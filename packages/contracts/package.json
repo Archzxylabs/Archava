@@ -1,0 +1,26 @@
+{
+  "name": "@archava/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "forge build",
+    "test": "forge test -vv",
+    "test:deployment": "vitest run test/deployment.test.ts test/deployment-v2.test.ts",
+    "deploy:contract": "tsx scripts/deploy.ts",
+    "deploy:v2": "tsx scripts/deploy-v2.ts",
+    "verify:contract": "tsx scripts/verify.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "5.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.9.1",
+    "forge-std": "^1.1.2",
+    "tsx": "4.20.6",
+    "typescript": "5.9.3",
+    "vitest": "3.2.7",
+    "viem": "^2.23.0"
+  }
+}
