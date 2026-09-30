@@ -19,6 +19,8 @@ The minute-pack contract is **not deployed or implemented in this repository**. 
 
 ## Public deployment status
 
+The [Archzxylabs/Archava](https://github.com/Archzxylabs/Archava) `main` branch is connected to the existing Vercel project. Pushes to `main` trigger production deployments.
+
 The static showcase is deployed at [archava-onchain.vercel.app](https://archava-onchain.vercel.app). Its API still depends on a temporary tunnel and a running local API and worker. The last public check returned `502` for `/api/health`; the live preview is therefore **not verified available** on that host. The UI shows an offline state when it cannot load the API config. Minute-pack purchases remain unavailable until the team's contract is deployed.
 
 The landing page also has a **For business** path for custom integrations. Set the public `VITE_BUSINESS_CONTACT_URL` build variable to Archava's official `mailto:` or WhatsApp link to route inquiries directly. Until that contact is supplied, the CTA opens the avatar section or live preview when available; the page says no inquiry was sent.
