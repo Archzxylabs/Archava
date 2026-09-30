@@ -121,7 +121,7 @@ def is_paid_room_metadata(raw: str | None) -> bool:
 
 
 from google.genai import types as genai_types
-from livekit.agents.voice.turn import InterruptionOptions, TurnHandlingOptions
+from livekit.agents.voice.turn import EndpointingOptions, InterruptionOptions, TurnHandlingOptions
 
 
 def new_session(instructions: str = INSTRUCTIONS) -> AgentSession:
@@ -137,11 +137,15 @@ def new_session(instructions: str = INSTRUCTIONS) -> AgentSession:
             instructions=instructions,
         ),
         turn_handling=TurnHandlingOptions(
+            endpointing=EndpointingOptions(
+                min_delay=0.15,
+                max_delay=0.6,
+            ),
             interruption=InterruptionOptions(
                 enabled=True,
                 min_duration=0.8,
                 min_words=1,
-            )
+            ),
         ),
     )
 
