@@ -98,8 +98,8 @@ export function DigitalFrontierSection({ contractReady, previewReady }: { contra
             </div>
             <p className="frontier-explanation-p">
               {contractReady
-                ? "Minute packs are bought on BNB Chain. Archava checks the wallet's remaining balance before opening a LiveKit room; Gemini handles conversation and the avatar engine brings it on screen. Voice and visuals run offchain."
-                : `${previewReady ? "Try Ava in the live preview above." : "The live preview is temporarily offline."} BNB Chain minute packs become available when the contract is connected. Gemini handles conversation; LiveKit and the avatar engine bring it to life offchain.`}
+                ? "Minute packs use demo mUSDT on BNB Testnet. Archava checks the wallet's remaining balance before opening a LiveKit room; Gemini handles conversation and the avatar engine brings it on screen. Voice and visuals run offchain."
+                : `${previewReady ? "Try Ava in the live preview above." : "The live preview is temporarily offline."} Demo mUSDT minute packs require the BNB Testnet contract and rental API to be configured. Gemini handles conversation; LiveKit and the avatar engine bring it to life offchain.`}
             </p>
             <p className="frontier-disclosure">Portraits on this page are concept artwork. Live sessions feature an AI-generated avatar.</p>
           </div>

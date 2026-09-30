@@ -7,6 +7,7 @@ import {
   getPackQuote,
   getCreditStatus,
   buyMinutePack,
+  claimDemoUsdt,
   startAnonymousPreview,
   startAvatarSession,
   type AppConfig,
@@ -49,6 +50,7 @@ export default function App() {
   const [loading, setLoading] = useState("");
   const [error, setError] = useState("");
   const [txHash, setTxHash] = useState("");
+  const [txKind, setTxKind] = useState<"purchase" | "faucet">("purchase");
   const [nextSteps, setNextSteps] = useState(false);
   const [lastCallPaid, setLastCallPaid] = useState(false);
 
@@ -176,6 +178,7 @@ export default function App() {
     if (!config || !wallet || !quote) return;
     setError("");
     setTxHash("");
+    setTxKind("purchase");
     setLoading("buy");
     sounds.playClick();
     try {
@@ -185,6 +188,25 @@ export default function App() {
       await refreshCredits(wallet, config);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Minute-pack transaction failed");
+    } finally {
+      setLoading("");
+    }
+  };
+
+  const handleClaimFaucet = async () => {
+    if (!config || !wallet) return;
+    setError("");
+    setTxHash("");
+    setTxKind("faucet");
+    setLoading("faucet");
+    sounds.playClick();
+    try {
+      const hash = await claimDemoUsdt(config, wallet);
+      setTxHash(hash);
+      sounds.playSuccess();
+      await refreshCredits(wallet, config);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Demo mUSDT faucet failed");
     } finally {
       setLoading("");
     }
@@ -282,6 +304,8 @@ export default function App() {
           txHash={txHash}
           onConnect={handleConnect}
           onBuy={handleBuy}
+          onClaimFaucet={handleClaimFaucet}
+          txKind={txKind}
           onSelectPack={handleSelectPack}
           onRefreshQuote={refreshQuote}
           onOpenDeveloper={openDeveloper}
@@ -329,6 +353,8 @@ export default function App() {
         txHash={txHash}
         onConnect={handleConnect}
         onBuy={handleBuy}
+        onClaimFaucet={handleClaimFaucet}
+        txKind={txKind}
         onSelectPack={handleSelectPack}
         onStartSession={handleStart}
         onTryPreview={handleTryPreview}

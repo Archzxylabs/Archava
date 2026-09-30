@@ -13,6 +13,8 @@ interface BuildPageProps {
   txHash: string;
   onConnect: () => void;
   onBuy: () => void;
+  onClaimFaucet: () => void;
+  txKind: "purchase" | "faucet";
   onSelectPack: (minutes: number) => void;
   onRefreshQuote: () => void;
   onOpenDeveloper: () => void;
@@ -35,9 +37,9 @@ const { sessionId, serverUrl, participantToken, endsAt, avatar } =
   await response.json();
 // Pass the short-lived room data to your browser, never the API key.`;
 
-const packAbi = `purchasedMinutes(address buyer) → lifetime minutes
-quotePack(uint64 minutes) → BNB wei
-buyPack(uint64 minutes) payable`;
+const packAbi = `quoteRent(uint8 packageId) → mUSDT base units
+rent(uint8 packageId) → transfers approved mUSDT
+AccessRented(wallet, packageId, includedMinutes, expiresAt, amountPaid)`;
 
 export function BuildPage({
   config,
@@ -51,6 +53,8 @@ export function BuildPage({
   txHash,
   onConnect,
   onBuy,
+  onClaimFaucet,
+  txKind,
   onSelectPack,
   onRefreshQuote,
   onOpenDeveloper,
@@ -90,7 +94,7 @@ export function BuildPage({
             <a className="build-button build-button-primary" href="/#catalog-section"><Mic2 size={17} /> {previewReady ? "Talk to Ava" : "Explore Ava"} <ArrowUpRight size={17} /></a>
             <a className="build-button build-button-quiet" href="#access">Explore access <ArrowRight size={17} /></a>
           </div>
-          <div className="build-hero-footnote">{previewReady ? "LIVE PREVIEW / NO WALLET NEEDED" : "LIVE PREVIEW / CURRENTLY OFFLINE"} · API KEYS / WALLET SIGNATURE · MINUTE PACKS / BNB CHAIN</div>
+          <div className="build-hero-footnote">{previewReady ? "LIVE PREVIEW / NO WALLET NEEDED" : "LIVE PREVIEW / CURRENTLY OFFLINE"} · API KEYS / WALLET SIGNATURE · MINUTE PACKS / BNB CHAIN TESTNET</div>
         </div>
         <div className="build-hero-art" aria-label="Concept artwork of Ava">
           <img src="/assets/archava_hero_clean.webp" alt="Concept portrait representing Ava" />
@@ -102,7 +106,7 @@ export function BuildPage({
       <section className="build-route-strip" aria-label="How Archava works">
         <div><span>01 / EXPERIENCE</span><strong>Meet Ava in the browser</strong><small>{previewReady ? "Anonymous live preview" : "Live preview offline"}</small></div>
         <ArrowRight size={18} aria-hidden="true" />
-        <div><span>02 / ACCESS</span><strong>Buy Ava minutes</strong><small>BNB Chain payment</small></div>
+          <div><span>02 / ACCESS</span><strong>Buy Ava minutes</strong><small>Mock USDT on BNB Testnet</small></div>
         <ArrowRight size={18} aria-hidden="true" />
         <div><span>03 / INTEGRATE</span><strong>Open a room by API</strong><small>Key stays on your backend</small></div>
       </section>
@@ -111,7 +115,7 @@ export function BuildPage({
         <div className="build-section-intro">
           <span className="build-section-index">01 / ONCHAIN ACCESS</span>
           <h2 id="access-title">Your minutes.<br /><span>Your Ava sessions.</span></h2>
-          <p>Minute packs belong to a wallet. Archava reads total purchased minutes from BNB Chain and subtracts allocated room time from its server ledger. Your website calls and API key share one balance.</p>
+          <p>Minute packs belong to a wallet. Archava reads the wallet's rental events and active access from BNB Testnet, then subtracts allocated room time from its server ledger. Your website calls and API key share one balance.</p>
         </div>
         <div className="build-access-card">
           <div className="build-card-top"><span>ACCESS TERMINAL</span><span className={hasCredits || quote ? "build-ready" : "build-pending"}>{accessLabel}</span></div>
@@ -120,7 +124,7 @@ export function BuildPage({
           <div className="build-access-row"><span>CONTRACT</span><strong>{contractConfigured ? "CONFIGURED" : "NOT CONNECTED"}</strong></div>
           {contractConfigured && <div className="build-access-row"><span>AVAILABLE</span><strong>{credits ? `${Math.floor(credits.remainingSeconds / 60)}m ${credits.remainingSeconds % 60}s` : wallet ? "CHECKING BALANCE" : "CONNECT TO CHECK"}</strong></div>}
           {config && <div className="pack-options" role="group" aria-label="Choose minute pack">{(config.packMinutes || [60, 300]).map((minutes) => <button key={minutes} type="button" className={selectedPack === minutes ? "selected" : ""} onClick={() => onSelectPack(minutes)}>{minutes} min</button>)}</div>}
-          {contractConfigured && quote && <div className="build-quote"><span>{quote.minutes} AVA MINUTES</span><strong>{quote.bnb} {config?.chainId === 97 ? "tBNB" : "BNB"}</strong></div>}
+          {contractConfigured && quote && <div className="build-quote"><span>{quote.minutes} AVA MINUTES</span><strong>{quote.tokenAmount} {quote.symbol}</strong></div>}
           {!contractConfigured ? (
             <p className="build-card-note">The contract address is not configured in this build. {previewReady ? "The free preview is available from the landing page." : "The live preview is currently offline."}</p>
           ) : !wallet ? (
@@ -130,10 +134,11 @@ export function BuildPage({
           ) : (
             <button className="build-button build-button-quiet build-card-action" type="button" onClick={onRefreshQuote}>Quote unavailable · retry</button>
           )}
+          {wallet && config?.paymentTokenAddress && <button className="build-button build-button-quiet build-card-action" type="button" onClick={onClaimFaucet} disabled={!!loading}><Wallet size={16} /> {loading === "faucet" ? "Claiming demo mUSDT…" : "Claim 100 demo mUSDT"}</button>}
           {hasCredits && <a className="build-button build-button-quiet build-card-action" href="/#catalog-section"><Check size={16} /> Talk with Ava <ArrowUpRight size={16} /></a>}
           {error && <div className="build-error" role="alert"><span>{error}</span><button type="button" onClick={onClearError}>Dismiss</button></div>}
-          {txHash && <a className="build-tx" href={explorer + txHash} target="_blank" rel="noreferrer">Minute pack confirmed · View transaction <ArrowUpRight size={13} /></a>}
-          <span className="build-card-disclaimer"><Clock3 size={13} /> One minute = 60 seconds of allocated room time. Each call runs up to 30 minutes; unused seconds return to your balance when you end it.</span>
+          {txHash && <a className="build-tx" href={explorer + txHash} target="_blank" rel="noreferrer">{txKind === "faucet" ? "Demo mUSDT claimed" : "Minute pack confirmed"} · View transaction <ArrowUpRight size={13} /></a>}
+          <span className="build-card-disclaimer"><Clock3 size={13} /> mUSDT is a testnet demo token with no real value. Keep tBNB for gas. Each call runs up to 30 minutes; unused reserved seconds return when you end it.</span>
         </div>
       </section>
 
@@ -159,7 +164,7 @@ export function BuildPage({
       </section>
 
       <section className="build-contract-note" aria-labelledby="contract-note-title" data-reveal>
-        <div><span className="build-section-index">03 / CONTRACT INTERFACE</span><h2 id="contract-note-title">Minutes bought onchain.</h2><p>The contract records each wallet's cumulative Ava minutes. Archava meters room time offchain and makes the remaining balance available to the wallet and its API keys.</p></div>
+        <div><span className="build-section-index">03 / CONTRACT INTERFACE</span><h2 id="contract-note-title">Minutes bought onchain.</h2><p>The contract emits each wallet's purchased minutes and access expiry. Archava meters room time offchain and shares the remaining balance with the wallet and its API keys.</p></div>
         <pre><code>{packAbi}</code></pre>
       </section>
 

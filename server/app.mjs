@@ -37,6 +37,8 @@ export function createApp(dependencies) {
     distDir,
     chainId,
     contractAddress,
+    paymentTokenAddress = "",
+    paymentTokenSymbol = "mUSDT",
     livekitUrl,
     avatarProvider,
     spatiusAppId,
@@ -81,6 +83,8 @@ export function createApp(dependencies) {
     return {
       chainId,
       contractAddress,
+      paymentTokenAddress,
+      paymentTokenSymbol,
       livekitReady: Boolean(rooms),
       avatarProvider,
       ...(avatarProvider === "spatius" ? { spatiusAppId, spatiusAvatarId } : {}),

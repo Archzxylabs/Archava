@@ -15,7 +15,7 @@ export function HowItWorks() {
       icon: LockKeyhole,
       tag: "SMART CONTRACT",
       title: "Onchain Minute Packs",
-      desc: "Buy Ava minutes on BNB Chain. Archava checks cumulative purchases and its usage ledger before opening a paid room.",
+      desc: "Buy Ava minutes with demo mUSDT on BNB Testnet. Archava checks purchase events, active access, and its usage ledger before opening a paid room.",
     },
     {
       number: "03",

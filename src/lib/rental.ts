@@ -4,6 +4,8 @@ import { ApiError } from "./apiError.ts";
 export interface AppConfig {
   chainId: number;
   contractAddress: string;
+  paymentTokenAddress?: string;
+  paymentTokenSymbol?: string;
   livekitReady: boolean;
   avatarProvider: "tavus" | "spatius";
   spatiusAppId?: string;
@@ -34,7 +36,8 @@ export interface AvatarSession {
 
 export interface PackQuote {
   wei: string;
-  bnb: string;
+  tokenAmount: string;
+  symbol: string;
   minutes: number;
 }
 
@@ -48,10 +51,17 @@ declare global {
   }
 }
 
-export const PACK_ABI = [
-  "function purchasedMinutes(address buyer) view returns (uint256)",
-  "function quotePack(uint64 minutes) view returns (uint256)",
-  "function buyPack(uint64 minutes) payable",
+export const RENTAL_ABI = [
+  "function quoteRent(uint8 packageId) view returns (uint256)",
+  "function rent(uint8 packageId)",
+];
+
+export const PAYMENT_TOKEN_ABI = [
+  "function approve(address spender, uint256 amount) returns (bool)",
+  "function allowance(address owner, address spender) view returns (uint256)",
+  "function balanceOf(address account) view returns (uint256)",
+  "function faucet()",
+  "function hasClaimed(address wallet) view returns (bool)",
 ];
 
 async function api<T>(path: string, body?: unknown): Promise<T> {
@@ -119,8 +129,30 @@ export async function ensureChain(chainId: number): Promise<void> {
   }
 }
 
+function packageIdForMinutes(minutes: number): number {
+  if (minutes === 60) return 1;
+  if (minutes === 300) return 2;
+  throw new Error("Unsupported minute pack");
+}
+
+export async function claimDemoUsdt(config: AppConfig, expectedWallet: string): Promise<string> {
+  if (!config.paymentTokenAddress) throw new Error("Mock USDT contract not configured");
+  const provider = injectedProvider();
+  await ensureChain(config.chainId);
+  const signer = await provider.getSigner();
+  if ((await signer.getAddress()).toLowerCase() !== expectedWallet.toLowerCase()) {
+    throw new Error("Connected wallet changed. Connect again before claiming tokens.");
+  }
+  const token = new Contract(config.paymentTokenAddress, PAYMENT_TOKEN_ABI, signer);
+  const tx = await token.faucet();
+  const receipt = await tx.wait();
+  if (receipt?.status !== 1) throw new Error("Mock USDT faucet transaction failed");
+  return tx.hash as string;
+}
+
 export async function buyMinutePack(config: AppConfig, minutes: number, expectedWallet: string): Promise<string> {
-  if (!config.contractAddress) throw new Error("Minute-pack contract not configured");
+  if (!config.contractAddress || !config.paymentTokenAddress) throw new Error("Minute-pack contracts not configured");
+  const packageId = packageIdForMinutes(minutes);
   if (!Array.isArray(config.packMinutes) || !config.packMinutes.includes(minutes)) {
     throw new Error("This site needs the minute-pack API. Refresh after the API is updated.");
   }
@@ -130,10 +162,25 @@ export async function buyMinutePack(config: AppConfig, minutes: number, expected
   if ((await signer.getAddress()).toLowerCase() !== expectedWallet.toLowerCase()) {
     throw new Error("Connected wallet changed. Connect again before buying minutes.");
   }
-  const contract = new Contract(config.contractAddress, PACK_ABI, signer);
-  const value: bigint = await contract.quotePack(minutes);
-  const tx = await contract.buyPack(minutes, { value });
-  await tx.wait();
+  const token = new Contract(config.paymentTokenAddress, PAYMENT_TOKEN_ABI, signer);
+  const rental = new Contract(config.contractAddress, RENTAL_ABI, signer);
+  const value: bigint = await rental.quoteRent(packageId);
+  const tokenBalance: bigint = await token.balanceOf(expectedWallet);
+  if (tokenBalance < value) {
+    const claimed: boolean = await token.hasClaimed(expectedWallet);
+    throw new Error(claimed
+      ? "Not enough demo mUSDT. This wallet has already used its one-time test faucet."
+      : "Not enough demo mUSDT. Claim test tokens before buying a minute pack.");
+  }
+  const allowance: bigint = await token.allowance(expectedWallet, config.contractAddress);
+  if (allowance < value) {
+    const approval = await token.approve(config.contractAddress, value);
+    const approvalReceipt = await approval.wait();
+    if (approvalReceipt?.status !== 1) throw new Error("Mock USDT approval failed");
+  }
+  const tx = await rental.rent(packageId);
+  const receipt = await tx.wait();
+  if (receipt?.status !== 1) throw new Error("Minute-pack purchase failed");
   return tx.hash as string;
 }
 

@@ -1,12 +1,25 @@
-import { Contract, JsonRpcProvider, formatEther, getAddress, isAddress } from "ethers";
+import { Contract, JsonRpcProvider, formatUnits, getAddress, isAddress } from "ethers";
 
-// Contract handoff: purchases are cumulative. Usage is measured offchain in
-// seconds, so a browser timer never determines a wallet's balance.
-export const PACK_ABI = [
-  "function purchasedMinutes(address buyer) view returns (uint256)",
-  "function quotePack(uint64 minutes) view returns (uint256)",
-  "function buyPack(uint64 minutes) payable",
+// V2 packages are indexed onchain: 1 = 60 minutes, 2 = 300 minutes.
+// Purchases are summed from AccessRented events because V2 deliberately stores
+// access expiry rather than a mutable lifetime-minute counter.
+export const RENTAL_ABI = [
+  "function paymentToken() view returns (address)",
+  "function quoteRent(uint8 packageId) view returns (uint256)",
+  "function expiresAt(address wallet) view returns (uint256)",
+  "function hasActiveAccess(address wallet) view returns (bool)",
+  "event AccessRented(address indexed wallet, uint8 indexed packageId, uint256 includedMinutes, uint256 expiresAt, uint256 amountPaid)",
 ];
+
+export const TOKEN_ABI = [
+  "function decimals() view returns (uint8)",
+  "function symbol() view returns (string)",
+];
+
+const PACKAGES = new Map([[60, 1], [300, 2]]);
+const START_BLOCK = 134052025;
+const LOG_BLOCK_SPAN = 5000;
+const TOKEN_DECIMALS = 6;
 
 export function normalizeWallet(value) {
   if (typeof value !== "string" || !isAddress(value)) {
@@ -24,36 +37,70 @@ export function purchasedState(minutes) {
   return { purchasedMinutes };
 }
 
-function configuredContract({ rpcUrl, contractAddress, chainId }) {
+function configuredContracts({ rpcUrl, contractAddress, tokenAddress, chainId, deploymentBlock = START_BLOCK }) {
   if (!contractAddress) return null;
-  if (!isAddress(contractAddress)) throw new Error("PACK_CONTRACT is invalid");
-  if (!rpcUrl) throw new Error("RPC_URL is required when PACK_CONTRACT is set");
+  if (!isAddress(contractAddress)) throw new Error("RENTAL_CONTRACT (formerly PACK_CONTRACT) is invalid");
+  if (!isAddress(tokenAddress || "")) throw new Error("PAYMENT_TOKEN_CONTRACT is missing or invalid");
+  if (!rpcUrl) throw new Error("RPC_URL is required when RENTAL_CONTRACT is set");
+  if (Number(chainId) !== 97) throw new Error("Archava Rental V2 is configured for BNB Testnet chain ID 97");
+  if (!Number.isSafeInteger(Number(deploymentBlock)) || Number(deploymentBlock) <= 0) {
+    throw new Error("RENTAL_DEPLOYMENT_BLOCK must be a positive block number");
+  }
   const provider = new JsonRpcProvider(rpcUrl, Number(chainId));
-  return { provider, contract: new Contract(contractAddress, PACK_ABI, provider) };
+  const rental = new Contract(contractAddress, RENTAL_ABI, provider);
+  const token = new Contract(tokenAddress, TOKEN_ABI, provider);
+  return { provider, rental, token, contractAddress: getAddress(contractAddress), tokenAddress: getAddress(tokenAddress), chainId: Number(chainId), deploymentBlock: Number(deploymentBlock) };
 }
 
-async function verifyChain(provider, chainId) {
-  if ((await provider.getNetwork()).chainId !== BigInt(chainId)) throw new Error("RPC chain mismatch");
+async function verifyConnection(connection) {
+  if ((await connection.provider.getNetwork()).chainId !== BigInt(connection.chainId)) {
+    throw new Error("RPC chain mismatch");
+  }
+  if (getAddress(await connection.rental.paymentToken()) !== connection.tokenAddress) {
+    throw new Error("Payment token does not match RENTAL_CONTRACT");
+  }
 }
 
 export function createCreditReader(config) {
-  const connection = configuredContract(config);
+  const connection = configuredContracts(config);
   if (!connection) return null;
-  const { provider, contract } = connection;
-  return async (wallet) => {
-    await verifyChain(provider, config.chainId);
-    return purchasedState(await contract.purchasedMinutes(normalizeWallet(wallet)));
+  const { provider, rental, deploymentBlock } = connection;
+  const eventFilter = rental.filters.AccessRented;
+  return async (walletInput) => {
+    await verifyConnection(connection);
+    const wallet = normalizeWallet(walletInput);
+    const latestBlock = await provider.getBlockNumber();
+    const topics = eventFilter(wallet).topics;
+    let purchasedMinutes = 0n;
+    for (let fromBlock = deploymentBlock; fromBlock <= latestBlock; fromBlock += LOG_BLOCK_SPAN) {
+      const toBlock = Math.min(fromBlock + LOG_BLOCK_SPAN - 1, latestBlock);
+      const logs = await provider.getLogs({ address: connection.contractAddress, topics, fromBlock, toBlock });
+      for (const log of logs) {
+        const event = rental.interface.parseLog(log);
+        if (event) purchasedMinutes += event.args.includedMinutes;
+      }
+    }
+    const active = await rental.hasActiveAccess(wallet);
+    return purchasedState(active ? purchasedMinutes : 0n);
   };
 }
 
 export function createPackQuoter(config) {
-  const connection = configuredContract(config);
+  const connection = configuredContracts(config);
   if (!connection) return null;
-  const { provider, contract } = connection;
+  const { rental, token } = connection;
   return async (minutes) => {
-    if (!Number.isSafeInteger(minutes) || minutes <= 0) throw new Error("Invalid pack minutes");
-    await verifyChain(provider, config.chainId);
-    const wei = await contract.quotePack(minutes);
-    return { minutes, wei: wei.toString(), bnb: formatEther(wei) };
+    const packageId = PACKAGES.get(minutes);
+    if (!packageId) throw new Error("Unsupported minute pack");
+    await verifyConnection(connection);
+    const [wei, decimals, symbol] = await Promise.all([
+      rental.quoteRent(packageId),
+      token.decimals(),
+      token.symbol(),
+    ]);
+    if (Number(decimals) !== TOKEN_DECIMALS || symbol !== "mUSDT") {
+      throw new Error("Configured payment token is not Archava Mock USDT");
+    }
+    return { minutes, wei: wei.toString(), tokenAmount: formatUnits(wei, TOKEN_DECIMALS), symbol };
   };
 }

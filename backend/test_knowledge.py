@@ -15,7 +15,7 @@ class KnowledgeTests(unittest.TestCase):
         self.assertIn("no live pack transaction", rental)
 
     def test_environment_flags_cannot_make_unbuilt_services_live(self):
-        with patch.dict("os.environ", {"PACK_CONTRACT": "0x123", "API_KEYS_ENABLED": "true"}):
+        with patch.dict("os.environ", {"RENTAL_CONTRACT": "0x123", "API_KEYS_ENABLED": "true"}):
             notes = product_knowledge()
         self.assertIn("not connected to this demo", notes)
         self.assertIn("public customer API is not available yet", notes)

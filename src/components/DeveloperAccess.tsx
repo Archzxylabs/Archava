@@ -482,7 +482,7 @@ export function DeveloperAccess({ wallet, contractConnected, onClose }: Develope
             </h3>
             <p className="developer-copy">
               Choose a 60 or 300 minute pack on the build page. The checkout reads the exact
-              BNB Chain quote from the contract just before payment. More packs add to your wallet's total.
+              mUSDT quote, approves that amount, and rents the package on BNB Testnet. More packs add minutes.
             </p>
             <p className="developer-copy">
               <strong>Available time</strong> subtracts completed room usage and currently reserved

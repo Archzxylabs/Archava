@@ -29,7 +29,7 @@ FACTS = {
         "Archava Onchain presents one ready-to-use conversational AI avatar. The "
         "visitor is speaking with that avatar live right now, and the site's "
         "wallet-free preview is how any visitor tries it, with no usage limit. "
-        "BNB Chain minute packs are the planned paid access. Archava Platform is the "
+        "BNB Testnet minute packs use demo mUSDT and become usable when the API is configured. Archava Platform is the "
         "separate custom integration offering for businesses."
     ),
     "preview": (
@@ -40,10 +40,12 @@ FACTS = {
         "concept portraits on the page are not the live avatar."
     ),
     "rental": (
-        "Onchain Ava minute packs on BNB Chain are planned, but the contract is not "
-        "connected to this demo. Packs contain 60 or 300 minutes. A purchased minute "
-        "is 60 seconds of allocated room time; website calls and API-key calls share "
-        "the wallet balance. There is no live pack transaction or price to quote yet."
+        "ArchavaRentalV2 and Archava Mock USDT are deployed on BNB Testnet, but "
+        "checkout is not connected to this demo until the API has its QuickNode "
+        "RPC and contract configuration. Packs contain 60 or 300 minutes and use "
+        "test-only mUSDT. The API "
+        "checks rental events and active access, then subtracts allocated room time "
+        "from the shared wallet balance."
     ),
     "api": (
         "The current demo integrates Gemini, LiveKit, and Spatius internally. "
@@ -90,8 +92,9 @@ PAID_CALL_FACTS = {
 # payment or quote the current onchain amount.
 PACKS_CONNECTED = (
     "Onchain minute packs are connected. Archava verifies cumulative purchased "
-    "minutes and subtracts server-metered room time before creating a paid room. "
-    "The website reads a live BNB quote from the contract for 60 and 300 minute "
+    "minutes by summing rental events and checks active access, then subtracts "
+    "server-metered room time before creating a paid room. The website reads a "
+    "live mUSDT quote from the contract for 60 and 300 minute "
     "packs; Ava cannot quote its current amount, confirm payment, or buy a pack. "
     "No IDR retail price is approved."
 )
