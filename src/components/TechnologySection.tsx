@@ -19,7 +19,7 @@ export function TechnologySection() {
       icon: Shield,
       title: "BNB Chain Settlement",
       sub: "Verifiable Access Tokens",
-      desc: "BNB Chain records cumulative Ava minute purchases. The server meters allocated room seconds and wallet signatures prevent replay attacks.",
+      desc: "BNB Testnet records Ava rental events in demo mUSDT. The server checks active access, meters allocated room seconds, and verifies wallet signatures.",
     },
     {
       icon: Zap,

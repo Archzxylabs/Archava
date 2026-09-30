@@ -61,7 +61,7 @@ class ReadinessDefaultTests(unittest.TestCase):
         with patch.dict(
             "os.environ",
             {
-                "PACK_CONTRACT": "0x123",
+                "RENTAL_CONTRACT": "0x123",
                 "API_KEYS_ENABLED": "true",
                 "LIVEKIT_URL": "wss://example.invalid",
                 "SPATIUS_API_KEY": "k",
@@ -120,7 +120,7 @@ class RentalReleasedTests(unittest.TestCase):
 
     def test_the_live_wording_still_refuses_to_quote_commerce(self):
         rental = product_facts("rental")
-        self.assertIn("live BNB quote from the contract", rental)
+        self.assertIn("live mUSDT quote from the contract", rental)
         self.assertIn("cannot quote its current amount, confirm payment", rental)
 
     def test_the_live_wording_describes_minute_packs(self):

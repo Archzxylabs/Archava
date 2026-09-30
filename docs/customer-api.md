@@ -1,10 +1,10 @@
 # Archava Session API — integration guide
 
-**Status: local MVP, 30 Sep 2026.** The public Vercel host's API tunnel was last measured unavailable (`/api/health` returned `502`). The minute-pack contract is not deployed. Use a running local or private API for development; the paid flow needs the team's contract before end-to-end testing.
+**Status: BNB Testnet integration.** The UI and API support ArchavaRentalV2 and Archava Mock USDT (mUSDT). Public paid sessions still depend on the configured API, QuickNode RPC, LiveKit service, and worker being online.
 
 ## Product and balance
 
-Ava is the only avatar. The free 120-second landing-page preview does not consume purchased minutes. A wallet buys 60 or 300 minutes on BNB Chain Testnet; the contract's `purchasedMinutes(wallet)` is cumulative. The Archava API subtracts completed room usage and currently reserved seconds. One purchased minute is 60 seconds of allocated room time, measured from room allocation, including any wait before a participant joins. A session reserves at most 30 minutes, or the wallet's smaller remaining balance. Unused reserved seconds return when the room is closed. One wallet can hold only one paid room across the website and **all API keys**.
+Ava is the only avatar. The free 120-second landing-page preview does not consume purchased minutes. A wallet can buy the 60-minute Starter or 300-minute Pro package using testnet mUSDT. The API sums the wallet's `AccessRented` events, checks that its contract access is active, then subtracts completed room usage and currently reserved seconds. One purchased minute is 60 seconds of allocated room time, measured from room allocation, including any wait before a participant joins. A session reserves at most 30 minutes, or the wallet's smaller remaining balance. Unused reserved seconds return when the room is closed. One wallet can hold only one paid room across the website and **all API keys**.
 
 ```text
 remainingSeconds = max(0, purchasedMinutes * 60
@@ -83,4 +83,4 @@ Only the key that opened a room may close it. The response includes `seconds`, t
 | `502` | Chain read or room provider failed |
 | `503` | Contract/provider/usage ledger unavailable |
 
-The server checks the key, then the chain and balance, then reserves seconds before opening a vendor room. A rejected request does not open a paid room. Price in tBNB comes from `GET /api/quote?minutes=60` or `300` after contract deployment. No IDR retail price is approved; the Rp79,000/60 and Rp299,000/300 figures in `pricing/` are internal hackathon drafts.
+The server checks the key, then the chain and balance, then reserves seconds before opening a vendor room. A rejected request does not open a paid room. The mUSDT quote comes from `GET /api/quote?minutes=60` or `300`. Mock mUSDT is a testnet token and has no retail value. The Rp79,000/60 and Rp299,000/300 figures in `pricing/` remain internal hackathon drafts.

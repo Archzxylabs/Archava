@@ -17,6 +17,8 @@ interface AvatarCatalogProps {
   txHash: string;
   onConnect: () => void;
   onBuy: () => void;
+  onClaimFaucet: () => void;
+  txKind: "purchase" | "faucet";
   onSelectPack: (minutes: number) => void;
   onStartSession: () => void;
   onTryPreview: () => void;
@@ -50,6 +52,8 @@ export function AvatarCatalog({
   txHash,
   onConnect,
   onBuy,
+  onClaimFaucet,
+  txKind,
   onSelectPack,
   onStartSession,
   onTryPreview,
@@ -199,9 +203,10 @@ export function AvatarCatalog({
                   <span className="tag-eyebrow">TRY IT NOW</span>
                   <h3>Enter the live room.</h3>
                   {credits && <span className="card-quote">{Math.floor(credits.remainingSeconds / 60)}m {credits.remainingSeconds % 60}s available</span>}
-                  {quote && <span className="card-quote">{quote.minutes} min · {quote.bnb} {config?.chainId === 97 ? "tBNB" : "BNB"}</span>}
+                  {quote && <span className="card-quote">{quote.minutes} min · {quote.tokenAmount} {quote.symbol}</span>}
                   {!config?.contractAddress && <span className="card-contract-status">Onchain minute packs opening soon</span>}
                   {wallet && config?.contractAddress && <div className="pack-options" role="group" aria-label="Choose minute pack">{(config.packMinutes || [60, 300]).map((minutes) => <button key={minutes} type="button" className={selectedPack === minutes ? "selected" : ""} onClick={(event) => { event.stopPropagation(); onSelectPack(minutes); }}>{minutes} min</button>)}</div>}
+                  {wallet && config?.paymentTokenAddress && <button type="button" className="card-preview-btn" onClick={(event) => { event.stopPropagation(); onClaimFaucet(); }} disabled={!!loading}>{loading === "faucet" ? "Claiming demo mUSDT…" : "Claim 100 demo mUSDT"}</button>}
                   {!wallet ? (
                     <button
                       type="button"
@@ -262,7 +267,7 @@ export function AvatarCatalog({
           {txHash && (
             <div className="catalog-alert success" role="status">
               <Check size={16} />
-              <span>Minute pack confirmed: {txHash.slice(0, 10)}…</span>
+              <span>{txKind === "faucet" ? "Demo mUSDT claimed" : "Minute pack confirmed"}: {txHash.slice(0, 10)}…</span>
               <button type="button" onClick={() => void copyTx()} aria-label="Copy transaction hash">
                 {copiedTx ? <Check size={12} /> : <Copy size={12} />}
               </button>

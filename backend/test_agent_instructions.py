@@ -42,7 +42,7 @@ class HostTests(unittest.IsolatedAsyncioTestCase):
         host = ArchavaHost(site, Mock())
         self.assertIn("not available yet", await host.get_current_page())
         site.accept_packet("archava.page", b'{"section":"protocol-section","revision":1}', "guest-abc")
-        self.assertIn("planned connect, buy minutes, and converse", await host.get_current_page())
+        self.assertIn("connect, buy minutes, and converse", await host.get_current_page())
 
     async def test_product_tool_returns_verified_facts(self):
         host = ArchavaHost(SiteContext(), Mock())

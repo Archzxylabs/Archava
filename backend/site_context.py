@@ -15,11 +15,11 @@ SECTIONS = {
         "The avatar",
         "The portraits are concept art; the live session renders a separate Spatius "
         "avatar, which is what the visitor is speaking with now. Minute-pack "
-        "checkout becomes available when the BNB Chain contract is connected.",
+        "checkout uses demo mUSDT when the BNB Testnet contract and API are connected.",
     ),
     "protocol-section": (
         "How it works",
-        "This section explains the planned connect, buy minutes, and converse "
+        "This section explains the connect, buy minutes, and converse "
         "flow. The current preview works without a wallet; conversation and avatar "
         "rendering run offchain.",
     ),

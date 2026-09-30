@@ -60,11 +60,21 @@ export function createDependencies({ env = process.env, cwd = process.cwd(), sta
 
   const rentalConfig = {
     rpcUrl: env.RPC_URL,
-    contractAddress: env.PACK_CONTRACT || "",
+    contractAddress: env.RENTAL_CONTRACT || "",
+    tokenAddress: env.PAYMENT_TOKEN_CONTRACT || "",
     chainId,
+    deploymentBlock: env.RENTAL_DEPLOYMENT_BLOCK || 134052025,
   };
-  const readCredits = createCreditReader(rentalConfig);
-  const quotePack = createPackQuoter(rentalConfig);
+  let readCredits = null;
+  let quotePack = null;
+  try {
+    readCredits = createCreditReader(rentalConfig);
+    quotePack = createPackQuoter(rentalConfig);
+  } catch (error) {
+    // A rental misconfiguration disables paid access without taking down the
+    // wallet-free preview or the rest of the API.
+    console.error("Minute-pack contract configuration is unavailable:", error.message);
+  }
 
   // The developer-facing product: a key proves a customer, the chain proves the
   // key's wallet purchased minutes, and the ledger checks remaining time. The key
@@ -160,7 +170,9 @@ export function createDependencies({ env = process.env, cwd = process.cwd(), sta
     origin,
     distDir: resolve(cwd, DIST_DIR),
     chainId,
-    contractAddress: env.PACK_CONTRACT || "",
+    contractAddress: rentalConfig.contractAddress,
+    paymentTokenAddress: rentalConfig.tokenAddress,
+    paymentTokenSymbol: "mUSDT",
     livekitUrl,
     avatarProvider,
     spatiusAppId,

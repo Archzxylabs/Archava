@@ -43,7 +43,7 @@ async function harness(run) {
     contractAddress: wallet.address, livekitUrl: "wss://test.livekit.cloud",
     avatarProvider: "spatius", spatiusAppId: "app", spatiusAvatarId: "avatar",
     previewSeconds: 120, packMinutes: [60, 300], readCredits,
-    quotePack: async (minutes) => ({ minutes, wei: String(minutes * 1000), bnb: String(minutes / 60_000) }),
+    quotePack: async (minutes) => ({ minutes, wei: String(minutes * 1000), tokenAmount: String(minutes / 60_000), symbol: "mUSDT" }),
     usage, customerSessions: sessions, rooms, challenges, dashboardChallenges,
     dashboardSessions, sessionTickets: new Map(),
     previewController: { available: () => false, handle: async () => ({ status: 403, body: {} }) },

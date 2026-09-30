@@ -136,7 +136,7 @@ class SectionDescriptionTests(unittest.TestCase):
                 self.assertIn(phrase, site.describe())
 
     def test_minute_pack_and_business_wording_stays_accurate(self):
-        self.assertIn("planned connect, buy minutes, and converse", SECTIONS["protocol-section"][1])
+        self.assertIn("connect, buy minutes, and converse", SECTIONS["protocol-section"][1])
         self.assertIn("does not activate a custom integration", SECTIONS["business-section"][1])
 
 
@@ -173,7 +173,7 @@ class PageProtocolUnchangedTests(unittest.IsolatedAsyncioTestCase):
         host = ArchavaHost(site, Mock())
         self.assertIn("not available yet", await host.get_current_page())
         site.accept_packet(PAGE_TOPIC, PACKET("protocol-section", 4), GUEST)
-        self.assertIn("planned connect, buy minutes, and converse", await host.get_current_page())
+        self.assertIn("connect, buy minutes, and converse", await host.get_current_page())
 
 
 if __name__ == "__main__":
