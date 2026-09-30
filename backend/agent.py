@@ -120,6 +120,10 @@ def is_paid_room_metadata(raw: str | None) -> bool:
     return isinstance(room_meta, dict) and room_meta.get("product") == "archava" and room_meta.get("preview") is False
 
 
+from google.genai import types as genai_types
+from livekit.agents.voice.turn import InterruptionOptions, TurnHandlingOptions
+
+
 def new_session(instructions: str = INSTRUCTIONS) -> AgentSession:
     key = configured("GEMINI_API_KEY")
     if not key:
@@ -129,8 +133,16 @@ def new_session(instructions: str = INSTRUCTIONS) -> AgentSession:
             model=os.getenv("GEMINI_MODEL", "gemini-2.5-flash-native-audio-preview-12-2025"),
             voice=os.getenv("GEMINI_VOICE", "Kore"),
             api_key=key,
+            thinking_config=genai_types.ThinkingConfig(thinking_budget=0),
             instructions=instructions,
-        )
+        ),
+        turn_handling=TurnHandlingOptions(
+            interruption=InterruptionOptions(
+                enabled=True,
+                min_duration=0.8,
+                min_words=1,
+            )
+        ),
     )
 
 
