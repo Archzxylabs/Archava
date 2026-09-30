@@ -35,6 +35,12 @@ export function SpatiusAvatar({ session }: SpatiusAvatarProps) {
 
       connectionAttempted = true;
       await room.connect(session.serverUrl, session.token);
+      if (cancelled) return;
+      try {
+        await room.localParticipant.setMicrophoneEnabled(true);
+      } catch (micError) {
+        console.warn("Could not auto-enable microphone:", micError);
+      }
     };
 
     const dispose = async () => {

@@ -4,6 +4,7 @@ import {
   BarVisualizer,
   DisconnectButton,
   isTrackReference,
+  StartAudio,
   useLocalParticipant,
   useTracks,
   useVoiceAssistant,
@@ -204,6 +205,8 @@ export function LiveRoom({ session, onClose }: LiveRoomProps) {
             {!isMuted ? <Mic size={17} /> : <MicOff size={17} />}
             <span>{!isMuted ? "MIC ON" : "MUTED"}</span>
           </button>
+
+          <StartAudio label="ALLOW AUDIO" className="mic-control-btn active" />
 
           <DisconnectButton className="end-call-btn" onClick={handleEnd}>
             <PhoneOff size={15} />

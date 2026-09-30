@@ -126,7 +126,7 @@ def new_session(instructions: str = INSTRUCTIONS) -> AgentSession:
         raise RuntimeError("GEMINI_API_KEY is required")
     return AgentSession(
         llm=google.realtime.RealtimeModel(
-            model=os.getenv("GEMINI_MODEL", "gemini-3.1-flash-live-preview"),
+            model=os.getenv("GEMINI_MODEL", "gemini-2.5-flash-native-audio-preview-12-2025"),
             voice=os.getenv("GEMINI_VOICE", "Kore"),
             api_key=key,
             instructions=instructions,
@@ -242,6 +242,12 @@ async def entrypoint(ctx: agents.JobContext) -> None:
         ),
     )
     print("[archava] session ready", flush=True)
+    try:
+        session.generate_reply(
+            instructions="Introduce yourself in one short sentence as Ava from Archava and greet the visitor warmly."
+        )
+    except Exception as error:
+        print(f"[archava] greeting error: {error}", flush=True)
 
 
 if __name__ == "__main__":
