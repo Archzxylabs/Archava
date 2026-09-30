@@ -28,7 +28,14 @@ const STATE_DIR = "data";
 const SWEEP_INTERVAL_MS = 10_000;
 
 export function createDependencies({ env = process.env, cwd = process.cwd(), stateDir } = {}) {
-  const origin = env.WEB_ORIGIN || "http://localhost:5174";
+  const rawOrigin = env.WEB_ORIGIN || "http://localhost:5174";
+  const origins = rawOrigin.split(",").map((s) => s.trim()).filter(Boolean);
+  const origin = origins[0] || "http://localhost:5174";
+  const allowedOrigins = [
+    ...origins,
+    "https://archava.vercel.app",
+    "https://archava-onchain.vercel.app",
+  ];
   const chainId = Number(env.CHAIN_ID || 97);
   const livekitUrl = env.LIVEKIT_URL || "";
   const livekitKey = env.LIVEKIT_API_KEY || "";
@@ -168,6 +175,7 @@ export function createDependencies({ env = process.env, cwd = process.cwd(), sta
       return closed;
     },
     origin,
+    allowedOrigins,
     distDir: resolve(cwd, DIST_DIR),
     chainId,
     contractAddress: rentalConfig.contractAddress,

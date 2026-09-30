@@ -34,6 +34,7 @@ export function createApp(dependencies) {
   const {
     now = Date.now,
     origin,
+    allowedOrigins: customAllowedOrigins,
     distDir,
     chainId,
     contractAddress,
@@ -64,6 +65,17 @@ export function createApp(dependencies) {
 
   const rateBuckets = new Map();
 
+  const allowedOrigins = new Set(
+    Array.isArray(customAllowedOrigins)
+      ? customAllowedOrigins
+      : [origin, "https://archava.vercel.app", "https://archava-onchain.vercel.app"].filter(Boolean)
+  );
+
+  function isAllowedOrigin(reqOrigin) {
+    if (!reqOrigin) return true;
+    return reqOrigin === origin || allowedOrigins.has(reqOrigin);
+  }
+
   function respond(res, status, data, requestOrigin = "", extraHeaders = {}) {
     const headers = {
       "content-type": "application/json; charset=utf-8",
@@ -71,8 +83,8 @@ export function createApp(dependencies) {
       "x-content-type-options": "nosniff",
       ...extraHeaders,
     };
-    if (requestOrigin === origin) {
-      headers["access-control-allow-origin"] = origin;
+    if (isAllowedOrigin(requestOrigin)) {
+      headers["access-control-allow-origin"] = requestOrigin || origin;
       headers.vary = "Origin";
     }
     res.writeHead(status, headers);
@@ -185,14 +197,14 @@ export function createApp(dependencies) {
 
     if (method === "OPTIONS") {
       res.writeHead(204, {
-        "access-control-allow-origin": origin,
+        "access-control-allow-origin": isAllowedOrigin(requestOrigin) ? (requestOrigin || origin) : origin,
         "access-control-allow-methods": "GET, POST, OPTIONS",
         "access-control-allow-headers": "content-type, authorization",
         vary: "Origin",
       });
       return res.end();
     }
-    if (requestOrigin && requestOrigin !== origin) {
+    if (requestOrigin && !isAllowedOrigin(requestOrigin)) {
       return respond(res, 403, { error: "Origin not allowed" }, requestOrigin);
     }
 
