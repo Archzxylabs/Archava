@@ -12,7 +12,7 @@ import { createCustomerSessions } from "./customer-sessions.mjs";
 import { createCustomerApi } from "./customer-api.mjs";
 import { createDeveloperApi } from "./developer-api.mjs";
 import { createDashboardSessionStore } from "./developer-auth.mjs";
-import { createRoomProvider } from "./livekit-rooms.mjs";
+import { createRoomProvider, removeAutomaticAgents } from "./livekit-rooms.mjs";
 import { createApp } from "./app.mjs";
 
 /**
@@ -214,7 +214,7 @@ async function openPreviewRoom({ endsAt, dispatchService, roomService, rooms, ag
     name: roomName,
     emptyTimeout: 60,
     departureTimeout: 30,
-    maxParticipants: 3,
+    maxParticipants: 4,
     metadata: JSON.stringify({ product: "archava", preview: true, endsAt }),
   });
   try {
@@ -229,23 +229,6 @@ async function openPreviewRoom({ endsAt, dispatchService, roomService, rooms, ag
     throw error;
   }
   return { roomName, token: jwt };
-}
-
-async function removeAutomaticAgents(roomName, roomService, automaticDispatches) {
-  const identities = new Set(automaticDispatches.flatMap((dispatch) =>
-    (dispatch.state?.jobs || []).map((job) => `agent-${job.id}`)));
-  if (!identities.size) return;
-
-  for (let attempt = 0; attempt < 20 && identities.size; attempt += 1) {
-    const participants = await roomService.listParticipants(roomName);
-    for (const participant of participants) {
-      if (!identities.has(participant.identity)) continue;
-      await roomService.removeParticipant(roomName, participant.identity);
-      identities.delete(participant.identity);
-    }
-    if (identities.size) await new Promise((resolve) => setTimeout(resolve, 750));
-  }
-  if (identities.size) throw new Error("An unrelated automatic agent could not be removed from the room");
 }
 
 export { SWEEP_INTERVAL_MS, createApp };

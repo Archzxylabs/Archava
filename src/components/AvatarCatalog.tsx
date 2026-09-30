@@ -142,7 +142,7 @@ export function AvatarCatalog({
                 token={session.token}
                 serverUrl={session.serverUrl}
                 connect={session.avatarProvider !== "spatius"}
-                audio={session.avatarProvider !== "spatius"}
+                audio={true}
                 video={false}
                 options={session.avatarProvider === "spatius" ? { singlePeerConnection: false } : undefined}
                 onDisconnected={onCloseSession}

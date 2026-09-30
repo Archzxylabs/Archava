@@ -35,8 +35,6 @@ export function SpatiusAvatar({ session }: SpatiusAvatarProps) {
 
       connectionAttempted = true;
       await room.connect(session.serverUrl, session.token);
-      if (cancelled) return;
-      await room.localParticipant.setMicrophoneEnabled(true);
     };
 
     const dispose = async () => {
@@ -62,7 +60,7 @@ export function SpatiusAvatar({ session }: SpatiusAvatarProps) {
   return (
     <div className="spatius-avatar-surface">
       <div className="spatius-avatar-canvas" ref={containerRef} />
-      {!ready && (
+      {(!ready || error) && (
         <div className="spatius-avatar-status" role={error ? "alert" : "status"}>
           <span className="live-pulse-dot" />
           <span>{error || "Preparing Ava's live avatar…"}</span>

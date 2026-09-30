@@ -2,8 +2,9 @@ import { randomBytes } from "node:crypto";
 import { AccessToken } from "livekit-server-sdk";
 import { TrackSource } from "@livekit/protocol";
 
-const AGENT_EVICT_ATTEMPTS = 20;
-const AGENT_EVICT_PAUSE_MS = 750;
+const AGENT_EVICT_GRACE_POLLS = 10;
+const AGENT_EVICT_LATE_POLLS = 40;
+const AGENT_EVICT_PAUSE_MS = 500;
 
 function isMissingRoom(error) {
   return Boolean(error) && (error.status === 404 || error.code === "not_found");
@@ -28,18 +29,44 @@ export async function attachHostAgent({ roomName, rooms, dispatch, agentName }) 
   }
   await dispatch.createDispatch(roomName, agentName);
 
-  const identities = new Set(automaticDispatches.flatMap((dispatchRecord) =>
-    (dispatchRecord.state?.jobs || []).map((job) => `agent-${job.id}`)));
-  for (let attempt = 0; attempt < AGENT_EVICT_ATTEMPTS && identities.size; attempt += 1) {
+  await removeAutomaticAgents(roomName, rooms, automaticDispatches);
+}
+
+/** A deleted dispatch can still have a job that joins later. Remove that exact
+ * agent when it appears, without refusing a room when the cancelled job never
+ * joins at all. The extra room slot keeps the guest able to connect meanwhile. */
+export async function removeAutomaticAgents(roomName, rooms, dispatches, options = {}) {
+  const identities = new Set(dispatches.flatMap((record) =>
+    (record.state?.jobs || []).map((job) => `agent-${job.id}`)));
+  if (!identities.size) return;
+
+  const pauseMs = options.pauseMs ?? AGENT_EVICT_PAUSE_MS;
+  const gracePolls = options.gracePolls ?? AGENT_EVICT_GRACE_POLLS;
+  const latePolls = options.latePolls ?? AGENT_EVICT_LATE_POLLS;
+  const pause = () => new Promise((resolve) => setTimeout(resolve, pauseMs));
+  const removeJoined = async () => {
     const participants = await rooms.listParticipants(roomName);
     for (const participant of participants) {
       if (!identities.has(participant.identity)) continue;
       await rooms.removeParticipant(roomName, participant.identity);
       identities.delete(participant.identity);
     }
-    if (identities.size) await new Promise((resolve) => setTimeout(resolve, AGENT_EVICT_PAUSE_MS));
+  };
+
+  for (let attempt = 0; attempt < gracePolls && identities.size; attempt += 1) {
+    await removeJoined();
+    if (identities.size) await pause();
   }
-  if (identities.size) throw new Error("The previous host agent could not be removed from the room");
+  if (!identities.size) return;
+
+  void (async () => {
+    for (let attempt = 0; attempt < latePolls && identities.size; attempt += 1) {
+      await removeJoined();
+      if (identities.size) await pause();
+    }
+  })().catch((error) => {
+    if (!isMissingRoom(error)) console.error("Late automatic-agent cleanup failed:", error);
+  });
 }
 
 /**
@@ -55,7 +82,7 @@ export function createRoomProvider({ rooms, dispatch, key, secret, agentName }) 
       name: roomName,
       emptyTimeout: 60,
       departureTimeout: 30,
-      maxParticipants: 3,
+      maxParticipants: 4,
       metadata: JSON.stringify({ product: "archava", wallet, endsAt, preview: false }),
     });
     try {

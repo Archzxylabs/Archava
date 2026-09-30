@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createRoomProvider, attachHostAgent } from "./livekit-rooms.mjs";
+import { createRoomProvider, attachHostAgent, removeAutomaticAgents } from "./livekit-rooms.mjs";
 
 const WALLET = "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC";
 // endsAt is a wall-clock second, and a token is minted against the real clock.
@@ -65,7 +65,7 @@ test("a room is labelled with its wallet, its end, and never as a preview", asyn
   assert.equal(clients.created.length, 1);
   const options = clients.created[0];
   assert.equal(options.name, "archava-1");
-  assert.equal(options.maxParticipants, 3);
+  assert.equal(options.maxParticipants, 4);
   const meta = JSON.parse(options.metadata);
   assert.deepEqual(meta, { product: "archava", wallet: WALLET, endsAt: ENDS_AT, preview: false });
 });
@@ -77,6 +77,24 @@ test("opening a room attaches the named host agent and clears the automatic ones
   assert.deepEqual(clients.dispatchCalls, [["delete", "d1"], ["create", "archava-2", "archava-host"]]);
   // The host agent is allowed to stay; the guest is never removed.
   assert.deepEqual(clients.participantRemovals, [["archava-2", "agent-job-9"]]);
+});
+
+test("a deleted automatic dispatch that joins late is removed without blocking the guest", async () => {
+  let polls = 0;
+  const removed = [];
+  const rooms = {
+    async listParticipants() {
+      polls += 1;
+      return polls < 3 ? [] : [{ identity: "agent-late-job" }];
+    },
+    async removeParticipant(roomName, identity) {
+      removed.push([roomName, identity]);
+    },
+  };
+  const dispatches = [{ state: { jobs: [{ id: "late-job" }] } }];
+  await removeAutomaticAgents("archava-late", rooms, dispatches, { gracePolls: 1, latePolls: 5, pauseMs: 1 });
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  assert.deepEqual(removed, [["archava-late", "agent-late-job"]]);
 });
 
 test("a failed dispatch leaves no room behind", async () => {
