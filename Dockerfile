@@ -1,9 +1,12 @@
 FROM python:3.12-slim-bookworm
 
-# Install system dependencies and Node.js 20
+# Install system dependencies, audio codecs, and Node.js 20
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     ca-certificates \
+    libopus0 \
+    libopus-dev \
+    ffmpeg \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y --no-install-recommends nodejs \
     && apt-get clean \
