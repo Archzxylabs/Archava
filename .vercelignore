@@ -1,0 +1,10 @@
+.env
+.env.*
+.venv/
+node_modules/
+dist/
+backend/
+server/
+*.log
+*.pyc
+*.tsbuildinfo
