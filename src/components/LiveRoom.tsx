@@ -14,6 +14,7 @@ import { Track } from "livekit-client";
 import { type AvatarSession } from "../lib/rental";
 import { sounds } from "../lib/sound";
 import { SiteAwareness } from "./SiteAwareness";
+import { LiveCallDock } from "./LiveCallDock";
 
 const SpatiusAvatar = lazy(() => import("./SpatiusAvatar").then((module) => ({ default: module.SpatiusAvatar })));
 
@@ -83,6 +84,11 @@ export function LiveRoom({ session, onClose }: LiveRoomProps) {
   const isMuted = !localParticipant?.isMicrophoneEnabled;
   const callPhase: CallPhase = CALL_PHASES[state];
   const stateLabel = STATE_LABELS[state];
+
+  useEffect(() => {
+    document.body.classList.add("has-live-call");
+    return () => document.body.classList.remove("has-live-call");
+  }, []);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -201,6 +207,8 @@ export function LiveRoom({ session, onClose }: LiveRoomProps) {
             className={`mic-control-btn ${!isMuted ? "active" : "muted"}`}
             onClick={toggleMic}
             title={isMuted ? "Unmute microphone" : "Mute microphone"}
+            aria-label={isMuted ? "Unmute microphone" : "Mute microphone"}
+            aria-pressed={!isMuted}
           >
             {!isMuted ? <Mic size={17} /> : <MicOff size={17} />}
             <span>{!isMuted ? "MIC ON" : "MUTED"}</span>
@@ -208,9 +216,9 @@ export function LiveRoom({ session, onClose }: LiveRoomProps) {
 
           <StartAudio label="ALLOW AUDIO" className="mic-control-btn active" />
 
-          <DisconnectButton className="end-call-btn" onClick={handleEnd}>
+          <DisconnectButton className="end-call-btn" onClick={handleEnd} aria-label="End conversation">
             <PhoneOff size={15} />
-            <span>DISCONNECT</span>
+            <span>END CALL</span>
           </DisconnectButton>
         </div>
       </div>
@@ -228,6 +236,15 @@ export function LiveRoom({ session, onClose }: LiveRoomProps) {
       <div className="live-footer-note">
         <span><Shield size={11} /> {session.preview ? "Short demo preview · AI-generated avatar" : "Wallet verified · Ava minutes reserved · AI-generated avatar"}</span>
       </div>
+      <LiveCallDock
+        remaining={remaining}
+        stateLabel={stateLabel}
+        muted={isMuted}
+        error={micError}
+        onToggleMic={() => void toggleMic()}
+        onEnd={handleEnd}
+        audioAction={<StartAudio label="Allow audio" className="call-dock-audio" />}
+      />
     </div>
   );
 }

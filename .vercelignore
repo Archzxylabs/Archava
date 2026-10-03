@@ -8,3 +8,13 @@ server/
 *.log
 *.pyc
 *.tsbuildinfo
+.tmp-test/
+tests/
+scripts/
+.git/
+.vercel/
+data/
+coordination/
+submission/
+ops/
+__pycache__/

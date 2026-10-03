@@ -12,7 +12,7 @@ class KnowledgeTests(unittest.TestCase):
         self.assertIn("without a wallet", preview)
         self.assertIn("Spatius-rendered avatar", preview)
         self.assertIn("not connected", rental)
-        self.assertIn("no live pack transaction", rental)
+        self.assertIn("test-only mUSDT", rental)
 
     def test_environment_flags_cannot_make_unbuilt_services_live(self):
         with patch.dict("os.environ", {"RENTAL_CONTRACT": "0x123", "API_KEYS_ENABLED": "true"}):

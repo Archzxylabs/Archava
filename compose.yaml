@@ -1,0 +1,18 @@
+services:
+  archava:
+    build: .
+    env_file:
+      - ${ARCHAVA_ENV_FILE:-.env}
+    environment:
+      PORT: '5002'
+      ARCHAVA_STATE_DIR: /app/data
+      ARCHAVA_WORKER_HEALTH_URL: http://127.0.0.1:8081/
+    ports:
+      - '127.0.0.1:${ARCHAVA_HTTP_PORT:-5002}:5002'
+    volumes:
+      - archava-state:/app/data
+    restart: on-failure:10
+    stop_grace_period: 30s
+
+volumes:
+  archava-state:

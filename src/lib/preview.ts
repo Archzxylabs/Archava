@@ -2,7 +2,12 @@ import { ApiError } from "./apiError.ts";
 import type { AppConfig } from "./rental.ts";
 
 export const SPATIUS_UNSUPPORTED_MESSAGE =
-  "This browser cannot display the avatar. Try a recent Chrome or Edge browser.";
+  "This browser cannot display the live avatar. Open this page in a recent Chrome or Edge browser to try the demo.";
+
+export function previewDurationLabel(seconds?: number): string {
+  if (!seconds || seconds <= 0) return "Short demo";
+  return seconds % 60 === 0 ? `${seconds / 60}-minute demo` : `${seconds}-second demo`;
+}
 
 const UNAVAILABLE_BY_STATUS: Record<number, string> = {
   403: "The live demo is not open right now. Please try again later.",

@@ -61,6 +61,7 @@ export function createApp(dependencies) {
     customerApi,
     sessionTickets,
     rateLimitKey = () => "shared",
+    checkReadiness = async () => ({ ok: true, checks: { api: "ok", worker: "not_configured" } }),
   } = dependencies;
 
   const rateBuckets = new Map();
@@ -214,13 +215,17 @@ export function createApp(dependencies) {
     // keyed on a shared proxy IP would cap preview usage, which is no longer
     // wanted. Everything else — including the metered /v1 surface — stays on the
     // 30/60s bucket.
-    if (isApi && url.pathname !== "/api/preview" && !allowRate(rateLimitKey(req))) {
+    if (isApi && !["/api/preview", "/api/health", "/api/ready"].includes(url.pathname) && !allowRate(rateLimitKey(req))) {
       return respond(res, 429, { error: "Too many requests" }, requestOrigin);
     }
 
     try {
       if (method === "GET" && url.pathname === "/api/health") {
         return respond(res, 200, { ok: true }, requestOrigin);
+      }
+      if (method === "GET" && url.pathname === "/api/ready") {
+        const readiness = await checkReadiness();
+        return respond(res, readiness.ok ? 200 : 503, readiness, requestOrigin);
       }
       if (method === "GET" && url.pathname === "/api/config") {
         return respond(res, 200, publicConfig(), requestOrigin);

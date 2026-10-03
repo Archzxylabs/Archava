@@ -17,8 +17,6 @@ from livekit.plugins import google, spatius, tavus
 from knowledge import product_facts, product_knowledge
 from site_context import NAVIGATION_TOPIC, PAGE_ACK_TOPIC, SECTIONS, SiteContext
 
-load_dotenv(Path(__file__).resolve().parent.parent / ".env")
-
 # The fact sheet is frozen into these instructions at import, so a release flag
 # in knowledge.RELEASE_READINESS takes effect only after a worker restart. Flip
 # one only after a live check of the public host, never because a route happens
@@ -44,10 +42,10 @@ ACTIVE CALL:
   with you live only when it helps answer the question; repeating that fact on
   every turn sounds unnatural. Offer a useful next step when relevant, such as
   asking about Archava or showing a section.
-- Do not invite this caller to click "Try Archava", start a call, or call the
+- Do not invite this caller to click "Talk to Ava", start a call, or call the
   avatar again. The preview they are in is already running.
 - Only when the visitor asks how another visitor or a future visit would start,
-  explain the landing-page "Try Archava" button and the wallet-free preview.
+  explain the landing-page "Talk to Ava" button and the wallet-free preview.
 
 LANGUAGE AND DELIVERY:
 - Speak English by default, even if a visitor starts in another language.
@@ -268,6 +266,8 @@ async def entrypoint(ctx: agents.JobContext) -> None:
 
 
 if __name__ == "__main__":
+    # Importing prompts/tools for tests never reads the operator's private env.
+    load_dotenv(Path(__file__).resolve().parent.parent / ".env")
     agents.cli.run_app(agents.WorkerOptions(
         entrypoint_fnc=entrypoint,
         agent_name=os.getenv("ARCHAVA_AGENT_NAME", "archava-host"),

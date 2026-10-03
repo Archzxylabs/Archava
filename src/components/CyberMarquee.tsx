@@ -2,11 +2,11 @@ export function CyberMarquee() {
   const items = [
     "AI AVATAR ON DEMAND",
     "LIVE CONVERSATION",
-    "WALLET-GATED ACCESS",
-    "BNB CHAIN MINUTE PACKS",
-    "GEMINI REALTIME VOICE",
+    "NO WALLET FOR THE DEMO",
+    "ONE LIVE AI HOST",
+    "REALTIME VOICE",
     "REALTIME AVATAR",
-    "LIVEKIT TRANSPORT",
+    "TALK NATURALLY",
     "ARCHAVA / 2026",
   ];
 

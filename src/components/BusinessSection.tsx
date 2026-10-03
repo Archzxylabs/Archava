@@ -50,19 +50,17 @@ export function BusinessSection({ contactHref, previewEnabled, onTryPreview }: B
               </a>
             ) : previewEnabled ? (
               <button type="button" className="business-cta" onClick={onTryPreview}>
-                <span>See the avatar with your customers</span><ArrowUpRight size={20} />
+                <span>Try the live demo</span><ArrowUpRight size={20} />
               </button>
             ) : (
-              <a className="business-cta" href="#catalog-section" onClick={() => sounds.playClick()}>
-                <span>Explore the avatar demo</span><ArrowUpRight size={20} />
+              <a className="business-cta" href="/build#api" onClick={() => sounds.playClick()}>
+                <span>Explore integration options</span><ArrowUpRight size={20} />
               </a>
             )}
             <span className="business-action-note">
               {contactHref
                 ? "Tell us what you run. We’ll explore where a live AI host could help."
-                : previewEnabled
-                  ? "Demo notice: no business contact has been published for this build yet, so nothing here sends a business inquiry. Try Ava live first, no wallet needed."
-                  : "Demo notice: no business contact has been published for this build yet, so nothing here sends a business inquiry. The live preview is currently offline."}
+                : "Hackathon demo. These industries illustrate possible custom integrations; try Ava or explore how to build with her."}
             </span>
           </div>
         </div>

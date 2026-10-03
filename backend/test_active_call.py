@@ -40,14 +40,14 @@ class ActiveCallPromptTests(unittest.TestCase):
 
     def test_the_caller_is_never_invited_to_start_the_call_again(self):
         block = active_call_block()
-        self.assertIn('Do not invite this caller to click "Try Archava"', block)
+        self.assertIn('Do not invite this caller to click "Talk to Ava"', block)
         self.assertIn("start a call", block)
         self.assertIn("already running", block)
 
     def test_the_cta_is_explained_only_for_another_visitor_or_a_future_visit(self):
         block = active_call_block()
         self.assertIn("another visitor or a future visit", block)
-        self.assertIn('"Try Archava" button', block)
+        self.assertIn('"Talk to Ava" button', block)
         # The refusal and the exception live in the same section, in order:
         # refuse first, then explain on request.
         self.assertLess(
@@ -58,7 +58,7 @@ class ActiveCallPromptTests(unittest.TestCase):
     def test_no_section_of_the_prompt_invites_the_caller_to_try_the_avatar(self):
         # Outside ACTIVE CALL, the only permitted mention is the future-visit rule.
         body = flatten(re.sub(r"^ACTIVE CALL:$.*?^LANGUAGE AND DELIVERY:$", "", INSTRUCTIONS, flags=re.S | re.M))
-        self.assertNotIn("Try Archava", body)
+        self.assertNotIn("Talk to Ava", body)
         self.assertNotIn("start a call", body)
         self.assertNotIn("call the avatar", body)
 
@@ -136,7 +136,8 @@ class SectionDescriptionTests(unittest.TestCase):
                 self.assertIn(phrase, site.describe())
 
     def test_minute_pack_and_business_wording_stays_accurate(self):
-        self.assertIn("connect, buy minutes, and converse", SECTIONS["protocol-section"][1])
+        self.assertIn("allow your microphone, and start talking", SECTIONS["protocol-section"][1])
+        self.assertIn("optional path on the Build page", SECTIONS["protocol-section"][1])
         self.assertIn("does not activate a custom integration", SECTIONS["business-section"][1])
 
 
@@ -173,7 +174,7 @@ class PageProtocolUnchangedTests(unittest.IsolatedAsyncioTestCase):
         host = ArchavaHost(site, Mock())
         self.assertIn("not available yet", await host.get_current_page())
         site.accept_packet(PAGE_TOPIC, PACKET("protocol-section", 4), GUEST)
-        self.assertIn("connect, buy minutes, and converse", await host.get_current_page())
+        self.assertIn("allow your microphone, and start talking", await host.get_current_page())
 
 
 if __name__ == "__main__":

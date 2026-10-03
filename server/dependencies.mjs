@@ -14,6 +14,7 @@ import { createDeveloperApi } from "./developer-api.mjs";
 import { createDashboardSessionStore } from "./developer-auth.mjs";
 import { createRoomProvider, removeAutomaticAgents } from "./livekit-rooms.mjs";
 import { createApp } from "./app.mjs";
+import { createReadinessCheck } from "./readiness.mjs";
 
 /**
  * Builds every collaborator the HTTP application needs, from the environment.
@@ -86,7 +87,7 @@ export function createDependencies({ env = process.env, cwd = process.cwd(), sta
   // The developer-facing product: a key proves a customer, the chain proves the
   // key's wallet purchased minutes, and the ledger checks remaining time. The key
   // store, the ledger, and the rooms all live next to each other in data/.
-  const dataDir = stateDir || resolve(cwd, STATE_DIR);
+  const dataDir = stateDir || resolve(cwd, env.ARCHAVA_STATE_DIR || STATE_DIR);
   const keys = createKeyStore({ path: resolve(dataDir, "keys.json") });
   const usage = createUsageStore({ path: resolve(dataDir, "usage.json") });
   // Customer API and browser sessions share this entitlement gate and ledger.
@@ -154,6 +155,7 @@ export function createDependencies({ env = process.env, cwd = process.cwd(), sta
   });
 
   return {
+    checkReadiness: createReadinessCheck({ workerHealthUrl: env.ARCHAVA_WORKER_HEALTH_URL }),
     /** Closes LiveKit rooms whose metadata says their time is up. */
     closeExpiredRooms: async () => {
       if (!roomService) return [];

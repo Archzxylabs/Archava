@@ -1,32 +1,35 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowUpRight, Check, Copy, Info, KeyRound, Volume2, VolumeX, Wallet } from "lucide-react";
+import { ArrowUpRight, Check, Code2, Copy, Info, KeyRound, Volume2, VolumeX } from "lucide-react";
 import { sounds } from "../lib/sound";
+import { previewDurationLabel, SPATIUS_UNSUPPORTED_MESSAGE } from "../lib/preview";
 
 interface VideoHeroProps {
   wallet: string;
-  chainId?: number;
-  contractConnected: boolean;
-  onConnect: () => void;
-  loading: boolean;
+  configStatus: "loading" | "ready" | "error";
+  previewSupported: boolean;
+  previewSeconds?: number;
+  openingLabel: string;
+  onCopyError: (message: string) => void;
   onRentClick: () => void;
   previewEnabled: boolean;
+  sessionActive: boolean;
   previewLoading: boolean;
   onTryPreview: () => void;
-  walletConnected: boolean;
   onOpenDeveloper: () => void;
 }
 
 export function VideoHero({
   wallet,
-  chainId,
-  contractConnected,
-  onConnect,
-  loading,
+  configStatus,
+  previewSupported,
+  previewSeconds,
+  openingLabel,
+  onCopyError,
   onRentClick,
   previewEnabled,
+  sessionActive,
   previewLoading,
   onTryPreview,
-  walletConnected,
   onOpenDeveloper,
 }: VideoHeroProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -52,10 +55,14 @@ export function VideoHero({
 
   const copyWallet = async () => {
     if (!wallet) return;
-    await navigator.clipboard.writeText(wallet);
-    setCopied(true);
-    sounds.playSuccess();
-    window.setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(wallet);
+      setCopied(true);
+      sounds.playSuccess();
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      onCopyError("Couldn't copy the wallet address. Please allow clipboard access and try again.");
+    }
   };
 
   const explore = () => {
@@ -111,7 +118,7 @@ export function VideoHero({
             <a className="nav-round-btn" href="#protocol-section" aria-label="Learn how Archava works" title="How it works">
               <Info size={15} />
             </a>
-            {walletConnected && (
+            {wallet && (
               <button type="button" className="nav-dev-btn" onClick={onOpenDeveloper}>
                 <KeyRound size={14} />
                 <span>Developer</span>
@@ -124,10 +131,7 @@ export function VideoHero({
                 {copied ? <Check size={13} /> : <Copy size={13} />}
               </button>
             ) : (
-              <button type="button" className="hero-connect-pill" onClick={onConnect} disabled={loading}>
-                <Wallet size={14} />
-                <span>{loading ? "Connecting…" : "Connect wallet"}</span>
-              </button>
+              <a className="hero-connect-pill" href="/build#access"><Code2 size={15} /><span>Minutes &amp; API</span></a>
             )}
           </div>
         </header>
@@ -168,35 +172,31 @@ export function VideoHero({
           </div>
         </div>
 
-        <div className="hero-center-typography">
-          <h1 className="hero-massive-title"><span>TALK TO</span><span>AVA.</span></h1>
-          <span className="hero-sub-kicker">ARCHAVA / ONE LIVE AI AVATAR, OPEN TO EVERYONE</span>
-        </div>
+        <div className="hero-demo-entry">
+          <div className="hero-center-typography">
+            <h1 className="hero-massive-title"><span>TALK TO</span><span>AVA.</span></h1>
+            <span className="hero-sub-kicker">ARCHAVA / ONE LIVE AI AVATAR, OPEN TO EVERYONE</span>
+          </div>
 
-        <button type="button" className="hero-right-circle-widget" onClick={explore} aria-label="Explore the Archava avatar">
-          <span className="circle-inner-image">
-            <img src="/assets/archava_pink_clean.webp" alt="" />
-            <span className="circle-text-overlay">Meet Archava</span>
-          </span>
-          <span className="circle-arrow-badge"><ArrowUpRight size={16} /></span>
-        </button>
-
-        <div className="hero-cta-stack">
-          <button type="button" className="hero-neon-pill-btn" onClick={previewEnabled ? onTryPreview : explore} onMouseEnter={() => sounds.playHover()} disabled={previewLoading}>
-            <span>{previewLoading ? "Opening Archava…" : previewEnabled ? "Talk to Ava" : "Explore avatar"}</span><ArrowUpRight size={16} />
+          <button type="button" className="hero-right-circle-widget" onClick={explore} aria-label="Explore the Archava avatar">
+            <span className="circle-inner-image">
+              <img src="/assets/archava_pink_clean.webp" alt="" />
+              <span className="circle-text-overlay">Meet Archava</span>
+            </span>
+            <span className="circle-arrow-badge"><ArrowUpRight size={16} /></span>
           </button>
-          {previewEnabled && (
-            <span className="hero-preview-hint">Live voice and avatar · no wallet, no sign-in</span>
-          )}
-          <span className="hero-access-hint">
-            {contractConnected
-              ? "Minute packs configured · connect a wallet to check balance"
-              : previewEnabled
-                ? "Onchain access opening soon · live preview available"
-                : "Onchain access opening soon · preview currently offline"}
-          </span>
+
+          <div className="hero-cta-stack">
+            <button type="button" className="hero-neon-pill-btn" onClick={previewEnabled ? onTryPreview : explore} onMouseEnter={() => sounds.playHover()} disabled={previewLoading || configStatus === "loading" || !previewSupported} aria-describedby="hero-demo-note">
+              <span>{sessionActive ? "Back to Ava" : !previewSupported ? "Browser not supported" : previewLoading ? openingLabel : configStatus === "loading" ? "Checking availability…" : previewEnabled ? "Talk to Ava" : "Explore avatar"}</span><ArrowUpRight size={16} />
+            </button>
+            <span className="hero-preview-hint" id="hero-demo-note">
+              {sessionActive ? "Your conversation is active. Mic and end-call controls stay on screen." : !previewSupported ? SPATIUS_UNSUPPORTED_MESSAGE : configStatus === "loading" ? "Checking the live demo…" : previewEnabled ? `${previewDurationLabel(previewSeconds)} · microphone needed` : "Live demo currently offline. Explore the avatar or check availability below."}
+            </span>
+            <span className="hero-access-hint">No wallet or sign-in for the demo. End anytime.</span>
+          </div>
         </div>
-        <span className="hero-chain-label">{chainId === 97 || !chainId ? "BNB CHAIN TESTNET" : "CHAIN ID " + chainId} · AI-GENERATED VISUALS</span>
+        <span className="hero-chain-label">HACKATHON DEMO · AI-GENERATED VISUALS</span>
       </div>
     </section>
   );

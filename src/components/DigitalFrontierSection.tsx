@@ -1,33 +1,33 @@
-import { ArrowUpRight, AudioLines, ShieldCheck, Wallet } from "lucide-react";
+import { ArrowUpRight, AudioLines, MessageCircle, Mic } from "lucide-react";
 import { sounds } from "../lib/sound";
 
 const steps = [
   {
     number: "01",
-    icon: Wallet,
-    title: "Connect",
-    detail: "Your wallet is your identity. No new account to create.",
+    icon: MessageCircle,
+    title: "Try the demo",
+    detail: "Tap Talk to Ava. No wallet, account, or payment needed.",
   },
   {
     number: "02",
-    icon: ShieldCheck,
-    title: "Verify",
-    detail: "Archava checks purchased minutes and remaining balance before issuing a room token.",
+    icon: Mic,
+    title: "Allow your mic",
+    detail: "Allow microphone access so Ava can hear you. You can mute it anytime.",
   },
   {
     number: "03",
     icon: AudioLines,
-    title: "Converse",
-    detail: "Speak with the avatar through a live audio and video session.",
+    title: "Start talking",
+    detail: "Ask a question naturally. End the conversation whenever you like.",
   },
 ] as const;
 
 const headlineLines = [
   ["Presence", "you", "can", "feel."],
-  ["Access", "you", "can", "verify."],
+  ["Conversation", "you", "can", "join."],
 ];
 
-export function DigitalFrontierSection({ contractReady, previewReady }: { contractReady: boolean; previewReady: boolean }) {
+export function DigitalFrontierSection({ previewReady }: { previewReady: boolean }) {
   return (
     <section className="digital-frontier-section" id="protocol-section">
       <div className="frontier-cad-grid" aria-hidden="true" />
@@ -35,8 +35,8 @@ export function DigitalFrontierSection({ contractReady, previewReady }: { contra
 
       <div className="frontier-container">
         <div className="frontier-heading-wrapper" data-reveal>
-          <span className="frontier-section-label">THE ARCHAVA PROTOCOL / 001</span>
-          <h2 className="frontier-main-title" aria-label="Presence you can feel. Access you can verify.">
+          <span className="frontier-section-label">HOW TO TRY ARCHAVA / 001</span>
+          <h2 className="frontier-main-title" aria-label="Presence you can feel. Conversation you can join.">
             {headlineLines.map((line, lineIndex) => (
               <span className="frontier-title-line" aria-hidden="true" key={lineIndex}>
                 {line.map((word, wordIndex) => (
@@ -50,13 +50,13 @@ export function DigitalFrontierSection({ contractReady, previewReady }: { contra
             ))}
           </h2>
           <div className="frontier-reflected-title" aria-hidden="true">
-            Presence you can feel.<br />Access you can verify.
+            Presence you can feel.<br />Conversation you can join.
           </div>
         </div>
 
         <div className="frontier-split-row">
           <div className="frontier-left-col" data-reveal>
-            <span className="frontier-kicker">FROM WALLET TO CONVERSATION</span>
+            <span className="frontier-kicker">FROM ONE TAP TO A CONVERSATION</span>
             <div className="frontier-team-cards">
               {steps.map((step) => {
                 const Icon = step.icon;
@@ -83,7 +83,6 @@ export function DigitalFrontierSection({ contractReady, previewReady }: { contra
             <div className="frontier-follow-box">
               <span className="follow-label">POWERED BY</span>
               <div className="follow-icons-row" aria-label="Technology stack">
-                <span className="social-badge">BNB Chain</span>
                 <span className="social-badge">Gemini</span>
                 <span className="social-badge">Avatar engine</span>
                 <span className="social-badge">LiveKit</span>
@@ -97,10 +96,9 @@ export function DigitalFrontierSection({ contractReady, previewReady }: { contra
               <div className="portal-cad-rings" aria-hidden="true" />
             </div>
             <p className="frontier-explanation-p">
-              {contractReady
-                ? "Minute packs use demo mUSDT on BNB Testnet. Archava checks the wallet's remaining balance before opening a LiveKit room; Gemini handles conversation and the avatar engine brings it on screen. Voice and visuals run offchain."
-                : `${previewReady ? "Try Ava in the live preview above." : "The live preview is temporarily offline."} Demo mUSDT minute packs require the BNB Testnet contract and rental API to be configured. Gemini handles conversation; LiveKit and the avatar engine bring it to life offchain.`}
+              {previewReady ? "The live demo is open to everyone. Ava listens, answers, and guides you through this page in a natural conversation." : "Explore Ava on this page and check the demo's availability in the avatar section."}
             </p>
+            <a className="frontier-access-link" href="/build#access">Want longer calls or API access? Explore BNB Testnet minute packs <ArrowUpRight size={15} /></a>
             <p className="frontier-disclosure">Portraits on this page are concept artwork. Live sessions feature an AI-generated avatar.</p>
           </div>
         </div>

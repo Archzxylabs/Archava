@@ -98,7 +98,7 @@ export function SiteAwareness() {
       try {
         const payload = JSON.parse(decoder.decode(data));
         if (!isSiteSection(payload?.section)) return;
-        document.getElementById(payload.section)?.scrollIntoView({ behavior: "smooth", block: "start" });
+        document.getElementById(payload.section)?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" });
         window.setTimeout(() => sendPage(true), 700);
       } catch { /* Ignore malformed packets. */ }
     };

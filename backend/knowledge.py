@@ -37,7 +37,7 @@ FACTS = {
         "two minutes (120 seconds) per call. It runs through Gemini realtime "
         "voice, a LiveKit room, and a Spatius-rendered avatar in this build, and "
         "it works without a wallet, account, signature, gas, or payment. The "
-        "concept portraits on the page are not the live avatar."
+        "concept portrait on the page is not the live avatar."
     ),
     "rental": (
         "ArchavaRentalV2 and Archava Mock USDT are deployed on BNB Testnet, but "

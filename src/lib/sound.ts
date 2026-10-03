@@ -3,7 +3,7 @@
 
 class SoundEngine {
   private ctx: AudioContext | null = null;
-  private enabled: boolean = true;
+  private enabled: boolean = false;
 
   constructor() {
     // Check localStorage for user sound preference

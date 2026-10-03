@@ -6,7 +6,8 @@ This is separate from Archava Platform's custom integration service. This app of
 
 ## What is implemented
 
-- Responsive landing page, standalone `/build` page, and wallet-signed API key dashboard.
+- Responsive landing page with one Ava demo entry, standalone `/build` page, and wallet-signed API key dashboard.
+- Demo duration, microphone requirements, preparation status, and browser support are shown before starting. Errors remain visible in a dismissible toast; active calls retain microphone and end-call controls while Ava guides the visitor through the site.
 - BNB Testnet wallet connection, 60/300-minute mUSDT quotes, test-token faucet, and approved token purchase.
 - Server-side purchased-minute and remaining-balance check plus a one-use signed wallet challenge before a LiveKit room/token is issued.
 - Gemini realtime voice agent and LiveKit transport, with Spatius rendering the public demo avatar in the browser. Tavus remains available as a fallback provider.
@@ -21,16 +22,20 @@ The BNB Testnet contracts are deployed and verified. This app reads `AccessRente
 
 The [Archzxylabs/Archava](https://github.com/Archzxylabs/Archava) `main` branch is connected to the existing Vercel project. Pushes to `main` trigger production deployments.
 
-The showcase is deployed at [archava-onchain.vercel.app](https://archava-onchain.vercel.app). On September 30, 2026, its public `/api/health` returned `200`, and a public preview created a LiveKit room, received the host agent, and closed successfully. The API still runs locally on port `5003` behind a temporary Cloudflare tunnel; the `archava-public-api.service` user service keeps that API process running. Keep the PC, tunnel, and Python worker online for the live demo. The UI shows an offline state if the API becomes unreachable. The production API needs this branch's V2 integration and contract/RPC configuration before paid packs become available.
+The showcase is deployed at [archava.vercel.app](https://archava.vercel.app). Since October 3, 2026, `archava-onchain.vercel.app` permanently redirects to that domain with HTTP `308`, preserving paths, query strings, and browser fragments such as `#catalog-section`. The redirect is configured in the existing Vercel project's domain settings and remains independent of frontend builds. The Vercel project is still named `archava-onchain`.
 
-The landing page also has a **For business** path for custom integrations. Set the public `VITE_BUSINESS_CONTACT_URL` build variable to Archava's official `mailto:` or WhatsApp link to route inquiries directly. Until that contact is supplied, the CTA opens the avatar section or live preview when available; the page says no inquiry was sent.
+[vercel.json](vercel.json) routes `/api/*` and `/v1/*` to the Railway backend at `archava-backend-production.up.railway.app`. On October 3, 2026, the updated frontend and voice-worker guidance were deployed. The API returned `200`, the worker registered with LiveKit, and the legacy domain's root, `/build`, query strings, API health path, and catalog fragment were verified through the redirect. Five production browser checks passed, including 320/390/1440px layouts, accessible mobile pages, visible wallet errors, and no avatar downloads on `/build`. These checks did not open a voice room or make a wallet transaction.
+
+An earlier public preview on September 30, 2026, created a LiveKit room, received the host agent, and closed successfully. The UI shows an offline state if the API becomes unreachable. Paid calls depend on the contract/token addresses, RPC, LiveKit credentials, and worker configuration; a paid transaction was not repeated during the October 3 UI update.
+
+The landing page's **For business** section shows potential custom integrations as hackathon examples. Without `VITE_BUSINESS_CONTACT_URL`, its CTA is **Try the live demo**, with a Build-page fallback when the preview is unavailable. Business contact is intentionally omitted for this showcase. A future deployment can set that public build variable to an official `mailto:` or WhatsApp link.
 
 ## Run locally
 
-Use Node 22+ and Python 3.12 or 3.13.
+Use Node 22.18+ and Python 3.12 or 3.13. CI and Docker use Node 22 and Python 3.12.
 
 ```bash
-npm install
+npm ci
 cp .env.example .env
 # Fill the private QuickNode RPC_URL, LiveKit/Gemini credentials, and your
 # selected avatar provider's credentials. Contract addresses are public defaults.
@@ -52,13 +57,13 @@ Open `http://localhost:5174`. Vite proxies `/api` to port 5002. For a local voic
 
 Spatius is the active provider. Set `AVATAR_PROVIDER=spatius` and fill `SPATIUS_API_KEY`, `SPATIUS_APP_ID`, and `SPATIUS_AVATAR_ID` in the private `.env`, then restart both the API and Python worker. The current public demo uses the team's selected Spatius Avatar ID. The API key stays server-side; the frontend receives only the public App ID and Avatar ID. The browser loads avatar assets before requesting a live session so the preview timer starts when the avatar is ready. The API refuses to start in Spatius mode if any of the three values is missing. `AVATAR_PROVIDER=tavus` with `TAVUS_API_KEY` and `FACE_ID` is the fallback.
 
-Spatius uses the LiveKit Agents plugin in the worker and AvatarKit's client renderer in the browser. Its LiveKit adapter requires `RTCRtpScriptTransform`; unsupported browsers see an explanation before entering the preview or paid session. The frontend loads Spatius code only for Spatius sessions and attaches the renderer to its LiveKit room before connecting. The current concept portraits are separate from the live Spatius avatar selected by `SPATIUS_AVATAR_ID`.
+Spatius uses the LiveKit Agents plugin in the worker and AvatarKit's client renderer in the browser. Its LiveKit adapter requires `RTCRtpScriptTransform`; unsupported browsers see an explanation before entering the preview or paid session. The frontend loads Spatius code only for Spatius sessions and attaches the renderer to its LiveKit room before connecting. The single concept portrait is separate from the live Spatius avatar selected by `SPATIUS_AVATAR_ID`. Home retains background preparation for quick demo startup; `/build` skips avatar downloads until a session is requested.
 
 The integration follows the [Spatius LiveKit server guide](https://docs.spatius.ai/livekit-agents/server), [client guide](https://docs.spatius.ai/livekit-agents/client), and [RTC adapter guide](https://docs.spatius.ai/sdk-reference/web-sdk/rtc-adapter). It was tested with the live Spatius avatar, LiveKit room, Gemini worker, and a browser microphone. The API explicitly dispatches `ARCHAVA_AGENT_NAME` and removes unrelated automatically dispatched agents from Archava rooms when a LiveKit project has other workers.
 
 The live preview also shares the visitor's current section (`Home`, `The avatar`, `How it works`, or `For business`) with the voice worker. The worker accepts only those section IDs from a LiveKit guest, never page text or arbitrary URLs. The avatar can use a tool to read the current section or scroll to one of the four sections. Product facts are maintained in `backend/knowledge.py`; update them whenever minute packs or business integrations become active.
 
-The temporary public demo runs a second API process on port 5003 with `WEB_ORIGIN=https://archava-onchain.vercel.app`, `ENABLE_PREVIEW=true`, and `PREVIEW_SECONDS=120`. On the demo PC, inspect or restart it with `systemctl --user status archava-public-api.service` or `systemctl --user restart archava-public-api.service`. A Cloudflare Quick Tunnel forwards that port, and [vercel.json](vercel.json) rewrites `/api/*` and `/v1/*` to the tunnel. Keep the API, tunnel, and Python worker running while sharing it. Quick Tunnel URLs change when the tunnel restarts; update the rewrite and redeploy if that happens. Preview usage is not capped; `ENABLE_PREVIEW=false` disables it.
+For temporary hosting from a local PC, run a second API process on port 5003 with `WEB_ORIGIN=https://archava.vercel.app`, `ENABLE_PREVIEW=true`, and `PREVIEW_SECONDS=120`. If the existing demo service is installed, inspect or restart it with `systemctl --user status archava-public-api.service` or `systemctl --user restart archava-public-api.service`. A Cloudflare Quick Tunnel can forward that port; using this alternative requires changing [vercel.json](vercel.json) to rewrite `/api/*` and `/v1/*` to the tunnel instead of the current Railway backend. Keep the API, tunnel, and Python worker running while sharing it. Quick Tunnel URLs change when the tunnel restarts; update the rewrite and redeploy if that happens. Preview usage is not capped; `ENABLE_PREVIEW=false` disables it.
 
 For a single-server build, run `npm run build` and `npm run api`; the API serves `dist` on port 5002. Set `WEB_ORIGIN` to the browser origin (`http://localhost:5002` for local testing, or your public HTTPS origin after deployment). Run the Python worker as a separate process connected to the same LiveKit project.
 
@@ -88,10 +93,18 @@ The API's nonce store and preview tickets are held in memory; paid reservations 
 ## Checks
 
 ```bash
-npm test
-(cd backend && ../.venv/bin/python -m unittest discover -s . -p 'test_*.py' -q)
-npm run build
-.venv/bin/python -m py_compile backend/agent.py
+npx playwright install chromium
+npm run verify:local
+# Run separately against the deployed app; this sends GET requests only.
+npm run preflight:readonly
 ```
 
-The tests cover preview room cleanup, minute reservations and settlement, signed challenge replay/expiry, customer API sessions, and allowed page context and navigation. A full video call needs real LiveKit, Gemini, and the selected avatar provider's credentials; a paid session needs the team's deployed contract.
+For individual checks, use `npm test`, `npm run test:backend`, `npm run test:ui`, `npm run build`, and `npm run verify:artifacts`. Backend tests run with a clean environment and do not read the operator's private `.env`.
+
+The tests cover preview room cleanup, minute reservations and settlement, signed challenge replay/expiry, customer API sessions, and allowed page context and navigation. The 20 browser checks cover 320–1440px layouts, keyboard access, dialog focus, offline recovery, clipboard feedback, avatar preload policy, and persistent call controls during agent navigation. They use isolated API and LiveKit fixtures without opening real rooms, microphones, wallets, or transactions. Screenshots and results are written to `.tmp-test/ui/`; `ARCHAVA_BROWSER_EXECUTABLE` can select an existing Chromium binary.
+
+A full video call needs real LiveKit, Gemini, and the selected avatar provider's credentials; a paid session needs the team's deployed contract.
+
+## Deployment workflow
+
+See the [deployment guide](docs/deployment/DEPLOYMENT.md) for the Vercel/Railway release steps, worker readiness, persistent backend state, safe updates and rollback, and a portable Docker Compose deployment. The container includes the built frontend and supervises both the API and voice worker. CI repeats local verification and builds that image; production checks remain separate.

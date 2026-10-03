@@ -13,28 +13,31 @@ SECTIONS = {
     ),
     "catalog-section": (
         "The avatar",
-        "The portraits are concept art; the live session renders a separate Spatius "
+        "The single portrait is concept art; the live session renders a separate Spatius "
         "avatar, which is what the visitor is speaking with now. Minute-pack "
-        "checkout uses demo mUSDT when the BNB Testnet contract and API are connected.",
+        "checkout is on the separate Build page and uses demo mUSDT when the BNB "
+        "Testnet contract and API are connected.",
     ),
     "protocol-section": (
         "How it works",
-        "This section explains the connect, buy minutes, and converse "
-        "flow. The current preview works without a wallet; conversation and avatar "
-        "rendering run offchain.",
+        "This section explains the demo flow: try the demo, allow your microphone, and start talking. "
+        "The current preview works without a wallet; conversation and avatar "
+        "rendering run offchain. Purchased minutes and API access are a separate "
+        "optional path on the Build page.",
     ),
     "business-section": (
         "For business",
         "This section presents custom Archava Platform use cases for hospitality, "
-        "retail, education, events, and customer experience. It does not activate "
-        "a custom integration from this page.",
+        "retail, education, events, and customer experience. These are hackathon "
+        "examples. It does not activate a custom integration from this page or "
+        "send a business inquiry; it presents demo and integration options.",
     ),
 }
 
 PAID_SECTION_DETAILS = {
     "top": "The hero introduces Ava and the separate wallet-free preview. This visitor is already in a minute-verified live room.",
-    "catalog-section": "The portraits are concept art; the visitor is speaking with the separately rendered Spatius avatar now. Purchased minutes and a remaining balance were verified for this room.",
-    "protocol-section": "This section explains connect, buy minutes, and converse. This room has passed minute-balance verification; voice and avatar rendering run offchain.",
+    "catalog-section": "The single portrait is concept art; the visitor is speaking with the separately rendered Spatius avatar now. Purchased minutes and a remaining balance were verified for this room.",
+    "protocol-section": "This section explains the demo flow: try the demo, allow your microphone, and start talking, with purchased minutes and API access on the separate Build page. This room has passed minute-balance verification; voice and avatar rendering run offchain.",
     "business-section": SECTIONS["business-section"][1],
 }
 

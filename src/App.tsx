@@ -30,6 +30,7 @@ import { DigitalFrontierSection } from "./components/DigitalFrontierSection";
 import { BusinessSection } from "./components/BusinessSection";
 import { DeveloperAccess } from "./components/DeveloperAccess";
 import { BuildPage } from "./components/BuildPage";
+import { FeedbackToast } from "./components/FeedbackToast";
 
 async function prepareAvatar(config: AppConfig | null): Promise<void> {
   if (config?.avatarProvider !== "spatius") return;
@@ -39,13 +40,20 @@ async function prepareAvatar(config: AppConfig | null): Promise<void> {
 
 export default function App() {
   useScrollReveal();
+  const isBuildPage = window.location.pathname.replace(/\/$/, "") === "/build";
   const [config, setConfig] = useState<AppConfig | null>(null);
+  const [configStatus, setConfigStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [avatarStatus, setAvatarStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const configRequest = useRef(0);
+  const avatarRequest = useRef(0);
   const [wallet, setWallet] = useState("");
   const [credits, setCredits] = useState<CreditStatus | null>(null);
   const [quote, setQuote] = useState<PackQuote | null>(null);
   const [selectedPack, setSelectedPack] = useState(60);
   const quoteRequest = useRef(0);
   const [session, setSession] = useState<AvatarSession | null>(null);
+  const sessionRef = useRef(session);
+  sessionRef.current = session;
   const [developerOpen, setDeveloperOpen] = useState(false);
   const [loading, setLoading] = useState("");
   const [error, setError] = useState("");
@@ -54,21 +62,65 @@ export default function App() {
   const [nextSteps, setNextSteps] = useState(false);
   const [lastCallPaid, setLastCallPaid] = useState(false);
 
-  useEffect(() => {
-    getConfig()
-      .then((next) => {
-        setConfig(next);
-        if (next.avatarProvider === "spatius" && "RTCRtpScriptTransform" in globalThis) {
-          void prepareAvatar(next).catch(() => {});
-        }
-      })
-      .catch(() => setError("Archava preview is temporarily offline. Please try again later."));
-
+  const loadConfig = useCallback(async () => {
+    const request = ++configRequest.current;
+    setConfigStatus("loading");
+    setError("");
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 15000);
+    try {
+      const next = await getConfig(controller.signal);
+      if (request !== configRequest.current) return;
+      setConfig(next);
+      setConfigStatus("ready");
+    } catch {
+      if (request !== configRequest.current) return;
+      setConfig(null);
+      setConfigStatus("error");
+      setError("The live demo is temporarily offline. You can retry the connection or explore the page.");
+    } finally {
+      window.clearTimeout(timeout);
+    }
   }, []);
+
+  useEffect(() => {
+    void loadConfig();
+    return () => { configRequest.current++; };
+  }, [loadConfig]);
+
+  useEffect(() => {
+    let cancelled = false;
+    // Reuse a wallet already authorized by its extension; never open a prompt on load.
+    void window.ethereum?.request({ method: "eth_accounts" }).then((accounts) => {
+      if (cancelled || !Array.isArray(accounts)) return;
+      const address = accounts[0];
+      if (typeof address === "string" && /^0x[a-fA-F0-9]{40}$/.test(address)) setWallet(address);
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  const warmAvatar = useCallback(async (appConfig: AppConfig | null) => {
+    const request = ++avatarRequest.current;
+    setAvatarStatus("loading");
+    try {
+      await prepareAvatar(appConfig);
+      if (request === avatarRequest.current) setAvatarStatus("ready");
+    } catch (cause) {
+      if (request === avatarRequest.current) setAvatarStatus("error");
+      throw cause;
+    }
+  }, []);
+
+  useEffect(() => {
+    // Keep the demo warm. Reading the integration guide never downloads the avatar.
+    if (!isBuildPage && config && isPreviewAvailable(config) && supportsAvatarRendering(config)) {
+      void warmAvatar(config).catch(() => {});
+    }
+  }, [isBuildPage, config, warmAvatar]);
 
   const refreshQuote = useCallback(() => {
     const request = ++quoteRequest.current;
-    if (!config?.contractAddress) {
+    if (!isBuildPage || !config?.contractAddress) {
       setQuote(null);
       return;
     }
@@ -76,7 +128,7 @@ export default function App() {
     void getPackQuote(selectedPack).then((next) => {
       if (request === quoteRequest.current && next.minutes === selectedPack) setQuote(next);
     }).catch(() => { if (request === quoteRequest.current) setQuote(null); });
-  }, [config?.contractAddress, selectedPack]);
+  }, [isBuildPage, config?.contractAddress, selectedPack]);
 
   useEffect(() => refreshQuote(), [refreshQuote]);
 
@@ -99,20 +151,22 @@ export default function App() {
   }, [session]);
 
   const closeSession = useCallback(() => {
-    if (!session) return;
+    const closing = sessionRef.current;
+    if (!closing) return;
+    sessionRef.current = null;
     sounds.playClick();
     setSession(null);
-    setLastCallPaid(!session.preview);
+    setLastCallPaid(!closing.preview);
     // The call is over: offer the visitor one clear next step instead of
     // dropping them back into the catalog with no direction.
     setNextSteps(true);
-    void endAvatarSession(session.ticket)
-      .then(() => { if (!session.preview && wallet && config) void refreshCredits(wallet, config); })
+    void endAvatarSession(closing.ticket)
+      .then(() => { if (!closing.preview && wallet && config) void refreshCredits(wallet, config); })
       .catch(() => {});
     window.setTimeout(() => {
       document.getElementById("post-call-panel")?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 120);
-  }, [session, wallet, config]);
+  }, [wallet, config]);
 
   const refreshCredits = useCallback(async (address: string, appConfig: AppConfig) => {
     if (!appConfig.contractAddress) {
@@ -129,6 +183,7 @@ export default function App() {
 
   useEffect(() => {
     if (!wallet || !config?.contractAddress) return;
+    void refreshCredits(wallet, config);
     const onReturn = () => { if (!document.hidden) void refreshCredits(wallet, config); };
     window.addEventListener("focus", onReturn);
     document.addEventListener("visibilitychange", onReturn);
@@ -152,7 +207,6 @@ export default function App() {
         return null;
       });
       setNextSteps(false);
-      if (next && config) void refreshCredits(next, config);
     };
     window.ethereum.on("accountsChanged", handleAccounts);
     return () => window.ethereum?.removeListener?.("accountsChanged", handleAccounts);
@@ -166,7 +220,6 @@ export default function App() {
       const address = await connectWallet();
       setWallet(address);
       sounds.playSuccess();
-      if (config) await refreshCredits(address, config);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Wallet connection rejected");
     } finally {
@@ -213,7 +266,7 @@ export default function App() {
   };
 
   const scrollToCatalog = useCallback(() => {
-    document.getElementById("catalog-section")?.scrollIntoView({ behavior: "smooth" });
+    document.getElementById(sessionRef.current ? "live-avatar-room" : "catalog-section")?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "center" });
   }, []);
 
   const scrollToBusiness = useCallback(() => {
@@ -231,7 +284,7 @@ export default function App() {
     setLoading("session");
     sounds.playClick();
     try {
-      await prepareAvatar(config);
+      await warmAvatar(config);
       const next = await startAvatarSession(wallet);
       setSession(next);
       sounds.playSuccess();
@@ -254,7 +307,7 @@ export default function App() {
     setLoading("preview");
     sounds.playClick();
     try {
-      await prepareAvatar(config);
+      await warmAvatar(config);
       const next = await startAnonymousPreview();
       setSession(next);
       sounds.playSuccess();
@@ -279,6 +332,7 @@ export default function App() {
   const openDeveloper = useCallback(() => {
     if (!wallet) return;
     sounds.playClick();
+    setError("");
     setDeveloperOpen(true);
   }, [wallet]);
 
@@ -288,19 +342,24 @@ export default function App() {
   }, []);
 
   const previewAvailable = isPreviewAvailable(config);
+  const previewSupported = supportsAvatarRendering(config);
+  const openingLabel = avatarStatus === "ready" ? "Connecting live room…" : "Preparing Ava…";
+  const feedback = <FeedbackToast message={error} onDismiss={() => setError("")} onRetry={configStatus === "error" ? () => void loadConfig() : undefined} />;
 
-  if (window.location.pathname.replace(/\/$/, "") === "/build") {
+  if (isBuildPage) {
     return (
       <div className="archava-site-root">
+        <a className="skip-link" href="#top">Skip to main content</a>
         <BuildPage
           config={config}
           wallet={wallet}
           credits={credits}
           quote={quote}
           selectedPack={selectedPack}
-          previewReady={previewAvailable}
+          previewReady={previewAvailable && previewSupported}
+          previewSupported={previewSupported}
+          configStatus={configStatus}
           loading={loading}
-          error={error}
           txHash={txHash}
           onConnect={handleConnect}
           onBuy={handleBuy}
@@ -309,8 +368,9 @@ export default function App() {
           onSelectPack={handleSelectPack}
           onRefreshQuote={refreshQuote}
           onOpenDeveloper={openDeveloper}
-          onClearError={() => setError("")}
+          onError={setError}
         />
+        {feedback}
         {developerOpen && wallet && (
           <DeveloperAccess
             key={wallet.toLowerCase()}
@@ -325,111 +385,112 @@ export default function App() {
 
   return (
     <div className="archava-site-root">
-      <VideoHero
-        wallet={wallet}
-        chainId={config?.chainId}
-        onConnect={handleConnect}
-        loading={loading === "connect"}
-        onRentClick={handleScrollToRent}
-        previewEnabled={previewAvailable && !session}
-        previewLoading={loading === "preview"}
-        onTryPreview={handleTryPreview}
-        walletConnected={Boolean(wallet)}
-        onOpenDeveloper={openDeveloper}
-        contractConnected={Boolean(config?.contractAddress)}
-      />
+      <a className="skip-link" href="#main-content">Skip to main content</a>
+      <main id="main-content" tabIndex={-1}>
+        <VideoHero
+          wallet={wallet}
+          configStatus={configStatus}
+          previewSupported={previewSupported}
+          previewSeconds={config?.previewSeconds}
+          openingLabel={openingLabel}
+          onCopyError={setError}
+          onRentClick={handleScrollToRent}
+          previewEnabled={previewAvailable && !session}
+          sessionActive={Boolean(session)}
+          previewLoading={loading === "preview"}
+          onTryPreview={handleTryPreview}
+          onOpenDeveloper={openDeveloper}
+        />
 
-      <CyberMarquee />
+        <CyberMarquee />
 
-      <AvatarCatalog
-        config={config}
-        wallet={wallet}
-        credits={credits}
-        quote={quote}
-        selectedPack={selectedPack}
-        session={session}
-        loading={loading}
-        error={error}
-        txHash={txHash}
-        onConnect={handleConnect}
-        onBuy={handleBuy}
-        onClaimFaucet={handleClaimFaucet}
-        txKind={txKind}
-        onSelectPack={handleSelectPack}
-        onStartSession={handleStart}
-        onTryPreview={handleTryPreview}
-        onCloseSession={closeSession}
-        onClearError={() => setError("")}
-        onOpenDeveloper={openDeveloper}
-      />
+        <AvatarCatalog
+          config={config}
+          configStatus={configStatus}
+          avatarStatus={avatarStatus}
+          previewSupported={previewSupported}
+          openingLabel={openingLabel}
+          wallet={wallet}
+          credits={credits}
+          session={session}
+          loading={loading}
+          onConnect={handleConnect}
+          onStartSession={handleStart}
+          onTryPreview={handleTryPreview}
+          onCloseSession={closeSession}
+          onOpenDeveloper={openDeveloper}
+          onRetryConfig={() => void loadConfig()}
+        />
 
-      {/*
-        Shown only after a call ends, so every visitor — including one whose
-        two minutes simply ran out — gets one clear next step instead of an
-        unexplained return to the catalog.
-      */}
-      {nextSteps && !session && (
-        <section className="post-call-panel" id="post-call-panel" aria-label="After your call">
-          <div className="post-call-inner">
-            <div className="post-call-head">
-              <span className="post-call-eyebrow">CALL ENDED / WHAT NEXT</span>
-              <button type="button" className="post-call-dismiss" onClick={() => setNextSteps(false)} aria-label="Dismiss next steps">
-                <X size={14} />
-              </button>
-            </div>
-            <h2 className="post-call-title">Thanks for talking to Ava.</h2>
-            <div className="post-call-actions">
-              {lastCallPaid && wallet && credits?.active && credits.reservedSeconds === 0 ? (
+        {/*
+          Shown only after a call ends, so every visitor — including one whose
+          two minutes simply ran out — gets one clear next step instead of an
+          unexplained return to the catalog.
+        */}
+        {nextSteps && !session && (
+          <section className="post-call-panel" id="post-call-panel" aria-label="After your call">
+            <div className="post-call-inner">
+              <div className="post-call-head">
+                <span className="post-call-eyebrow">CALL ENDED / WHAT NEXT</span>
+                <button type="button" className="post-call-dismiss" onClick={() => setNextSteps(false)} aria-label="Dismiss next steps">
+                  <X size={14} />
+                </button>
+              </div>
+              <h2 className="post-call-title">Thanks for talking to Ava.</h2>
+              <div className="post-call-actions">
+                {lastCallPaid && wallet && credits?.active && credits.reservedSeconds === 0 ? (
+                  <button
+                    type="button"
+                    className="post-call-btn primary"
+                    onClick={() => { sounds.playClick(); void handleStart(); }}
+                    disabled={!!loading}
+                  >
+                    <Mic size={15} /><span>{loading === "session" ? "Opening room…" : "Continue with your minutes"}</span>
+                  </button>
+                ) : lastCallPaid && config?.contractAddress ? (
+                  <a className="post-call-btn primary" href="/build#access">
+                    <Wallet size={15} /><span>Check balance or top up minutes</span>
+                  </a>
+                ) : previewAvailable && previewSupported ? (
+                  <button
+                    type="button"
+                    className="post-call-btn primary"
+                    onClick={() => { sounds.playClick(); void handleTryPreview(); }}
+                    disabled={!!loading}
+                  >
+                    <Mic size={15} /><span>{loading === "preview" ? "Opening Archava…" : "Talk to Ava again"}</span>
+                  </button>
+                ) : (
+                  <span className="post-call-unavailable">{previewSupported ? "The live preview is offline right now." : SPATIUS_UNSUPPORTED_MESSAGE}</span>
+                )}
                 <button
                   type="button"
-                  className="post-call-btn primary"
-                  onClick={() => { sounds.playClick(); void handleStart(); }}
-                  disabled={!!loading}
+                  className="post-call-btn"
+                  onClick={() => { wallet ? openDeveloper() : handleConnect(); }}
                 >
-                  <Mic size={15} /><span>{loading === "session" ? "Opening room…" : "Continue with your minutes"}</span>
+                  {wallet ? <KeyRound size={15} /> : <Wallet size={15} />}
+                  <span>{wallet ? "Developer access · API keys" : "Connect wallet for developer access"}</span>
                 </button>
-              ) : lastCallPaid && config?.contractAddress ? (
-                <a className="post-call-btn primary" href="/build#access">
-                  <Wallet size={15} /><span>Check balance or top up minutes</span>
-                </a>
-              ) : previewAvailable ? (
                 <button
                   type="button"
-                  className="post-call-btn primary"
-                  onClick={() => { sounds.playClick(); void handleTryPreview(); }}
-                  disabled={!!loading}
+                  className="post-call-btn"
+                  onClick={() => { sounds.playClick(); scrollToBusiness(); }}
                 >
-                  <Mic size={15} /><span>{loading === "preview" ? "Opening Archava…" : "Talk to Ava again"}</span>
+                  <BriefcaseBusiness size={15} /><span>For business · custom integration</span>
                 </button>
-              ) : (
-                <span className="post-call-unavailable">The live preview is offline right now.</span>
-              )}
-              <button
-                type="button"
-                className="post-call-btn"
-                onClick={() => { wallet ? openDeveloper() : handleConnect(); }}
-              >
-                {wallet ? <KeyRound size={15} /> : <Wallet size={15} />}
-                <span>{wallet ? "Developer access · API keys" : "Connect wallet for developer access"}</span>
-              </button>
-              <button
-                type="button"
-                className="post-call-btn"
-                onClick={() => { sounds.playClick(); scrollToBusiness(); }}
-              >
-                <BriefcaseBusiness size={15} /><span>For business · custom integration</span>
-              </button>
+              </div>
             </div>
-          </div>
-        </section>
-      )}
+          </section>
+        )}
 
-      <DigitalFrontierSection contractReady={Boolean(config?.contractAddress)} previewReady={previewAvailable} />
-      <BusinessSection
-        contactHref={import.meta.env.VITE_BUSINESS_CONTACT_URL || ""}
-        previewEnabled={previewAvailable && !session}
-        onTryPreview={handleTryPreview}
-      />
+        <DigitalFrontierSection previewReady={previewAvailable && previewSupported} />
+        <BusinessSection
+          contactHref={import.meta.env.VITE_BUSINESS_CONTACT_URL || ""}
+          previewEnabled={previewAvailable && previewSupported && !session}
+          onTryPreview={handleTryPreview}
+        />
+      </main>
+      {feedback}
 
       {/*
         `key={wallet}` remounts the dashboard on an account switch, so cached

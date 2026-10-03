@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
 import {
   AlertTriangle,
   Check,
@@ -35,6 +35,20 @@ interface DeveloperAccessProps {
 
 const LABEL_MAX = 40;
 
+function containDialogFocus(event: KeyboardEvent<HTMLDialogElement>) {
+  if (event.key !== "Tab") return;
+  const controls = [...event.currentTarget.querySelectorAll<HTMLElement>(
+    'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+  )].filter(element => element.getClientRects().length > 0 && getComputedStyle(element).visibility !== "hidden");
+  const first = controls[0];
+  const last = controls[controls.length - 1];
+  if (!first) { event.preventDefault(); event.currentTarget.focus(); return; }
+  if (!controls.includes(document.activeElement as HTMLElement) || (event.shiftKey ? document.activeElement === first : document.activeElement === last)) {
+    event.preventDefault();
+    (event.shiftKey ? last : first).focus();
+  }
+}
+
 const shortWallet = (address: string) =>
   address.length > 12 ? `${address.slice(0, 6)}…${address.slice(-4)}` : address;
 
@@ -62,6 +76,22 @@ export function DeveloperAccess({ wallet, contractConnected, onClose }: Develope
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const copyTimer = useRef(0);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    const returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    dialog?.showModal();
+    closeRef.current?.focus();
+    return () => {
+      dialog?.close();
+      document.body.style.overflow = previousOverflow;
+      if (returnFocus?.isConnected) returnFocus.focus({ preventScroll: true });
+    };
+  }, []);
 
   useEffect(() => () => window.clearTimeout(copyTimer.current), []);
 
@@ -166,11 +196,15 @@ export function DeveloperAccess({ wallet, contractConnected, onClose }: Develope
 
   const copySecret = useCallback(async () => {
     if (!created) return;
-    await navigator.clipboard.writeText(created.apiKey);
-    setCopied(true);
-    sounds.playSuccess();
-    window.clearTimeout(copyTimer.current);
-    copyTimer.current = window.setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(created.apiKey);
+      setCopied(true);
+      sounds.playSuccess();
+      window.clearTimeout(copyTimer.current);
+      copyTimer.current = window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setError("Couldn't copy the key. Select the key text to copy it manually, or allow clipboard access and try again.");
+    }
   }, [created]);
 
   const dismissSecret = useCallback(() => {
@@ -207,7 +241,7 @@ export function DeveloperAccess({ wallet, contractConnected, onClose }: Develope
   const noWallet = !wallet;
 
   return (
-    <section className="developer-access-section" id="developer-access" aria-labelledby="developer-access-title">
+    <dialog ref={dialogRef} className="developer-access-section" id="developer-access" tabIndex={-1} aria-labelledby="developer-access-title" aria-describedby="developer-access-description" onKeyDown={containDialogFocus} onCancel={(event) => { event.preventDefault(); onClose(); }}>
       <div className="developer-access-inner">
         {/* No `data-reveal`: the scroll observer runs once at app mount, before this
             overlay exists, so the head would never leave its opacity:0 start state. */}
@@ -218,7 +252,7 @@ export function DeveloperAccess({ wallet, contractConnected, onClose }: Develope
             </h2>
             <span className="developer-access-tag">API KEYS</span>
           </div>
-          <p className="developer-access-lede">
+          <p className="developer-access-lede" id="developer-access-description">
             Build on the same realtime voice and live avatar Archava uses. Connect a wallet, sign one
             developer challenge, then create keys that authenticate Archava API requests.
           </p>
@@ -229,6 +263,7 @@ export function DeveloperAccess({ wallet, contractConnected, onClose }: Develope
           </p>
           <a className="developer-doc-link" href="/build#api">See the session API and minute packs ↗</a>
           <button
+            ref={closeRef}
             type="button"
             className="developer-access-close"
             onClick={() => {
@@ -504,6 +539,6 @@ export function DeveloperAccess({ wallet, contractConnected, onClose }: Develope
           </span>
         </footer>
       </div>
-    </section>
+    </dialog>
   );
 }

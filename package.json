@@ -8,8 +8,14 @@
     "api": "node server/index.mjs",
     "build": "tsc -b && vite build",
     "preview": "vite preview --host 0.0.0.0",
-    "test": "node --test server/*.test.mjs src/lib/*.test.ts src/components/*.test.ts"
+    "test": "node --test server/*.test.mjs src/lib/*.test.ts src/components/*.test.ts",
+    "test:ui": "node scripts/ux-check.mjs",
+    "test:backend": "node scripts/test-backend.mjs",
+    "verify:local": "node scripts/verify-local.mjs",
+    "verify:artifacts": "node scripts/verify-artifacts.mjs",
+    "preflight:readonly": "node scripts/readonly-preflight.mjs"
   },
+  "engines": { "node": ">=22.18" },
   "dependencies": {
     "@livekit/components-react": "^2.9.23",
     "@livekit/components-styles": "^1.2.0",
@@ -28,6 +34,8 @@
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react-swc": "^3.5.0",
+    "axe-core": "^4.10.3",
+    "playwright": "^1.63.0",
     "typescript": "^5.5.3",
     "vite": "^5.4.1"
   }

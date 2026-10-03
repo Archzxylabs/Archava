@@ -64,11 +64,12 @@ export const PAYMENT_TOKEN_ABI = [
   "function hasClaimed(address wallet) view returns (bool)",
 ];
 
-async function api<T>(path: string, body?: unknown): Promise<T> {
-  const response = await fetch(path, body === undefined ? undefined : {
+async function api<T>(path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
+  const response = await fetch(path, body === undefined ? { signal } : {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
+    signal,
   });
   const data = (await response.json().catch(() => ({}))) as { error?: string };
   if (!response.ok) throw new ApiError(response.status, data.error || "Request failed");
@@ -79,8 +80,8 @@ export async function startAnonymousPreview(): Promise<AvatarSession> {
   return api<AvatarSession>("/api/preview", {});
 }
 
-export async function getConfig(): Promise<AppConfig> {
-  return api<AppConfig>("/api/config");
+export async function getConfig(signal?: AbortSignal): Promise<AppConfig> {
+  return api<AppConfig>("/api/config", undefined, signal);
 }
 
 export async function getCreditStatus(wallet: string): Promise<CreditStatus> {
