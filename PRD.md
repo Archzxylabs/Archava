@@ -9,6 +9,8 @@
 **Status:** Research-informed product specification and incremental roadmap. Reusable modules and production readiness require the acceptance evidence below.
 
 **Research:** [Reusable platform research](docs/REUSABLE_PLATFORM_RESEARCH.md), reviewed 7 October 2026.
+**Research addendum:** [Business-model research](docs/BUSINESS_MODEL_RESEARCH_2026-10-08.md)
+and [capability map](docs/BUSINESS_CAPABILITY_MATRIX.md), reviewed 8 October 2026.
 **Previous specification:** [Preserved PRD v1.0.0](docs/history/PRD.v1.0.0.md).
 **Scope of this revision:** ARCHZXY is the company; Archava is its flagship product. The internal ARCHZXY module library supports Archava and reusable CRM/ERP business capabilities. The ARCHZXY company website is a separate project. §§40–49 define the new reuse scope; existing section numbers remain stable. Document version, product/package versions and pricebook version are independent.
 
@@ -1727,6 +1729,16 @@ ERP is a composition of operational modules, not a mandatory application install
 Retail can compose contacts/CRM, product inventory, orders and billing. Hospitality can compose contacts/CRM, resource booking and billing with rooms/housekeeping extensions. Education can compose contacts, billing and notifications with students/attendance extensions. These are target compositions, not shipped kits or promises that all data/rules are interchangeable.
 
 Regulated medical operations, broad payroll/statutory accounting and manufacturing remain later specialized requirements. Every kit declares supported modules/config versions and contract tests. Reusable improvements feed back into the library only after removing client identifiers/secrets and validating general applicability.
+
+### 46.4 Research catalog for business discovery
+
+The [business capability map](docs/BUSINESS_CAPABILITY_MATRIX.md) is a non-runtime
+planning addendum. It distinguishes operating patterns, revenue, channels/actors
+and industry extensions, with illustrative combinations and candidate ownership.
+A business can combine several patterns. Candidate names do not register modules,
+grant permissions, assign prices or establish supported vertical kits. Actual
+implementation status and acceptance evidence remain authoritative. Expand the
+catalog from validated requirements while preserving §§41–46 and the M3 gates.
 
 ---
 

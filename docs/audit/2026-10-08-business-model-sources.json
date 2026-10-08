@@ -1,0 +1,318 @@
+{
+  "schema": "archzxy-research-sources-v1",
+  "reviewed": "2026-10-08",
+  "repositoryBaseline": "1fad26a",
+  "scope": "Operating-pattern and industry capability research; planning only.",
+  "primaryDocuments": 29,
+  "officialIndexedExcerpts": 3,
+  "taxonomyIsArchzxySynthesis": true,
+  "customerDemandValidated": false,
+  "frameworksInstalled": 0,
+  "languageModelCalls": 0,
+  "runtimeModulesEnabled": 0,
+  "pricebookChanged": false,
+  "sources": [
+    {
+      "id": "S01",
+      "publisher": "Strategyzer",
+      "title": "Business Model Canvas",
+      "url": "https://www.strategyzer.com/library/the-business-model-canvas",
+      "reviewed": "2026-10-08",
+      "evidence": "primary_document",
+      "supports": "Business models cover several linked dimensions, including channels, activities, revenue and costs."
+    },
+    {
+      "id": "S02",
+      "publisher": "Odoo",
+      "title": "CRM, documentation source 19.0",
+      "url": "https://raw.githubusercontent.com/odoo/documentation/19.0/content/applications/sales/crm.rst",
+      "reviewed": "2026-10-08",
+      "evidence": "primary_document",
+      "supports": "CRM concerns leads, opportunities and sales activity, distinct from a contacts-only slice."
+    },
+    {
+      "id": "S03",
+      "publisher": "Odoo",
+      "title": "Project, documentation source 19.0",
+      "url": "https://raw.githubusercontent.com/odoo/documentation/19.0/content/applications/services/project.rst",
+      "reviewed": "2026-10-08",
+      "evidence": "primary_document",
+      "supports": "Projects group tasks and activities; profitability is a separate concern to validate."
+    },
+    {
+      "id": "S04",
+      "publisher": "Odoo",
+      "title": "Appointments, documentation source 19.0",
+      "url": "https://raw.githubusercontent.com/odoo/documentation/19.0/content/applications/productivity/appointments.rst",
+      "reviewed": "2026-10-08",
+      "evidence": "primary_document",
+      "supports": "Scheduling can depend on users/resources, capacity and timezone."
+    },
+    {
+      "id": "S05",
+      "publisher": "Odoo",
+      "title": "Creating field-service tasks, source 19.0",
+      "url": "https://raw.githubusercontent.com/odoo/documentation/19.0/content/applications/services/field_service/creating_tasks.rst",
+      "reviewed": "2026-10-08",
+      "evidence": "primary_document",
+      "supports": "Field-service work is represented by tasks and can connect to sales/helpdesk workflows."
+    },
+    {
+      "id": "S06",
+      "publisher": "Odoo",
+      "title": "Rental, documentation source 19.0",
+      "url": "https://raw.githubusercontent.com/odoo/documentation/19.0/content/applications/sales/rental.rst",
+      "reviewed": "2026-10-08",
+      "evidence": "primary_document",
+      "supports": "Rental includes quotations, reservation, pickup/return and invoicing."
+    },
+    {
+      "id": "S07",
+      "publisher": "Odoo",
+      "title": "Rental product types, source 19.0",
+      "url": "https://raw.githubusercontent.com/odoo/documentation/19.0/content/applications/sales/rental/configure_products/product_type.rst",
+      "reviewed": "2026-10-08",
+      "evidence": "primary_document",
+      "supports": "Rental goods/services have different handling; integrations and nightly periods are documented."
+    },
+    {
+      "id": "S08",
+      "publisher": "Odoo",
+      "title": "Restaurant, documentation source 19.0",
+      "url": "https://raw.githubusercontent.com/odoo/documentation/19.0/content/applications/sales/point_of_sale/restaurant.rst",
+      "reviewed": "2026-10-08",
+      "evidence": "primary_document",
+      "supports": "Restaurant POS models floors/tables and restaurant-specific service flow."
+    },
+    {
+      "id": "S09",
+      "publisher": "Medusa",
+      "title": "Commerce modules",
+      "url": "https://docs.medusajs.com/learn/fundamentals/modules/commerce-modules",
+      "reviewed": "2026-10-08",
+      "evidence": "primary_document",
+      "supports": "Commerce workflows compose product, inventory, cart and other module services."
+    },
+    {
+      "id": "S10",
+      "publisher": "Medusa",
+      "title": "Module isolation",
+      "url": "https://docs.medusajs.com/learn/fundamentals/modules/isolation",
+      "reviewed": "2026-10-08",
+      "evidence": "primary_document",
+      "supports": "Modules own resources; cross-module features use explicit composition boundaries."
+    },
+    {
+      "id": "S11",
+      "publisher": "Medusa",
+      "title": "Module links",
+      "url": "https://docs.medusajs.com/learn/fundamentals/module-links",
+      "reviewed": "2026-10-08",
+      "evidence": "primary_document",
+      "supports": "Cross-module associations are modeled explicitly without direct module ownership transfer."
+    },
+    {
+      "id": "S12",
+      "publisher": "Medusa",
+      "title": "Reservations lifecycle",
+      "url": "https://docs.medusajs.com/resources/commerce-modules/inventory/reservations-lifecycle",
+      "reviewed": "2026-10-08",
+      "evidence": "official_indexed_excerpt",
+      "supports": "Inventory reservations hold quantities associated with order fulfillment."
+    },
+    {
+      "id": "S13",
+      "publisher": "Medusa",
+      "title": "Order transactions",
+      "url": "https://docs.medusajs.com/resources/commerce-modules/order/transactions",
+      "reviewed": "2026-10-08",
+      "evidence": "official_indexed_excerpt",
+      "supports": "Order transactions reference payment/refund records; payment processing belongs to the payment module."
+    },
+    {
+      "id": "S14",
+      "publisher": "Medusa",
+      "title": "Accept payment flow",
+      "url": "https://docs.medusajs.com/resources/commerce-modules/payment/payment-flow",
+      "reviewed": "2026-10-08",
+      "evidence": "official_indexed_excerpt",
+      "supports": "Payment sessions are authorized with a third-party payment provider."
+    },
+    {
+      "id": "S15",
+      "publisher": "Frappe / ERPNext",
+      "title": "Sales Order",
+      "url": "https://docs.frappe.io/erpnext/sales-order",
+      "reviewed": "2026-10-08",
+      "evidence": "primary_document",
+      "supports": "Orders connect confirmed commercial terms with downstream delivery, invoice and payment steps."
+    },
+    {
+      "id": "S16",
+      "publisher": "Frappe / ERPNext",
+      "title": "Project",
+      "url": "https://docs.frappe.io/erpnext/project",
+      "reviewed": "2026-10-08",
+      "evidence": "primary_document",
+      "supports": "Projects have tasks, planned dates, status and operational tracking."
+    },
+    {
+      "id": "S17",
+      "publisher": "Frappe / ERPNext",
+      "title": "Manufacturing",
+      "url": "https://docs.frappe.io/erpnext/manufacturing",
+      "reviewed": "2026-10-08",
+      "evidence": "primary_document",
+      "supports": "Manufacturing includes workstations, job cards, BOMs and work orders."
+    },
+    {
+      "id": "S18",
+      "publisher": "Frappe / ERPNext",
+      "title": "Bill Of Materials",
+      "url": "https://docs.frappe.io/erpnext/bill-of-materials",
+      "reviewed": "2026-10-08",
+      "evidence": "primary_document",
+      "supports": "BOM records materials/subassemblies and may include production operations."
+    },
+    {
+      "id": "S19",
+      "publisher": "Frappe / ERPNext",
+      "title": "Immutable Ledger",
+      "url": "https://docs.frappe.io/erpnext/immutable-ledger-in-erpnext",
+      "reviewed": "2026-10-08",
+      "evidence": "primary_document",
+      "supports": "Posted stock/accounting history uses traceable reversals/corrections instead of silent replacement."
+    },
+    {
+      "id": "S20",
+      "publisher": "Stripe",
+      "title": "How subscriptions work",
+      "url": "https://docs.stripe.com/billing/subscriptions/overview",
+      "reviewed": "2026-10-08",
+      "evidence": "primary_document",
+      "supports": "Recurring subscriptions have status transitions, invoice/payment lifecycle and provisioning concerns."
+    },
+    {
+      "id": "S21",
+      "publisher": "Stripe",
+      "title": "Basic usage-based billing",
+      "url": "https://docs.stripe.com/billing/subscriptions/usage-based",
+      "reviewed": "2026-10-08",
+      "evidence": "primary_document",
+      "supports": "Usage-based pricing uses measured usage; the reviewed page distinguishes current integration approaches."
+    },
+    {
+      "id": "S22",
+      "publisher": "Stripe",
+      "title": "Connect",
+      "url": "https://docs.stripe.com/connect",
+      "reviewed": "2026-10-08",
+      "evidence": "primary_document",
+      "supports": "Platform/marketplace payments involve several accounts and movement of funds between parties."
+    },
+    {
+      "id": "S23",
+      "publisher": "Frappe Education",
+      "title": "Program Enrollment",
+      "url": "https://docs.frappe.io/education/program-enrollment",
+      "reviewed": "2026-10-08",
+      "evidence": "primary_document",
+      "supports": "Enrollment connects a student, program/courses and academic term."
+    },
+    {
+      "id": "S24",
+      "publisher": "Frappe Education",
+      "title": "Student Portal",
+      "url": "https://docs.frappe.io/education/student-portal",
+      "reviewed": "2026-10-08",
+      "evidence": "primary_document",
+      "supports": "Student-facing schedule, grades, attendance and fee history are distinct domain views."
+    },
+    {
+      "id": "S25",
+      "publisher": "Frappe Education",
+      "title": "Fees",
+      "url": "https://docs.frappe.io/education/fees",
+      "reviewed": "2026-10-08",
+      "evidence": "primary_document",
+      "supports": "Fee records relate to student/program enrollment and academic periods."
+    },
+    {
+      "id": "S26",
+      "publisher": "HL7",
+      "title": "FHIR R5 Patient",
+      "url": "https://hl7.org/fhir/R5/patient.html",
+      "reviewed": "2026-10-08",
+      "evidence": "primary_document",
+      "supports": "Patient is a healthcare resource with its own identity and domain relationships."
+    },
+    {
+      "id": "S27",
+      "publisher": "Oracle Hospitality",
+      "title": "OPERA Cloud 25.3 Room Management",
+      "url": "https://docs.oracle.com/en/industries/hospitality/opera-cloud/25.3/ocsuh/c_housekeeping_room_management.htm",
+      "reviewed": "2026-10-08",
+      "evidence": "primary_document",
+      "supports": "Hotel operations include housekeeping, room status and out-of-service/out-of-order handling."
+    },
+    {
+      "id": "S28",
+      "publisher": "Oracle Hospitality",
+      "title": "OPERA Cloud 26.4 Bookings",
+      "url": "https://docs.oracle.com/en/industries/hospitality/opera-cloud/26.4/ocsuh/ch_bookings.htm",
+      "reviewed": "2026-10-08",
+      "evidence": "primary_document",
+      "supports": "Hospitality reservations span properties and several reservation categories."
+    },
+    {
+      "id": "S29",
+      "publisher": "Frappe / ERPNext",
+      "title": "Donation",
+      "url": "https://docs.frappe.io/erpnext/donation",
+      "reviewed": "2026-10-08",
+      "evidence": "primary_document",
+      "supports": "Donor/donation records link to payment entries; fundraising is a distinct workflow."
+    },
+    {
+      "id": "S30",
+      "publisher": "Frappe Helpdesk",
+      "title": "Ticket",
+      "url": "https://docs.frappe.io/helpdesk/ticket",
+      "reviewed": "2026-10-08",
+      "evidence": "primary_document",
+      "supports": "Service tickets have status, priority, routing and conditional SLA lifecycle."
+    },
+    {
+      "id": "S31",
+      "publisher": "Midtrans",
+      "title": "Handle Notifications",
+      "url": "https://docs.midtrans.com/reference/handle-notifications",
+      "reviewed": "2026-10-08",
+      "evidence": "primary_document",
+      "supports": "Notification verification uses signatures/status checks; duplicate handling must be idempotent."
+    },
+    {
+      "id": "S32",
+      "publisher": "Shopify",
+      "title": "API access scopes",
+      "url": "https://shopify.dev/docs/api/usage/access-scopes",
+      "reviewed": "2026-10-08",
+      "evidence": "primary_document",
+      "supports": "External API operations require the applicable resource access scopes."
+    }
+  ],
+  "fetchLimitations": [
+    "Several rendered Odoo 19.0 pages timed out; corresponding official documentation source was inspected.",
+    "Direct Medusa fetches S12-S14 timed out; findings were restricted to their substantive official indexed excerpts.",
+    "Stripe entitlements pages were empty/inaccessible and were excluded; entitlement ownership is an Archava design proposal.",
+    "Odoo preparation-display direct URLs failed; no standalone preparation-display source was counted."
+  ],
+  "notEstablished": [
+    "universal taxonomy completeness",
+    "product-market fit",
+    "vendor performance",
+    "license/adoption suitability",
+    "local statutory compliance",
+    "production readiness"
+  ]
+}

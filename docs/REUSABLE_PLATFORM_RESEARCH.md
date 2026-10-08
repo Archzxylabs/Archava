@@ -3,6 +3,10 @@
 **Reviewed:** 7 October 2026. **Repository baseline:** `main`, `63b221b`.
 **Purpose:** inform [PRD v2](../PRD.md), preserving the existing assistant/action boundaries and commercial pricebook.
 
+**8 October follow-up:** [Business-model research](BUSINESS_MODEL_RESEARCH_2026-10-08.md)
+adds an operating-pattern/industry capability map against checkpoint `1fad26a`.
+The earlier findings and repository snapshot below remain dated historical evidence.
+
 ## Decision
 
 Build an internal ARCHZXY module library incrementally. Archava remains the flagship AI interface product. The library can contain deterministic CRM/ERP business modules as well as assistant, presence, SDK and integration modules. Business modules must also work through dashboards/APIs without an LLM. The ARCHZXY company website remains a separate consumer project.

@@ -14,6 +14,9 @@ business modules remain release work.
 The [research and decisions](docs/REUSABLE_PLATFORM_RESEARCH.md) distinguish source
 evidence, proposed architecture and staged acceptance; the [previous PRD](docs/history/PRD.v1.0.0.md)
 is preserved. Pricing v1 remains unchanged.
+The [business capability map](docs/BUSINESS_CAPABILITY_MATRIX.md), informed by
+[8 October research](docs/BUSINESS_MODEL_RESEARCH_2026-10-08.md), separates operating
+patterns, industry extensions and candidate modules from delivered capabilities.
 The [pre-reuse project audit](docs/PROJECT_AUDIT_2026-10-07.md) records current
 verification, cleanup priorities and the boundaries to complete before live actions.
 The Decision Intelligence extension is described in [`docs/DECISION_INTELLIGENCE.md`](docs/DECISION_INTELLIGENCE.md).
