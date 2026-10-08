@@ -1,0 +1,13 @@
+{
+  "node": "22.22.3",
+  "pnpm": "10.15.1",
+  "newExternalDependencies": [],
+  "vulnerabilities": {
+    "info": 0,
+    "low": 0,
+    "moderate": 0,
+    "high": 0,
+    "critical": 0
+  },
+  "scope": "pnpm platform; standalone template remains separate"
+}

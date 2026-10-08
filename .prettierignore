@@ -6,6 +6,7 @@ pnpm-lock.yaml
 # Build output. Compiled bundles are not source, and a formatter run over them
 # produces noise on files nobody reads.
 dist/
+.local/
 node_modules/
 
 # Standalone npm template; retain its own source formatting.

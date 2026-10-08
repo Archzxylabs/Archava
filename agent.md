@@ -1063,6 +1063,13 @@ dashboard, Archava or a worker. Keep existing risk/capability/approval boundarie
 general CRM writes require Act even when the module is first-party. Unverified
 payments and unknown provider outcomes are never reported as successful.
 
+The persistent CRM host consumes installed modules and verifies credential-backed
+sessions through an optional identity adapter. These local checks do not grant
+authority to browser role/tenant/confirmation fields or establish public identity
+readiness across every product surface. Keep runtime state and credential inputs
+private and outside artifacts. Restore into a fresh target, retain command identity,
+invalidate restored sessions and recover selected accounts explicitly.
+
 The existing historical v1 delivery percentage is not a v2 module-library score.
 Use PRD §49 evidence gates and build status to describe readiness. Specification,
 offline fixtures and mocked integrations cannot be presented as shipped/live modules.

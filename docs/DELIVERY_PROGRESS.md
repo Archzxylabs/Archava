@@ -110,3 +110,17 @@ backup/restore, live Act writes/provider recovery and broader CRM/ERP remain
 release work. No historical commercial-readiness score or Pending Act task is
 marked complete by this slice. The full check results are in
 [offline M2 evidence](CRM_M2_2026-10-08.md).
+
+## 8 October 2026 — persistent authenticated CRM host / partial M3
+
+`apps/crm` now uses the compiled CRM packages and an optional identity adapter.
+Owner/staff/viewer credentials replace fictional identity selection on this host.
+Sessions expire and are revoked server-side. Data survives host/database shutdown;
+private backup archives restore into a fresh database with migration/grant checks,
+preserved retry receipts and explicit account recovery. See
+[CRM runtime](CRM_RUNTIME.md).
+
+This is local operational evidence. Public TLS/deployment, MFA/SSO, automated
+backup/alerts, provider correlation, durable Act attempts and shared realtime
+presence remain open. The historical readiness estimate and Pending Act tasks
+are unchanged. Checkpoint `4f24164` preserves the M1/M2 baseline.

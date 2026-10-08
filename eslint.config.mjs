@@ -10,6 +10,7 @@ export default tseslint.config(
       // Independent consumers typecheck and build after installing packed artifacts.
       'examples/consumers/**',
       'examples/crm-consumers/**',
+      '.local/**',
       '**/node_modules/**',
       '**/dist/**',
       '**/build/**',

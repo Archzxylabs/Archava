@@ -1,0 +1,40 @@
+{
+  "node": "v22.22.3",
+  "checks": [
+    "private persistent installation, stable keys and idempotent setup",
+    "atomic operator enrollment and non-owner runtime cannot enroll or activate accounts",
+    "real credentials, cookie-only session, origin checks and browser/server isolation",
+    "private connections ignore ambient database credentials, service files and destinations",
+    "owner/staff/viewer permissions, session-bound CSRF and tenant/resource isolation",
+    "authorized tool projection, hashed sessions, idle/absolute expiry and membership revocation",
+    "application/database restart retains records, sessions, revoked logout and retry receipt",
+    "durable login budget and password change invalidates every old session",
+    "private pg_dump archive plus runtime metadata; restore leaves the original database untouched",
+    "restored records/audit/retry identity survive; old credentials and sessions require explicit recovery",
+    "restore preserves one mutation audit and spoofed forwarding headers cannot bypass login budget",
+    "database failures are observable through sanitized health responses and recover without process crash"
+  ],
+  "checkpoint": "4f24164",
+  "database": "real private persistent PostgreSQL; pg_dump/pg_restore exercised",
+  "providerCalls": 0,
+  "browserChecks": 15,
+  "browserScope": "Local credential login, reload, shared CRUD, CSRF/tenant denial, owner/staff isolation, logout, mobile and clean runtime/resources; deliberate HTTP 401/403 expected.",
+  "wrapperShutdownVerified": true,
+  "artifacts": [
+    {
+      "name": "@archava/crm",
+      "version": "0.1.0",
+      "sha256": "ab4fe4d07044812f293d9c7f75e5f6c36f62895522cb7aecb7a18be1967e4e1c"
+    },
+    {
+      "name": "@archava/crm-pg",
+      "version": "0.1.0",
+      "sha256": "e4dd30e48f331fea11654b51746d48c9e620b75889ee5642dc3091e3818dde5f"
+    },
+    {
+      "name": "@archava/identity-pg",
+      "version": "0.1.0",
+      "sha256": "9f105b74aaef696c29a8a4cfb543d8068503d4caaee3090f59b1a091468eb4c9"
+    }
+  ]
+}

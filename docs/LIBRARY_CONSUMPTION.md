@@ -1,4 +1,4 @@
-# Internal library consumption — offline M1/M2
+# Internal library consumption — M1/M2 and local host
 
 ARCHZXY owns the internal library; Archava is the flagship product. The company
 website remains an independent future consumer. This milestone distributes
@@ -19,7 +19,7 @@ Artifacts and checks are generated under ignored `dist/`:
 
 | Output                                   | Purpose                                                  |
 | ---------------------------------------- | -------------------------------------------------------- |
-| `dist/library/tarballs/*.tgz`            | Eleven private internal package artifacts, version 0.1.0 |
+| `dist/library/tarballs/*.tgz`            | Twelve private internal package artifacts, version 0.1.0 |
 | `dist/library/artifacts.json`            | Artifact versions and tarball SHA-256                    |
 | `dist/library/consumer-proof.json`       | Installed implementation hashes and consumer results     |
 | `dist/reuse-demo/hospitality/index.html` | Offline hospitality browser embed                        |
@@ -87,6 +87,11 @@ or permission to execute an action. The existing ActionPolicy/ActHost/executor
 boundaries remain authoritative.
 
 ## Remaining work
+
+The optional server-only `@archava/identity-pg` package is used by the
+[persistent CRM host](CRM_RUNTIME.md). The host cold-installs compiled artifacts
+and reuses the shared dashboard; core/CRM do not depend on this identity adapter.
+This proves local login/revocation and backup restoration, not public deployment.
 
 The first persistent contacts + activities/follow-up CRM slice now has two
 independent consumers, an API, a shared dashboard and permission-bound read/draft

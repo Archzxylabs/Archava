@@ -15,6 +15,12 @@ presence remain separate release gaps. The persistent contacts/activity/follow-u
 CRM slice is now exercised across two contexts; see [CRM module](CRM_MODULE.md). The company website
 is still a separate future consumer.
 
+**8 October persistent host:** `apps/crm` consumes compiled modules with real
+credential/session verification in `packages/identity-pg`. Its private database
+survives graceful shutdown. Owner/staff/viewer policies, session revocation,
+restart and non-destructive backup restoration are exercised locally. See
+[CRM runtime](CRM_RUNTIME.md). This does not complete the broader M3 release gate.
+
 The consolidated source also includes the [website and CRM/ERP frontend](FRONTEND.md)
 and the [portable realtime template](<../Archava Template/README.md>). Frontend
 records and approvals are browser-local demos. The template is a standalone npm
@@ -115,7 +121,7 @@ The mechanism is real and tested; what is behind it is a stand-in.
 | SDK integration                          | Graph building, consent, session and two independent compiled core consumers                                                            | a production host page shipped by a tenant                                                                               |
 | Configurator                             | a config set and a quote                                                                                                                | persistence and tenant provisioning. "Built" means the file exists                                                       |
 | Handoff to a human                       | `HandoffContext` and `packages/assistant/src/handoff.ts`                                                                                | a channel to a human. The request is modelled; nothing is delivered                                                      |
-| Auth and authorisation                   | Core roles/tiers; CRM server-side memberships/resource permissions and fictional local reference sessions                               | production authentication, enrollment, session expiry/revocation and secure host deployment                              |
+| Auth and authorisation                   | Core roles/tiers; CRM memberships; local persistent host with operator-managed credentials, sessions, expiry/revocation and CSRF        | public identity/deployment policy, MFA/SSO, end-user enrollment/recovery and identity across other runtime surfaces      |
 
 ## Planned
 

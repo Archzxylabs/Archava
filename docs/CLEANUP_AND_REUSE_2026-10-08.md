@@ -76,5 +76,6 @@ installer or semver-range/migration engine. Planning readiness is not permission
 
 No provider calls, deployment, Docker image run, SQL verifier rerun or SDK Python
 integration rerun occurred in this cleanup. The SQL checks remain evidence from
-the prior audit; SDK integration requires its missing venv. Changes remain local,
-without a new commit, PR or push.
+the prior audit; SDK integration requires its missing venv. At this cleanup
+verification point changes were local without a new commit, PR or push. The later
+checkpoint/runtime work is recorded in [local M3 evidence](CRM_M3_LOCAL_2026-10-08.md).

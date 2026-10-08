@@ -289,3 +289,18 @@ Compiled artifacts include the owned migration. The CRM verifier loads installed
 exports with plain Node, cold-builds both consumers and exercises an isolated
 real PostgreSQL cluster. Production host identity and live Act integration remain
 separate. See [CRM module](CRM_MODULE.md) for contracts and release boundaries.
+
+## Persistent CRM consumer and identity adapter
+
+`apps/crm` is a host consumer of installed compiled CRM artifacts. It supplies
+verified identities from the optional server-only `@archava/identity-pg` adapter.
+Identity owns credential/session/rate-budget tables, migrations and lifecycle
+events; it does not own business roles. CRM memberships/resources remain the
+authority for record access. Core and CRM do not import this identity adapter.
+
+The host uses private persistent PostgreSQL state, session-bound CSRF transport,
+cookie login and the same dashboard component. Operator enrollment and membership
+creation share one transaction. Backups include private runtime metadata;
+restoration creates a fresh database, preserves mutation identity and requires
+explicit account recovery. See [CRM runtime](CRM_RUNTIME.md). Public deployment,
+shared presence and durable Act/provider execution retain separate release gates.

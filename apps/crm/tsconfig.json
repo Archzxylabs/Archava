@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "baseUrl": ".",
+    "paths": {
+      "@archava/crm": ["../../packages/crm/src/index.ts"],
+      "@archava/crm/dashboard": ["../../packages/crm/src/dashboard.ts"],
+      "@archava/crm-pg": ["../../packages/crm-pg/src/index.ts"],
+      "@archava/identity-pg": ["../../packages/identity-pg/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*.ts", "test/**/*.ts"]
+}

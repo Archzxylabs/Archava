@@ -34,7 +34,15 @@
     "reuse:verify": "node tools/library/verify-consumers.mjs",
     "crm:verify": "pnpm --fail-if-no-match --filter @archava/crm-reference verify",
     "crm:dev": "pnpm --fail-if-no-match --filter @archava/crm-reference dev",
-    "e2e:crm": "node tools/e2e/crm.mjs"
+    "e2e:crm": "node tools/e2e/crm.mjs",
+    "crm:build": "pnpm --fail-if-no-match --filter @archava/crm-host run build",
+    "crm:setup": "pnpm --fail-if-no-match --filter @archava/crm-host run setup",
+    "crm:start": "pnpm --fail-if-no-match --filter @archava/crm-host run start",
+    "crm:user": "pnpm --fail-if-no-match --filter @archava/crm-host run user",
+    "crm:backup": "pnpm --fail-if-no-match --filter @archava/crm-host run backup",
+    "crm:restore": "pnpm --fail-if-no-match --filter @archava/crm-host run restore",
+    "crm:verify-runtime": "pnpm --fail-if-no-match --filter @archava/crm-host run verify",
+    "e2e:crm-runtime": "node tools/e2e/crm-runtime.mjs"
   },
   "devDependencies": {
     "@eslint/js": "9.37.0",

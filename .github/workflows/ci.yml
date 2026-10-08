@@ -84,6 +84,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y postgresql
       - name: Verify persistent CRM and independent consumers
         run: pnpm crm:verify
+      - name: Verify authenticated persistent host and backup restoration
+        run: pnpm crm:verify-runtime
 
   template:
     runs-on: ubuntu-latest

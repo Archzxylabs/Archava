@@ -36,6 +36,12 @@ Use `pnpm crm:verify` for disposable PostgreSQL checks or `pnpm crm:dev` for
 the local dashboard. These reference sessions use fictional identities; a
 production host supplies its own verified authentication.
 
+The [persistent authenticated CRM host](docs/CRM_RUNTIME.md) is a separate consumer
+of the same modules. `pnpm crm:setup` creates private persistent state and an owner
+credential; `pnpm crm:start` serves the local login/dashboard at port 4175.
+Owner/staff/viewer accounts, session revocation, backup and restoration are locally
+verified. `crm:dev` remains the disposable fictional-session reference.
+
 The frontend demo and template have separate runtime boundaries; consolidating
 their source does not connect CRM/ERP, providers, or production Act workflows.
 
