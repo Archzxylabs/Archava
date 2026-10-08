@@ -10,6 +10,7 @@
     "user": "node scripts/run.mjs user",
     "backup": "node scripts/run.mjs backup",
     "restore": "node scripts/run.mjs restore",
+    "ai-status": "node scripts/run.mjs ai-status",
     "verify": "node scripts/run.mjs verify",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
@@ -18,6 +19,7 @@
     "@archava/crm-assistant": "workspace:*",
     "@archava/crm-pg": "workspace:*",
     "@archava/identity-pg": "workspace:*",
+    "@archava/provider-runtime": "workspace:*",
     "pg": "8.23.1",
     "zod": "4.1.12"
   },

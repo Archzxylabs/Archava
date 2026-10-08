@@ -12,7 +12,8 @@
   "dependencies": {
     "@archava/crm": "workspace:*",
     "@archava/crm-assistant": "workspace:*",
-    "@archava/crm-pg": "workspace:*"
+    "@archava/crm-pg": "workspace:*",
+    "@archava/provider-runtime": "workspace:*"
   },
   "devDependencies": {
     "pg": "8.23.1",

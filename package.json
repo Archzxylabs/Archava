@@ -42,6 +42,7 @@
     "crm:user": "pnpm --fail-if-no-match --filter @archava/crm-host run user",
     "crm:backup": "pnpm --fail-if-no-match --filter @archava/crm-host run backup",
     "crm:restore": "pnpm --fail-if-no-match --filter @archava/crm-host run restore",
+    "crm:ai-status": "pnpm --fail-if-no-match --filter @archava/crm-host run ai-status",
     "crm:verify-runtime": "pnpm --fail-if-no-match --filter @archava/crm-host run verify",
     "e2e:crm-runtime": "node tools/e2e/crm-runtime.mjs"
   },

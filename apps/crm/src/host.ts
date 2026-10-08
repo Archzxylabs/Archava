@@ -12,6 +12,7 @@ import {
   type CrmConversationPlanner,
 } from '@archava/crm-assistant'
 import { randomUUID } from 'node:crypto'
+import { ProviderAdmissionError } from '@archava/provider-runtime'
 import { IdentityError, type PostgresIdentity } from '@archava/identity-pg'
 import type { RuntimeSettings } from './settings.js'
 
@@ -37,12 +38,16 @@ export function createHostHandler(
   settings: RuntimeSettings,
   origin: string,
   pipeline?: CrmPipelineService,
-  plannerFor: (utterance: string) => CrmConversationPlanner = () => new LocalCrmPlanner(),
+  plannerFor: (utterance: string, attemptId: string) => CrmConversationPlanner = () =>
+    new LocalCrmPlanner(),
   plannerMode: 'local' | 'gemini-synthetic' = 'local',
 ) {
   const secure = new URL(origin).protocol === 'https:'
   const cookieName = secure ? '__Host-archava_session' : 'archava_local_session'
   return async (request: Request, source: string): Promise<Response> => {
+    const attemptId = randomUUID()
+    const respond = (value: unknown, status = 200, headers: Record<string, string> = {}) =>
+      json(value, status, { ...headers, 'x-archava-request-id': attemptId })
     try {
       const url = new URL(request.url)
       if (url.origin !== origin) return json({ error: { message: 'Request origin refused.' } }, 403)
@@ -110,12 +115,16 @@ export function createHostHandler(
         const tenant = settings.tenants.find((item) => item.id === conversation[1])
         if (!tenant) return json({ error: { message: 'Workspace access refused.' } }, 403)
         const input = conversationInputSchema.parse(await request.json())
-        return json(
-          await createCrmConversation(service, plannerFor(input.utterance), pipeline).ask(
+        return respond(
+          await createCrmConversation(
+            service,
+            plannerFor(input.utterance, attemptId),
+            pipeline,
+          ).ask(
             {
               tenantId: tenant.id,
               principal: { kind: 'human', id: session.principalId },
-              turnId: randomUUID(),
+              turnId: attemptId,
               occurredAt: new Date().toISOString(),
             },
             input,
@@ -130,6 +139,10 @@ export function createHostHandler(
         )(request)
       return json({ error: { message: 'Unknown route.' } }, 404)
     } catch (error) {
+      if (error instanceof ProviderAdmissionError)
+        return respond({ error: { message: 'AI request limit reached. Try again later.' } }, 429, {
+          'retry-after': String(Math.max(1, Math.ceil(error.retryAfterMs / 1000))),
+        })
       if (error instanceof z.ZodError || error instanceof SyntaxError)
         return json({ error: { message: 'Invalid request.' } }, 400)
       if (error instanceof CrmError) {
@@ -165,7 +178,7 @@ export function createHostHandler(
       }
       // Do not expose SQL, credentials or personal records through errors.
       process.stderr.write('CRM request temporarily unavailable.\n')
-      return json({ error: { message: 'Service temporarily unavailable.' } }, 503)
+      return respond({ error: { message: 'Service temporarily unavailable.' } }, 503)
     }
   }
 }
@@ -176,7 +189,7 @@ export async function startCrmHost(
   settings: RuntimeSettings,
   publicDirectory: string,
   pipeline?: CrmPipelineService,
-  plannerFor?: (utterance: string) => CrmConversationPlanner,
+  plannerFor?: (utterance: string, attemptId: string) => CrmConversationPlanner,
   plannerMode?: 'local' | 'gemini-synthetic',
 ) {
   const handle = (request: Request, source: string) =>

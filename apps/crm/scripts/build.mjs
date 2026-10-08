@@ -89,6 +89,7 @@ if (
     (path) =>
       path.includes('identity-pg') ||
       path.includes('crm-pg') ||
+      path.includes('provider-runtime') ||
       path.includes('node:') ||
       /crm-assistant\/dist\/(conversation|planner|gemini-planner|server|index)\.js/.test(path) ||
       /@archava\/assistant\//.test(path),

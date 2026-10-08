@@ -6,6 +6,9 @@ hospitality and professional-service consumers use the same compiled module.
 The deterministic CRM and existing `runTurn` presentation remain authoritative.
 This release adds no dependency, database migration or company website.
 
+The subsequent [provider-runtime module](PROVIDER_RUNTIME.md) adds persistent
+admission/diagnostics without changing this planner's data boundary.
+
 ## What can be tried
 
 The authenticated local host at `http://127.0.0.1:4175` can show six example
@@ -72,8 +75,10 @@ endpoint. Startup failures and provider exceptions never expose the key.
 The adapter permits one in-flight request, at least 15 seconds between starts
 and at most 30 attempts per planner instance. A call has a 45-second deadline,
 one candidate, at most 512 output tokens and a 32 KiB response body. These are
-local process limits; they reset on restart and do not replace Google's
-project-level quotas or a durable usage budget.
+standalone planner limits. The host now adds a durable 30-attempt UTC-day budget
+and shared lease through [provider runtime](PROVIDER_RUNTIME.md), so restarting
+does not replenish its daily allowance. Neither layer replaces Google's
+project-level quotas or token/cost accounting.
 [Rate limits](https://ai.google.dev/gemini-api/docs/rate-limits).
 
 ## Architecture and security
@@ -133,6 +138,6 @@ restart/backup restoration, inert record text and cleanup of late responses.
 See [9 October verification evidence](CRM_GEMINI_2026-10-09.md) for exact results.
 
 Still open: a broader model evaluation and approved data policy, durable usage
-limits, correlated telemetry, production deployment, shared voice/avatar, and
+limits across deployments, production telemetry/alerts, deployment, shared voice/avatar, and
 durable machine approval/execution/recovery. The three existing Act operational
 tasks remain Pending. This is an incremental pilot, not completion of M3.

@@ -158,3 +158,15 @@ See [Gemini pilot](CRM_GEMINI_PILOT.md) for its data, pricing and evaluation
 limits. This does not establish general conversational quality, autonomous Act
 approval/execution/recovery or production deployment. The historical commercial
 score and three Pending Act tasks remain unchanged.
+
+## 9 October 2026 — durable provider admission and diagnostics / partial M3
+
+The optional provider-runtime primitive shares a persisted UTC-day allowance and
+lease across independent consumers. The host records metadata-only outcomes and
+exposes a private status command. Restart retains usage; restore conservatively
+holds provider calls until the next UTC day while authorized local CRM remains
+available. See [provider runtime](PROVIDER_RUNTIME.md).
+
+This adds controlled operational evidence without completing M3, production
+telemetry/alerts, project-wide billing limits or durable autonomous Act execution.
+Historical commercial percentages and Pending Act tasks are unchanged.

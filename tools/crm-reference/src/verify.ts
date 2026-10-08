@@ -9,6 +9,7 @@ import { prepareConsumers } from './consumers.js'
 import { startReferenceServer } from './server.js'
 import { referenceShutdown } from './shutdown.js'
 import { verifyPipeline } from './pipeline-proof.js'
+import { verifyProviderRuntime } from './provider-proof.js'
 
 const shutdown = referenceShutdown()
 const consumers = await prepareConsumers()
@@ -52,6 +53,7 @@ try {
   let service = new crm.CrmService(
     await postgres.PostgresCrmRepository.create(pool, cluster.fingerprintKey),
   )
+  const providerCheckpoint = await verifyProviderRuntime(consumers, cluster.owner, pool, check)
   const create = mutation({
     operation: 'contact.create',
     data: {
@@ -341,6 +343,12 @@ try {
   service = new crm.CrmService(
     await postgres.PostgresCrmRepository.create(pool, cluster.fingerprintKey),
   )
+  const providerModule = consumers.providerPgModules[0]
+  assert.ok(providerModule)
+  const restoredProvider = await providerModule.readProviderStatus(pool, providerCheckpoint.policy)
+  assert.equal(restoredProvider.attemptsToday, providerCheckpoint.used)
+  assert.equal(restoredProvider.recent[0]?.state, 'succeeded')
+  check('provider allowance and metadata-only outcomes survive a real PostgreSQL restart')
   assert.equal((await service.detail('hotel-demo', owner, contactId)).activities.length, 1)
   assert.deepEqual(await service.mutate('hotel-demo', owner, create), receipts[0])
   check(

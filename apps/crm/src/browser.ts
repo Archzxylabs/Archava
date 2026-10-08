@@ -128,6 +128,10 @@ async function mount() {
       headers.set('x-archava-csrf', csrf)
       const response = await fetch(input, { ...init, headers })
       if (response.status === 401) signedOut()
+      if (response.status === 429)
+        throw new Error(
+          'Batas permintaan AI tercapai. Coba lagi nanti atau gunakan perintah lokal.',
+        )
       return response
     },
   })

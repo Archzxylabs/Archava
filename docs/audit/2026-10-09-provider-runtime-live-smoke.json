@@ -1,0 +1,28 @@
+{
+  "passed": true,
+  "source": "actual authenticated localhost host; one committed synthetic Google request; then graceful application/database restart",
+  "businessWrites": 0,
+  "usagePreservedAfterRestart": true,
+  "status": {
+    "bucketId": "crm-gemini-pilot",
+    "providerId": "google-gemini-crm",
+    "model": "gemini-3.5-flash-lite",
+    "utcDay": "2026-10-08",
+    "dailyLimit": 30,
+    "attemptsToday": 1,
+    "remaining": 29,
+    "restoreHoldUntil": null,
+    "activeRequestId": null,
+    "recent": [
+      {
+        "requestId": "11b7e61f-c9c5-45d0-9127-9d2653467aef",
+        "state": "succeeded",
+        "startedAt": "2026-10-08T19:57:13.591Z",
+        "finishedAt": "2026-10-08T19:57:15.599Z",
+        "elapsedMs": 2008,
+        "failureCode": null,
+        "httpStatus": 200
+      }
+    ]
+  }
+}

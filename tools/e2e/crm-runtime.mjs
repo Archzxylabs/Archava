@@ -85,6 +85,17 @@ try {
   await evaluate(
     'window.fetch=window.pilotOriginalFetch;delete window.pilotOriginalFetch;delete window.pilotConversationCalls',
   )
+  await fill('[data-archava-form] [name=utterance]', 'Bisa tampilkan daftar kontak CRM?')
+  await evaluate('document.querySelector("[data-archava-form]").requestSubmit()')
+  await wait(
+    'document.querySelector("[data-archava-status]").textContent.includes("Batas permintaan AI")',
+  )
+  check(
+    'exhausted/restored pilot shows its usage limit without creating a reply; local commands stay usable',
+    await evaluate(
+      'document.querySelector("[data-archava-log]").textContent==="" && !document.querySelector("[data-archava-form] button[type=submit]").disabled',
+    ),
+  )
   await wait('document.querySelector("[data-crm-contacts]").textContent.includes("Owner contact")')
   check(
     'owner credentials open the persisted shared CRM dashboard',
@@ -397,7 +408,7 @@ try {
   )
   await page.screenshot('/tmp/archava-crm-runtime-browser/shots/authenticated-mobile.png')
   const expected = page.console_.filter(
-    (item) => item.kind === 'error' && /status of (401|403|409)/.test(item.text),
+    (item) => item.kind === 'error' && /status of (401|403|409|429)/.test(item.text),
   )
   const failures = page.network_.filter((item) => item.phase === 'failed')
   const expectedAbort = failures.filter(
@@ -418,7 +429,7 @@ try {
   )
   check(
     'no unexpected browser errors, CSP violations or failed resources',
-    expected.length <= 4 &&
+    expected.length <= 5 &&
       page.console_.length === expected.length &&
       expectedAbort.length <= 2 &&
       failures.length === expectedAbort.length,

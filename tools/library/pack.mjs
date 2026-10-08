@@ -41,6 +41,7 @@ export async function packLibrary() {
     '@archava/crm-pg',
     '@archava/identity-pg',
     '@archava/crm-assistant',
+    '@archava/provider-runtime',
   ])
     await include(name)
   await rm(output, { recursive: true, force: true })
@@ -94,7 +95,7 @@ export async function packLibrary() {
       target: 'es2022',
       logLevel: 'silent',
     })
-    if (['crm-pg', 'identity-pg'].includes(shortName))
+    if (['crm-pg', 'identity-pg', 'provider-runtime'].includes(shortName))
       await cp(join(directory, 'migrations'), join(stage, 'migrations'), { recursive: true })
     const exports = {}
     for (const [subpath, source] of Object.entries(manifest.exports)) {
@@ -122,7 +123,9 @@ export async function packLibrary() {
           main: './dist/index.js',
           types: './dist/index.d.ts',
           exports,
-          files: ['crm-pg', 'identity-pg'].includes(shortName) ? ['dist', 'migrations'] : ['dist'],
+          files: ['crm-pg', 'identity-pg', 'provider-runtime'].includes(shortName)
+            ? ['dist', 'migrations']
+            : ['dist'],
           dependencies,
         },
         null,

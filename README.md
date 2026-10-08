@@ -57,6 +57,10 @@ optional [Gemini pilot](docs/CRM_GEMINI_PILOT.md) processes only committed synth
 examples without sending CRM data to the free provider. General AI quality and
 machine writes remain release gates. Two independent consumers share the adapter.
 
+The host's [provider runtime](docs/PROVIDER_RUNTIME.md) preserves daily AI usage
+and safe outcome metadata across restart. Use `pnpm crm:ai-status` for its private
+operator view; prompts, records and keys are absent from diagnostic storage.
+
 The frontend demo and template have separate runtime boundaries; consolidating
 their source does not connect CRM/ERP, providers, or production Act workflows.
 

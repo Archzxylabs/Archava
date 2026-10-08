@@ -45,6 +45,31 @@ const env = {
 const require = createRequire(join(runtime, 'package.json'))
 const { Pool } = require('pg')
 const identityModule = await import(pathToFileURL(require.resolve('@archava/identity-pg')).href)
+const providerModule = await import(
+  pathToFileURL(require.resolve('@archava/provider-runtime')).href
+)
+const providerPg = await import(
+  pathToFileURL(require.resolve('@archava/provider-runtime/postgres')).href
+)
+const providerPolicy = {
+  bucketId: 'crm-gemini-pilot',
+  providerId: 'google-gemini-crm',
+  model: 'gemini-3.5-flash-lite',
+  dailyLimit: 30,
+  minimumIntervalMs: 15000,
+  leaseMs: 60000,
+}
+const outboundMarker = join(home, 'outbound-attempts.log')
+const networkGuard = join(home, 'block-external.mjs')
+await writeFile(
+  networkGuard,
+  `import {appendFile} from 'node:fs/promises';
+  const original=globalThis.fetch;
+  globalThis.fetch=async(input,init)=>{const url=new URL(typeof input==='string' || input instanceof URL ? input : input.url);
+  if(url.hostname!=='127.0.0.1'){await appendFile(${JSON.stringify(outboundMarker)},'blocked\\n');throw new Error('Fixture forbids external provider calls')}
+  return original(input,init)};`,
+  { mode: 0o600 },
+)
 const checks = []
 const check = (label) => {
   checks.push(label)
@@ -61,7 +86,7 @@ const operator = (args, profile = 'runtime.json') =>
   })
 let live = null
 async function boot(profile = 'runtime.json') {
-  const child = spawn(process.execPath, [join(runtime, 'server.mjs')], {
+  const child = spawn(process.execPath, ['--import', networkGuard, join(runtime, 'server.mjs')], {
     cwd: root,
     env: { ...env, ARCHAVA_CRM_PROFILE: profile },
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -739,12 +764,88 @@ try {
   const logoutSession = await login(origin, account.username, account.password)
   assert.equal((await post(origin, '/api/logout', {}, logoutSession)).status, 200)
   assert.equal((await get(origin, '/api/crm/hotel-demo/contacts', logoutSession)).status, 401)
+  const usagePool = poolFor(settings, 'archava_crm_app')
+  try {
+    const store = await providerPg.PostgresProviderAttemptStore.create(usagePool)
+    await providerModule.runProvider({
+      store,
+      policy: providerPolicy,
+      attemptId: randomUUID(),
+      invoke: () => Promise.resolve('private-result-fixture'),
+      httpStatus: () => 200,
+    })
+    const operatorPool = poolFor(settings)
+    try {
+      await operatorPool.query(
+        "UPDATE archava_provider.buckets SET last_started_at=clock_timestamp()-interval '1 minute' WHERE bucket_id=$1",
+        [providerPolicy.bucketId],
+      )
+    } finally {
+      await operatorPool.end()
+    }
+    await assert.rejects(() =>
+      providerModule.runProvider({
+        store,
+        policy: providerPolicy,
+        attemptId: randomUUID(),
+        invoke: () => Promise.reject({ code: 'timeout', body: geminiMarker }),
+      }),
+    )
+    const usage = JSON.parse(operator(['ai-status']).toString())
+    assert.equal(usage.attemptsToday, 2)
+    assert.deepEqual(usage.recent.map((item) => item.state).sort(), ['failed', 'succeeded'])
+    assert.ok(
+      !JSON.stringify(usage).includes(geminiMarker) &&
+        !JSON.stringify(usage).includes('private-result-fixture'),
+    )
+  } finally {
+    await usagePool.end()
+  }
+  const exhaustedPool = poolFor(settings)
+  try {
+    await exhaustedPool.query(
+      'UPDATE archava_provider.buckets SET used=daily_limit WHERE bucket_id=$1',
+      [providerPolicy.bucketId],
+    )
+  } finally {
+    await exhaustedPool.end()
+  }
+  await privateJson(join(home, 'gemini-planner.json'), {
+    provider: 'gemini',
+    model: providerPolicy.model,
+    projectTier: 'free',
+    enabled: true,
+    apiKey: geminiMarker,
+  })
+  check(
+    'operator sees safe success/failure/latency metadata; no keys, results or business identifiers stored',
+  )
   await stop()
   assert.equal((await stat(join(home, 'data'))).isDirectory(), true)
   assert.throws(() =>
     execFileSync(join(bin, 'pg_ctl'), ['-D', join(home, 'data'), 'status'], { stdio: 'pipe' }),
   )
   origin = await boot()
+  assert.equal(
+    (await get(origin, '/api/session', owner).then((response) => response.json())).plannerMode,
+    'gemini-synthetic',
+  )
+  const limited = await post(
+    origin,
+    conversationPath,
+    { utterance: 'Bisa tampilkan daftar kontak CRM?' },
+    owner,
+  )
+  assert.equal(limited.status, 429)
+  assert.ok(Number(limited.headers.get('retry-after')) > 0)
+  assert.match(limited.headers.get('x-archava-request-id'), /^[0-9a-f-]{36}$/)
+  const exhaustedStatus = JSON.parse(operator(['ai-status']).toString())
+  assert.equal(exhaustedStatus.attemptsToday, 30)
+  assert.equal(exhaustedStatus.remaining, 0)
+  assert.equal(exhaustedStatus.recent.length, 2)
+  check(
+    'daily usage survives host/database restart; exhausted Gemini request returns correlated 429 before any outbound call',
+  )
   assert.equal(
     (await get(origin, '/api/session', owner).then((response) => response.json())).authenticated,
     true,
@@ -887,6 +988,28 @@ try {
     receipt,
   )
   const restored = JSON.parse(await readFile(join(home, 'restored-runtime.json'), 'utf8'))
+  const recoveredUsage = JSON.parse(operator(['ai-status'], 'restored-runtime.json').toString())
+  assert.equal(recoveredUsage.attemptsToday, 30)
+  assert.equal(recoveredUsage.recent.length, 2)
+  assert.ok(recoveredUsage.restoreHoldUntil)
+  assert.equal(
+    (
+      await post(
+        origin,
+        conversationPath,
+        { utterance: 'Bisa tampilkan daftar kontak CRM?' },
+        owner,
+      )
+    ).status,
+    429,
+  )
+  assert.equal(
+    (await post(origin, conversationPath, { utterance: 'tampilkan kontak' }, owner)).status,
+    200,
+  )
+  check(
+    'backup restores provider outcomes; conservative UTC-day hold prevents quota reset while local CRM remains available',
+  )
   assert.deepEqual(
     await get(origin, opportunityPath, owner).then((response) => response.json()),
     opportunityDetail,
@@ -965,6 +1088,11 @@ try {
   check(
     'database failures are observable through sanitized health responses and recover without process crash',
   )
+  await assert.rejects(
+    () => stat(outboundMarker),
+    (error) => error?.code === 'ENOENT',
+  )
+  check('live-planner quota/restore tests issue zero external provider requests')
 
   await mkdir(join(root, 'dist/crm-runtime-proof'), { recursive: true })
   await writeFile(

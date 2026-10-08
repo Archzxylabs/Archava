@@ -19,7 +19,7 @@ Artifacts and checks are generated under ignored `dist/`:
 
 | Output                                   | Purpose                                                                   |
 | ---------------------------------------- | ------------------------------------------------------------------------- |
-| `dist/library/tarballs/*.tgz`            | Thirteen private internal artifacts; per-package versions in the manifest |
+| `dist/library/tarballs/*.tgz`            | Fourteen private internal artifacts; per-package versions in the manifest |
 | `dist/library/artifacts.json`            | Artifact versions and tarball SHA-256                                     |
 | `dist/library/consumer-proof.json`       | Installed implementation hashes and consumer results                      |
 | `dist/reuse-demo/hospitality/index.html` | Offline hospitality browser embed                                         |
@@ -93,8 +93,10 @@ The optional server-only `@archava/identity-pg` package is used by the
 and reuses the shared dashboard; core/CRM do not depend on this identity adapter.
 
 The optional `@archava/crm-assistant` artifact adds `/contracts`, `/panel`, `/pilot`
-and server-only `/server` exports using the existing turn pipeline. The artifact set contains
-13 packages. Hospitality and professional-service CRM consumers cold-install
+and server-only `/server` exports using the existing turn pipeline. The generic
+`@archava/provider-runtime` adds durable provider admission and diagnostics, with
+a separate `/postgres` adapter. The artifact set contains 14 packages.
+Hospitality and professional-service CRM consumers cold-install
 matching conversation implementations and exercise their authorized live data.
 See [CRM conversation](CRM_CONVERSATION.md) and the [bounded Gemini pilot](CRM_GEMINI_PILOT.md).
 The synthetic live evidence and explicit human Save do not establish general

@@ -5,7 +5,7 @@ import { resolve, join } from 'node:path'
 
 const root = resolve(import.meta.dirname, '../../..')
 const [mode, ...args] = process.argv.slice(2)
-if (!['start', 'setup', 'user', 'backup', 'restore', 'verify'].includes(mode))
+if (!['start', 'setup', 'user', 'backup', 'restore', 'verify', 'ai-status'].includes(mode))
   throw new Error('Unknown CRM command')
 const entry =
   mode === 'verify'

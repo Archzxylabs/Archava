@@ -11,6 +11,8 @@ import type * as ConversationModule from '@archava/crm-assistant'
 import type * as PipelineModule from '@archava/crm/pipeline'
 import type * as GeminiModule from '@archava/crm-assistant/server'
 import type * as PilotModule from '@archava/crm-assistant/pilot'
+import type * as ProviderModule from '@archava/provider-runtime'
+import type * as ProviderPgModule from '@archava/provider-runtime/postgres'
 
 const root = resolve(import.meta.dirname, '../../..')
 async function hash(directory: string): Promise<string> {
@@ -52,6 +54,8 @@ export async function prepareConsumers() {
   const pipelines: (typeof PipelineModule)[] = []
   const geminiModules: (typeof GeminiModule)[] = []
   const pilotModules: (typeof PilotModule)[] = []
+  const providerModules: (typeof ProviderModule)[] = []
+  const providerPgModules: (typeof ProviderPgModule)[] = []
   try {
     for (const name of ['hospitality', 'professional-services']) {
       const directory = join(scratch, name)
@@ -74,7 +78,12 @@ export async function prepareConsumers() {
       ])
         execFileSync('npm', args, { cwd: directory, stdio: 'pipe' })
       const modules = []
-      for (const name of ['@archava/crm', '@archava/crm-pg', '@archava/crm-assistant']) {
+      for (const name of [
+        '@archava/crm',
+        '@archava/crm-pg',
+        '@archava/crm-assistant',
+        '@archava/provider-runtime',
+      ]) {
         const artifact = artifacts.artifacts.find((item) => item.name === name)
         if (!artifact) throw new Error('Missing CRM artifact')
         modules.push({
@@ -90,6 +99,16 @@ export async function prepareConsumers() {
       const pipelineEntry = consumerRequire.resolve('@archava/crm/pipeline')
       const geminiEntry = consumerRequire.resolve('@archava/crm-assistant/server')
       const pilotEntry = consumerRequire.resolve('@archava/crm-assistant/pilot')
+      const providerEntry = consumerRequire.resolve('@archava/provider-runtime')
+      const providerPgEntry = consumerRequire.resolve('@archava/provider-runtime/postgres')
+      if (![providerEntry, providerPgEntry].every((entry) => entry.includes('/node_modules/')))
+        throw new Error('Provider runtime resolved to workspace source')
+      providerModules.push(
+        (await import(pathToFileURL(providerEntry).href)) as typeof ProviderModule,
+      )
+      providerPgModules.push(
+        (await import(pathToFileURL(providerPgEntry).href)) as typeof ProviderPgModule,
+      )
       if (![geminiEntry, pilotEntry].every((entry) => entry.includes('/node_modules/')))
         throw new Error('Planner resolved to workspace source')
       geminiModules.push((await import(pathToFileURL(geminiEntry).href)) as typeof GeminiModule)
@@ -124,6 +143,8 @@ export async function prepareConsumers() {
       pipelines,
       geminiModules,
       pilotModules,
+      providerModules,
+      providerPgModules,
       proofs,
       publicDirectory: join(root, 'dist/crm-demo'),
       async close() {

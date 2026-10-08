@@ -46,6 +46,14 @@ and audit checks. See [pilot scope and evaluation](CRM_GEMINI_PILOT.md).
 This is bounded planning plus human operation; general model quality, durable
 machine execution, telemetry and public deployment remain release gaps.
 
+**9 October provider runtime:** an optional generic module records admitted
+attempts, UTC-day allowance, leases and safe outcomes in PostgreSQL. The CRM host
+shares its budget across businesses, correlates provider responses and exposes a
+private operator status command. Restart preserves usage; restoring a stale
+snapshot holds Gemini until the next UTC day while local CRM remains usable.
+See [provider runtime](PROVIDER_RUNTIME.md). Token/cost metering, automated alerts,
+production telemetry/deployment and durable machine actions remain open.
+
 The consolidated source also includes the [website and CRM/ERP frontend](FRONTEND.md)
 and the [portable realtime template](<../Archava Template/README.md>). Frontend
 records and approvals are browser-local demos. The template is a standalone npm

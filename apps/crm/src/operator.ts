@@ -4,6 +4,13 @@ import { join, resolve, dirname } from 'node:path'
 import { chmod, lstat, writeFile } from 'node:fs/promises'
 import { Pool } from 'pg'
 import { z } from 'zod'
+import {
+  migrateProviderRuntime,
+  grantProviderRuntime,
+  readProviderStatus,
+  holdProviderAfterRestore,
+} from '@archava/provider-runtime/postgres'
+import { CRM_PROVIDER_POLICY } from './provider-policy.js'
 import { CRM_PERMISSIONS } from '@archava/crm'
 import { migrateCrm, grantCrmRuntime } from '@archava/crm-pg'
 import {
@@ -46,6 +53,7 @@ const role = 'archava_crm_app'
 async function grant(pool: Pool) {
   await grantCrmRuntime(pool, role)
   await grantIdentityRuntime(pool, role)
+  await grantProviderRuntime(pool, role)
 }
 async function enroll(pool: Pool, settings: RuntimeSettings, input: unknown) {
   const account = credentialsSchema.parse(input)
@@ -132,6 +140,7 @@ async function setup() {
     try {
       await migrateCrm(owner)
       await migrateIdentity(owner)
+      await migrateProviderRuntime(owner)
       await grant(owner)
       if ((await owner.query('SELECT 1 FROM archava_identity.users LIMIT 1')).rowCount === 0) {
         const account = {
@@ -291,6 +300,8 @@ async function restore(args: string[]) {
     try {
       await migrateCrm(owner)
       await migrateIdentity(owner)
+      await migrateProviderRuntime(owner)
+      await holdProviderAfterRestore(owner, CRM_PROVIDER_POLICY)
       await grant(owner)
       // Restoring an older backup must never resurrect a logged-out session.
       await owner.query('DELETE FROM archava_identity.sessions')
@@ -305,12 +316,26 @@ async function restore(args: string[]) {
     'Restored into a new database. Use ARCHAVA_CRM_PROFILE=restored-runtime.json and recover selected accounts with new passwords; the original database is unchanged.\n',
   )
 }
+async function aiStatus() {
+  const settings = await loadSettings()
+  await withLocalDatabase(settings, async () => {
+    const owner = new Pool(connection(settings, 'archava_operator'))
+    try {
+      process.stdout.write(
+        JSON.stringify(await readProviderStatus(owner, CRM_PROVIDER_POLICY), null, 2) + '\n',
+      )
+    } finally {
+      await owner.end()
+    }
+  })
+}
 try {
   const [mode, ...args] = process.argv.slice(2)
   if (mode === 'setup') await setup()
   else if (mode === 'user') await user(args)
   else if (mode === 'backup') await backup(args)
   else if (mode === 'restore') await restore(args)
+  else if (mode === 'ai-status') await aiStatus()
   else throw new Error('Unknown CRM operator command')
 } catch (error) {
   if (

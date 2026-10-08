@@ -10,6 +10,7 @@ import { home, loadSettings, connection } from './settings.js'
 import { startLocalDatabase, stopLocalDatabase } from './local-postgres.js'
 import { startCrmHost } from './host.js'
 import { loadCrmPlanner } from './planner.js'
+import { PostgresProviderAttemptStore } from '@archava/provider-runtime/postgres'
 
 // This local host also runs on desktops without reliable IPv6 routing.
 setDefaultResultOrder('ipv4first')
@@ -51,7 +52,7 @@ try {
   const repository = await PostgresCrmRepository.create(pool, settings.fingerprintKey)
   const service = new CrmService(repository)
   const identity = await PostgresIdentity.create(pool, settings.identityKey)
-  const planner = await loadCrmPlanner()
+  const planner = await loadCrmPlanner(await PostgresProviderAttemptStore.create(pool))
   host = await startCrmHost(
     service,
     identity,
