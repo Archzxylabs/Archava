@@ -5,6 +5,7 @@ export interface CrmDashboardOptions {
   readonly labels: { readonly title: string; readonly contacts: string; readonly contact: string }
   /** Same-origin cookie session by default. A host may inject its authenticated transport. */
   readonly transport?: typeof fetch
+  readonly onContactSelected?: (contact: Contact) => void
 }
 
 /** One dashboard component, configured by the host. Every write goes through the API. */
@@ -105,7 +106,9 @@ export function mountCrmDashboard(host: HTMLElement, options: CrmDashboardOption
   }
   async function show(id: string) {
     const result = await request<ContactDetail>('/contacts/' + encodeURIComponent(id))
+    if (disposed) return
     selected = result.contact
+    options.onContactSelected?.(result.contact)
     detail.replaceChildren(
       node('h2', result.contact.fullName),
       node('p', result.contact.email ?? 'No email recorded'),

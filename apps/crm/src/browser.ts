@@ -1,4 +1,6 @@
 import { mountCrmDashboard } from '@archava/crm/dashboard'
+import { mountPipelineDashboard } from '@archava/crm/pipeline-dashboard'
+import { pipelineLabelsSchema } from '@archava/crm/pipeline-contracts'
 import { mountCrmConversation } from '@archava/crm-assistant/panel'
 import { z } from 'zod'
 
@@ -11,7 +13,13 @@ const sessionSchema = z.discriminatedUnion('authenticated', [
       csrf: z.string(),
       tenants: z.array(
         z
-          .object({ id: z.string(), title: z.string(), contacts: z.string(), contact: z.string() })
+          .object({
+            id: z.string(),
+            title: z.string(),
+            contacts: z.string(),
+            contact: z.string(),
+            pipelineLabels: pipelineLabelsSchema.optional(),
+          })
           .strict(),
       ),
     })
@@ -30,11 +38,14 @@ const tenants = element<HTMLSelectElement>('#tenants')
 const status = element<HTMLElement>('#status')
 let csrf = ''
 let dashboard: ReturnType<typeof mountCrmDashboard> | null = null
+let pipeline: ReturnType<typeof mountPipelineDashboard> | null = null
 let conversation: ReturnType<typeof mountCrmConversation> | null = null
 let session: z.infer<typeof sessionSchema> = { authenticated: false }
 function signedOut() {
   dashboard?.destroy()
   dashboard = null
+  pipeline?.destroy()
+  pipeline = null
   conversation?.destroy()
   conversation = null
   csrf = ''
@@ -73,6 +84,8 @@ async function mount() {
   if (!session.authenticated) return
   const selected = session.tenants.find((item) => item.id === tenants.value)
   dashboard?.destroy()
+  pipeline?.destroy()
+  pipeline = null
   conversation?.destroy()
   conversation = null
   if (!selected) {
@@ -82,6 +95,7 @@ async function mount() {
   dashboard = mountCrmDashboard(host, {
     apiBase: '/api/crm/' + selected.id,
     labels: selected,
+    onContactSelected: (contact) => pipeline?.selectContact(contact),
     transport: async (input, init) => {
       const headers = new Headers(init?.headers)
       if (init?.method === 'POST') headers.set('x-archava-csrf', csrf)
@@ -90,6 +104,17 @@ async function mount() {
         signedOut()
         status.textContent = 'Your session ended. Sign in again.'
       }
+      return response
+    },
+  })
+  pipeline = mountPipelineDashboard(element<HTMLElement>('#pipeline'), {
+    apiBase: '/api/crm/' + selected.id,
+    labels: selected.pipelineLabels,
+    transport: async (input, init) => {
+      const headers = new Headers(init?.headers)
+      if (init?.method === 'POST') headers.set('x-archava-csrf', csrf)
+      const response = await fetch(input, { ...init, headers })
+      if (response.status === 401) signedOut()
       return response
     },
   })
@@ -103,7 +128,7 @@ async function mount() {
       return response
     },
   })
-  await dashboard.ready
+  await Promise.all([dashboard.ready, pipeline.ready])
 }
 async function refreshSession() {
   session = sessionSchema.parse(await send('/api/session'))

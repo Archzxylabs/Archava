@@ -64,6 +64,14 @@ const browser = await build({
   target: 'es2022',
   alias: {
     '@archava/crm/dashboard': join(output, 'node_modules/@archava/crm/dist/dashboard.js'),
+    '@archava/crm/pipeline-dashboard': join(
+      output,
+      'node_modules/@archava/crm/dist/pipeline-dashboard.js',
+    ),
+    '@archava/crm/pipeline-contracts': join(
+      output,
+      'node_modules/@archava/crm/dist/pipeline-contracts.js',
+    ),
     '@archava/crm-assistant/panel': join(
       output,
       'node_modules/@archava/crm-assistant/dist/panel.js',

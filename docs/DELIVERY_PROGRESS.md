@@ -4,19 +4,26 @@
 
 **Target:** Archava v1 commercial readiness in `PRD.md` §34, including the platform needed to operate it.
 
-**PRD v2 scope, evidence updated 8 October 2026:** §34 remains the broader commercial gate. The
+**PRD v2 scope, evidence updated 9 October 2026:** §34 remains the broader commercial gate. The
 new module-library milestones in [PRD §49](../PRD.md) are assessed separately:
 
-| Milestone                  | Current evidence                                                                                                                               |
-| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| M0 specification alignment | Research, PRD and supporting operating/status documents updated; documentation only.                                                           |
-| M1 independent core reuse  | Two independent cold-installed core consumers use matching compiled artifacts; see the M1 entry below.                                         |
-| M2 business-module reuse   | One persistent contacts/activity/follow-up module serves two contexts with the same API/dashboard; see the M2 entry below.                     |
-| M3 controlled operations   | Local identity, durability, restore and CRM read/draft conversation verified; public deployment, live providers and observability remain open. |
-| M4 library expansion       | Later demand-backed work, not delivered capability.                                                                                            |
+| Milestone                  | Current evidence                                                                                                                                      |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| M0 specification alignment | Research, PRD and supporting operating/status documents updated; documentation only.                                                                  |
+| M1 independent core reuse  | Two independent cold-installed core consumers use matching compiled artifacts; see the M1 entry below.                                                |
+| M2 business-module reuse   | One persistent contacts/activity/follow-up module serves two contexts with the same API/dashboard; see the M2 entry below.                            |
+| M3 controlled operations   | Local identity, durability, restore and CRM read/draft conversation verified; public deployment, live providers and observability remain open.        |
+| M4 library expansion       | Small CRM sales-pipeline extension locally verified across two independent inquiry consumers; broader kits, support and commercial scope remain open. |
 
 The historical weighted percentage below is not recalculated or reused as v2
 progress. M1/M2 evidence is assessed separately from commercial readiness.
+
+**9 October pipeline checkpoint:** contact-linked opportunities, guarded stages,
+immutable history, separate grants, v1 schema upgrade and recovery now have local
+evidence. See [pipeline scope](CRM_PIPELINE.md) and
+[verification](CRM_PIPELINE_2026-10-09.md). This does not complete M4 or change the
+historical commercial score; no contract, payment or project execution is inferred
+from Won.
 
 **Current estimate after Act pilot audit:** **about 30% weighted delivery coverage. Release readiness: not met.**
 

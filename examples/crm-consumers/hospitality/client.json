@@ -4,5 +4,12 @@
   "contacts": "Guest inquirys",
   "contact": "Guest inquiry",
   "principal": "hotel-owner",
-  "viewer": "hotel-viewer"
+  "viewer": "hotel-viewer",
+  "pipelineLabels": {
+    "new": "New inquiry",
+    "qualified": "Qualified inquiry",
+    "proposal": "Offer",
+    "won": "Won inquiry",
+    "lost": "Lost inquiry"
+  }
 }

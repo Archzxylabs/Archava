@@ -90,12 +90,26 @@ async function setup() {
           title: 'Hospitality',
           contacts: 'Guests / inquiries',
           contact: 'Guest',
+          pipelineLabels: {
+            new: 'New inquiry',
+            qualified: 'Qualified inquiry',
+            proposal: 'Offer',
+            won: 'Won inquiry',
+            lost: 'Lost inquiry',
+          },
         },
         {
           id: 'studio-demo',
           title: 'Professional services',
           contacts: 'Clients / inquiries',
           contact: 'Client',
+          pipelineLabels: {
+            new: 'New lead',
+            qualified: 'Qualified lead',
+            proposal: 'Proposal',
+            won: 'Won opportunity',
+            lost: 'Lost opportunity',
+          },
         },
       ].map((value) => tenantConfig.parse(value)),
     })
@@ -141,15 +155,60 @@ async function setup() {
 }
 async function user(args: string[]) {
   const [mode, file] = args
-  if (!['add', 'reset', 'recover'].includes(mode ?? '') || !file)
-    throw new Error('Expected user add|reset|recover private-credential.json')
+  if (!['add', 'reset', 'recover', 'pipeline'].includes(mode ?? '') || !file)
+    throw new Error('Expected user add|reset|recover|pipeline private-input.json')
   const settings = await loadSettings()
   const input = await readPrivateJson(resolve(file))
   await withLocalDatabase(settings, async () => {
     const owner = new Pool(connection(settings, 'archava_operator'))
     try {
       if (mode === 'add') await enroll(owner, settings, input)
-      else {
+      else if (mode === 'pipeline') {
+        const account = z
+          .object({
+            username: usernameSchema,
+            tenants: z.array(z.string()).min(1).max(20),
+            access: z.enum(['read', 'write', 'none']),
+          })
+          .strict()
+          .parse(input)
+        if (account.tenants.some((tenant) => !settings.tenants.some((item) => item.id === tenant)))
+          throw new Error('Unknown tenant')
+        const client = await owner.connect()
+        try {
+          await client.query('BEGIN')
+          const identity = (
+            await client.query<{ id: string }>(
+              'SELECT id FROM archava_identity.users WHERE username=$1 AND active FOR SHARE',
+              [account.username],
+            )
+          ).rows[0]
+          if (!identity) throw new Error('Active account required')
+          for (const tenant of new Set(account.tenants)) {
+            const member = (
+              await client.query<{ permissions: string[] }>(
+                "SELECT permissions FROM archava_crm.memberships WHERE tenant_id=$1 AND principal_id=$2 AND kind='human' AND active FOR UPDATE",
+                [tenant, identity.id],
+              )
+            ).rows[0]
+            if (!member || !member.permissions.includes('contacts.read'))
+              throw new Error('Active contact membership required')
+            const grants = member.permissions.filter((value) => !value.startsWith('pipeline.'))
+            if (account.access !== 'none') grants.push('pipeline.read')
+            if (account.access === 'write') grants.push('pipeline.write')
+            await client.query(
+              'UPDATE archava_crm.memberships SET permissions=$3 WHERE tenant_id=$1 AND principal_id=$2',
+              [tenant, identity.id, grants],
+            )
+          }
+          await client.query('COMMIT')
+        } catch (error) {
+          await client.query('ROLLBACK')
+          throw error
+        } finally {
+          client.release()
+        }
+      } else {
         const account = z
           .object({ username: usernameSchema, password: passwordSchema })
           .strict()

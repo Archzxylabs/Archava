@@ -79,6 +79,7 @@ form {
   color: #c6d4f2;
 }
 #crm,
+#pipeline,
 #conversation {
   overflow-wrap: anywhere;
 }

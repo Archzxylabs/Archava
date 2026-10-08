@@ -2,6 +2,7 @@ import { Pool } from 'pg'
 import { open, readFile, unlink } from 'node:fs/promises'
 import { join } from 'node:path'
 import { CrmService } from '@archava/crm'
+import { CrmPipelineService } from '@archava/crm/pipeline'
 import { PostgresCrmRepository } from '@archava/crm-pg'
 import { PostgresIdentity } from '@archava/identity-pg'
 import { home, loadSettings, connection } from './settings.js'
@@ -42,9 +43,17 @@ try {
   ownsDatabase = await startLocalDatabase(settings)
   pool = new Pool(connection(settings))
   pool.on('error', () => process.stderr.write('CRM database connection unavailable.\n'))
-  const service = new CrmService(await PostgresCrmRepository.create(pool, settings.fingerprintKey))
+  const repository = await PostgresCrmRepository.create(pool, settings.fingerprintKey)
+  const service = new CrmService(repository)
   const identity = await PostgresIdentity.create(pool, settings.identityKey)
-  host = await startCrmHost(service, identity, pool, settings, join(import.meta.dirname, 'public'))
+  host = await startCrmHost(
+    service,
+    identity,
+    pool,
+    settings,
+    join(import.meta.dirname, 'public'),
+    new CrmPipelineService(repository),
+  )
   process.stdout.write(`CRM ready: ${host.origin}\n`)
   await stopped
 } catch {

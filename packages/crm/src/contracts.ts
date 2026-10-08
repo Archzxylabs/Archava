@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { opportunityCommandSchema } from './pipeline-contracts.js'
 
 export const tenantSchema = z
   .string()
@@ -25,6 +26,8 @@ export const CRM_PERMISSIONS = [
   'followups.read',
   'followups.write',
   'audit.read',
+  'pipeline.read',
+  'pipeline.write',
 ] as const
 export type CrmPermission = (typeof CRM_PERMISSIONS)[number]
 export const membershipSchema = z
@@ -91,7 +94,7 @@ const contactFields = z
     organization: optionalText.default(null),
   })
   .strict()
-export const commandSchema = z.discriminatedUnion('operation', [
+const contactCommandSchema = z.discriminatedUnion('operation', [
   z.object({ operation: z.literal('contact.create'), data: contactFields }).strict(),
   z
     .object({
@@ -130,11 +133,12 @@ export const commandSchema = z.discriminatedUnion('operation', [
     .object({ operation: z.literal('followup.complete'), id: idSchema, expectedRevision: revision })
     .strict(),
 ])
+export const commandSchema = z.union([contactCommandSchema, opportunityCommandSchema])
 export type CrmCommand = z.infer<typeof commandSchema>
 export const mutationSchema = z.object({ requestId: idSchema, command: commandSchema }).strict()
 export type CrmMutation = z.infer<typeof mutationSchema>
 export interface MutationReceipt {
-  readonly kind: 'contact' | 'activity' | 'followup'
+  readonly kind: 'contact' | 'activity' | 'followup' | 'opportunity'
   readonly id: string
   readonly revision: number
 }
@@ -178,10 +182,10 @@ export class CrmError extends Error {
 /** Config/installation metadata; it grants no authority and supplies no price. */
 export const CRM_CONTACTS_MANIFEST = {
   id: 'crm_contacts',
-  version: '0.1.0',
+  version: '0.2.0',
   status: 'implemented' as const,
   requires: [],
-  permissions: [...CRM_PERMISSIONS],
+  permissions: CRM_PERMISSIONS.filter((permission) => !permission.startsWith('pipeline.')),
   persistence: { adapter: '@archava/crm-pg', migration: '001_crm_contacts' },
   apiVersion: '1.0.0',
   tools: ['crm.contacts.list', 'crm.contact.summary', 'crm.followup.prepare'],

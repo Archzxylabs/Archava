@@ -5,6 +5,11 @@ The same implementation serves hospitality inquiry and professional-service
 inquiry references. Archava consumes authorized read/draft ports; the shared
 dashboard works without an LLM. The company website remains a separate consumer.
 
+The optional [sales pipeline capability](CRM_PIPELINE.md) extends this same domain
+through explicit public subpaths. Current CRM/PG internal artifacts are 0.2.0;
+contacts APIs remain available. Its additive migration and separate grants do not
+turn the first contacts slice into a complete CRM/ERP.
+
 | Package                  | Responsibility                                                                |
 | ------------------------ | ----------------------------------------------------------------------------- |
 | `@archava/crm`           | Strict schemas, trusted-principal service, JSON API and read/draft tools      |

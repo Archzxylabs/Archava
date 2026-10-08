@@ -45,6 +45,11 @@ credential; `pnpm crm:start` serves the local login/dashboard at port 4175.
 Owner/staff/viewer accounts, session revocation, backup and restoration are locally
 verified. `crm:dev` remains the disposable fictional-session reference.
 
+The [reusable sales pipeline](docs/CRM_PIPELINE.md) adds contact-linked opportunities,
+guarded stages and immutable history to that same CRM domain. Hospitality and
+professional-service consumers share the compiled implementation. Existing accounts
+need explicit pipeline grants after upgrading; see the linked migration steps.
+
 The same host includes a [reusable CRM conversation adapter](docs/CRM_CONVERSATION.md):
 list/search contacts, read a summary and prepare a follow-up draft. Its initial
 planner uses bounded local commands; live models and machine writes remain later

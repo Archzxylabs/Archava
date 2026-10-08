@@ -28,6 +28,15 @@ does not call a model; drafts are transient and perform no mutation or send. See
 [CRM conversation](CRM_CONVERSATION.md). Live planner evaluation, deployment and
 durable Act execution remain open.
 
+**9 October sales pipeline:** `crm_sales_pipeline` now extends the existing CRM
+domain with contact-linked opportunities, guarded stages, immutable transition
+history and a shared dashboard. Separate pipeline grants, current revision,
+idempotent replay and audit remain backend-owned. Two independently installed
+inquiry consumers use the same 0.2.0 CRM artifacts; legacy schema upgrade preserves
+existing grants and records. See [pipeline scope and upgrade](CRM_PIPELINE.md).
+Won is a sales outcome; contract/payment/project automation and machine writes
+remain separate work. This is local evidence, not a completed M3 release.
+
 The consolidated source also includes the [website and CRM/ERP frontend](FRONTEND.md)
 and the [portable realtime template](<../Archava Template/README.md>). Frontend
 records and approvals are browser-local demos. The template is a standalone npm

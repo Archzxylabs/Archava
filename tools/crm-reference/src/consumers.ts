@@ -8,6 +8,7 @@ import { createHash } from 'node:crypto'
 import type * as CrmModule from '@archava/crm'
 import type * as PostgresModule from '@archava/crm-pg'
 import type * as ConversationModule from '@archava/crm-assistant'
+import type * as PipelineModule from '@archava/crm/pipeline'
 
 const root = resolve(import.meta.dirname, '../../..')
 async function hash(directory: string): Promise<string> {
@@ -46,6 +47,7 @@ export async function prepareConsumers() {
     }[]
   }[] = []
   const conversations: (typeof ConversationModule)[] = []
+  const pipelines: (typeof PipelineModule)[] = []
   try {
     for (const name of ['hospitality', 'professional-services']) {
       const directory = join(scratch, name)
@@ -81,6 +83,10 @@ export async function prepareConsumers() {
       proofs.push({ consumer: name, modules })
       const consumerRequire = createRequire(join(directory, 'package.json'))
       const conversationEntry = consumerRequire.resolve('@archava/crm-assistant')
+      const pipelineEntry = consumerRequire.resolve('@archava/crm/pipeline')
+      if (!pipelineEntry.includes('/node_modules/'))
+        throw new Error('Pipeline resolved to workspace source')
+      pipelines.push((await import(pathToFileURL(pipelineEntry).href)) as typeof PipelineModule)
       if (!conversationEntry.includes('/node_modules/'))
         throw new Error('Conversation resolved to workspace source')
       conversations.push(
@@ -105,6 +111,7 @@ export async function prepareConsumers() {
       crm,
       postgres,
       conversations,
+      pipelines,
       proofs,
       publicDirectory: join(root, 'dist/crm-demo'),
       async close() {

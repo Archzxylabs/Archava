@@ -4,5 +4,12 @@
   "contacts": "Client contacts",
   "contact": "Client contact",
   "principal": "studio-owner",
-  "viewer": null
+  "viewer": null,
+  "pipelineLabels": {
+    "new": "New lead",
+    "qualified": "Qualified lead",
+    "proposal": "Proposal",
+    "won": "Won opportunity",
+    "lost": "Lost opportunity"
+  }
 }

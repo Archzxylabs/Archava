@@ -15,13 +15,18 @@ const cluster = await createCluster(consumers.postgres, consumers.crm.CRM_PERMIS
 const pool = new Pool(cluster.application)
 let server: Awaited<ReturnType<typeof startReferenceServer>> | null = null
 try {
-  const service = new consumers.crm.CrmService(
-    await consumers.postgres.PostgresCrmRepository.create(pool, cluster.fingerprintKey),
+  const repository = await consumers.postgres.PostgresCrmRepository.create(
+    pool,
+    cluster.fingerprintKey,
   )
+  const service = new consumers.crm.CrmService(repository)
+  const pipelineModule = consumers.pipelines[0]
+  if (!pipelineModule) throw new Error('Missing installed pipeline module')
   server = await startReferenceServer(
     service,
     consumers.publicDirectory,
     consumers.crm.createCrmApi,
+    new pipelineModule.CrmPipelineService(repository),
   )
   process.stdout.write(
     `Reference CRM: ${server.origin}/hospitality/ and ${server.origin}/professional-services/\nFictional local sessions; disposable PostgreSQL data is removed on exit.\n`,

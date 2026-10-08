@@ -307,6 +307,103 @@ try {
   )
   check('owner/staff/viewer permissions, session-bound CSRF and tenant/resource isolation')
 
+  const opportunityIntent = {
+    requestId: randomUUID(),
+    command: {
+      operation: 'opportunity.create',
+      contactId: receipt.id,
+      contactRevision: 1,
+      title: 'Persisted hotel opportunity',
+    },
+  }
+  const opportunityResponse = await post(
+    origin,
+    '/api/crm/hotel-demo/commands',
+    opportunityIntent,
+    owner,
+  )
+  assert.equal(opportunityResponse.status, 200)
+  const opportunityReceipt = await opportunityResponse.json()
+  const opportunityPath = '/api/crm/hotel-demo/opportunities/' + opportunityReceipt.id
+  for (const [index, stage] of ['qualified', 'proposal', 'won'].entries()) {
+    const response = await post(
+      origin,
+      '/api/crm/hotel-demo/commands',
+      {
+        requestId: randomUUID(),
+        command: {
+          operation: 'opportunity.move',
+          id: opportunityReceipt.id,
+          expectedRevision: index + 1,
+          stage,
+        },
+      },
+      owner,
+    )
+    assert.equal(response.status, 200)
+  }
+  const opportunityDetail = await get(origin, opportunityPath, owner).then((response) =>
+    response.json(),
+  )
+  assert.equal(opportunityDetail.opportunity.stage, 'won')
+  assert.equal(opportunityDetail.transitions.length, 4)
+  assert.equal((await get(origin, opportunityPath, staffSession)).status, 404)
+  assert.equal(
+    (await get(origin, '/api/crm/studio-demo/opportunities/' + opportunityReceipt.id, owner))
+      .status,
+    404,
+  )
+  assert.equal((await get(origin, opportunityPath, view)).status, 200)
+  assert.equal(
+    (await post(origin, '/api/crm/hotel-demo/commands', opportunityIntent, view)).status,
+    403,
+  )
+  const pipelineProjection = await post(
+    origin,
+    '/api/crm/hotel-demo/tools',
+    { name: 'crm.opportunities.list', input: {} },
+    owner,
+  ).then((response) => response.json())
+  assert.equal(pipelineProjection.items[0].id, opportunityReceipt.id)
+  assert.equal('ownerId' in pipelineProjection.items[0], false)
+  assert.notEqual(
+    owner.session.tenants[0].pipelineLabels.won,
+    owner.session.tenants[1].pipelineLabels.won,
+  )
+  check(
+    'session-protected persistent pipeline, canonical stage history, separate grants and configured business labels',
+  )
+
+  const pipelineGrant = join(home, 'pipeline-grant.json')
+  await privateJson(pipelineGrant, {
+    username: account.username,
+    tenants: ['hotel-demo'],
+    access: 'none',
+  })
+  operator(['user', 'pipeline', pipelineGrant])
+  operator(['setup'])
+  assert.equal((await get(origin, '/api/crm/hotel-demo/opportunities', owner)).status, 403)
+  assert.equal(
+    (await post(origin, '/api/crm/hotel-demo/commands', opportunityIntent, owner)).status,
+    403,
+  )
+  assert.equal((await get(origin, '/api/crm/hotel-demo/contacts', owner)).status, 200)
+  await privateJson(pipelineGrant, {
+    username: account.username,
+    tenants: ['hotel-demo'],
+    access: 'write',
+  })
+  operator(['user', 'pipeline', pipelineGrant])
+  assert.deepEqual(
+    await post(origin, '/api/crm/hotel-demo/commands', opportunityIntent, owner).then((response) =>
+      response.json(),
+    ),
+    opportunityReceipt,
+  )
+  check(
+    'operator explicitly enables pipeline; setup preserves existing grants and retry rechecks revocation',
+  )
+
   const note = {
     requestId: randomUUID(),
     command: {
@@ -334,7 +431,9 @@ try {
     (SELECT count(*) FROM archava_crm.activities) AS activities,
     (SELECT count(*) FROM archava_crm.followups) AS followups,
     (SELECT count(*) FROM archava_crm.commands) AS commands,
-    (SELECT count(*) FROM archava_crm.audit) AS audit`)
+    (SELECT count(*) FROM archava_crm.audit) AS audit,
+    (SELECT count(*) FROM archava_crm.opportunities) AS opportunities,
+    (SELECT count(*) FROM archava_crm.opportunity_transitions) AS transitions`)
   try {
     const before = (await snapshot()).rows[0]
     const conversation = await post(
@@ -526,6 +625,19 @@ try {
   )
   assert.equal((await get(origin, '/api/crm/hotel-demo/contacts', logoutSession)).status, 401)
   check('application/database restart retains records, sessions, revoked logout and retry receipt')
+  assert.deepEqual(
+    await get(origin, opportunityPath, owner).then((response) => response.json()),
+    opportunityDetail,
+  )
+  assert.deepEqual(
+    await post(origin, '/api/crm/hotel-demo/commands', opportunityIntent, owner).then((response) =>
+      response.json(),
+    ),
+    opportunityReceipt,
+  )
+  check(
+    'pipeline record, full stage history and retry receipt survive application/database restart',
+  )
 
   for (let i = 0; i < 5; i++)
     assert.equal(
@@ -616,6 +728,17 @@ try {
     receipt,
   )
   const restored = JSON.parse(await readFile(join(home, 'restored-runtime.json'), 'utf8'))
+  assert.deepEqual(
+    await get(origin, opportunityPath, owner).then((response) => response.json()),
+    opportunityDetail,
+  )
+  assert.deepEqual(
+    await post(origin, '/api/crm/hotel-demo/commands', opportunityIntent, owner).then((response) =>
+      response.json(),
+    ),
+    opportunityReceipt,
+  )
+  check('pg_dump/pg_restore preserves pipeline history and the original idempotency receipt')
   assert.ok(
     restored.fingerprintKey === settings.fingerprintKey &&
       restored.identityKey !== settings.identityKey,

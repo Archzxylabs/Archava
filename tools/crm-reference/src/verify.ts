@@ -8,6 +8,7 @@ import { createCluster } from './cluster.js'
 import { prepareConsumers } from './consumers.js'
 import { startReferenceServer } from './server.js'
 import { referenceShutdown } from './shutdown.js'
+import { verifyPipeline } from './pipeline-proof.js'
 
 const shutdown = referenceShutdown()
 const consumers = await prepareConsumers()
@@ -42,7 +43,7 @@ try {
   await postgres.migrateCrm(cluster.owner)
   assert.equal(
     (await cluster.owner.query('SELECT * FROM archava_crm.schema_migrations')).rowCount,
-    1,
+    2,
   )
   await assert.rejects(() =>
     postgres.PostgresCrmRepository.create(cluster.owner, cluster.fingerprintKey),
@@ -318,6 +319,14 @@ try {
   await service.mutate('hotel-demo', owner, atomic)
   check('audit failure rolls back records and command identity; same request can recover')
 
+  const pipelineProof = await verifyPipeline(
+    consumers,
+    cluster,
+    pool,
+    service,
+    [contactId, second.id],
+    check,
+  )
   await cluster.owner.query(
     "UPDATE archava_crm.memberships SET active=false WHERE principal_id='hotel-viewer'",
   )
@@ -338,7 +347,25 @@ try {
     'membership revocation rechecked; database restart preserves records, audit and retry receipt',
   )
 
-  server = await startReferenceServer(service, consumers.publicDirectory, crm.createCrmApi)
+  const pipelineModule = consumers.pipelines[0]
+  assert.ok(pipelineModule)
+  const pipeline = new pipelineModule.CrmPipelineService(
+    await postgres.PostgresCrmRepository.create(pool, cluster.fingerprintKey),
+  )
+  assert.deepEqual(
+    await pipeline.mutate('hotel-demo', owner, pipelineProof.create),
+    pipelineProof.receipt,
+  )
+  assert.ok(
+    (await pipeline.detail('hotel-demo', owner, pipelineProof.receipt.id)).transitions.length >= 2,
+  )
+  check('pipeline record/history and identical retry survive a PostgreSQL restart')
+  server = await startReferenceServer(
+    service,
+    consumers.publicDirectory,
+    crm.createCrmApi,
+    pipeline,
+  )
   const token = server.token(owner)
   const readToken = server.token(viewer)
   const apiOrigin = server.origin

@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import type { Pool } from 'pg'
 import { z } from 'zod'
 import { CrmError, createCrmApi, type CrmService } from '@archava/crm'
+import type { CrmPipelineService } from '@archava/crm/pipeline'
 import { createCrmConversation, LocalCrmPlanner } from '@archava/crm-assistant'
 import { randomUUID } from 'node:crypto'
 import { IdentityError, type PostgresIdentity } from '@archava/identity-pg'
@@ -30,6 +31,7 @@ export function createHostHandler(
   pool: Pool,
   settings: RuntimeSettings,
   origin: string,
+  pipeline?: CrmPipelineService,
 ) {
   const secure = new URL(origin).protocol === 'https:'
   const cookieName = secure ? '__Host-archava_session' : 'archava_local_session'
@@ -112,8 +114,10 @@ export function createHostHandler(
         )
       }
       if (url.pathname.startsWith('/api/crm/'))
-        return await createCrmApi(service, () =>
-          Promise.resolve({ kind: 'human', id: session.principalId }),
+        return await createCrmApi(
+          service,
+          () => Promise.resolve({ kind: 'human', id: session.principalId }),
+          pipeline,
         )(request)
       return json({ error: { message: 'Unknown route.' } }, 404)
     } catch (error) {
@@ -162,6 +166,7 @@ export async function startCrmHost(
   pool: Pool,
   settings: RuntimeSettings,
   publicDirectory: string,
+  pipeline?: CrmPipelineService,
 ) {
   const handle = (request: Request, source: string) =>
     createHostHandler(
@@ -170,6 +175,7 @@ export async function startCrmHost(
       pool,
       settings,
       settings.publicOrigin ?? `http://127.0.0.1:${(server.address() as { port: number }).port}`,
+      pipeline,
     )(request, source)
   const server = createServer(
     { maxHeaderSize: 8192, requestTimeout: 10000, headersTimeout: 10000 },

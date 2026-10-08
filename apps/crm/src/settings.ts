@@ -2,6 +2,7 @@ import { lstat, mkdir, readFile, writeFile } from 'node:fs/promises'
 import { resolve, join } from 'node:path'
 import { z } from 'zod'
 import { tenantSchema } from '@archava/crm'
+import { pipelineLabelsSchema } from '@archava/crm/pipeline-contracts'
 
 export const databaseName = z.string().regex(/^[a-z][a-z0-9_]{0,62}$/)
 export const tenantConfig = z
@@ -10,6 +11,7 @@ export const tenantConfig = z
     title: z.string().min(1).max(160),
     contacts: z.string().min(1).max(80),
     contact: z.string().min(1).max(80),
+    pipelineLabels: pipelineLabelsSchema.optional(),
   })
   .strict()
 export const settingsSchema = z

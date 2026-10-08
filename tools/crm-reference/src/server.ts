@@ -3,24 +3,30 @@ import { readFile } from 'node:fs/promises'
 import { resolve, join } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import type { createCrmApi, CrmService, CrmPrincipal } from '@archava/crm'
+import type { CrmPipelineService } from '@archava/crm/pipeline'
 
 /** Fictional identities only, on loopback. Replace this host auth adapter for release. */
 export async function startReferenceServer(
   service: CrmService,
   publicDirectory: string,
   apiFactory: typeof createCrmApi,
+  pipeline?: CrmPipelineService,
 ) {
   const sessions = new Map<string, CrmPrincipal>()
-  const api = apiFactory(service, (request) => {
-    const bearer = request.headers.get('authorization')?.replace(/^Bearer /, '')
-    const cookie = request.headers
-      .get('cookie')
-      ?.split(';')
-      .map((item) => item.trim())
-      .find((item) => item.startsWith('crm_reference='))
-      ?.slice('crm_reference='.length)
-    return Promise.resolve(sessions.get(bearer ?? cookie ?? '') ?? null)
-  })
+  const api = apiFactory(
+    service,
+    (request) => {
+      const bearer = request.headers.get('authorization')?.replace(/^Bearer /, '')
+      const cookie = request.headers
+        .get('cookie')
+        ?.split(';')
+        .map((item) => item.trim())
+        .find((item) => item.startsWith('crm_reference='))
+        ?.slice('crm_reference='.length)
+      return Promise.resolve(sessions.get(bearer ?? cookie ?? '') ?? null)
+    },
+    pipeline,
+  )
   const server: Server = createServer((incoming, outgoing) => {
     void (async () => {
       const origin = `http://127.0.0.1:${(server.address() as { port: number }).port}`

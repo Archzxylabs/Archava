@@ -25,6 +25,11 @@ The password is never printed. Read it privately to sign in, then change the
 password through the account form and remove the obsolete bootstrap file.
 Repeat setup preserves accounts, records and secrets.
 
+The optional [sales pipeline](CRM_PIPELINE.md) uses the same host/session and shared
+CRM domain. Upgrade with a pre-upgrade backup and a stopped host. Existing accounts
+receive no new grants from migration/setup; use the explicit `crm:user pipeline`
+operator command documented there. Fresh role presets include pipeline access.
+
 State lives in `.local/crm`, mode 0700, outside generated `dist`. Graceful shutdown
 closes the host and the PostgreSQL process it started, preserving files. Admin
 commands preserve an already-running database. PostgreSQL uses a private Unix

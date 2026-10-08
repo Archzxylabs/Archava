@@ -1,0 +1,161 @@
+{
+  "schema_version": "1.0.0",
+  "date": "2026-10-09",
+  "baseline": "bddb4fe",
+  "root": {
+    "gates": 8,
+    "passed": true,
+    "testFiles": 87,
+    "tests": 1339
+  },
+  "crm": {
+    "node": "v22.22.3",
+    "checks": [
+      "migration ledger repeatability and non-owner runtime requirement",
+      "eight concurrent identical requests produce one contact and one audit receipt",
+      "two business contexts persist separate records; cross-tenant and public callers refused",
+      "two cold-installed conversation adapters use identical artifacts and real tenant-scoped CRM data",
+      "optimistic revision race, preserved optional fields and canonical retry/new-intent separation",
+      "viewer writes refused and assigned-only resource access enforced",
+      "machine/initiator permission intersection, projected read tools and no machine write path",
+      "draft remains read-only; human activity/follow-up lifecycle persisted and audited",
+      "bounded keyset pagination, parameterized hostile search and strict mutation schema",
+      "forced tenant RLS, pool scope reset, composite tenant foreign keys and immutable audit",
+      "audit failure rolls back records and command identity; same request can recover",
+      "two independent installed pipeline consumers; tenant isolation and eight retries produce one history/audit event",
+      "stage races, invalid jumps, mandatory loss reason, terminal outcomes and current revision enforced",
+      "pipeline-specific grants, assigned resources, delegation intersection, read-only tools and replay revocation",
+      "atomic rollback includes command/history/audit; bounded pages, escaped search, forced RLS and immutable history",
+      "real v1-to-v2 upgrade preserves records, audit, receipts and original grants; modified ledger refused",
+      "membership revocation rechecked; database restart preserves records, audit and retry receipt",
+      "pipeline record/history and identical retry survive a PostgreSQL restart",
+      "authenticated HTTP API rejects anonymous, cross-tenant, viewer, cross-origin and oversized requests"
+    ],
+    "consumers": [
+      {
+        "consumer": "hospitality",
+        "modules": [
+          {
+            "name": "@archava/crm",
+            "version": "0.2.0",
+            "implementationSha256": "4d710161c4b340eaddebe6d905cfe7d763e50ae052c1ca738bba112d531c7f3d",
+            "tarballSha256": "16eb5e77643960710406ada14819945cf87c9ff2230b97baacec7886e094c691"
+          },
+          {
+            "name": "@archava/crm-pg",
+            "version": "0.2.0",
+            "implementationSha256": "f7eab41172db9951358ead49c0b82b3f9d6e0b7cf88ad324c238450200cba428",
+            "tarballSha256": "bde99f498743e2f007f26d2749b5e41771e5cddbc49896fdcaa195fec2f5e826"
+          },
+          {
+            "name": "@archava/crm-assistant",
+            "version": "0.1.0",
+            "implementationSha256": "8eb1e472d7408ad286872680bb3575d0817c1b7beca4712e4f73ab4c15dc1077",
+            "tarballSha256": "af89373ee412f6036cc7afad578dfebf9f6368bf073344e4d59a0b64b412101d"
+          }
+        ]
+      },
+      {
+        "consumer": "professional-services",
+        "modules": [
+          {
+            "name": "@archava/crm",
+            "version": "0.2.0",
+            "implementationSha256": "4d710161c4b340eaddebe6d905cfe7d763e50ae052c1ca738bba112d531c7f3d",
+            "tarballSha256": "16eb5e77643960710406ada14819945cf87c9ff2230b97baacec7886e094c691"
+          },
+          {
+            "name": "@archava/crm-pg",
+            "version": "0.2.0",
+            "implementationSha256": "f7eab41172db9951358ead49c0b82b3f9d6e0b7cf88ad324c238450200cba428",
+            "tarballSha256": "bde99f498743e2f007f26d2749b5e41771e5cddbc49896fdcaa195fec2f5e826"
+          },
+          {
+            "name": "@archava/crm-assistant",
+            "version": "0.1.0",
+            "implementationSha256": "8eb1e472d7408ad286872680bb3575d0817c1b7beca4712e4f73ab4c15dc1077",
+            "tarballSha256": "af89373ee412f6036cc7afad578dfebf9f6368bf073344e4d59a0b64b412101d"
+          }
+        ]
+      }
+    ],
+    "postgres": "real disposable cluster",
+    "providerCalls": 0
+  },
+  "runtime": {
+    "node": "v22.22.3",
+    "checks": [
+      "private persistent installation, stable keys and idempotent setup",
+      "atomic operator enrollment and non-owner runtime cannot enroll or activate accounts",
+      "real credentials, cookie-only session, origin checks and browser/server isolation",
+      "private connections ignore ambient database credentials, service files and destinations",
+      "owner/staff/viewer permissions, session-bound CSRF and tenant/resource isolation",
+      "session-protected persistent pipeline, canonical stage history, separate grants and configured business labels",
+      "operator explicitly enables pipeline; setup preserves existing grants and retry rechecks revocation",
+      "conversation reads real CRM in two businesses and prepares drafts without commands, audit writes or sending",
+      "conversation rejects anonymous, forged roles/tenants, missing CSRF, viewer preparation and cross-resource staff reads",
+      "authorized tool projection, hashed sessions, idle/absolute expiry and membership revocation",
+      "application/database restart retains records, sessions, revoked logout and retry receipt",
+      "pipeline record, full stage history and retry receipt survive application/database restart",
+      "durable login budget and password change invalidates every old session",
+      "private pg_dump archive plus runtime metadata; restore leaves the original database untouched",
+      "pg_dump/pg_restore preserves pipeline history and the original idempotency receipt",
+      "restored records/audit/retry identity survive; old credentials and sessions require explicit recovery",
+      "restore preserves one mutation audit and spoofed forwarding headers cannot bypass login budget",
+      "database failures are observable through sanitized health responses and recover without process crash"
+    ],
+    "checkpoint": "4f24164",
+    "database": "real private persistent PostgreSQL; pg_dump/pg_restore exercised",
+    "providerCalls": 0
+  },
+  "browser": {
+    "checks": [
+      "unauthenticated visitor sees sign-in and no business records",
+      "invalid credentials remain outside the workspace",
+      "owner credentials open the persisted shared CRM dashboard",
+      "reload keeps the authenticated session and database records",
+      "shared dashboard writes through the session and CSRF-protected API",
+      "shared pipeline creates an opportunity linked to the explicitly selected contact",
+      "lost mutation response retries the same UUID and creates one stage event",
+      "canonical stage history reaches Won and the terminal outcome has no move form",
+      "Archava conversation lists authorized CRM contacts with a source label",
+      "explicit conversation selection resolves a live contact summary",
+      "stored HTML and prompt injection render as inert CRM text",
+      "follow-up draft has user-supplied content and time without creating a task",
+      "conversation does not turn a send request into a side effect",
+      "direct browser mutation without CSRF is refused",
+      "business selection switches configuration and isolated records",
+      "switching business clears conversation, selected contact and draft fields",
+      "business switch clears old pipeline selection and applies the second label configuration",
+      "a late response from the old business cannot repopulate the new conversation",
+      "same conversation component reads the second business without sharing records",
+      "sign-out clears the visible workspace",
+      "sign-out also destroys conversation data",
+      "sign-out destroys pipeline records and pending selections",
+      "a logged-out session stays logged out after reload",
+      "staff sees only its assigned contacts and allowed business",
+      "pipeline applies assigned staff scope without exposing owner opportunities",
+      "conversation keeps assigned staff scope",
+      "staff cannot bypass tenant selection by calling the API directly",
+      "owner and staff operate through the same module and database",
+      "session credential stays HttpOnly and business data is absent from localStorage",
+      "authenticated CRM remains usable at mobile width",
+      "no unexpected browser errors, CSP violations or failed resources"
+    ],
+    "count": 31
+  },
+  "localInstall": {
+    "preUpgradeBackup": true,
+    "existingRecordsAccountsMembershipsKeysPreservedBeforeGrant": true,
+    "ownerPipelineExplicitlyEnabled": true,
+    "healthStatus": 200,
+    "testOpportunitiesCreated": 0
+  },
+  "boundaries": {
+    "publicDeployment": false,
+    "machineWrites": false,
+    "pipelineConversationIntents": false,
+    "pricingChanged": false,
+    "actReadinessChanged": false
+  }
+}

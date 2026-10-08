@@ -1,13 +1,16 @@
 {
   "name": "@archava/crm",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./dashboard": "./src/dashboard.ts"
+    "./dashboard": "./src/dashboard.ts",
+    "./pipeline": "./src/pipeline.ts",
+    "./pipeline-contracts": "./src/pipeline-contracts.ts",
+    "./pipeline-dashboard": "./src/pipeline-dashboard.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json"

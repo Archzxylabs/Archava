@@ -22,7 +22,17 @@ import {
   type CrmMutation,
   type MutationReceipt,
 } from '@archava/crm'
-import { CRM_MIGRATION, crmMigrationChecksum } from './migrate.js'
+import { crmMigrationLedger } from './migrate.js'
+import {
+  opportunitySchema,
+  transitionSchema,
+  pipelinePageSchema,
+  PIPELINE_TRANSITIONS,
+  type CrmPipelineRepository,
+  type PipelinePage,
+  type OpportunityPage,
+  type OpportunityDetail,
+} from '@archava/crm/pipeline'
 
 type Row = Record<string, unknown>
 const timestamp = (value: unknown): string => {
@@ -64,9 +74,22 @@ const followup = (row: Row) =>
     createdAt: timestamp(row.created_at),
     updatedAt: timestamp(row.updated_at),
   })
+const opportunity = (row: Row) =>
+  opportunitySchema.parse({
+    id: row.id,
+    tenantId: row.tenant_id,
+    contactId: row.contact_id,
+    ownerId: row.owner_id,
+    title: row.title,
+    stage: row.stage,
+    revision: row.revision,
+    lossReason: row.loss_reason,
+    createdAt: timestamp(row.created_at),
+    updatedAt: timestamp(row.updated_at),
+  })
 const receiptSchema = z
   .object({
-    kind: z.enum(['contact', 'activity', 'followup']),
+    kind: z.enum(['contact', 'activity', 'followup', 'opportunity']),
     id: idSchema,
     revision: z.number().int().positive(),
   })
@@ -85,7 +108,7 @@ function canonical(value: unknown): string {
   return JSON.stringify(value)
 }
 
-export class PostgresCrmRepository implements CrmRepository {
+export class PostgresCrmRepository implements CrmRepository, CrmPipelineRepository {
   private constructor(
     private readonly pool: Pool,
     private readonly fingerprintKey: string,
@@ -102,18 +125,22 @@ export class PostgresCrmRepository implements CrmRepository {
     if (role.rows[0]?.unsafe !== false)
       throw new Error('CRM runtime must use a non-owner role without superuser/BYPASSRLS')
     const migrations = await pool.query<{ id: string; checksum: string }>(
-      'SELECT id,checksum FROM archava_crm.schema_migrations',
+      'SELECT id,checksum FROM archava_crm.schema_migrations ORDER BY id',
     )
+    const expectedMigrations = await crmMigrationLedger()
     if (
-      migrations.rows.length !== 1 ||
-      migrations.rows[0]?.id !== CRM_MIGRATION ||
-      migrations.rows[0]?.checksum !== (await crmMigrationChecksum())
+      migrations.rows.length !== expectedMigrations.length ||
+      migrations.rows.some(
+        (row, index) =>
+          row.id !== expectedMigrations[index]?.id ||
+          row.checksum !== expectedMigrations[index]?.checksum,
+      )
     )
       throw new Error('Unsupported CRM schema version/checksum')
     const policies = await pool.query<{ count: number }>(
       "SELECT count(*)::integer AS count FROM pg_class WHERE relnamespace='archava_crm'::regnamespace AND relrowsecurity AND relforcerowsecurity",
     )
-    if (policies.rows[0]?.count !== 6)
+    if (policies.rows[0]?.count !== 8)
       throw new Error('CRM tenant row policies are not enabled/forced')
     return new PostgresCrmRepository(pool, fingerprintKey)
   }
@@ -244,16 +271,101 @@ export class PostgresCrmRepository implements CrmRepository {
     })
   }
 
+  private async ownedOpportunity(
+    client: PoolClient,
+    tenant: string,
+    access: CrmAccess,
+    id: string,
+    lock?: 'update' | 'share',
+  ) {
+    if (!access.permissions.includes('contacts.read'))
+      throw new CrmError('forbidden', 'Contact access is required.')
+    const row = (
+      await client.query<Row>(
+        `SELECT * FROM archava_crm.opportunities WHERE tenant_id=$1 AND id=$2 AND ($3::boolean OR owner_id=$4) ${lock === 'update' ? 'FOR UPDATE' : lock === 'share' ? 'FOR SHARE' : ''}`,
+        [tenant, id, access.scope === 'all', access.ownerId],
+      )
+    ).rows[0]
+    if (!row || typeof row.contact_id !== 'string')
+      throw new CrmError('not_found', 'Opportunity not found.')
+    await this.ownedContact(client, tenant, access, row.contact_id)
+    return opportunity(row)
+  }
+  listOpportunities(
+    tenant: string,
+    principal: CrmPrincipal,
+    raw: PipelinePage,
+  ): Promise<OpportunityPage> {
+    const page = pipelinePageSchema.parse(raw)
+    return this.transaction(tenant, principal, 'pipeline.read', async (client, access) => {
+      if (!access.permissions.includes('contacts.read'))
+        throw new CrmError('forbidden', 'Contact access is required.')
+      if (page.contactId) await this.ownedContact(client, tenant, access, page.contactId)
+      const search = page.search.replace(/[\\%_]/g, (char) => '\\' + char)
+      const rows = (
+        await client.query<Row>(
+          `SELECT * FROM archava_crm.opportunities WHERE tenant_id=$1 AND ($2::boolean OR owner_id=$3) AND ($4::uuid IS NULL OR id>$4) AND ($5::text IS NULL OR stage=$5) AND ($6::uuid IS NULL OR contact_id=$6) AND title ILIKE $7 ESCAPE '\\' ORDER BY id LIMIT $8`,
+          [
+            tenant,
+            access.scope === 'all',
+            access.ownerId,
+            page.after ?? null,
+            page.stage ?? null,
+            page.contactId ?? null,
+            '%' + search + '%',
+            page.limit + 1,
+          ],
+        )
+      ).rows
+      const items = rows.slice(0, page.limit).map(opportunity)
+      return { items, next: rows.length > page.limit ? (items.at(-1)?.id ?? null) : null }
+    })
+  }
+  opportunityDetail(
+    tenant: string,
+    principal: CrmPrincipal,
+    rawId: string,
+  ): Promise<OpportunityDetail> {
+    const id = idSchema.parse(rawId)
+    return this.transaction(tenant, principal, 'pipeline.read', async (client, access) => {
+      // Prevent a concurrent move between the record and history reads.
+      const record = await this.ownedOpportunity(client, tenant, access, id, 'share')
+      const rows = (
+        await client.query<Row>(
+          'SELECT * FROM archava_crm.opportunity_transitions WHERE tenant_id=$1 AND opportunity_id=$2 ORDER BY revision DESC LIMIT 20',
+          [tenant, id],
+        )
+      ).rows
+      return {
+        opportunity: record,
+        transitions: rows.map((row) =>
+          transitionSchema.parse({
+            requestId: row.request_id,
+            opportunityId: row.opportunity_id,
+            from: row.from_stage,
+            to: row.to_stage,
+            reason: row.reason,
+            actorId: row.actor_id,
+            revision: row.revision,
+            occurredAt: timestamp(row.occurred_at),
+          }),
+        ),
+      }
+    })
+  }
+
   mutate(tenant: string, principal: CrmPrincipal, raw: CrmMutation): Promise<MutationReceipt> {
     if (principal.kind !== 'human')
       throw new CrmError('forbidden', 'Machine CRM writes require a verified Act integration.')
     const mutation = mutationSchema.parse(raw)
     const command = mutation.command
-    const permission: CrmPermission = command.operation.startsWith('contact.')
-      ? 'contacts.write'
-      : command.operation === 'activity.add'
-        ? 'activities.write'
-        : 'followups.write'
+    const permission: CrmPermission = command.operation.startsWith('opportunity.')
+      ? 'pipeline.write'
+      : command.operation.startsWith('contact.')
+        ? 'contacts.write'
+        : command.operation === 'activity.add'
+          ? 'activities.write'
+          : 'followups.write'
     const fingerprint = createHmac('sha256', this.fingerprintKey)
       .update(canonical({ tenant, principal, command }))
       .digest('hex')
@@ -273,6 +385,8 @@ export class PostgresCrmRepository implements CrmRepository {
           throw new CrmError('conflict', 'CRM request identity already belongs to another command.')
         const receipt = receiptSchema.parse(existing.receipt)
         if (receipt.kind === 'contact') await this.ownedContact(client, tenant, access, receipt.id)
+        else if (receipt.kind === 'opportunity')
+          await this.ownedOpportunity(client, tenant, access, receipt.id)
         else {
           const table = receipt.kind === 'activity' ? 'activities' : 'followups'
           const row = (
@@ -288,7 +402,47 @@ export class PostgresCrmRepository implements CrmRepository {
         return receipt
       }
       let receipt: MutationReceipt
-      if (command.operation === 'contact.create') {
+      if (command.operation === 'opportunity.create') {
+        if (!access.permissions.includes('contacts.read'))
+          throw new CrmError('forbidden', 'Contact access is required.')
+        const record = await this.ownedContact(client, tenant, access, command.contactId, true)
+        if (record.revision !== command.contactRevision)
+          throw new CrmError('conflict', 'CRM contact revision changed.')
+        const id = randomUUID()
+        await client.query(
+          'INSERT INTO archava_crm.opportunities(tenant_id,id,contact_id,owner_id,title) VALUES($1,$2,$3,$4,$5)',
+          [tenant, id, record.id, record.ownerId, command.title],
+        )
+        await client.query(
+          "INSERT INTO archava_crm.opportunity_transitions(tenant_id,request_id,opportunity_id,to_stage,actor_id,revision) VALUES($1,$2,$3,'new',$4,1)",
+          [tenant, mutation.requestId, id, principal.id],
+        )
+        receipt = { kind: 'opportunity', id, revision: 1 }
+      } else if (command.operation === 'opportunity.move') {
+        const record = await this.ownedOpportunity(client, tenant, access, command.id, 'update')
+        if (record.revision !== command.expectedRevision)
+          throw new CrmError('conflict', 'Opportunity revision changed.')
+        if (!PIPELINE_TRANSITIONS[record.stage].includes(command.stage))
+          throw new CrmError('conflict', 'Stage transition is not permitted.')
+        await client.query(
+          'UPDATE archava_crm.opportunities SET stage=$3,loss_reason=$4,revision=revision+1,updated_at=now() WHERE tenant_id=$1 AND id=$2',
+          [tenant, command.id, command.stage, command.stage === 'lost' ? command.reason : null],
+        )
+        await client.query(
+          'INSERT INTO archava_crm.opportunity_transitions(tenant_id,request_id,opportunity_id,from_stage,to_stage,reason,actor_id,revision) VALUES($1,$2,$3,$4,$5,$6,$7,$8)',
+          [
+            tenant,
+            mutation.requestId,
+            command.id,
+            record.stage,
+            command.stage,
+            command.reason ?? null,
+            principal.id,
+            record.revision + 1,
+          ],
+        )
+        receipt = { kind: 'opportunity', id: command.id, revision: record.revision + 1 }
+      } else if (command.operation === 'contact.create') {
         const id = randomUUID()
         await client.query(
           'INSERT INTO archava_crm.contacts(tenant_id,id,full_name,email,organization,owner_id) VALUES($1,$2,$3,$4,$5,$6)',

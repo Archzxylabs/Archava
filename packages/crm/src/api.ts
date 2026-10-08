@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { CrmError, type CrmPrincipal } from './contracts.js'
 import { type CrmService, createCrmTools } from './service.js'
+import { type CrmPipelineService, createPipelineTools } from './pipeline.js'
 
 export type CrmAuthenticator = (request: Request) => Promise<CrmPrincipal | null>
 const json = (value: unknown, status = 200) =>
@@ -30,7 +31,11 @@ async function readBoundedBody(request: Request): Promise<string | null> {
 
 /** Same-origin JSON API. Authenticate using a host session, not body roles/ids.
  * Host must enforce CSRF protection for cookie-based deployments. */
-export function createCrmApi(service: CrmService, authenticate: CrmAuthenticator) {
+export function createCrmApi(
+  service: CrmService,
+  authenticate: CrmAuthenticator,
+  pipeline?: CrmPipelineService,
+) {
   return async (request: Request): Promise<Response> => {
     try {
       const url = new URL(request.url)
@@ -58,9 +63,28 @@ export function createCrmApi(service: CrmService, authenticate: CrmAuthenticator
               search: url.searchParams.get('search') ?? '',
             }),
           )
+        if (parts[3] === 'opportunities' && pipeline)
+          return json(
+            await pipeline.list(tenant, principal, {
+              ...(url.searchParams.has('after') ? { after: url.searchParams.get('after') } : {}),
+              ...(url.searchParams.has('stage') ? { stage: url.searchParams.get('stage') } : {}),
+              ...(url.searchParams.has('contactId')
+                ? { contactId: url.searchParams.get('contactId') }
+                : {}),
+              limit: url.searchParams.has('limit') ? Number(url.searchParams.get('limit')) : 20,
+              search: url.searchParams.get('search') ?? '',
+            }),
+          )
       }
       if (request.method === 'GET' && parts.length === 5 && parts[3] === 'contacts')
         return json(await service.detail(tenant, principal, parts[4]))
+      if (
+        request.method === 'GET' &&
+        parts.length === 5 &&
+        parts[3] === 'opportunities' &&
+        pipeline
+      )
+        return json(await pipeline.detail(tenant, principal, parts[4]))
       if (
         request.method === 'POST' &&
         parts.length === 4 &&
@@ -83,6 +107,10 @@ export function createCrmApi(service: CrmService, authenticate: CrmAuthenticator
           .object({ name: z.string().max(80), input: z.unknown() })
           .strict()
           .parse(input)
+        if (pipeline && ['crm.opportunities.list', 'crm.opportunity.summary'].includes(tool.name))
+          return json(
+            await createPipelineTools(pipeline, tenant, principal).invoke(tool.name, tool.input),
+          )
         return json(await createCrmTools(service, tenant, principal).invoke(tool.name, tool.input))
       }
       return json({ error: { code: 'not_found', message: 'Unknown CRM route.' } }, 404)

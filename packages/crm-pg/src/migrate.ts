@@ -3,16 +3,28 @@ import { readFile } from 'node:fs/promises'
 import type { Pool } from 'pg'
 
 export const CRM_MIGRATION = '001_crm_contacts'
+export const CRM_MIGRATIONS = [CRM_MIGRATION, '002_sales_pipeline'] as const
 
-export async function crmMigrationChecksum(): Promise<string> {
-  const sql = await readFile(new URL('../migrations/001_crm_contacts.sql', import.meta.url), 'utf8')
+export async function crmMigrationChecksum(id: string = CRM_MIGRATION): Promise<string> {
+  if (!CRM_MIGRATIONS.some((migration) => migration === id))
+    throw new Error('Unknown CRM migration')
+  const sql = await readFile(new URL(`../migrations/${id}.sql`, import.meta.url), 'utf8')
   return createHash('sha256').update(sql).digest('hex')
+}
+export async function crmMigrationLedger() {
+  return await Promise.all(
+    CRM_MIGRATIONS.map(async (id) => ({ id, checksum: await crmMigrationChecksum(id) })),
+  )
 }
 
 /** Run with a migration-owner connection; never with the application's login. */
 export async function migrateCrm(pool: Pool): Promise<void> {
-  const sql = await readFile(new URL('../migrations/001_crm_contacts.sql', import.meta.url), 'utf8')
-  const checksum = createHash('sha256').update(sql).digest('hex')
+  const migrations = await Promise.all(
+    CRM_MIGRATIONS.map(async (id) => {
+      const sql = await readFile(new URL(`../migrations/${id}.sql`, import.meta.url), 'utf8')
+      return { id, sql, checksum: createHash('sha256').update(sql).digest('hex') }
+    }),
+  )
   const client = await pool.connect()
   try {
     await client.query('BEGIN')
@@ -22,15 +34,21 @@ export async function migrateCrm(pool: Pool): Promise<void> {
       'CREATE TABLE IF NOT EXISTS archava_crm.schema_migrations (id text PRIMARY KEY, checksum text NOT NULL, applied_at timestamptz NOT NULL DEFAULT now())',
     )
     const existing = await client.query<{ id: string; checksum: string }>(
-      'SELECT id,checksum FROM archava_crm.schema_migrations',
+      'SELECT id,checksum FROM archava_crm.schema_migrations ORDER BY id',
     )
-    if (existing.rows.some((row) => row.id !== CRM_MIGRATION || row.checksum !== checksum))
+    if (
+      existing.rows.length > migrations.length ||
+      existing.rows.some(
+        (row, index) =>
+          row.id !== migrations[index]?.id || row.checksum !== migrations[index]?.checksum,
+      )
+    )
       throw new Error('Unsupported or modified CRM migration history')
-    if (existing.rows.length === 0) {
-      await client.query(sql)
+    for (const migration of migrations.slice(existing.rows.length)) {
+      await client.query(migration.sql)
       await client.query('INSERT INTO archava_crm.schema_migrations(id,checksum) VALUES($1,$2)', [
-        CRM_MIGRATION,
-        checksum,
+        migration.id,
+        migration.checksum,
       ])
     }
     await client.query('COMMIT')
@@ -54,5 +72,7 @@ export async function grantCrmRuntime(pool: Pool, role: string): Promise<void> {
     `GRANT SELECT,INSERT,UPDATE ON archava_crm.contacts,archava_crm.followups,archava_crm.commands TO "${role}"`,
   )
   await pool.query(`GRANT SELECT,INSERT ON archava_crm.activities,archava_crm.audit TO "${role}"`)
+  await pool.query(`GRANT SELECT,INSERT,UPDATE ON archava_crm.opportunities TO "${role}"`)
+  await pool.query(`GRANT SELECT,INSERT ON archava_crm.opportunity_transitions TO "${role}"`)
   await pool.query(`GRANT EXECUTE ON FUNCTION archava_crm.lock_membership(text,text) TO "${role}"`)
 }

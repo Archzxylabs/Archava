@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import { CrmService, CRM_CONTACTS_MANIFEST, mutationSchema } from '@archava/crm'
+import { CrmPipelineService, CRM_PIPELINE_MANIFEST } from '@archava/crm/pipeline'
 import { PostgresCrmRepository, migrateCrm } from '@archava/crm-pg'
 assert.equal(typeof CrmService, 'function')
 assert.equal(typeof PostgresCrmRepository.create, 'function')
@@ -21,3 +22,6 @@ assert.ok(
   ),
 )
 console.log('PASS independent CRM package declarations, browser build and public contracts')
+
+assert.equal(typeof CrmPipelineService, 'function')
+assert.equal(CRM_PIPELINE_MANIFEST.id, 'crm_sales_pipeline')

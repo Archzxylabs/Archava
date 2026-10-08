@@ -92,6 +92,51 @@ try {
     'document.querySelector("[data-crm-detail]").textContent.includes("Browser permanent guest")',
   )
   check('shared dashboard writes through the session and CSRF-protected API', true)
+  await wait(
+    'document.querySelector("[data-pipeline-contact]").textContent.includes("Browser permanent guest")',
+  )
+  await fill('[data-pipeline-create] [name=title]', 'Browser group stay')
+  await evaluate('document.querySelector("[data-pipeline-create]").requestSubmit()')
+  await wait(
+    'document.querySelector("[data-pipeline-detail]").textContent.includes("Browser group stay")',
+  )
+  check(
+    'shared pipeline creates an opportunity linked to the explicitly selected contact',
+    await evaluate(
+      'document.querySelector("[data-pipeline-detail]").textContent.includes("New inquiry") && document.querySelector("[data-pipeline-detail] ol").children.length===1',
+    ),
+  )
+  await evaluate(`window.pipelineOriginalFetch=window.fetch;window.pipelineRetryIds=[];window.pipelineLoseResponse=true;
+    window.fetch=async(...args)=>{const response=await window.pipelineOriginalFetch(...args);if(String(args[0]).endsWith('/commands') && JSON.parse(args[1].body).command.operation==='opportunity.move'){window.pipelineRetryIds.push(JSON.parse(args[1].body).requestId);if(window.pipelineLoseResponse){window.pipelineLoseResponse=false;throw new Error('fixture-response-lost')}}return response}`)
+  await evaluate('document.querySelector("[data-pipeline-move]").requestSubmit()')
+  await wait(
+    'document.querySelector("[data-pipeline-status]").textContent==="fixture-response-lost"',
+  )
+  await evaluate('document.querySelector("[data-pipeline-move]").requestSubmit()')
+  await wait('document.querySelector("[data-pipeline-detail] ol").children.length===2')
+  check(
+    'lost mutation response retries the same UUID and creates one stage event',
+    await evaluate(
+      'window.pipelineRetryIds.length===2 && new Set(window.pipelineRetryIds).size===1 && document.querySelector("[data-pipeline-detail]").textContent.includes("Qualified inquiry")',
+    ),
+  )
+  await evaluate(
+    'window.fetch=window.pipelineOriginalFetch;delete window.pipelineOriginalFetch;delete window.pipelineRetryIds;delete window.pipelineLoseResponse',
+  )
+  for (const [stage, changes] of [
+    ['proposal', 3],
+    ['won', 4],
+  ]) {
+    await fill('[data-pipeline-move] [name=stage]', stage)
+    await evaluate('document.querySelector("[data-pipeline-move]").requestSubmit()')
+    await wait(`document.querySelector("[data-pipeline-detail] ol").children.length===${changes}`)
+  }
+  check(
+    'canonical stage history reaches Won and the terminal outcome has no move form',
+    await evaluate(
+      'document.querySelector("[data-pipeline-detail]").textContent.includes("Won inquiry") && !document.querySelector("[data-pipeline-move]")',
+    ),
+  )
   await ask('tampilkan kontak')
   check(
     'Archava conversation lists authorized CRM contacts with a source label',
@@ -167,6 +212,12 @@ try {
       'document.querySelector("[data-archava-log]").textContent==="" && document.querySelector("[data-archava-selected]").textContent==="Belum ada kontak dipilih." && document.querySelector("[data-archava-form] [name=summary]").value===""',
     ),
   )
+  check(
+    'business switch clears old pipeline selection and applies the second label configuration',
+    await evaluate(
+      'document.querySelector("[data-pipeline-detail]").textContent==="" && !document.querySelector("#pipeline").textContent.includes("Browser group stay") && document.querySelector("[data-pipeline-filter]").textContent.includes("Won opportunity") && document.querySelector("[data-pipeline-contact]").textContent.includes("Select a contact")',
+    ),
+  )
   await evaluate(
     'window.fetch=window.archavaOriginalFetch;window.archavaReleaseResponse();delete window.archavaOriginalFetch;delete window.archavaReleaseResponse;new Promise(done=>setTimeout(done,50))',
   )
@@ -192,6 +243,10 @@ try {
     'sign-out also destroys conversation data',
     await evaluate('document.querySelector("#conversation").textContent===""'),
   )
+  check(
+    'sign-out destroys pipeline records and pending selections',
+    await evaluate('document.querySelector("#pipeline").textContent===""'),
+  )
   await page.navigate(origin)
   check(
     'a logged-out session stays logged out after reload',
@@ -203,6 +258,12 @@ try {
     'staff sees only its assigned contacts and allowed business',
     await evaluate(
       'document.querySelector("#tenants").options.length===1 && !document.querySelector("[data-crm-contacts]").textContent.includes("Owner contact") && !document.querySelector("[data-crm-contacts]").textContent.includes("Browser permanent guest")',
+    ),
+  )
+  check(
+    'pipeline applies assigned staff scope without exposing owner opportunities',
+    await evaluate(
+      'document.querySelector("[data-pipeline-list]").textContent==="" && !document.querySelector("#pipeline").textContent.includes("Browser group stay")',
     ),
   )
   await ask('tampilkan kontak')
