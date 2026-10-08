@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@archava/crm": "0.1.0",
+    "@archava/crm-assistant": "0.1.0",
     "@archava/crm-pg": "0.1.0"
   },
   "devDependencies": {

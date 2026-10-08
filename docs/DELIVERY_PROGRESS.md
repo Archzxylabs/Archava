@@ -7,13 +7,13 @@
 **PRD v2 scope, evidence updated 8 October 2026:** §34 remains the broader commercial gate. The
 new module-library milestones in [PRD §49](../PRD.md) are assessed separately:
 
-| Milestone                  | Current evidence                                                                                                           |
-| -------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| M0 specification alignment | Research, PRD and supporting operating/status documents updated; documentation only.                                       |
-| M1 independent core reuse  | Two independent cold-installed core consumers use matching compiled artifacts; see the M1 entry below.                     |
-| M2 business-module reuse   | One persistent contacts/activity/follow-up module serves two contexts with the same API/dashboard; see the M2 entry below. |
-| M3 controlled operations   | Identity, host durability, provider/live, observability and restore gates remain open.                                     |
-| M4 library expansion       | Later demand-backed work, not delivered capability.                                                                        |
+| Milestone                  | Current evidence                                                                                                                               |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| M0 specification alignment | Research, PRD and supporting operating/status documents updated; documentation only.                                                           |
+| M1 independent core reuse  | Two independent cold-installed core consumers use matching compiled artifacts; see the M1 entry below.                                         |
+| M2 business-module reuse   | One persistent contacts/activity/follow-up module serves two contexts with the same API/dashboard; see the M2 entry below.                     |
+| M3 controlled operations   | Local identity, durability, restore and CRM read/draft conversation verified; public deployment, live providers and observability remain open. |
+| M4 library expansion       | Later demand-backed work, not delivered capability.                                                                                            |
 
 The historical weighted percentage below is not recalculated or reused as v2
 progress. M1/M2 evidence is assessed separately from commercial readiness.
@@ -124,3 +124,17 @@ This is local operational evidence. Public TLS/deployment, MFA/SSO, automated
 backup/alerts, provider correlation, durable Act attempts and shared realtime
 presence remain open. The historical readiness estimate and Pending Act tasks
 are unchanged. Checkpoint `4f24164` preserves the M1/M2 baseline.
+
+## 8 October 2026 — reusable CRM read/draft conversation / partial M3
+
+The optional conversation adapter and shared panel connect existing CRM tools to
+`runTurn`. Two independent compiled consumers read tenant-scoped PostgreSQL data
+using identical adapter hashes. The authenticated host verifies membership,
+staff assignment and draft permissions; conversation requests do not change
+contacts, activities, follow-ups, command receipts or mutation audit counts.
+
+The shipped planner recognizes local commands and makes zero model requests.
+Drafts require explicit content/date and remain transient. Live planner quality,
+durable Act confirmation/execution, public hosting and telemetry remain open.
+See [CRM conversation](CRM_CONVERSATION.md). Historical commercial percentages
+and the three Pending Act operational tasks remain unchanged.

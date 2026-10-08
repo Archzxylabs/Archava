@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@archava/crm": "workspace:*",
+    "@archava/crm-assistant": "workspace:*",
     "@archava/crm-pg": "workspace:*"
   },
   "devDependencies": {

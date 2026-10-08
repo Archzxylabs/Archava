@@ -42,6 +42,11 @@ credential; `pnpm crm:start` serves the local login/dashboard at port 4175.
 Owner/staff/viewer accounts, session revocation, backup and restoration are locally
 verified. `crm:dev` remains the disposable fictional-session reference.
 
+The same host includes a [reusable CRM conversation adapter](docs/CRM_CONVERSATION.md):
+list/search contacts, read a summary and prepare a follow-up draft. Its initial
+planner uses bounded local commands; live models and machine writes remain later
+gates. The shared adapter is verified from two independently installed consumers.
+
 The frontend demo and template have separate runtime boundaries; consolidating
 their source does not connect CRM/ERP, providers, or production Act workflows.
 

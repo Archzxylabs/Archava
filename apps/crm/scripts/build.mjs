@@ -62,13 +62,24 @@ const browser = await build({
   platform: 'browser',
   format: 'esm',
   target: 'es2022',
-  alias: { '@archava/crm/dashboard': join(output, 'node_modules/@archava/crm/dist/dashboard.js') },
+  alias: {
+    '@archava/crm/dashboard': join(output, 'node_modules/@archava/crm/dist/dashboard.js'),
+    '@archava/crm-assistant/panel': join(
+      output,
+      'node_modules/@archava/crm-assistant/dist/panel.js',
+    ),
+  },
   metafile: true,
   logLevel: 'silent',
 })
 if (
   Object.keys(browser.metafile.inputs).some(
-    (path) => path.includes('identity-pg') || path.includes('crm-pg') || path.includes('node:'),
+    (path) =>
+      path.includes('identity-pg') ||
+      path.includes('crm-pg') ||
+      path.includes('node:') ||
+      /crm-assistant\/dist\/(conversation|planner|index)\.js/.test(path) ||
+      /@archava\/assistant\//.test(path),
   )
 )
   throw new Error('Server implementation entered browser bundle')

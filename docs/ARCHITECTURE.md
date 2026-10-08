@@ -304,3 +304,14 @@ creation share one transaction. Backups include private runtime metadata;
 restoration creates a fresh database, preserves mutation identity and requires
 explicit account recovery. See [CRM runtime](CRM_RUNTIME.md). Public deployment,
 shared presence and durable Act/provider execution retain separate release gates.
+
+## Optional CRM conversation adapter
+
+`@archava/crm-assistant` depends on CRM and the existing assistant/core contracts;
+the core has no reverse CRM dependency. Its planner sees the user's bounded text
+and produces a strict read/prepare request. Verified host identity scopes each
+CRM tool. `StructuredTruthPort` carries the authorized projection into `runTurn`;
+the host's optional authoritative routing can only add live-data requirements.
+No executor or page action is available. The browser `/panel` uses the shared
+contracts and renders records as text. See [CRM conversation](CRM_CONVERSATION.md)
+for local commands, independent-consumer evidence and the live-provider/Act gaps.

@@ -93,6 +93,32 @@ try {
   await assert.rejects(() => service.list('hotel-demo', human('public-customer')), denied)
   check('two business contexts persist separate records; cross-tenant and public callers refused')
 
+  for (const [index, tenant, principal, expectedId] of [
+    [0, 'hotel-demo', owner, contactId],
+    [1, 'studio-demo', studio, second.id],
+  ] as const) {
+    const module = consumers.conversations[index]
+    assert.ok(module)
+    const reply = await module.createCrmConversation(service, new module.LocalCrmPlanner()).ask(
+      {
+        tenantId: tenant,
+        principal,
+        turnId: randomUUID(),
+        occurredAt: new Date().toISOString(),
+      },
+      { utterance: 'tampilkan kontak' },
+    )
+    assert.equal(reply.source, 'crm')
+    assert.equal(reply.data?.kind, 'contacts')
+    if (reply.data?.kind !== 'contacts')
+      throw new Error('Conversation did not return a contact page')
+    assert.equal(reply.data.items[0]?.id, expectedId)
+    assert.equal(JSON.stringify(reply).includes('@example.test'), false)
+  }
+  check(
+    'two cold-installed conversation adapters use identical artifacts and real tenant-scoped CRM data',
+  )
+
   assert.equal(
     (await service.detail('hotel-demo', owner, contactId)).contact.email,
     'guest@example.test',

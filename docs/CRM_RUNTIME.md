@@ -38,6 +38,13 @@ normal restarts; rotation needs explicit retry reconciliation. The two initial
 configurations are hospitality and professional services. Existing `/workspace`
 and `crm:dev` references retain their original demo behavior.
 
+The host also mounts the [shared CRM conversation panel](CRM_CONVERSATION.md).
+Its local command planner reads contacts, shows notes/follow-ups and prepares
+reviewable drafts through the existing Archava turn pipeline. It uses the same
+verified session and CRM permissions, makes no model requests and cannot save or
+send a draft. Rebuild while the host is stopped so installed artifacts remain
+available to the running process.
+
 ## Accounts
 
 Enrollment is operator-only. Supply an owned mode-0600 JSON file:

@@ -7,6 +7,7 @@ import { pathToFileURL } from 'node:url'
 import { createHash } from 'node:crypto'
 import type * as CrmModule from '@archava/crm'
 import type * as PostgresModule from '@archava/crm-pg'
+import type * as ConversationModule from '@archava/crm-assistant'
 
 const root = resolve(import.meta.dirname, '../../..')
 async function hash(directory: string): Promise<string> {
@@ -44,6 +45,7 @@ export async function prepareConsumers() {
       tarballSha256: string
     }[]
   }[] = []
+  const conversations: (typeof ConversationModule)[] = []
   try {
     for (const name of ['hospitality', 'professional-services']) {
       const directory = join(scratch, name)
@@ -66,7 +68,7 @@ export async function prepareConsumers() {
       ])
         execFileSync('npm', args, { cwd: directory, stdio: 'pipe' })
       const modules = []
-      for (const name of ['@archava/crm', '@archava/crm-pg']) {
+      for (const name of ['@archava/crm', '@archava/crm-pg', '@archava/crm-assistant']) {
         const artifact = artifacts.artifacts.find((item) => item.name === name)
         if (!artifact) throw new Error('Missing CRM artifact')
         modules.push({
@@ -77,6 +79,13 @@ export async function prepareConsumers() {
         })
       }
       proofs.push({ consumer: name, modules })
+      const consumerRequire = createRequire(join(directory, 'package.json'))
+      const conversationEntry = consumerRequire.resolve('@archava/crm-assistant')
+      if (!conversationEntry.includes('/node_modules/'))
+        throw new Error('Conversation resolved to workspace source')
+      conversations.push(
+        (await import(pathToFileURL(conversationEntry).href)) as typeof ConversationModule,
+      )
       const target = join(root, 'dist/crm-demo', name)
       await mkdir(target, { recursive: true })
       await cp(join(directory, 'dist'), join(target, 'dist'), { recursive: true })
@@ -95,6 +104,7 @@ export async function prepareConsumers() {
     return {
       crm,
       postgres,
+      conversations,
       proofs,
       publicDirectory: join(root, 'dist/crm-demo'),
       async close() {

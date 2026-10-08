@@ -1,4 +1,5 @@
 import { mountCrmDashboard } from '@archava/crm/dashboard'
+import { mountCrmConversation } from '@archava/crm-assistant/panel'
 import { z } from 'zod'
 
 const sessionSchema = z.discriminatedUnion('authenticated', [
@@ -29,10 +30,13 @@ const tenants = element<HTMLSelectElement>('#tenants')
 const status = element<HTMLElement>('#status')
 let csrf = ''
 let dashboard: ReturnType<typeof mountCrmDashboard> | null = null
+let conversation: ReturnType<typeof mountCrmConversation> | null = null
 let session: z.infer<typeof sessionSchema> = { authenticated: false }
 function signedOut() {
   dashboard?.destroy()
   dashboard = null
+  conversation?.destroy()
+  conversation = null
   csrf = ''
   session = { authenticated: false }
   workspace.hidden = true
@@ -69,6 +73,8 @@ async function mount() {
   if (!session.authenticated) return
   const selected = session.tenants.find((item) => item.id === tenants.value)
   dashboard?.destroy()
+  conversation?.destroy()
+  conversation = null
   if (!selected) {
     host.textContent = 'No workspace access. Contact your administrator.'
     return
@@ -84,6 +90,16 @@ async function mount() {
         signedOut()
         status.textContent = 'Your session ended. Sign in again.'
       }
+      return response
+    },
+  })
+  conversation = mountCrmConversation(element<HTMLElement>('#conversation'), {
+    apiBase: '/api/crm/' + selected.id + '/conversation',
+    transport: async (input, init) => {
+      const headers = new Headers(init?.headers)
+      headers.set('x-archava-csrf', csrf)
+      const response = await fetch(input, { ...init, headers })
+      if (response.status === 401) signedOut()
       return response
     },
   })

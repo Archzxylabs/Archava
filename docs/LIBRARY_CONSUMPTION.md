@@ -91,6 +91,13 @@ boundaries remain authoritative.
 The optional server-only `@archava/identity-pg` package is used by the
 [persistent CRM host](CRM_RUNTIME.md). The host cold-installs compiled artifacts
 and reuses the shared dashboard; core/CRM do not depend on this identity adapter.
+
+The optional `@archava/crm-assistant` artifact adds `/contracts`, `/panel` and a
+server adapter using the existing turn pipeline. The artifact set now contains
+13 packages. Hospitality and professional-service CRM consumers cold-install
+matching conversation implementations and exercise their authorized live data.
+See [CRM conversation](CRM_CONVERSATION.md). No live model or machine-write
+readiness is inferred from this local parser.
 This proves local login/revocation and backup restoration, not public deployment.
 
 The first persistent contacts + activities/follow-up CRM slice now has two

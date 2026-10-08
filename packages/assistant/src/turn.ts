@@ -48,7 +48,7 @@ import type {
   RetrievalOutcome,
   StructuredTruthSubject,
 } from '@archava/knowledge'
-import { classifyKnowledgeNeed } from '@archava/knowledge'
+import { classifyKnowledgeNeed, STRUCTURED_TRUTH_SUBJECTS } from '@archava/knowledge'
 import {
   buildComponents,
   filterComponentsByAllowedActions,
@@ -126,6 +126,8 @@ export interface TurnRequest {
   readonly policy: ActionPolicy
   readonly knowledge: KnowledgePort
   readonly truth?: StructuredTruthPort
+  /** Trusted host routing may require live data; it can never downgrade lexical routing. */
+  readonly authoritativeSubjects?: readonly StructuredTruthSubject[]
   /**
    * Who runs an action the gate allowed. Absent by default, and deliberately so:
    * without an executor an allowed action stays `not_attempted`, which is the
@@ -1040,7 +1042,18 @@ function turnEvents(
  */
 export async function runTurn(request: TurnRequest): Promise<TurnOutcome> {
   const graph = assertTenant(request.graph, request.tenantId)
-  const deterministicClassification = classifyKnowledgeNeed(request.utterance)
+  const lexicalClassification = classifyKnowledgeNeed(request.utterance)
+  const hostSubjects = request.authoritativeSubjects ?? []
+  if (hostSubjects.some((subject) => !STRUCTURED_TRUTH_SUBJECTS.includes(subject)))
+    throw new Error('Unknown authoritative subject')
+  const deterministicClassification =
+    hostSubjects.length === 0
+      ? lexicalClassification
+      : {
+          need: 'structured_truth' as const,
+          subjects: [...new Set([...lexicalClassification.subjects, ...hostSubjects])],
+          matched: [...lexicalClassification.matched, 'host_authoritative_route'],
+        }
   const retrieval = await retrieve(request)
 
   const permitted = permittedActions(request)

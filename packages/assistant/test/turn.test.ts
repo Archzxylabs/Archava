@@ -345,6 +345,57 @@ function request(overrides: Partial<TurnRequest> = {}): TurnRequest {
   }
 }
 
+describe('trusted host authoritative routing', () => {
+  it('routes non-keyword business queries to live truth and withholds stale retrieval', async () => {
+    const brain = probe()
+    const outcome = await runTurn(
+      request({
+        utterance: 'tampilkan kontak',
+        authoritativeSubjects: ['customer_or_order'],
+        brain,
+        truth: truth({ crm: { count: 1 } }),
+      }),
+    )
+    expect(outcome.basis).toBe('structured_truth')
+    expect(brain.turns[0]?.grounding).toEqual([])
+    expect(brain.turns[0]?.structuredTruth).toEqual({ crm: { count: 1 } })
+    expect(outcome.knowledgeGap).toBe(false)
+  })
+  it('does not fall back to retrieval when host-routed live data is unavailable', async () => {
+    const brain = probe()
+    const outcome = await runTurn(
+      request({
+        utterance: 'tampilkan kontak',
+        authoritativeSubjects: ['customer_or_order'],
+        brain,
+        truth: EMPTY_TRUTH,
+      }),
+    )
+    expect(outcome.basis).toBe('none')
+    expect(outcome.knowledgeGap).toBe(true)
+    expect(brain.turns[0]?.grounding).toEqual([])
+  })
+  it('retains lexical live subjects when a host supplies an empty or additional route', async () => {
+    for (const authoritativeSubjects of [[], ['customer_or_order']] as const) {
+      const subjects: StructuredTruthSubject[][] = []
+      const outcome = await runTurn(
+        request({
+          utterance: 'payment status',
+          authoritativeSubjects,
+          truth: {
+            resolve: (requested) => {
+              subjects.push([...requested])
+              return Promise.resolve({ verified: true })
+            },
+          },
+        }),
+      )
+      expect(subjects[0]).toContain('payment_status')
+      expect(outcome.basis).toBe('structured_truth')
+    }
+  })
+})
+
 /** The projected context the brain was actually handed. */
 function seen(
   brain: BrainProvider & { readonly turns: readonly BrainTurn[] },

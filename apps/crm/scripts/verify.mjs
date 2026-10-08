@@ -326,6 +326,139 @@ try {
   ).then((response) => response.json())
   assert.equal(projection.fullName, 'Owner contact')
   assert.ok(!('email' in projection))
+  const conversationPath = '/api/crm/hotel-demo/conversation'
+  const countPool = poolFor(settings)
+  const snapshot = () =>
+    countPool.query(`SELECT
+    (SELECT count(*) FROM archava_crm.contacts) AS contacts,
+    (SELECT count(*) FROM archava_crm.activities) AS activities,
+    (SELECT count(*) FROM archava_crm.followups) AS followups,
+    (SELECT count(*) FROM archava_crm.commands) AS commands,
+    (SELECT count(*) FROM archava_crm.audit) AS audit`)
+  try {
+    const before = (await snapshot()).rows[0]
+    const conversation = await post(
+      origin,
+      conversationPath,
+      { utterance: 'ringkas Owner contact' },
+      owner,
+    ).then((response) => response.json())
+    assert.equal(conversation.source, 'crm')
+    assert.equal(conversation.data.contact.id, receipt.id)
+    assert.equal(conversation.data.contact.activities[0].summary, 'Persistent inquiry note')
+    assert.ok(!JSON.stringify(conversation).includes('contact@example.test'))
+    const studioConversation = await post(
+      origin,
+      '/api/crm/studio-demo/conversation',
+      { utterance: 'tampilkan kontak' },
+      owner,
+    ).then((response) => response.json())
+    assert.equal(studioConversation.data.items[0].fullName, 'Studio client')
+    assert.ok(!JSON.stringify(studioConversation).includes('Owner contact'))
+    const prepared = await post(
+      origin,
+      conversationPath,
+      {
+        utterance: 'siapkan follow-up Owner contact',
+        draft: { summary: 'Please confirm the meeting time', dueAt: '2026-10-15T02:00:00.000Z' },
+      },
+      owner,
+    ).then((response) => response.json())
+    assert.equal(prepared.data.kind, 'draft')
+    assert.equal(prepared.data.draft.status, 'draft')
+    assert.equal(prepared.data.draft.requiresApproval, true)
+    assert.equal(prepared.data.draft.contactId, receipt.id)
+    const send = await post(
+      origin,
+      conversationPath,
+      { utterance: 'kirim semua follow-up sekarang' },
+      owner,
+    ).then((response) => response.json())
+    assert.equal(send.data.kind, 'help')
+    assert.equal(send.source, 'none')
+    assert.deepEqual((await snapshot()).rows[0], before)
+    check(
+      'conversation reads real CRM in two businesses and prepares drafts without commands, audit writes or sending',
+    )
+
+    assert.equal(
+      (await post(origin, conversationPath, { utterance: 'tampilkan kontak' })).status,
+      401,
+    )
+    assert.equal(
+      (
+        await post(origin, conversationPath, { utterance: 'tampilkan kontak' }, owner, {
+          'x-archava-csrf': '',
+        })
+      ).status,
+      403,
+    )
+    assert.equal(
+      (
+        await post(
+          origin,
+          conversationPath,
+          { utterance: 'tampilkan kontak', role: 'owner' },
+          owner,
+        )
+      ).status,
+      400,
+    )
+    assert.equal(
+      (
+        await post(
+          origin,
+          conversationPath,
+          { utterance: 'tampilkan kontak', tenantId: 'studio-demo' },
+          owner,
+        )
+      ).status,
+      400,
+    )
+    assert.equal(
+      (
+        await post(
+          origin,
+          '/api/crm/studio-demo/conversation',
+          { utterance: 'tampilkan kontak' },
+          staffSession,
+        )
+      ).status,
+      403,
+    )
+    assert.equal(
+      (
+        await post(
+          origin,
+          conversationPath,
+          { utterance: 'ringkas', contactId: receipt.id },
+          staffSession,
+        )
+      ).status,
+      404,
+    )
+    assert.equal(
+      (await post(origin, conversationPath, { utterance: 'siapkan follow-up Owner contact' }, view))
+        .status,
+      403,
+    )
+    const assigned = await post(
+      origin,
+      conversationPath,
+      { utterance: 'tampilkan kontak' },
+      staffSession,
+    ).then((response) => response.json())
+    assert.deepEqual(
+      assigned.data.items.map((item) => item.fullName),
+      ['Staff contact'],
+    )
+    assert.deepEqual((await snapshot()).rows[0], before)
+    check(
+      'conversation rejects anonymous, forged roles/tenants, missing CSRF, viewer preparation and cross-resource staff reads',
+    )
+  } finally {
+    await countPool.end()
+  }
   const actor = owner.session.username
   const p = poolFor(settings)
   try {
@@ -352,6 +485,10 @@ try {
     )
     const revoked = await login(origin, viewer.username, viewer.password)
     assert.equal((await get(origin, '/api/crm/hotel-demo/contacts', revoked)).status, 403)
+    assert.equal(
+      (await post(origin, conversationPath, { utterance: 'tampilkan kontak' }, revoked)).status,
+      403,
+    )
     await p.query(
       'UPDATE archava_crm.memberships SET active=true WHERE principal_id=(SELECT id FROM archava_identity.users WHERE username=$1)',
       [viewer.username],

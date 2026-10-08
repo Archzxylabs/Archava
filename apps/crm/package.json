@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@archava/crm": "workspace:*",
+    "@archava/crm-assistant": "workspace:*",
     "@archava/crm-pg": "workspace:*",
     "@archava/identity-pg": "workspace:*",
     "pg": "8.23.1",

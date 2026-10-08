@@ -4,6 +4,8 @@ import { join } from 'node:path'
 import type { Pool } from 'pg'
 import { z } from 'zod'
 import { CrmError, createCrmApi, type CrmService } from '@archava/crm'
+import { createCrmConversation, LocalCrmPlanner } from '@archava/crm-assistant'
+import { randomUUID } from 'node:crypto'
 import { IdentityError, type PostgresIdentity } from '@archava/identity-pg'
 import type { RuntimeSettings } from './settings.js'
 
@@ -93,6 +95,22 @@ export function createHostHandler(
           'set-cookie': sessionCookie(cookieName, '', secure, true),
         })
       }
+      const conversation = /^\/api\/crm\/([^/]+)\/conversation$/.exec(url.pathname)
+      if (conversation && request.method === 'POST') {
+        const tenant = settings.tenants.find((item) => item.id === conversation[1])
+        if (!tenant) return json({ error: { message: 'Workspace access refused.' } }, 403)
+        return json(
+          await createCrmConversation(service, new LocalCrmPlanner()).ask(
+            {
+              tenantId: tenant.id,
+              principal: { kind: 'human', id: session.principalId },
+              turnId: randomUUID(),
+              occurredAt: new Date().toISOString(),
+            },
+            await request.json(),
+          ),
+        )
+      }
       if (url.pathname.startsWith('/api/crm/'))
         return await createCrmApi(service, () =>
           Promise.resolve({ kind: 'human', id: session.principalId }),
@@ -101,6 +119,23 @@ export function createHostHandler(
     } catch (error) {
       if (error instanceof z.ZodError || error instanceof SyntaxError)
         return json({ error: { message: 'Invalid request.' } }, 400)
+      if (error instanceof CrmError) {
+        const status = {
+          unauthenticated: 401,
+          forbidden: 403,
+          not_found: 404,
+          conflict: 409,
+          unavailable: 503,
+        }[error.code]
+        return json(
+          {
+            error: {
+              message: status === 503 ? 'Service temporarily unavailable.' : 'CRM request refused.',
+            },
+          },
+          status,
+        )
+      }
       if (error instanceof IdentityError) {
         const limited = error.code === 'rate_limited' || error.code === 'busy'
         return json(

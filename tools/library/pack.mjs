@@ -40,6 +40,7 @@ export async function packLibrary() {
     '@archava/crm',
     '@archava/crm-pg',
     '@archava/identity-pg',
+    '@archava/crm-assistant',
   ])
     await include(name)
   await rm(output, { recursive: true, force: true })

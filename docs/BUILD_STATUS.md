@@ -21,6 +21,13 @@ survives graceful shutdown. Owner/staff/viewer policies, session revocation,
 restart and non-destructive backup restoration are exercised locally. See
 [CRM runtime](CRM_RUNTIME.md). This does not complete the broader M3 release gate.
 
+**8 October CRM conversation:** an optional `@archava/crm-assistant` adapter now
+connects authenticated CRM read/prepare tools to the existing turn pipeline.
+Its shared panel clears state across businesses/logout. The bounded local planner
+does not call a model; drafts are transient and perform no mutation or send. See
+[CRM conversation](CRM_CONVERSATION.md). Live planner evaluation, deployment and
+durable Act execution remain open.
+
 The consolidated source also includes the [website and CRM/ERP frontend](FRONTEND.md)
 and the [portable realtime template](<../Archava Template/README.md>). Frontend
 records and approvals are browser-local demos. The template is a standalone npm
