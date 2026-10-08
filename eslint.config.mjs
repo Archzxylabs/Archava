@@ -7,6 +7,9 @@ export default tseslint.config(
     ignores: [
       // The reusable template is a standalone npm project with its own checks.
       'Archava Template/**',
+      // Independent consumers typecheck and build after installing packed artifacts.
+      'examples/consumers/**',
+      'examples/crm-consumers/**',
       '**/node_modules/**',
       '**/dist/**',
       '**/build/**',

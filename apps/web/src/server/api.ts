@@ -16,7 +16,15 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { loadPricebook, type Branding, type ClientConfig } from '@archava/config'
+import {
+  loadPricebook,
+  loadTemplates,
+  TemplateRegistry,
+  ClientConfigResolver,
+  type Branding,
+  type ClientConfig,
+  type DeploymentPlan,
+} from '@archava/config'
 import {
   buildConfigSet,
   emitClientConfig,
@@ -46,6 +54,7 @@ interface QuoteRequestBody {
 interface QuoteResult {
   readonly set: ConfigSet
   readonly config: ClientConfig | null
+  readonly deploymentPlan: DeploymentPlan | null
 }
 
 class BodyTooLargeError extends Error {
@@ -147,9 +156,13 @@ export async function answerQuote(
   // and a route that emitted one anyway would invent a name and a date the
   // client never gave.
   let config: ClientConfig | null = null
+  let deploymentPlan: DeploymentPlan | null = null
   if (payload.branding !== undefined && payload.updatedAt !== undefined) {
     try {
       config = emitConfig(set, payload)
+      deploymentPlan = new ClientConfigResolver(new TemplateRegistry(loadTemplates(appDir))).plan(
+        config,
+      )
     } catch (error) {
       respond(response, 400, {
         error: {
@@ -161,7 +174,7 @@ export async function answerQuote(
     }
   }
 
-  respond(response, 200, { set, config } satisfies QuoteResult)
+  respond(response, 200, { set, config, deploymentPlan } satisfies QuoteResult)
 }
 
 /** Emit the selected variant's scope as a tenant config. */

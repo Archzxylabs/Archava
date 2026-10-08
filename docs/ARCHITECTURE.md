@@ -4,6 +4,12 @@ What the pipeline is, and where the boundaries are. This document describes the
 tree as it is; for what the tree does not yet do, see
 [`BUILD_STATUS.md`](BUILD_STATUS.md).
 
+The future reusable business-module architecture is specified in [PRD v2
+§§40–49](../PRD.md) and explained in [the research](REUSABLE_PLATFORM_RESEARCH.md).
+This document continues to describe the implementation, including its separate
+realtime template boundary. A PRD upgrade does not add auth, module resolution or
+CRM/ERP persistence to the code.
+
 ## The shape
 
 A turn is a sequence of boundaries. Each boundary holds a **port** — an
@@ -253,3 +259,33 @@ HTTP transport and server token. Neither is wired to a production database or
 provider. The reference browser has no access to these gateways. Current
 integration tests use fakes; no live PMS or mail provider is connected. See
 [`ACT_PILOT.md`](ACT_PILOT.md).
+
+## Internal artifacts and deployment planning — 8 October 2026
+
+`tools/library/pack.mjs` compiles the SDK/assistant/Chat dependency closure into
+nine private ESM/declaration artifacts while retaining module identity.
+`tools/library/verify-consumers.mjs` installs them in two projects outside the
+workspace and checks distinct knowledge/branding/action sets with shared hashes.
+The web browser build now needs no configuration alias. Explicit `/pure` exports
+keep filesystem readers on server paths.
+
+`packages/config/src/client/modules.ts` provides thin host-owned planning
+metadata; `plan.ts` resolves requested modules/dependencies and separates
+suggested integrations from host connection/health snapshots. Existing V1
+resolution is preserved through `resolveLegacy()`; new quote responses add V2
+`deploymentPlan`. Planning readiness never grants action authority. Details and
+migration limitations are in [library consumption](LIBRARY_CONSUMPTION.md).
+
+## First business module — CRM contacts/activity/follow-up
+
+`@archava/crm` owns schemas, public service/API and explicit read/draft tool ports;
+its `/dashboard` subpath shares one DOM component across two contexts.
+`@archava/crm-pg` supplies the server-only PostgreSQL adapter with a migration
+ledger, membership/resource checks, forced tenant RLS, revision preconditions,
+command identity and atomic metadata audit. Its pinned `pg` dependency is an
+intentional database-driver addition; the Archava core has no CRM dependency.
+
+Compiled artifacts include the owned migration. The CRM verifier loads installed
+exports with plain Node, cold-builds both consumers and exercises an isolated
+real PostgreSQL cluster. Production host identity and live Act integration remain
+separate. See [CRM module](CRM_MODULE.md) for contracts and release boundaries.

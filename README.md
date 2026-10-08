@@ -4,7 +4,18 @@ A multi-tenant AI assistant platform where an assistant's behaviour is decided b
 **data** rather than by prompt text, and where every decision it makes is auditable
 against the policy that produced it.
 
-The product requirement is `PRD.md`. The operational contract is `agent.md`.
+The product requirement is [PRD v2](PRD.md). The operational contract is `agent.md`.
+ARCHZXY is the company; Archava is its flagship product. The target internal module
+library includes reusable assistant/presence contracts and deterministic CRM/ERP
+business modules, composed across business models. The ARCHZXY company website is
+a separate consumer project. Independent compiled core consumption and the first
+persistent CRM slice now have local verification; production hosting and broader
+business modules remain release work.
+The [research and decisions](docs/REUSABLE_PLATFORM_RESEARCH.md) distinguish source
+evidence, proposed architecture and staged acceptance; the [previous PRD](docs/history/PRD.v1.0.0.md)
+is preserved. Pricing v1 remains unchanged.
+The [pre-reuse project audit](docs/PROJECT_AUDIT_2026-10-07.md) records current
+verification, cleanup priorities and the boundaries to complete before live actions.
 The Decision Intelligence extension is described in [`docs/DECISION_INTELLIGENCE.md`](docs/DECISION_INTELLIGENCE.md).
 This file is what the repository _actually_ does, which is a smaller thing than
 either document, deliberately so. For the gap, see
@@ -19,6 +30,12 @@ Run its commands inside that directory; it is separate from the pnpm workspaces 
 
 Decision Intelligence, the Act backend packages, the website/workspace frontend,
 and the portable realtime template are maintained together in this repository.
+The persistent [CRM module](docs/CRM_MODULE.md) now runs contacts, activities
+and follow-up tasks across hospitality and professional-service references.
+Use `pnpm crm:verify` for disposable PostgreSQL checks or `pnpm crm:dev` for
+the local dashboard. These reference sessions use fictional identities; a
+production host supplies its own verified authentication.
+
 The frontend demo and template have separate runtime boundaries; consolidating
 their source does not connect CRM/ERP, providers, or production Act workflows.
 
@@ -29,7 +46,8 @@ see [`docs/ACT_PILOT.md`](docs/ACT_PILOT.md).
 
 ## What runs today
 
-One vertical slice runs end to end, offline, in a browser:
+The assistant reference runs end to end, offline, in a browser. The separate
+persistent CRM reference runs with `pnpm crm:dev`:
 
 ```
 pnpm install
@@ -132,15 +150,20 @@ pnpm typecheck     # every package + the web app
 pnpm lint          # eslint --max-warnings=0
 pnpm format        # prettier
 pnpm test          # vitest
-pnpm verify        # install + structure + lint + typecheck + test + build
+pnpm verify        # install + structure + format + lint + typecheck + test + build + reuse
 pnpm e2e:home      # 31 assertions against a served page
 ```
 
-`pnpm verify` is the same list `pnpm test` runs, plus install, `pnpm structure`
-and `pnpm build` — so "CI passed" and "`pnpm verify` passed" are one fact rather
-than two. `pnpm structure` (`tools/scripts/structure.mjs`) is the gate that fails
-if the runnable web app disappears, if a package boundary is violated by an
-unlisted import, or if source reaches outside the workspace.
+`pnpm verify` mirrors the platform CI gates, including format and the two
+independent-consumer proof. Use Node **22.22.3** from `.tool-versions` and pnpm
+**10.15.1**. `pnpm structure` checks package boundaries and declared imports.
+
+`pnpm library:pack` creates eleven compiled internal artifacts. `pnpm reuse:verify`
+installs them in two separate temporary projects, typechecks, builds browser/Node
+entries and verifies identical implementations with different knowledge,
+branding and allowed actions. See [library consumption](docs/LIBRARY_CONSUMPTION.md).
+Consumer installs may access the npm registry for pinned public tooling/Zod;
+fixture turns and builds never call AI or business providers.
 
 Nothing here gates the _prose_. This file and
 [`docs/BUILD_STATUS.md`](docs/BUILD_STATUS.md) are maintained by hand, which is

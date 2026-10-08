@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0.0",
+  "tenantId": "retail-demo",
+  "template": "ecommerce",
+  "environment": "business",
+  "presence": "chat",
+  "capability": "assist",
+  "region": "ID",
+  "branding": {
+    "businessName": "Paper Shop \u2014 offline reference",
+    "theme": {
+      "accent": "#7346a1",
+      "surface": "#ffffff",
+      "ink": "#101010",
+      "radius": "rounded",
+      "fontFamily": "system-ui"
+    }
+  },
+  "languages": [
+    {
+      "code": "en",
+      "label": "English"
+    }
+  ],
+  "primaryLanguage": "en",
+  "updatedAt": "2026-10-08",
+  "isReferenceImplementation": true,
+  "modules": [
+    {
+      "name": "knowledge",
+      "enabled": true
+    },
+    {
+      "name": "page_awareness",
+      "enabled": true
+    }
+  ],
+  "knowledgeSources": [
+    {
+      "id": "retail-demo-faq",
+      "kind": "faq",
+      "title": "Paper Shop \u2014 offline reference services",
+      "content": "Our services include notebooks, paper supplies and gift wrapping.",
+      "updatedAt": "2026-10-08"
+    }
+  ]
+}

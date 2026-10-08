@@ -3,6 +3,12 @@ import { parseClientConfig, type ClientConfig } from '@archava/config'
 import { foldContextEvents, seedContextGraph } from '@archava/core'
 import { SdkConfigError, SdkConsentError, createSession, type PageShape } from '../src/index.js'
 
+it('refuses a config from another tenant before starting a session', () => {
+  expect(() => createSession({ tenantId: 'retail-demo', config: configFor('hotel-demo') })).toThrow(
+    SdkConfigError,
+  )
+})
+
 /**
  * What the session is *for*, in the two promises a bug report depends on:
  *

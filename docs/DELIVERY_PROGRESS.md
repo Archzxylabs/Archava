@@ -4,6 +4,20 @@
 
 **Target:** Archava v1 commercial readiness in `PRD.md` §34, including the platform needed to operate it.
 
+**PRD v2 scope, evidence updated 8 October 2026:** §34 remains the broader commercial gate. The
+new module-library milestones in [PRD §49](../PRD.md) are assessed separately:
+
+| Milestone                  | Current evidence                                                                                                           |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| M0 specification alignment | Research, PRD and supporting operating/status documents updated; documentation only.                                       |
+| M1 independent core reuse  | Two independent cold-installed core consumers use matching compiled artifacts; see the M1 entry below.                     |
+| M2 business-module reuse   | One persistent contacts/activity/follow-up module serves two contexts with the same API/dashboard; see the M2 entry below. |
+| M3 controlled operations   | Identity, host durability, provider/live, observability and restore gates remain open.                                     |
+| M4 library expansion       | Later demand-backed work, not delivered capability.                                                                        |
+
+The historical weighted percentage below is not recalculated or reused as v2
+progress. M1/M2 evidence is assessed separately from commercial readiness.
+
 **Current estimate after Act pilot audit:** **about 30% weighted delivery coverage. Release readiness: not met.**
 
 **Source consolidation, 7 October 2026:** Decision Intelligence, Act host/storage/
@@ -68,3 +82,31 @@ tenant configuration, a real user confirmation surface, and a controlled
 external transaction. The next Jev review needs the optional live synthetic
 evaluation and a data-term decision. Keep both claims separate from offline
 tests and mocked gateways.
+
+## 8 October 2026 — reusable-core cleanup and offline M1
+
+Nine compiled internal artifacts are consumed by two independently installed
+hospitality/retail examples with identical implementation hashes. Knowledge,
+branding and allowed page actions differ; cross-tenant and unsafe model action
+requests are refused. V2 deployment planning keeps template suggestions separate
+from declared scope, with explicit V1 compatibility. See
+[library consumption](LIBRARY_CONSUMPTION.md).
+
+This advances the PRD v2 reuse milestone; it does not change the historical V1
+commercial score or close the three Pending Act operational tasks. Persistent
+CRM reuse, production identity/recovery and shared realtime presence remain next
+work. The company website remains outside this repo.
+
+## 8 October 2026 — persistent CRM slice / offline M2
+
+The first native business module now covers contacts, activities and follow-up
+tasks. Hospitality and professional-service references consume identical compiled
+CRM artifacts and the same dashboard/API/service. PostgreSQL verification proves
+retry identity, revision races, tenant/resource permissions, audit atomicity,
+revocation and restart durability. See [CRM module](CRM_MODULE.md).
+
+Reference authentication uses fictional local accounts; production identity,
+backup/restore, live Act writes/provider recovery and broader CRM/ERP remain
+release work. No historical commercial-readiness score or Pending Act task is
+marked complete by this slice. The full check results are in
+[offline M2 evidence](CRM_M2_2026-10-08.md).

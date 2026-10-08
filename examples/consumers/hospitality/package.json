@@ -1,0 +1,26 @@
+{
+  "name": "archava-hospitality-consumer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "node build.mjs",
+    "verify": "node verify.mjs"
+  },
+  "dependencies": {
+    "@archava/config": "0.1.0",
+    "@archava/core": "0.1.0",
+    "@archava/sdk": "0.1.0",
+    "@archava/assistant": "0.1.0",
+    "@archava/chat": "0.1.0",
+    "@archava/acl": "0.1.0",
+    "@archava/knowledge": "0.1.0",
+    "@archava/adapters": "0.1.0",
+    "@archava/decision": "0.1.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.12",
+    "typescript": "5.9.3"
+  }
+}

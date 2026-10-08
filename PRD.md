@@ -1,18 +1,26 @@
 # ARCHAVA Platform — Master Product Requirements Document
 
-**Company:** ARCHZXY — AI-native Creative & Product Studio  
-**Product:** Archava  
-**Document version:** 1.0.0  
-**Commercial baseline:** Pricing v1.0  
-**Effective date:** 22 September 2026  
-**Primary implementation workspace:** `/home/haikaru/Archverse/Lab/Archava_Platform/`  
-**Status:** Build-ready baseline; pricing and provider economics require scheduled review.
+**Company:** ARCHZXY — AI-native Creative & Product Studio\
+**Product:** Archava\
+**Document version:** 2.0.0\
+**Commercial baseline:** Pricing v1.0\
+**Effective date:** 7 October 2026 (product scope); 22 September 2026 (unchanged Pricing v1.0)\
+**Primary implementation workspace:** `/home/haikaru/Archverse/Lab/Archava_Platform/`\
+**Status:** Research-informed product specification and incremental roadmap. Reusable modules and production readiness require the acceptance evidence below.
+
+**Research:** [Reusable platform research](docs/REUSABLE_PLATFORM_RESEARCH.md), reviewed 7 October 2026.
+**Previous specification:** [Preserved PRD v1.0.0](docs/history/PRD.v1.0.0.md).
+**Scope of this revision:** ARCHZXY is the company; Archava is its flagship product. The internal ARCHZXY module library supports Archava and reusable CRM/ERP business capabilities. The ARCHZXY company website is a separate project. §§40–49 define the new reuse scope; existing section numbers remain stable. Document version, product/package versions and pricebook version are independent.
 
 ---
 
 ## 1. Executive summary
 
-Archava is ARCHZXY's reusable digital-employee platform for the web. It is not primarily a chatbot, avatar vendor, or website builder. Archava combines business knowledge, page awareness, customer context, realtime conversation, permitted actions, transaction orchestration, and optional human-looking realtime embodiment into one deployable experience.
+Archava is ARCHZXY's flagship AI interface to a business. It combines business knowledge, page awareness, customer/employee context, realtime conversation, permitted actions, transaction orchestration and optional realtime avatar presence. ARCHZXY develops an internal module library for these capabilities and for deterministic CRM/ERP business modules that can be composed across business models.
+
+Reuse covers data models, business rules, APIs, dashboard components, events, migrations and Archava tools. Business modules also work through dashboards/APIs independently of the LLM runtime. Shared primitives, supported configuration and explicit vertical extensions replace repeated client-specific rebuilding. Archava consumes their authoritative contracts; it does not own financial truth by inference.
+
+This repository contains the product/library and reference consumers. The ARCHZXY company website, company sales funnel and studio delivery operations are consumer projects outside this repository. They may use the library and Archava SDK/API later.
 
 The same Archava core must be sellable in three public **Presence** levels:
 
@@ -40,7 +48,7 @@ This separation gives ARCHZXY a deterministic pricing and delivery system. The c
 
 > **Implementation + Presence + Capability + Digital Environment + Integration Complexity + Consumption**
 
-The platform must include an internal **Archava Studio** that accepts client requirements, selects the closest reusable template, enables the required modules, calculates an accurate quote from the machine-readable pricebook, and generates a proposal/configuration. The agent rules for this behavior are defined in `AGENT.md`.
+The platform must include an internal **Archava Studio** that accepts client requirements, selects the closest reusable template, enables the required modules, calculates an accurate quote from the machine-readable pricebook, and generates a proposal/configuration. The agent rules for this behavior are defined in `agent.md`.
 
 ---
 
@@ -48,7 +56,7 @@ The platform must include an internal **Archava Studio** that accepts client req
 
 ### 2.1 What Archava is
 
-Archava is an embodied business interface. A customer can ask natural-language questions, receive contextual answers, see personalized recommendations, navigate the website, trigger allowed actions, complete a transaction, receive confirmation/receipt, and return later for support.
+Archava is a conversational business interface for customers, employees and owners with distinct identities, data access and tool permissions. Customers can ask questions, receive contextual answers, navigate, perform allowed transactions and return for support. Authorized employees/owners can query operational records, prepare drafts and perform permitted workflows. Deterministic business systems remain authoritative for records and actions.
 
 The canonical end-to-end experience is:
 
@@ -67,7 +75,7 @@ A client should buy:
 
 The client does **not** buy “Spatius integration”, “LiveKit integration”, “Gemini integration”, or a bundle of APIs. Provider names are implementation details unless the client asks for technical/procurement disclosure.
 
-### 2.3 What must remain ARCHZXY IP
+### 2.3 First-party ownership and reusable contracts
 
 The following must remain first-party Archava logic and must not become inseparable from any single model/avatar vendor:
 
@@ -87,7 +95,7 @@ The following must remain first-party Archava logic and must not become insepara
 - template selection;
 - commercial/pricing engine.
 
-Provider implementations may be replaced without redefining the product.
+Provider implementations may be replaced without redefining the product. ARCHZXY ownership applies to its first-party work subject to contracts and dependency licenses. Client data, brand/content and contracted client-specific assets remain separately defined. Platform source delivery is not implied by reuse or a client application handoff; third-party software retains its own license/ownership. See §40 and the research license review.
 
 ---
 
@@ -115,7 +123,7 @@ For the public website, avoid leading with infrastructure terminology. Show the 
 
 ### 4.1 Product goals
 
-Archava v1 must:
+The product must:
 
 - work as Chat, Voice, or Human without changing the underlying business intelligence;
 - understand the current webpage and relevant UI/business state;
@@ -129,6 +137,8 @@ Archava v1 must:
 - expose useful analytics to the client;
 - run on an existing website or an ARCHZXY-built environment;
 - support a reusable template catalog for multiple industries;
+- expose independently consumable module contracts and compose CRM/ERP capabilities across business models;
+- let business modules serve authorized dashboard/API consumers without depending on an LLM;
 - produce deterministic regional pricing from client requirements;
 - be provider-agnostic for LLM/realtime voice/avatar infrastructure;
 - fail gracefully from Human → Voice → Chat when required.
@@ -139,7 +149,7 @@ The platform must let ARCHZXY:
 
 - stop pricing projects ad hoc;
 - quote a client quickly and consistently;
-- reuse 70–90% of standard implementation work;
+- target substantial reuse of standard implementation work, measuring integration effort and forks rather than claiming a guaranteed 70–90% ratio;
 - preserve premium pricing despite lower infrastructure cost;
 - sell in Indonesia with a localized IDR pricebook;
 - sell globally with a separate USD pricebook;
@@ -148,15 +158,16 @@ The platform must let ARCHZXY:
 
 ---
 
-## 5. Non-goals for v1
+## 5. Non-goals for the initial reusable release
 
-Archava v1 will **not** attempt to:
+The initial reusable release will **not** attempt to:
 
 - build a new foundational LLM;
 - build a production-grade realtime avatar renderer from scratch;
-- replace established ERP/accounting platforms;
+- deliver a universal ERP or statutory accounting/payroll engine;
+- build the ARCHZXY company website or internal delivery/sales system in this product repository;
 - replace Shopify/WooCommerce/Medusa where a mature commerce engine already exists;
-- replace client CRM/PMS systems unless explicitly contracted;
+- require replacement of client CRM/PMS systems; adapters remain a supported path;
 - provide unlimited usage plans;
 - provide autonomous high-risk payments/refunds without explicit authorization policy;
 - promise exact enterprise pricing without discovery;
@@ -183,7 +194,7 @@ Needs:
 
 ### 6.2 Client owner / business administrator
 
-A business owner or team member using Archava as a customer-facing employee.
+A business owner or team member configuring customer-facing Archava or using an authenticated operational Archava surface.
 
 Needs:
 
@@ -193,7 +204,11 @@ Needs:
 - control what Archava can do;
 - review knowledge gaps;
 - manage team handoff;
-- understand ROI.
+- understand ROI;
+- query tenant-scoped CRM/operational records;
+- prepare and approve actions within their role and resource permissions.
+
+Public customer and employee/owner access must use separate trusted principal/tool projections. A machine actor does not inherit an owner's permissions.
 
 ### 6.3 ARCHZXY operator
 
@@ -780,7 +795,7 @@ Initial templates:
 7. Professional Services / B2B
 8. Education / Courses
 
-Templates are not independent codebases. They are compositions of:
+Templates are compositions rather than independent client forks. Their commercial defaults remain in the existing catalog; implementation readiness and dependency/version checks are separately required by §§42–43. They compose:
 
 - page presets;
 - data schemas;
@@ -1036,7 +1051,7 @@ Examples:
 - order/shipping notification;
 - post-purchase sequence.
 
-Selected baseline: **Trigger.dev** for v1.
+Workflow durability is a requirement; a workflow vendor is an implementation decision. Trigger.dev was the v1 planning candidate and is not installed in the current platform. Retain tenant-bound recovery/idempotency contracts and choose at most one queue/workflow tool through an ADR when a concrete flow requires it. BullMQ or Temporal are alternatives to evaluate for that need, not dependencies mandated by this revision.
 
 Workflows must be resumable, retryable, observable, and tenant-scoped.
 
@@ -1076,73 +1091,37 @@ Archava must remain usable.
 
 ---
 
-## 22. Technical baseline
+## 22. Technical baseline and adoption rules
 
-### Application / monorepo
+### 22.1 Current implementation to preserve
 
-- Nx + pnpm
-- Next.js
-- TypeScript
-- Tailwind + private shadcn registry
-- Storybook for reusable UI/component review
+The audited platform uses pnpm workspaces, TypeScript, Zod, Node HTTP hosting, esbuild, Vitest and GitHub Actions. Workspace packages expose assistant, knowledge, SDK, policy, configuration, deterministic pricing and Act contracts. PostgreSQL attempt/confirmation adapters use injected SQL clients and explicit migrations; this is not a deployed general business database.
 
-### CMS/admin
+The portable realtime template has a separate React/Vite frontend, Node API and Python LiveKit worker. Its own provider dependencies and deploy recipes do not prove shared Chat/Voice/Human intelligence or live readiness. See [architecture](docs/ARCHITECTURE.md) and [build status](docs/BUILD_STATUS.md).
 
-- Payload
-- multi-tenant architecture
+### 22.2 Proposed architecture
 
-### Data
+Use a modular monolith for the initial business runtime, with reusable packages and explicit public service/API/event contracts. Keep the Python realtime worker behind a typed boundary. Business modules own records, migrations and domain invariants; the assistant core owns intelligence/orchestration contracts. Dashboards and Archava use the same authorized business service. Module boundaries do not require independent network services.
 
-- Neon PostgreSQL
-- pgvector
-- Drizzle
-- Upstash Redis for ephemeral/cache/rate-limit/locks
-- Cloudflare R2 for files/media
+PostgreSQL is the proposed durable record store. Begin with explicit migrations and a tested tenant/auth boundary. Persistence, CMS, backend frameworks, caches and workflow engines are chosen incrementally; no framework adoption may erase existing safety behavior or passing regressions.
 
-### Realtime
+### 22.3 Tools are candidates, not an installation checklist
 
-- LiveKit Agents
-- provider abstraction for realtime model
-- provider abstraction for avatar/presence
+The v1 wishlist named Nx, Next.js, Payload, Drizzle, pgvector, Redis, R2, Trigger.dev, PostHog, OpenTelemetry, Phoenix, Sentry, Infisical and several security/load tools. Their mention does not establish implementation or mandate adoption. NestJS, Turborepo and BullMQ/Temporal are also candidates, not automatic replacements.
 
-### Durable background work
+Use an ADR to select a tool only when it solves a current requirement, its dependencies/licenses are reviewed and a small spike demonstrates benefit and operational fit for the team. Select one initial observability/error path. Keep deterministic domain/permission contracts independent of vendors. Kubernetes, arbitrary plugins and service decomposition require measured need.
 
-- Trigger.dev
+### 22.4 Business engines and integrations
 
-### Integrations
+Build bounded first-party CRM/ERP capability modules from repeated requirements. Use adapters where clients already have authoritative CRM/PMS/ERP/commerce systems. Frappe/ERPNext, Odoo, Twenty and Medusa are integration/build-versus-buy candidates or design references; none becomes a mandatory platform dependency through this PRD.
 
-- Postmark transactional email default
-- Midtrans Indonesia payment default
-- Xendit/Stripe adapters
-- Cal.com appointment adapter
-- Shopify/WooCommerce/Medusa commerce adapters
-- CRM adapters
-- ERPNext/Frappe adapter for ERP-oriented deployments rather than rebuilding generic ERP
-
-### Analytics/observability
-
-- PostHog product analytics
-- OpenTelemetry
-- Arize Phoenix OSS for AI traces/evals
-- Sentry for application errors/performance
-
-### Security/dev tooling
-
-- Infisical or equivalent secret management
-- GitHub Actions
-- Vitest
-- pytest + Ruff + MyPy for Python services
-- Playwright E2E
-- k6 load testing
-- Semgrep
-- Trivy
-- OWASP ZAP staging scans
+Keep existing Postmark, booking and presence ports; payment providers retain the §19 authoritative verification requirement. Validate provider-specific behavior in controlled live tests before advertising an integration as ready. Pricing v1 and existing configured defaults remain unchanged by research; suggested providers cannot be treated as connected services.
 
 ---
 
 ## 23. Multi-tenancy
 
-Standard clients should default to a shared platform/tenant model when requirements permit.
+The proposed hosted default is shared application code and PostgreSQL tables scoped by tenant, after authenticated principal binding and persistence are implemented. Use server-side authorization plus database isolation; ordinary runtime credentials must not bypass RLS. Tenant context is established per transaction, including on reused connections. See §44. Shared code never implies shared tenant records.
 
 Each tenant must isolate:
 
@@ -1411,74 +1390,17 @@ This is the minimum demo that proves Archava is not merely a talking avatar.
 
 ## 33. Build phases
 
-### Phase 0 — Freeze specification
+The immediate roadmap is the evidence-gated reusable-platform sequence in §49. Initial work is contract inventory, independently consumable artifacts and configuration/module boundaries. The next business slice is contacts + activities/follow-up in two contexts, then demand-backed CRM/ERP expansion.
 
-- approve PRD;
-- approve pricebook;
-- approve templates;
-- approve `AGENT.md`.
+Existing Chat/Voice/Human, Act/Transact, Studio and reference-product commitments remain broader product targets. Shared presence and live business integrations progress incrementally while preserving the current core. No mandatory stack rewrite or company-website implementation is a prerequisite to reuse.
 
-### Phase 1 — Platform foundation
-
-- Nx workspace;
-- Next/Payload/Postgres baseline;
-- tenant model;
-- config/pricing loaders;
-- CI/security baseline.
-
-### Phase 2 — Archava Core
-
-- context graph;
-- page awareness;
-- knowledge;
-- capability/permission registry;
-- Chat presence;
-- analytics.
-
-### Phase 3 — Realtime
-
-- LiveKit;
-- Gemini Live provider;
-- Voice;
-- Spatius Human provider;
-- fallback routing.
-
-### Phase 4 — Act
-
-- forms;
-- lead capture;
-- calendar/booking;
-- transactional email;
-- CRM adapter.
-
-### Phase 5 — Transact
-
-- commerce adapter;
-- Midtrans/Stripe/Xendit adapters;
-- checkout;
-- payment verification;
-- receipt;
-- post-purchase.
-
-### Phase 6 — Studio & commercial engine
-
-- requirement wizard;
-- template selection;
-- quote calculator;
-- proposal generation;
-- config export.
-
-### Phase 7 — References and polish
-
-- Stay;
-- Clinic;
-- Realty;
-- Store;
-- benchmark/reliability/performance pass.
+Completing a library milestone does not satisfy §34 commercial readiness. Likewise, existing offline test coverage is not proof that new business modules, hosting, identity or external providers are ready.
 
 ---
 
 ## 34. Acceptance criteria for v1 commercial readiness
+
+The existing full-product v1 commercial readiness gate is retained. PRD v2 extends product scope; it does not declare this gate met. Smaller reusable-library milestones are evaluated separately in §49.
 
 Archava v1 is commercially ready when:
 
@@ -1518,35 +1440,30 @@ Do not change old signed contracts retroactively unless contract terms permit it
 
 ## 36. Research basis and market anchors
 
-This baseline was informed by current 2026 market/provider data, including:
+The current architecture/module research is recorded in [Reusable platform research](docs/REUSABLE_PLATFORM_RESEARCH.md), including 34 primary sources, dated findings, alternatives, limitations and the decisions they inform.
 
-- Clutch September 2026 pricing guides: typical web projects on the platform commonly below $10k; reviewed software/AI projects often in the $10k–$49k/$49.999 range.
-- Intercom Fin 2026 outcome pricing: $0.99 common Fin outcomes and higher pricing for qualified sales outcomes, demonstrating movement toward value/outcome pricing.
-- Paddle localized pricing documentation: explicit country-level pricing overrides based on willingness to pay/purchasing power rather than only FX conversion.
-- Stripe Adaptive Pricing: reported international revenue uplift from localized pricing, supporting localized buyer experience.
-- Spatius September 2026 public pricing: very low avatar-rendering economics, commercial usage on paid plans, and high included-minute tiers.
-- LiveKit official Spatius integration: client-side rendering and native LiveKit Agents integration.
-- Midtrans public Indonesia pricing: no implementation/monthly fee for payment service; merchant pays transaction fees per successful payment method.
-- Payload official multi-tenant plugin: tenant-scoped collections/admin behavior.
-- Trigger.dev public pricing/docs: long-running resilient tasks without standard timeouts and optional self-hosting.
-- Cloudflare R2 public pricing: low object-storage cost with no egress-bandwidth charge.
-- PostHog public usage model: generous free analytics/session-replay tiers suitable for early deployments.
+The September 2026 market/provider anchors that informed Pricing v1 are preserved in the [v1 specification](docs/history/PRD.v1.0.0.md). They are historical inputs, not verified current offers or refreshed economics in this revision. Review actual provider plans, account availability, license editions and costs before commercial launch or a new pricebook release.
 
-Provider/market evidence is used to set a rational baseline, not to guarantee future third-party pricing. Machine-readable ARCHZXY pricebooks remain the authoritative quote source.
+Research does not authorize changes to quote numbers or contractual commitments. `config/pricing.v1.json` remains the authoritative active pricebook until explicitly revised. New native CRM/ERP modules have no invented automatic prices; unsupported/unpriced scope requires manual review.
 
 ---
 
 ## 37. Source-of-truth hierarchy
 
-For implementation and quoting, use this precedence:
+Authority is separated by subject:
 
-1. `config/pricing.v1.json` — prices and commercial rules.
-2. `config/templates.v1.json` — template/module defaults.
-3. `AGENT.md` — deterministic selection/quotation behavior.
-4. This PRD — product/architecture requirements.
-5. Client-specific signed Statement of Work / contract.
+| Subject                                        | Authority                                                                                               |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Active standard quote numbers/rules            | `config/pricing.v1.json`; research, prose or models do not alter them.                                  |
+| Legacy template defaults                       | `config/templates.v1.json`; defaults are suggestions/configuration, not readiness evidence.             |
+| Quote-selection behavior                       | `agent.md`, constrained by active pricebook and current requirements.                                   |
+| Product scope and future acceptance            | This PRD, including §§40–49. Supporting research/proposals explain decisions.                           |
+| Client contractual scope/ownership/obligations | The applicable signed agreement/change order; a later PRD/pricebook does not silently modify it.        |
+| Operational business records                   | The designated authoritative business module or external system, including verified payment outcomes.   |
+| Permissions and actions                        | Server-verified identity, module/resource authorization and deterministic action/confirmation policy.   |
+| What is implemented                            | Source, verification evidence and `docs/BUILD_STATUS.md`; requirement text is not implementation proof. |
 
-If a contradiction exists, stop automatic finalization and flag the conflict for ARCHZXY review.
+If a requirement, pricebook, client agreement or supported configuration conflicts, stop automatic finalization and surface the conflict. Never bypass security or silently rewrite commitments to reconcile it. The v2 module registry will govern validated composition once implemented; it does not retroactively make legacy free-form toggles valid.
 
 ---
 
@@ -1593,4 +1510,305 @@ An offline English, Indonesian and mixed-language corpus must report accuracy, p
 
 The layer is reviewable when the provider-neutral contract, Rule provider, orchestrator, three modes, initial task catalogue, server-side Jev adapter, mocked transport tests, runtime safety regressions, offline eval, reference debug trace, additive tenant schema and documentation are present and ordinary gates pass. Laya and other future adapters are not implemented. This phase does not satisfy the separate §34 commercial-readiness criteria for real Act and Transact workflows.
 
-**Prior PRD sections touched:** none. §39 is additive; §§16–18, 21, 23, 26–30, 34 and the commercial rules retain their existing authority and wording.
+**History:** §39 was introduced additively without changing prior sections. PRD v2 subsequently clarifies product scope and implementation planning while preserving these authority boundaries and Pricing v1.0. The original wording is retained in the v1 archive.
+
+---
+
+## 40. Company, product and internal library boundaries
+
+### 40.1 Product ownership
+
+ARCHZXY is the company. Archava is its flagship AI interface product. ARCHZXY develops and maintains an internal module library that supports Archava and reusable business applications. A library module is reusable functionality with a public contract and an owner; a starter kit is a tested composition; a client implementation supplies configuration and bounded extensions.
+
+This revision requires reuse of business modules themselves, including their backend and UI, rather than limiting reuse to AI connectors. It does not require every module to depend on the assistant or every Archava deployment to include CRM/ERP.
+
+The ARCHZXY company website is built outside this product repository and consumes supported SDK/API/library contracts. Its sales consultation, proposal/agreement/deposit, project delivery capacity, warranty and maintenance workflows are consumer requirements. Product tooling may expose quote/configuration primitives, but no company-specific workflow becomes the shared core's default.
+
+### 40.2 Ownership and distribution
+
+Client data, brand/content and contracted client-specific assets have explicit ownership/export terms. First-party Archava/core modules, generic improvements and internal tooling remain ARCHZXY IP unless a contract explicitly transfers them. Third-party licenses remain applicable; source access to a client application is distinct from a platform IP transfer. Browser-delivered code is observable and cannot be treated as a secret.
+
+Initially distribute the library internally through controlled artifacts. Public npm publication, client platform-source delivery or an IP buyout is a separate commercial/release decision. Reuse does not imply a public open-source license or deployment in one shared database.
+
+### 40.3 Success measures
+
+Measure integration time, copied/forked core code, client-specific patches, module changes per delivery, supported-profile regression rate, upgrade effort and maintenance load. The 70–90% reuse aspiration is a hypothesis, not a release criterion or guaranteed customer promise. Prefer measured reduction in repeated work while preserving behavior/security.
+
+---
+
+## 41. Reuse layers and domain ownership
+
+| Layer                          | Responsibility                                                                                            | Boundary                                                                                                |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Shared primitives              | Tenant/principal contracts, permissions, identifiers, money/time conventions, audit/event interfaces      | Keep small. Domain-sensitive records do not become globally readable through a shared contact identity. |
+| Archava core                   | Context, knowledge/truth ports, conversation, decision advisory, action gating, generative UI and handoff | No mandatory CRM, inventory, company workflow or provider implementation dependency.                    |
+| Presence/SDK                   | Chat/Voice/Human surfaces, session transport, page awareness and host integration                         | Same intelligence/action authority; browser artifacts cannot include server credentials.                |
+| Business modules               | Contacts, CRM, booking, inventory, orders, billing and later demand-backed capabilities                   | Each owns its records, validation, APIs, migrations and state transitions. Can operate without an LLM.  |
+| Integration/action adapters    | Map public domain contracts to native modules or existing client systems                                  | Explicit authoritative resource ownership, credential scope and failure/recovery semantics.             |
+| Vertical kits/extensions       | Hotel, retail, services, education and other domain compositions                                          | Supported configuration plus specific records/invariants; no client fork of shared modules.             |
+| Client configuration/extension | Branding, allowed features, knowledge, supported workflows and client-only requirements                   | Validated options and registered extensions; no arbitrary tenant code execution.                        |
+
+**REUSE-01:** the same released module implementation must serve at least two reference consumers without copying business logic, importing parent workspace source or adding tenant-name branches to core.
+
+**REUSE-02:** a deterministic business module must accept authorized dashboard/API calls without requiring an LLM/model session; Archava must use the same domain service and state-transition rules.
+
+**REUSE-03:** each resource has one authoritative owner. Cross-module access uses public services, IDs and events. A module cannot silently update another module's internal tables. Transactions spanning modules require an explicit application-service boundary and tested failure semantics; external effects are not made atomic by a database transaction.
+
+**REUSE-04:** configuration changes supported options, not domain invariants. Material differences in scheduling, inventory valuation, patient care or school administration use explicit vertical extensions. A generic contact can be linked to a guest/student/patient record, but those records retain domain-specific permissions and meaning.
+
+**REUSE-05:** existing client systems remain supported via adapters. Read projections may be cached with provenance/freshness, but must not become a competing editable source of truth. Reconcile mappings and deletes explicitly.
+
+---
+
+## 42. Module contract
+
+### 42.1 Manifest requirements
+
+Begin with an explicit registry of trusted first-party module implementations loaded at build/startup. The registry does not download or evaluate packages named by browser/model input. New modules need implementation evidence as well as metadata.
+
+| Field                               | Requirement                                                                                             |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `id`, `version`, `contractVersion`  | Stable ID, declared public API version and exact implementation version.                                |
+| `requires`, `optional`, `conflicts` | Dependency constraints and incompatible combinations; optional dependencies do not activate themselves. |
+| `configSchema`                      | Closed validated options and a migration policy for persisted config.                                   |
+| `resources`                         | Owned records/services and data-classification boundary where persistence exists.                       |
+| `permissions`, `actions`            | Distinct resource grants and typed Archava action contracts; neither grants permission automatically.   |
+| `requiredPorts`, `credentialRefs`   | Registered implementation requirements and server-only secret references.                               |
+| `requiredEnvironment`               | Required runtime setting names, validation and public/server classification; never secret values.       |
+| `api`, `events`                     | Public service/API/event contracts with versioning and retry semantics.                                 |
+| `migrations`                        | Ordered migrations, schema compatibility and deployment/recovery instructions for stored data.          |
+| `ui`                                | Optional trusted UI entry points/extension slots and compatible UI contract.                            |
+| `healthChecks`                      | Configuration/readiness checks appropriate to the module/provider.                                      |
+| `maintainer`, `license`             | Ownership, support responsibility and third-party license inventory.                                    |
+
+A stateless module may omit persistence/UI fields. A module that stores business records cannot defer schema/migration ownership indefinitely. Start with the fields needed by actual modules; this specification does not require a universal plugin engine.
+
+Illustrative future manifest, **not an existing installed module or schema**:
+
+```json
+{
+  "id": "business.crm",
+  "version": "0.1.0",
+  "contractVersion": "crm.v1",
+  "requires": {
+    "foundation.identity": ">=0.1.0 <0.2.0",
+    "business.contacts": ">=0.1.0 <0.2.0"
+  },
+  "optional": ["archava.assistant", "integration.email"],
+  "conflicts": [],
+  "configSchema": "crm.config.v1",
+  "resources": { "owned": ["crm.activities", "crm.opportunities"] },
+  "permissions": ["crm.read", "crm.activity.write"],
+  "actions": ["crm.activity.create"],
+  "requiredPorts": ["records", "authorization", "audit"],
+  "credentialRefs": [],
+  "requiredEnvironment": [],
+  "api": "crm.api.v1",
+  "events": ["crm.activity.created.v1"],
+  "migrations": ["crm.0001"],
+  "ui": ["crm.workspace.v1"],
+  "healthChecks": ["crm.records"],
+  "maintainer": "ARCHZXY",
+  "license": "internal-first-party"
+}
+```
+
+### 42.2 Resolution and lifecycle
+
+**MOD-01:** resolve declared dependencies against a finite supported release profile. Reject unknown IDs, unsatisfied ranges, cycles, conflicts and attempts to disable required dependencies. Produce explicit reasons rather than silently substituting implementations.
+
+**MOD-02:** installation/configuration, commercial entitlement, UI visibility, runtime readiness and user/action permission are separate states. Turning a module on grants no role/resource access. A module can be installed but unavailable because its required port is missing.
+
+**MOD-03:** disabling a module prevents new invocations and removes its active UI/tools from the supported projection. It must not delete business data, invalidate legal retention or abandon already-started effects without a recovery policy. Uninstall/data purge requires an explicit authorized lifecycle.
+
+**MOD-04:** additional actions use the existing closed action registry, risk classification and validated executor boundary. Manifest strings alone do not create executable tools or extend the current 24-action registry.
+
+---
+
+## 43. Client configuration and resolved plans
+
+### 43.1 Inputs and outputs
+
+Evolve existing `ClientConfig` incrementally. Future configuration selects tenant/deployment, template/kit, supported release profile, requested modules/options, knowledge/truth sources, presence/capability, identity policy and integration references. Runtime uses a validated, versioned resolved plan with exact modules and implementations.
+
+**CFG-01:** preserve separate requested, supported, configured, connected and healthy states. Legacy `enabled: true` is not proof that an integration exists or can execute. Template common integrations begin as suggestions; automatic provisioning requires explicit validated selection and readiness.
+
+**CFG-02:** distinguish supported pipeline/stage labels, field options and workflow settings from executable code. No arbitrary scripts, SQL, dynamic imports or unreviewed schemas come from tenant/browser/model configuration.
+
+**CFG-03:** a public browser config is a safe projection. Secrets, internal margins, employee roles and privileged tool definitions stay server-side. Client IDs select intended deployments; they are not authorization credentials.
+
+**CFG-04:** quote selection and deployment selection use the same supported scope. A suggested integration cannot be promoted to connected scope or omitted from price/manual-review treatment by a config merge. Planned/unpriced native modules receive an explicit unsupported/manual-scope result, never an invented price.
+
+### 43.2 Compatibility
+
+Introduce explicit config versions and migrators alongside the old schema. Legacy configs keep current reference behavior until deliberately migrated. When old free-form module names cannot resolve, report a migration/unsupported issue; do not quietly enable new modules or change pricebook tiers.
+
+The pricebook, legacy template catalog, deployment config and module catalog have independent versions. Freeze the resolved scope with the quote/deployment evidence, including the pricebook version used. The existing resolver remains planning/reference behavior until these new guarantees are implemented and tested.
+
+---
+
+## 44. Tenancy, identity and tool permissions
+
+### 44.1 Trusted identity
+
+**TEN-01:** bind server-owned tenant scope to an authenticated employee/member, scoped service identity or constrained public customer session. Do not trust role, tenant, approval or provider credentials supplied by browser/model input. Public visitors do not need employee login, but receive a separate limited principal/tool/data projection.
+
+**TEN-02:** isolate tenant records, retrieval, cache keys, exports, files, credentials, events, jobs, rate budgets and action attempts. Resource-level ownership also applies within a tenant, such as one customer's booking or one employee's permitted contact set.
+
+**TEN-03:** for shared PostgreSQL data, use tenant-bound keys/queries and tested RLS defense in depth. Runtime roles must not be superusers or `BYPASSRLS`; address table-owner bypass explicitly. Establish transaction-local scope and test reused connections. Migration/admin credentials are separate and their cross-tenant operations explicitly authorized.
+
+Dedicated deployment/database may serve justified isolation requirements using the same library contracts. Data migration between modes must preserve resource IDs, audit/correlation and deletion/retention policies. A client-specific code fork is not required for dedicated hosting.
+
+### 44.2 Authorization
+
+**AUTH-01:** effective action authorization intersects initiating-principal grants/resource ownership, service allowlist, tenant capability/module policy, validated inputs, approval and current business preconditions. A model confidence, enabled module or paid tier grants no independent authority.
+
+**AUTH-02:** business APIs enforce permissions and invariants for every entry point: dashboard, direct API, Archava and background worker. UI controls are conveniences, not enforcement. Preserve L0–L5 and capability boundaries, including existing L5 non-autonomy. General CRM writes require Act; the existing bounded Assist lead-capture allowance does not authorize arbitrary CRM mutation.
+
+**AUTH-03:** bind confirmation to canonical payload, target/resource revision, expiry, tenant and principal/session. Recheck time-sensitive permissions and preconditions before execution. Keep raw provider keys, credentials and approval tokens out of prompts/logs.
+
+**AUTH-04:** preserve one canonical intent/attempt across retries and restarts. Distinguish a retried action from an intentionally new identical action. Atomic durable attempt identity and one-time approval consumption must be demonstrated before the corresponding real writes. Unknown results remain unknown until authoritative reconciliation or a defined operator recovery.
+
+These requirements extend the existing `ActionExecutor`, `GatedAction`, policy and host contracts incrementally; they are not claims that authenticated hosting or a durable host ledger is already implemented.
+
+---
+
+## 45. Versioning, migrations and recovery
+
+**REL-01:** declare a public contract before applying semantic versions. Initially support a small set of tested release profiles with exact resolved versions instead of every possible module combination. Document supported runtimes/UI contracts and incompatible changes.
+
+**REL-02:** separate product release, module package, config schema, API/event, database schema and pricebook versions. A module version bump does not authorize a price change or automatic client upgrade.
+
+**REL-03:** each persistence module owns ordered migrations and a migration ledger. Test an existing-data upgrade, interrupted run, supported restart/recovery and prior/current code compatibility. Use expand/contract changes for shared services where mixed deployments may coexist. Destructive changes require explicit data/recovery planning; code rollback is not proof of data rollback.
+
+**REL-04:** tenants sharing tables cannot independently apply incompatible schema histories. Coordinate a shared-service schema release. Dedicated deployments may remain pinned within a documented support window. Record which profiles are tested; do not claim compatibility from version constraints alone.
+
+**REL-05:** before hosted persistent modules go live, back up database/files/config as applicable and demonstrate restoration to an isolated environment. Record observed recovery time, backup age and consistency. Assign support-tier RPO/RTO commitments only after capacity and restore evidence exist.
+
+**REL-06:** privacy lifecycle covers exports, deletion/retention, backups, audit and provider data. Deleting a contact must reconcile dependent records and retention duties; do not blindly cascade financial/audit deletion. Curated support knowledge records problem, root cause, affected version, fix and prevention rather than ingesting all conversations automatically.
+
+---
+
+## 46. CRM / ERP across business models
+
+### 46.1 First business slice
+
+The proposed first slice is tenant-scoped contacts plus activities/follow-up tasks. Demonstrate it in hospitality inquiry and professional-service inquiry reference contexts; replace these examples if actual repeated customer demand identifies a better slice. Reference contexts do not require building the ARCHZXY company website.
+
+**CRM-01:** provide bounded contact list/detail/create/update and activity/task operations, permission checks, record revisions and durable audit. Typed validation and pagination must bound query/mutation scope. Automatic bulk messaging or arbitrary workflow execution is outside the first slice.
+
+**CRM-02:** dashboard and Archava operate on the same authorized records/service. Archava can list contacts, retrieve activity context and prepare a follow-up; mutation/sending follows existing capability/approval rules. External email delivery is enabled only when its separate Act/provider gates pass.
+
+**CRM-03:** two contexts share the same released contacts/activity implementation. Labels, supported fields and views can differ through config; genuinely new domain records live in extensions. Seed/demo data are isolated fixtures and never represented as real customer records.
+
+**CRM-04:** later leads/opportunities and sales stages must have explicit transition, assignment, visibility and audit policies. Stage relabeling cannot bypass domain rules. A contact, guest, student and patient are distinct business concepts even when linked to a shared identity.
+
+### 46.2 Operational capability growth
+
+ERP is a composition of operational modules, not a mandatory application installed for every tenant. Add capabilities only after repeated requirements establish their actual rules.
+
+| Candidate   | Shared capability                                        | Domain-specific obligations                                                           |
+| ----------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Inventory   | Items, locations and movement/reservation contracts      | Units, lots/expiry, valuation, concurrency and negative-stock rules.                  |
+| Booking     | Resource/time reservation, availability and confirmation | Room-night versus appointment semantics, overbooking/cancellation and timezone rules. |
+| Orders      | Lines, lifecycle and fulfillment references              | Returns, partial fulfillment, service delivery and external-commerce ownership.       |
+| Billing     | Invoice/payment references and verified settlement       | Currency, taxes, numbering, corrections, retention and accounting integration.        |
+| Procurement | Suppliers, purchase request/order and receipt            | Approval limits, lead times and stock/accounting integration.                         |
+| Projects    | Tasks, milestones and approved scope references          | Workflow/assignment, changes and capacity rules belonging to that business.           |
+
+**ERP-01:** define each module's invariants before implementation and validate them on actual business scenarios. Stock quantity and time-slot capacity must not be collapsed into a single generic CRUD table. An invoice/payment module is not an assertion of full accounting, tax or payroll compliance.
+
+**ERP-02:** keep posted financial/stock history traceable. Corrections use authorized adjustment/reversal semantics appropriate to the source system. An LLM cannot edit immutable financial truth, mark payments successful or make accounting policy decisions.
+
+**ERP-03:** support external authoritative systems with scoped adapters when client needs exceed first-party module scope. Avoid synchronized writable duplicates unless there is an explicit ownership/conflict/reconciliation design.
+
+### 46.3 Vertical kits
+
+Retail can compose contacts/CRM, product inventory, orders and billing. Hospitality can compose contacts/CRM, resource booking and billing with rooms/housekeeping extensions. Education can compose contacts, billing and notifications with students/attendance extensions. These are target compositions, not shipped kits or promises that all data/rules are interchangeable.
+
+Regulated medical operations, broad payroll/statutory accounting and manufacturing remain later specialized requirements. Every kit declares supported modules/config versions and contract tests. Reusable improvements feed back into the library only after removing client identifiers/secrets and validating general applicability.
+
+---
+
+## 47. Packaging and incremental migration
+
+**DIST-01:** prove consumption through packed artifacts in at least two host/configuration contexts outside workspace source resolution. Declare transitive dependencies and runtime support. No package may rely on parent paths, test aliases, private environment files or another project's build output.
+
+**DIST-02:** publish separate public browser and server surfaces. Browser output must not import Node-only adapters, provider keys or private operational data. Preserve SDK consent/page-awareness contracts; business dashboard components can be reused without coupling host-page design to the assistant widget.
+
+**DIST-03:** use internal controlled artifacts initially. A registry, CDN or public SDK bundle requires an explicit distribution/access/update policy. Inspect packaged contents, source/build hashes, licenses and dependency advisories. Provenance does not prove absence of malicious code and may disclose source/build metadata; review registry capabilities before enabling it for private IP.
+
+**MIG-01:** map existing package exports and dependencies first. Keep working ports, assistant safety, pricing and browser reference behavior. Add compiled exports/artifacts and a compatibility path incrementally rather than moving all source or switching frameworks at once.
+
+**MIG-02:** add manifest/resolution contracts alongside legacy config, then prove two compositions. Introduce trusted auth/tenant hosting, persistent business records and durable action recovery at their gates. Shared Voice/Human integration must preserve template consent/session/page protocol behavior and provider failure evidence.
+
+**MIG-03:** route one scoped consumer to the new contract and compare behavior before removing legacy paths. Record unsupported differences. No existing passing suite or legitimate behavior is removed merely to satisfy a new module architecture.
+
+---
+
+## 48. Operational and verification requirements
+
+### 48.1 Observable modules
+
+**OPS-01:** correlate tenant, initiating principal/service actor, request/turn, config/release profile, approval, action attempt, resource and authoritative outcome. Telemetry is metadata-first; provider payloads, credentials, tokens and unnecessary PII must not be logged.
+
+**OPS-02:** separate durable audit from sampled diagnostic traces. Record denials, approvals, changes and outcomes with restricted append/write access and tenant-scoped reads. This is not a guarantee of immutability against all privileged administrators.
+
+**OPS-03:** expose host/module/provider health and readiness, action/webhook/worker failures, unknown outcomes, latency, usage and cost anomalies. Configuration completeness is not provider readiness. Alert through a defined operator channel with an owner/runbook; no autonomous customer communication is implied.
+
+**OPS-04:** define support hours, severity/response policy, maintenance windows, upstream limitations and defect warranty versus paid maintenance for each release/contract. The §29 mature uptime target is aspirational until observed; no unlimited support or unmeasured SLA is created by this revision.
+
+### 48.2 Test evidence
+
+| Gate                 | Required proof                                                                                                                                  |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Existing behavior    | Preserve relevant structure/lint/type/unit/build/format/browser and template guardrail suites. Clearly record live/SDK tests not run.           |
+| Artifact consumption | Install packed artifacts outside monorepo aliases, build browser and server consumers, inspect bundle/contents for server-only code or secrets. |
+| Module/config        | Unknown IDs, cycles/ranges/conflicts, disabled dependency, missing port, requested-versus-ready state and legacy migration.                     |
+| Domain reuse         | Same CRM slice in two contexts; dashboard and Archava share data/permission rules; supported options versus vertical extension are explicit.    |
+| Identity/tenant      | Forged roles/tenant/approval, cross-tenant/customer reads/writes, retrieval/cache/file/export/worker paths and pooled connection reuse.         |
+| Actions/recovery     | Race, restart, one-time consume, new-intent versus retry, stale approval/resource, unknown provider outcome and safe reconciliation.            |
+| Persistent modules   | Existing-data migration, compatibility/recovery, record invariants, deletion/export/retention and restoration drill.                            |
+| Presence/providers   | Shared core equivalence, session/context binding, interruption/fallback and controlled provider behavior/cost.                                  |
+| Security/release     | Applicable dependency/license/advisory checks, injection reaching tools, resource authorization and packaged artifact review.                   |
+
+**VAL-01:** report offline fixtures, mocked transports, local database evidence and live provider/deployment evidence separately. Passing a mocked test is not a claim of payment/email/CRM production success. New acceptance requires source and runnable evidence, not only this PRD.
+
+No broad performance or financial guarantee is inferred from desk research. Establish realistic latency/capacity budgets from measured representative sessions and data volumes before production commitments.
+
+---
+
+## 49. Priorities, milestone acceptance and rollout
+
+### 49.1 Four priority buckets
+
+| Priority                              | Deliverable                                                                                                                                                                  | Exit evidence                                                                                                                                     |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **MUST BUILD NOW**                    | Existing public contract inventory, browser/server packaging, thin module registry/config readiness and independent consumption proof                                        | Same core artifact works in two consumers without source copies or workspace aliases; legacy regressions pass.                                    |
+| **MUST BUILD NOW for design**         | Shared CRM/ERP primitives, resource ownership and first contacts/activity slice contract                                                                                     | Two business scenarios with reviewable schema/API/UI/tools and config/extension boundaries.                                                       |
+| **MUST BUILD NOW before live writes** | Trusted principal/tenant hosting, atomic durable intent/attempt, confirmation/recovery and audit                                                                             | Race/restart/forged-confirmation/stale-resource/unknown-outcome cases pass before external effects.                                               |
+| **SHOULD BUILD NEXT**                 | One persistent reusable CRM slice, shared Voice/Human contracts, one authoritative adapter                                                                                   | Two business compositions use the same module; dashboard/Archava access the same authorized data; controlled live evidence for claimed providers. |
+| **BUILD LATER**                       | Demand-backed ERP capabilities, vertical kits, additional providers, supported profiles and provisioning                                                                     | Repeated requirements, operator/support capacity, migration and domain evidence.                                                                  |
+| **DO NOT BUILD YET**                  | Company website inside this repo; universal ERP, no-code schema/workflow platform, arbitrary plugins/version combinations, wholesale stack rewrite, microservices/Kubernetes | Revisit only for concrete requirements with evidence the simpler design cannot meet them.                                                         |
+
+### 49.2 Milestones
+
+**M0 — Specification alignment:** this research, PRD, supporting audit and operating rules agree on company/product/library boundaries. Current implementation status and unpriced scope are explicit. Completion of M0 is documentation evidence only.
+
+**M1 — Archava reuse proof:** two independent consumer builds use identical core artifact versions with different knowledge, branding and allowed actions. Browser/server separation, config validation and cross-tenant denial hold; no client-specific branch enters core. Reference fixtures are acceptable here, labelled offline.
+
+**M2 — Deterministic business module proof:** the first contacts/activity slice has persistent records, public service/API, dashboard components, tools, permissions, migration and audit. Two contexts use it with configuration/extensions and no fork. The dashboard works without an LLM. Existing customer/principal access tests remain enforced.
+
+**M3 — Controlled operational release:** the selected integration/presence actually works in a controlled environment. Durable intent/recovery, auth, provider correlation, health/telemetry, backup restoration and applicable security/advisory gates pass. CRM readiness, presence readiness and each action provider are reported separately.
+
+**M4 — Demand-backed library expansion:** add the next CRM/ERP module or kit only when its domain requirements and support owner are explicit. Publish supported profiles/changelogs and prove existing-data upgrade/recovery. Commercialize only the modules whose readiness and pricing scope are established.
+
+M1–M4 do not silently waive any broader §34 gate or authorize unsupported high-risk actions. Assess v1 commercial readiness separately. The existing historical 30% delivery estimate applies to its earlier v1 scorecard, not to this v2 module-library scope.
+
+### 49.3 Work order and open decisions
+
+Start with package/API inventory and packaging before new business code. Introduce thin metadata/config contracts, then the smallest supported two-consumer proof. Complete security/persistence gates before real state changes. Build one business slice; generalize from actual repeated needs.
+
+Distribution registry, first production provider, backend framework/ORM and queue vendor remain implementation ADR decisions. Native module versus an existing backend must be assessed on total integration, license, migration and operation cost. Do not delay all contract work while waiting for those choices, and do not mark a planned option as supported.
+
+This PRD upgrade authorizes specification work and establishes the target. It does not implement modules, publish packages, create the company website, change pricebook numbers or certify deployment readiness.

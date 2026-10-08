@@ -55,3 +55,19 @@ Template dipindahkan dari Archava Onchain ke `Archverse/Lab/Archava_Platform/Arc
 Install bersih `npm ci`, 55 test JavaScript, 4 test guardrail Python, dan build template lolos ketika source digabung dengan platform. CI repository sekarang menjalankan pemeriksaan tersebut sebagai job template tersendiri. Tujuh test integrasi SDK Python belum diulang pada konsolidasi ini karena venv proyek tidak tersedia; hasil historisnya tercatat di atas.
 
 `npm audit --omit=dev` melaporkan 16 advisory pada dependency graph yang terpasang: 14 moderate dan 2 high. Dua package berlevel high adalah `source-map-js` dan `vite`; versi tetap mengikuti lockfile template yang diaudit. Upgrade dependency dan pemeriksaan ulang advisory perlu diselesaikan sebelum deployment live. Konsolidasi source dan build yang lolos belum menjadi bukti kesiapan produksi.
+
+## Dependency cleanup — 8 Oktober 2026
+
+Vite dinaikkan dari 5.4.21 ke 6.4.4; source-map-js diperbarui ke versi patched.
+Node minimum/pin platform menjadi 22.22.3 karena dependency machina meminta
+22.22+. `npm audit --omit=dev` setelah cleanup melaporkan 13 package entries
+moderate, nol high dan nol critical. Sisa advisory berasal dari rantai
+OpenTelemetry yang dipin SDK Spatius; versi inti 2.7.1 masih dikunci beberapa
+exporter/SDK. Tidak ada downgrade Spatius atau override lintas versi internal
+telemetry yang dipaksakan. Ikuti upgrade vendor yang kompatibel dan ulang
+provider validation sebelum mengklaim produksi. Angka registry tidak sama
+dengan jumlah exploit yang dapat dijangkau.
+
+Guardrail/JavaScript/build tetap diuji offline. Agent/session behavior dan
+protokol tidak diubah. Tidak ada live provider, deployment atau Docker test
+baru; tujuh test SDK Python belum diulang karena venv tidak tersedia.

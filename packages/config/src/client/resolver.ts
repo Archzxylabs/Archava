@@ -1,5 +1,7 @@
 import { TemplateRegistry } from '../templates/loader.js'
 import type { ClientConfig, Entity, Integration, ModuleToggle } from './schema.js'
+import { buildDeploymentPlan, type DeploymentPlan, type IntegrationEvidence } from './plan.js'
+import { ModuleRegistry } from './modules.js'
 
 export class ClientConfigError extends Error {
   constructor(message: string) {
@@ -20,8 +22,14 @@ export class ClientConfigError extends Error {
 export class ClientConfigResolver {
   constructor(private readonly registry: TemplateRegistry = new TemplateRegistry()) {}
 
-  /** Validates the template reference and merges template defaults in. */
+  /** @deprecated V1 defaults are planning suggestions, not deployment readiness.
+   * Retained for existing callers. New consumers must use plan(). */
   resolve(config: ClientConfig): ClientConfig {
+    return this.resolveLegacy(config)
+  }
+
+  /** Explicit compatibility path. Do not provision from its enabled flags. */
+  resolveLegacy(config: ClientConfig): ClientConfig {
     const template = this.registry.tryGet(config.template)
     if (!template) {
       throw new ClientConfigError(
@@ -38,6 +46,14 @@ export class ClientConfigResolver {
       modules: this.mergeModules(config.modules, template.modules),
       integrations: this.mergeIntegrations(config.integrations, template.common_integrations),
     }
+  }
+
+  plan(
+    config: ClientConfig,
+    modules: ModuleRegistry = new ModuleRegistry(),
+    hostEvidence: readonly IntegrationEvidence[] = [],
+  ): DeploymentPlan {
+    return buildDeploymentPlan(config, this.registry, modules, hostEvidence)
   }
 
   /** Effective module set: template modules filtered by client toggles, plus client-only modules. */

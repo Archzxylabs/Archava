@@ -26,6 +26,19 @@ export {
 } from './client/schema.js'
 
 export { ClientConfigResolver, ClientConfigError } from './client/resolver.js'
+export {
+  buildDeploymentPlan,
+  integrationEvidenceSchema,
+  type DeploymentPlan,
+  type TemplateLookup,
+  type IntegrationEvidence,
+} from './client/plan.js'
+export {
+  ModuleRegistry,
+  PLATFORM_MODULES,
+  moduleManifestSchema,
+  type ModuleManifest,
+} from './client/modules.js'
 
 export {
   pricebookSchema,

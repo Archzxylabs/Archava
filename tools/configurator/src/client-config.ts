@@ -21,13 +21,11 @@ import type { NormalizedScope } from './normalized.js'
  *    which day this snapshot is stamped; a configurator that made up a hex code
  *    would be writing brand decisions no client ever made. The core also stays
  *    clock-free, which is what keeps two runs on one intake identical.
- * 2. **Integrations are the client's, not the template's.** Only the
- *    integrations the intake required are emitted here. `ClientConfigResolver`
- *    is the one place template `common_integrations` and `modules` get merged
- *    in, so a resolved deployment can legitimately carry integrations the
- *    configurator never priced — the quote answers "what did the client ask
- *    for", the config answers "what is deployed", and conflating the two would
- *    misreport both.
+ * 2. **Only explicitly requested integrations are emitted.** New deployment
+ *    consumers use ClientConfigResolver.plan(): common integrations stay
+ *    suggestions and host verification supplies connection/health evidence.
+ *    resolveLegacy() preserves V1 demo defaults but is not a provisioning input.
+ *    A quote and its deployment scope must never silently gain unpriced work.
  */
 
 /** Matches `config/templates.v1.json`; bumped there, changed here, never silently. */

@@ -50,7 +50,7 @@ export interface NormalizedScope {
   readonly provenance: ScopeProvenance
 }
 
-/** An integration as it ships: on, with the complexity it was quoted at. */
+/** An integration requested for launch, with its quoted complexity. Not connection evidence. */
 export interface NormalizedIntegration {
   readonly name: string
   readonly complexity: IntegrationComplexity

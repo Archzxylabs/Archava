@@ -19,10 +19,10 @@
  * cannot help here — the import graph is resolved before any code runs, so by
  * the time a flag could say "no filesystem", `node:fs` is already being bundled.
  *
- * What is *not* here, and why: nothing that mutates, and nothing that resolves a
- * template. Both loaders are pure readers, so dropping them costs a browser
- * nothing it had; and template resolution needs a resolved catalog on disk, which
- * is the server's job to have already done before it answers a client.
+ * Deployment planning is also pure when supplied a host-owned catalog lookup
+ * and module/evidence snapshots. It never loads a catalog, connects a provider
+ * or grants permission. Filesystem readers and the default server resolver stay
+ * on the server entry points.
  */
 
 export {
@@ -51,6 +51,20 @@ export {
   type DecisionTasks,
   type DecisionConfig,
 } from './client/schema.js'
+
+export {
+  buildDeploymentPlan,
+  integrationEvidenceSchema,
+  type DeploymentPlan,
+  type TemplateLookup,
+  type IntegrationEvidence,
+} from './client/plan.js'
+export {
+  ModuleRegistry,
+  PLATFORM_MODULES,
+  moduleManifestSchema,
+  type ModuleManifest,
+} from './client/modules.js'
 
 export {
   pricebookSchema,

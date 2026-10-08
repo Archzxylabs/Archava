@@ -1,0 +1,142 @@
+{
+  "node": "v22.22.3",
+  "consumers": [
+    {
+      "consumer": "hospitality",
+      "checks": {
+        "tenantId": "hotel-demo",
+        "brand": "Garden Stay \u2014 offline reference",
+        "allowedActions": ["navigation.go"],
+        "text": "Our services include garden stays and quiet reading spaces.",
+        "crossTenant": "denied",
+        "unsafeAction": "denied",
+        "browser": "built-without-alias"
+      },
+      "installed": [
+        {
+          "name": "@archava/sdk",
+          "version": "0.1.0",
+          "implementationSha256": "ca8434a7a972873a9c3aa682b8a7aecb16cb8504af9be525a4da27cc5a73f854",
+          "tarballSha256": "8b694a35506165ac25e54bac2ce3b76a7bff5dac0e261f2c7954a4a2f4557425"
+        },
+        {
+          "name": "@archava/config",
+          "version": "0.1.0",
+          "implementationSha256": "2999330ecb05dc3e2f01dccd66625e8272d81a9bcee83909be963b74bdcd6717",
+          "tarballSha256": "18e8ad1c263f7d7c8c7f2c5aeee2567663379007eb2b3131ef53c0457112b3f1"
+        },
+        {
+          "name": "@archava/core",
+          "version": "0.1.0",
+          "implementationSha256": "720aa7343658e59a6fa223d5a94cbed38554e255a879e32be7b86aafe6a06d73",
+          "tarballSha256": "d922709ba0ba3181e2822bb8a2e601cb35429ae0594d04b8a4a3d3eea0adf690"
+        },
+        {
+          "name": "@archava/assistant",
+          "version": "0.1.0",
+          "implementationSha256": "00e24fe9d894145bbcb18183e24e9651ef89de78534bbbb1c2f95575bac45d7d",
+          "tarballSha256": "5bb6bcd08195331324b0fa0ce958fd6468fb3807ed96e68a721ff76a49ea130d"
+        },
+        {
+          "name": "@archava/acl",
+          "version": "0.1.0",
+          "implementationSha256": "a8afbd041bb0198082e780a8b531c76a2a221b4b2d0b9b7ab6d9f58ecd21342b",
+          "tarballSha256": "4f17bb494a74d3d43519ee21e7b57fc807f7d799c35d43bcb2b508018bba1559"
+        },
+        {
+          "name": "@archava/adapters",
+          "version": "0.1.0",
+          "implementationSha256": "8c784ff755850a4c3349676a5cb71becbff36796b577b8dad91bec2790ca3b58",
+          "tarballSha256": "c2eaa9895125edf61d8b3d10c3f53b3299217c6ecb4b7e4ea65613cb64e38b29"
+        },
+        {
+          "name": "@archava/decision",
+          "version": "0.1.0",
+          "implementationSha256": "53a499da3f25576ca0f125e63c86fbb595b6d1c3b95d95685827ba40780d562f",
+          "tarballSha256": "411f7507335051e5b2c1a661821d4d0c69d2ffc7d1987136250ddedd12c9f693"
+        },
+        {
+          "name": "@archava/knowledge",
+          "version": "0.1.0",
+          "implementationSha256": "dea9e4ba7979472585b094c9fa9f915ee9303f9c686b8f50f841abca8ed92216",
+          "tarballSha256": "4760986f35090c80d9af1bfb42926f7365292b5e912562542db246fc7497363f"
+        },
+        {
+          "name": "@archava/chat",
+          "version": "0.1.0",
+          "implementationSha256": "f5ee79c41f6fe947c01233bf92dd47d09570de077704711d4ff1f35a1445541f",
+          "tarballSha256": "e40cb8efe8a5f21c8472d1798d7c2bb12e7bdc1b2d6714a320a0078ee3444bdb"
+        }
+      ]
+    },
+    {
+      "consumer": "retail",
+      "checks": {
+        "tenantId": "retail-demo",
+        "brand": "Paper Shop \u2014 offline reference",
+        "allowedActions": ["ui.highlight"],
+        "text": "Our services include notebooks, paper supplies and gift wrapping.",
+        "crossTenant": "denied",
+        "unsafeAction": "denied",
+        "browser": "built-without-alias"
+      },
+      "installed": [
+        {
+          "name": "@archava/sdk",
+          "version": "0.1.0",
+          "implementationSha256": "ca8434a7a972873a9c3aa682b8a7aecb16cb8504af9be525a4da27cc5a73f854",
+          "tarballSha256": "8b694a35506165ac25e54bac2ce3b76a7bff5dac0e261f2c7954a4a2f4557425"
+        },
+        {
+          "name": "@archava/config",
+          "version": "0.1.0",
+          "implementationSha256": "2999330ecb05dc3e2f01dccd66625e8272d81a9bcee83909be963b74bdcd6717",
+          "tarballSha256": "18e8ad1c263f7d7c8c7f2c5aeee2567663379007eb2b3131ef53c0457112b3f1"
+        },
+        {
+          "name": "@archava/core",
+          "version": "0.1.0",
+          "implementationSha256": "720aa7343658e59a6fa223d5a94cbed38554e255a879e32be7b86aafe6a06d73",
+          "tarballSha256": "d922709ba0ba3181e2822bb8a2e601cb35429ae0594d04b8a4a3d3eea0adf690"
+        },
+        {
+          "name": "@archava/assistant",
+          "version": "0.1.0",
+          "implementationSha256": "00e24fe9d894145bbcb18183e24e9651ef89de78534bbbb1c2f95575bac45d7d",
+          "tarballSha256": "5bb6bcd08195331324b0fa0ce958fd6468fb3807ed96e68a721ff76a49ea130d"
+        },
+        {
+          "name": "@archava/acl",
+          "version": "0.1.0",
+          "implementationSha256": "a8afbd041bb0198082e780a8b531c76a2a221b4b2d0b9b7ab6d9f58ecd21342b",
+          "tarballSha256": "4f17bb494a74d3d43519ee21e7b57fc807f7d799c35d43bcb2b508018bba1559"
+        },
+        {
+          "name": "@archava/adapters",
+          "version": "0.1.0",
+          "implementationSha256": "8c784ff755850a4c3349676a5cb71becbff36796b577b8dad91bec2790ca3b58",
+          "tarballSha256": "c2eaa9895125edf61d8b3d10c3f53b3299217c6ecb4b7e4ea65613cb64e38b29"
+        },
+        {
+          "name": "@archava/decision",
+          "version": "0.1.0",
+          "implementationSha256": "53a499da3f25576ca0f125e63c86fbb595b6d1c3b95d95685827ba40780d562f",
+          "tarballSha256": "411f7507335051e5b2c1a661821d4d0c69d2ffc7d1987136250ddedd12c9f693"
+        },
+        {
+          "name": "@archava/knowledge",
+          "version": "0.1.0",
+          "implementationSha256": "dea9e4ba7979472585b094c9fa9f915ee9303f9c686b8f50f841abca8ed92216",
+          "tarballSha256": "4760986f35090c80d9af1bfb42926f7365292b5e912562542db246fc7497363f"
+        },
+        {
+          "name": "@archava/chat",
+          "version": "0.1.0",
+          "implementationSha256": "f5ee79c41f6fe947c01233bf92dd47d09570de077704711d4ff1f35a1445541f",
+          "tarballSha256": "e40cb8efe8a5f21c8472d1798d7c2bb12e7bdc1b2d6714a320a0078ee3444bdb"
+        }
+      ]
+    }
+  ],
+  "identicalArtifacts": true
+}

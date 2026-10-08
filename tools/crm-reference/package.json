@@ -1,0 +1,22 @@
+{
+  "name": "@archava/crm-reference",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "verify": "node scripts/run.mjs verify",
+    "dev": "node scripts/run.mjs dev",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@archava/crm": "workspace:*",
+    "@archava/crm-pg": "workspace:*"
+  },
+  "devDependencies": {
+    "pg": "8.23.1",
+    "@types/pg": "8.23.1",
+    "typescript": "5.9.3",
+    "tsx": "4.20.6",
+    "esbuild": "0.25.12"
+  }
+}

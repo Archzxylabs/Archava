@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0.0",
+  "tenantId": "hotel-demo",
+  "template": "hospitality",
+  "environment": "business",
+  "presence": "chat",
+  "capability": "assist",
+  "region": "ID",
+  "branding": {
+    "businessName": "Garden Stay \u2014 offline reference",
+    "theme": {
+      "accent": "#1f6f5c",
+      "surface": "#ffffff",
+      "ink": "#101010",
+      "radius": "rounded",
+      "fontFamily": "system-ui"
+    }
+  },
+  "languages": [
+    {
+      "code": "en",
+      "label": "English"
+    }
+  ],
+  "primaryLanguage": "en",
+  "updatedAt": "2026-10-08",
+  "isReferenceImplementation": true,
+  "modules": [
+    {
+      "name": "knowledge",
+      "enabled": true
+    },
+    {
+      "name": "page_awareness",
+      "enabled": true
+    }
+  ],
+  "knowledgeSources": [
+    {
+      "id": "hotel-demo-faq",
+      "kind": "faq",
+      "title": "Garden Stay \u2014 offline reference services",
+      "content": "Our services include garden stays and quiet reading spaces.",
+      "updatedAt": "2026-10-08"
+    }
+  ]
+}

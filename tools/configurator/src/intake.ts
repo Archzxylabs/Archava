@@ -57,6 +57,7 @@ export const INDUSTRIES = [
   'real_estate',
   'ecommerce',
   'professional_services',
+  'education',
 ] as const
 export type IndustryName = (typeof INDUSTRIES)[number]
 

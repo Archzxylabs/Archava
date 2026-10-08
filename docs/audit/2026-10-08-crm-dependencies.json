@@ -1,0 +1,14 @@
+{
+  "reviewed": "2026-10-08",
+  "platformAll": {
+    "info": 0,
+    "low": 0,
+    "moderate": 0,
+    "high": 0,
+    "critical": 0
+  },
+  "newRuntimeDriver": "pg@8.23.1",
+  "driverLicense": "MIT",
+  "installScripts": "No pg install scripts",
+  "scope": "pnpm platform including CRM; standalone template still has previously reported moderate advisories"
+}

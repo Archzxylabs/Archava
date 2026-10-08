@@ -1,0 +1,8 @@
+{
+  "tenantId": "hotel-demo",
+  "title": "Hotel inquiry desk",
+  "contacts": "Guest inquirys",
+  "contact": "Guest inquiry",
+  "principal": "hotel-owner",
+  "viewer": "hotel-viewer"
+}

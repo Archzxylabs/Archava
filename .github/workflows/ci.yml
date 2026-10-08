@@ -47,6 +47,9 @@ jobs:
       - name: Structure
         run: pnpm structure
 
+      - name: Format
+        run: pnpm format:check
+
       - name: Lint
         run: pnpm lint
 
@@ -58,6 +61,29 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+      - name: Verify two independent consumers
+        run: pnpm reuse:verify
+
+  crm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read Node version
+        run: echo "NODE_VERSION=$(grep '^node ' .tool-versions | awk '{print $2}')" >> "$GITHUB_ENV"
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.15.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Install disposable PostgreSQL tooling
+        run: sudo apt-get update && sudo apt-get install -y postgresql
+      - name: Verify persistent CRM and independent consumers
+        run: pnpm crm:verify
 
   template:
     runs-on: ubuntu-latest

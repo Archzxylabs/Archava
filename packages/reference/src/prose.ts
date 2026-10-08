@@ -26,7 +26,7 @@
  *    are live as of this turn" without stamping a time nobody measured.
  */
 
-import { minorUnitDivisor } from '@archava/config'
+import { minorUnitDivisor } from '@archava/config/pure'
 
 /** A resolved subject's record, as the port answered it. */
 type SubjectRecord = Readonly<Record<string, unknown>>

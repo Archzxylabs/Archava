@@ -20,7 +20,7 @@
  *   a live PMS would answer through (§17).
  */
 
-import { parseClientConfig, type ClientConfig } from '@archava/config'
+import { parseClientConfig, type ClientConfig } from '@archava/config/pure'
 import { referenceKnowledgeInputs } from './knowledge.js'
 import { referenceUnitInputs } from './units.js'
 

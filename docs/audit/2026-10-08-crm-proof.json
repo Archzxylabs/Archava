@@ -1,0 +1,58 @@
+{
+  "node": "v22.22.3",
+  "checks": [
+    "migration ledger repeatability and non-owner runtime requirement",
+    "eight concurrent identical requests produce one contact and one audit receipt",
+    "two business contexts persist separate records; cross-tenant and public callers refused",
+    "optimistic revision race, preserved optional fields and canonical retry/new-intent separation",
+    "viewer writes refused and assigned-only resource access enforced",
+    "machine/initiator permission intersection, projected read tools and no machine write path",
+    "draft remains read-only; human activity/follow-up lifecycle persisted and audited",
+    "bounded keyset pagination, parameterized hostile search and strict mutation schema",
+    "forced tenant RLS, pool scope reset, composite tenant foreign keys and immutable audit",
+    "audit failure rolls back records and command identity; same request can recover",
+    "membership revocation rechecked; database restart preserves records, audit and retry receipt",
+    "authenticated HTTP API rejects anonymous, cross-tenant, viewer, cross-origin and oversized requests"
+  ],
+  "consumers": [
+    {
+      "consumer": "hospitality",
+      "modules": [
+        {
+          "name": "@archava/crm",
+          "version": "0.1.0",
+          "implementationSha256": "ac1d4ad48f7a5cf89c9c222923e80334785f0a7b8a4fadbb9d4d9c8dd597841a",
+          "tarballSha256": "ab4fe4d07044812f293d9c7f75e5f6c36f62895522cb7aecb7a18be1967e4e1c"
+        },
+        {
+          "name": "@archava/crm-pg",
+          "version": "0.1.0",
+          "implementationSha256": "798e757a9108c89029c135a0bc4be6fe53f0d5a8f970a9df91cfbaaaccae7200",
+          "tarballSha256": "e4dd30e48f331fea11654b51746d48c9e620b75889ee5642dc3091e3818dde5f"
+        }
+      ]
+    },
+    {
+      "consumer": "professional-services",
+      "modules": [
+        {
+          "name": "@archava/crm",
+          "version": "0.1.0",
+          "implementationSha256": "ac1d4ad48f7a5cf89c9c222923e80334785f0a7b8a4fadbb9d4d9c8dd597841a",
+          "tarballSha256": "ab4fe4d07044812f293d9c7f75e5f6c36f62895522cb7aecb7a18be1967e4e1c"
+        },
+        {
+          "name": "@archava/crm-pg",
+          "version": "0.1.0",
+          "implementationSha256": "798e757a9108c89029c135a0bc4be6fe53f0d5a8f970a9df91cfbaaaccae7200",
+          "tarballSha256": "e4dd30e48f331fea11654b51746d48c9e620b75889ee5642dc3091e3818dde5f"
+        }
+      ]
+    }
+  ],
+  "postgres": "real disposable cluster",
+  "providerCalls": 0,
+  "browserChecks": 13,
+  "browserScope": "Real DOM CRUD/reload/role denial in two loopback reference contexts; deliberate HTTP 403 expected.",
+  "referenceShutdownVerified": true
+}

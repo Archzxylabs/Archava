@@ -35,7 +35,7 @@ export const designAddonSchema = z.enum([
 export const integrationSchema = z.object({
   name: nonEmptyString,
   complexity: integrationComplexitySchema,
-  /** Whether this integration is wired up in this deployment. */
+  /** Requested in this scope. V1 enabled is not connection or health evidence. */
   enabled: z.boolean().default(true),
   /** Free-text note on credentials/account ownership. Never a secret value. */
   note: z.string().optional(),

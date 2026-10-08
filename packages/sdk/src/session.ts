@@ -86,6 +86,10 @@ export function createSession(init: SdkInit): SdkSession {
     )
   }
 
+  if (init.config !== undefined && init.config.tenantId !== tenantId) {
+    throw new SdkConfigError('Session tenantId must match the supplied client configuration.')
+  }
+
   let consent = parseConsent(init.consent)
   const sensitive = [...(init.sensitiveFields ?? [])]
   const notices: string[] = []

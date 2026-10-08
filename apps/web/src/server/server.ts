@@ -11,20 +11,14 @@
  *   serving is a deploy nobody asked for.
  * - `prod` — serve `dist/` and the API. Refuses to serve anything else.
  *
- * The alias table is the whole reason this file has to exist. `@archava/config`
- * exports a filesystem pricebook loader from its barrel, which cannot be
- * bundled for a browser at all, so the browser is handed the package's `pure`
- * entry: the same schemas minus the readers. Server code keeps the barrel,
- * because reading a file is fine under Node. That makes one package resolve two
- * ways in one app, and the only thing deciding which is where the import came
- * from — which is the honest way to put it: the schemas are shared, the readers
- * are not.
+ * Browser consumers use explicit pure configuration exports. The build needs
+ * no workspace aliases or private source paths.
  */
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
 import { readFile } from 'node:fs/promises'
 import { dirname, join, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { build, type BuildOptions, type Plugin } from 'esbuild'
+import { build, type BuildOptions } from 'esbuild'
 import { answerQuote } from './api.js'
 
 const appDir = dirname(fileURLToPath(import.meta.url))
@@ -36,8 +30,6 @@ const appDir = dirname(fileURLToPath(import.meta.url))
  * the root once is the difference between one place to get it right and three.
  */
 const webDir = join(appDir, '..', '..')
-/** The workspace root, two above the app. */
-const repoDir = join(webDir, '..', '..')
 const distDir = join(webDir, 'dist')
 const pagesDir = join(webDir, 'pages')
 const publicDir = join(webDir, 'public')
@@ -88,25 +80,6 @@ const TYPES: Readonly<Record<string, string>> = {
 }
 
 /**
- * The esbuild plugin that resolves `@archava/config` for the browser.
- *
- * A plugin rather than an `alias` entry because the decision is not "the name
- * maps to a different path" but "the name maps to a different *entry* of the
- * same package". `alias` cannot express that: it rewrites the specifier, and the
- * resolved path would still land on the barrel's `main`. Resolving on load
- * lets the root specifier land where it should and leave everything else — a
- * deep import into `src/pricing.ts`, a `zod` import — exactly as it was.
- */
-const browserConfigEntry: Plugin = {
-  name: 'archava-browser-config',
-  setup(builder) {
-    builder.onResolve({ filter: /^@archava\/config$/ }, () => ({
-      path: join(repoDir, 'packages', 'config', 'src', 'pure.ts'),
-    }))
-  },
-}
-
-/**
  * Options every browser build shares.
  *
  * The entry is a parameter because it is the thing being built. A defaulted
@@ -123,7 +96,6 @@ function buildOptions(from: string, outfile: string): BuildOptions {
     target: 'es2022',
     outfile,
     logLevel: 'warning',
-    plugins: [browserConfigEntry],
   }
 }
 

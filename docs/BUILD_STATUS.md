@@ -1,5 +1,20 @@
 # Build status
 
+The [7 October project audit](PROJECT_AUDIT_2026-10-07.md) reruns the platform,
+template, browser and local PostgreSQL checks and records dependency findings.
+It also reproduces the Chat browser-export and config/readiness gaps. Passing
+reference tests does not establish independently consumable or live modules.
+
+**8 October cleanup and offline M1:** internal compiled package consumption is
+now exercised by two independent hospitality/retail consumers. A thin module
+registry and V2 deployment plan separate template suggestions from quoted scope
+and tenant-bound host connection evidence. The V1 resolver remains an explicitly
+labelled compatibility path. See [library consumption](LIBRARY_CONSUMPTION.md).
+Trusted production authentication, durable host attempt recovery, shared realtime
+presence remain separate release gaps. The persistent contacts/activity/follow-up
+CRM slice is now exercised across two contexts; see [CRM module](CRM_MODULE.md). The company website
+is still a separate future consumer.
+
 The consolidated source also includes the [website and CRM/ERP frontend](FRONTEND.md)
 and the [portable realtime template](<../Archava Template/README.md>). Frontend
 records and approvals are browser-local demos. The template is a standalone npm
@@ -21,19 +36,22 @@ labels mean:
 Where a claim below rests on evidence, the evidence is a file path. Where it
 rests on the absence of something, that absence was verified rather than
 assumed: no `package.json` in the workspace declares an external service SDK.
-The only _runtime_ dependencies in the whole
-workspace are `@archava/*` and `zod`; every other dependency in every manifest
+The foundation runtime dependencies are `@archava/*` and `zod`. The new
+server-only `@archava/crm-pg` adapter additionally uses pinned `pg` and its
+type package; browser CRM code imports only the shared dashboard contract.
+Other tooling dependencies in the manifests
 (eslint, prettier, typescript, typescript-eslint, vitest, tsx, esbuild,
-@vitest/coverage-v8, eslint-plugin-react-hooks, @eslint/js) is a
-devDependency. See _External baselines_ below.
+@vitest/coverage-v8, eslint-plugin-react-hooks, @eslint/js) remain
+devDependencies. See _External baselines_ below.
 
 ## The short version
 
-One vertical slice runs end to end in a browser, offline, for one reference
-tenant. The pipeline's decisions are real and fully visible: retrieval,
+The assistant slice runs end to end in a browser, offline, for one reference
+tenant. The persistent CRM slice separately serves two business contexts with
+shared compiled artifacts. The assistant pipeline's decisions are real and fully visible: retrieval,
 structured truth, the capability gate, §9 input validation, entity resolution,
-and execution each happen in code with a test beside them. The **commercial
-surface does not exist**. There is no payment integration, no PMS integration,
+and execution each happen in code with a test beside them. Production commercial
+workflows remain unverified. There is no payment integration, no PMS integration,
 and no production-connected executor for any action that changes a tenant's data.
 
 The PRD's acceptance criterion is `PRD.md` §34: _Act_ can complete one
@@ -48,8 +66,7 @@ stating plainly:
    (`apps/web/src/surface.ts`) handles `ui.*`; the separate server-side Act
    executors handle only booking and email, not payment.
 
-That is the whole answer to "is this production ready": the pipeline is, and the
-product is not.
+Production release gates remain open for the pipeline and product.
 
 ## Implemented
 
@@ -78,25 +95,27 @@ product is not.
 | Full gate chain, same order as CI                                           | `tools/scripts/verify.mjs`                                                                                              |
 | Browser E2E against the served page                                         | `tools/e2e/home.mjs` — 31 assertions, passing                                                                           |
 | GitHub Actions CI                                                           | `.github/workflows/ci.yml`                                                                                              |
+| Persistent contacts, activities and follow-up module                        | `packages/crm`, `packages/crm-pg`; real database and two independent consumers in `tools/crm-reference`                 |
+| Shared CRM dashboard and authorized read/draft tools                        | `packages/crm/src/{dashboard,service,api}.ts`; browser and SQL evidence in `docs/CRM_M2_2026-10-08.md`                  |
 
 ## Partially Implemented
 
 The mechanism is real and tested; what is behind it is a stand-in.
 
-| Area                                     | What exists                                                                                                                             | What is missing                                                                                                        |
-| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| Conversation (`BrainProvider`)           | `ScriptedBrain` and `ReferenceBrain` — deterministic, keyword-matched, with an explicit fallback sentence                               | a generative model client. The Jev decision adapter does not implement conversation                                    |
-| Retrieval (`KnowledgePort`)              | `buildKnowledgeStore` (`packages/reference/src/knowledge.ts:224`) + `retrieveContext`                                                   | a hosted index, embeddings, incremental ingest. The store is in memory and built at request time                       |
-| Live facts (`StructuredTruthPort`)       | `referenceTruth` (`packages/reference/src/rates.ts:421`) — date-stated fixtures                                                         | a PMS or inventory service. Prices and availability are fixtures, not live                                             |
-| "Does this id exist?" (`EntityResolver`) | `pageEntityResolver` (`apps/web/src/surface.ts:142`) — answers from the rendered page, kind `pageEntity`                                | a tenant catalog. The resolver can only confirm what the page is already showing                                       |
-| Execution (`ActionExecutor`)             | `pageExecutor` for UI; `packages/act-booking`, `act-email`, and `act` for server-side booking/email ports with mocked integration tests | a connected booking/email service, durable outbox, CRM, payment, and production tenant wiring                          |
-| Confirmation and human approval          | `confirmedActionIds`, `declinedActionIds`, `humanApprovedActionIds`, `handoffRequested` on `TurnRequest`; gate reasons emit them        | an operator console. In the reference slice these are supplied by the caller, so no real person ever approves anything |
-| Multi-tenancy                            | `assertTenant` at the seam (`apps/web/src/slice.ts:160`); tenant id never travels inside a payload                                      | provisioning, per-tenant configuration at runtime, database-level isolation. One tenant ships                          |
-| Analytics                                | `AnalyticsEvent`s on every `TurnOutcome` (`packages/assistant/src/analytics.ts`)                                                        | anywhere to send them. No PostHog, OTel, Phoenix or Sentry                                                             |
-| SDK integration                          | graph building, consent, session                                                                                                        | a real host page shipped by a tenant. The reference page is the only consumer                                          |
-| Configurator                             | a config set and a quote                                                                                                                | persistence and tenant provisioning. "Built" means the file exists                                                     |
-| Handoff to a human                       | `HandoffContext` and `packages/assistant/src/handoff.ts`                                                                                | a channel to a human. The request is modelled; nothing is delivered                                                    |
-| Auth and authorisation                   | roles and tiers as data                                                                                                                 | authentication of any kind. No login exists in the tree                                                                |
+| Area                                     | What exists                                                                                                                             | What is missing                                                                                                          |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Conversation (`BrainProvider`)           | `ScriptedBrain` and `ReferenceBrain` — deterministic, keyword-matched, with an explicit fallback sentence                               | a generative model client. The Jev decision adapter does not implement conversation                                      |
+| Retrieval (`KnowledgePort`)              | `buildKnowledgeStore` (`packages/reference/src/knowledge.ts:224`) + `retrieveContext`                                                   | a hosted index, embeddings, incremental ingest. The store is in memory and built at request time                         |
+| Live facts (`StructuredTruthPort`)       | `referenceTruth` (`packages/reference/src/rates.ts:421`) — date-stated fixtures                                                         | a PMS or inventory service. Prices and availability are fixtures, not live                                               |
+| "Does this id exist?" (`EntityResolver`) | `pageEntityResolver` (`apps/web/src/surface.ts:142`) — answers from the rendered page, kind `pageEntity`                                | a tenant catalog. The resolver can only confirm what the page is already showing                                         |
+| Execution (`ActionExecutor`)             | `pageExecutor` for UI; `packages/act-booking`, `act-email`, and `act` for server-side booking/email ports with mocked integration tests | a connected booking/email service, durable host recovery, gated CRM machine writes, payment and production tenant wiring |
+| Confirmation and human approval          | `confirmedActionIds`, `declinedActionIds`, `humanApprovedActionIds`, `handoffRequested` on `TurnRequest`; gate reasons emit them        | an operator console. In the reference slice these are supplied by the caller, so no real person ever approves anything   |
+| Multi-tenancy                            | Assistant tenant checks; CRM memberships, assigned-record scope, forced tenant RLS and two-context database verification                | production provisioning/session management and tenant operations across all runtime surfaces                             |
+| Analytics                                | `AnalyticsEvent`s on every `TurnOutcome` (`packages/assistant/src/analytics.ts`)                                                        | anywhere to send them. No PostHog, OTel, Phoenix or Sentry                                                               |
+| SDK integration                          | Graph building, consent, session and two independent compiled core consumers                                                            | a production host page shipped by a tenant                                                                               |
+| Configurator                             | a config set and a quote                                                                                                                | persistence and tenant provisioning. "Built" means the file exists                                                       |
+| Handoff to a human                       | `HandoffContext` and `packages/assistant/src/handoff.ts`                                                                                | a channel to a human. The request is modelled; nothing is delivered                                                      |
+| Auth and authorisation                   | Core roles/tiers; CRM server-side memberships/resource permissions and fictional local reference sessions                               | production authentication, enrollment, session expiry/revocation and secure host deployment                              |
 
 ## Planned
 
@@ -141,7 +160,7 @@ done.
 - Email delivery (Postmark or equivalent)
 - Payment providers: Midtrans, Xendit, Stripe
 - Booking and commerce systems: Cal.com, Shopify, WooCommerce, Medusa
-- CRM and ERP: a CRM, ERPNext
+- Broader CRM and ERP: a full CRM, ERPNext
 
 **Observability and security tooling**
 

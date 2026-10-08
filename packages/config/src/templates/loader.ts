@@ -15,11 +15,14 @@ export class TemplateError extends Error {
 const TEMPLATES_RELATIVE_PATH = 'config/templates.v1.json'
 
 export function loadTemplates(searchFrom: string = process.cwd()): TemplateCatalog {
-  const candidates = [
-    path.resolve(searchFrom, TEMPLATES_RELATIVE_PATH),
-    path.resolve(searchFrom, '../../', TEMPLATES_RELATIVE_PATH),
-    path.resolve(searchFrom, '../../../', TEMPLATES_RELATIVE_PATH),
-  ]
+  const candidates: string[] = []
+  let directory = path.resolve(searchFrom)
+  while (true) {
+    candidates.push(path.join(directory, TEMPLATES_RELATIVE_PATH))
+    const parent = path.dirname(directory)
+    if (parent === directory) break
+    directory = parent
+  }
   const found = candidates.find((candidate) => {
     try {
       readFileSync(candidate, 'utf8')

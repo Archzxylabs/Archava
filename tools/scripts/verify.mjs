@@ -38,10 +38,12 @@ const pnpm = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm'
 const GATES = [
   { name: 'install', args: ['install', '--frozen-lockfile'], stopOnFailure: true },
   { name: 'structure', args: ['structure'] },
+  { name: 'format', args: ['format:check'] },
   { name: 'lint', args: ['lint'] },
   { name: 'typecheck', args: ['typecheck'] },
   { name: 'test', args: ['test'] },
   { name: 'build', args: ['build'] },
+  { name: 'reuse', args: ['reuse:verify'] },
 ]
 
 /** Actions used for the console, guarded so a piped run never crashes. */

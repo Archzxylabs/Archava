@@ -1,0 +1,111 @@
+{
+  "reviewed": "2026-10-08",
+  "node": "22.22.3",
+  "pnpm": "10.15.1",
+  "platformAll": {
+    "info": 0,
+    "low": 0,
+    "moderate": 0,
+    "high": 0,
+    "critical": 0
+  },
+  "templateOmitDev": {
+    "info": 0,
+    "low": 0,
+    "moderate": 13,
+    "high": 0,
+    "critical": 0,
+    "total": 13
+  },
+  "templateAdvisories": [
+    {
+      "package": "@opentelemetry/core",
+      "severity": "moderate",
+      "range": "<2.8.0",
+      "sources": ["https://github.com/advisories/GHSA-8988-4f7v-96qf"]
+    },
+    {
+      "package": "@opentelemetry/exporter-logs-otlp-http",
+      "severity": "moderate",
+      "range": "<=0.218.0",
+      "sources": []
+    },
+    {
+      "package": "@opentelemetry/exporter-metrics-otlp-http",
+      "severity": "moderate",
+      "range": "<=0.218.0",
+      "sources": []
+    },
+    {
+      "package": "@opentelemetry/exporter-trace-otlp-http",
+      "severity": "moderate",
+      "range": "<=0.218.0",
+      "sources": []
+    },
+    {
+      "package": "@opentelemetry/otlp-exporter-base",
+      "severity": "moderate",
+      "range": "<=0.218.0",
+      "sources": []
+    },
+    {
+      "package": "@opentelemetry/otlp-transformer",
+      "severity": "moderate",
+      "range": "<=0.218.0",
+      "sources": []
+    },
+    {
+      "package": "@opentelemetry/resources",
+      "severity": "moderate",
+      "range": "0.8.0 - 2.7.1",
+      "sources": []
+    },
+    {
+      "package": "@opentelemetry/sdk-logs",
+      "severity": "moderate",
+      "range": "<=0.218.0",
+      "sources": []
+    },
+    {
+      "package": "@opentelemetry/sdk-metrics",
+      "severity": "moderate",
+      "range": "<=2.7.1",
+      "sources": []
+    },
+    {
+      "package": "@opentelemetry/sdk-trace-base",
+      "severity": "moderate",
+      "range": "<=2.7.1",
+      "sources": []
+    },
+    {
+      "package": "@opentelemetry/sdk-trace-web",
+      "severity": "moderate",
+      "range": "<=2.7.1",
+      "sources": []
+    },
+    {
+      "package": "@spatius/avatarkit",
+      "severity": "moderate",
+      "range": ">=1.1.0-beta.1",
+      "sources": []
+    },
+    {
+      "package": "@spatius/avatarkit-rtc",
+      "severity": "moderate",
+      "range": ">=1.1.0-beta.1",
+      "sources": []
+    }
+  ],
+  "changes": {
+    "vitest": "4.1.11",
+    "coverageV8": "4.1.11",
+    "sourceMapJs": "1.2.2",
+    "templateVite": "6.4.4"
+  },
+  "limitations": [
+    "Registry snapshot is not proof of reachable exploitation.",
+    "Thirteen moderate template package entries remain through vendor-pinned OpenTelemetry components.",
+    "No provider, Docker or deployment validation; no public package publication."
+  ]
+}

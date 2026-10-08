@@ -1,4 +1,4 @@
-import { minorUnitExponent } from '@archava/config'
+import { minorUnitExponent } from '@archava/config/pure'
 
 /**
  * Money, formatted for a visitor without restating what a live system said.
