@@ -6,6 +6,7 @@
   "scripts": {
     "verify": "node scripts/run.mjs verify",
     "dev": "node scripts/run.mjs dev",
+    "gemini:eval": "node scripts/run.mjs live-gemini",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {

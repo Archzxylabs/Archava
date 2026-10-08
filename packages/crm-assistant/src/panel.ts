@@ -1,16 +1,21 @@
 import { conversationReplySchema, type CrmConversationData } from './contracts.js'
+import { z } from 'zod'
+import { GEMINI_PILOT_CASES } from './pilot.js'
 
 /** Shared UI. It renders records as text and holds no credentials or durable conversation state. */
 export function mountCrmConversation(
   host: HTMLElement,
   options: {
     apiBase: string
+    commandsBase?: string
+    pilotEnabled?: boolean
     transport?: typeof fetch
   },
 ) {
   let destroyed = false
   let busy = false
   let selected: { id: string; fullName: string } | null = null
+  let opportunity: { id: string; title: string } | null = null
   let active: AbortController | null = null
   const transport = options.transport ?? fetch
   const make = <K extends keyof HTMLElementTagNameMap>(tag: K, text = '') => {
@@ -21,15 +26,19 @@ export function mountCrmConversation(
   const title = make('h2', 'Archava · CRM')
   const help = make(
     'p',
-    'Coba “tampilkan kontak”, “cari Budi”, atau “ringkas Budi”. Draft follow-up belum disimpan atau dikirim.',
+    'Coba “tampilkan kontak”, “cari Budi”, “ringkas Budi”, atau “tampilkan peluang”. Tinjau draft follow-up sebelum menyimpannya ke CRM.',
   )
   const selectedLabel = make('p', 'Belum ada kontak dipilih.')
   selectedLabel.dataset.archavaSelected = ''
+  const opportunityLabel = make('p', 'Belum ada peluang dipilih.')
+  opportunityLabel.dataset.archavaOpportunitySelected = ''
   const clear = make('button', 'Hapus pilihan')
   clear.type = 'button'
   clear.addEventListener('click', () => {
     selected = null
+    opportunity = null
     selectedLabel.textContent = 'Belum ada kontak dipilih.'
+    opportunityLabel.textContent = 'Belum ada peluang dipilih.'
   })
   const log = make('div')
   log.dataset.archavaLog = ''
@@ -62,7 +71,24 @@ export function mountCrmConversation(
   const submit = make('button', 'Tanya Archava')
   submit.type = 'submit'
   form.append(label, details, submit)
-  host.replaceChildren(title, help, selectedLabel, clear, log, feedback, form)
+  host.replaceChildren(title, help, selectedLabel, opportunityLabel, clear, log, feedback, form)
+  if (options.pilotEnabled) {
+    const examples = make('div')
+    examples.append(make('p', 'Pilot Gemini: pilih contoh permintaan. Teks bebas diproses lokal.'))
+    for (const item of GEMINI_PILOT_CASES.filter((item) => item.example)) {
+      const button = make('button', item.utterance)
+      button.type = 'button'
+      button.dataset.archavaExample = item.id
+      button.addEventListener('click', () => {
+        if (!destroyed && !busy) {
+          message.value = item.utterance
+          message.focus()
+        }
+      })
+      examples.append(button)
+    }
+    form.before(examples)
+  }
 
   const render = (data: CrmConversationData | null, entry: HTMLElement) => {
     if (!data) return
@@ -76,6 +102,8 @@ export function mountCrmConversation(
         button.addEventListener('click', () => {
           if (destroyed || busy) return
           selected = { id: item.id, fullName: item.fullName }
+          opportunity = null
+          opportunityLabel.textContent = 'Belum ada peluang dipilih.'
           selectedLabel.textContent = 'Kontak dipilih: ' + item.fullName
           message.value = 'ringkas'
           message.focus()
@@ -95,6 +123,47 @@ export function mountCrmConversation(
       } else if (data.next)
         entry.append(make('p', 'Masih ada hasil lain. Perjelas nama lewat “cari …”.'))
     }
+    if (data.kind === 'opportunities' || data.kind === 'choose_opportunity') {
+      const list = make('ul')
+      for (const item of data.items) {
+        const row = make('li')
+        const button = make('button', `${item.title} · ${item.stage}`)
+        button.type = 'button'
+        button.dataset.archavaOpportunity = item.id
+        button.addEventListener('click', () => {
+          if (destroyed || busy) return
+          opportunity = { id: item.id, title: item.title }
+          selected = null
+          selectedLabel.textContent = 'Belum ada kontak dipilih.'
+          opportunityLabel.textContent = 'Peluang dipilih: ' + item.title
+          message.value = 'ringkas peluang'
+          message.focus()
+        })
+        row.append(button)
+        list.append(row)
+      }
+      entry.append(list)
+      if (data.next && data.kind === 'opportunities') {
+        const next = make('button', 'Halaman peluang berikutnya')
+        next.type = 'button'
+        const utterance = message.value
+        next.addEventListener('click', () => {
+          void ask(utterance, data.next ?? undefined)
+        })
+        entry.append(next)
+      } else if (data.next) entry.append(make('p', 'Masih ada hasil lain. Perjelas judul peluang.'))
+    }
+    if (data.kind === 'opportunity') {
+      const history = make('ul')
+      for (const item of data.opportunity.transitions)
+        history.append(
+          make(
+            'li',
+            `${item.occurredAt} · ${item.from ?? 'Created'} → ${item.to}${item.reason ? ': ' + item.reason : ''}`,
+          ),
+        )
+      entry.append(history)
+    }
     if (data.kind === 'summary') {
       const list = make('ul')
       for (const item of data.contact.activities)
@@ -113,6 +182,79 @@ export function mountCrmConversation(
         make('p', 'Jadwal: ' + data.draft.dueAt),
         make('p', 'Status: draft · perlu persetujuan'),
       )
+      const commandsBase = options.commandsBase
+      if (commandsBase) {
+        const save = make('button', 'Simpan follow-up yang ditinjau')
+        save.type = 'button'
+        save.dataset.archavaSave = ''
+        const requestId = crypto.randomUUID()
+        let saved = false
+        let revisionChanged = false
+        const state = make('p', 'Simpan sebagai tugas follow-up di CRM.')
+        save.addEventListener('click', () => {
+          if (destroyed || busy || saved) return
+          void (async () => {
+            busy = true
+            save.disabled = true
+            submit.disabled = true
+            message.disabled = true
+            active = new AbortController()
+            state.textContent = 'Menyimpan…'
+            try {
+              const response = await transport(commandsBase, {
+                method: 'POST',
+                credentials: 'same-origin',
+                signal: active.signal,
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({
+                  requestId,
+                  command: {
+                    operation: 'followup.create',
+                    contactId: data.draft.contactId,
+                    contactRevision: data.draft.contactRevision,
+                    summary: data.draft.summary,
+                    dueAt: data.draft.dueAt,
+                  },
+                }),
+              })
+              if (destroyed) return
+              if (!response.ok) {
+                revisionChanged = response.status === 409
+                throw new Error(
+                  response.status === 409
+                    ? 'Kontak berubah. Buat ulang draft setelah meninjau data terbaru.'
+                    : 'Belum berhasil menyimpan. Percobaan ulang memakai permintaan yang sama.',
+                )
+              }
+              z.object({
+                kind: z.literal('followup'),
+                id: z.uuid(),
+                revision: z.number().int().positive(),
+              })
+                .strict()
+                .parse(await response.json())
+              if (destroyed) return
+              saved = true
+              state.textContent = 'Follow-up tersimpan di CRM.'
+              save.textContent = 'Tersimpan'
+            } catch {
+              if (!destroyed)
+                state.textContent = revisionChanged
+                  ? 'Kontak berubah. Buat ulang draft setelah meninjau data terbaru.'
+                  : 'Belum berhasil menyimpan. Tinjau status atau ulangi permintaan yang sama.'
+            } finally {
+              busy = false
+              active = null
+              if (!destroyed) {
+                save.disabled = saved || revisionChanged
+                submit.disabled = false
+                message.disabled = false
+              }
+            }
+          })()
+        })
+        entry.append(save, state)
+      }
     }
   }
   async function ask(utterance: string, after?: string) {
@@ -137,6 +279,7 @@ export function mountCrmConversation(
         body: JSON.stringify({
           utterance,
           ...(selected ? { contactId: selected.id } : {}),
+          ...(opportunity ? { opportunityId: opportunity.id } : {}),
           ...(after ? { after } : {}),
           ...(summary && date ? { draft: { summary, dueAt: date.toISOString() } } : {}),
         }),
@@ -158,12 +301,49 @@ export function mountCrmConversation(
         selected = { id: result.data.draft.contactId, fullName: result.data.fullName }
       else if (result.data && ['choose', 'not_found', 'needs_contact'].includes(result.data.kind))
         selected = null
+      if (
+        result.data &&
+        [
+          'opportunities',
+          'choose_opportunity',
+          'opportunity',
+          'needs_opportunity',
+          'opportunity_not_found',
+        ].includes(result.data.kind)
+      )
+        selected = null
+      if (result.data?.kind === 'opportunity')
+        opportunity = { id: result.data.opportunity.id, title: result.data.opportunity.title }
+      else if (
+        result.data &&
+        [
+          'contacts',
+          'choose',
+          'summary',
+          'draft',
+          'choose_opportunity',
+          'opportunity_not_found',
+          'needs_opportunity',
+        ].includes(result.data.kind)
+      )
+        opportunity = null
       selectedLabel.textContent = selected
         ? 'Kontak dipilih: ' + selected.fullName
         : 'Belum ada kontak dipilih.'
+      opportunityLabel.textContent = opportunity
+        ? 'Peluang dipilih: ' + opportunity.title
+        : 'Belum ada peluang dipilih.'
       const entry = make('article')
       entry.append(make('p', 'Anda: ' + utterance), make('p', result.text))
       if (result.source === 'crm') entry.append(make('small', 'Sumber: CRM'))
+      entry.append(
+        make(
+          'small',
+          result.planner.providerId === 'google-gemini-crm'
+            ? 'Pemahaman: model Gemini · pilot'
+            : 'Pemahaman: perintah lokal',
+        ),
+      )
       render(result.data, entry)
       log.append(entry)
       while (log.childElementCount > 20) log.firstElementChild?.remove()
@@ -188,6 +368,7 @@ export function mountCrmConversation(
       destroyed = true
       active?.abort()
       selected = null
+      opportunity = null
       host.replaceChildren()
     },
   }

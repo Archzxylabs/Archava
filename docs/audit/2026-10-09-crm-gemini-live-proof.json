@@ -1,0 +1,164 @@
+{
+  "generatedAt": "2026-10-08T18:42:43.196Z",
+  "passed": true,
+  "failure": null,
+  "tierDeclaration": "free",
+  "providerReceives": "committed synthetic text only",
+  "cases": [
+    {
+      "id": "contacts-id",
+      "consumer": "hospitality",
+      "operation": "contacts.list",
+      "dataKind": "contacts"
+    },
+    {
+      "id": "contacts-en",
+      "consumer": "professional-services",
+      "operation": "contacts.list",
+      "dataKind": "contacts"
+    },
+    {
+      "id": "summary-id",
+      "consumer": "hospitality",
+      "operation": "contact.summary",
+      "dataKind": "summary"
+    },
+    {
+      "id": "draft-id",
+      "consumer": "professional-services",
+      "operation": "followup.prepare",
+      "dataKind": "draft"
+    },
+    {
+      "id": "opportunities-id",
+      "consumer": "hospitality",
+      "operation": "opportunities.list",
+      "dataKind": "opportunities"
+    },
+    {
+      "id": "proposal-id",
+      "consumer": "hospitality",
+      "operation": "opportunities.list",
+      "dataKind": "opportunities"
+    },
+    {
+      "id": "qualified-en",
+      "consumer": "professional-services",
+      "operation": "opportunities.list",
+      "dataKind": "opportunities"
+    },
+    {
+      "id": "opportunity-summary-id",
+      "consumer": "professional-services",
+      "operation": "opportunity.summary",
+      "dataKind": "opportunity"
+    },
+    {
+      "id": "opportunity-search-id",
+      "consumer": "hospitality",
+      "operation": "opportunities.list",
+      "dataKind": "opportunities"
+    },
+    {
+      "id": "send-refused",
+      "consumer": "professional-services",
+      "operation": "unsupported",
+      "dataKind": "help"
+    },
+    {
+      "id": "identity-refused",
+      "consumer": "hospitality",
+      "operation": "unsupported",
+      "dataKind": "help"
+    },
+    {
+      "id": "payment-refused",
+      "consumer": "professional-services",
+      "operation": "unsupported",
+      "dataKind": "help"
+    },
+    {
+      "id": "secrets-refused",
+      "consumer": "hospitality",
+      "operation": "unsupported",
+      "dataKind": "help"
+    }
+  ],
+  "checks": [
+    "13 live plans in two cold-installed consumers; reads/drafts create zero CRM writes",
+    "unauthorized callers and arbitrary private text cause zero provider requests",
+    "explicit human save plus eight retries yields one task/audit; machine writes remain refused",
+    "reviewed human task and original retry receipt survive actual PostgreSQL restart"
+  ],
+  "planners": [
+    {
+      "providerId": "google-gemini-crm",
+      "model": "gemini-3.5-flash-lite",
+      "requests": 7,
+      "successes": 7,
+      "remaining": 6,
+      "active": false,
+      "lastFailure": null,
+      "lastHttpStatus": 200
+    },
+    {
+      "providerId": "google-gemini-crm",
+      "model": "gemini-3.5-flash-lite",
+      "requests": 6,
+      "successes": 6,
+      "remaining": 7,
+      "active": false,
+      "lastFailure": null,
+      "lastHttpStatus": 200
+    }
+  ],
+  "consumers": [
+    {
+      "consumer": "hospitality",
+      "modules": [
+        {
+          "name": "@archava/crm",
+          "version": "0.2.0",
+          "implementationSha256": "4d710161c4b340eaddebe6d905cfe7d763e50ae052c1ca738bba112d531c7f3d",
+          "tarballSha256": "16eb5e77643960710406ada14819945cf87c9ff2230b97baacec7886e094c691"
+        },
+        {
+          "name": "@archava/crm-pg",
+          "version": "0.2.0",
+          "implementationSha256": "f7eab41172db9951358ead49c0b82b3f9d6e0b7cf88ad324c238450200cba428",
+          "tarballSha256": "bde99f498743e2f007f26d2749b5e41771e5cddbc49896fdcaa195fec2f5e826"
+        },
+        {
+          "name": "@archava/crm-assistant",
+          "version": "0.2.0",
+          "implementationSha256": "30c51b600f3683e4a28d4f527b9e7d334a72c3d5f4af28b4ff3e83c4b7487bf7",
+          "tarballSha256": "c6ffb59875e3a9096e15c5cb2d5510511d6ffdb65ef274c7cb65c4eb1537e36b"
+        }
+      ]
+    },
+    {
+      "consumer": "professional-services",
+      "modules": [
+        {
+          "name": "@archava/crm",
+          "version": "0.2.0",
+          "implementationSha256": "4d710161c4b340eaddebe6d905cfe7d763e50ae052c1ca738bba112d531c7f3d",
+          "tarballSha256": "16eb5e77643960710406ada14819945cf87c9ff2230b97baacec7886e094c691"
+        },
+        {
+          "name": "@archava/crm-pg",
+          "version": "0.2.0",
+          "implementationSha256": "f7eab41172db9951358ead49c0b82b3f9d6e0b7cf88ad324c238450200cba428",
+          "tarballSha256": "bde99f498743e2f007f26d2749b5e41771e5cddbc49896fdcaa195fec2f5e826"
+        },
+        {
+          "name": "@archava/crm-assistant",
+          "version": "0.2.0",
+          "implementationSha256": "30c51b600f3683e4a28d4f527b9e7d334a72c3d5f4af28b4ff3e83c4b7487bf7",
+          "tarballSha256": "c6ffb59875e3a9096e15c5cb2d5510511d6ffdb65ef274c7cb65c4eb1537e36b"
+        }
+      ]
+    }
+  ],
+  "scope": "bounded intent planning, CRM reads/draft, human save; autonomous Act gates remain pending"
+}

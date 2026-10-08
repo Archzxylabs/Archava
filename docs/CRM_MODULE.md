@@ -61,7 +61,8 @@ production login system or permanent installation. Keep real customer data out.
 
 Results are generated in `dist/crm-proof/results.json`; dashboards are in
 `dist/crm-demo`. Browser checks are separately runnable. Package/migration version
-is **0.1.0 / 001_crm_contacts**; API contract is **1.0.0**.
+is now **0.2.0 / 001_crm_contacts + 002_sales_pipeline**; the contacts API contract
+remains **1.0.0**. See [pipeline migration and scope](CRM_PIPELINE.md).
 
 ## Host integration and authorization
 

@@ -17,13 +17,13 @@ pnpm reuse:verify
 
 Artifacts and checks are generated under ignored `dist/`:
 
-| Output                                   | Purpose                                                  |
-| ---------------------------------------- | -------------------------------------------------------- |
-| `dist/library/tarballs/*.tgz`            | Twelve private internal package artifacts, version 0.1.0 |
-| `dist/library/artifacts.json`            | Artifact versions and tarball SHA-256                    |
-| `dist/library/consumer-proof.json`       | Installed implementation hashes and consumer results     |
-| `dist/reuse-demo/hospitality/index.html` | Offline hospitality browser embed                        |
-| `dist/reuse-demo/retail/index.html`      | Offline retail browser embed                             |
+| Output                                   | Purpose                                                                   |
+| ---------------------------------------- | ------------------------------------------------------------------------- |
+| `dist/library/tarballs/*.tgz`            | Thirteen private internal artifacts; per-package versions in the manifest |
+| `dist/library/artifacts.json`            | Artifact versions and tarball SHA-256                                     |
+| `dist/library/consumer-proof.json`       | Installed implementation hashes and consumer results                      |
+| `dist/reuse-demo/hospitality/index.html` | Offline hospitality browser embed                                         |
+| `dist/reuse-demo/retail/index.html`      | Offline retail browser embed                                              |
 
 The verifier copies each [independent consumer](../examples/consumers) into a
 separate temporary directory outside the workspace, installs identical tarballs,
@@ -92,12 +92,13 @@ The optional server-only `@archava/identity-pg` package is used by the
 [persistent CRM host](CRM_RUNTIME.md). The host cold-installs compiled artifacts
 and reuses the shared dashboard; core/CRM do not depend on this identity adapter.
 
-The optional `@archava/crm-assistant` artifact adds `/contracts`, `/panel` and a
-server adapter using the existing turn pipeline. The artifact set now contains
+The optional `@archava/crm-assistant` artifact adds `/contracts`, `/panel`, `/pilot`
+and server-only `/server` exports using the existing turn pipeline. The artifact set contains
 13 packages. Hospitality and professional-service CRM consumers cold-install
 matching conversation implementations and exercise their authorized live data.
-See [CRM conversation](CRM_CONVERSATION.md). No live model or machine-write
-readiness is inferred from this local parser.
+See [CRM conversation](CRM_CONVERSATION.md) and the [bounded Gemini pilot](CRM_GEMINI_PILOT.md).
+The synthetic live evidence and explicit human Save do not establish general
+model quality or machine-write readiness.
 This proves local login/revocation and backup restoration, not public deployment.
 
 The first persistent contacts + activities/follow-up CRM slice now has two

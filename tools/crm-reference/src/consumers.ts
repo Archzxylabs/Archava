@@ -9,6 +9,8 @@ import type * as CrmModule from '@archava/crm'
 import type * as PostgresModule from '@archava/crm-pg'
 import type * as ConversationModule from '@archava/crm-assistant'
 import type * as PipelineModule from '@archava/crm/pipeline'
+import type * as GeminiModule from '@archava/crm-assistant/server'
+import type * as PilotModule from '@archava/crm-assistant/pilot'
 
 const root = resolve(import.meta.dirname, '../../..')
 async function hash(directory: string): Promise<string> {
@@ -48,6 +50,8 @@ export async function prepareConsumers() {
   }[] = []
   const conversations: (typeof ConversationModule)[] = []
   const pipelines: (typeof PipelineModule)[] = []
+  const geminiModules: (typeof GeminiModule)[] = []
+  const pilotModules: (typeof PilotModule)[] = []
   try {
     for (const name of ['hospitality', 'professional-services']) {
       const directory = join(scratch, name)
@@ -84,6 +88,12 @@ export async function prepareConsumers() {
       const consumerRequire = createRequire(join(directory, 'package.json'))
       const conversationEntry = consumerRequire.resolve('@archava/crm-assistant')
       const pipelineEntry = consumerRequire.resolve('@archava/crm/pipeline')
+      const geminiEntry = consumerRequire.resolve('@archava/crm-assistant/server')
+      const pilotEntry = consumerRequire.resolve('@archava/crm-assistant/pilot')
+      if (![geminiEntry, pilotEntry].every((entry) => entry.includes('/node_modules/')))
+        throw new Error('Planner resolved to workspace source')
+      geminiModules.push((await import(pathToFileURL(geminiEntry).href)) as typeof GeminiModule)
+      pilotModules.push((await import(pathToFileURL(pilotEntry).href)) as typeof PilotModule)
       if (!pipelineEntry.includes('/node_modules/'))
         throw new Error('Pipeline resolved to workspace source')
       pipelines.push((await import(pathToFileURL(pipelineEntry).href)) as typeof PipelineModule)
@@ -112,6 +122,8 @@ export async function prepareConsumers() {
       postgres,
       conversations,
       pipelines,
+      geminiModules,
+      pilotModules,
       proofs,
       publicDirectory: join(root, 'dist/crm-demo'),
       async close() {

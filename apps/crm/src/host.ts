@@ -5,7 +5,12 @@ import type { Pool } from 'pg'
 import { z } from 'zod'
 import { CrmError, createCrmApi, type CrmService } from '@archava/crm'
 import type { CrmPipelineService } from '@archava/crm/pipeline'
-import { createCrmConversation, LocalCrmPlanner } from '@archava/crm-assistant'
+import {
+  createCrmConversation,
+  LocalCrmPlanner,
+  conversationInputSchema,
+  type CrmConversationPlanner,
+} from '@archava/crm-assistant'
 import { randomUUID } from 'node:crypto'
 import { IdentityError, type PostgresIdentity } from '@archava/identity-pg'
 import type { RuntimeSettings } from './settings.js'
@@ -32,6 +37,8 @@ export function createHostHandler(
   settings: RuntimeSettings,
   origin: string,
   pipeline?: CrmPipelineService,
+  plannerFor: (utterance: string) => CrmConversationPlanner = () => new LocalCrmPlanner(),
+  plannerMode: 'local' | 'gemini-synthetic' = 'local',
 ) {
   const secure = new URL(origin).protocol === 'https:'
   const cookieName = secure ? '__Host-archava_session' : 'archava_local_session'
@@ -73,6 +80,7 @@ export function createHostHandler(
           username: session.username,
           csrf: session.csrf,
           tenants,
+          plannerMode,
         })
       }
       if (!session || !token) return json({ error: { message: 'Sign in to continue.' } }, 401)
@@ -101,15 +109,16 @@ export function createHostHandler(
       if (conversation && request.method === 'POST') {
         const tenant = settings.tenants.find((item) => item.id === conversation[1])
         if (!tenant) return json({ error: { message: 'Workspace access refused.' } }, 403)
+        const input = conversationInputSchema.parse(await request.json())
         return json(
-          await createCrmConversation(service, new LocalCrmPlanner()).ask(
+          await createCrmConversation(service, plannerFor(input.utterance), pipeline).ask(
             {
               tenantId: tenant.id,
               principal: { kind: 'human', id: session.principalId },
               turnId: randomUUID(),
               occurredAt: new Date().toISOString(),
             },
-            await request.json(),
+            input,
           ),
         )
       }
@@ -167,6 +176,8 @@ export async function startCrmHost(
   settings: RuntimeSettings,
   publicDirectory: string,
   pipeline?: CrmPipelineService,
+  plannerFor?: (utterance: string) => CrmConversationPlanner,
+  plannerMode?: 'local' | 'gemini-synthetic',
 ) {
   const handle = (request: Request, source: string) =>
     createHostHandler(
@@ -176,6 +187,8 @@ export async function startCrmHost(
       settings,
       settings.publicOrigin ?? `http://127.0.0.1:${(server.address() as { port: number }).port}`,
       pipeline,
+      plannerFor,
+      plannerMode,
     )(request, source)
   const server = createServer(
     { maxHeaderSize: 8192, requestTimeout: 10000, headersTimeout: 10000 },

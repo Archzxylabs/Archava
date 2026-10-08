@@ -72,7 +72,19 @@ try {
     'invalid credentials remain outside the workspace',
     await evaluate('document.querySelector("#workspace").hidden'),
   )
+  await evaluate(`window.pilotOriginalFetch=window.fetch;window.pilotConversationCalls=0;
+    window.fetch=async(...args)=>{const response=await window.pilotOriginalFetch(...args);if(String(args[0]).endsWith('/conversation'))window.pilotConversationCalls++;if(String(args[0])==='/api/session' && response.ok){const session=await response.json();if(session.authenticated)return new Response(JSON.stringify({...session,plannerMode:'gemini-synthetic'}),{status:200,headers:{'content-type':'application/json'}})}return response}`)
   await signIn(accounts.owner)
+  await evaluate('document.querySelector("[data-archava-example]").click()')
+  check(
+    'pilot metadata shows six examples; choosing an example fills text without submitting or calling a provider',
+    await evaluate(
+      'document.querySelectorAll("[data-archava-example]").length===6 && document.querySelector("[name=utterance]").value==="Bisa tampilkan daftar kontak CRM?" && window.pilotConversationCalls===0 && document.querySelector("[data-archava-log]").textContent===""',
+    ),
+  )
+  await evaluate(
+    'window.fetch=window.pilotOriginalFetch;delete window.pilotOriginalFetch;delete window.pilotConversationCalls',
+  )
   await wait('document.querySelector("[data-crm-contacts]").textContent.includes("Owner contact")')
   check(
     'owner credentials open the persisted shared CRM dashboard',
@@ -137,6 +149,17 @@ try {
       'document.querySelector("[data-pipeline-detail]").textContent.includes("Won inquiry") && !document.querySelector("[data-pipeline-move]")',
     ),
   )
+  await ask('tampilkan peluang')
+  await evaluate(
+    'Array.from(document.querySelectorAll("[data-archava-opportunity]")).find(button=>button.textContent.includes("Browser group stay")).click()',
+  )
+  await ask('ringkas peluang')
+  check(
+    'conversation uses the explicitly selected opportunity and its persisted history',
+    await evaluate(
+      'document.querySelector("[data-archava-log]").lastElementChild.textContent.includes("Browser group stay") && document.querySelector("[data-archava-log]").lastElementChild.querySelectorAll("li").length===4 && document.querySelector("[data-archava-selected]").textContent==="Belum ada kontak dipilih."',
+    ),
+  )
   await ask('tampilkan kontak')
   check(
     'Archava conversation lists authorized CRM contacts with a source label',
@@ -146,6 +169,12 @@ try {
   )
   await evaluate(
     'Array.from(document.querySelectorAll("[data-archava-contact]")).find(button=>button.textContent==="Browser permanent guest").click()',
+  )
+  check(
+    'contact selection clears the independent opportunity selection',
+    await evaluate(
+      'document.querySelector("[data-archava-opportunity-selected]").textContent==="Belum ada peluang dipilih."',
+    ),
   )
   await ask('ringkas')
   check(
@@ -183,6 +212,48 @@ try {
     'conversation does not turn a send request into a side effect',
     await evaluate(
       'document.querySelector("[data-archava-log]").lastElementChild.textContent.includes("Coba") && !document.querySelector("[data-crm-detail]").textContent.includes("Confirm the consultation time")',
+    ),
+  )
+  await evaluate(`window.reviewOriginalFetch=window.fetch;window.reviewIds=[];window.reviewLoseResponse=true;
+    window.fetch=async(...args)=>{const response=await window.reviewOriginalFetch(...args);if(String(args[0]).endsWith('/commands') && JSON.parse(args[1].body).command.operation==='followup.create'){window.reviewIds.push(JSON.parse(args[1].body).requestId);if(window.reviewLoseResponse){window.reviewLoseResponse=false;throw new Error('fixture-response-lost')}}return response}`)
+  await evaluate('document.querySelector("[data-archava-save]").click()')
+  await wait(
+    'document.querySelector("[data-archava-save]").parentElement.textContent.includes("Belum berhasil menyimpan") && !document.querySelector("[data-archava-save]").disabled',
+  )
+  await evaluate('document.querySelector("[data-archava-save]").click()')
+  await wait('document.querySelector("[data-archava-save]").textContent==="Tersimpan"')
+  const tasks = await evaluate(`(async()=>{
+    const id=Array.from(document.querySelectorAll('[data-archava-contact]')).find(button=>button.textContent==='Browser permanent guest').dataset.archavaContact;
+    return fetch('/api/crm/hotel-demo/contacts/'+id).then(response=>response.json()).then(detail=>detail.followups.length);
+  })()`)
+  check(
+    'explicit human Save retries the same UUID after a lost response and creates one task',
+    tasks === 1 &&
+      (await evaluate(
+        'window.reviewIds.length===2 && new Set(window.reviewIds).size===1 && document.querySelector("[data-archava-save]").disabled',
+      )),
+  )
+  await evaluate(
+    'window.fetch=window.reviewOriginalFetch;delete window.reviewOriginalFetch;delete window.reviewIds;delete window.reviewLoseResponse',
+  )
+  await ask('siapkan follow-up')
+  const changedContact = await evaluate(`(async()=>{
+    const session=await fetch('/api/session').then(response=>response.json());
+    const id=Array.from(document.querySelectorAll('[data-archava-contact]')).find(button=>button.textContent==='Browser permanent guest').dataset.archavaContact;
+    const detail=await fetch('/api/crm/hotel-demo/contacts/'+id).then(response=>response.json());
+    return fetch('/api/crm/hotel-demo/commands',{method:'POST',headers:{'content-type':'application/json','x-archava-csrf':session.csrf},body:JSON.stringify({requestId:crypto.randomUUID(),command:{operation:'contact.update',id,expectedRevision:detail.contact.revision,data:{organization:'Changed after draft'}}})}).then(response=>response.status);
+  })()`)
+  assert.equal(changedContact, 200)
+  await evaluate(
+    'document.querySelector("[data-archava-log]").lastElementChild.querySelector("[data-archava-save]").click()',
+  )
+  await wait(
+    'document.querySelector("[data-archava-log]").lastElementChild.textContent.includes("Kontak berubah")',
+  )
+  check(
+    'stale reviewed draft is refused and its Save button requires a fresh draft',
+    await evaluate(
+      'document.querySelector("[data-archava-log]").lastElementChild.querySelector("[data-archava-save]").disabled',
     ),
   )
   const noCsrf = await evaluate(
@@ -288,6 +359,28 @@ try {
     'document.querySelector("[data-crm-contacts]").textContent.includes("Browser staff contact")',
   )
   check('owner and staff operate through the same module and database', true)
+  await ask('tampilkan kontak')
+  await evaluate(
+    'Array.from(document.querySelectorAll("[data-archava-contact]")).find(button=>button.textContent==="Browser permanent guest").click()',
+  )
+  await fill('[data-archava-form] [name=summary]', 'Late reviewed task')
+  await fill('[data-archava-form] [name=dueAt]', '2026-10-15T09:00')
+  await ask('siapkan follow-up')
+  await evaluate(`window.saveOriginalFetch=window.fetch;window.saveReleaseResponse=null;
+    window.fetch=async(...args)=>{const response=await window.saveOriginalFetch(...args);if(String(args[0]).endsWith('/commands') && JSON.parse(args[1].body).command.operation==='followup.create')await new Promise(done=>{window.saveReleaseResponse=done});return response}`)
+  await evaluate('document.querySelector("[data-archava-save]").click()')
+  await wait('typeof window.saveReleaseResponse==="function"')
+  await logout()
+  await evaluate(
+    'window.fetch=window.saveOriginalFetch;window.saveReleaseResponse();delete window.saveOriginalFetch;delete window.saveReleaseResponse;new Promise(done=>setTimeout(done,50))',
+  )
+  check(
+    'logout destroys pending Save UI and a late receipt cannot repopulate the signed-out workspace',
+    await evaluate(
+      'document.querySelector("#conversation").textContent==="" && document.querySelector("#workspace").hidden',
+    ),
+  )
+  await signIn(accounts.owner)
   check(
     'session credential stays HttpOnly and business data is absent from localStorage',
     await evaluate('!document.cookie.includes("archava_local_session") && localStorage.length===0'),
@@ -304,12 +397,15 @@ try {
   )
   await page.screenshot('/tmp/archava-crm-runtime-browser/shots/authenticated-mobile.png')
   const expected = page.console_.filter(
-    (item) => item.kind === 'error' && /status of (401|403)/.test(item.text),
+    (item) => item.kind === 'error' && /status of (401|403|409)/.test(item.text),
   )
   const failures = page.network_.filter((item) => item.phase === 'failed')
   const expectedAbort = failures.filter(
     (item) =>
-      item.url === origin + '/api/crm/hotel-demo/conversation' && item.error === 'net::ERR_ABORTED',
+      [
+        origin + '/api/crm/hotel-demo/conversation',
+        origin + '/api/crm/hotel-demo/commands',
+      ].includes(item.url) && item.error === 'net::ERR_ABORTED',
   )
   await writeFile(
     '/tmp/archava-runtime-browser-diagnostics.json',
@@ -322,9 +418,9 @@ try {
   )
   check(
     'no unexpected browser errors, CSP violations or failed resources',
-    expected.length <= 3 &&
+    expected.length <= 4 &&
       page.console_.length === expected.length &&
-      expectedAbort.length <= 1 &&
+      expectedAbort.length <= 2 &&
       failures.length === expectedAbort.length,
   )
   console.log(`${checks.length}/${checks.length} authenticated CRM browser checks passed.`)

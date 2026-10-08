@@ -106,6 +106,59 @@ export async function verifyPipeline(
     'two independent installed pipeline consumers; tenant isolation and eight retries produce one history/audit event',
   )
 
+  const conversationCounts = async () =>
+    (
+      await cluster.owner.query<Record<string, string>>(`SELECT
+    (SELECT count(*) FROM archava_crm.commands) AS commands,
+    (SELECT count(*) FROM archava_crm.audit) AS audit,
+    (SELECT count(*) FROM archava_crm.opportunity_transitions) AS transitions,
+    (SELECT count(*) FROM archava_crm.followups) AS followups`)
+    ).rows[0]
+  const conversationBefore = await conversationCounts()
+  for (const [index, tenant, principal, id] of [
+    [0, 'hotel-demo', owner, receipt.id],
+    [1, 'studio-demo', studio, second.id],
+  ] as const) {
+    const module = consumers.conversations[index]
+    assert.ok(module)
+    const conversation = module.createCrmConversation(
+      crm,
+      new module.LocalCrmPlanner(),
+      pipelines[index],
+    )
+    const context = {
+      tenantId: tenant,
+      principal,
+      turnId: randomUUID(),
+      occurredAt: new Date().toISOString(),
+    }
+    const list = await conversation.ask(context, { utterance: 'tampilkan peluang' })
+    assert.equal(list.data?.kind, 'opportunities')
+    if (list.data?.kind === 'opportunities') assert.equal(list.data.items[0]?.id, id)
+    const summary = await conversation.ask(context, {
+      utterance: 'ringkas peluang',
+      opportunityId: id,
+    })
+    assert.equal(summary.data?.kind, 'opportunity')
+    if (summary.data?.kind === 'opportunity') assert.equal(summary.data.opportunity.id, id)
+    await assert.rejects(
+      () =>
+        conversation.ask(context, {
+          utterance: 'ringkas peluang',
+          opportunityId: contacts[index],
+        }),
+      denied,
+    )
+    await assert.rejects(
+      () => conversation.ask({ ...context, principal: viewer }, { utterance: 'tampilkan peluang' }),
+      denied,
+    )
+  }
+  assert.deepEqual(await conversationCounts(), conversationBefore)
+  check(
+    'installed conversation adapters read both pipelines without SQL writes and enforce grants/resource types',
+  )
+
   await assert.rejects(() =>
     pipeline.mutate(
       'hotel-demo',

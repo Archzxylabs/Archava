@@ -1,4 +1,4 @@
-# Reusable CRM conversation — controlled local slice
+# Reusable CRM conversation — controlled read/draft slice
 
 `@archava/crm-assistant` connects the existing `runTurn` pipeline to the CRM
 read/prepare tools. `apps/crm` consumes its compiled server export and shared
@@ -6,9 +6,10 @@ browser panel. Core, CRM and identity remain separate: neither core nor the
 deterministic CRM package imports this optional adapter.
 
 The shipped `LocalCrmPlanner` recognizes bounded Indonesian/English commands.
-It makes zero language-model/provider requests. A future planner can implement
-the same narrow port, subject to provider/data/evaluation gates. This slice does
-not establish general natural-language understanding or live AI readiness.
+It makes zero language-model/provider requests. An optional server-only Gemini
+planner uses that same port for a committed synthetic pilot corpus; arbitrary
+user text remains local. See [Gemini pilot boundaries](CRM_GEMINI_PILOT.md).
+This slice does not establish general natural-language production readiness.
 
 ## Try it
 
@@ -28,6 +29,8 @@ selected business and current permissions.
 | `cari Budi` / `find Budi`                           | Search authorized contacts.                                                      |
 | `ringkas Budi` / `summarize Budi`                   | Authorized notes/follow-ups, up to 20 of each; no email/organization projection. |
 | `ringkas`                                           | Use an explicitly selected contact.                                              |
+| `tampilkan peluang` / `list opportunities`          | One page of authorized sales opportunities; separate pipeline read permission.   |
+| `ringkas peluang` / `summary opportunity`           | Use an explicitly selected opportunity and read its persisted stage history.     |
 | `siapkan follow-up Budi` / `prepare follow-up Budi` | Require a permitted contact and user-supplied draft message/date.                |
 | `kirim`, unsupported writes or other requests       | Explain the supported commands; no mutation or external send.                    |
 
@@ -40,9 +43,12 @@ the panel, aborts its request and clears its record/selection/draft state.
 
 Drafts exist only in the response and browser memory. They carry the contact
 revision, `status: draft` and `requiresApproval: true`. A revision change during
-preparation requires a retry. There is no save/approve/send endpoint in this
-adapter. Human dashboard mutations continue through the existing command API;
-machine writes still require the separately verified Act integration.
+preparation requires a retry. The host can supply `commandsBase` to show an
+explicit **Simpan follow-up yang ditinjau** button. That human click submits the
+verified draft through the existing authenticated command API. One UUID is
+retained across uncertain responses; stale drafts require a fresh review.
+No conversation turn saves a task automatically, and saving does not send a
+message. Machine writes still require the separately verified Act integration.
 
 ## Boundaries
 
@@ -59,12 +65,14 @@ flowchart TD
 ```
 
 `POST /api/crm/:tenant/conversation` accepts only `utterance`, optional
-`contactId`/`after`, and optional `draft: {summary, dueAt}`. The host constructs
+`contactId`/`opportunityId`/`after`, and optional `draft: {summary, dueAt}`. The host constructs
 identity, tenant scope, turn id and timestamp. Browser role, principal, action
 confirmation and routing fields are rejected. Every turn rechecks membership;
 each tool rechecks its own resource/permission boundary. Staff assignment scopes
 and tenant isolation remain repository responsibilities. Viewers can read but
-cannot prepare drafts without `followups.write`.
+cannot prepare drafts without `followups.write`. Pipeline requests also require
+`pipeline.read`; contact and opportunity selections remain distinct. Saving
+rechecks current membership, permissions, scope and revision.
 
 The planner receives only bounded text. It never receives a repository, executor,
 private CRM records, session token or provider secret. Its strict plan cannot
@@ -94,8 +102,9 @@ The [8 October verification report](CRM_CONVERSATION_2026-10-08.md) records the
 passed gates and preserved artifact hashes. These artifact builders share
 `dist/library`; run the verifier commands sequentially.
 
-Next: choose/evaluate a live planner and its data boundary; add deployment
-observability; complete durable Act approval/execution/recovery before enabling
+The optional [Gemini pilot](CRM_GEMINI_PILOT.md) evaluates a bounded live planner
+without transmitting user CRM data. Next: expand provider quality and data
+boundaries deliberately; add deployment observability; complete durable Act approval/execution/recovery before enabling
 machine writes. Transcript retention, proactive message sending, financial
 reporting and broader CRM/ERP are separate capabilities. The ARCHZXY company
 website remains outside this project.

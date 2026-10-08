@@ -76,6 +76,10 @@ const browser = await build({
       output,
       'node_modules/@archava/crm-assistant/dist/panel.js',
     ),
+    '@archava/crm-assistant/pilot': join(
+      output,
+      'node_modules/@archava/crm-assistant/dist/pilot.js',
+    ),
   },
   metafile: true,
   logLevel: 'silent',
@@ -86,7 +90,7 @@ if (
       path.includes('identity-pg') ||
       path.includes('crm-pg') ||
       path.includes('node:') ||
-      /crm-assistant\/dist\/(conversation|planner|index)\.js/.test(path) ||
+      /crm-assistant\/dist\/(conversation|planner|gemini-planner|server|index)\.js/.test(path) ||
       /@archava\/assistant\//.test(path),
   )
 )

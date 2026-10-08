@@ -11,6 +11,7 @@ import {
   LocalCrmPlanner,
   type CrmConversationPlanner,
 } from '../src/index.js'
+import { CrmPipelineService, type CrmPipelineRepository } from '@archava/crm/pipeline'
 
 const id = '10000000-0000-4000-8000-000000000001'
 const otherId = '10000000-0000-4000-8000-000000000002'
@@ -64,6 +65,7 @@ function fixture(
     list,
     detail,
     mutate,
+    repository,
     conversation: createCrmConversation(new CrmService(repository), planner),
   }
 }
@@ -197,5 +199,86 @@ describe('reusable CRM conversation boundary', () => {
         draft: { summary: 'Please review', dueAt: now },
       }),
     ).rejects.toMatchObject({ code: 'conflict' })
+  })
+})
+
+describe('conversation pipeline reads', () => {
+  function pipelineFixture(permissions: readonly CrmPermission[] = CRM_PERMISSIONS) {
+    const base = fixture(permissions)
+    const opportunity = {
+      id: otherId,
+      tenantId: 'hotel-demo',
+      contactId: id,
+      ownerId: 'hotel-owner',
+      title: 'Demo engagement',
+      stage: 'proposal' as const,
+      revision: 3,
+      lossReason: null,
+      createdAt: now,
+      updatedAt: now,
+    }
+    const listOpportunities = vi.fn(() =>
+      Promise.resolve({ items: [opportunity], next: null as string | null }),
+    )
+    const opportunityDetail = vi.fn(() => Promise.resolve({ opportunity, transitions: [] }))
+    const repository: CrmPipelineRepository = {
+      ...base.repository,
+      listOpportunities,
+      opportunityDetail,
+    }
+    return {
+      ...base,
+      listOpportunities,
+      opportunityDetail,
+      conversation: createCrmConversation(
+        new CrmService(repository),
+        new LocalCrmPlanner(),
+        new CrmPipelineService(repository),
+      ),
+    }
+  }
+  it('keeps pipeline reads projected and never turns stage/send requests into a mutation', async () => {
+    const f = pipelineFixture()
+    const listed = await f.conversation.ask(context, { utterance: 'tampilkan peluang' })
+    expect(listed.data?.kind).toBe('opportunities')
+    expect(JSON.stringify(listed)).not.toContain('ownerId')
+    const summary = await f.conversation.ask(context, {
+      utterance: 'ringkas peluang',
+      opportunityId: otherId,
+    })
+    expect(summary.data).toMatchObject({
+      kind: 'opportunity',
+      opportunity: { id: otherId, stage: 'proposal' },
+    })
+    expect(
+      (await f.conversation.ask(context, { utterance: 'ubah peluang menjadi won' })).data?.kind,
+    ).toBe('help')
+    expect(f.mutate).not.toHaveBeenCalled()
+  })
+  it('checks pipeline grants and resource selection without reusing a contact id as an opportunity', async () => {
+    const denied = pipelineFixture(['contacts.read'])
+    await expect(
+      denied.conversation.ask(context, { utterance: 'tampilkan peluang' }),
+    ).rejects.toMatchObject({ code: 'forbidden' })
+    expect(denied.listOpportunities).not.toHaveBeenCalled()
+    const f = pipelineFixture()
+    expect(
+      (await f.conversation.ask(context, { utterance: 'ringkas peluang', contactId: id })).data
+        ?.kind,
+    ).toBe('needs_opportunity')
+    f.opportunityDetail.mockRejectedValue(new CrmError('not_found', 'Denied'))
+    await expect(
+      f.conversation.ask(context, { utterance: 'ringkas peluang', opportunityId: otherId }),
+    ).rejects.toMatchObject({ code: 'not_found' })
+  })
+  it('requires an explicit choice for duplicate or truncated opportunity searches', async () => {
+    const f = pipelineFixture()
+    const page = await f.listOpportunities()
+    f.listOpportunities.mockResolvedValue({ ...page, next: otherId })
+    expect(
+      (await f.conversation.ask(context, { utterance: 'ringkas peluang Demo engagement' })).data
+        ?.kind,
+    ).toBe('choose_opportunity')
+    expect(f.opportunityDetail).not.toHaveBeenCalled()
   })
 })

@@ -11,6 +11,7 @@ const sessionSchema = z.discriminatedUnion('authenticated', [
       authenticated: z.literal(true),
       username: z.string(),
       csrf: z.string(),
+      plannerMode: z.enum(['local', 'gemini-synthetic']).optional(),
       tenants: z.array(
         z
           .object({
@@ -120,6 +121,8 @@ async function mount() {
   })
   conversation = mountCrmConversation(element<HTMLElement>('#conversation'), {
     apiBase: '/api/crm/' + selected.id + '/conversation',
+    commandsBase: '/api/crm/' + selected.id + '/commands',
+    pilotEnabled: session.plannerMode === 'gemini-synthetic',
     transport: async (input, init) => {
       const headers = new Headers(init?.headers)
       headers.set('x-archava-csrf', csrf)

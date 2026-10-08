@@ -148,6 +148,14 @@ try {
   settings.appPort = 0
   await privateJson(configPath, settings)
   const account = JSON.parse(await readFile(join(home, 'initial-owner.json'), 'utf8'))
+  const geminiMarker = 'disabled-fixture-gemini-key-marker'
+  await privateJson(join(home, 'gemini-planner.json'), {
+    provider: 'gemini',
+    model: 'gemini-3.5-flash-lite',
+    projectTier: 'free',
+    enabled: false,
+    apiKey: geminiMarker,
+  })
   operator(['setup'])
   const repeat = JSON.parse(await readFile(configPath, 'utf8'))
   assert.ok(
@@ -246,6 +254,7 @@ try {
     403,
   )
   let owner = await login(origin, account.username, account.password)
+  assert.equal(owner.session.plannerMode, 'local')
   assert.equal(owner.session.tenants.length, 2)
   assert.equal((await get(origin, '/healthz')).status, 200)
   const html = await get(origin, '/').then((response) => response.text())
@@ -254,6 +263,8 @@ try {
   assert.ok(
     !publicBundle.includes(settings.identityKey) &&
       !publicBundle.includes(settings.fingerprintKey) &&
+      !publicBundle.includes(geminiMarker) &&
+      !publicBundle.includes('generativelanguage.googleapis.com') &&
       !publicBundle.includes('password_hash'),
   )
   check('real credentials, cookie-only session, origin checks and browser/server isolation')
@@ -424,6 +435,8 @@ try {
   assert.equal(projection.fullName, 'Owner contact')
   assert.ok(!('email' in projection))
   const conversationPath = '/api/crm/hotel-demo/conversation'
+  let reviewedFollowup
+  let reviewedReceipt
   const countPool = poolFor(settings)
   const snapshot = () =>
     countPool.query(`SELECT
@@ -475,6 +488,39 @@ try {
     ).then((response) => response.json())
     assert.equal(send.data.kind, 'help')
     assert.equal(send.source, 'none')
+    const opportunities = await post(
+      origin,
+      conversationPath,
+      { utterance: 'tampilkan peluang' },
+      owner,
+    ).then((response) => response.json())
+    assert.equal(opportunities.data.kind, 'opportunities')
+    assert.equal(opportunities.data.items[0].id, opportunityReceipt.id)
+    const selectedOpportunity = await post(
+      origin,
+      conversationPath,
+      {
+        utterance: 'ringkas peluang',
+        opportunityId: opportunityReceipt.id,
+      },
+      owner,
+    ).then((response) => response.json())
+    assert.equal(selectedOpportunity.data.kind, 'opportunity')
+    assert.equal(selectedOpportunity.data.opportunity.transitions.length, 4)
+    assert.equal(
+      (
+        await post(
+          origin,
+          conversationPath,
+          {
+            utterance: 'ringkas peluang',
+            opportunityId: receipt.id,
+          },
+          owner,
+        )
+      ).status,
+      404,
+    )
     assert.deepEqual((await snapshot()).rows[0], before)
     check(
       'conversation reads real CRM in two businesses and prepares drafts without commands, audit writes or sending',
@@ -555,6 +601,97 @@ try {
     check(
       'conversation rejects anonymous, forged roles/tenants, missing CSRF, viewer preparation and cross-resource staff reads',
     )
+    check(
+      'pipeline conversation keeps opportunity/contact selections distinct and reads the persisted stage history',
+    )
+    reviewedFollowup = {
+      requestId: randomUUID(),
+      command: {
+        operation: 'followup.create',
+        contactId: prepared.data.draft.contactId,
+        contactRevision: prepared.data.draft.contactRevision,
+        summary: prepared.data.draft.summary,
+        dueAt: prepared.data.draft.dueAt,
+      },
+    }
+    const approved = await Promise.all(
+      Array.from({ length: 8 }, () =>
+        post(origin, '/api/crm/hotel-demo/commands', reviewedFollowup, owner),
+      ),
+    )
+    assert.ok(approved.every((response) => response.status === 200))
+    const receipts = await Promise.all(approved.map((response) => response.json()))
+    reviewedReceipt = receipts[0]
+    assert.ok(
+      receipts.every((receipt) => JSON.stringify(receipt) === JSON.stringify(reviewedReceipt)),
+    )
+    assert.equal(
+      (
+        await countPool.query('SELECT 1 FROM archava_crm.audit WHERE request_id=$1', [
+          reviewedFollowup.requestId,
+        ])
+      ).rowCount,
+      1,
+    )
+    assert.equal(
+      (await post(origin, '/api/crm/hotel-demo/commands', reviewedFollowup, view)).status,
+      403,
+    )
+    await countPool.query(
+      "UPDATE archava_crm.memberships SET permissions=array_remove(permissions,'followups.write') WHERE principal_id=(SELECT id FROM archava_identity.users WHERE username=$1)",
+      [account.username],
+    )
+    assert.equal(
+      (await post(origin, '/api/crm/hotel-demo/commands', reviewedFollowup, owner)).status,
+      403,
+    )
+    await countPool.query(
+      "UPDATE archava_crm.memberships SET permissions=array_append(permissions,'followups.write') WHERE principal_id=(SELECT id FROM archava_identity.users WHERE username=$1)",
+      [account.username],
+    )
+    const currentContact = await get(
+      origin,
+      '/api/crm/hotel-demo/contacts/' + receipt.id,
+      owner,
+    ).then((response) => response.json())
+    assert.equal(
+      (
+        await post(
+          origin,
+          '/api/crm/hotel-demo/commands',
+          {
+            requestId: randomUUID(),
+            command: {
+              operation: 'contact.update',
+              id: receipt.id,
+              expectedRevision: currentContact.contact.revision,
+              data: { organization: 'Updated synthetic organization' },
+            },
+          },
+          owner,
+        )
+      ).status,
+      200,
+    )
+    const afterReview = (await snapshot()).rows[0]
+    assert.equal(
+      (
+        await post(
+          origin,
+          '/api/crm/hotel-demo/commands',
+          {
+            ...reviewedFollowup,
+            requestId: randomUUID(),
+          },
+          owner,
+        )
+      ).status,
+      409,
+    )
+    assert.deepEqual((await snapshot()).rows[0], afterReview)
+    check(
+      'human-reviewed Save is idempotent, rechecks permissions and refuses stale drafts without new writes',
+    )
   } finally {
     await countPool.end()
   }
@@ -625,6 +762,21 @@ try {
   )
   assert.equal((await get(origin, '/api/crm/hotel-demo/contacts', logoutSession)).status, 401)
   check('application/database restart retains records, sessions, revoked logout and retry receipt')
+  assert.deepEqual(
+    await post(origin, '/api/crm/hotel-demo/commands', reviewedFollowup, owner).then((response) =>
+      response.json(),
+    ),
+    reviewedReceipt,
+  )
+  assert.equal(
+    (
+      await get(origin, '/api/crm/hotel-demo/contacts/' + receipt.id, owner).then((response) =>
+        response.json(),
+      )
+    ).followups.length,
+    1,
+  )
+  check('reviewed follow-up and original Save receipt persist across application/database restart')
   assert.deepEqual(
     await get(origin, opportunityPath, owner).then((response) => response.json()),
     opportunityDetail,
@@ -721,6 +873,13 @@ try {
     (response) => response.json(),
   )
   assert.equal(detail.activities[0]?.summary, 'Persistent inquiry note')
+  assert.equal(detail.followups[0]?.summary, reviewedFollowup.command.summary)
+  assert.deepEqual(
+    await post(origin, '/api/crm/hotel-demo/commands', reviewedFollowup, owner).then((response) =>
+      response.json(),
+    ),
+    reviewedReceipt,
+  )
   assert.deepEqual(
     await post(origin, '/api/crm/hotel-demo/commands', first, owner).then((response) =>
       response.json(),

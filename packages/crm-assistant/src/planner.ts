@@ -10,6 +10,24 @@ export class LocalCrmPlanner implements CrmConversationPlanner {
       .replace(/[?!.]+$/, '')
       .trim()
     if (
+      /^(?:tampilkan|daftar|lihat|list|show)(?:\s+(?:semua|all))?\s+(?:peluang|opportunities)$/i.test(
+        text,
+      )
+    )
+      return Promise.resolve({ operation: 'opportunities.list', search: '' })
+    const opportunitySearch = /^(?:cari|search|find)\s+(?:peluang|opportunity)\s+(.+)$/i.exec(
+      text,
+    )?.[1]
+    if (opportunitySearch && opportunitySearch.length <= 120)
+      return Promise.resolve({ operation: 'opportunities.list', search: opportunitySearch })
+    const opportunitySummary =
+      /^(?:ringkas|ringkasan|summarize|summary)\s+(?:peluang|opportunity)(?:\s+(.+))?$/i.exec(text)
+    if (opportunitySummary && (opportunitySummary[1]?.length ?? 0) <= 120)
+      return Promise.resolve({
+        operation: 'opportunity.summary',
+        ...(opportunitySummary[1] ? { query: opportunitySummary[1] } : {}),
+      })
+    if (
       /^(?:tampilkan|daftar|lihat|list|show)(?:\s+(?:semua|all))?\s+(?:kontak|contacts)$/i.test(
         text,
       )

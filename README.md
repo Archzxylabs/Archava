@@ -51,9 +51,11 @@ professional-service consumers share the compiled implementation. Existing accou
 need explicit pipeline grants after upgrading; see the linked migration steps.
 
 The same host includes a [reusable CRM conversation adapter](docs/CRM_CONVERSATION.md):
-list/search contacts, read a summary and prepare a follow-up draft. Its initial
-planner uses bounded local commands; live models and machine writes remain later
-gates. The shared adapter is verified from two independently installed consumers.
+list/search contacts and opportunities, read summaries/history and prepare a
+follow-up draft for explicit human Save. Local commands remain available; an
+optional [Gemini pilot](docs/CRM_GEMINI_PILOT.md) processes only committed synthetic
+examples without sending CRM data to the free provider. General AI quality and
+machine writes remain release gates. Two independent consumers share the adapter.
 
 The frontend demo and template have separate runtime boundaries; consolidating
 their source does not connect CRM/ERP, providers, or production Act workflows.

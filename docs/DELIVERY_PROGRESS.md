@@ -7,13 +7,13 @@
 **PRD v2 scope, evidence updated 9 October 2026:** §34 remains the broader commercial gate. The
 new module-library milestones in [PRD §49](../PRD.md) are assessed separately:
 
-| Milestone                  | Current evidence                                                                                                                                      |
-| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| M0 specification alignment | Research, PRD and supporting operating/status documents updated; documentation only.                                                                  |
-| M1 independent core reuse  | Two independent cold-installed core consumers use matching compiled artifacts; see the M1 entry below.                                                |
-| M2 business-module reuse   | One persistent contacts/activity/follow-up module serves two contexts with the same API/dashboard; see the M2 entry below.                            |
-| M3 controlled operations   | Local identity, durability, restore and CRM read/draft conversation verified; public deployment, live providers and observability remain open.        |
-| M4 library expansion       | Small CRM sales-pipeline extension locally verified across two independent inquiry consumers; broader kits, support and commercial scope remain open. |
+| Milestone                  | Current evidence                                                                                                                                            |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| M0 specification alignment | Research, PRD and supporting operating/status documents updated; documentation only.                                                                        |
+| M1 independent core reuse  | Two independent cold-installed core consumers use matching compiled artifacts; see the M1 entry below.                                                      |
+| M2 business-module reuse   | One persistent contacts/activity/follow-up module serves two contexts with the same API/dashboard; see the M2 entry below.                                  |
+| M3 controlled operations   | Local identity/recovery, CRM conversation and bounded Gemini pilot; general model quality, durable machine execution, deployment and telemetry remain open. |
+| M4 library expansion       | Small CRM sales-pipeline extension locally verified across two independent inquiry consumers; broader kits, support and commercial scope remain open.       |
 
 The historical weighted percentage below is not recalculated or reused as v2
 progress. M1/M2 evidence is assessed separately from commercial readiness.
@@ -145,3 +145,16 @@ Drafts require explicit content/date and remain transient. Live planner quality,
 durable Act confirmation/execution, public hosting and telemetry remain open.
 See [CRM conversation](CRM_CONVERSATION.md). Historical commercial percentages
 and the three Pending Act operational tasks remain unchanged.
+
+## 9 October 2026 — bounded Gemini planning and human-reviewed follow-up / partial M3
+
+The optional adapter now supports live intent planning for a committed synthetic
+corpus and pipeline read projections across the same two business consumers.
+Arbitrary private text remains local under the unpaid provider data boundary.
+An explicit human Save uses existing authorization, revision and durable
+idempotency/audit mechanics; conversation turns still perform no mutation.
+
+See [Gemini pilot](CRM_GEMINI_PILOT.md) for its data, pricing and evaluation
+limits. This does not establish general conversational quality, autonomous Act
+approval/execution/recovery or production deployment. The historical commercial
+score and three Pending Act tasks remain unchanged.

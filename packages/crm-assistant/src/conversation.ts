@@ -10,6 +10,7 @@ import {
   type CrmService,
   type CrmPrincipal,
 } from '@archava/crm'
+import { createPipelineTools, type CrmPipelineService } from '@archava/crm/pipeline'
 import {
   conversationInputSchema,
   conversationPlanSchema,
@@ -27,6 +28,16 @@ function describe(data: CrmConversationData): string {
       return HELP
     case 'needs_contact':
       return 'Sebutkan nama kontak atau pilih kontak dari hasil pencarian.'
+    case 'needs_opportunity':
+      return 'Sebutkan judul peluang atau pilih peluang dari hasil pencarian.'
+    case 'opportunity_not_found':
+      return 'Peluang tidak ditemukan dalam data yang boleh Anda akses.'
+    case 'opportunities':
+      return `${data.items.length} peluang pada halaman ini${data.next ? '; masih ada halaman berikutnya' : ''}.`
+    case 'choose_opportunity':
+      return 'Pilih peluang yang Anda maksud dari hasil pencarian.'
+    case 'opportunity':
+      return `Peluang ${data.opportunity.title}: stage ${data.opportunity.stage}. Riwayat di bawah berasal dari CRM.`
     case 'needs_draft':
       return 'Isi pesan dan jadwal follow-up, lalu kirim permintaan lagi. Jadwal tidak saya tentukan sendiri.'
     case 'not_found':
@@ -45,7 +56,11 @@ function describe(data: CrmConversationData): string {
 }
 
 /** Host supplies authenticated identity. The planner never receives a service/repository or tool executor. */
-export function createCrmConversation(service: CrmService, planner: CrmConversationPlanner) {
+export function createCrmConversation(
+  service: CrmService,
+  planner: CrmConversationPlanner,
+  pipeline?: CrmPipelineService,
+) {
   return {
     async ask(
       context: { tenantId: string; principal: CrmPrincipal; turnId: string; occurredAt: string },
@@ -65,6 +80,45 @@ export function createCrmConversation(service: CrmService, planner: CrmConversat
       const tools = createCrmTools(service, tenant, principal)
       const resolve = async (): Promise<CrmConversationData> => {
         if (plan.operation === 'unsupported') return { kind: 'help' }
+        if (plan.operation === 'opportunities.list' || plan.operation === 'opportunity.summary') {
+          if (!access.permissions.includes('pipeline.read'))
+            throw new CrmError('forbidden', 'Pipeline reading is not permitted.')
+          if (!pipeline) throw new CrmError('unavailable', 'Pipeline is not connected.')
+          const pipelineTools = createPipelineTools(pipeline, tenant, principal)
+          if (plan.operation === 'opportunities.list')
+            return conversationDataSchema.parse({
+              kind: 'opportunities',
+              ...(await pipelineTools.invoke('crm.opportunities.list', {
+                search: plan.search,
+                ...(plan.stage ? { stage: plan.stage } : {}),
+                limit: 20,
+                ...(input.after ? { after: input.after } : {}),
+              })),
+            })
+          let id = input.opportunityId
+          if (plan.query) {
+            const result = conversationDataSchema.parse({
+              kind: 'opportunities',
+              ...(await pipelineTools.invoke('crm.opportunities.list', {
+                search: plan.query,
+                limit: 20,
+              })),
+            })
+            if (result.kind !== 'opportunities') throw new Error('Invalid pipeline page')
+            if (!result.items.length) return { kind: 'opportunity_not_found' }
+            const exact = result.items.filter(
+              (item) => item.title.toLocaleLowerCase() === plan.query?.toLocaleLowerCase(),
+            )
+            if (result.next || (exact.length !== 1 && result.items.length !== 1))
+              return { kind: 'choose_opportunity', items: result.items, next: result.next }
+            id = (exact.length === 1 ? exact[0] : result.items[0])?.id
+          }
+          if (!id) return { kind: 'needs_opportunity' }
+          return conversationDataSchema.parse({
+            kind: 'opportunity',
+            opportunity: await pipelineTools.invoke('crm.opportunity.summary', { id }),
+          })
+        }
         if (plan.operation === 'contacts.list') {
           const page = await tools.invoke('crm.contacts.list', {
             search: plan.search,
@@ -180,7 +234,17 @@ export function createCrmConversation(service: CrmService, planner: CrmConversat
       const data = conversationDataSchema.parse(outcome.structuredTruth.crm)
       return {
         text: outcome.text,
-        source: ['contacts', 'summary', 'draft', 'choose', 'not_found'].includes(data.kind)
+        source: [
+          'contacts',
+          'summary',
+          'draft',
+          'choose',
+          'not_found',
+          'opportunities',
+          'choose_opportunity',
+          'opportunity',
+          'opportunity_not_found',
+        ].includes(data.kind)
           ? 'crm'
           : 'none',
         data,

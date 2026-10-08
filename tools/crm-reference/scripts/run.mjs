@@ -4,7 +4,8 @@ import { spawn } from 'node:child_process'
 import { resolve } from 'node:path'
 
 const mode = process.argv[2]
-if (!['verify', 'dev'].includes(mode)) throw new Error('Expected verify or dev')
+if (!['verify', 'dev', 'live-gemini'].includes(mode))
+  throw new Error('Expected verify, dev or live-gemini')
 const outfile = resolve('dist', `${mode}.mjs`)
 await build({
   entryPoints: [`src/${mode}.ts`],

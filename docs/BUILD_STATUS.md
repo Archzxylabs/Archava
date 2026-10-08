@@ -37,6 +37,15 @@ existing grants and records. See [pipeline scope and upgrade](CRM_PIPELINE.md).
 Won is a sales outcome; contract/payment/project automation and machine writes
 remain separate work. This is local evidence, not a completed M3 release.
 
+**9 October Gemini CRM pilot:** `@archava/crm-assistant` 0.2.0 adds an optional
+server-only Gemini intent planner for a committed synthetic corpus. Arbitrary
+text stays local; CRM records and draft contents are never sent to the free
+provider. Opportunity reads use separate grants. An explicit human Save stores
+the reviewed follow-up through the existing command API with revision, retry
+and audit checks. See [pilot scope and evaluation](CRM_GEMINI_PILOT.md).
+This is bounded planning plus human operation; general model quality, durable
+machine execution, telemetry and public deployment remain release gaps.
+
 The consolidated source also includes the [website and CRM/ERP frontend](FRONTEND.md)
 and the [portable realtime template](<../Archava Template/README.md>). Frontend
 records and approvals are browser-local demos. The template is a standalone npm
@@ -126,7 +135,7 @@ The mechanism is real and tested; what is behind it is a stand-in.
 
 | Area                                     | What exists                                                                                                                             | What is missing                                                                                                          |
 | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Conversation (`BrainProvider`)           | `ScriptedBrain` and `ReferenceBrain` — deterministic, keyword-matched, with an explicit fallback sentence                               | a generative model client. The Jev decision adapter does not implement conversation                                      |
+| Conversation (`BrainProvider`)           | Deterministic reference brains and CRM presentation; optional server-only Gemini CRM intent planner for synthetic examples              | general generative conversation or model-authored CRM replies; the Jev decision adapter does not implement conversation  |
 | Retrieval (`KnowledgePort`)              | `buildKnowledgeStore` (`packages/reference/src/knowledge.ts:224`) + `retrieveContext`                                                   | a hosted index, embeddings, incremental ingest. The store is in memory and built at request time                         |
 | Live facts (`StructuredTruthPort`)       | `referenceTruth` (`packages/reference/src/rates.ts:421`) — date-stated fixtures                                                         | a PMS or inventory service. Prices and availability are fixtures, not live                                               |
 | "Does this id exist?" (`EntityResolver`) | `pageEntityResolver` (`apps/web/src/surface.ts:142`) — answers from the rendered page, kind `pageEntity`                                | a tenant catalog. The resolver can only confirm what the page is already showing                                         |

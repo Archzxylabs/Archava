@@ -1,9 +1,11 @@
 import { z } from 'zod'
+import { pipelineStageSchema } from '@archava/crm/pipeline-contracts'
 
 export const conversationInputSchema = z
   .object({
     utterance: z.string().trim().min(1).max(1000),
     contactId: z.uuid().optional(),
+    opportunityId: z.uuid().optional(),
     after: z.uuid().optional(),
     draft: z
       .object({
@@ -37,6 +39,19 @@ export const conversationPlanSchema = z.discriminatedUnion('operation', [
     })
     .strict(),
   z.object({ operation: z.literal('unsupported') }).strict(),
+  z
+    .object({
+      operation: z.literal('opportunities.list'),
+      search: z.string().trim().max(120).default(''),
+      stage: pipelineStageSchema.optional(),
+    })
+    .strict(),
+  z
+    .object({
+      operation: z.literal('opportunity.summary'),
+      query: z.string().trim().min(1).max(120).optional(),
+    })
+    .strict(),
 ])
 export type CrmConversationPlan = z.infer<typeof conversationPlanSchema>
 export interface CrmConversationPlanner {
@@ -49,16 +64,67 @@ export interface CrmConversationPlanner {
 const itemSchema = z
   .object({ id: z.uuid(), fullName: z.string().max(160), revision: z.number().int().positive() })
   .strict()
+const opportunityItemSchema = z
+  .object({
+    id: z.uuid(),
+    contactId: z.uuid(),
+    title: z.string().max(160),
+    stage: pipelineStageSchema,
+    revision: z.number().int().positive(),
+  })
+  .strict()
 export const conversationDataSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('help') }).strict(),
   z.object({ kind: z.literal('needs_contact') }).strict(),
   z.object({ kind: z.literal('needs_draft') }).strict(),
+  z.object({ kind: z.literal('needs_opportunity') }).strict(),
+  z.object({ kind: z.literal('opportunity_not_found') }).strict(),
   z.object({ kind: z.literal('not_found') }).strict(),
   z
     .object({
       kind: z.literal('contacts'),
       items: z.array(itemSchema).max(20),
       next: z.uuid().nullable(),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal('opportunities'),
+      items: z.array(opportunityItemSchema).max(20),
+      next: z.uuid().nullable(),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal('choose_opportunity'),
+      items: z.array(opportunityItemSchema).max(20),
+      next: z.uuid().nullable(),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal('opportunity'),
+      opportunity: z
+        .object({
+          id: z.uuid(),
+          title: z.string().max(160),
+          stage: pipelineStageSchema,
+          revision: z.number().int().positive(),
+          transitions: z
+            .array(
+              z
+                .object({
+                  from: pipelineStageSchema.nullable(),
+                  to: pipelineStageSchema,
+                  reason: z.string().max(1000).nullable(),
+                  revision: z.number().int().positive(),
+                  occurredAt: z.iso.datetime(),
+                })
+                .strict(),
+            )
+            .max(20),
+        })
+        .strict(),
     })
     .strict(),
   z
