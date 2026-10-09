@@ -103,6 +103,47 @@ try {
       'document.querySelector("[data-crm-contacts]").textContent.includes("Staff contact") && document.querySelector("#tenants").options.length===2',
     ),
   )
+  await wait(
+    'document.querySelector("[data-crm-worklist]")?.textContent.includes("Worklist owner overdue")',
+  )
+  check(
+    'shared owner worklist renders stored task text literally with no HTML execution',
+    await evaluate(
+      'document.querySelector("[data-crm-worklist]").textContent.includes("<b>literal</b>") && !document.querySelector("[data-crm-worklist] b") && document.querySelector("[data-crm-worklist]").textContent.includes("Worklist staff overdue")',
+    ),
+  )
+  await evaluate(
+    'document.querySelector("[data-crm-work-bucket]").value="upcoming";document.querySelector("[data-crm-work-bucket]").dispatchEvent(new Event("change"))',
+  )
+  await wait(
+    'document.querySelector("[data-crm-worklist]").textContent.includes("Native approved fixture")',
+  )
+  check(
+    'worklist switches due buckets using authoritative reads',
+    await evaluate(
+      '!document.querySelector("[data-crm-worklist]").textContent.includes("Worklist owner overdue")',
+    ),
+  )
+  await evaluate(
+    'Array.from(document.querySelectorAll("[data-crm-work-contact]")).find(button=>button.textContent.includes("Native approved fixture")).click()',
+  )
+  await wait(
+    'document.querySelector("[data-crm-detail]").textContent.includes("Native approved fixture")',
+  )
+  check(
+    'worklist contact navigation opens the existing authorized detail and pipeline selection',
+    true,
+  )
+  await ask('tampilkan follow-up terlambat')
+  await wait(
+    'document.querySelector("[data-archava-followups]")?.textContent.includes("Worklist owner overdue")',
+  )
+  check(
+    'Archava reads the same overdue tasks without preparing or executing a command',
+    await evaluate(
+      'document.querySelector("[data-archava-followups]").textContent.includes("Worklist staff overdue") && !document.querySelector("[data-archava-save]")',
+    ),
+  )
   await page.navigate(origin)
   await wait('document.querySelector("[data-crm-contacts]")?.textContent.includes("Owner contact")')
   check(
@@ -496,6 +537,22 @@ try {
       'document.querySelector("#tenants").options.length===1 && !document.querySelector("[data-crm-contacts]").textContent.includes("Owner contact") && !document.querySelector("[data-crm-contacts]").textContent.includes("Browser permanent guest")',
     ),
   )
+  await wait(
+    'document.querySelector("[data-crm-worklist]")?.textContent.includes("Worklist staff overdue")',
+  )
+  check(
+    'worklist masks owner tasks for assigned staff',
+    await evaluate(
+      '!document.querySelector("[data-crm-worklist]").textContent.includes("Worklist owner overdue")',
+    ),
+  )
+  await ask('tampilkan follow-up terlambat')
+  check(
+    'Archava worklist preserves assigned staff scope',
+    await evaluate(
+      'document.querySelector("[data-archava-followups]").textContent.includes("Worklist staff overdue") && !document.querySelector("[data-archava-followups]").textContent.includes("Worklist owner overdue")',
+    ),
+  )
   check(
     'pipeline applies assigned staff scope without exposing owner opportunities',
     await evaluate(
@@ -544,7 +601,7 @@ try {
   check(
     'logout destroys pending Save UI and a late receipt cannot repopulate the signed-out workspace',
     await evaluate(
-      'document.querySelector("#conversation").textContent==="" && document.querySelector("#workspace").hidden',
+      'document.querySelector("#conversation").textContent==="" && document.querySelector("#worklist").textContent==="" && document.querySelector("#workspace").hidden',
     ),
   )
   await signIn(accounts.owner)

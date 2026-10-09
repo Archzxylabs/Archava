@@ -1072,6 +1072,11 @@ Preserve the private per-database restore hold/epoch, and retain unresolved
 receipt markers rather than issuing a blind new command. Do not extend this
 approval to another operation, public visitor, external effect or model flag.
 
+The 0.5.0 `crm.followups.list` worklist is a read projection of open tasks across
+currently permitted contacts. Require both contact/task read grants and delegated
+scope; keep exact-time pagination and a fixed page boundary. It grants no write,
+message-send or native approval authority. Dashboard and Archava share this service.
+
 The persistent CRM host consumes installed modules and verifies credential-backed
 sessions through an optional identity adapter. These local checks do not grant
 authority to browser role/tenant/confirmation fields or establish public identity

@@ -63,6 +63,23 @@ export function createCrmApi(
               search: url.searchParams.get('search') ?? '',
             }),
           )
+        if (parts[3] === 'followups')
+          return json(
+            await service.listFollowups(tenant, principal, {
+              ...(url.searchParams.has('bucket') ? { bucket: url.searchParams.get('bucket') } : {}),
+              ...(url.searchParams.has('asOf') ? { asOf: url.searchParams.get('asOf') } : {}),
+              ...(url.searchParams.has('afterDueAt') || url.searchParams.has('afterId')
+                ? {
+                    after: {
+                      dueAt: url.searchParams.get('afterDueAt'),
+                      id: url.searchParams.get('afterId'),
+                    },
+                  }
+                : {}),
+              limit: url.searchParams.has('limit') ? Number(url.searchParams.get('limit')) : 20,
+              search: url.searchParams.get('search') ?? '',
+            }),
+          )
         if (parts[3] === 'opportunities' && pipeline)
           return json(
             await pipeline.list(tenant, principal, {

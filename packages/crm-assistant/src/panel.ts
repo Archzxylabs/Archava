@@ -250,6 +250,38 @@ export function mountCrmConversation(
 
   const render = (data: CrmConversationData | null, entry: HTMLElement) => {
     if (!data) return
+    if (data.kind === 'followups') {
+      const list = make('ul')
+      list.dataset.archavaFollowups = ''
+      for (const item of data.items) {
+        const row = make('li', `${new Date(item.dueAt).toLocaleString()} · ${item.summary} · `)
+        const button = make('button', item.fullName)
+        button.type = 'button'
+        button.dataset.archavaContact = item.contactId
+        button.addEventListener('click', () => {
+          if (destroyed || busy) return
+          selected = { id: item.contactId, fullName: item.fullName }
+          opportunity = null
+          opportunityLabel.textContent = 'Belum ada peluang dipilih.'
+          selectedLabel.textContent = 'Kontak dipilih: ' + item.fullName
+          message.value = 'ringkas'
+          message.focus()
+        })
+        row.append(button)
+        list.append(row)
+      }
+      entry.append(list)
+      if (data.next) {
+        const cursor = data.next
+        const next = make('button', 'Halaman follow-up berikutnya')
+        next.type = 'button'
+        const utterance = message.value
+        next.addEventListener('click', () => {
+          void ask(utterance, undefined, { after: cursor, asOf: data.asOf })
+        })
+        entry.append(next)
+      }
+    }
     if (data.kind === 'contacts' || data.kind === 'choose') {
       const list = make('ul')
       for (const item of data.items) {
@@ -575,7 +607,11 @@ export function mountCrmConversation(
       })()
     })
   }
-  async function ask(utterance: string, after?: string) {
+  async function ask(
+    utterance: string,
+    after?: string,
+    followups?: { after: { dueAt: string; id: string }; asOf: string },
+  ) {
     if (busy || destroyed) return
     feedback.textContent = ''
     const summary = note.value.trim()
@@ -599,6 +635,7 @@ export function mountCrmConversation(
           ...(selected ? { contactId: selected.id } : {}),
           ...(opportunity ? { opportunityId: opportunity.id } : {}),
           ...(after ? { after } : {}),
+          ...(followups ? { followupAfter: followups.after, followupAsOf: followups.asOf } : {}),
           ...(summary && date ? { draft: { summary, dueAt: date.toISOString() } } : {}),
         }),
       })

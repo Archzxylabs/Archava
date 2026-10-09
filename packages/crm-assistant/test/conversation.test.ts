@@ -70,6 +70,54 @@ function fixture(
   }
 }
 describe('reusable CRM conversation boundary', () => {
+  it('reads due work with fixed page time, no contact selection dependency or machine write', async () => {
+    const f = fixture()
+    const listFollowups = vi.fn(() =>
+      Promise.resolve({
+        asOf: now,
+        items: [
+          {
+            id: otherId,
+            contactId: id,
+            fullName: 'Budi',
+            summary: '<script>send</script>',
+            dueAt: now,
+          },
+        ],
+        next: { dueAt: now, id: otherId },
+      }),
+    )
+    const conversation = createCrmConversation(
+      new CrmService({ ...f.repository, listFollowups }),
+      new LocalCrmPlanner(),
+    )
+    const reply = await conversation.ask(context, {
+      utterance: 'tampilkan follow-up terlambat?',
+      contactId: otherId,
+    })
+    expect(reply.source).toBe('crm')
+    expect(reply.data?.kind).toBe('followups')
+    expect(listFollowups).toHaveBeenLastCalledWith('hotel-demo', context.principal, {
+      bucket: 'overdue',
+      asOf: now,
+      limit: 20,
+      search: '',
+    })
+    await conversation.ask(context, {
+      utterance: 'tampilkan follow-up terlambat',
+      followupAsOf: now,
+      followupAfter: { dueAt: now, id: otherId },
+    })
+    expect(listFollowups).toHaveBeenLastCalledWith('hotel-demo', context.principal, {
+      bucket: 'overdue',
+      asOf: now,
+      limit: 20,
+      search: '',
+      after: { dueAt: now, id: otherId },
+    })
+    expect(f.detail).not.toHaveBeenCalled()
+    expect(f.mutate).not.toHaveBeenCalled()
+  })
   it('reads projected authoritative CRM data without email/organization or machine actions', async () => {
     const { conversation, mutate, list } = fixture()
     const reply = await conversation.ask(context, { utterance: 'tampilkan kontak' })

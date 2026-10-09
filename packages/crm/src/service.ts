@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { followupQueueQuerySchema, followupQueueSchema } from './worklist-contracts.js'
 import {
   CrmError,
   tenantSchema,
@@ -34,6 +35,18 @@ export class CrmService {
   async detail(tenant: unknown, principal: unknown, id: unknown) {
     const identity = this.identity(tenant, principal)
     return await this.repository.detail(identity.tenant, identity.principal, idSchema.parse(id))
+  }
+  async listFollowups(tenant: unknown, principal: unknown, input: unknown = {}) {
+    const identity = this.identity(tenant, principal)
+    const query = followupQueueQuerySchema.parse(input)
+    if (!this.repository.listFollowups)
+      throw new CrmError('unavailable', 'Follow-up worklist is unavailable on this adapter.')
+    const result = followupQueueSchema.parse(
+      await this.repository.listFollowups(identity.tenant, identity.principal, query),
+    )
+    if (result.asOf !== query.asOf || result.items.length > query.limit)
+      throw new CrmError('unavailable', 'Follow-up worklist could not be verified.')
+    return result
   }
   async mutate(tenant: unknown, principal: unknown, input: unknown) {
     const identity = this.identity(tenant, principal)
@@ -102,6 +115,7 @@ export function createCrmTools(service: CrmService, tenant: string, principal: C
           next: page.next,
         }
       }
+      if (name === 'crm.followups.list') return service.listFollowups(tenant, principal, input)
       if (name === 'crm.contact.summary') {
         const { id } = z.object({ id: idSchema }).strict().parse(input)
         const detail = await service.detail(tenant, principal, id)

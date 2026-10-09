@@ -11,6 +11,7 @@ import { referenceShutdown } from './shutdown.js'
 import { verifyPipeline } from './pipeline-proof.js'
 import { verifyProviderRuntime } from './provider-proof.js'
 import { verifyCommandRecovery } from './recovery-proof.js'
+import { verifyWorklist } from './worklist-proof.js'
 
 const shutdown = referenceShutdown()
 const consumers = await prepareConsumers()
@@ -422,6 +423,7 @@ try {
   )
 
   const root = resolve(import.meta.dirname, '../../..')
+  await verifyWorklist(consumers, cluster.owner, pool, cluster.fingerprintKey, check)
   await mkdir(join(root, 'dist/crm-proof'), { recursive: true })
   await writeFile(
     join(root, 'dist/crm-proof/results.json'),

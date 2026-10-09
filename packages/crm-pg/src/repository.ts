@@ -22,6 +22,10 @@ import {
   type CrmMutation,
   type MutationReceipt,
   type CrmCommandStatus,
+  followupQueueQuerySchema,
+  followupQueueSchema,
+  type FollowupQueueQuery,
+  type FollowupQueue,
 } from '@archava/crm'
 import { crmMigrationLedger } from './migrate.js'
 import {
@@ -350,6 +354,58 @@ export class PostgresCrmRepository implements CrmRepository, CrmPipelineReposito
           ).rows.map(followup)
         : []
       return { contact: record, activities, followups }
+    })
+  }
+
+  listFollowups(
+    tenant: string,
+    principal: CrmPrincipal,
+    raw: FollowupQueueQuery,
+  ): Promise<FollowupQueue> {
+    const query = followupQueueQuerySchema.parse(raw)
+    return this.transaction(tenant, principal, 'followups.read', async (client, access) => {
+      if (!access.permissions.includes('contacts.read'))
+        throw new CrmError('forbidden', 'Contact access is required.')
+      const search = query.search.replace(/[\\%_]/g, (char) => '\\' + char)
+      const rows = (
+        await client.query<Row>(
+          `SELECT f.id,f.contact_id,c.full_name,f.summary,
+          to_char(f.due_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS due_at_exact
+        FROM archava_crm.followups f JOIN archava_crm.contacts c
+          ON c.tenant_id=f.tenant_id AND c.id=f.contact_id
+        WHERE f.tenant_id=$1 AND c.tenant_id=$1 AND f.status='open'
+          AND ($2::boolean OR c.owner_id=$3)
+          AND ($4::text='open' OR ($4='overdue' AND f.due_at<$5::timestamptz)
+            OR ($4='upcoming' AND f.due_at>=$5::timestamptz))
+          AND ($6::timestamptz IS NULL OR (f.due_at,f.id)>($6::timestamptz,$7::uuid))
+          AND (c.full_name ILIKE $8 ESCAPE '\\' OR f.summary ILIKE $8 ESCAPE '\\')
+        ORDER BY f.due_at,f.id LIMIT $9`,
+          [
+            tenant,
+            access.scope === 'all',
+            access.ownerId,
+            query.bucket,
+            query.asOf,
+            query.after?.dueAt ?? null,
+            query.after?.id ?? null,
+            '%' + search + '%',
+            query.limit + 1,
+          ],
+        )
+      ).rows
+      const items = rows.slice(0, query.limit).map((row) => ({
+        id: row.id,
+        contactId: row.contact_id,
+        fullName: row.full_name,
+        summary: row.summary,
+        dueAt: row.due_at_exact,
+      }))
+      const last = items.at(-1)
+      return followupQueueSchema.parse({
+        asOf: query.asOf,
+        items,
+        next: rows.length > query.limit && last ? { dueAt: last.dueAt, id: last.id } : null,
+      })
     })
   }
 

@@ -202,3 +202,13 @@ This completes [the supported local owner acceptance](LOCAL_OWNER_PILOT.md).
 Broader M3/presence/commercial release and general ERP remain separate. The
 historical commercial percentage is unchanged; the broader owner planning
 checkpoint and the completed local acceptance use distinct denominators.
+
+## 9 October 2026 — reusable owner follow-up worklist
+
+The [0.5.0 CRM worklist](CRM_WORKLIST.md) adds a shared read projection for open,
+overdue and upcoming follow-ups across permitted contacts. Dashboard and local
+Archava use the same service/transaction and current tenant/resource grants.
+Exact-time keyset pagination, read-only tools and old-adapter compatibility are
+verified independently from the native approval foundation. No business fork,
+new schema or additional external provider is introduced. Broader commercial
+readiness and the owner planning estimate are unchanged.

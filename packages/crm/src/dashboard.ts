@@ -270,6 +270,10 @@ export function mountCrmDashboard(host: HTMLElement, options: CrmDashboardOption
   })
   return {
     ready,
+    selectContact: async (id: string) => {
+      await ready
+      return perform(() => show(id))
+    },
     refresh: () =>
       perform(async () => {
         await load()

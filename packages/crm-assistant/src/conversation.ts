@@ -21,9 +21,11 @@ import {
 } from './contracts.js'
 
 const HELP =
-  'Coba “tampilkan kontak”, “cari Budi”, “ringkas Budi”, atau “siapkan follow-up Budi”. Follow-up hanya berupa draft untuk ditinjau; belum disimpan atau dikirim.'
+  'Coba “tampilkan kontak”, “cari Budi”, “ringkas Budi”, “tampilkan follow-up terlambat”, atau “siapkan follow-up Budi”. Draft belum disimpan atau dikirim.'
 function describe(data: CrmConversationData): string {
   switch (data.kind) {
+    case 'followups':
+      return `${data.items.length} follow-up ${data.bucket === 'overdue' ? 'terlambat' : data.bucket === 'upcoming' ? 'mendatang' : 'terbuka'} pada halaman ini${data.next ? '; masih ada halaman berikutnya' : ''}. Batas waktu pemeriksaan: ${data.asOf}.`
     case 'help':
       return HELP
     case 'needs_contact':
@@ -80,6 +82,17 @@ export function createCrmConversation(
       const tools = createCrmTools(service, tenant, principal)
       const resolve = async (): Promise<CrmConversationData> => {
         if (plan.operation === 'unsupported') return { kind: 'help' }
+        if (plan.operation === 'followups.list')
+          return conversationDataSchema.parse({
+            kind: 'followups',
+            bucket: plan.bucket,
+            ...(await tools.invoke('crm.followups.list', {
+              bucket: plan.bucket,
+              asOf: input.followupAsOf ?? context.occurredAt,
+              limit: 20,
+              ...(input.followupAfter ? { after: input.followupAfter } : {}),
+            })),
+          })
         if (plan.operation === 'opportunities.list' || plan.operation === 'opportunity.summary') {
           if (!access.permissions.includes('pipeline.read'))
             throw new CrmError('forbidden', 'Pipeline reading is not permitted.')
@@ -236,6 +249,7 @@ export function createCrmConversation(
         text: outcome.text,
         source: [
           'contacts',
+          'followups',
           'summary',
           'draft',
           'choose',

@@ -1220,6 +1220,76 @@ try {
     'authenticated native HTTP review/confirmation/receipt flow rejects anonymous, CSRF, forged authority, payload drift and repeat execution; exactly one task commits',
   )
 
+  const queueOwnerResponse = await post(
+    origin,
+    '/api/crm/hotel-demo/commands',
+    {
+      requestId: randomUUID(),
+      command: {
+        operation: 'followup.create',
+        contactId: nativeContact.id,
+        contactRevision: nativeDetail.contact.revision,
+        summary: 'Worklist owner overdue <b>literal</b>',
+        dueAt: '2020-01-01T00:00:00Z',
+      },
+    },
+    owner,
+  )
+  assert.equal(queueOwnerResponse.status, 200)
+  const queueStaffSession = await login(origin, staff.username, recoveredStaff)
+  const queueStaffContact = await post(
+    origin,
+    '/api/crm/hotel-demo/commands',
+    create('Worklist staff contact'),
+    queueStaffSession,
+  ).then((r) => r.json())
+  assert.equal(
+    (
+      await post(
+        origin,
+        '/api/crm/hotel-demo/commands',
+        {
+          requestId: randomUUID(),
+          command: {
+            operation: 'followup.create',
+            contactId: queueStaffContact.id,
+            contactRevision: 1,
+            summary: 'Worklist staff overdue',
+            dueAt: '2020-01-02T00:00:00Z',
+          },
+        },
+        queueStaffSession,
+      )
+    ).status,
+    200,
+  )
+  const queuePath = '/api/crm/hotel-demo/followups?bucket=overdue'
+  assert.equal((await get(origin, queuePath)).status, 401)
+  const ownerQueue = await get(origin, queuePath, owner).then((r) => r.json())
+  assert.ok(
+    ownerQueue.items.some((item) => item.summary === 'Worklist owner overdue <b>literal</b>'),
+  )
+  assert.ok(ownerQueue.items.some((item) => item.summary === 'Worklist staff overdue'))
+  const staffQueue = await get(origin, queuePath, queueStaffSession).then((r) => r.json())
+  assert.ok(staffQueue.items.some((item) => item.summary === 'Worklist staff overdue'))
+  assert.ok(!JSON.stringify(staffQueue).includes('Worklist owner overdue'))
+  assert.equal((await get(origin, '/api/crm/studio-demo/followups', queueStaffSession)).status, 403)
+  assert.equal(
+    (await get(origin, '/api/crm/hotel-demo/followups?afterId=' + randomUUID(), owner)).status,
+    400,
+  )
+  const queueReply = await post(
+    origin,
+    '/api/crm/hotel-demo/conversation',
+    { utterance: 'tampilkan follow-up terlambat' },
+    queueStaffSession,
+  ).then((r) => r.json())
+  assert.equal(queueReply.data.kind, 'followups')
+  assert.ok(!JSON.stringify(queueReply).includes('Worklist owner overdue'))
+  check(
+    'authenticated worklist and Archava share due tasks while enforcing current assigned staff and tenant scope; partial cursors are refused',
+  )
+
   await mkdir(join(root, 'dist/crm-runtime-proof'), { recursive: true })
   await writeFile(
     join(root, 'dist/crm-runtime-proof/results.json'),

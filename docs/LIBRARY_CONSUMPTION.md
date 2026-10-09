@@ -125,3 +125,7 @@ production provider/deployment gates.
 The 0.4.0 CRM/domain/assistant artifacts and `@archava/crm-act` add the
 [supported local owner approval flow](LOCAL_OWNER_PILOT.md), with authenticated
 review/present/status, current delegated grants and a private restore hold.
+
+The 0.5.0 CRM/PG/conversation artifacts add an optional authorized follow-up queue
+and standalone browser component. Both installed business consumers exercise the
+same due-time cursor, permissions and read-only tools; see [worklist contracts](CRM_WORKLIST.md).

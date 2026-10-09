@@ -4,6 +4,10 @@ Target confirmed by the owner: **local first, free**, 9 October 2026. This relea
 is the reusable CRM owner pilot. Its acceptance is distinct from the full Archava
 commercial/customer-presence roadmap and the separate ARCHZXY company website.
 
+The subsequent [0.5.0 worklist release](CRM_WORKLIST.md) adds authorized due tasks
+across contacts, using the same local host. The 0.4.0 acceptance evidence below
+remains the historical foundation; its native action/recovery boundary is preserved.
+
 ## Supported capability
 
 The same compiled library serves Hospitality and Professional Services without

@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { opportunityCommandSchema } from './pipeline-contracts.js'
+import type { FollowupQueueQuery, FollowupQueue } from './worklist-contracts.js'
 
 export const tenantSchema = z
   .string()
@@ -176,6 +177,12 @@ export const followupDraftSchema = z
 export interface CrmRepository {
   access(tenant: string, principal: CrmPrincipal): Promise<CrmAccess>
   list(tenant: string, principal: CrmPrincipal, page: CrmPage): Promise<ContactPage>
+  /** Optional authorized read projection; old adapters remain compatible. */
+  listFollowups?(
+    tenant: string,
+    principal: CrmPrincipal,
+    page: FollowupQueueQuery,
+  ): Promise<FollowupQueue>
   detail(tenant: string, principal: CrmPrincipal, id: string): Promise<ContactDetail>
   mutate(tenant: string, principal: CrmPrincipal, mutation: CrmMutation): Promise<MutationReceipt>
   /** Server-only verified approval path. Ordinary machine writes remain forbidden. */
@@ -211,11 +218,11 @@ export class CrmError extends Error {
 /** Config/installation metadata; it grants no authority and supplies no price. */
 export const CRM_CONTACTS_MANIFEST = {
   id: 'crm_contacts',
-  version: '0.4.0',
+  version: '0.5.0',
   status: 'implemented' as const,
   requires: [],
   permissions: CRM_PERMISSIONS.filter((permission) => !permission.startsWith('pipeline.')),
   persistence: { adapter: '@archava/crm-pg', migration: '001_crm_contacts' },
   apiVersion: '1.0.0',
-  tools: ['crm.contacts.list', 'crm.contact.summary', 'crm.followup.prepare'],
+  tools: ['crm.contacts.list', 'crm.contact.summary', 'crm.followups.list', 'crm.followup.prepare'],
 }

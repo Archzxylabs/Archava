@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-09",
+  "baseline": "af9ae4b",
+  "releaseScope": "local free follow-up worklist on reusable CRM",
+  "node": "v22.22.3",
+  "originalDomainIdentityApprovalAndProviderRowsPreserved": true,
+  "originalPrivateFilesPreserved": true,
+  "crmSchemaUnchanged": true,
+  "domainCommandsSubmitted": 0,
+  "actualModelOrExternalActionCalls": 0,
+  "installedLocalHostHealthStatus": 200,
+  "authenticatedWorklist": true,
+  "configuredWorkspaces": 2,
+  "localConversationWorklist": true,
+  "localPlannerConfirmed": true,
+  "existingCredentialsPreserved": true,
+  "compiledBrowserWorklist": true
+}

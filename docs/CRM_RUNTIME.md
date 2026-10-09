@@ -10,6 +10,9 @@ general AI writes have separate release gates. The supported local release now
 includes one owner-approved native follow-up action; see
 [local pilot operation and acceptance](LOCAL_OWNER_PILOT.md).
 
+The [0.5.0 follow-up worklist](CRM_WORKLIST.md) adds a shared read-only task list
+and local Archava queries across permitted contacts, without a schema/grant change.
+
 ## Start
 
 Use Node 22.22.3, pnpm 10.15.1 and PostgreSQL tooling (`pg_config`, `initdb`,

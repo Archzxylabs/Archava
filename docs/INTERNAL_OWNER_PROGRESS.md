@@ -52,3 +52,9 @@ after native UI/HTTP/current-grants/recovery/restore proof; operations advance t
 contributions stay 15 + 14 + 12 + 3. Total = 15 + 14 + 12 + 12 + 3 + 4 = 60.
 This still includes open production/support/general-planning work, so it is a
 different assessment from the completed local release acceptance.
+
+9 October local follow-up: the [0.5.0 CRM worklist](CRM_WORKLIST.md) exposes open,
+overdue and upcoming tasks across authorized contacts in both the dashboard and
+local Archava. It reuses existing permissions/data and adds no action authority
+or infrastructure. The broader 60% estimate is retained; this is a useful local
+CRM increment rather than evidence for production/general AI readiness.

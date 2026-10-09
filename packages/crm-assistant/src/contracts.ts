@@ -1,5 +1,10 @@
 import { z } from 'zod'
 import { pipelineStageSchema } from '@archava/crm/pipeline-contracts'
+import {
+  followupBucketSchema,
+  followupCursorSchema,
+  followupQueueSchema,
+} from '@archava/crm/worklist-contracts'
 
 export const conversationInputSchema = z
   .object({
@@ -7,6 +12,8 @@ export const conversationInputSchema = z
     contactId: z.uuid().optional(),
     opportunityId: z.uuid().optional(),
     after: z.uuid().optional(),
+    followupAfter: followupCursorSchema.optional(),
+    followupAsOf: z.iso.datetime().optional(),
     draft: z
       .object({
         summary: z.string().trim().min(1).max(2000),
@@ -20,6 +27,12 @@ export type CrmConversationInput = z.infer<typeof conversationInputSchema>
 
 /** Provider output is a request. No tenant, identity, permissions, SQL or write tool exists here. */
 export const conversationPlanSchema = z.discriminatedUnion('operation', [
+  z
+    .object({
+      operation: z.literal('followups.list'),
+      bucket: followupBucketSchema.default('open'),
+    })
+    .strict(),
   z
     .object({
       operation: z.literal('contacts.list'),
@@ -74,6 +87,14 @@ const opportunityItemSchema = z
   })
   .strict()
 export const conversationDataSchema = z.discriminatedUnion('kind', [
+  z
+    .object({
+      kind: z.literal('followups'),
+      bucket: followupBucketSchema,
+      ...followupQueueSchema.shape,
+      items: followupQueueSchema.shape.items.max(20),
+    })
+    .strict(),
   z.object({ kind: z.literal('help') }).strict(),
   z.object({ kind: z.literal('needs_contact') }).strict(),
   z.object({ kind: z.literal('needs_draft') }).strict(),

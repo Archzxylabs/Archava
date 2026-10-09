@@ -1,0 +1,161 @@
+{
+  "date": "2026-10-09",
+  "baseline": "af9ae4b",
+  "releaseScope": "local free follow-up worklist on reusable CRM",
+  "node": "v22.22.3",
+  "command": "fnm exec --using 22.22.3 pnpm act:verify",
+  "checks": [
+    "two independent cold installs use identical compiled Act implementations and included owned migrations",
+    "repeat/concurrent migration, checksummed ledger, forced RLS and non-owner runtime requirement",
+    "four separate Node processes atomically open one canonical intent/time and retain every challenge mapping",
+    "four processes admit one executor claimant; cancellation/late settlement cannot replace terminal truth",
+    "explicit same-payload transition has one successor under contention; unknown never opens a new intent",
+    "tenant/session isolation, transaction scope reset and no runtime deletion",
+    "immutable canonical identity and rejection of modified migration ledgers",
+    "real PostgreSQL restart retains canonical identity/unknown; positive reconciliation fences late claimants",
+    "real installed policy/validation/turn, PostgreSQL one-time consent/intent/provider records and bounded mocked gateways compose for two tenants; concurrent presentations perform one reservation",
+    "real database restart and second independent installed consumer retain unknown mail; exact positive mocked Postmark read recovers it without claim/send, while missing results do not",
+    "native review is metadata-only; two installed consumers execute one approved CRM task with service actor plus human initiator audit, and machine/forged/replayed/cross-owner writes remain denied",
+    "native approval rechecks both current memberships and exact text/revision; stale review can be cancelled before execution, while completed execution cannot",
+    "native confirmation schema is checksummed, forced tenant/owner-scope RLS and non-owner; raw drafts/tokens never reach the approval journal",
+    "native lost response recovers through own authoritative receipt after real restart without resubmission; restored execution hold/new epoch refuses old approval"
+  ],
+  "consumers": [
+    {
+      "consumer": "hospitality",
+      "modules": [
+        {
+          "name": "@archava/act-host",
+          "version": "0.3.0",
+          "implementationSha256": "d7f11c11dbc11bf6bae81fa110f517639487573883f14affcb94fb37654187cf",
+          "tarballSha256": "286555a5b3c900eda2c4373d28f4f9bcf2a1f1dcdbe5b70dc9dc16f2e317fbd5"
+        },
+        {
+          "name": "@archava/act-host-pg",
+          "version": "0.2.0",
+          "implementationSha256": "73623406a641d5bbecba1b259fd4656f30eb6db915ae70631af2495950e1faf4",
+          "tarballSha256": "965bc8b97210751b5e27b8f80c087725449dc92ecbdc413a8d78cb288959d6a0"
+        },
+        {
+          "name": "@archava/act-confirmation",
+          "version": "0.3.0",
+          "implementationSha256": "fe7685cd1c0aadb5bd7b266a208cf88f86e8e01857b679a253b9fe2a9b32c727",
+          "tarballSha256": "160ad9d90b835f91349557ad15987efe9481383edd354b7cf09b65007747c43b"
+        },
+        {
+          "name": "@archava/act-confirmation-pg",
+          "version": "0.1.0",
+          "implementationSha256": "98b6d06a9309f877fe8895812dcde51e3617f91cb12e18156d96091d47d3c309",
+          "tarballSha256": "21e811ecc4ec811be978a2ee082338f29e8f820b3e555ab2bd737152c507e240"
+        },
+        {
+          "name": "@archava/act-storage",
+          "version": "0.2.0",
+          "implementationSha256": "0b8c5c9e627f09cfed81bdad540c6322ddf88f31dbde96b86230708020d9c099",
+          "tarballSha256": "af011132600505d918bc303fe4b7055ab4cc2dc8fe27670d3ad4349534e233c4"
+        },
+        {
+          "name": "@archava/act",
+          "version": "0.2.0",
+          "implementationSha256": "4c56604d416fcbe78f7aed79754ec77e046d910ac984100e3970c9e912b49528",
+          "tarballSha256": "9d6eeacec7eb3c1695c1b7a1566a861b7ecb2256389879df9b59088d040d4ae7"
+        },
+        {
+          "name": "@archava/act-postmark",
+          "version": "0.2.0",
+          "implementationSha256": "9cb98f3794203eb62752331f81ebca346901eacee03280d04a98e1f30a49e852",
+          "tarballSha256": "c8480afd2e9bd6f5eedb8cfd5847bae76703747bf8e01d0337641f4d269fef51"
+        },
+        {
+          "name": "@archava/crm-act",
+          "version": "0.1.1",
+          "implementationSha256": "2356732d32d2f3c0d12127a9f1201016a943f4fb699e2e531d15aa614568abce",
+          "tarballSha256": "5accf75d8c7e07cef2c0b3243f838476fbb7f19444d3815a6d03ad9df5754e49"
+        },
+        {
+          "name": "@archava/crm",
+          "version": "0.5.0",
+          "implementationSha256": "c9bde971675ea2c936f924d95819b961b3e37bca27f907d24b5523051c4de264",
+          "tarballSha256": "ef0c3484a0844a8ac185519c60b81c95b47f2e6248dfe7211522a7e99905d996"
+        },
+        {
+          "name": "@archava/crm-pg",
+          "version": "0.5.0",
+          "implementationSha256": "c2f8876eba8098fa68cc66c6d70402b679151ba3293f9732646d20060f211e64",
+          "tarballSha256": "a676d8ec065771b8d1e84e50f5ec2d91855ce99bc5928c009899a1ff5a3481d6"
+        }
+      ]
+    },
+    {
+      "consumer": "professional-services",
+      "modules": [
+        {
+          "name": "@archava/act-host",
+          "version": "0.3.0",
+          "implementationSha256": "d7f11c11dbc11bf6bae81fa110f517639487573883f14affcb94fb37654187cf",
+          "tarballSha256": "286555a5b3c900eda2c4373d28f4f9bcf2a1f1dcdbe5b70dc9dc16f2e317fbd5"
+        },
+        {
+          "name": "@archava/act-host-pg",
+          "version": "0.2.0",
+          "implementationSha256": "73623406a641d5bbecba1b259fd4656f30eb6db915ae70631af2495950e1faf4",
+          "tarballSha256": "965bc8b97210751b5e27b8f80c087725449dc92ecbdc413a8d78cb288959d6a0"
+        },
+        {
+          "name": "@archava/act-confirmation",
+          "version": "0.3.0",
+          "implementationSha256": "fe7685cd1c0aadb5bd7b266a208cf88f86e8e01857b679a253b9fe2a9b32c727",
+          "tarballSha256": "160ad9d90b835f91349557ad15987efe9481383edd354b7cf09b65007747c43b"
+        },
+        {
+          "name": "@archava/act-confirmation-pg",
+          "version": "0.1.0",
+          "implementationSha256": "98b6d06a9309f877fe8895812dcde51e3617f91cb12e18156d96091d47d3c309",
+          "tarballSha256": "21e811ecc4ec811be978a2ee082338f29e8f820b3e555ab2bd737152c507e240"
+        },
+        {
+          "name": "@archava/act-storage",
+          "version": "0.2.0",
+          "implementationSha256": "0b8c5c9e627f09cfed81bdad540c6322ddf88f31dbde96b86230708020d9c099",
+          "tarballSha256": "af011132600505d918bc303fe4b7055ab4cc2dc8fe27670d3ad4349534e233c4"
+        },
+        {
+          "name": "@archava/act",
+          "version": "0.2.0",
+          "implementationSha256": "4c56604d416fcbe78f7aed79754ec77e046d910ac984100e3970c9e912b49528",
+          "tarballSha256": "9d6eeacec7eb3c1695c1b7a1566a861b7ecb2256389879df9b59088d040d4ae7"
+        },
+        {
+          "name": "@archava/act-postmark",
+          "version": "0.2.0",
+          "implementationSha256": "9cb98f3794203eb62752331f81ebca346901eacee03280d04a98e1f30a49e852",
+          "tarballSha256": "c8480afd2e9bd6f5eedb8cfd5847bae76703747bf8e01d0337641f4d269fef51"
+        },
+        {
+          "name": "@archava/crm-act",
+          "version": "0.1.1",
+          "implementationSha256": "2356732d32d2f3c0d12127a9f1201016a943f4fb699e2e531d15aa614568abce",
+          "tarballSha256": "5accf75d8c7e07cef2c0b3243f838476fbb7f19444d3815a6d03ad9df5754e49"
+        },
+        {
+          "name": "@archava/crm",
+          "version": "0.5.0",
+          "implementationSha256": "c9bde971675ea2c936f924d95819b961b3e37bca27f907d24b5523051c4de264",
+          "tarballSha256": "ef0c3484a0844a8ac185519c60b81c95b47f2e6248dfe7211522a7e99905d996"
+        },
+        {
+          "name": "@archava/crm-pg",
+          "version": "0.5.0",
+          "implementationSha256": "c2f8876eba8098fa68cc66c6d70402b679151ba3293f9732646d20060f211e64",
+          "tarballSha256": "a676d8ec065771b8d1e84e50f5ec2d91855ce99bc5928c009899a1ff5a3481d6"
+        }
+      ]
+    }
+  ],
+  "providerCalls": 0,
+  "mockedProviderCalls": {
+    "reservations": 2,
+    "sends": 3
+  },
+  "scope": "isolated real PostgreSQL and four actual Node processes; no real booking/email"
+}
