@@ -2,6 +2,7 @@ import { mountCrmDashboard } from '@archava/crm/dashboard'
 import { mountPipelineDashboard } from '@archava/crm/pipeline-dashboard'
 import { pipelineLabelsSchema } from '@archava/crm/pipeline-contracts'
 import { mountCrmConversation } from '@archava/crm-assistant/panel'
+import { createTabFollowupRecovery } from '@archava/crm-assistant/recovery'
 import { z } from 'zod'
 
 const sessionSchema = z.discriminatedUnion('authenticated', [
@@ -123,6 +124,14 @@ async function mount() {
     apiBase: '/api/crm/' + selected.id + '/conversation',
     commandsBase: '/api/crm/' + selected.id + '/commands',
     pilotEnabled: session.plannerMode === 'gemini-synthetic',
+    recovery: createTabFollowupRecovery(
+      {
+        getItem: (key) => sessionStorage.getItem(key),
+        setItem: (key, value) => sessionStorage.setItem(key, value),
+        removeItem: (key) => sessionStorage.removeItem(key),
+      },
+      JSON.stringify([session.username, selected.id]),
+    ),
     transport: async (input, init) => {
       const headers = new Headers(init?.headers)
       headers.set('x-archava-csrf', csrf)

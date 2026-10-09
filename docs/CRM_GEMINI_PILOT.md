@@ -8,6 +8,8 @@ This release adds no dependency, database migration or company website.
 
 The subsequent [provider-runtime module](PROVIDER_RUNTIME.md) adds persistent
 admission/diagnostics without changing this planner's data boundary.
+The current 0.3.0 artifact also adds [human Save receipt recovery](CRM_COMMAND_RECOVERY.md),
+using the existing command ledger and an optional tab-scoped UUID marker.
 
 ## What can be tried
 

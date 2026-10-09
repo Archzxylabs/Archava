@@ -78,6 +78,8 @@ export function createCrmApi(
       }
       if (request.method === 'GET' && parts.length === 5 && parts[3] === 'contacts')
         return json(await service.detail(tenant, principal, parts[4]))
+      if (request.method === 'GET' && parts.length === 5 && parts[3] === 'commands')
+        return json(await service.commandStatus(tenant, principal, parts[4]))
       if (
         request.method === 'GET' &&
         parts.length === 5 &&

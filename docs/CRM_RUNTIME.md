@@ -46,8 +46,12 @@ and `crm:dev` references retain their original demo behavior.
 The host also mounts the [shared CRM conversation panel](CRM_CONVERSATION.md).
 Its local command planner reads contacts, shows notes/follow-ups and prepares
 reviewable drafts through the existing Archava turn pipeline. It uses the same
-verified session and CRM permissions, makes no model requests and cannot save or
-send a draft. Rebuild while the host is stopped so installed artifacts remain
+verified session and CRM permissions. Local planning makes no model requests;
+an explicit human Save uses the existing command API. The optional
+[Gemini pilot](CRM_GEMINI_PILOT.md) accepts only committed synthetic examples.
+[Reviewed Save recovery](CRM_COMMAND_RECOVERY.md) checks the original receipt
+after a lost response/reload without resubmission. Rebuild while the host is
+stopped so installed artifacts remain
 available to the running process.
 
 ## Accounts

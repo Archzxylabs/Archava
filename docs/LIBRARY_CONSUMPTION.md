@@ -92,7 +92,7 @@ The optional server-only `@archava/identity-pg` package is used by the
 [persistent CRM host](CRM_RUNTIME.md). The host cold-installs compiled artifacts
 and reuses the shared dashboard; core/CRM do not depend on this identity adapter.
 
-The optional `@archava/crm-assistant` artifact adds `/contracts`, `/panel`, `/pilot`
+The optional `@archava/crm-assistant` artifact adds `/contracts`, `/panel`, `/pilot`, `/recovery`
 and server-only `/server` exports using the existing turn pipeline. The generic
 `@archava/provider-runtime` adds durable provider admission and diagnostics, with
 a separate `/postgres` adapter. The artifact set contains 14 packages.
@@ -101,6 +101,9 @@ matching conversation implementations and exercise their authorized live data.
 See [CRM conversation](CRM_CONVERSATION.md) and the [bounded Gemini pilot](CRM_GEMINI_PILOT.md).
 The synthetic live evidence and explicit human Save do not establish general
 model quality or machine-write readiness.
+The 0.3.0 CRM/PG/assistant artifacts add [read-only command receipt recovery](CRM_COMMAND_RECOVERY.md)
+without another internal package or migration. Older adapters can omit this
+capability; the local host opts in with an account/workspace-scoped tab store.
 This proves local login/revocation and backup restoration, not public deployment.
 
 The first persistent contacts + activities/follow-up CRM slice now has two

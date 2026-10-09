@@ -1,6 +1,6 @@
 {
   "name": "@archava/crm-assistant",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",
@@ -10,7 +10,8 @@
     "./contracts": "./src/contracts.ts",
     "./panel": "./src/panel.ts",
     "./server": "./src/server.ts",
-    "./pilot": "./src/pilot.ts"
+    "./pilot": "./src/pilot.ts",
+    "./recovery": "./src/recovery.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json"

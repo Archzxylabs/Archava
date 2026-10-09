@@ -10,6 +10,7 @@ import { startReferenceServer } from './server.js'
 import { referenceShutdown } from './shutdown.js'
 import { verifyPipeline } from './pipeline-proof.js'
 import { verifyProviderRuntime } from './provider-proof.js'
+import { verifyCommandRecovery } from './recovery-proof.js'
 
 const shutdown = referenceShutdown()
 const consumers = await prepareConsumers()
@@ -329,6 +330,13 @@ try {
     [contactId, second.id],
     check,
   )
+  const recoveryCheckpoints = await verifyCommandRecovery(
+    consumers,
+    cluster,
+    pool,
+    [contactId, second.id],
+    check,
+  )
   await cluster.owner.query(
     "UPDATE archava_crm.memberships SET active=false WHERE principal_id='hotel-viewer'",
   )
@@ -350,6 +358,12 @@ try {
   assert.equal(restoredProvider.recent[0]?.state, 'succeeded')
   check('provider allowance and metadata-only outcomes survive a real PostgreSQL restart')
   assert.equal((await service.detail('hotel-demo', owner, contactId)).activities.length, 1)
+  for (const checkpoint of recoveryCheckpoints)
+    assert.deepEqual(
+      await service.commandStatus(checkpoint.tenant, checkpoint.principal, checkpoint.requestId),
+      checkpoint.expected,
+    )
+  check('read-only recovery preserves original UUID receipts across a real PostgreSQL restart')
   assert.deepEqual(await service.mutate('hotel-demo', owner, create), receipts[0])
   check(
     'membership revocation rechecked; database restart preserves records, audit and retry receipt',

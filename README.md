@@ -61,6 +61,10 @@ The host's [provider runtime](docs/PROVIDER_RUNTIME.md) preserves daily AI usage
 and safe outcome metadata across restart. Use `pnpm crm:ai-status` for its private
 operator view; prompts, records and keys are absent from diagnostic storage.
 
+[Reviewed Save recovery](docs/CRM_COMMAND_RECOVERY.md) now checks the original
+receipt after a lost response and reload. The panel keeps only a tab-scoped
+request ID and holds a new Save while the earlier outcome remains uncertain.
+
 The frontend demo and template have separate runtime boundaries; consolidating
 their source does not connect CRM/ERP, providers, or production Act workflows.
 

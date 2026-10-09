@@ -54,6 +54,13 @@ snapshot holds Gemini until the next UTC day while local CRM remains usable.
 See [provider runtime](PROVIDER_RUNTIME.md). Token/cost metering, automated alerts,
 production telemetry/deployment and durable machine actions remain open.
 
+**9 October reviewed Save recovery:** CRM/PG/assistant 0.3.0 adds a read-only
+command receipt capability and an opt-in tab recovery store. Lost responses can
+be resolved after reload without resubmission; absent receipts stay unconfirmed.
+Current actor, tenant, read grants and resource scope remain backend-authorized.
+See [recovery scope](CRM_COMMAND_RECOVERY.md). Autonomous Act lifecycle,
+cross-device reconciliation and public deployment remain open.
+
 The consolidated source also includes the [website and CRM/ERP frontend](FRONTEND.md)
 and the [portable realtime template](<../Archava Template/README.md>). Frontend
 records and approvals are browser-local demos. The template is a standalone npm

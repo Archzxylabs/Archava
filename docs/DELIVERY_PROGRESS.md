@@ -170,3 +170,16 @@ available. See [provider runtime](PROVIDER_RUNTIME.md).
 This adds controlled operational evidence without completing M3, production
 telemetry/alerts, project-wide billing limits or durable autonomous Act execution.
 Historical commercial percentages and Pending Act tasks are unchanged.
+
+## 9 October 2026 — read-only reviewed Save recovery / partial M3
+
+The existing CRM command receipt can now be queried by its original human with
+current tenant/read/resource authorization. An optional shared panel recovery
+store preserves only a request UUID in the tab. A lost response followed by
+reload is checked without resubmission; an unavailable receipt stays unconfirmed
+and prevents a new Save. Both independent business consumers use the same 0.3.0
+CRM artifacts. See [recovery scope](CRM_COMMAND_RECOVERY.md).
+
+This is human operation recovery. Autonomous Act approval/lifecycle, broader
+reconciliation, public hosting and telemetry remain open. M3 stays partial; the
+historical commercial percentage and Pending Act tasks are unchanged.

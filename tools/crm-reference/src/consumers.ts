@@ -56,6 +56,8 @@ export async function prepareConsumers() {
   const pilotModules: (typeof PilotModule)[] = []
   const providerModules: (typeof ProviderModule)[] = []
   const providerPgModules: (typeof ProviderPgModule)[] = []
+  const crmModules: (typeof CrmModule)[] = []
+  const postgresModules: (typeof PostgresModule)[] = []
   try {
     for (const name of ['hospitality', 'professional-services']) {
       const directory = join(scratch, name)
@@ -95,6 +97,12 @@ export async function prepareConsumers() {
       }
       proofs.push({ consumer: name, modules })
       const consumerRequire = createRequire(join(directory, 'package.json'))
+      const crmEntry = consumerRequire.resolve('@archava/crm')
+      const pgEntry = consumerRequire.resolve('@archava/crm-pg')
+      if (![crmEntry, pgEntry].every((entry) => entry.includes('/node_modules/')))
+        throw new Error('CRM recovery resolved to workspace source')
+      crmModules.push((await import(pathToFileURL(crmEntry).href)) as typeof CrmModule)
+      postgresModules.push((await import(pathToFileURL(pgEntry).href)) as typeof PostgresModule)
       const conversationEntry = consumerRequire.resolve('@archava/crm-assistant')
       const pipelineEntry = consumerRequire.resolve('@archava/crm/pipeline')
       const geminiEntry = consumerRequire.resolve('@archava/crm-assistant/server')
@@ -145,6 +153,8 @@ export async function prepareConsumers() {
       pilotModules,
       providerModules,
       providerPgModules,
+      crmModules,
+      postgresModules,
       proofs,
       publicDirectory: join(root, 'dist/crm-demo'),
       async close() {

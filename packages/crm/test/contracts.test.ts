@@ -9,6 +9,8 @@ import {
   CrmError,
   createCrmApi,
   type CrmRepository,
+  type CrmCommandStatus,
+  commandStatusSchema,
 } from '../src/index.js'
 
 describe('CRM contracts', () => {
@@ -132,5 +134,69 @@ describe('service and HTTP boundary', () => {
       )
       expect(response.status).toBe(status)
     }
+  })
+})
+
+describe('command recovery boundary', () => {
+  const id = randomUUID()
+  const principal = { kind: 'human' as const, id: 'owner' }
+  it('requires a human, validated request id and an explicitly supported adapter', async () => {
+    const unsupported = new CrmService(trapped())
+    await expect(unsupported.commandStatus('hotel-demo', null, id)).rejects.toMatchObject({
+      code: 'unauthenticated',
+    })
+    await expect(
+      unsupported.commandStatus(
+        'hotel-demo',
+        { kind: 'service', id: 'bot', onBehalfOf: 'owner' },
+        id,
+      ),
+    ).rejects.toMatchObject({ code: 'forbidden' })
+    await expect(unsupported.commandStatus('hotel-demo', principal, 'invalid')).rejects.toThrow()
+    await expect(unsupported.commandStatus('hotel-demo', principal, id)).rejects.toMatchObject({
+      code: 'unavailable',
+    })
+  })
+  it('rejects a mismatched receipt or unbounded output instead of claiming success', async () => {
+    const mismatch = new CrmService({
+      ...trapped(),
+      commandStatus: () => Promise.resolve({ status: 'unconfirmed', requestId: randomUUID() }),
+    })
+    await expect(mismatch.commandStatus('hotel-demo', principal, id)).rejects.toMatchObject({
+      code: 'unavailable',
+    })
+    expect(() =>
+      commandStatusSchema.parse({ status: 'unconfirmed', requestId: id, rawInputs: 'private' }),
+    ).toThrow()
+  })
+  it('reads a receipt with no mutation and masks storage errors at HTTP', async () => {
+    let calls = 0
+    const receipt = { kind: 'followup' as const, id: randomUUID(), revision: 1 }
+    const repository = {
+      ...trapped(),
+      commandStatus: () => {
+        calls += 1
+        return Promise.resolve({ status: 'committed' as const, requestId: id, receipt })
+      },
+    }
+    const handler = createCrmApi(new CrmService(repository), () => Promise.resolve(principal))
+    const response = await handler(
+      new Request('https://crm.test/api/crm/hotel-demo/commands/' + id),
+    )
+    expect(response.status).toBe(200)
+    expect(response.headers.get('cache-control')).toBe('no-store')
+    expect(await response.json()).toEqual({ status: 'committed', requestId: id, receipt })
+    expect(calls).toBe(1)
+    const broken = createCrmApi(
+      new CrmService({
+        ...trapped(),
+        commandStatus: (): Promise<CrmCommandStatus> =>
+          Promise.reject(new Error('private database details')),
+      }),
+      () => Promise.resolve(principal),
+    )
+    const failure = await broken(new Request('https://crm.test/api/crm/hotel-demo/commands/' + id))
+    expect(failure.status).toBe(503)
+    expect(JSON.stringify(await failure.json())).not.toContain('private database')
   })
 })

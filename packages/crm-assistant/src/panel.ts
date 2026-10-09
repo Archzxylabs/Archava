@@ -1,6 +1,7 @@
 import { conversationReplySchema, type CrmConversationData } from './contracts.js'
-import { z } from 'zod'
 import { GEMINI_PILOT_CASES } from './pilot.js'
+import { commandStatusSchema, mutationReceiptSchema, idSchema } from '@archava/crm/contracts'
+import type { FollowupRecoveryStore } from './recovery.js'
 
 /** Shared UI. It renders records as text and holds no credentials or durable conversation state. */
 export function mountCrmConversation(
@@ -9,6 +10,7 @@ export function mountCrmConversation(
     apiBase: string
     commandsBase?: string
     pilotEnabled?: boolean
+    recovery?: FollowupRecoveryStore
     transport?: typeof fetch
   },
 ) {
@@ -18,6 +20,15 @@ export function mountCrmConversation(
   let opportunity: { id: string; title: string } | null = null
   let active: AbortController | null = null
   const transport = options.transport ?? fetch
+  let pendingRequestId: string | null = null
+  let recoveryUnavailable = false
+  let recoveryActive: AbortController | null = null
+  try {
+    const pending = options.recovery?.load() ?? null
+    pendingRequestId = pending === null ? null : idSchema.parse(pending)
+  } catch {
+    recoveryUnavailable = true
+  }
   const make = <K extends keyof HTMLElementTagNameMap>(tag: K, text = '') => {
     const element = document.createElement(tag)
     element.textContent = text
@@ -72,6 +83,102 @@ export function mountCrmConversation(
   submit.type = 'submit'
   form.append(label, details, submit)
   host.replaceChildren(title, help, selectedLabel, opportunityLabel, clear, log, feedback, form)
+  const recoveryBox = make('div')
+  recoveryBox.dataset.archavaRecovery = ''
+  const recoveryState = make('p')
+  recoveryState.setAttribute('role', 'status')
+  const checkSave = make('button', 'Cek hasil penyimpanan')
+  checkSave.type = 'button'
+  checkSave.dataset.archavaRecover = ''
+  recoveryBox.append(recoveryState, checkSave)
+  if (options.recovery) log.before(recoveryBox)
+
+  function syncRecovery() {
+    if (recoveryUnavailable && !recoveryState.textContent?.includes('ditahan'))
+      recoveryState.textContent =
+        (recoveryState.textContent ? recoveryState.textContent + ' ' : '') +
+        'Pemulihan tab belum bisa diperbarui; penyimpanan baru ditahan.'
+    recoveryBox.hidden = !pendingRequestId && !recoveryUnavailable && !recoveryState.textContent
+    checkSave.hidden = !pendingRequestId
+    checkSave.disabled = busy || recoveryActive !== null || recoveryUnavailable
+    for (const button of host.querySelectorAll<HTMLButtonElement>('[data-archava-save]'))
+      button.disabled =
+        busy ||
+        recoveryActive !== null ||
+        recoveryUnavailable ||
+        button.dataset.archavaFinal === 'true' ||
+        (pendingRequestId !== null && pendingRequestId !== button.dataset.archavaRequestId)
+  }
+  function forgetKnown(requestId: string) {
+    try {
+      options.recovery?.forget(requestId)
+      if (pendingRequestId === requestId) pendingRequestId = null
+    } catch {
+      recoveryUnavailable = true
+    }
+  }
+  async function recoverSave() {
+    const requestId = pendingRequestId
+    if (
+      !requestId ||
+      !options.commandsBase ||
+      recoveryActive ||
+      busy ||
+      destroyed ||
+      recoveryUnavailable
+    )
+      return
+    recoveryActive = new AbortController()
+    recoveryState.textContent = 'Memeriksa hasil penyimpanan sebelumnya…'
+    syncRecovery()
+    try {
+      const response = await transport(options.commandsBase + '/' + requestId, {
+        credentials: 'same-origin',
+        signal: recoveryActive.signal,
+      })
+      if (destroyed) return
+      if (!response.ok) throw new Error('Receipt could not be verified')
+      const result = commandStatusSchema.parse(await response.json())
+      if (destroyed) return
+      if (result.requestId !== requestId) throw new Error('Receipt does not match')
+      if (result.status === 'committed') {
+        if (result.receipt.kind !== 'followup') throw new Error('Receipt does not match')
+        forgetKnown(requestId)
+        recoveryState.textContent =
+          'Penyimpanan sebelumnya terkonfirmasi: follow-up tersimpan di CRM.'
+        const button = host.querySelector<HTMLButtonElement>(
+          `[data-archava-request-id="${requestId}"]`,
+        )
+        if (button) {
+          button.dataset.archavaFinal = 'true'
+          button.textContent = 'Tersimpan'
+          const state = button.parentElement?.querySelector<HTMLElement>(
+            '[data-archava-save-state]',
+          )
+          if (state) state.textContent = 'Follow-up tersimpan di CRM.'
+        }
+      } else {
+        recoveryState.textContent =
+          'Hasil penyimpanan belum terkonfirmasi. Cek lagi sebelum membuat penyimpanan baru.'
+      }
+    } catch {
+      if (!destroyed)
+        recoveryState.textContent =
+          'Hasil belum bisa diverifikasi. Cek lagi saat koneksi dan akses tersedia.'
+    } finally {
+      recoveryActive = null
+      if (!destroyed) syncRecovery()
+    }
+  }
+  checkSave.addEventListener('click', () => {
+    void recoverSave()
+  })
+  if (recoveryUnavailable)
+    recoveryState.textContent =
+      'Pemulihan penyimpanan tidak tersedia di tab ini. Penyimpanan baru ditahan.'
+  else if (pendingRequestId)
+    recoveryState.textContent = 'Ada penyimpanan sebelumnya yang belum terkonfirmasi.'
+  syncRecovery()
   if (options.pilotEnabled) {
     const examples = make('div')
     examples.append(make('p', 'Pilot Gemini: pilih contoh permintaan. Teks bebas diproses lokal.'))
@@ -188,17 +295,43 @@ export function mountCrmConversation(
         save.type = 'button'
         save.dataset.archavaSave = ''
         const requestId = crypto.randomUUID()
+        save.dataset.archavaRequestId = requestId
         let saved = false
         let revisionChanged = false
         const state = make('p', 'Simpan sebagai tugas follow-up di CRM.')
+        state.dataset.archavaSaveState = ''
         save.addEventListener('click', () => {
-          if (destroyed || busy || saved) return
+          if (
+            destroyed ||
+            busy ||
+            saved ||
+            revisionChanged ||
+            recoveryUnavailable ||
+            recoveryActive ||
+            (pendingRequestId !== null && pendingRequestId !== requestId)
+          )
+            return
           void (async () => {
+            const wasPending = pendingRequestId === requestId
+            if (options.recovery) {
+              try {
+                options.recovery.remember(requestId)
+                pendingRequestId = requestId
+                recoveryState.textContent = 'Ada penyimpanan yang belum terkonfirmasi.'
+              } catch {
+                recoveryUnavailable = true
+                recoveryState.textContent =
+                  'Pemulihan penyimpanan tidak tersedia di tab ini. Penyimpanan baru ditahan.'
+                syncRecovery()
+                return
+              }
+            }
             busy = true
             save.disabled = true
             submit.disabled = true
             message.disabled = true
             active = new AbortController()
+            syncRecovery()
             state.textContent = 'Menyimpan…'
             try {
               const response = await transport(commandsBase, {
@@ -220,21 +353,22 @@ export function mountCrmConversation(
               if (destroyed) return
               if (!response.ok) {
                 revisionChanged = response.status === 409
+                // A first, explicit validation/revision refusal did not commit.
+                // An earlier uncertain response must instead stay unresolved.
+                if (!wasPending && [400, 409].includes(response.status)) forgetKnown(requestId)
                 throw new Error(
                   response.status === 409
                     ? 'Kontak berubah. Buat ulang draft setelah meninjau data terbaru.'
                     : 'Belum berhasil menyimpan. Percobaan ulang memakai permintaan yang sama.',
                 )
               }
-              z.object({
-                kind: z.literal('followup'),
-                id: z.uuid(),
-                revision: z.number().int().positive(),
-              })
-                .strict()
-                .parse(await response.json())
+              const receipt = mutationReceiptSchema.parse(await response.json())
+              if (receipt.kind !== 'followup') throw new Error('Unexpected receipt')
               if (destroyed) return
               saved = true
+              save.dataset.archavaFinal = 'true'
+              forgetKnown(requestId)
+              recoveryState.textContent = ''
               state.textContent = 'Follow-up tersimpan di CRM.'
               save.textContent = 'Tersimpan'
             } catch {
@@ -247,6 +381,8 @@ export function mountCrmConversation(
               active = null
               if (!destroyed) {
                 save.disabled = saved || revisionChanged
+                if (revisionChanged) save.dataset.archavaFinal = 'true'
+                syncRecovery()
                 submit.disabled = false
                 message.disabled = false
               }
@@ -254,6 +390,7 @@ export function mountCrmConversation(
           })()
         })
         entry.append(save, state)
+        syncRecovery()
       }
     }
   }
@@ -346,6 +483,7 @@ export function mountCrmConversation(
       )
       render(result.data, entry)
       log.append(entry)
+      syncRecovery()
       while (log.childElementCount > 20) log.firstElementChild?.remove()
     } catch (error) {
       if (!destroyed)
@@ -356,6 +494,7 @@ export function mountCrmConversation(
       if (!destroyed) {
         submit.disabled = false
         message.disabled = false
+        syncRecovery()
       }
     }
   }
@@ -363,10 +502,12 @@ export function mountCrmConversation(
     event.preventDefault()
     void ask(message.value)
   })
+  void recoverSave()
   return {
     destroy() {
       destroyed = true
       active?.abort()
+      recoveryActive?.abort()
       selected = null
       opportunity = null
       host.replaceChildren()

@@ -1,0 +1,15 @@
+{
+  "scope": "existing local installation; empty CRM remains unchanged",
+  "health": 200,
+  "anonymous": 401,
+  "authenticatedUnknownReceipt": "unconfirmed",
+  "invalidId": 400,
+  "versions": {
+    "@archava/crm": "0.3.0",
+    "@archava/crm-pg": "0.3.0",
+    "@archava/crm-assistant": "0.3.0"
+  },
+  "providerCalls": 0,
+  "crmWrites": 0,
+  "preservation": "CRM records/receipts/audit/memberships, identity users, provider attempts, and private configuration hashes match the pre-change snapshot"
+}

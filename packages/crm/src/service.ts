@@ -7,6 +7,7 @@ import {
   pageSchema,
   mutationSchema,
   followupDraftSchema,
+  commandStatusSchema,
   type CrmRepository,
   type CrmPrincipal,
 } from './contracts.js'
@@ -44,6 +45,20 @@ export class CrmService {
       identity.principal,
       mutationSchema.parse(input),
     )
+  }
+  async commandStatus(tenant: unknown, principal: unknown, requestId: unknown) {
+    const identity = this.identity(tenant, principal)
+    const id = idSchema.parse(requestId)
+    if (identity.principal.kind !== 'human')
+      throw new CrmError('forbidden', 'Command recovery requires the human initiator.')
+    if (!this.repository.commandStatus)
+      throw new CrmError('unavailable', 'Command recovery is unavailable on this adapter.')
+    const result = commandStatusSchema.parse(
+      await this.repository.commandStatus(identity.tenant, identity.principal, id),
+    )
+    if (result.requestId !== id)
+      throw new CrmError('unavailable', 'Command recovery could not be verified.')
+    return result
   }
 }
 

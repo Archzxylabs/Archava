@@ -267,6 +267,143 @@ try {
       'document.querySelector("[data-archava-log]").lastElementChild.querySelector("[data-archava-save]").disabled',
     ),
   )
+  await fill('[data-archava-form] [name=summary]', 'Reload-safe reviewed task')
+  await ask('siapkan follow-up')
+  await evaluate(`window.reloadOriginalFetch=window.fetch;
+    window.fetch=async(...args)=>{const response=await window.reloadOriginalFetch(...args);if(String(args[0]).endsWith('/commands') && JSON.parse(args[1].body).command.operation==='followup.create')throw new Error('fixture-response-lost');return response}`)
+  await evaluate(
+    'document.querySelector("[data-archava-log]").lastElementChild.querySelector("[data-archava-save]").click()',
+  )
+  await wait(
+    'document.querySelector("[data-archava-log]").lastElementChild.textContent.includes("Belum berhasil menyimpan")',
+  )
+  const recoveryKey = await evaluate(
+    "Object.keys(sessionStorage).find(key=>key.startsWith('archava.crm.followup-recovery.v1:'))",
+  )
+  const recoveryId = await evaluate(`sessionStorage.getItem(${JSON.stringify(recoveryKey)})`)
+  check(
+    'lost Save response keeps only one opaque UUID in tab storage',
+    /^[0-9a-f-]{36}$/.test(recoveryId) &&
+      (await evaluate(
+        'Object.values(sessionStorage).every(value=>!value.includes("Reload-safe") && !value.includes("summary"))',
+      )),
+  )
+  await ask('siapkan follow-up')
+  check(
+    'an unresolved earlier Save blocks a new draft from receiving a second command UUID',
+    await evaluate(
+      'document.querySelector("[data-archava-log]").lastElementChild.querySelector("[data-archava-save]").disabled',
+    ),
+  )
+  const commandRequests = () =>
+    page.network_.filter(
+      (item) => item.phase === 'request' && item.url === origin + '/api/crm/hotel-demo/commands',
+    ).length
+  const beforeReload = commandRequests()
+  await page.navigate(origin)
+  await wait(
+    'document.querySelector("[data-archava-recovery]").textContent.includes("Penyimpanan sebelumnya terkonfirmasi")',
+  )
+  const recoveredTasks = await evaluate(`(async()=>{
+    const contacts=await fetch('/api/crm/hotel-demo/contacts?search=Browser%20permanent%20guest').then(response=>response.json());
+    const detail=await fetch('/api/crm/hotel-demo/contacts/'+contacts.items[0].id).then(response=>response.json());
+    return detail.followups.filter(task=>task.summary==='Reload-safe reviewed task').length;
+  })()`)
+  check(
+    'reload recovers the committed receipt with one task and zero command resubmissions',
+    recoveredTasks === 1 &&
+      commandRequests() === beforeReload &&
+      (await evaluate(`sessionStorage.getItem(${JSON.stringify(recoveryKey)})===null`)),
+  )
+  check(
+    'recovery uses the original request UUID through a read endpoint',
+    page.network_.some(
+      (item) =>
+        item.phase === 'request' &&
+        item.url === origin + '/api/crm/hotel-demo/commands/' + recoveryId,
+    ),
+  )
+
+  // Deliberately unresolved synthetic marker; fixture cleanup below is not a product action.
+  await evaluate(`sessionStorage.setItem(${JSON.stringify(recoveryKey)},crypto.randomUUID())`)
+  await page.navigate(origin)
+  await wait(
+    'document.querySelector("[data-archava-recovery]").textContent.includes("belum terkonfirmasi")',
+  )
+  const unresolvedId = await evaluate(`sessionStorage.getItem(${JSON.stringify(recoveryKey)})`)
+  await ask('tampilkan kontak')
+  await evaluate(
+    'Array.from(document.querySelectorAll("[data-archava-contact]")).find(button=>button.textContent==="Browser permanent guest").click()',
+  )
+  await fill('[data-archava-form] [name=summary]', 'Unresolved fixture must not save')
+  await fill('[data-archava-form] [name=dueAt]', '2026-10-15T09:00')
+  await ask('siapkan follow-up')
+  check(
+    'missing receipt stays unconfirmed, retains its marker and prevents a new Save without stopping reads',
+    commandRequests() === beforeReload &&
+      (await evaluate('document.querySelector("[data-archava-save]").disabled')),
+  )
+  await evaluate(`window.mismatchOriginalFetch=window.fetch;
+    window.fetch=async(...args)=>String(args[0]).endsWith('/commands/'+${JSON.stringify(unresolvedId)})?new Response(JSON.stringify({status:'committed',requestId:crypto.randomUUID(),receipt:{kind:'followup',id:crypto.randomUUID(),revision:1}}),{status:200,headers:{'content-type':'application/json'}}):window.mismatchOriginalFetch(...args)`)
+  await evaluate('document.querySelector("[data-archava-recover]").click()')
+  await wait(
+    'document.querySelector("[data-archava-recovery]").textContent.includes("belum bisa diverifikasi")',
+  )
+  check(
+    'a mismatched receipt cannot clear uncertainty or unlock Save',
+    await evaluate(
+      `sessionStorage.getItem(${JSON.stringify(recoveryKey)})===${JSON.stringify(unresolvedId)} && document.querySelector('[data-archava-save]').disabled`,
+    ),
+  )
+  await evaluate('window.fetch=window.mismatchOriginalFetch;delete window.mismatchOriginalFetch')
+  await evaluate(
+    'document.querySelector("#tenants").value="studio-demo";document.querySelector("#tenants").dispatchEvent(new Event("change"))',
+  )
+  await wait(
+    'document.querySelector("#status").textContent==="" && document.querySelector("[data-crm-contacts]").textContent.includes("Studio client")',
+  )
+  check(
+    'another workspace does not render or consume the first workspace recovery marker',
+    await evaluate(
+      `document.querySelector('[data-archava-recovery]').hidden && sessionStorage.getItem(${JSON.stringify(recoveryKey)})===${JSON.stringify(unresolvedId)}`,
+    ),
+  )
+  await logout()
+  await signIn(accounts.staff)
+  check(
+    'another authenticated account has no access to the owner tab recovery state',
+    await evaluate(
+      `document.querySelector('[data-archava-recovery]').hidden && sessionStorage.getItem(${JSON.stringify(recoveryKey)})===${JSON.stringify(unresolvedId)}`,
+    ),
+  )
+  await logout()
+  await signIn(accounts.owner)
+  await wait(
+    'document.querySelector("[data-archava-recovery]").textContent.includes("belum terkonfirmasi")',
+  )
+  await evaluate(`sessionStorage.removeItem(${JSON.stringify(recoveryKey)})`)
+  await page.navigate(origin)
+  await ask('tampilkan kontak')
+  await evaluate(
+    'Array.from(document.querySelectorAll("[data-archava-contact]")).find(button=>button.textContent==="Browser permanent guest").click()',
+  )
+  await fill('[data-archava-form] [name=summary]', 'Storage-denied fixture must not save')
+  await fill('[data-archava-form] [name=dueAt]', '2026-10-15T09:00')
+  await ask('siapkan follow-up')
+  await evaluate(
+    'window.storageOriginalSet=Storage.prototype.setItem;Storage.prototype.setItem=function(){throw new Error("fixture-storage-denied")}',
+  )
+  await evaluate('document.querySelector("[data-archava-save]").click()')
+  await wait('document.querySelector("[data-archava-recovery]").textContent.includes("ditahan")')
+  check(
+    'blocked browser storage prevents the write before any command request',
+    commandRequests() === beforeReload &&
+      (await evaluate('document.querySelector("[data-archava-save]").disabled')),
+  )
+  await evaluate(
+    'Storage.prototype.setItem=window.storageOriginalSet;delete window.storageOriginalSet',
+  )
+  await page.navigate(origin)
   const noCsrf = await evaluate(
     "fetch('/api/crm/hotel-demo/commands',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({requestId:crypto.randomUUID(),command:{operation:'contact.create',data:{fullName:'Forbidden browser command'}}})}).then(response=>response.status)",
   )

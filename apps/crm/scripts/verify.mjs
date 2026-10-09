@@ -674,6 +674,40 @@ try {
       "UPDATE archava_crm.memberships SET permissions=array_append(permissions,'followups.write') WHERE principal_id=(SELECT id FROM archava_identity.users WHERE username=$1)",
       [account.username],
     )
+    const recoveryPath = '/api/crm/hotel-demo/commands/' + reviewedFollowup.requestId
+    const beforeRecovery = (await snapshot()).rows[0]
+    const recovered = await get(origin, recoveryPath, owner)
+    assert.equal(recovered.headers.get('cache-control'), 'no-store')
+    assert.deepEqual(await recovered.json(), {
+      status: 'committed',
+      requestId: reviewedFollowup.requestId,
+      receipt: reviewedReceipt,
+    })
+    assert.equal((await get(origin, recoveryPath)).status, 401)
+    for (const [path, caller] of [
+      [recoveryPath, view],
+      [recoveryPath, staffSession],
+      ['/api/crm/studio-demo/commands/' + reviewedFollowup.requestId, owner],
+    ]) {
+      assert.deepEqual(await get(origin, path, caller).then((response) => response.json()), {
+        status: 'unconfirmed',
+        requestId: reviewedFollowup.requestId,
+      })
+    }
+    assert.equal((await get(origin, '/api/crm/hotel-demo/commands/invalid', owner)).status, 400)
+    await countPool.query(
+      "UPDATE archava_crm.memberships SET permissions=array_remove(permissions,'followups.read') WHERE tenant_id='hotel-demo' AND principal_id=(SELECT id FROM archava_identity.users WHERE username=$1)",
+      [account.username],
+    )
+    assert.equal((await get(origin, recoveryPath, owner)).status, 403)
+    await countPool.query(
+      "UPDATE archava_crm.memberships SET permissions=array_append(permissions,'followups.read') WHERE tenant_id='hotel-demo' AND principal_id=(SELECT id FROM archava_identity.users WHERE username=$1)",
+      [account.username],
+    )
+    assert.deepEqual((await snapshot()).rows[0], beforeRecovery)
+    check(
+      'authenticated read-only command recovery binds initiator/tenant, masks absent receipts and rechecks current read permissions without mutations',
+    )
     const currentContact = await get(
       origin,
       '/api/crm/hotel-demo/contacts/' + receipt.id,
@@ -879,6 +913,15 @@ try {
   )
   check('reviewed follow-up and original Save receipt persist across application/database restart')
   assert.deepEqual(
+    await get(origin, '/api/crm/hotel-demo/commands/' + reviewedFollowup.requestId, owner).then(
+      (response) => response.json(),
+    ),
+    { status: 'committed', requestId: reviewedFollowup.requestId, receipt: reviewedReceipt },
+  )
+  check(
+    'application/database restart recovers the original Save receipt through GET without replaying its command',
+  )
+  assert.deepEqual(
     await get(origin, opportunityPath, owner).then((response) => response.json()),
     opportunityDetail,
   )
@@ -975,6 +1018,15 @@ try {
   )
   assert.equal(detail.activities[0]?.summary, 'Persistent inquiry note')
   assert.equal(detail.followups[0]?.summary, reviewedFollowup.command.summary)
+  assert.deepEqual(
+    await get(origin, '/api/crm/hotel-demo/commands/' + reviewedFollowup.requestId, owner).then(
+      (response) => response.json(),
+    ),
+    { status: 'committed', requestId: reviewedFollowup.requestId, receipt: reviewedReceipt },
+  )
+  check(
+    'after backup/restore and explicit account recovery, receipt lookup remains read-only and keeps the original UUID',
+  )
   assert.deepEqual(
     await post(origin, '/api/crm/hotel-demo/commands', reviewedFollowup, owner).then((response) =>
       response.json(),

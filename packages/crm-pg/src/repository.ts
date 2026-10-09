@@ -1,6 +1,5 @@
 import { createHmac, randomUUID } from 'node:crypto'
 import type { Pool, PoolClient } from 'pg'
-import { z } from 'zod'
 import {
   CrmError,
   tenantSchema,
@@ -12,6 +11,7 @@ import {
   idSchema,
   pageSchema,
   mutationSchema,
+  mutationReceiptSchema,
   type CrmPrincipal,
   type CrmPermission,
   type CrmAccess,
@@ -21,6 +21,7 @@ import {
   type ContactDetail,
   type CrmMutation,
   type MutationReceipt,
+  type CrmCommandStatus,
 } from '@archava/crm'
 import { crmMigrationLedger } from './migrate.js'
 import {
@@ -87,13 +88,6 @@ const opportunity = (row: Row) =>
     createdAt: timestamp(row.created_at),
     updatedAt: timestamp(row.updated_at),
   })
-const receiptSchema = z
-  .object({
-    kind: z.enum(['contact', 'activity', 'followup', 'opportunity']),
-    id: idSchema,
-    revision: z.number().int().positive(),
-  })
-  .strict()
 function canonical(value: unknown): string {
   if (Array.isArray(value)) return '[' + value.map(canonical).join(',') + ']'
   if (typeof value === 'object' && value !== null)
@@ -227,6 +221,58 @@ export class PostgresCrmRepository implements CrmRepository, CrmPipelineReposito
 
   access(tenant: string, principal: CrmPrincipal): Promise<CrmAccess> {
     return this.transaction(tenant, principal, null, (_client, access) => Promise.resolve(access))
+  }
+  commandStatus(tenant: string, principal: CrmPrincipal, rawId: string): Promise<CrmCommandStatus> {
+    if (principal.kind !== 'human')
+      throw new CrmError('forbidden', 'Command recovery requires the human initiator.')
+    const requestId = idSchema.parse(rawId)
+    return this.transaction(tenant, principal, null, async (client, access) => {
+      const row = (
+        await client.query<Row>(
+          'SELECT receipt FROM archava_crm.commands WHERE tenant_id=$1 AND request_id=$2 AND actor_id=$3',
+          [tenant, requestId, principal.id],
+        )
+      ).rows[0]
+      // Committed rows and their receipts are atomic with the mutation and audit.
+      // A missing row may be an uncommitted transaction; do not claim it failed.
+      if (!row) return { status: 'unconfirmed', requestId }
+      const receipt = mutationReceiptSchema.parse(row.receipt)
+      const permission: CrmPermission =
+        receipt.kind === 'contact'
+          ? 'contacts.read'
+          : receipt.kind === 'opportunity'
+            ? 'pipeline.read'
+            : receipt.kind === 'activity'
+              ? 'activities.read'
+              : 'followups.read'
+      if (!access.permissions.includes(permission) || !access.permissions.includes('contacts.read'))
+        throw new CrmError('forbidden', 'CRM receipt access is not permitted.')
+      await this.receiptResource(client, tenant, access, receipt)
+      return { status: 'committed', requestId, receipt }
+    })
+  }
+
+  private async receiptResource(
+    client: PoolClient,
+    tenant: string,
+    access: CrmAccess,
+    receipt: MutationReceipt,
+  ) {
+    if (receipt.kind === 'contact') await this.ownedContact(client, tenant, access, receipt.id)
+    else if (receipt.kind === 'opportunity')
+      await this.ownedOpportunity(client, tenant, access, receipt.id)
+    else {
+      const table = receipt.kind === 'activity' ? 'activities' : 'followups'
+      const row = (
+        await client.query<Row>(
+          `SELECT contact_id FROM archava_crm.${table} WHERE tenant_id=$1 AND id=$2`,
+          [tenant, receipt.id],
+        )
+      ).rows[0]
+      if (!row || typeof row.contact_id !== 'string')
+        throw new CrmError('not_found', 'CRM resource not found.')
+      await this.ownedContact(client, tenant, access, row.contact_id)
+    }
   }
   list(tenant: string, principal: CrmPrincipal, raw: CrmPage): Promise<ContactPage> {
     const page = pageSchema.parse(raw)
@@ -383,22 +429,8 @@ export class PostgresCrmRepository implements CrmRepository, CrmPipelineReposito
         ).rows[0]
         if (!existing || existing.actor_id !== principal.id || existing.fingerprint !== fingerprint)
           throw new CrmError('conflict', 'CRM request identity already belongs to another command.')
-        const receipt = receiptSchema.parse(existing.receipt)
-        if (receipt.kind === 'contact') await this.ownedContact(client, tenant, access, receipt.id)
-        else if (receipt.kind === 'opportunity')
-          await this.ownedOpportunity(client, tenant, access, receipt.id)
-        else {
-          const table = receipt.kind === 'activity' ? 'activities' : 'followups'
-          const row = (
-            await client.query<Row>(
-              `SELECT contact_id FROM archava_crm.${table} WHERE tenant_id=$1 AND id=$2`,
-              [tenant, receipt.id],
-            )
-          ).rows[0]
-          if (!row || typeof row.contact_id !== 'string')
-            throw new CrmError('not_found', 'CRM resource not found.')
-          await this.ownedContact(client, tenant, access, row.contact_id)
-        }
+        const receipt = mutationReceiptSchema.parse(existing.receipt)
+        await this.receiptResource(client, tenant, access, receipt)
         return receipt
       }
       let receipt: MutationReceipt

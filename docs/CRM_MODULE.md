@@ -6,9 +6,10 @@ inquiry references. Archava consumes authorized read/draft ports; the shared
 dashboard works without an LLM. The company website remains a separate consumer.
 
 The optional [sales pipeline capability](CRM_PIPELINE.md) extends this same domain
-through explicit public subpaths. Current CRM/PG internal artifacts are 0.2.0;
+through explicit public subpaths. Current CRM/PG internal artifacts are 0.3.0;
 contacts APIs remain available. Its additive migration and separate grants do not
-turn the first contacts slice into a complete CRM/ERP.
+turn the first contacts slice into a complete CRM/ERP. The additive
+[command receipt recovery](CRM_COMMAND_RECOVERY.md) uses the existing schema.
 
 | Package                  | Responsibility                                                                |
 | ------------------------ | ----------------------------------------------------------------------------- |
@@ -61,7 +62,7 @@ production login system or permanent installation. Keep real customer data out.
 
 Results are generated in `dist/crm-proof/results.json`; dashboards are in
 `dist/crm-demo`. Browser checks are separately runnable. Package/migration version
-is now **0.2.0 / 001_crm_contacts + 002_sales_pipeline**; the contacts API contract
+is now **0.3.0 / 001_crm_contacts + 002_sales_pipeline**; the contacts API contract
 remains **1.0.0**. See [pipeline migration and scope](CRM_PIPELINE.md).
 
 ## Host integration and authorization

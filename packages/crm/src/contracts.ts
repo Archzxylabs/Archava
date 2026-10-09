@@ -137,11 +137,22 @@ export const commandSchema = z.union([contactCommandSchema, opportunityCommandSc
 export type CrmCommand = z.infer<typeof commandSchema>
 export const mutationSchema = z.object({ requestId: idSchema, command: commandSchema }).strict()
 export type CrmMutation = z.infer<typeof mutationSchema>
-export interface MutationReceipt {
-  readonly kind: 'contact' | 'activity' | 'followup' | 'opportunity'
-  readonly id: string
-  readonly revision: number
-}
+export const mutationReceiptSchema = z
+  .object({
+    kind: z.enum(['contact', 'activity', 'followup', 'opportunity']),
+    id: idSchema,
+    revision,
+  })
+  .strict()
+export type MutationReceipt = z.infer<typeof mutationReceiptSchema>
+/** Absence is not proof of failure: the original transaction may still be running. */
+export const commandStatusSchema = z.discriminatedUnion('status', [
+  z
+    .object({ status: z.literal('committed'), requestId: idSchema, receipt: mutationReceiptSchema })
+    .strict(),
+  z.object({ status: z.literal('unconfirmed'), requestId: idSchema }).strict(),
+])
+export type CrmCommandStatus = z.infer<typeof commandStatusSchema>
 export const pageSchema = z
   .object({
     after: idSchema.optional(),
@@ -167,6 +178,12 @@ export interface CrmRepository {
   list(tenant: string, principal: CrmPrincipal, page: CrmPage): Promise<ContactPage>
   detail(tenant: string, principal: CrmPrincipal, id: string): Promise<ContactDetail>
   mutate(tenant: string, principal: CrmPrincipal, mutation: CrmMutation): Promise<MutationReceipt>
+  /** Optional read capability for existing adapters; never executes or retries a command. */
+  commandStatus?(
+    tenant: string,
+    principal: CrmPrincipal,
+    requestId: string,
+  ): Promise<CrmCommandStatus>
 }
 
 export class CrmError extends Error {
@@ -182,7 +199,7 @@ export class CrmError extends Error {
 /** Config/installation metadata; it grants no authority and supplies no price. */
 export const CRM_CONTACTS_MANIFEST = {
   id: 'crm_contacts',
-  version: '0.2.0',
+  version: '0.3.0',
   status: 'implemented' as const,
   requires: [],
   permissions: CRM_PERMISSIONS.filter((permission) => !permission.startsWith('pipeline.')),
