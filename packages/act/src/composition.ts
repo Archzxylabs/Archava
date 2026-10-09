@@ -92,6 +92,8 @@ export interface TenantActConfiguration {
 
 /** A composed executor, and what it may be asked about itself. */
 export interface TenantActExecutor extends ActionExecutor {
+  /** Recovery of an existing attempt only: no provider send/reservation and no claim. */
+  recover(request: ActionExecutionRequest): Promise<ActionExecutionResult>
   /** The tenant this executor is bound to. */
   readonly tenantId: string
   /**
@@ -167,11 +169,36 @@ export function composeTenantActExecutor(configuration: TenantActConfiguration):
     gateway: emailOutbox,
   })
   const dispatch = new ActActionExecutor(booking, email)
+  const recovery = new ActActionExecutor(
+    new BookingActionExecutor({
+      gateway: {
+        gatewayId: bookingReplay.gatewayId + '-read-only',
+        health: { ready: true, reason: 'recovery reads only' },
+        reserve: (request) => bookingReplay.recover(request),
+      },
+    }),
+    new EmailActionExecutor({
+      templates: tenantBoundTemplates,
+      gateway: {
+        send: (request) => emailOutbox.recover(request),
+      },
+    }),
+  )
 
   return {
     executorId: `tenant-act@1(${tenantId})`,
     tenantId,
     seam: { booking: bookingReplay.gatewayId, email: emailOutbox.outboxId },
+    async recover(request) {
+      if (request.tenantId !== tenantId)
+        return {
+          status: 'failed',
+          errorCode: 'act_executor_tenant_mismatch',
+          retryable: false,
+          message: 'This executor is not configured for the requesting tenant.',
+        }
+      return recovery.execute(request)
+    },
     handles(action, requestTenantId) {
       return (
         requestTenantId === tenantId && (action === 'booking.create' || action === 'email.send')

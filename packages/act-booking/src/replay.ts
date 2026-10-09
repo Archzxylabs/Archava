@@ -108,6 +108,8 @@ export type BookingAttemptSettlementResult =
 export interface BookingAttemptStore {
   /** Which store this is, for the audit trail. Not a secret. */
   readonly storeId: string
+  /** Read-only lookup; absence is never permission to reserve. Optional for legacy stores. */
+  find?(owner: BookingAttemptOwnership): Promise<BookingAttemptRecord | null>
   /**
    * Atomically assert that nobody has claimed this attempt yet.
    *
@@ -202,6 +204,26 @@ export class BookingReplayBoundary implements BookingGateway {
       return this.gateway.health
     } catch {
       return { ready: false, reason: 'booking_system_health_unreadable' }
+    }
+  }
+
+  /** Recover an existing attempt only. Never claims or calls the reservation gateway. */
+  async recover(request: BookingReservationRequest): Promise<BookingOutcome> {
+    try {
+      if (!this.store.find) return { outcome: 'unknown', reason: 'attempt_not_reconciled' }
+      const row = await this.store.find({
+        tenantId: request.tenantId,
+        idempotencyKey: request.idempotencyKey,
+      })
+      if (
+        !row ||
+        row.tenantId !== request.tenantId ||
+        row.idempotencyKey !== request.idempotencyKey
+      )
+        return { outcome: 'unknown', reason: 'attempt_not_reconciled' }
+      return await this.replay(row, attemptFingerprint(request, this.fingerprintKey))
+    } catch {
+      return { outcome: 'unknown', reason: 'attempt_not_reconciled' }
     }
   }
 

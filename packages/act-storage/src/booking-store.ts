@@ -56,6 +56,7 @@ import type {
   BookingAttemptSettlement,
   BookingAttemptSettlementResult,
   BookingAttemptStore,
+  BookingAttemptOwnership,
 } from '@archava/act-booking'
 import { claimAttempt, lookupAttempt, settleAttempt, type AttemptRow } from './core.js'
 import type { SqlClient } from './sql.js'
@@ -83,12 +84,12 @@ export interface PostgresBookingAttemptStoreOptions {
 export class PostgresBookingAttemptStore implements BookingAttemptStore {
   /** Composed for the audit trail: names the database, not itself. */
   readonly storeId: string
-  private readonly client: SqlClient
-  private readonly idempotencyKeyHmacKey: Uint8Array
+  readonly #client: SqlClient
+  readonly #idempotencyKeyHmacKey: Uint8Array
 
   constructor(options: PostgresBookingAttemptStoreOptions) {
-    this.client = options.client
-    this.idempotencyKeyHmacKey = copyStorageKeySecret(options.idempotencyKeyHmacKey)
+    this.#client = options.client
+    this.#idempotencyKeyHmacKey = copyStorageKeySecret(options.idempotencyKeyHmacKey)
     this.storeId = `postgres(${options.client.storeId})`
   }
 
@@ -99,9 +100,20 @@ export class PostgresBookingAttemptStore implements BookingAttemptStore {
    * row that does not validate. Both leave the caller knowing nothing, which is
    * exactly where it started.
    */
+  async find(owner: BookingAttemptOwnership): Promise<BookingAttemptRecord | null> {
+    const reading = await lookupAttempt(this.#client, {
+      tenantId: owner.tenantId,
+      actionKind: BOOKING_ACTION_KIND,
+      idempotencyKey: this.storageKey(owner.tenantId, owner.idempotencyKey),
+    })
+    if (reading.status === 'empty') return null
+    if (reading.status === 'replayed') return bookingRecord(reading.row, owner.idempotencyKey)
+    throw new Error(storeFailure(reading))
+  }
+
   async claim(attempt: BookingAttemptRecord): Promise<BookingAttemptClaim> {
     const storageKey = this.storageKey(attempt.tenantId, attempt.idempotencyKey)
-    const reading = await claimAttempt(this.client, {
+    const reading = await claimAttempt(this.#client, {
       tenantId: attempt.tenantId,
       actionKind: BOOKING_ACTION_KIND,
       idempotencyKey: storageKey,
@@ -124,7 +136,7 @@ export class PostgresBookingAttemptStore implements BookingAttemptStore {
    * reference; a rejected one is answered as a previous refusal.
    */
   async settle(settlement: BookingAttemptSettlement): Promise<BookingAttemptSettlementResult> {
-    const reading = await settleAttempt(this.client, {
+    const reading = await settleAttempt(this.#client, {
       tenantId: settlement.tenantId,
       actionKind: BOOKING_ACTION_KIND,
       idempotencyKey: this.storageKey(settlement.tenantId, settlement.idempotencyKey),
@@ -155,7 +167,7 @@ export class PostgresBookingAttemptStore implements BookingAttemptStore {
     tenantId: string,
     idempotencyKey: string,
   ): Promise<BookingAttemptRecord | null> {
-    const reading = await lookupAttempt(this.client, {
+    const reading = await lookupAttempt(this.#client, {
       tenantId,
       actionKind: BOOKING_ACTION_KIND,
       idempotencyKey: this.storageKey(tenantId, idempotencyKey),
@@ -166,7 +178,7 @@ export class PostgresBookingAttemptStore implements BookingAttemptStore {
 
   private storageKey(tenantId: string, rawIdempotencyKey: string): string {
     return attemptStorageKey(
-      this.idempotencyKeyHmacKey,
+      this.#idempotencyKeyHmacKey,
       tenantId,
       BOOKING_ACTION_KIND,
       rawIdempotencyKey,

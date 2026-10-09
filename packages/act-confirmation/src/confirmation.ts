@@ -134,6 +134,11 @@ export type ConfirmationVerification =
   | { readonly status: 'confirmed'; readonly receipt: ConfirmationReceipt }
   | { readonly status: 'rejected'; readonly reason: ConfirmationRefusal }
 
+/** Correlation only. A binding description is neither consent nor an execution receipt. */
+export type ConfirmationBindingDescription =
+  | { readonly status: 'bound'; readonly inputDigest: string; readonly bindingDigest: string }
+  | { readonly status: 'rejected'; readonly reason: ConfirmationRefusal }
+
 /** The collaborators this service needs, all of them injectable. */
 export interface ConfirmationServiceOptions {
   readonly store: ConfirmationChallengeStore
@@ -148,11 +153,11 @@ export interface ConfirmationServiceOptions {
 }
 
 export class ConfirmationService {
-  private readonly store: ConfirmationChallengeStore
-  private readonly digestKey: DigestKey
-  private readonly clock: () => number
-  private readonly random: RandomBytes
-  private readonly ttlMs: number
+  readonly #store: ConfirmationChallengeStore
+  readonly #digestKey: DigestKey
+  readonly #clock: () => number
+  readonly #random: RandomBytes
+  readonly #ttlMs: number
 
   constructor(options: ConfirmationServiceOptions) {
     if (!isDigestKey(options.digestKey)) {
@@ -174,13 +179,43 @@ export class ConfirmationService {
     if (options.store === undefined || options.store === null) {
       throw new TypeError('a confirmation needs a store')
     }
-    this.store = options.store
+    this.#store = options.store
     // A caller must not be able to rotate this service's key by mutating the
     // Uint8Array it passed to the constructor after a challenge was issued.
-    this.digestKey = new Uint8Array(options.digestKey)
-    this.clock = options.clock
-    this.random = options.random ?? defaultRandomBytes
-    this.ttlMs = ttlMs
+    this.#digestKey = new Uint8Array(options.digestKey)
+    this.#clock = options.clock
+    this.#random = options.random ?? defaultRandomBytes
+    this.#ttlMs = ttlMs
+  }
+
+  /** Read-only binding for recovery: no challenge, token, store access or authority. */
+  describeBinding(request: ConfirmationChallengeRequest): ConfirmationBindingDescription {
+    try {
+      if (request === null || typeof request !== 'object')
+        return { status: 'rejected', reason: 'malformed_request' }
+      const shape = requireShape(
+        request.tenantId,
+        request.sessionId,
+        request.actionId,
+        request.inputs,
+      )
+      if (shape !== null) return { status: 'rejected', reason: shape }
+      const inputDigest = digestInputs(this.#digestKey, request.inputs)
+      if (inputDigest === null) return { status: 'rejected', reason: 'unsupported_inputs' }
+      return {
+        status: 'bound',
+        inputDigest,
+        bindingDigest: digestBinding(
+          this.#digestKey,
+          request.tenantId,
+          request.sessionId,
+          request.actionId,
+          inputDigest,
+        ),
+      }
+    } catch {
+      return { status: 'rejected', reason: 'unsupported_inputs' }
+    }
   }
 
   /**
@@ -207,7 +242,7 @@ export class ConfirmationService {
 
     let inputDigest: string | null
     try {
-      inputDigest = digestInputs(this.digestKey, request.inputs)
+      inputDigest = digestInputs(this.#digestKey, request.inputs)
     } catch {
       return { status: 'rejected', reason: 'unsupported_inputs' }
     }
@@ -218,7 +253,7 @@ export class ConfirmationService {
     }
 
     const bindingDigest = digestBinding(
-      this.digestKey,
+      this.#digestKey,
       request.tenantId,
       request.sessionId,
       request.actionId,
@@ -229,13 +264,13 @@ export class ConfirmationService {
     let token: string
     let issuedAt: number
     try {
-      id = newId(this.random)
-      token = newChallengeToken(this.random)
-      issuedAt = this.clock()
+      id = newId(this.#random)
+      token = newChallengeToken(this.#random)
+      issuedAt = this.#clock()
     } catch {
       return { status: 'rejected', reason: 'store_unavailable' }
     }
-    const expiresAt = issuedAt + this.ttlMs
+    const expiresAt = issuedAt + this.#ttlMs
     if (!Number.isSafeInteger(issuedAt) || !Number.isSafeInteger(expiresAt)) {
       return { status: 'rejected', reason: 'store_unavailable' }
     }
@@ -247,7 +282,7 @@ export class ConfirmationService {
       // The digest, never the token. A store row is a durable artefact, a backup
       // is a durable artefact, and neither is entitled to the thing that spends
       // a confirmation.
-      tokenDigest: digestToken(this.digestKey, token),
+      tokenDigest: digestToken(this.#digestKey, token),
       bindingDigest,
       issuedAt,
       expiresAt,
@@ -255,7 +290,7 @@ export class ConfirmationService {
 
     let recorded: boolean
     try {
-      recorded = (await this.store.issue(insert)) === true
+      recorded = (await this.#store.issue(insert)) === true
     } catch {
       // A store outage is a deployment fact, not a caller fact: the refusal says
       // the store was unavailable, and no token escapes.
@@ -308,14 +343,14 @@ export class ConfirmationService {
 
     let inputDigest: string | null
     try {
-      inputDigest = digestInputs(this.digestKey, presentation.inputs)
+      inputDigest = digestInputs(this.#digestKey, presentation.inputs)
     } catch {
       return { status: 'rejected', reason: 'unsupported_inputs' }
     }
     if (inputDigest === null) return { status: 'rejected', reason: 'unsupported_inputs' }
 
     const bindingDigest = digestBinding(
-      this.digestKey,
+      this.#digestKey,
       presentation.tenantId,
       presentation.sessionId,
       presentation.actionId,
@@ -323,26 +358,26 @@ export class ConfirmationService {
     )
     let now: number
     try {
-      now = this.clock()
+      now = this.#clock()
     } catch {
       return { status: 'rejected', reason: 'store_unavailable' }
     }
     if (!Number.isSafeInteger(now)) return { status: 'rejected', reason: 'store_unavailable' }
     let receiptId: string
     try {
-      receiptId = newId(this.random)
+      receiptId = newId(this.#random)
     } catch {
       return { status: 'rejected', reason: 'store_unavailable' }
     }
 
     let consumed: ConfirmationChallengeConsumeResult
     try {
-      consumed = await this.store.consume({
+      consumed = await this.#store.consume({
         id: presentation.challengeId,
         tenantId: presentation.tenantId,
         sessionId: presentation.sessionId,
         actionId: presentation.actionId,
-        tokenDigest: digestToken(this.digestKey, presentation.token),
+        tokenDigest: digestToken(this.#digestKey, presentation.token),
         bindingDigest,
         now,
       })
@@ -382,12 +417,12 @@ export class ConfirmationService {
     }
 
     const refusal = reconcile(
-      this.digestKey,
+      this.#digestKey,
       presentation,
       consumed.challenge,
       bindingDigest,
       now,
-      this.ttlMs,
+      this.#ttlMs,
     )
     if (refusal !== null) return { status: 'rejected', reason: refusal }
 
@@ -406,7 +441,7 @@ export class ConfirmationService {
         issuedAt: spent.issuedAt,
         expiresAt: spent.expiresAt,
         confirmedAt,
-        receiptDigest: digestReceipt(this.digestKey, {
+        receiptDigest: digestReceipt(this.#digestKey, {
           receiptId,
           challengeId: spent.id,
           tenantId: spent.tenantId,

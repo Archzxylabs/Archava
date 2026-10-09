@@ -69,13 +69,13 @@ never retries automatically. An HTTP 200 with a successful response and a
 validated provider `MessageID` means accepted for delivery, never delivered
 to the recipient. Timeout and uncertain responses remain unknown. The raw
 idempotency key is replaced by a tenant-separated HMAC metadata label; Postmark
-does not deduplicate on that label. The provided status port always returns
-unknown because positive reconciliation has not been implemented.
+does not deduplicate on that label. The status port stays offline by default;
+explicit recovery config supports conservative positive metadata lookup, tested
+with fake responses. See [durable Act operations](DURABLE_ACT_OPERATIONS.md).
 
-These packages are not composed into a production route. The host needs a
-durable attempt ledger whose atomic operation returns one canonical
-`occurredAt` under concurrent review. It also needs an explicit lifecycle for
-a later new intent with the same action and inputs in one session; the current
-ledger treats that as the same attempt. Until those contracts and tenant-owned
-wiring exist, the host is a tested integration seam, not a production-safe Act
-workflow. No live PMS booking, Postmark send or delivery is claimed.
+These packages are not composed into a production route. `DurableActHost` and
+`@archava/act-host-pg` now provide canonical atomic open/claim/settle, explicit
+safe successor intents and positive recovery. The public composition harness
+proves them with installed artifacts, real PostgreSQL restart and mocked
+providers. Authenticated owner wiring, restore holds and tenant-owned deployment
+remain open; no live PMS booking, Postmark send or delivery is claimed.

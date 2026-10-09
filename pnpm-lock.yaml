@@ -213,13 +213,14 @@ importers:
         version: 4.1.11(@types/node@24.9.1)(@vitest/coverage-v8@4.1.11)(vite@7.3.6(@types/node@24.9.1)(tsx@4.20.6))
 
   packages/act-confirmation-pg:
-    devDependencies:
+    dependencies:
       '@archava/act-confirmation':
         specifier: workspace:*
         version: link:../act-confirmation
       '@archava/act-storage':
         specifier: workspace:*
         version: link:../act-storage
+    devDependencies:
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -264,6 +265,22 @@ importers:
       typescript:
         specifier: 5.9.3
         version: 5.9.3
+
+  packages/act-host-pg:
+    dependencies:
+      '@archava/act-host':
+        specifier: workspace:*
+        version: link:../act-host
+      '@archava/act-storage':
+        specifier: workspace:*
+        version: link:../act-storage
+    devDependencies:
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@24.9.1)(@vitest/coverage-v8@4.1.11)(vite@7.3.6(@types/node@24.9.1)(tsx@4.20.6))
 
   packages/act-postmark:
     dependencies:
@@ -557,6 +574,67 @@ importers:
         specifier: workspace:*
         version: link:../core
     devDependencies:
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@24.9.1)(@vitest/coverage-v8@4.1.11)(vite@7.3.6(@types/node@24.9.1)(tsx@4.20.6))
+
+  tools/act-integration:
+    dependencies:
+      '@archava/acl':
+        specifier: workspace:*
+        version: link:../../packages/acl
+      '@archava/act':
+        specifier: workspace:*
+        version: link:../../packages/act
+      '@archava/act-booking':
+        specifier: workspace:*
+        version: link:../../packages/act-booking
+      '@archava/act-confirmation':
+        specifier: workspace:*
+        version: link:../../packages/act-confirmation
+      '@archava/act-confirmation-pg':
+        specifier: workspace:*
+        version: link:../../packages/act-confirmation-pg
+      '@archava/act-email':
+        specifier: workspace:*
+        version: link:../../packages/act-email
+      '@archava/act-host':
+        specifier: workspace:*
+        version: link:../../packages/act-host
+      '@archava/act-host-pg':
+        specifier: workspace:*
+        version: link:../../packages/act-host-pg
+      '@archava/act-postmark':
+        specifier: workspace:*
+        version: link:../../packages/act-postmark
+      '@archava/act-storage':
+        specifier: workspace:*
+        version: link:../../packages/act-storage
+      '@archava/adapters':
+        specifier: workspace:*
+        version: link:../../packages/adapters
+      '@archava/assistant':
+        specifier: workspace:*
+        version: link:../../packages/assistant
+      '@archava/config':
+        specifier: workspace:*
+        version: link:../../packages/config
+      '@archava/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@types/pg':
+        specifier: 8.23.1
+        version: 8.23.1
+      pg:
+        specifier: 8.23.1
+        version: 8.23.1
+    devDependencies:
+      esbuild:
+        specifier: 0.25.12
+        version: 0.25.12
       typescript:
         specifier: 5.9.3
         version: 5.9.3

@@ -1,74 +1,140 @@
-/**
- * The read-only status port for Postmark — which reports nothing yet.
- *
- * The outbox ({@link EmailDeliveryStatusPort} in `packages/act-email`) asks one
- * narrow question of a status port: *what did the provider already decide about
- * this attempt?* It asks when a record is `prepared` or `unknown`, it asks
- * through a read, and it is the only thing that may speak for a message whose
- * fate is open. It is deliberately the reason *not* to send.
- *
- * Postmark's Messages API supports an outbound search filtered by one metadata
- * field. A uniquely matched label may help a future positive-only recovery
- * flow, but the API does not promise that a search miss proves non-send: search
- * visibility, pagination, and retention leave that question open. This port
- * has not implemented or validated a tenant-bound positive lookup. Reading a
- * search miss as "not sent" would be the inference that produces a duplicate.
- *
- * So this port answers `unknown`, always, and says why. That is the honest
- * answer and the outbox already knows how to receive it: `status_not_available`
- * is one of the few provider reasons the outbox preserves verbatim, and a
- * record left at `unknown` is recovered by a later replay asking again rather
- * than by a send. It is also the deployment gap, stated rather than hidden
- * behind a plausible implementation:
- *
- * > A trustworthy positive-only recovery has not been implemented or verified
- * > through the documented metadata search. Until one is, an interrupted send
- * > stays reported as unknown. A search miss can never authorize another send.
- *
- * If a tenant-bound positive lookup is implemented and verified, it belongs
- * here. A method that returns a verdict without correlation it can vouch for
- * does not belong in this package.
- */
-
 import type {
   EmailDeliveryStatusLookup,
   EmailDeliveryStatusPort,
   EmailGatewayOutcome,
 } from '@archava/act-email'
+import { postmarkAttemptLabel } from './label.js'
+import { POSTMARK_ATTEMPT_KEY } from './gateway.js'
+import { defaultPostmarkReadTransport, type PostmarkReadTransport } from './transport.js'
 
-/** Which status port this is, for the audit trail. Not a secret. */
 export const POSTMARK_STATUS_PORT_ID = 'postmark:status@1'
-
-/** The reason a lookup this port cannot make answers with. */
-const UNAVAILABLE = 'status_not_available'
-
-export interface PostmarkStatusPortOptions {
-  /** Which deployment this port reports on. Not a secret. */
-  readonly deployment?: string
+export const POSTMARK_STATUS_URL = 'https://api.postmarkapp.com/messages/outbound'
+const unknown = (): EmailGatewayOutcome => ({ outcome: 'unknown', reason: 'status_not_available' })
+export interface PostmarkStatusRecovery {
+  readonly tenantId: string
+  readonly serverToken: string
+  readonly attemptLabelKey: Uint8Array
+  readonly messageStream?: string
+  readonly sandboxed?: boolean
+  readonly timeoutMs?: number
+  readonly transport?: PostmarkReadTransport
 }
+export interface PostmarkStatusPortOptions {
+  readonly deployment?: string
+  /** Explicit opt-in. Unconfigured construction stays credential-free and unknown. */
+  readonly recovery?: PostmarkStatusRecovery
+}
+const safeText = (value: unknown): value is string =>
+  typeof value === 'string' && value.length > 0 && value.length <= 1000 && !/[\r\n\0]/.test(value)
+const object = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === 'object' && !Array.isArray(value)
 
-/**
- * The Postmark status port: read-only, and never able to answer.
- *
- * Credential-free, because a port that cannot reach the provider has nothing to
- * authenticate. The lookup it is handed is accepted and deliberately ignored,
- * so nothing about an attempt — not its tenant, not its key, not its
- * fingerprint — goes anywhere from a question that cannot be answered with it.
- */
+/** Tenant-bound positive acceptance lookup; never sends or reports rejection/delivery. */
 export class PostmarkStatusPort implements EmailDeliveryStatusPort {
   readonly statusPortId: string
-
+  readonly #recovery:
+    | (PostmarkStatusRecovery & { readonly transport: PostmarkReadTransport })
+    | undefined
   constructor(options: PostmarkStatusPortOptions = {}) {
     this.statusPortId =
       options.deployment === undefined
         ? POSTMARK_STATUS_PORT_ID
         : `${POSTMARK_STATUS_PORT_ID}(${options.deployment})`
+    const recovery = options.recovery
+    if (recovery) {
+      if (
+        !safeText(recovery.tenantId) ||
+        !safeText(recovery.serverToken) ||
+        !(recovery.attemptLabelKey instanceof Uint8Array) ||
+        recovery.attemptLabelKey.length < 32 ||
+        (recovery.messageStream !== undefined &&
+          !/^[a-zA-Z0-9_-]{1,100}$/.test(recovery.messageStream)) ||
+        (recovery.sandboxed !== undefined && typeof recovery.sandboxed !== 'boolean') ||
+        (recovery.timeoutMs !== undefined &&
+          (!Number.isInteger(recovery.timeoutMs) ||
+            recovery.timeoutMs < 1 ||
+            recovery.timeoutMs > 30000)) ||
+        (recovery.transport !== undefined && typeof recovery.transport.get !== 'function')
+      )
+        throw new TypeError('Invalid tenant-bound Postmark recovery configuration.')
+      this.#recovery = {
+        ...recovery,
+        attemptLabelKey: Uint8Array.from(recovery.attemptLabelKey),
+        transport: recovery.transport ?? defaultPostmarkReadTransport(),
+      }
+    }
   }
-
-  status(lookup: EmailDeliveryStatusLookup): Promise<EmailGatewayOutcome> {
-    // Unused on purpose: there is no lookup to make, and a question that cannot
-    // be answered is not a reason to keep what it carried.
-    void lookup
-    return Promise.resolve({ outcome: 'unknown', reason: UNAVAILABLE })
+  async status(lookup: EmailDeliveryStatusLookup): Promise<EmailGatewayOutcome> {
+    const config = this.#recovery
+    if (
+      !config ||
+      !lookup ||
+      lookup.tenantId !== config.tenantId ||
+      typeof lookup.idempotencyKey !== 'string' ||
+      lookup.idempotencyKey.length < 1 ||
+      lookup.idempotencyKey.length > 65536 ||
+      !/^[a-f0-9]{64}$/.test(lookup.fingerprint)
+    )
+      return unknown()
+    const label = postmarkAttemptLabel(
+      config.attemptLabelKey,
+      lookup.tenantId,
+      lookup.idempotencyKey,
+    )
+    const url = new URL(POSTMARK_STATUS_URL)
+    url.searchParams.set('count', '2')
+    url.searchParams.set('offset', '0')
+    url.searchParams.set('messagestream', config.messageStream ?? 'outbound')
+    url.searchParams.set('metadata_' + POSTMARK_ATTEMPT_KEY, label)
+    const controller = new AbortController()
+    let timer: ReturnType<typeof setTimeout> | undefined
+    try {
+      const response = await Promise.race([
+        config.transport.get({
+          url: url.href,
+          headers: { accept: 'application/json', 'x-postmark-server-token': config.serverToken },
+          signal: controller.signal,
+        }),
+        new Promise<never>((_resolve, reject) => {
+          timer = setTimeout(() => {
+            controller.abort()
+            reject(new Error('Status deadline'))
+          }, config.timeoutMs ?? 15000)
+        }),
+      ])
+      if (
+        response.status !== 200 ||
+        typeof response.body !== 'string' ||
+        Buffer.byteLength(response.body) > 65536
+      )
+        return unknown()
+      const reply: unknown = JSON.parse(response.body)
+      if (
+        !object(reply) ||
+        reply.TotalCount !== 1 ||
+        !Array.isArray(reply.Messages) ||
+        reply.Messages.length !== 1
+      )
+        return unknown()
+      const message: unknown = reply.Messages[0]
+      if (
+        !object(message) ||
+        typeof message.MessageID !== 'string' ||
+        !/^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$/.test(
+          message.MessageID,
+        ) ||
+        !object(message.Metadata) ||
+        message.Metadata[POSTMARK_ATTEMPT_KEY] !== label ||
+        message.MessageStream !== (config.messageStream ?? 'outbound') ||
+        message.Sandboxed !== (config.sandboxed ?? false) ||
+        !['Sent', 'Processed', 'Queued'].includes(String(message.Status))
+      )
+        return unknown()
+      return { outcome: 'accepted', providerMessageId: message.MessageID }
+    } catch {
+      return unknown()
+    } finally {
+      if (timer) clearTimeout(timer)
+    }
   }
 }

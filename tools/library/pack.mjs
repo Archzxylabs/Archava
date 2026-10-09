@@ -10,6 +10,14 @@ import { build } from 'esbuild'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 const output = join(root, 'dist/library')
+const migrationPackages = new Set([
+  'crm-pg',
+  'identity-pg',
+  'provider-runtime',
+  'act-host-pg',
+  'act-confirmation-pg',
+  'act-storage',
+])
 
 async function sourceFiles(directory) {
   const files = []
@@ -42,6 +50,10 @@ export async function packLibrary() {
     '@archava/identity-pg',
     '@archava/crm-assistant',
     '@archava/provider-runtime',
+    '@archava/act-host-pg',
+    '@archava/act-confirmation-pg',
+    '@archava/act',
+    '@archava/act-postmark',
   ])
     await include(name)
   await rm(output, { recursive: true, force: true })
@@ -95,7 +107,7 @@ export async function packLibrary() {
       target: 'es2022',
       logLevel: 'silent',
     })
-    if (['crm-pg', 'identity-pg', 'provider-runtime'].includes(shortName))
+    if (migrationPackages.has(shortName))
       await cp(join(directory, 'migrations'), join(stage, 'migrations'), { recursive: true })
     const exports = {}
     for (const [subpath, source] of Object.entries(manifest.exports)) {
@@ -123,9 +135,7 @@ export async function packLibrary() {
           main: './dist/index.js',
           types: './dist/index.d.ts',
           exports,
-          files: ['crm-pg', 'identity-pg', 'provider-runtime'].includes(shortName)
-            ? ['dist', 'migrations']
-            : ['dist'],
+          files: migrationPackages.has(shortName) ? ['dist', 'migrations'] : ['dist'],
           dependencies,
         },
         null,

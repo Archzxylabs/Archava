@@ -1,0 +1,23 @@
+{
+  "date": "2026-10-09",
+  "baseline": "83b65a8",
+  "node": "v22.22.3",
+  "command": "fnm exec --using 22.22.3 pnpm verify",
+  "gates": ["install", "structure", "format", "lint", "typecheck", "test", "build", "reuse"],
+  "passed": true,
+  "testFiles": 95,
+  "tests": 1420,
+  "compiledArtifacts": 23,
+  "actDatabaseCompositionChecks": 10,
+  "crmDatabaseRegressionChecks": 31,
+  "postmarkOfflineTests": 52,
+  "actualBookingOrMailProviderCalls": 0,
+  "originalPrivateConfigurationAndDatabaseSnapshotPreserved": true,
+  "limits": [
+    "No native owner approval HTTP/UI integration",
+    "No live PMS/Postmark effect or recipient-delivery proof",
+    "Legacy confirmation/provider schemas and restored external-effect execution still need deployment hardening",
+    "Internal owner pilot planning baseline remains 50 percent; full v1 commercial baseline is separate"
+  ],
+  "originalLocalCrmHealthStatus": 200
+}

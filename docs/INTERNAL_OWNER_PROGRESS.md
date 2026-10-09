@@ -1,0 +1,37 @@
+# Internal owner pilot — scope and planning progress
+
+Baseline: 9 October 2026, source `83b65a8`. Estimated delivery coverage for the
+bounded internal owner pilot is **50%**. This is a planning estimate, not measured
+productivity, revenue, percentage of tests, or a claim of release readiness.
+
+The denominator is reusable core, the existing CRM domain, trusted identity,
+approved actions, bounded AI operation and reliable hosting. It excludes the
+separate ARCHZXY company website/sales-delivery application, every future ERP
+vertical, and the broader customer Voice/Human/commercial release. The historical
+30% v1 score in `DELIVERY_PROGRESS.md` uses a different denominator and is unchanged.
+
+| Internal capability                                 | Weight | Coverage | Weighted points | Evidence and remaining gap                                                                                                                                        |
+| --------------------------------------------------- | -----: | -------: | --------------: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Reusable core and configuration                     |     20 |       75 |              15 | Independent cold-installed consumers, explicit public packages and configuration; supported production profiles/upgrade matrix remain open.                       |
+| Contacts, activities, follow-ups and sales pipeline |     20 |       70 |              14 | Shared persistent domain/API/dashboard, two business contexts, migrations/audit/receipt recovery; broader domain and release evidence remain open.                |
+| Trusted identity, tenant/resource permissions       |     20 |       60 |              12 | Local owner/staff/viewer sessions, RLS, revocation, CSRF and account recovery; production identity/TLS/enrollment remain open.                                    |
+| Approved action execution and recovery              |     20 |       15 |               3 | Policy/confirmation/executor ports and durable provider-specific stores; atomic host intent, deployed approval flow and authoritative reconciliation remain open. |
+| AI operational interface                            |     10 |       30 |               3 | Local read/draft commands, thirteen synthetic Gemini cases, persisted budget; general planning quality and approved private-data policy remain open.              |
+| Reliable operation and diagnostics                  |     10 |       30 |               3 | Local health, backup restoration and safe provider metadata; deployment, automated monitoring/backup drills and incident workflow remain open.                    |
+| Total                                               |    100 |          |    **50 / 100** | Internal pilot remains partial.                                                                                                                                   |
+
+Calculation: weight × coverage / 100. Update a line only after its operator
+capability is implemented and verified; a passing isolated mock does not establish
+live integration. Preserve the baseline and add dated checkpoints with evidence.
+
+Current work order follows PRD §49: durable atomic intent/confirmation/recovery,
+public composition proof, a bounded native approved action, supported host
+configuration and operational checks. Keep existing behavior/tests. New business
+modules require concrete domain scope and support ownership; the library is not
+an infinite checklist of industries to implement at once.
+
+9 October follow-up: atomic durable Act intents, positive read recovery and
+installed full-path PostgreSQL composition are implemented. See
+[the operational evidence and remaining owner integration](DURABLE_ACT_OPERATIONS.md).
+The 50% baseline stays unchanged: isolated infrastructure evidence does not yet
+complete the owner-facing approval capability.

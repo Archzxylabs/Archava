@@ -17,6 +17,9 @@ new module-library milestones in [PRD §49](../PRD.md) are assessed separately:
 
 The historical weighted percentage below is not recalculated or reused as v2
 progress. M1/M2 evidence is assessed separately from commercial readiness.
+The bounded [internal owner pilot](INTERNAL_OWNER_PROGRESS.md) has its own
+explicit six-capability planning denominator: 50% at source `83b65a8`, before
+the next durable action work. It does not score every future CRM/ERP capability.
 
 **9 October pipeline checkpoint:** contact-linked opportunities, guarded stages,
 immutable history, separate grants, v1 schema upgrade and recovery now have local

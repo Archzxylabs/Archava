@@ -1,6 +1,6 @@
 {
   "name": "@archava/act-email",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "Tenant-scoped transactional email executor behind the existing Act gate.",

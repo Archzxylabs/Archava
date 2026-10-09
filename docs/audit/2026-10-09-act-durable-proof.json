@@ -1,0 +1,119 @@
+{
+  "node": "v22.22.3",
+  "checks": [
+    "two independent cold installs use identical compiled Act implementations and included owned migrations",
+    "repeat/concurrent migration, checksummed ledger, forced RLS and non-owner runtime requirement",
+    "four separate Node processes atomically open one canonical intent/time and retain every challenge mapping",
+    "four processes admit one executor claimant; cancellation/late settlement cannot replace terminal truth",
+    "explicit same-payload transition has one successor under contention; unknown never opens a new intent",
+    "tenant/session isolation, transaction scope reset and no runtime deletion",
+    "immutable canonical identity and rejection of modified migration ledgers",
+    "real PostgreSQL restart retains canonical identity/unknown; positive reconciliation fences late claimants",
+    "real installed policy/validation/turn, PostgreSQL one-time consent/intent/provider records and bounded mocked gateways compose for two tenants; concurrent presentations perform one reservation",
+    "real database restart and second independent installed consumer retain unknown mail; exact positive mocked Postmark read recovers it without claim/send, while missing results do not"
+  ],
+  "consumers": [
+    {
+      "consumer": "hospitality",
+      "modules": [
+        {
+          "name": "@archava/act-host",
+          "version": "0.2.0",
+          "implementationSha256": "854dfec85f9c55fb09632461b8fb0ef73eb97300f7590f525b00966e678e1d68",
+          "tarballSha256": "83353162eec733447361912babd3d6204625799e26d484c535fc08efbfccb6d4"
+        },
+        {
+          "name": "@archava/act-host-pg",
+          "version": "0.1.0",
+          "implementationSha256": "7e4cde3aac9bb3d834aa0268b9f2222a07e62d7262c1d8db940bfe175efca1d6",
+          "tarballSha256": "432318416d1764686aecb2e7bc0515eabc807158cb8c0a7d3a21359c3dd6a2fd"
+        },
+        {
+          "name": "@archava/act-confirmation",
+          "version": "0.2.0",
+          "implementationSha256": "2f3ae79b7811b2e01f5e27e324cf353f7c58196edd781f3f0c34a8de88515dd9",
+          "tarballSha256": "5a4b91c7e5b1f4ffa694484823aee575c8edd1da8827d635143ee71e04a7ee0e"
+        },
+        {
+          "name": "@archava/act-confirmation-pg",
+          "version": "0.1.0",
+          "implementationSha256": "49b80287201812a742cc6796f5312d60e1a3db9ddb00aff5e9bc8b36c2c12a9f",
+          "tarballSha256": "844bc2f6c715095e6716da282edf4ae1e41ef8a7be1a2645ee1c3c4dab50a9f1"
+        },
+        {
+          "name": "@archava/act-storage",
+          "version": "0.2.0",
+          "implementationSha256": "0b8c5c9e627f09cfed81bdad540c6322ddf88f31dbde96b86230708020d9c099",
+          "tarballSha256": "af011132600505d918bc303fe4b7055ab4cc2dc8fe27670d3ad4349534e233c4"
+        },
+        {
+          "name": "@archava/act",
+          "version": "0.2.0",
+          "implementationSha256": "f9f5cfa1dd72d7b2ea76cf86804bca7b392a000eca305dbf482bc7e7ce5219d0",
+          "tarballSha256": "a7bd02d1a7ec9e5403d7faf7ddd5b0a5bfe145dc5cda5d800624270e4910e4bf"
+        },
+        {
+          "name": "@archava/act-postmark",
+          "version": "0.2.0",
+          "implementationSha256": "9cb98f3794203eb62752331f81ebca346901eacee03280d04a98e1f30a49e852",
+          "tarballSha256": "c8480afd2e9bd6f5eedb8cfd5847bae76703747bf8e01d0337641f4d269fef51"
+        }
+      ]
+    },
+    {
+      "consumer": "professional-services",
+      "modules": [
+        {
+          "name": "@archava/act-host",
+          "version": "0.2.0",
+          "implementationSha256": "854dfec85f9c55fb09632461b8fb0ef73eb97300f7590f525b00966e678e1d68",
+          "tarballSha256": "83353162eec733447361912babd3d6204625799e26d484c535fc08efbfccb6d4"
+        },
+        {
+          "name": "@archava/act-host-pg",
+          "version": "0.1.0",
+          "implementationSha256": "7e4cde3aac9bb3d834aa0268b9f2222a07e62d7262c1d8db940bfe175efca1d6",
+          "tarballSha256": "432318416d1764686aecb2e7bc0515eabc807158cb8c0a7d3a21359c3dd6a2fd"
+        },
+        {
+          "name": "@archava/act-confirmation",
+          "version": "0.2.0",
+          "implementationSha256": "2f3ae79b7811b2e01f5e27e324cf353f7c58196edd781f3f0c34a8de88515dd9",
+          "tarballSha256": "5a4b91c7e5b1f4ffa694484823aee575c8edd1da8827d635143ee71e04a7ee0e"
+        },
+        {
+          "name": "@archava/act-confirmation-pg",
+          "version": "0.1.0",
+          "implementationSha256": "49b80287201812a742cc6796f5312d60e1a3db9ddb00aff5e9bc8b36c2c12a9f",
+          "tarballSha256": "844bc2f6c715095e6716da282edf4ae1e41ef8a7be1a2645ee1c3c4dab50a9f1"
+        },
+        {
+          "name": "@archava/act-storage",
+          "version": "0.2.0",
+          "implementationSha256": "0b8c5c9e627f09cfed81bdad540c6322ddf88f31dbde96b86230708020d9c099",
+          "tarballSha256": "af011132600505d918bc303fe4b7055ab4cc2dc8fe27670d3ad4349534e233c4"
+        },
+        {
+          "name": "@archava/act",
+          "version": "0.2.0",
+          "implementationSha256": "f9f5cfa1dd72d7b2ea76cf86804bca7b392a000eca305dbf482bc7e7ce5219d0",
+          "tarballSha256": "a7bd02d1a7ec9e5403d7faf7ddd5b0a5bfe145dc5cda5d800624270e4910e4bf"
+        },
+        {
+          "name": "@archava/act-postmark",
+          "version": "0.2.0",
+          "implementationSha256": "9cb98f3794203eb62752331f81ebca346901eacee03280d04a98e1f30a49e852",
+          "tarballSha256": "c8480afd2e9bd6f5eedb8cfd5847bae76703747bf8e01d0337641f4d269fef51"
+        }
+      ]
+    }
+  ],
+  "providerCalls": 0,
+  "mockedProviderCalls": {
+    "reservations": 2,
+    "sends": 3
+  },
+  "scope": "isolated real PostgreSQL and four actual Node processes; no real booking/email",
+  "date": "2026-10-09",
+  "baseline": "83b65a8"
+}

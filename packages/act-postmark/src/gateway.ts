@@ -58,7 +58,7 @@ import {
   type EmailGatewayOutcome,
   type EmailSendRequest,
 } from '@archava/act-email'
-import { createHmac } from 'node:crypto'
+import { postmarkAttemptLabel } from './label.js'
 import {
   defaultPostmarkTransport,
   type PostmarkHTTPRequest,
@@ -200,11 +200,11 @@ export class PostmarkEmailGateway implements EmailGateway {
   /** Which gateway this is, for the audit trail. Not a secret. */
   readonly gatewayId = 'postmark:withTemplate@1'
 
-  private readonly serverToken: string
-  private readonly transport: PostmarkTransport
-  private readonly attemptLabelKey: Uint8Array
-  private readonly messageStream: string
-  private readonly timeoutMs: number
+  readonly #serverToken: string
+  readonly #transport: PostmarkTransport
+  readonly #attemptLabelKey: Uint8Array
+  readonly #messageStream: string
+  readonly #timeoutMs: number
 
   constructor(options: PostmarkEmailGatewayOptions) {
     if (!isNonblank(options.serverToken)) {
@@ -225,11 +225,11 @@ export class PostmarkEmailGateway implements EmailGateway {
     ) {
       throw new TypeError('A Postmark send timeout must be a positive number of milliseconds.')
     }
-    this.serverToken = options.serverToken
-    this.transport = options.transport ?? defaultPostmarkTransport()
-    this.attemptLabelKey = Uint8Array.from(options.attemptLabelKey)
-    this.messageStream = options.messageStream ?? DEFAULT_MESSAGE_STREAM
-    this.timeoutMs = options.timeoutMs ?? POSTMARK_SEND_TIMEOUT_MS
+    this.#serverToken = options.serverToken
+    this.#transport = options.transport ?? defaultPostmarkTransport()
+    this.#attemptLabelKey = Uint8Array.from(options.attemptLabelKey)
+    this.#messageStream = options.messageStream ?? DEFAULT_MESSAGE_STREAM
+    this.#timeoutMs = options.timeoutMs ?? POSTMARK_SEND_TIMEOUT_MS
   }
 
   async send(request: EmailSendRequest): Promise<EmailGatewayOutcome> {
@@ -241,7 +241,7 @@ export class PostmarkEmailGateway implements EmailGateway {
     let reply: PostmarkReply
     try {
       reply = await this.postOnce(
-        buildSendPayload(request, this.messageStream, this.attemptLabel(request)),
+        buildSendPayload(request, this.#messageStream, this.attemptLabel(request)),
       )
     } catch (error) {
       return unknown(error instanceof PostmarkCallFailure ? error.reason : REASON.unreachable)
@@ -268,20 +268,20 @@ export class PostmarkEmailGateway implements EmailGateway {
         // what bounds a transport that never answers at all.
         controller.abort()
         reject(new PostmarkCallFailure(REASON.timeout))
-      }, this.timeoutMs)
+      }, this.#timeoutMs)
     })
     const request: PostmarkHTTPRequest = {
       url: POSTMARK_SEND_URL,
       headers: {
         accept: 'application/json',
         'content-type': 'application/json',
-        'x-postmark-server-token': this.serverToken,
+        'x-postmark-server-token': this.#serverToken,
       },
       body: payload,
       signal: controller.signal,
     }
     try {
-      const sent = this.transport.post(request)
+      const sent = this.#transport.post(request)
       // A transport that loses the race and rejects later must not surface as
       // an unhandled rejection; the call has already been reported.
       void sent.catch(() => undefined)
@@ -306,11 +306,7 @@ export class PostmarkEmailGateway implements EmailGateway {
    * support, so at-most-once is the attempt store's guarantee and stays there.
    */
   private attemptLabel(request: EmailSendRequest): string {
-    return createHmac('sha256', this.attemptLabelKey)
-      .update(
-        JSON.stringify(['archava-postmark-attempt-v2', request.tenantId, request.idempotencyKey]),
-      )
-      .digest('base64url')
+    return postmarkAttemptLabel(this.#attemptLabelKey, request.tenantId, request.idempotencyKey)
   }
 }
 

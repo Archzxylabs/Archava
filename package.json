@@ -33,6 +33,7 @@
     "library:pack": "node tools/library/pack.mjs",
     "reuse:verify": "node tools/library/verify-consumers.mjs",
     "crm:verify": "pnpm --fail-if-no-match --filter @archava/crm-reference verify",
+    "act:verify": "pnpm --fail-if-no-match --filter @archava/act-integration verify",
     "crm:gemini-eval": "pnpm --fail-if-no-match --filter @archava/crm-reference gemini:eval",
     "crm:dev": "pnpm --fail-if-no-match --filter @archava/crm-reference dev",
     "e2e:crm": "node tools/e2e/crm.mjs",

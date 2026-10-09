@@ -60,6 +60,8 @@ export interface ActHostAttemptRecord {
 /** Where attempt records live. Implement durably for a deployment. */
 export interface ActHostAttemptLedger {
   readonly ledgerId: string
+  /** Atomic canonical open for durable hosts. Legacy find/save is an offline compatibility path. */
+  open?(record: ActHostAttemptRecord, previousIntentId?: string): Promise<ActHostAttemptRecord>
   save(record: ActHostAttemptRecord): Promise<void>
   find(identity: ActHostAttemptIdentity): Promise<ActHostAttemptRecord | null>
   findByChallenge(challengeId: string): Promise<ActHostAttemptRecord | null>

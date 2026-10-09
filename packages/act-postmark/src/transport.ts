@@ -41,6 +41,10 @@ export interface PostmarkHTTPResponse {
 export interface PostmarkTransport {
   post(request: PostmarkHTTPRequest): Promise<PostmarkHTTPResponse>
 }
+export type PostmarkReadRequest = Omit<PostmarkHTTPRequest, 'body'>
+export interface PostmarkReadTransport {
+  get(request: PostmarkReadRequest): Promise<PostmarkHTTPResponse>
+}
 
 /**
  * A transport failure. Thrown only ever with this fixed message.
@@ -72,13 +76,65 @@ export function defaultPostmarkTransport(
           method: 'POST',
           headers: request.headers,
           body: request.body,
+          redirect: 'error',
+          credentials: 'omit',
           ...(request.signal ? { signal: request.signal } : {}),
         })
       } catch {
         throw new PostmarkTransportFailure()
       }
       // Read inside the seam so a transport never hands back a live stream.
-      return { status: response.status, body: await response.text() }
+      try {
+        return { status: response.status, body: await readBoundedBody(response) }
+      } catch {
+        throw new PostmarkTransportFailure()
+      }
     },
+  }
+}
+
+/** Bounded read-only transport; a token never follows redirects to another host. */
+export function defaultPostmarkReadTransport(
+  fetchImpl: typeof fetch = globalThis.fetch,
+): PostmarkReadTransport {
+  return {
+    async get(request) {
+      try {
+        const response = await fetchImpl(request.url, {
+          method: 'GET',
+          headers: request.headers,
+          signal: request.signal,
+          redirect: 'error',
+          credentials: 'omit',
+        })
+        return { status: response.status, body: await readBoundedBody(response) }
+      } catch {
+        throw new PostmarkTransportFailure()
+      }
+    },
+  }
+}
+
+async function readBoundedBody(response: Response): Promise<string> {
+  const reader = response.body?.getReader()
+  if (!reader) return ''
+  const decoder = new TextDecoder()
+  let size = 0,
+    body = ''
+  try {
+    while (true) {
+      const part = await reader.read()
+      if (part.done) return body + decoder.decode()
+      const chunk: unknown = part.value
+      if (!(chunk instanceof Uint8Array)) throw new PostmarkTransportFailure()
+      size += chunk.byteLength
+      if (size > 65536) {
+        await reader.cancel()
+        throw new PostmarkTransportFailure()
+      }
+      body += decoder.decode(chunk, { stream: true })
+    }
+  } finally {
+    reader.releaseLock()
   }
 }

@@ -14,9 +14,11 @@
     "test": "vitest run --root ../.. packages/act-confirmation-pg/test",
     "verify:sql": "tsx scripts/verify-against-postgres.ts"
   },
-  "devDependencies": {
+  "dependencies": {
     "@archava/act-confirmation": "workspace:*",
-    "@archava/act-storage": "workspace:*",
+    "@archava/act-storage": "workspace:*"
+  },
+  "devDependencies": {
     "typescript": "5.9.3",
     "vitest": "4.1.11"
   }

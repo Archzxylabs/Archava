@@ -1,6 +1,6 @@
 {
   "name": "@archava/act-postmark",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "Server-only Postmark transactional mail gateway behind the Act email outbox. The server token is injected, so importing this package leaks nothing and a browser bundle gains nothing.",

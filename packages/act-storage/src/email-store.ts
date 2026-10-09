@@ -46,8 +46,9 @@ import type {
   EmailAttemptRecord,
   EmailAttemptSettlement,
   EmailAttemptStore,
+  EmailAttemptOwnership,
 } from '@archava/act-email'
-import { claimAttempt, settleAttempt, type AttemptRow } from './core.js'
+import { claimAttempt, lookupAttempt, settleAttempt, type AttemptRow } from './core.js'
 import type { SqlClient } from './sql.js'
 import { attemptStorageKey, copyStorageKeySecret } from './storage-key.js'
 
@@ -69,17 +70,28 @@ export interface PostgresEmailAttemptStoreOptions {
 export class PostgresEmailAttemptStore implements EmailAttemptStore {
   /** Composed for the audit trail: names the database, not itself. */
   readonly storeId: string
-  private readonly client: SqlClient
-  private readonly idempotencyKeyHmacKey: Uint8Array
+  readonly #client: SqlClient
+  readonly #idempotencyKeyHmacKey: Uint8Array
 
   constructor(options: PostgresEmailAttemptStoreOptions) {
-    this.client = options.client
-    this.idempotencyKeyHmacKey = copyStorageKeySecret(options.idempotencyKeyHmacKey)
+    this.#client = options.client
+    this.#idempotencyKeyHmacKey = copyStorageKeySecret(options.idempotencyKeyHmacKey)
     this.storeId = `postgres(${options.client.storeId})`
   }
 
+  async find(owner: EmailAttemptOwnership): Promise<EmailAttemptRecord | null> {
+    const reading = await lookupAttempt(this.#client, {
+      tenantId: owner.tenantId,
+      actionKind: EMAIL_ACTION_KIND,
+      idempotencyKey: this.storageKey(owner.tenantId, owner.idempotencyKey),
+    })
+    if (reading.status === 'empty') return null
+    if (reading.status === 'replayed') return emailRecord(reading.row, owner.idempotencyKey)
+    throw new Error(storeFailure(reading))
+  }
+
   async claim(attempt: EmailAttemptRecord): Promise<EmailAttemptClaim> {
-    const reading = await claimAttempt(this.client, {
+    const reading = await claimAttempt(this.#client, {
       tenantId: attempt.tenantId,
       actionKind: EMAIL_ACTION_KIND,
       idempotencyKey: this.storageKey(attempt.tenantId, attempt.idempotencyKey),
@@ -105,7 +117,7 @@ export class PostgresEmailAttemptStore implements EmailAttemptStore {
    * three share a return value and why none of them is allowed to be `true`.
    */
   async settle(settlement: EmailAttemptSettlement): Promise<boolean> {
-    const reading = await settleAttempt(this.client, {
+    const reading = await settleAttempt(this.#client, {
       tenantId: settlement.tenantId,
       actionKind: EMAIL_ACTION_KIND,
       idempotencyKey: this.storageKey(settlement.tenantId, settlement.idempotencyKey),
@@ -119,7 +131,7 @@ export class PostgresEmailAttemptStore implements EmailAttemptStore {
 
   private storageKey(tenantId: string, rawIdempotencyKey: string): string {
     return attemptStorageKey(
-      this.idempotencyKeyHmacKey,
+      this.#idempotencyKeyHmacKey,
       tenantId,
       EMAIL_ACTION_KIND,
       rawIdempotencyKey,

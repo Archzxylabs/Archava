@@ -145,6 +145,8 @@ export const ACT_HOST_REFUSAL_CODES = [
   'executor_unavailable',
   // A presentation named a challenge this host has no record of.
   'attempt_record_missing',
+  'attempt_record_unavailable',
+  'attempt_transition_refused',
 ] as const
 export type ActHostRefusalCode = (typeof ACT_HOST_REFUSAL_CODES)[number]
 
@@ -215,6 +217,8 @@ export interface ActHostRequest {
   readonly envelope: unknown
   /** The page context, as the SDK recorded it. Server-owned per call. */
   readonly graph: ContextGraph
+  /** Opaque predecessor, parsed by the trusted host. Never permission or consent. */
+  readonly previousIntentId?: string
 }
 
 /** A public-safe validation reason; `*` avoids echoing visitor field names. */
@@ -327,7 +331,7 @@ export class ActHost {
    * Whether this candidate has a claim on a confirmation, and the challenge if
    * so. Never executes anything.
    */
-  async review({ envelope, graph }: ActHostRequest): Promise<ActHostReview> {
+  async review({ envelope, graph, previousIntentId }: ActHostRequest): Promise<ActHostReview> {
     let reading: VisitorEnvelopeReading
     try {
       reading = readVisitorEnvelope(envelope)
@@ -400,8 +404,8 @@ export class ActHost {
     // form — all of them read the same `occurredAt`, and therefore mint the same
     // idempotency key for the same booking.
     //
-    // The read happens *before* the write, and the write carries the value that
-    // was read rather than the one this call would have derived. A challenge
+    // Operational ports open atomically and return the persisted identity;
+    // the legacy read/save path below remains offline compatibility. A challenge
     // minted 90 seconds after the original is a new challenge for the *same*
     // attempt, not a new attempt — only its id and expiry change. Derived from
     // the clock instead, that same retry would mint a second key, which is
@@ -413,14 +417,46 @@ export class ActHost {
       actionId: candidate.actionId,
       inputDigest: challenge.inputDigest,
     }
-    const existing = await this.attempts.find(identity)
-    const occurredAt = existing?.occurredAt ?? new Date(challenge.issuedAt).toISOString()
-    await this.attempts.save({
-      ...identity,
-      occurredAt,
-      challengeId: challenge.id,
-      expiresAt: challenge.expiresAt,
-    })
+    let occurredAt: string
+    if (this.attempts.open) {
+      const canonical = await this.attempts.open(
+        {
+          ...identity,
+          occurredAt: new Date(challenge.issuedAt).toISOString(),
+          challengeId: challenge.id,
+          expiresAt: challenge.expiresAt,
+        },
+        previousIntentId,
+      )
+      if (
+        canonical.tenantId !== identity.tenantId ||
+        canonical.sessionId !== identity.sessionId ||
+        canonical.actionId !== identity.actionId ||
+        canonical.inputDigest !== identity.inputDigest ||
+        canonical.challengeId !== challenge.id ||
+        canonical.expiresAt !== challenge.expiresAt ||
+        !Number.isSafeInteger(Date.parse(canonical.occurredAt))
+      )
+        throw new ActHostRefusal(
+          'attempt_record_missing',
+          'The canonical attempt could not be verified.',
+        )
+      occurredAt = canonical.occurredAt
+    } else {
+      if (previousIntentId !== undefined)
+        throw new ActHostRefusal(
+          'attempt_record_missing',
+          'A durable attempt ledger is required for a new intent.',
+        )
+      const existing = await this.attempts.find(identity)
+      occurredAt = existing?.occurredAt ?? new Date(challenge.issuedAt).toISOString()
+      await this.attempts.save({
+        ...identity,
+        occurredAt,
+        challengeId: challenge.id,
+        expiresAt: challenge.expiresAt,
+      })
+    }
 
     return {
       status: 'challenge_issued',
@@ -565,6 +601,11 @@ export class ActHost {
         { rejection: verification.reason },
       )
     }
+    if (verification.receipt.inputDigest !== attempt.inputDigest)
+      throw new ActHostRefusal(
+        'visitor_challenge_mismatch',
+        'The confirmation does not match its recorded intent.',
+      )
 
     // The one line the whole module exists for. `attempt.occurredAt` was written
     // when the challenge was minted and has not been rewritten since — not by a

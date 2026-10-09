@@ -36,6 +36,7 @@ export {
   type ConfirmationRefusal,
   type ConfirmationServiceOptions,
   type ConfirmationVerification,
+  type ConfirmationBindingDescription,
 } from './confirmation.js'
 
 export {

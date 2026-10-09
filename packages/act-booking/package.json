@@ -1,6 +1,6 @@
 {
   "name": "@archava/act-booking",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "The booking.create executor: the only boundary where a reservation may be made, behind an injected authoritative gateway.",

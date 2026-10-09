@@ -134,6 +134,8 @@ export interface EmailAttemptSettlement extends EmailAttemptOwnership {
 export interface EmailAttemptStore {
   /** Which store this is, for the audit trail. Not a secret. */
   readonly storeId: string
+  /** Read-only lookup; absence is never permission to send. Optional for legacy stores. */
+  find?(owner: EmailAttemptOwnership): Promise<EmailAttemptRecord | null>
   /** Atomically assert that this tenant-scoped key is the caller's, or hand back the record that owns it. */
   claim(attempt: EmailAttemptRecord): Promise<EmailAttemptClaim>
   /** Return true only when the compare-and-swap was applied durably. */
@@ -209,6 +211,27 @@ export class EmailOutboxBoundary implements EmailGateway {
   /** Which ports this boundary is built from, for the audit trail. Not a secret. */
   get outboxId(): string {
     return `outbox(${this.store.storeId}->${this.status.statusPortId})`
+  }
+
+  /** Recover an existing attempt only. Never calls claim or the send gateway. */
+  async recover(request: EmailSendRequest): Promise<EmailGatewayOutcome> {
+    try {
+      if (!sendable(request) || !this.store.find)
+        return { outcome: 'unknown', reason: NOT_RECONCILED }
+      const row = await this.store.find({
+        tenantId: request.tenantId,
+        idempotencyKey: request.idempotencyKey,
+      })
+      if (
+        !row ||
+        row.tenantId !== request.tenantId ||
+        row.idempotencyKey !== request.idempotencyKey
+      )
+        return { outcome: 'unknown', reason: NOT_RECONCILED }
+      return await this.replay(row, this.attemptFingerprint(request))
+    } catch {
+      return { outcome: 'unknown', reason: NOT_RECONCILED }
+    }
   }
 
   async send(request: EmailSendRequest): Promise<EmailGatewayOutcome> {
