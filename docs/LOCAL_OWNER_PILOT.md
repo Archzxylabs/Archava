@@ -128,3 +128,7 @@ credential-backed identity/resource grants, reviewed native execution/audit,
 receipt recovery, bounded AI selection, diagnostics and backup restoration. Broader
 ERP modules, general-purpose AI write planning, public identity/TLS/SSO, automated
 monitoring and customer voice/avatar are future releases with separate acceptance.
+
+The [0.7.0 authorized overview](CRM_OVERVIEW.md) adds a read-only owner/staff CRM
+summary to both dashboard and local Archava. The original acceptance and its dated
+counts above remain historical; overview evidence is recorded separately.

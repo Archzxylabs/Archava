@@ -133,3 +133,7 @@ same due-time cursor, permissions and read-only tools; see [worklist contracts](
 The 0.6.0 CRM/PG/conversation artifacts and 0.2.0 native adapter add optional exact
 task reads and separately approved completion. Both native actions use the same
 domain/approval/recovery primitives; see [completion contracts](CRM_COMPLETION.md).
+
+The 0.7.0 CRM/PG/conversation artifacts add an optional permission-aware aggregate
+read and a shared dashboard/conversation renderer. Counts span all permitted rows
+without paging or copying business implementations; see [overview contracts](CRM_OVERVIEW.md).

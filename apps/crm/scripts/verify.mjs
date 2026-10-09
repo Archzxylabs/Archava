@@ -1410,6 +1410,73 @@ try {
     200,
   )
 
+  const overviewPath = '/api/crm/hotel-demo/overview'
+  assert.equal((await get(origin, overviewPath)).status, 401)
+  assert.equal((await get(origin, '/api/crm/studio-demo/overview', queueStaffSession)).status, 403)
+  assert.equal((await get(origin, overviewPath + '?scope=all', owner)).status, 400)
+  const overviewPool = poolFor(restored)
+  try {
+    const unchanged = async () =>
+      (
+        await overviewPool.query(`SELECT
+      (SELECT count(*) FROM archava_crm.commands) AS commands,
+      (SELECT count(*) FROM archava_crm.audit) AS audit,
+      (SELECT count(*) FROM archava_provider.attempts) AS provider,
+      (SELECT count(*) FROM archava_crm_act.confirmation_challenges) AS confirmations`)
+      ).rows
+    const beforeOverview = await unchanged()
+    for (const session of [owner, queueStaffSession]) {
+      const access = await get(origin, '/api/crm/hotel-demo/access', session).then((r) => r.json())
+      const response = await get(origin, overviewPath, session)
+      assert.equal(response.status, 200)
+      assert.equal(response.headers.get('cache-control'), 'no-store')
+      const snapshot = await response.json()
+      assert.equal(snapshot.tenantId, 'hotel-demo')
+      assert.equal(snapshot.scope, access.scope)
+      const expectedContacts = (
+        await overviewPool.query(
+          'SELECT count(*)::int AS count FROM archava_crm.contacts WHERE tenant_id=$1 AND ($2::boolean OR owner_id=$3)',
+          ['hotel-demo', access.scope === 'all', access.ownerId],
+        )
+      ).rows[0].count
+      assert.equal(snapshot.contacts, expectedContacts)
+      const expectedTasks = (
+        await overviewPool.query(
+          `SELECT
+        count(*) FILTER(WHERE f.status='open')::int AS open,
+        count(*) FILTER(WHERE f.status='open' AND f.due_at<$4)::int AS overdue,
+        count(*) FILTER(WHERE f.status='open' AND f.due_at>=$4)::int AS upcoming,
+        count(*) FILTER(WHERE f.status='completed')::int AS completed
+        FROM archava_crm.followups f JOIN archava_crm.contacts c ON c.tenant_id=f.tenant_id AND c.id=f.contact_id
+        WHERE f.tenant_id=$1 AND ($2::boolean OR c.owner_id=$3)`,
+          ['hotel-demo', access.scope === 'all', access.ownerId, snapshot.asOf],
+        )
+      ).rows[0]
+      assert.deepEqual(snapshot.followups, expectedTasks)
+      const reply = await post(
+        origin,
+        conversationPath,
+        { utterance: 'ringkas kondisi CRM' },
+        session,
+      ).then((r) => r.json())
+      assert.equal(reply.source, 'crm')
+      assert.equal(reply.data.kind, 'overview')
+      assert.equal(reply.data.snapshot.contacts, snapshot.contacts)
+      assert.deepEqual(reply.data.snapshot.pipeline, snapshot.pipeline)
+      assert.equal(reply.planner.providerId, 'archava-crm-local')
+      assert.ok(!JSON.stringify(reply).includes('contact@example.test'))
+    }
+    const second = await get(origin, '/api/crm/studio-demo/overview', owner).then((r) => r.json())
+    assert.equal(second.tenantId, 'studio-demo')
+    assert.equal(second.contacts, 1)
+    assert.deepEqual(await unchanged(), beforeOverview)
+  } finally {
+    await overviewPool.end()
+  }
+  check(
+    'restored authenticated host and local Archava share complete current owner/staff CRM aggregates with no command, consent or provider call; forged query scope and cross-tenant access are refused',
+  )
+
   await mkdir(join(root, 'dist/crm-runtime-proof'), { recursive: true })
   await writeFile(
     join(root, 'dist/crm-runtime-proof/results.json'),

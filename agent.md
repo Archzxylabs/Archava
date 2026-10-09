@@ -1080,6 +1080,13 @@ currently permitted contacts. Require both contact/task read grants and delegate
 scope; keep exact-time pagination and a fixed page boundary. It grants no write,
 message-send or native approval authority. Dashboard and Archava share this service.
 
+The 0.7.0 optional CRM overview is an authorized aggregate read, not a list-page
+count or model estimate. Require current contacts access, gate follow-up/pipeline
+sections separately and represent missing grants as unavailable rather than zero.
+Use one database statement snapshot and host due-time cutoff; callers cannot
+widen scope or supply grants/time/SQL. Keep records and aggregates local to the
+existing unpaid Gemini synthetic-only boundary. See `docs/CRM_OVERVIEW.md`.
+
 The persistent CRM host consumes installed modules and verifies credential-backed
 sessions through an optional identity adapter. These local checks do not grant
 authority to browser role/tenant/confirmation fields or establish public identity

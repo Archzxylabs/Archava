@@ -168,3 +168,8 @@ stay refused; only the bounded native follow-up path has verified write authorit
 The Act library attempt/recovery tasks are delivered. Public provider deployment
 and shared realtime gaps remain open.
 No company website or full ERP was added.
+
+The [0.7.0 CRM overview](CRM_OVERVIEW.md) adds complete authorized contact,
+follow-up and pipeline counts to the same local host and Archava panel. It requires
+no setup/migration/grant change; existing private accounts and configuration stay
+in place. Refresh after dashboard changes to retrieve current totals.

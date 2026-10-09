@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { opportunityCommandSchema } from './pipeline-contracts.js'
 import type { FollowupQueueQuery, FollowupQueue } from './worklist-contracts.js'
+import type { CrmOverview } from './overview-contracts.js'
 
 export const tenantSchema = z
   .string()
@@ -183,6 +184,8 @@ export const followupDraftSchema = z
   .strict()
 export interface CrmRepository {
   access(tenant: string, principal: CrmPrincipal): Promise<CrmAccess>
+  /** Optional aggregate read; null sections indicate missing read permission. */
+  overview?(tenant: string, principal: CrmPrincipal, asOf: string): Promise<CrmOverview>
   list(tenant: string, principal: CrmPrincipal, page: CrmPage): Promise<ContactPage>
   /** Optional authorized read projection; old adapters remain compatible. */
   listFollowups?(
@@ -226,13 +229,14 @@ export class CrmError extends Error {
 /** Config/installation metadata; it grants no authority and supplies no price. */
 export const CRM_CONTACTS_MANIFEST = {
   id: 'crm_contacts',
-  version: '0.6.0',
+  version: '0.7.0',
   status: 'implemented' as const,
   requires: [],
   permissions: CRM_PERMISSIONS.filter((permission) => !permission.startsWith('pipeline.')),
   persistence: { adapter: '@archava/crm-pg', migration: '001_crm_contacts' },
   apiVersion: '1.0.0',
   tools: [
+    'crm.overview',
     'crm.contacts.list',
     'crm.contact.summary',
     'crm.followups.list',

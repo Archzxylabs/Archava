@@ -10,6 +10,12 @@ export class LocalCrmPlanner implements CrmConversationPlanner {
       .replace(/[?!.]+$/, '')
       .trim()
     if (
+      /^(?:(?:ringkas|ringkasan|tampilkan|lihat)\s+(?:kondisi\s+)?crm|(?:show\s+)?crm\s+(?:overview|summary))$/i.test(
+        text,
+      )
+    )
+      return Promise.resolve({ operation: 'crm.overview' })
+    if (
       /^(?:tinjau penyelesaian|siapkan penyelesaian|selesaikan|review completion of|complete)\s+follow[ -]?up$/i.test(
         text,
       )

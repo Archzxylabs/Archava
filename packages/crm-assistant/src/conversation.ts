@@ -21,9 +21,21 @@ import {
 } from './contracts.js'
 
 const HELP =
-  'Coba “tampilkan kontak”, “cari Budi”, “ringkas Budi”, “tampilkan follow-up terlambat”, atau “siapkan follow-up Budi”. Draft belum disimpan atau dikirim.'
+  'Coba “ringkas kondisi CRM”, “tampilkan kontak”, “cari Budi”, “ringkas Budi”, “tampilkan follow-up terlambat”, atau “siapkan follow-up Budi”. Draft belum disimpan atau dikirim.'
 function describe(data: CrmConversationData): string {
   switch (data.kind) {
+    case 'overview': {
+      const snapshot = data.snapshot
+      return (
+        `Kondisi CRM dalam akses Anda: ${snapshot.contacts} kontak.` +
+        (snapshot.followups
+          ? ` ${snapshot.followups.open} follow-up terbuka, ${snapshot.followups.overdue} terlambat.`
+          : ' Ringkasan follow-up tidak tersedia untuk akses Anda.') +
+        (snapshot.pipeline
+          ? ` ${snapshot.pipeline.active} peluang aktif.`
+          : ' Ringkasan peluang tidak tersedia untuk akses Anda.')
+      )
+    }
     case 'needs_followup':
       return 'Pilih satu tugas dari daftar follow-up, lalu tinjau penyelesaiannya.'
     case 'completion_draft':
@@ -86,6 +98,11 @@ export function createCrmConversation(
       const tools = createCrmTools(service, tenant, principal)
       const resolve = async (): Promise<CrmConversationData> => {
         if (plan.operation === 'unsupported') return { kind: 'help' }
+        if (plan.operation === 'crm.overview')
+          return conversationDataSchema.parse({
+            kind: 'overview',
+            snapshot: await tools.invoke('crm.overview', {}),
+          })
         if (plan.operation === 'followup.complete.prepare') {
           if (!input.followupId) return { kind: 'needs_followup' }
           return conversationDataSchema.parse({
@@ -259,6 +276,7 @@ export function createCrmConversation(
       return {
         text: outcome.text,
         source: [
+          'overview',
           'contacts',
           'followups',
           'completion_draft',

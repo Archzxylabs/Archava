@@ -1,0 +1,109 @@
+{
+  "date": "2026-10-09",
+  "baseline": "0c8d444",
+  "releaseScope": "local free authorized CRM overview shared by dashboard and Archava",
+  "node": "v22.22.3",
+  "command": "fnm exec --using 22.22.3 pnpm crm:verify",
+  "checks": [
+    "migration ledger repeatability and non-owner runtime requirement",
+    "two installed provider runtimes share one durable admission; eight overlapping calls invoke no duplicate provider",
+    "policy mismatches, duplicate identities, unscoped reads/deletes and terminal outcome rewrites are refused",
+    "failed/interrupted requests remain charged; expiration is committed even on denial and late results cannot overwrite unknown",
+    "pacing spans independent consumers and only the authoritative UTC day resets daily usage",
+    "atomic reservation rollback, conservative restoration hold and migration checksum enforcement",
+    "eight concurrent identical requests produce one contact and one audit receipt",
+    "two business contexts persist separate records; cross-tenant and public callers refused",
+    "two cold-installed conversation adapters use identical artifacts and real tenant-scoped CRM data",
+    "optimistic revision race, preserved optional fields and canonical retry/new-intent separation",
+    "viewer writes refused and assigned-only resource access enforced",
+    "machine/initiator permission intersection, projected read tools and no machine write path",
+    "draft remains read-only; human activity/follow-up lifecycle persisted and audited",
+    "bounded keyset pagination, parameterized hostile search and strict mutation schema",
+    "forced tenant RLS, pool scope reset, composite tenant foreign keys and immutable audit",
+    "audit failure rolls back records and command identity; same request can recover",
+    "two independent installed pipeline consumers; tenant isolation and eight retries produce one history/audit event",
+    "installed conversation adapters read both pipelines without SQL writes and enforce grants/resource types",
+    "stage races, invalid jumps, mandatory loss reason, terminal outcomes and current revision enforced",
+    "pipeline-specific grants, assigned resources, delegation intersection, read-only tools and replay revocation",
+    "atomic rollback includes command/history/audit; bounded pages, escaped search, forced RLS and immutable history",
+    "real v1-to-v2 upgrade preserves records, audit, receipts and original grants; modified ledger refused",
+    "two independent cold-installed recovery consumers verify their own receipts with zero command/audit/task changes",
+    "recovery binds tenant and human initiator, rechecks current read grants/revocation and remains outside model tools",
+    "an own receipt no longer exposes its resource after contact reassignment",
+    "an actually blocked in-flight transaction stays unconfirmed and later commits under the original UUID without resubmission",
+    "provider allowance and metadata-only outcomes survive a real PostgreSQL restart",
+    "read-only recovery preserves original UUID receipts across a real PostgreSQL restart",
+    "membership revocation rechecked; database restart preserves records, audit and retry receipt",
+    "pipeline record/history and identical retry survive a PostgreSQL restart",
+    "authenticated HTTP API rejects anonymous, cross-tenant, viewer, cross-origin and oversized requests",
+    "two installed consumers share a read-only due worklist with exact-time keyset pagination, escaped search, completed exclusion and server-time buckets",
+    "worklist rechecks tenant, both read grants, delegated staff scope, revocation and reassignment; dashboard/Archava reads create zero command/audit/task writes",
+    "exact task detail and completion preparation share both installed consumers, reach tasks beyond the contact page, recheck both read grants/resource scope and create no mutation",
+    "two installed business consumers share complete CRM aggregates beyond page limits, microsecond due boundaries, stage totals and local Archava truth without private record fields",
+    "overview distinguishes permitted empty data from missing section grants and refuses missing contacts or tenant membership",
+    "overview rechecks human/service delegation intersections, resource reassignment and inactive membership without cached grants",
+    "dashboard and conversation overview reads leave all CRM record, command and audit counts unchanged and request no provider"
+  ],
+  "consumers": [
+    {
+      "consumer": "hospitality",
+      "modules": [
+        {
+          "name": "@archava/crm",
+          "version": "0.7.0",
+          "implementationSha256": "64787893c54999728e41bd9bb38b2f0625a90fd029e393d099a38d750fc160f3",
+          "tarballSha256": "a6da387030bd012dee0eee276f332cff293239d6ace8860dd94bd6c92307683d"
+        },
+        {
+          "name": "@archava/crm-pg",
+          "version": "0.7.0",
+          "implementationSha256": "860a1625a33e8e6b4cd463f205b1f75dd2213d2ed3b512ed377c2af9aa14b16a",
+          "tarballSha256": "2e4e9134692bf518490888b7b98c17a942d932a611d27546c47a9f739151a91f"
+        },
+        {
+          "name": "@archava/crm-assistant",
+          "version": "0.7.0",
+          "implementationSha256": "e30d1318871c7ac886857b80c3bd2fd80b30b18935894c6c5eadb7d61ca6f7b0",
+          "tarballSha256": "0f1816471abed51aa675cf31f21d7d62870596df820a11acf1b36b440216eef4"
+        },
+        {
+          "name": "@archava/provider-runtime",
+          "version": "0.1.0",
+          "implementationSha256": "de9ed6f451ca38791309c1d6ec9f8d2e0b6e2a85e7b461458b259e3f2461767a",
+          "tarballSha256": "a15001e97bbfd3295ab63c868354884acccd64cbdd403870d9f852f569d2072f"
+        }
+      ]
+    },
+    {
+      "consumer": "professional-services",
+      "modules": [
+        {
+          "name": "@archava/crm",
+          "version": "0.7.0",
+          "implementationSha256": "64787893c54999728e41bd9bb38b2f0625a90fd029e393d099a38d750fc160f3",
+          "tarballSha256": "a6da387030bd012dee0eee276f332cff293239d6ace8860dd94bd6c92307683d"
+        },
+        {
+          "name": "@archava/crm-pg",
+          "version": "0.7.0",
+          "implementationSha256": "860a1625a33e8e6b4cd463f205b1f75dd2213d2ed3b512ed377c2af9aa14b16a",
+          "tarballSha256": "2e4e9134692bf518490888b7b98c17a942d932a611d27546c47a9f739151a91f"
+        },
+        {
+          "name": "@archava/crm-assistant",
+          "version": "0.7.0",
+          "implementationSha256": "e30d1318871c7ac886857b80c3bd2fd80b30b18935894c6c5eadb7d61ca6f7b0",
+          "tarballSha256": "0f1816471abed51aa675cf31f21d7d62870596df820a11acf1b36b440216eef4"
+        },
+        {
+          "name": "@archava/provider-runtime",
+          "version": "0.1.0",
+          "implementationSha256": "de9ed6f451ca38791309c1d6ec9f8d2e0b6e2a85e7b461458b259e3f2461767a",
+          "tarballSha256": "a15001e97bbfd3295ab63c868354884acccd64cbdd403870d9f852f569d2072f"
+        }
+      ]
+    }
+  ],
+  "postgres": "real disposable cluster",
+  "providerCalls": 0
+}

@@ -1,6 +1,6 @@
 {
   "name": "@archava/crm",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",
@@ -11,6 +11,8 @@
     "./dashboard": "./src/dashboard.ts",
     "./worklist-contracts": "./src/worklist-contracts.ts",
     "./worklist-dashboard": "./src/worklist-dashboard.ts",
+    "./overview-contracts": "./src/overview-contracts.ts",
+    "./overview-dashboard": "./src/overview-dashboard.ts",
     "./pipeline": "./src/pipeline.ts",
     "./pipeline-contracts": "./src/pipeline-contracts.ts",
     "./pipeline-dashboard": "./src/pipeline-dashboard.ts"

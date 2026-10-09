@@ -55,6 +55,10 @@ export function createCrmApi(
       }
       if (request.method === 'GET' && parts.length === 4) {
         if (parts[3] === 'access') return json(await service.access(tenant, principal))
+        if (parts[3] === 'overview')
+          return json(
+            await service.overview(tenant, principal, Object.fromEntries(url.searchParams)),
+          )
         if (parts[3] === 'contacts')
           return json(
             await service.list(tenant, principal, {

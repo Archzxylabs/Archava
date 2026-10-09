@@ -222,3 +222,12 @@ resource locking and one authoritative audit/receipt remain deterministic.
 Both installed business consumers and restored local operation preserve their
 existing boundaries. Broader commercial coverage and owner planning estimates
 remain unchanged; this release adds no external effect or general AI write planner.
+
+## 9 October 2026 — complete authorized CRM overview
+
+The [0.7.0 shared overview](CRM_OVERVIEW.md) provides whole authorized contact,
+follow-up and pipeline counts through one deterministic database read. Dashboard
+and local Archava share its contract and presentation. Current section grants,
+assigned scope and service/human intersections apply to every read. No new domain,
+financial truth, write authority, provider or production infrastructure is claimed;
+the owner planning and historical commercial estimates remain unchanged.

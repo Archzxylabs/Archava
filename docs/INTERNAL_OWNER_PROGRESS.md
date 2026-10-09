@@ -64,3 +64,9 @@ bounded native action through the existing approved execution path. Exact task
 reads and selection remain read-only; final completion uses current delegated
 grants and a separate action-bound challenge. The broader 60% estimate remains
 unchanged pending production/general-planning evidence.
+
+9 October follow-up: the [0.7.0 authorized CRM overview](CRM_OVERVIEW.md) gives
+dashboard and local Archava the same complete contact/task/pipeline aggregates.
+Unavailable sections remain distinct from permitted zero counts; current tenant,
+assigned and delegated read grants govern every refresh. The broader 60% planning
+estimate remains unchanged.

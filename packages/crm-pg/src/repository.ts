@@ -27,6 +27,8 @@ import {
   type FollowupQueueQuery,
   type FollowupQueue,
   type FollowupDetail,
+  crmOverviewSchema,
+  type CrmOverview,
 } from '@archava/crm'
 import { crmMigrationLedger } from './migrate.js'
 import {
@@ -314,6 +316,71 @@ export class PostgresCrmRepository implements CrmRepository, CrmPipelineReposito
         throw new CrmError('not_found', 'CRM resource not found.')
       await this.ownedContact(client, tenant, access, row.contact_id)
     }
+  }
+  overview(tenant: string, principal: CrmPrincipal, asOf: string): Promise<CrmOverview> {
+    crmOverviewSchema.shape.asOf.parse(asOf)
+    // One SELECT gives all aggregates the same database snapshot and due-time boundary.
+    return this.transaction(tenant, principal, 'contacts.read', async (client, access) => {
+      const canFollowups = access.permissions.includes('followups.read'),
+        canPipeline = access.permissions.includes('pipeline.read')
+      const row = (
+        await client.query<Row>(
+          `WITH visible_contacts AS (
+            SELECT id FROM archava_crm.contacts
+            WHERE tenant_id=$1 AND ($2::boolean OR owner_id=$3)
+          ), tasks AS (
+            SELECT f.status,f.due_at FROM archava_crm.followups f
+            JOIN visible_contacts c ON c.id=f.contact_id
+            WHERE f.tenant_id=$1 AND $5::boolean
+          ), opportunities AS (
+            SELECT o.stage FROM archava_crm.opportunities o
+            JOIN visible_contacts c ON c.id=o.contact_id
+            WHERE o.tenant_id=$1 AND $6::boolean AND ($2::boolean OR o.owner_id=$3)
+          ) SELECT
+            (SELECT count(*) FROM visible_contacts) AS contacts,
+            (SELECT count(*) FROM tasks WHERE status='open') AS open,
+            (SELECT count(*) FROM tasks WHERE status='open' AND due_at<$4::timestamptz) AS overdue,
+            (SELECT count(*) FROM tasks WHERE status='open' AND due_at>=$4::timestamptz) AS upcoming,
+            (SELECT count(*) FROM tasks WHERE status='completed') AS completed,
+            (SELECT count(*) FROM opportunities) AS total,
+            (SELECT count(*) FROM opportunities WHERE stage='new') AS new,
+            (SELECT count(*) FROM opportunities WHERE stage='qualified') AS qualified,
+            (SELECT count(*) FROM opportunities WHERE stage='proposal') AS proposal,
+            (SELECT count(*) FROM opportunities WHERE stage='won') AS won,
+            (SELECT count(*) FROM opportunities WHERE stage='lost') AS lost`,
+          [tenant, access.scope === 'all', access.ownerId, asOf, canFollowups, canPipeline],
+        )
+      ).rows[0]
+      if (!row) throw new CrmError('unavailable', 'CRM overview could not be verified.')
+      const stages = {
+        new: Number(row.new),
+        qualified: Number(row.qualified),
+        proposal: Number(row.proposal),
+        won: Number(row.won),
+        lost: Number(row.lost),
+      }
+      return crmOverviewSchema.parse({
+        tenantId: tenant,
+        asOf,
+        scope: access.scope,
+        contacts: Number(row.contacts),
+        followups: canFollowups
+          ? {
+              open: Number(row.open),
+              overdue: Number(row.overdue),
+              upcoming: Number(row.upcoming),
+              completed: Number(row.completed),
+            }
+          : null,
+        pipeline: canPipeline
+          ? {
+              ...stages,
+              total: Number(row.total),
+              active: stages.new + stages.qualified + stages.proposal,
+            }
+          : null,
+      })
+    })
   }
   list(tenant: string, principal: CrmPrincipal, raw: CrmPage): Promise<ContactPage> {
     const page = pageSchema.parse(raw)

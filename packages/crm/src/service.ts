@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { followupQueueQuerySchema, followupQueueSchema } from './worklist-contracts.js'
+import { crmOverviewQuerySchema, crmOverviewSchema } from './overview-contracts.js'
 import {
   CrmError,
   tenantSchema,
@@ -15,7 +16,10 @@ import {
 } from './contracts.js'
 
 export class CrmService {
-  constructor(private readonly repository: CrmRepository) {}
+  constructor(
+    private readonly repository: CrmRepository,
+    private readonly clock: () => string = () => new Date().toISOString(),
+  ) {}
 
   private identity(
     tenant: unknown,
@@ -28,6 +32,19 @@ export class CrmService {
   async access(tenant: unknown, principal: unknown) {
     const identity = this.identity(tenant, principal)
     return await this.repository.access(identity.tenant, identity.principal)
+  }
+  async overview(tenant: unknown, principal: unknown, raw: unknown = {}) {
+    const identity = this.identity(tenant, principal)
+    crmOverviewQuerySchema.parse(raw)
+    const asOf = z.iso.datetime().parse(this.clock())
+    if (!this.repository.overview)
+      throw new CrmError('unavailable', 'CRM overview is unavailable on this adapter.')
+    const result = crmOverviewSchema.parse(
+      await this.repository.overview(identity.tenant, identity.principal, asOf),
+    )
+    if (result.tenantId !== identity.tenant || result.asOf !== asOf)
+      throw new CrmError('unavailable', 'CRM overview could not be verified.')
+    return result
   }
   async list(tenant: unknown, principal: unknown, page: unknown = {}) {
     const identity = this.identity(tenant, principal)
@@ -125,6 +142,7 @@ export class CrmService {
 export function createCrmTools(service: CrmService, tenant: string, principal: CrmPrincipal) {
   return {
     async invoke(name: string, input: unknown) {
+      if (name === 'crm.overview') return service.overview(tenant, principal, input)
       if (name === 'crm.contacts.list') {
         const page = await service.list(tenant, principal, input)
         return {

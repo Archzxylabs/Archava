@@ -3,6 +3,7 @@ import { GEMINI_PILOT_CASES } from './pilot.js'
 import { commandStatusSchema, mutationReceiptSchema, idSchema } from '@archava/crm/contracts'
 import type { FollowupRecoveryStore } from './recovery.js'
 import { nativeReviewSchema, nativeExecutionSchema } from '@archava/crm-act/contracts'
+import { renderCrmOverview } from '@archava/crm/overview-dashboard'
 
 /** Shared UI. It renders records as text and holds no credentials or durable conversation state. */
 export function mountCrmConversation(
@@ -15,6 +16,7 @@ export function mountCrmConversation(
     recovery?: FollowupRecoveryStore
     transport?: typeof fetch
     onFollowupCompleted?: () => void
+    pipelineLabels?: unknown
   },
 ) {
   let destroyed = false
@@ -41,7 +43,7 @@ export function mountCrmConversation(
   const title = make('h2', 'Archava · CRM')
   const help = make(
     'p',
-    'Coba “tampilkan kontak”, “cari Budi”, “ringkas Budi”, atau “tampilkan peluang”. Tinjau draft follow-up sebelum menyimpannya ke CRM.',
+    'Coba “ringkas kondisi CRM”, “tampilkan kontak”, “cari Budi”, “ringkas Budi”, atau “tampilkan peluang”. Tinjau draft follow-up sebelum menyimpannya ke CRM.',
   )
   const selectedLabel = make('p', 'Belum ada kontak dipilih.')
   selectedLabel.dataset.archavaSelected = ''
@@ -270,6 +272,12 @@ export function mountCrmConversation(
 
   const render = (data: CrmConversationData | null, entry: HTMLElement) => {
     if (!data) return
+    if (data.kind === 'overview') {
+      const overview = make('div')
+      overview.dataset.archavaOverview = ''
+      renderCrmOverview(overview, data.snapshot, options.pipelineLabels)
+      entry.append(overview)
+    }
     if (data.kind === 'completion_draft') {
       entry.append(
         make('p', data.task.followup.summary),

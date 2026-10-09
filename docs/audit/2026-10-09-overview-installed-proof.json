@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-09",
+  "baseline": "0c8d444",
+  "releaseScope": "local free authorized CRM overview shared by dashboard and Archava",
+  "node": "v22.22.3",
+  "originalDomainIdentityApprovalAndProviderRowsPreserved": true,
+  "originalPrivateFilesPreserved": true,
+  "crmSchemaUnchanged": true,
+  "domainCommandsSubmitted": 0,
+  "actualModelOrExternalActionCalls": 0,
+  "installedLocalHostHealthStatus": 200,
+  "authenticatedOverview": true,
+  "configuredWorkspaces": 2,
+  "localOverview": true,
+  "localPlannerConfirmed": true,
+  "existingCredentialsPreserved": true,
+  "compiledBrowserOverview": true,
+  "existingCompletionPreserved": true
+}

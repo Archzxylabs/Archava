@@ -1,5 +1,6 @@
 import { mountCrmDashboard } from '@archava/crm/dashboard'
 import { mountCrmWorklist } from '@archava/crm/worklist-dashboard'
+import { mountCrmOverview } from '@archava/crm/overview-dashboard'
 import { mountPipelineDashboard } from '@archava/crm/pipeline-dashboard'
 import { pipelineLabelsSchema } from '@archava/crm/pipeline-contracts'
 import { mountCrmConversation } from '@archava/crm-assistant/panel'
@@ -43,10 +44,13 @@ const status = element<HTMLElement>('#status')
 let csrf = ''
 let dashboard: ReturnType<typeof mountCrmDashboard> | null = null
 let worklist: ReturnType<typeof mountCrmWorklist> | null = null
+let overview: ReturnType<typeof mountCrmOverview> | null = null
 let pipeline: ReturnType<typeof mountPipelineDashboard> | null = null
 let conversation: ReturnType<typeof mountCrmConversation> | null = null
 let session: z.infer<typeof sessionSchema> = { authenticated: false }
 function signedOut() {
+  overview?.destroy()
+  overview = null
   worklist?.destroy()
   worklist = null
   dashboard?.destroy()
@@ -90,6 +94,8 @@ async function send(path: string, body?: unknown) {
 async function mount() {
   if (!session.authenticated) return
   const selected = session.tenants.find((item) => item.id === tenants.value)
+  overview?.destroy()
+  overview = null
   worklist?.destroy()
   worklist = null
   dashboard?.destroy()
@@ -134,8 +140,10 @@ async function mount() {
       ? '/api/crm/' + selected.id + '/actions/followup'
       : undefined,
     pilotEnabled: session.plannerMode === 'gemini-synthetic',
+    pipelineLabels: selected.pipelineLabels,
     onFollowupCompleted: () => {
       void worklist?.refresh()
+      void overview?.refresh()
     },
     recovery: createTabFollowupRecovery(
       {
@@ -171,7 +179,17 @@ async function mount() {
       return response
     },
   })
-  await Promise.all([dashboard.ready, pipeline.ready, worklist.ready])
+  overview = mountCrmOverview(element<HTMLElement>('#overview'), {
+    apiBase: '/api/crm/' + selected.id,
+    tenantId: selected.id,
+    pipelineLabels: selected.pipelineLabels,
+    transport: async (input, init) => {
+      const response = await fetch(input, init)
+      if (response.status === 401) signedOut()
+      return response
+    },
+  })
+  await Promise.all([dashboard.ready, pipeline.ready, worklist.ready, overview.ready])
 }
 async function refreshSession() {
   session = sessionSchema.parse(await send('/api/session'))

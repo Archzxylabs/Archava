@@ -31,6 +31,16 @@ const wait = (condition) =>
   )
 const fill = (selector, value) =>
   evaluate(`document.querySelector(${JSON.stringify(selector)}).value=${JSON.stringify(value)}`)
+const overviewMatches = (selector = '#overview') =>
+  evaluate(`(async()=>{
+  const tenant=document.querySelector('#tenants').value;
+  const response=await fetch('/api/crm/'+tenant+'/overview');if(!response.ok)return false;
+  const snapshot=await response.json(),root=document.querySelector(${JSON.stringify(selector)});
+  const expected={contacts:snapshot.contacts};
+  for(const key of ['open','overdue','upcoming','completed'])if(snapshot.followups)expected['followups.'+key]=snapshot.followups[key];
+  for(const key of ['active','new','qualified','proposal','won','lost'])if(snapshot.pipeline)expected['pipeline.'+key]=snapshot.pipeline[key];
+  return root.querySelectorAll('[data-crm-metric]').length===Object.keys(expected).length && Object.entries(expected).every(([key,value])=>root.querySelector('[data-crm-metric="'+key+'"]')?.textContent===String(value));
+})()`)
 async function signIn(account) {
   await fill('#login [name=username]', account.username)
   await fill('#login [name=password]', account.password)
@@ -75,6 +85,11 @@ try {
   await evaluate(`window.pilotOriginalFetch=window.fetch;window.pilotConversationCalls=0;
     window.fetch=async(...args)=>{const response=await window.pilotOriginalFetch(...args);if(String(args[0]).endsWith('/conversation'))window.pilotConversationCalls++;if(String(args[0])==='/api/session' && response.ok){const session=await response.json();if(session.authenticated)return new Response(JSON.stringify({...session,plannerMode:'gemini-synthetic'}),{status:200,headers:{'content-type':'application/json'}})}return response}`)
   await signIn(accounts.owner)
+  check(
+    'shared owner overview displays database totals and configured pipeline labels',
+    (await overviewMatches()) &&
+      (await evaluate('document.querySelector("#overview").textContent.includes("Won inquiry")')),
+  )
   await evaluate('document.querySelector("[data-archava-example]").click()')
   check(
     'pilot metadata shows six examples; choosing an example fills text without submitting or calling a provider',
@@ -95,6 +110,14 @@ try {
     await evaluate(
       'document.querySelector("[data-archava-log]").textContent==="" && !document.querySelector("[data-archava-form] button[type=submit]").disabled',
     ),
+  )
+  await ask('ringkas kondisi CRM')
+  check(
+    'local Archava overview renders the same CRM aggregates with no approval or task content',
+    (await overviewMatches('[data-archava-overview]')) &&
+      (await evaluate(
+        '!document.querySelector("[data-archava-save]") && !document.querySelector("[data-archava-overview]").textContent.includes("Worklist owner overdue")',
+      )),
   )
   await wait('document.querySelector("[data-crm-contacts]").textContent.includes("Owner contact")')
   check(
@@ -156,6 +179,9 @@ try {
     'document.querySelector("[data-crm-detail]").textContent.includes("Browser permanent guest")',
   )
   check('shared dashboard writes through the session and CSRF-protected API', true)
+  await evaluate('document.querySelector("[data-crm-overview-refresh]").click()')
+  await wait('!document.querySelector("[data-crm-overview-refresh]").disabled')
+  check('manual overview refresh includes a newly persisted contact', await overviewMatches())
   await wait(
     'document.querySelector("[data-pipeline-contact]").textContent.includes("Browser permanent guest")',
   )
@@ -200,6 +226,12 @@ try {
     await evaluate(
       'document.querySelector("[data-pipeline-detail]").textContent.includes("Won inquiry") && !document.querySelector("[data-pipeline-move]")',
     ),
+  )
+  await evaluate('document.querySelector("[data-crm-overview-refresh]").click()')
+  await wait('!document.querySelector("[data-crm-overview-refresh]").disabled')
+  check(
+    'overview refresh reflects authoritative stage changes and leaves Won as a sales count',
+    await overviewMatches(),
   )
   await ask('tampilkan peluang')
   await evaluate(
@@ -466,8 +498,27 @@ try {
     "fetch('/api/crm/hotel-demo/commands',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({requestId:crypto.randomUUID(),command:{operation:'contact.create',data:{fullName:'Forbidden browser command'}}})}).then(response=>response.status)",
   )
   check('direct browser mutation without CSRF is refused', noCsrf === 403)
+  await evaluate(
+    `window.overviewOriginalFetch=window.fetch;window.fetch=async(...args)=>String(args[0]).endsWith('/overview')?new Response('{}',{status:503}):window.overviewOriginalFetch(...args)`,
+  )
+  await evaluate('document.querySelector("[data-crm-overview-refresh]").click()')
+  await wait(
+    'document.querySelector("[data-crm-overview-status]").textContent.includes("belum bisa dimuat")',
+  )
+  check(
+    'failed overview refresh removes previous numbers instead of presenting stale totals',
+    await evaluate(
+      'document.querySelector("#overview").querySelectorAll("[data-crm-metric]").length===0',
+    ),
+  )
+  await evaluate(
+    'window.fetch=window.overviewOriginalFetch;delete window.overviewOriginalFetch;document.querySelector("[data-crm-overview-refresh]").click()',
+  )
+  await wait('!document.querySelector("[data-crm-overview-refresh]").disabled')
   await evaluate(`window.archavaOriginalFetch=window.fetch;window.archavaReleaseResponse=null;
-    window.fetch=async(...args)=>{const response=await window.archavaOriginalFetch(...args);if(String(args[0]).endsWith('/conversation'))await new Promise(done=>{window.archavaReleaseResponse=done});return response}`)
+    window.fetch=async(...args)=>{const response=await window.archavaOriginalFetch(...args);if(String(args[0]).endsWith('/conversation'))await new Promise(done=>{window.archavaReleaseResponse=done});if(String(args[0]).endsWith('/hotel-demo/overview'))await new Promise(done=>{window.archavaReleaseOverview=done});return response}`)
+  await evaluate('document.querySelector("[data-crm-overview-refresh]").click()')
+  await wait('typeof window.archavaReleaseOverview==="function"')
   await fill('[data-archava-form] [name=utterance]', 'tampilkan kontak')
   await evaluate('document.querySelector("[data-archava-form]").requestSubmit()')
   await wait('typeof window.archavaReleaseResponse==="function"')
@@ -496,13 +547,20 @@ try {
     ),
   )
   await evaluate(
-    'window.fetch=window.archavaOriginalFetch;window.archavaReleaseResponse();delete window.archavaOriginalFetch;delete window.archavaReleaseResponse;new Promise(done=>setTimeout(done,50))',
+    'window.fetch=window.archavaOriginalFetch;window.archavaReleaseResponse();window.archavaReleaseOverview();delete window.archavaOriginalFetch;delete window.archavaReleaseResponse;delete window.archavaReleaseOverview;new Promise(done=>setTimeout(done,50))',
   )
   check(
     'a late response from the old business cannot repopulate the new conversation',
     await evaluate(
       'document.querySelector("[data-archava-log]").textContent==="" && !document.querySelector("#conversation").textContent.includes("Browser permanent guest")',
     ),
+  )
+  check(
+    'switching business clears the prior overview and ignores its delayed response',
+    (await overviewMatches()) &&
+      (await evaluate(
+        'document.querySelector("#overview [data-crm-metric=contacts]").textContent==="1"',
+      )),
   )
   await ask('tampilkan kontak')
   check(
@@ -524,12 +582,23 @@ try {
     'sign-out destroys pipeline records and pending selections',
     await evaluate('document.querySelector("#pipeline").textContent===""'),
   )
+  check(
+    'logout destroys all overview numbers',
+    await evaluate('document.querySelector("#overview").textContent===""'),
+  )
   await page.navigate(origin)
   check(
     'a logged-out session stays logged out after reload',
     await evaluate('!document.querySelector("#login").hidden'),
   )
   await signIn(accounts.staff)
+  check(
+    'staff overview counts only assigned records and uses the same shared component',
+    (await overviewMatches()) &&
+      (await evaluate(
+        'document.querySelector("#overview").textContent.includes("ditugaskan kepada Anda")',
+      )),
+  )
   await wait('document.querySelector("[data-crm-contacts]").textContent.includes("Staff contact")')
   check(
     'staff sees only its assigned contacts and allowed business',
@@ -652,6 +721,8 @@ try {
     'lost completion response recovers by receipt without another POST and refreshes the open worklist',
     (await evaluate('window.completePosts===1')) && (await taskStatus()) === 'completed',
   )
+  await wait('!document.querySelector("[data-crm-overview-refresh]").disabled')
+  check('confirmed completion also refreshes overview counts from CRM', await overviewMatches())
   await evaluate('window.fetch=window.completeOriginalFetch;delete window.completeOriginalFetch')
   await ask('selesaikan follow-up')
   check(
@@ -717,6 +788,7 @@ try {
     (item) =>
       [
         origin + '/api/crm/hotel-demo/conversation',
+        origin + '/api/crm/hotel-demo/overview',
         origin + '/api/crm/hotel-demo/commands',
         origin + '/api/crm/hotel-demo/actions/followup/present',
       ].includes(item.url) && item.error === 'net::ERR_ABORTED',
@@ -734,7 +806,7 @@ try {
     'no unexpected browser errors, CSP violations or failed resources',
     expected.length <= 5 &&
       page.console_.length === expected.length &&
-      expectedAbort.length <= 2 &&
+      expectedAbort.length <= 3 &&
       failures.length === expectedAbort.length,
   )
   console.log(`${checks.length}/${checks.length} authenticated CRM browser checks passed.`)

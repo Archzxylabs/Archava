@@ -79,10 +79,23 @@ form {
   color: #c6d4f2;
 }
 #crm,
+#overview,
 #worklist,
 #pipeline,
 #conversation {
   overflow-wrap: anywhere;
+}
+[data-crm-overview-counts] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 16px;
+  padding: 16px;
+  border: 1px solid #334158;
+  border-radius: 12px;
+}
+[data-crm-overview-counts] dd {
+  margin: 0;
+  font-weight: 600;
 }
 #conversation article {
   border-left: 2px solid #45536b;

@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { pipelineStageSchema } from '@archava/crm/pipeline-contracts'
 import { followupDetailSchema } from '@archava/crm/contracts'
+import { crmOverviewSchema } from '@archava/crm/overview-contracts'
 import {
   followupBucketSchema,
   followupCursorSchema,
@@ -29,6 +30,7 @@ export type CrmConversationInput = z.infer<typeof conversationInputSchema>
 
 /** Provider output is a request. No tenant, identity, permissions, SQL or write tool exists here. */
 export const conversationPlanSchema = z.discriminatedUnion('operation', [
+  z.object({ operation: z.literal('crm.overview') }).strict(),
   z.object({ operation: z.literal('followup.complete.prepare') }).strict(),
   z
     .object({
@@ -90,6 +92,7 @@ const opportunityItemSchema = z
   })
   .strict()
 export const conversationDataSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('overview'), snapshot: crmOverviewSchema }).strict(),
   z
     .object({
       kind: z.literal('completion_draft'),

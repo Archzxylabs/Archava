@@ -5,6 +5,7 @@ import {
   CRM_PERMISSIONS,
   type CrmRepository,
   type CrmPermission,
+  type CrmOverview,
 } from '@archava/crm'
 import {
   createCrmConversation,
@@ -69,6 +70,51 @@ function fixture(
     conversation: createCrmConversation(new CrmService(repository), planner),
   }
 }
+
+describe('CRM operational overview conversation', () => {
+  const snapshot: CrmOverview = {
+    tenantId: 'hotel-demo',
+    asOf: now,
+    scope: 'assigned',
+    contacts: 3,
+    followups: { open: 4, overdue: 1, upcoming: 3, completed: 2 },
+    pipeline: { total: 2, active: 1, new: 0, qualified: 0, proposal: 1, won: 1, lost: 0 },
+  }
+  it('uses server aggregate truth without selection, writes or a private record prompt', async () => {
+    const f = fixture(),
+      overview = vi.fn(() => Promise.resolve(snapshot))
+    const conversation = createCrmConversation(
+      new CrmService({ ...f.repository, overview }, () => now),
+      new LocalCrmPlanner(),
+    )
+    const reply = await conversation.ask(context, { utterance: 'ringkas kondisi CRM' })
+    expect(reply.data).toEqual({ kind: 'overview', snapshot })
+    expect(reply.source).toBe('crm')
+    expect(reply.text).toContain('3 kontak')
+    expect(reply.text).toContain('1 terlambat')
+    expect(reply.planner.providerId).toBe('archava-crm-local')
+    expect(f.mutate).not.toHaveBeenCalled()
+    expect(f.detail).not.toHaveBeenCalled()
+    expect(f.list).not.toHaveBeenCalled()
+  })
+  it('describes restricted sections as unavailable and rechecks contact access before reading', async () => {
+    const f = fixture(),
+      overview = vi.fn(() => Promise.resolve({ ...snapshot, followups: null, pipeline: null }))
+    const conversation = createCrmConversation(
+      new CrmService({ ...f.repository, overview }, () => now),
+      new LocalCrmPlanner(),
+    )
+    const reply = await conversation.ask(context, { utterance: 'ringkas CRM' })
+    expect(reply.text).toContain('Ringkasan follow-up tidak tersedia')
+    expect(reply.text).toContain('Ringkasan peluang tidak tersedia')
+    f.access.mockResolvedValue({ permissions: [], ownerId: 'hotel-owner', scope: 'all' })
+    overview.mockClear()
+    await expect(
+      conversation.ask(context, { utterance: 'ringkas kondisi CRM' }),
+    ).rejects.toMatchObject({ code: 'forbidden' })
+    expect(overview).not.toHaveBeenCalled()
+  })
+})
 describe('reusable CRM conversation boundary', () => {
   it('requires explicit task selection for a read-only completion draft and leaves execution to approval', async () => {
     const f = fixture()

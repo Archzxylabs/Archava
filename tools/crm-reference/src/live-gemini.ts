@@ -172,6 +172,7 @@ if (process.argv.slice(2).join(' ') !== '--live') {
       assert.equal(reply.planner.providerId, 'google-gemini-crm')
       const operation = item.expected.operation
       const expectedKind = {
+        'crm.overview': 'overview',
         'followups.list': 'followups',
         'followup.complete.prepare': 'completion_draft',
         'contacts.list': 'contacts',
