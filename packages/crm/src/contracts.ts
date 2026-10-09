@@ -178,6 +178,18 @@ export interface CrmRepository {
   list(tenant: string, principal: CrmPrincipal, page: CrmPage): Promise<ContactPage>
   detail(tenant: string, principal: CrmPrincipal, id: string): Promise<ContactDetail>
   mutate(tenant: string, principal: CrmPrincipal, mutation: CrmMutation): Promise<MutationReceipt>
+  /** Server-only verified approval path. Ordinary machine writes remain forbidden. */
+  mutateApproved?(
+    tenant: string,
+    principal: CrmPrincipal,
+    mutation: CrmMutation,
+    approval: unknown,
+  ): Promise<MutationReceipt>
+  approvedCommandStatus?(
+    tenant: string,
+    principal: CrmPrincipal,
+    requestId: string,
+  ): Promise<CrmCommandStatus>
   /** Optional read capability for existing adapters; never executes or retries a command. */
   commandStatus?(
     tenant: string,
@@ -199,7 +211,7 @@ export class CrmError extends Error {
 /** Config/installation metadata; it grants no authority and supplies no price. */
 export const CRM_CONTACTS_MANIFEST = {
   id: 'crm_contacts',
-  version: '0.3.0',
+  version: '0.4.0',
   status: 'implemented' as const,
   requires: [],
   permissions: CRM_PERMISSIONS.filter((permission) => !permission.startsWith('pipeline.')),

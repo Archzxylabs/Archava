@@ -7,13 +7,13 @@
 **PRD v2 scope, evidence updated 9 October 2026:** §34 remains the broader commercial gate. The
 new module-library milestones in [PRD §49](../PRD.md) are assessed separately:
 
-| Milestone                  | Current evidence                                                                                                                                            |
-| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| M0 specification alignment | Research, PRD and supporting operating/status documents updated; documentation only.                                                                        |
-| M1 independent core reuse  | Two independent cold-installed core consumers use matching compiled artifacts; see the M1 entry below.                                                      |
-| M2 business-module reuse   | One persistent contacts/activity/follow-up module serves two contexts with the same API/dashboard; see the M2 entry below.                                  |
-| M3 controlled operations   | Local identity/recovery, CRM conversation and bounded Gemini pilot; general model quality, durable machine execution, deployment and telemetry remain open. |
-| M4 library expansion       | Small CRM sales-pipeline extension locally verified across two independent inquiry consumers; broader kits, support and commercial scope remain open.       |
+| Milestone                  | Current evidence                                                                                                                                                                                                 |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| M0 specification alignment | Research, PRD and supporting operating/status documents updated; documentation only.                                                                                                                             |
+| M1 independent core reuse  | Two independent cold-installed core consumers use matching compiled artifacts; see the M1 entry below.                                                                                                           |
+| M2 business-module reuse   | One persistent contacts/activity/follow-up module serves two contexts with the same API/dashboard; see the M2 entry below.                                                                                       |
+| M3 controlled operations   | Supported local owner pilot adds verified native follow-up execution, receipt recovery, restore hold and diagnostics. Public hosting, general AI planning and external/presence providers remain separate gates. |
+| M4 library expansion       | Small CRM sales-pipeline extension locally verified across two independent inquiry consumers; broader kits, support and commercial scope remain open.                                                            |
 
 The historical weighted percentage below is not recalculated or reused as v2
 progress. M1/M2 evidence is assessed separately from commercial readiness.
@@ -36,8 +36,10 @@ portable voice/avatar template now share one source tree. The 30% figure remains
 the last audited commercial score; the historical scorecard below does not yet
 score the standalone template or new frontend. Source consolidation does not
 establish shared Chat/Voice/Human intelligence, live Act/Transact, authentication,
-CRM/ERP integration, or production deployment. The operational-readiness tasks
-remain pending in `delegation/act-operational-readiness/`.
+CRM/ERP integration, or production deployment. The operational-readiness task
+results were completed in the 9 October durable library checkpoint; see
+`delegation/act-operational-readiness/` and the subsequent
+[local owner pilot](LOCAL_OWNER_PILOT.md).
 
 The audited Decision Intelligence line moves from 10% to **65%**: contracts, Rule provider, orchestrator, three modes, five tasks, assistant/reference integration, offline evaluation, metadata observability, and mocked Jev adapter are verified. Live Jev behavior, provider data terms, production telemetry and service hosting remain open. Its 8-point weighted contribution moves from 0.80 to 5.20, lifting the total from **24.15** to **28.55/100 ≈ 29%**. Other lines keep their baseline scores because this phase did not deliver voice, avatar, real Act/Transact workflows, tenant operations, or production deployment. This estimate is independent of the Rule provider's eval accuracy.
 
@@ -186,3 +188,17 @@ CRM artifacts. See [recovery scope](CRM_COMMAND_RECOVERY.md).
 This is human operation recovery. Autonomous Act approval/lifecycle, broader
 reconciliation, public hosting and telemetry remain open. M3 stays partial; the
 historical commercial percentage and Pending Act tasks are unchanged.
+
+## 9 October 2026 — supported local owner approval release
+
+The owner chose local/free completion. `@archava/crm-act` adds exactly one native
+owner-approved follow-up command, backed by current delegated grants, signed
+consent, active claim, version binding, atomic domain/audit receipt and read-only
+recovery. Restored copies hold execution under a new private approval epoch until
+explicit operator resume. Diagnostics, real restoration and Chromium flows are
+verified; the existing private local account/configuration are preserved.
+
+This completes [the supported local owner acceptance](LOCAL_OWNER_PILOT.md).
+Broader M3/presence/commercial release and general ERP remain separate. The
+historical commercial percentage is unchanged; the broader owner planning
+checkpoint and the completed local acceptance use distinct denominators.

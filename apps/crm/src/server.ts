@@ -5,6 +5,8 @@ import { join } from 'node:path'
 import { CrmService } from '@archava/crm'
 import { CrmPipelineService } from '@archava/crm/pipeline'
 import { PostgresCrmRepository } from '@archava/crm-pg'
+import { createNativeCrmVerifier, createPostgresNativeCrmHost } from '@archava/crm-act/postgres'
+import { nativeConfirmationKey, readNativeControl, NATIVE_SERVICE_ID } from './native-actions.js'
 import { PostgresIdentity } from '@archava/identity-pg'
 import { home, loadSettings, connection } from './settings.js'
 import { startLocalDatabase, stopLocalDatabase } from './local-postgres.js'
@@ -49,10 +51,20 @@ try {
   ownsDatabase = await startLocalDatabase(settings)
   pool = new Pool(connection(settings))
   pool.on('error', () => process.stderr.write('CRM database connection unavailable.\n'))
-  const repository = await PostgresCrmRepository.create(pool, settings.fingerprintKey)
+  const nativeOptions = {
+    serviceId: NATIVE_SERVICE_ID,
+    confirmationKey: nativeConfirmationKey(settings),
+    control: () => readNativeControl(settings),
+  }
+  const repository = await PostgresCrmRepository.create(
+    pool,
+    settings.fingerprintKey,
+    createNativeCrmVerifier(nativeOptions),
+  )
   const service = new CrmService(repository)
   const identity = await PostgresIdentity.create(pool, settings.identityKey)
   const planner = await loadCrmPlanner(await PostgresProviderAttemptStore.create(pool))
+  const runtimePool = pool
   host = await startCrmHost(
     service,
     identity,
@@ -62,6 +74,14 @@ try {
     new CrmPipelineService(repository),
     planner.select,
     planner.gemini ? 'gemini-synthetic' : 'local',
+    (tenantId, humanId) =>
+      createPostgresNativeCrmHost(runtimePool, {
+        ...nativeOptions,
+        tenantId,
+        humanId,
+        service,
+        clock: Date.now,
+      }),
   )
   process.stdout.write(`CRM ready: ${host.origin}\n`)
   await stopped

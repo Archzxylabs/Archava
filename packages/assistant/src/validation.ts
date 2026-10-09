@@ -213,6 +213,12 @@ const INPUT_SCHEMAS: Readonly<Record<string, Readonly<Record<string, InputField>
     templateId: { kind: 'string', entity: 'template', description: 'the template' },
     to: { kind: 'string', description: 'the recipient address' },
   },
+  'crm.followup.create': {
+    contactId: { kind: 'string', entity: 'contact', description: 'the authorized CRM contact' },
+    contactRevision: { kind: 'number', description: 'the reviewed contact revision' },
+    summary: { kind: 'string', description: 'the reviewed follow-up text' },
+    dueAt: { kind: 'string', description: 'the reviewed due date' },
+  },
   'form.submit': {
     formId: { kind: 'string', entity: 'form', description: 'the form' },
     fields: { kind: 'object', description: 'the submitted values' },

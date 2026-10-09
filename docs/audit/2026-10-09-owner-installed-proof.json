@@ -1,0 +1,15 @@
+{
+  "date": "2026-10-09",
+  "baseline": "f8140cf",
+  "releaseScope": "local-first free owner CRM pilot",
+  "node": "v22.22.3",
+  "originalDomainAndIdentityRowsPreserved": true,
+  "originalPrivateFilesPreserved": true,
+  "addedNativeServiceMemberships": 2,
+  "crmMigrationCount": 3,
+  "authenticatedNativeFeature": true,
+  "configuredWorkspaces": 2,
+  "originalInstalledHostHealthStatus": 200,
+  "domainCommandsSubmitted": 0,
+  "actualModelOrExternalActionCalls": 0
+}

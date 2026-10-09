@@ -218,6 +218,22 @@ export class ConfirmationService {
     }
   }
 
+  /** Server verification of a receipt MAC. Database consumption must still be checked by the adapter. */
+  verifyReceipt(receipt: ConfirmationReceipt): boolean {
+    try {
+      return (
+        typeof receipt.receiptDigest === 'string' &&
+        /^[a-f0-9]{64}$/.test(receipt.receiptDigest) &&
+        Number.isSafeInteger(receipt.confirmedAt) &&
+        receipt.confirmedAt >= receipt.issuedAt &&
+        receipt.confirmedAt < receipt.expiresAt &&
+        digestsEqual(digestReceipt(this.#digestKey, receipt), receipt.receiptDigest)
+      )
+    } catch {
+      return false
+    }
+  }
+
   /**
    * Mint a challenge.
    *

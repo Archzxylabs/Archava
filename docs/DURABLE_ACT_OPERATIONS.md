@@ -1,8 +1,9 @@
 # Durable Act intent and read-only recovery
 
-Checkpoint: 9 October 2026. This implements the operational library seams, not
-a live owner CRM route, PMS connection or mail deployment. The existing local
-CRM runtime and Gemini synthetic-only policy are unchanged.
+Initial checkpoint: 9 October 2026, `f8140cf`, implemented the operational library
+seams. The subsequent [local owner pilot](LOCAL_OWNER_PILOT.md) wires one native
+CRM approval route/UI and restore hold. PMS/mail deployment remains separate;
+Gemini keeps its synthetic-only policy.
 
 ## Execution boundary
 
@@ -107,12 +108,11 @@ preservation snapshot.
 
 ## Remaining release work
 
-**Must build now for the internal owner pilot:** one bounded native CRM approval
-adapter and authenticated HTTP/UI review/present/status flow, current owner and
-service grant intersection, resource-revision binding, restore execution hold,
-and end-to-end receipt/audit tests. Keep ordinary CRM machine writes denied until
-that path exists. Backups must not silently restore permission to repeat an
-external effect.
+**Local owner integration delivered:** one bounded native CRM adapter and
+authenticated HTTP/UI review/present/status/cancel flow, current service/human
+grant intersection, resource-revision binding, private restore hold/epoch and
+receipt/audit checks. Ordinary machine mutations remain denied. The native
+confirmation schema is hardened; legacy external-provider schemas remain separate.
 
 **Should build next:** deployment-owned hardening/checksummed upgrades for legacy
 confirmation/provider schemas, tenant credential lifecycle, hosted identity/TLS,

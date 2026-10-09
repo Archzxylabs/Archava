@@ -36,6 +36,16 @@ import {
 } from '@archava/crm/pipeline'
 
 type Row = Record<string, unknown>
+/** Injected by the native Act adapter; called inside the domain transaction after current grants are locked. */
+export interface CrmApprovedMutationVerifier {
+  verify(
+    client: PoolClient,
+    tenant: string,
+    principal: CrmPrincipal,
+    mutation: CrmMutation,
+    approval: unknown,
+  ): Promise<boolean>
+}
 const timestamp = (value: unknown): string => {
   if (!(value instanceof Date) || !Number.isFinite(value.getTime()))
     throw new Error('Invalid database timestamp')
@@ -106,9 +116,14 @@ export class PostgresCrmRepository implements CrmRepository, CrmPipelineReposito
   private constructor(
     private readonly pool: Pool,
     private readonly fingerprintKey: string,
+    private readonly approvalVerifier?: CrmApprovedMutationVerifier,
   ) {}
 
-  static async create(pool: Pool, fingerprintKey: string): Promise<PostgresCrmRepository> {
+  static async create(
+    pool: Pool,
+    fingerprintKey: string,
+    approvalVerifier?: CrmApprovedMutationVerifier,
+  ): Promise<PostgresCrmRepository> {
     if (fingerprintKey.length < 32)
       throw new Error(
         'CRM fingerprint key must contain at least 32 characters and remain stable across restarts',
@@ -136,7 +151,7 @@ export class PostgresCrmRepository implements CrmRepository, CrmPipelineReposito
     )
     if (policies.rows[0]?.count !== 8)
       throw new Error('CRM tenant row policies are not enabled/forced')
-    return new PostgresCrmRepository(pool, fingerprintKey)
+    return new PostgresCrmRepository(pool, fingerprintKey, approvalVerifier)
   }
 
   private async transaction<T>(
@@ -225,12 +240,33 @@ export class PostgresCrmRepository implements CrmRepository, CrmPipelineReposito
   commandStatus(tenant: string, principal: CrmPrincipal, rawId: string): Promise<CrmCommandStatus> {
     if (principal.kind !== 'human')
       throw new CrmError('forbidden', 'Command recovery requires the human initiator.')
+    return this.readCommandStatus(tenant, principal, rawId)
+  }
+  approvedCommandStatus(
+    tenant: string,
+    principal: CrmPrincipal,
+    rawId: string,
+  ): Promise<CrmCommandStatus> {
+    if (principal.kind !== 'service' || !this.approvalVerifier)
+      throw new CrmError('forbidden', 'Native receipt recovery is unavailable.')
+    return this.readCommandStatus(tenant, principal, rawId)
+  }
+  private readCommandStatus(
+    tenant: string,
+    principal: CrmPrincipal,
+    rawId: string,
+  ): Promise<CrmCommandStatus> {
     const requestId = idSchema.parse(rawId)
     return this.transaction(tenant, principal, null, async (client, access) => {
       const row = (
         await client.query<Row>(
-          'SELECT receipt FROM archava_crm.commands WHERE tenant_id=$1 AND request_id=$2 AND actor_id=$3',
-          [tenant, requestId, principal.id],
+          'SELECT receipt FROM archava_crm.commands WHERE tenant_id=$1 AND request_id=$2 AND actor_id=$3 AND initiator_id IS NOT DISTINCT FROM $4',
+          [
+            tenant,
+            requestId,
+            principal.id,
+            principal.kind === 'service' ? principal.onBehalfOf : null,
+          ],
         )
       ).rows[0]
       // Committed rows and their receipts are atomic with the mutation and audit.
@@ -403,6 +439,28 @@ export class PostgresCrmRepository implements CrmRepository, CrmPipelineReposito
   mutate(tenant: string, principal: CrmPrincipal, raw: CrmMutation): Promise<MutationReceipt> {
     if (principal.kind !== 'human')
       throw new CrmError('forbidden', 'Machine CRM writes require a verified Act integration.')
+    return this.runMutation(tenant, principal, raw)
+  }
+  mutateApproved(
+    tenant: string,
+    principal: CrmPrincipal,
+    raw: CrmMutation,
+    approval: unknown,
+  ): Promise<MutationReceipt> {
+    if (
+      principal.kind !== 'service' ||
+      !this.approvalVerifier ||
+      raw.command.operation !== 'followup.create'
+    )
+      throw new CrmError('forbidden', 'A verified native follow-up approval is required.')
+    return this.runMutation(tenant, principal, raw, approval)
+  }
+  private runMutation(
+    tenant: string,
+    principal: CrmPrincipal,
+    raw: CrmMutation,
+    approval?: unknown,
+  ): Promise<MutationReceipt> {
     const mutation = mutationSchema.parse(raw)
     const command = mutation.command
     const permission: CrmPermission = command.operation.startsWith('opportunity.')
@@ -416,9 +474,23 @@ export class PostgresCrmRepository implements CrmRepository, CrmPipelineReposito
       .update(canonical({ tenant, principal, command }))
       .digest('hex')
     return this.transaction(tenant, principal, permission, async (client, access) => {
+      if (
+        principal.kind === 'service' &&
+        (!access.permissions.includes('contacts.read') ||
+          !access.permissions.includes('followups.read') ||
+          !this.approvalVerifier ||
+          !(await this.approvalVerifier.verify(client, tenant, principal, mutation, approval)))
+      )
+        throw new CrmError('forbidden', 'Native action approval could not be verified.')
       const claimed = await client.query<Row>(
-        'INSERT INTO archava_crm.commands(tenant_id,request_id,actor_id,fingerprint) VALUES($1,$2,$3,$4) ON CONFLICT DO NOTHING RETURNING request_id',
-        [tenant, mutation.requestId, principal.id, fingerprint],
+        'INSERT INTO archava_crm.commands(tenant_id,request_id,actor_id,fingerprint,initiator_id) VALUES($1,$2,$3,$4,$5) ON CONFLICT DO NOTHING RETURNING request_id',
+        [
+          tenant,
+          mutation.requestId,
+          principal.id,
+          fingerprint,
+          principal.kind === 'service' ? principal.onBehalfOf : null,
+        ],
       )
       if (claimed.rows.length === 0) {
         const existing = (
@@ -552,8 +624,16 @@ export class PostgresCrmRepository implements CrmRepository, CrmPipelineReposito
         }
       }
       await client.query(
-        'INSERT INTO archava_crm.audit(tenant_id,request_id,actor_id,operation,resource_id,revision) VALUES($1,$2,$3,$4,$5,$6)',
-        [tenant, mutation.requestId, principal.id, command.operation, receipt.id, receipt.revision],
+        'INSERT INTO archava_crm.audit(tenant_id,request_id,actor_id,operation,resource_id,revision,initiator_id) VALUES($1,$2,$3,$4,$5,$6,$7)',
+        [
+          tenant,
+          mutation.requestId,
+          principal.id,
+          command.operation,
+          receipt.id,
+          receipt.revision,
+          principal.kind === 'service' ? principal.onBehalfOf : null,
+        ],
       )
       await client.query(
         'UPDATE archava_crm.commands SET receipt=$3 WHERE tenant_id=$1 AND request_id=$2',

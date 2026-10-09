@@ -442,8 +442,19 @@ export async function verifyPipeline(
     const before = await snapshot()
     await consumers.postgres.migrateCrm(legacy)
     await consumers.postgres.migrateCrm(legacy)
-    assert.deepEqual(await snapshot(), before)
-    assert.equal((await legacy.query('SELECT * FROM archava_crm.schema_migrations')).rowCount, 2)
+    const after = await snapshot()
+    for (const index of [4, 5]) {
+      const rows = after[index]
+      assert.ok(rows)
+      after[index] = rows.map((row) => {
+        assert.equal(row.initiator_id, null)
+        const retained = { ...row }
+        delete retained.initiator_id
+        return retained
+      })
+    }
+    assert.deepEqual(after, before)
+    assert.equal((await legacy.query('SELECT * FROM archava_crm.schema_migrations')).rowCount, 3)
     await legacy.query(
       "UPDATE archava_crm.schema_migrations SET checksum='tampered' WHERE id='001_crm_contacts'",
     )

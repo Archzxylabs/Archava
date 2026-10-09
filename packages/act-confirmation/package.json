@@ -1,6 +1,6 @@
 {
   "name": "@archava/act-confirmation",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "description": "One-time server-side confirmation challenge for state-changing Act actions.",

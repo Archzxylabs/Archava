@@ -17,13 +17,13 @@ pnpm reuse:verify
 
 Artifacts and checks are generated under ignored `dist/`:
 
-| Output                                   | Purpose                                                                       |
-| ---------------------------------------- | ----------------------------------------------------------------------------- |
-| `dist/library/tarballs/*.tgz`            | Twenty-three private internal artifacts; per-package versions in the manifest |
-| `dist/library/artifacts.json`            | Artifact versions and tarball SHA-256                                         |
-| `dist/library/consumer-proof.json`       | Installed implementation hashes and consumer results                          |
-| `dist/reuse-demo/hospitality/index.html` | Offline hospitality browser embed                                             |
-| `dist/reuse-demo/retail/index.html`      | Offline retail browser embed                                                  |
+| Output                                   | Purpose                                                                      |
+| ---------------------------------------- | ---------------------------------------------------------------------------- |
+| `dist/library/tarballs/*.tgz`            | Twenty-four private internal artifacts; per-package versions in the manifest |
+| `dist/library/artifacts.json`            | Artifact versions and tarball SHA-256                                        |
+| `dist/library/consumer-proof.json`       | Installed implementation hashes and consumer results                         |
+| `dist/reuse-demo/hospitality/index.html` | Offline hospitality browser embed                                            |
+| `dist/reuse-demo/retail/index.html`      | Offline retail browser embed                                                 |
 
 The verifier copies each [independent consumer](../examples/consumers) into a
 separate temporary directory outside the workspace, installs identical tarballs,
@@ -95,7 +95,7 @@ and reuses the shared dashboard; core/CRM do not depend on this identity adapter
 The optional `@archava/crm-assistant` artifact adds `/contracts`, `/panel`, `/pilot`, `/recovery`
 and server-only `/server` exports using the existing turn pipeline. The generic
 `@archava/provider-runtime` adds durable provider admission and diagnostics, with
-a separate `/postgres` adapter. The artifact set contains 23 packages, including
+a separate `/postgres` adapter. The artifact set contains 24 packages, including
 the [durable Act packages and owned migrations](DURABLE_ACT_OPERATIONS.md).
 Hospitality and professional-service CRM consumers cold-install
 matching conversation implementations and exercise their authorized live data.
@@ -119,4 +119,9 @@ provider recovery. The Python realtime template has no shared-core bridge yet.
 
 The 7 October audit remains historical evidence. The Nx placeholder is archived
 under `docs/history/nx.placeholder.json`; [task history](../delegation/README.md)
-keeps completed rounds separate from the three Pending operational tasks.
+records the completed operational library round separately from its remaining
+production provider/deployment gates.
+
+The 0.4.0 CRM/domain/assistant artifacts and `@archava/crm-act` add the
+[supported local owner approval flow](LOCAL_OWNER_PILOT.md), with authenticated
+review/present/status, current delegated grants and a private restore hold.

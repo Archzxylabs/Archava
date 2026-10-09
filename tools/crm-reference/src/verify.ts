@@ -45,7 +45,7 @@ try {
   await postgres.migrateCrm(cluster.owner)
   assert.equal(
     (await cluster.owner.query('SELECT * FROM archava_crm.schema_migrations')).rowCount,
-    2,
+    3,
   )
   await assert.rejects(() =>
     postgres.PostgresCrmRepository.create(cluster.owner, cluster.fingerprintKey),

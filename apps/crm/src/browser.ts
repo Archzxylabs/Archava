@@ -13,6 +13,7 @@ const sessionSchema = z.discriminatedUnion('authenticated', [
       username: z.string(),
       csrf: z.string(),
       plannerMode: z.enum(['local', 'gemini-synthetic']).optional(),
+      nativeActions: z.boolean().optional(),
       tenants: z.array(
         z
           .object({
@@ -123,6 +124,9 @@ async function mount() {
   conversation = mountCrmConversation(element<HTMLElement>('#conversation'), {
     apiBase: '/api/crm/' + selected.id + '/conversation',
     commandsBase: '/api/crm/' + selected.id + '/commands',
+    approvalBase: session.nativeActions
+      ? '/api/crm/' + selected.id + '/actions/followup'
+      : undefined,
     pilotEnabled: session.plannerMode === 'gemini-synthetic',
     recovery: createTabFollowupRecovery(
       {

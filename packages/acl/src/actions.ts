@@ -69,7 +69,7 @@ export interface ActionDefinition {
   readonly replacedBy?: string
 }
 
-export const ACTION_REGISTRY_VERSION = '1.0.0'
+export const ACTION_REGISTRY_VERSION = '1.1.0'
 
 const ASSISTANT_ONLY: readonly RoleName[] = ['archava_assistant']
 
@@ -268,6 +268,19 @@ export const BASELINE_ACTIONS: readonly ActionDefinition[] = [
     sensitiveFields: ['email', 'phone', 'notes'],
     description: 'Write or update a lead record in an external CRM.',
     requiredInputs: ['contact', 'source'],
+  },
+  {
+    id: 'crm.followup.create',
+    domain: 'crm',
+    level: 'L2',
+    requiresCapability: 'act',
+    confirmation: 'user_confirm',
+    allowedRoles: ASSISTANT_ONLY,
+    idempotent: true,
+    audited: true,
+    sensitiveFields: ['summary'],
+    description: 'Create an owner-approved CRM follow-up task.',
+    requiredInputs: ['contactId', 'contactRevision', 'summary', 'dueAt'],
   },
   {
     id: 'email.send',

@@ -226,10 +226,14 @@ try {
     ),
   )
   await evaluate(`window.reviewOriginalFetch=window.fetch;window.reviewIds=[];window.reviewLoseResponse=true;
-    window.fetch=async(...args)=>{const response=await window.reviewOriginalFetch(...args);if(String(args[0]).endsWith('/commands') && JSON.parse(args[1].body).command.operation==='followup.create'){window.reviewIds.push(JSON.parse(args[1].body).requestId);if(window.reviewLoseResponse){window.reviewLoseResponse=false;throw new Error('fixture-response-lost')}}return response}`)
+    window.fetch=async(...args)=>{const response=await window.reviewOriginalFetch(...args);if(String(args[0]).endsWith('/actions/followup/present')){window.reviewIds.push(JSON.parse(args[1].body).confirmation.challengeId);if(window.reviewLoseResponse){window.reviewLoseResponse=false;throw new Error('fixture-response-lost')}}return response}`)
   await evaluate('document.querySelector("[data-archava-save]").click()')
   await wait(
-    'document.querySelector("[data-archava-save]").parentElement.textContent.includes("Belum berhasil menyimpan") && !document.querySelector("[data-archava-save]").disabled',
+    'document.querySelector("[data-archava-save]").textContent==="Konfirmasi penyimpanan" && !document.querySelector("[data-archava-save]").disabled',
+  )
+  check(
+    'native review leaves the task uncommitted until the separate confirmation click',
+    await evaluate('window.reviewIds.length===0'),
   )
   await evaluate('document.querySelector("[data-archava-save]").click()')
   await wait('document.querySelector("[data-archava-save]").textContent==="Tersimpan"')
@@ -238,10 +242,10 @@ try {
     return fetch('/api/crm/hotel-demo/contacts/'+id).then(response=>response.json()).then(detail=>detail.followups.length);
   })()`)
   check(
-    'explicit human Save retries the same UUID after a lost response and creates one task',
+    'explicit native confirmation recovers a lost response through GET and creates one task without a second POST',
     tasks === 1 &&
       (await evaluate(
-        'window.reviewIds.length===2 && new Set(window.reviewIds).size===1 && document.querySelector("[data-archava-save]").disabled',
+        'window.reviewIds.length===1 && document.querySelector("[data-archava-save]").disabled',
       )),
   )
   await evaluate(
@@ -270,12 +274,18 @@ try {
   await fill('[data-archava-form] [name=summary]', 'Reload-safe reviewed task')
   await ask('siapkan follow-up')
   await evaluate(`window.reloadOriginalFetch=window.fetch;
-    window.fetch=async(...args)=>{const response=await window.reloadOriginalFetch(...args);if(String(args[0]).endsWith('/commands') && JSON.parse(args[1].body).command.operation==='followup.create')throw new Error('fixture-response-lost');return response}`)
+    window.fetch=async(...args)=>{if(String(args[0]).includes('/commands/'))throw new Error('fixture-receipt-unavailable');const response=await window.reloadOriginalFetch(...args);if(String(args[0]).endsWith('/actions/followup/present'))throw new Error('fixture-response-lost');return response}`)
   await evaluate(
     'document.querySelector("[data-archava-log]").lastElementChild.querySelector("[data-archava-save]").click()',
   )
   await wait(
-    'document.querySelector("[data-archava-log]").lastElementChild.textContent.includes("Belum berhasil menyimpan")',
+    'document.querySelector("[data-archava-log]").lastElementChild.querySelector("[data-archava-save]").textContent==="Konfirmasi penyimpanan"',
+  )
+  await evaluate(
+    'document.querySelector("[data-archava-log]").lastElementChild.querySelector("[data-archava-save]").click()',
+  )
+  await wait(
+    'document.querySelector("[data-archava-log]").lastElementChild.textContent.includes("Hasil belum terkonfirmasi")',
   )
   const recoveryKey = await evaluate(
     "Object.keys(sessionStorage).find(key=>key.startsWith('archava.crm.followup-recovery.v1:'))",
@@ -297,7 +307,12 @@ try {
   )
   const commandRequests = () =>
     page.network_.filter(
-      (item) => item.phase === 'request' && item.url === origin + '/api/crm/hotel-demo/commands',
+      (item) =>
+        item.phase === 'request' &&
+        [
+          origin + '/api/crm/hotel-demo/commands',
+          origin + '/api/crm/hotel-demo/actions/followup/present',
+        ].includes(item.url),
     ).length
   const beforeReload = commandRequests()
   await page.navigate(origin)
@@ -393,6 +408,8 @@ try {
   await evaluate(
     'window.storageOriginalSet=Storage.prototype.setItem;Storage.prototype.setItem=function(){throw new Error("fixture-storage-denied")}',
   )
+  await evaluate('document.querySelector("[data-archava-save]").click()')
+  await wait('document.querySelector("[data-archava-save]").textContent==="Konfirmasi penyimpanan"')
   await evaluate('document.querySelector("[data-archava-save]").click()')
   await wait('document.querySelector("[data-archava-recovery]").textContent.includes("ditahan")')
   check(
@@ -515,7 +532,9 @@ try {
   await fill('[data-archava-form] [name=dueAt]', '2026-10-15T09:00')
   await ask('siapkan follow-up')
   await evaluate(`window.saveOriginalFetch=window.fetch;window.saveReleaseResponse=null;
-    window.fetch=async(...args)=>{const response=await window.saveOriginalFetch(...args);if(String(args[0]).endsWith('/commands') && JSON.parse(args[1].body).command.operation==='followup.create')await new Promise(done=>{window.saveReleaseResponse=done});return response}`)
+    window.fetch=async(...args)=>{const response=await window.saveOriginalFetch(...args);if(String(args[0]).endsWith('/actions/followup/present'))await new Promise(done=>{window.saveReleaseResponse=done});return response}`)
+  await evaluate('document.querySelector("[data-archava-save]").click()')
+  await wait('document.querySelector("[data-archava-save]").textContent==="Konfirmasi penyimpanan"')
   await evaluate('document.querySelector("[data-archava-save]").click()')
   await wait('typeof window.saveReleaseResponse==="function"')
   await logout()
@@ -553,6 +572,7 @@ try {
       [
         origin + '/api/crm/hotel-demo/conversation',
         origin + '/api/crm/hotel-demo/commands',
+        origin + '/api/crm/hotel-demo/actions/followup/present',
       ].includes(item.url) && item.error === 'net::ERR_ABORTED',
   )
   await writeFile(

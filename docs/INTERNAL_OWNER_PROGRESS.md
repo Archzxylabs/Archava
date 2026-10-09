@@ -35,3 +35,20 @@ installed full-path PostgreSQL composition are implemented. See
 [the operational evidence and remaining owner integration](DURABLE_ACT_OPERATIONS.md).
 The 50% baseline stays unchanged: isolated infrastructure evidence does not yet
 complete the owner-facing approval capability.
+
+## Local release checkpoint — 9 October 2026
+
+The owner selected **local first, free** as the completion target. The six local
+acceptance capabilities are delivered: shared core/CRM consumers, CRM CRUD and
+pipeline, trusted identity, a bounded native approval action, bounded AI/read-draft
+operation, diagnostics and tested backup/restore. See [the exact supported local
+pilot](LOCAL_OWNER_PILOT.md). This completes that local acceptance, not the full
+commercial/presence/ERP roadmap.
+
+Preserve the original 50% planning baseline above. Broader owner roadmap coverage
+is now estimated at **60%** on the same weights: actions advance to 60% (12 points)
+after native UI/HTTP/current-grants/recovery/restore proof; operations advance to
+40% (4 points) after diagnostics and local release checks. The other weighted
+contributions stay 15 + 14 + 12 + 3. Total = 15 + 14 + 12 + 12 + 3 + 4 = 60.
+This still includes open production/support/general-planning work, so it is a
+different assessment from the completed local release acceptance.

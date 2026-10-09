@@ -17,6 +17,7 @@ const migrationPackages = new Set([
   'act-host-pg',
   'act-confirmation-pg',
   'act-storage',
+  'crm-act',
 ])
 
 async function sourceFiles(directory) {
@@ -42,6 +43,7 @@ export async function packLibrary() {
     }
   }
   for (const name of [
+    '@archava/crm-act',
     '@archava/sdk',
     '@archava/assistant',
     '@archava/chat',

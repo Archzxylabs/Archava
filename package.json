@@ -44,6 +44,8 @@
     "crm:backup": "pnpm --fail-if-no-match --filter @archava/crm-host run backup",
     "crm:restore": "pnpm --fail-if-no-match --filter @archava/crm-host run restore",
     "crm:ai-status": "pnpm --fail-if-no-match --filter @archava/crm-host run ai-status",
+    "crm:resume-actions": "pnpm --fail-if-no-match --filter @archava/crm-host run resume-actions",
+    "crm:doctor": "pnpm --fail-if-no-match --filter @archava/crm-host run doctor",
     "crm:verify-runtime": "pnpm --fail-if-no-match --filter @archava/crm-host run verify",
     "e2e:crm-runtime": "node tools/e2e/crm-runtime.mjs"
   },

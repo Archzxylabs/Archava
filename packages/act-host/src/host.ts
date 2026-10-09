@@ -64,6 +64,7 @@ import type {
   ConfirmationChallenge,
   ConfirmationRefusal,
   ConfirmationService,
+  ConfirmationReceipt,
 } from '@archava/act-confirmation'
 
 import {
@@ -194,6 +195,8 @@ export interface ActHostOptions {
   readonly resolver?: EntityResolver
   /** Absent means no claimed effect. The host refuses rather than improvising. */
   readonly executor?: ActionExecutor
+  /** Server-only factory; receives consent verified here, never browser receipt fields. */
+  readonly executorForConfirmation?: (receipt: ConfirmationReceipt) => ActionExecutor
   readonly confirmations: ConfirmationService
   /** Required: the host cannot infer a safe retry identity after a restart. */
   readonly attempts: ActHostAttemptLedger
@@ -578,8 +581,7 @@ export class ActHost {
       })
     }
 
-    const executor = this.options.executor
-    if (executor === undefined) {
+    if (this.options.executor === undefined && !this.options.executorForConfirmation) {
       throw new ActHostRefusal(
         'executor_unavailable',
         'No ActionExecutor is wired into this host, so no action may be run.',
@@ -606,6 +608,8 @@ export class ActHost {
         'visitor_challenge_mismatch',
         'The confirmation does not match its recorded intent.',
       )
+    const executor =
+      this.options.executorForConfirmation?.(verification.receipt) ?? this.options.executor
 
     // The one line the whole module exists for. `attempt.occurredAt` was written
     // when the challenge was minted and has not been rewritten since — not by a

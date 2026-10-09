@@ -1,4 +1,18 @@
 import { randomBytes } from 'node:crypto'
+import { migrateActHost, grantActHostRuntime } from '@archava/act-host-pg'
+import {
+  migrateNativeCrmAct,
+  grantNativeCrmAct,
+  nativeSqlClient,
+  createPostgresNativeCrmHost,
+} from '@archava/crm-act/postgres'
+import {
+  initializeNativeControl,
+  writeNativeControl,
+  readNativeControl,
+  nativeConfirmationKey,
+  NATIVE_SERVICE_ID,
+} from './native-actions.js'
 import { existsSync } from 'node:fs'
 import { join, resolve, dirname } from 'node:path'
 import { chmod, lstat, writeFile } from 'node:fs/promises'
@@ -11,8 +25,8 @@ import {
   holdProviderAfterRestore,
 } from '@archava/provider-runtime/postgres'
 import { CRM_PROVIDER_POLICY } from './provider-policy.js'
-import { CRM_PERMISSIONS } from '@archava/crm'
-import { migrateCrm, grantCrmRuntime } from '@archava/crm-pg'
+import { CRM_PERMISSIONS, CrmService } from '@archava/crm'
+import { migrateCrm, grantCrmRuntime, PostgresCrmRepository } from '@archava/crm-pg'
 import {
   migrateIdentity,
   grantIdentityRuntime,
@@ -54,6 +68,12 @@ async function grant(pool: Pool) {
   await grantCrmRuntime(pool, role)
   await grantIdentityRuntime(pool, role)
   await grantProviderRuntime(pool, role)
+  await grantNativeCrmAct(pool, role)
+  await grantActHostRuntime(nativeSqlClient(pool, 'operator', 'operator'), role)
+}
+async function migrateNative(pool: Pool) {
+  await migrateActHost(nativeSqlClient(pool, 'operator', 'operator'))
+  await migrateNativeCrmAct(pool)
 }
 async function enroll(pool: Pool, settings: RuntimeSettings, input: unknown) {
   const account = credentialsSchema.parse(input)
@@ -141,7 +161,26 @@ async function setup() {
       await migrateCrm(owner)
       await migrateIdentity(owner)
       await migrateProviderRuntime(owner)
+      await migrateNative(owner)
       await grant(owner)
+      for (const tenant of settings.tenants) {
+        await owner.query(
+          "INSERT INTO archava_crm.memberships(tenant_id,principal_id,kind,permissions,scope) VALUES($1,$2,'service',$3,'all') ON CONFLICT DO NOTHING",
+          [
+            tenant.id,
+            NATIVE_SERVICE_ID,
+            ['contacts.read', 'activities.read', 'followups.read', 'followups.write'],
+          ],
+        )
+        const member = (
+          await owner.query<{ kind: string }>(
+            'SELECT kind FROM archava_crm.memberships WHERE tenant_id=$1 AND principal_id=$2',
+            [tenant.id, NATIVE_SERVICE_ID],
+          )
+        ).rows[0]
+        if (member?.kind !== 'service') throw new Error('Native service identity conflict')
+      }
+      await initializeNativeControl(settings)
       if ((await owner.query('SELECT 1 FROM archava_identity.users LIMIT 1')).rowCount === 0) {
         const account = {
           username: 'owner@archava.local',
@@ -302,6 +341,8 @@ async function restore(args: string[]) {
       await migrateIdentity(owner)
       await migrateProviderRuntime(owner)
       await holdProviderAfterRestore(owner, CRM_PROVIDER_POLICY)
+      await writeNativeControl(recovered, true, true)
+      await migrateNative(owner)
       await grant(owner)
       // Restoring an older backup must never resurrect a logged-out session.
       await owner.query('DELETE FROM archava_identity.sessions')
@@ -329,6 +370,59 @@ async function aiStatus() {
     }
   })
 }
+async function resumeActions() {
+  const settings = await loadSettings()
+  await withLocalDatabase(settings, async () => {
+    const owner = new Pool(connection(settings, 'archava_operator'))
+    try {
+      await migrateCrm(owner)
+      await migrateNative(owner)
+      await grant(owner)
+      const active = (
+        await owner.query(
+          "SELECT 1 FROM archava_identity.users u JOIN archava_crm.memberships m ON m.principal_id=u.id WHERE u.active AND m.active AND m.kind='human' AND 'followups.write'=ANY(m.permissions) LIMIT 1",
+        )
+      ).rowCount
+      if (!active) throw new Error('Recover an authorized account before resuming native actions')
+      await writeNativeControl(settings, false, true)
+    } finally {
+      await owner.end()
+    }
+  })
+  process.stdout.write('Native follow-up actions resumed with a fresh approval epoch.\n')
+}
+async function doctor() {
+  const settings = await loadSettings()
+  await withLocalDatabase(settings, async () => {
+    const app = new Pool(connection(settings))
+    try {
+      const repository = await PostgresCrmRepository.create(app, settings.fingerprintKey)
+      const control = await readNativeControl(settings)
+      const tenant = settings.tenants[0]
+      if (!tenant) throw new Error('Workspace configuration missing')
+      await createPostgresNativeCrmHost(app, {
+        tenantId: tenant.id,
+        humanId: 'diagnostic',
+        serviceId: NATIVE_SERVICE_ID,
+        confirmationKey: nativeConfirmationKey(settings),
+        control: () => readNativeControl(settings),
+        service: new CrmService(repository),
+        clock: Date.now,
+      })
+      process.stdout.write(
+        JSON.stringify({
+          status: 'ready',
+          workspaces: settings.tenants.length,
+          nativeActions: control.held ? 'held' : 'ready',
+          externalActions: 'not configured',
+          credentialValuesPrinted: false,
+        }) + '\n',
+      )
+    } finally {
+      await app.end()
+    }
+  })
+}
 try {
   const [mode, ...args] = process.argv.slice(2)
   if (mode === 'setup') await setup()
@@ -336,6 +430,8 @@ try {
   else if (mode === 'backup') await backup(args)
   else if (mode === 'restore') await restore(args)
   else if (mode === 'ai-status') await aiStatus()
+  else if (mode === 'resume-actions') await resumeActions()
+  else if (mode === 'doctor') await doctor()
   else throw new Error('Unknown CRM operator command')
 } catch (error) {
   if (

@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises'
 import type { Pool } from 'pg'
 
 export const CRM_MIGRATION = '001_crm_contacts'
-export const CRM_MIGRATIONS = [CRM_MIGRATION, '002_sales_pipeline'] as const
+export const CRM_MIGRATIONS = [CRM_MIGRATION, '002_sales_pipeline', '003_native_approval'] as const
 
 export async function crmMigrationChecksum(id: string = CRM_MIGRATION): Promise<string> {
   if (!CRM_MIGRATIONS.some((migration) => migration === id))

@@ -1063,6 +1063,15 @@ dashboard, Archava or a worker. Keep existing risk/capability/approval boundarie
 general CRM writes require Act even when the module is first-party. Unverified
 payments and unknown provider outcomes are never reported as successful.
 
+The local 0.4.0 CRM pilot has exactly one approved native machine-write path:
+`@archava/crm-act` / `crm.followup.create`. It checks the server receipt MAC,
+consumed scoped confirmation, active intent claim, current service/human grant
+intersection and contact revision inside the CRM transaction. Ordinary machine
+mutations and read/draft conversation tools remain denied write authority.
+Preserve the private per-database restore hold/epoch, and retain unresolved
+receipt markers rather than issuing a blind new command. Do not extend this
+approval to another operation, public visitor, external effect or model flag.
+
 The persistent CRM host consumes installed modules and verifies credential-backed
 sessions through an optional identity adapter. These local checks do not grant
 authority to browser role/tenant/confirmation fields or establish public identity

@@ -1,6 +1,6 @@
 {
   "name": "@archava/acl",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "Versioned action registry, baseline roles, and the server-side capability/role/page-context policy gate.",

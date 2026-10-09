@@ -147,6 +147,26 @@ export class PostgresActHostAttemptLedger implements AtomicActHostAttemptLedger 
       throw new ActHostAttemptError('malformed')
     return canonical
   }
+
+  /** Use on an existing domain transaction client: the row lock fences settlement until commit. */
+  async verifyExecution(
+    intentId: string,
+    challengeId: string,
+    inputDigest: string,
+  ): Promise<boolean> {
+    if (
+      !isAttemptReference(intentId) ||
+      !isAttemptReference(challengeId) ||
+      !/^[a-f0-9]{64}$/.test(inputDigest)
+    )
+      return false
+    const result = await this.#call(
+      `WITH scope AS MATERIALIZED (SELECT set_config('archava.tenant_id',$1,true),set_config('archava.act_session',$2,true))
+SELECT EXISTS(SELECT 1 FROM archava_act_host.intents i,scope WHERE i.tenant_id=$1 AND i.session_id=$2 AND i.intent_id=$3 AND i.claim_id=$4 AND i.input_digest=$5 AND i.phase='executing' FOR SHARE OF i) AS result`,
+      [intentId, challengeId, inputDigest],
+    )
+    return result === true
+  }
   async save(record: ActHostAttemptRecord) {
     await this.open(record)
   }

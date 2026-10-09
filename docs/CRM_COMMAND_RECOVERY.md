@@ -1,9 +1,14 @@
 # Read-only recovery of a reviewed CRM Save
 
-The CRM/PG/assistant artifacts are now **0.3.0**. After a human saves a reviewed
+Historical **0.3.0** checkpoint: after a human saves a reviewed
 follow-up, a lost response followed by a reload can be recovered from the existing
 transactional command receipt. No additional package, database migration,
 provider call or machine write permission is introduced.
+
+The subsequent [0.4.0 local owner release](LOCAL_OWNER_PILOT.md) adds a bounded
+native approval adapter. Its installed host uses separate review and confirmation
+steps and resolves lost responses through GET only. The legacy human Save path
+described below remains available to consumers without that adapter.
 
 ## User flow
 
@@ -85,8 +90,9 @@ signed-out or different workspace's UI.
 
 ## Boundaries still open
 
-This handles human Save receipt recovery, not autonomous Act approval/execution.
-The three existing Act operational tasks remain Pending; M3 stays partial.
+This checkpoint handles human Save receipt recovery. The subsequent Act library
+round is completed and the local release adds one reviewed native task action;
+broader production M3 remains partial.
 Unsaved drafts and conversations remain transient. The UUID survives refresh in
 the same tab, not cleared browser storage, closing the tab or another device.
 There is no cross-device recovery inbox or operator reconciliation workflow yet.

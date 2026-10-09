@@ -15,6 +15,8 @@ import { randomUUID } from 'node:crypto'
 import { ProviderAdmissionError } from '@archava/provider-runtime'
 import { IdentityError, type PostgresIdentity } from '@archava/identity-pg'
 import type { RuntimeSettings } from './settings.js'
+import type { NativeCrmActHost } from '@archava/crm-act'
+import { ActHostRefusal } from '@archava/act-host'
 
 const json = (value: unknown, status = 200, headers: Record<string, string> = {}) =>
   Response.json(value, { status, headers: { 'cache-control': 'no-store', ...headers } })
@@ -41,6 +43,7 @@ export function createHostHandler(
   plannerFor: (utterance: string, attemptId: string) => CrmConversationPlanner = () =>
     new LocalCrmPlanner(),
   plannerMode: 'local' | 'gemini-synthetic' = 'local',
+  nativeFor?: (tenantId: string, humanId: string) => Promise<NativeCrmActHost>,
 ) {
   const secure = new URL(origin).protocol === 'https:'
   const cookieName = secure ? '__Host-archava_session' : 'archava_local_session'
@@ -86,6 +89,7 @@ export function createHostHandler(
           csrf: session.csrf,
           tenants,
           plannerMode,
+          nativeActions: nativeFor !== undefined,
         })
       }
       if (!session || !token) return json({ error: { message: 'Sign in to continue.' } }, 401)
@@ -111,6 +115,37 @@ export function createHostHandler(
         })
       }
       const conversation = /^\/api\/crm\/([^/]+)\/conversation$/.exec(url.pathname)
+      const native = /^\/api\/crm\/([^/]+)\/actions\/followup\/(review|present)$/.exec(url.pathname)
+      const cancelNative = /^\/api\/crm\/([^/]+)\/actions\/followup\/([a-f0-9-]+)\/cancel$/.exec(
+        url.pathname,
+      )
+      if (cancelNative && request.method === 'POST' && nativeFor) {
+        const tenant = settings.tenants.find((item) => item.id === cancelNative[1])
+        if (!tenant) return json({ error: { message: 'Workspace access refused.' } }, 403)
+        const id = z.uuid().parse(cancelNative[2])
+        return respond({
+          cancelled: await (await nativeFor(tenant.id, session.principalId)).cancelPending(id),
+        })
+      }
+      if (native && request.method === 'POST' && nativeFor) {
+        const tenant = settings.tenants.find((item) => item.id === native[1])
+        if (!tenant) return json({ error: { message: 'Workspace access refused.' } }, 403)
+        const action = await nativeFor(tenant.id, session.principalId)
+        const input: unknown = await request.json()
+        return respond(
+          native[2] === 'review' ? await action.review(input) : await action.present(input),
+        )
+      }
+      const receiptRoute = /^\/api\/crm\/([^/]+)\/commands\/([a-f0-9-]+)$/.exec(url.pathname)
+      if (receiptRoute && request.method === 'GET' && nativeFor) {
+        const tenant = settings.tenants.find((item) => item.id === receiptRoute[1])
+        if (!tenant) return json({ error: { message: 'Workspace access refused.' } }, 403)
+        const requestId = z.uuid().parse(receiptRoute[2])
+        const human = { kind: 'human' as const, id: session.principalId }
+        const existing = await service.commandStatus(tenant.id, human, requestId)
+        if (existing.status === 'committed') return respond(existing)
+        return respond(await (await nativeFor(tenant.id, session.principalId)).status(requestId))
+      }
       if (conversation && request.method === 'POST') {
         const tenant = settings.tenants.find((item) => item.id === conversation[1])
         if (!tenant) return json({ error: { message: 'Workspace access refused.' } }, 403)
@@ -139,6 +174,15 @@ export function createHostHandler(
         )(request)
       return json({ error: { message: 'Unknown route.' } }, 404)
     } catch (error) {
+      if (error instanceof ActHostRefusal)
+        return respond(
+          {
+            error: {
+              message: 'Action approval could not be verified. Review the current draft again.',
+            },
+          },
+          403,
+        )
       if (error instanceof ProviderAdmissionError)
         return respond({ error: { message: 'AI request limit reached. Try again later.' } }, 429, {
           'retry-after': String(Math.max(1, Math.ceil(error.retryAfterMs / 1000))),
@@ -191,6 +235,7 @@ export async function startCrmHost(
   pipeline?: CrmPipelineService,
   plannerFor?: (utterance: string, attemptId: string) => CrmConversationPlanner,
   plannerMode?: 'local' | 'gemini-synthetic',
+  nativeFor?: (tenantId: string, humanId: string) => Promise<NativeCrmActHost>,
 ) {
   const handle = (request: Request, source: string) =>
     createHostHandler(
@@ -202,6 +247,7 @@ export async function startCrmHost(
       pipeline,
       plannerFor,
       plannerMode,
+      nativeFor,
     )(request, source)
   const server = createServer(
     { maxHeaderSize: 8192, requestTimeout: 10000, headersTimeout: 10000 },

@@ -2,8 +2,10 @@
 
 Integration status (9 October 2026): the lead completed the offline library work
 in the primary workspace. The prompts below are retained as historical scope;
-the Results record delivered code and evidence. Production owner/provider wiring
-is still pending. See [durable Act operations](../../docs/DURABLE_ACT_OPERATIONS.md).
+the Results record delivered code and evidence. The subsequent
+[local owner pilot](../../docs/LOCAL_OWNER_PILOT.md) delivers one native CRM
+approval flow. Production provider wiring remains separate. See
+[durable Act operations](../../docs/DURABLE_ACT_OPERATIONS.md).
 
 Workspace: `/home/haikaru/Archverse/Lab/Archava_Platform`. Baseline: consolidated `main` after PRs #2–#5 and #9 were merged. The old `Archava_Act_*` worktrees have been removed; continue in this primary workspace on the lead-selected working branch. Inspect `git status --short` and current HEAD before editing; preserve all work. Do not switch branches, reset, rebase, stash, merge, or create another worktree.
 

@@ -2,6 +2,7 @@ import { conversationReplySchema, type CrmConversationData } from './contracts.j
 import { GEMINI_PILOT_CASES } from './pilot.js'
 import { commandStatusSchema, mutationReceiptSchema, idSchema } from '@archava/crm/contracts'
 import type { FollowupRecoveryStore } from './recovery.js'
+import { nativeReviewSchema, nativeExecutionSchema } from '@archava/crm-act/contracts'
 
 /** Shared UI. It renders records as text and holds no credentials or durable conversation state. */
 export function mountCrmConversation(
@@ -9,6 +10,7 @@ export function mountCrmConversation(
   options: {
     apiBase: string
     commandsBase?: string
+    approvalBase?: string
     pilotEnabled?: boolean
     recovery?: FollowupRecoveryStore
     transport?: typeof fetch
@@ -91,6 +93,10 @@ export function mountCrmConversation(
   checkSave.type = 'button'
   checkSave.dataset.archavaRecover = ''
   recoveryBox.append(recoveryState, checkSave)
+  const cancelSave = make('button', 'Batalkan penyimpanan yang belum dijalankan')
+  cancelSave.type = 'button'
+  cancelSave.dataset.archavaCancel = ''
+  if (options.approvalBase) recoveryBox.append(cancelSave)
   if (options.recovery) log.before(recoveryBox)
 
   function syncRecovery() {
@@ -101,12 +107,15 @@ export function mountCrmConversation(
     recoveryBox.hidden = !pendingRequestId && !recoveryUnavailable && !recoveryState.textContent
     checkSave.hidden = !pendingRequestId
     checkSave.disabled = busy || recoveryActive !== null || recoveryUnavailable
+    cancelSave.hidden = !options.approvalBase || !pendingRequestId
+    cancelSave.disabled = busy || recoveryActive !== null || recoveryUnavailable
     for (const button of host.querySelectorAll<HTMLButtonElement>('[data-archava-save]'))
       button.disabled =
         busy ||
         recoveryActive !== null ||
         recoveryUnavailable ||
         button.dataset.archavaFinal === 'true' ||
+        button.dataset.archavaUncertain === 'true' ||
         (pendingRequestId !== null && pendingRequestId !== button.dataset.archavaRequestId)
   }
   function forgetKnown(requestId: string) {
@@ -117,13 +126,13 @@ export function mountCrmConversation(
       recoveryUnavailable = true
     }
   }
-  async function recoverSave() {
+  async function recoverSave(allowBusy = false) {
     const requestId = pendingRequestId
     if (
       !requestId ||
       !options.commandsBase ||
       recoveryActive ||
-      busy ||
+      (busy && !allowBusy) ||
       destroyed ||
       recoveryUnavailable
     )
@@ -172,6 +181,48 @@ export function mountCrmConversation(
   }
   checkSave.addEventListener('click', () => {
     void recoverSave()
+  })
+  cancelSave.addEventListener('click', () => {
+    const id = pendingRequestId
+    if (!id || !options.approvalBase || busy || recoveryActive || recoveryUnavailable || destroyed)
+      return
+    void (async () => {
+      busy = true
+      syncRecovery()
+      try {
+        const response = await transport(options.approvalBase + '/' + id + '/cancel', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'content-type': 'application/json' },
+          body: '{}',
+        })
+        if (destroyed) return
+        const result: unknown = await response.json()
+        if (
+          !response.ok ||
+          typeof result !== 'object' ||
+          result === null ||
+          !('cancelled' in result) ||
+          result.cancelled !== true
+        )
+          throw new Error('Cannot cancel a started action')
+        forgetKnown(id)
+        const button = host.querySelector<HTMLButtonElement>(`[data-archava-request-id="${id}"]`)
+        if (button) {
+          button.dataset.archavaFinal = 'true'
+          button.textContent = 'Dibatalkan'
+        }
+        recoveryState.textContent =
+          'Penyimpanan dibatalkan sebelum dijalankan. Buat dan tinjau draft baru.'
+      } catch {
+        if (!destroyed)
+          recoveryState.textContent =
+            'Penyimpanan belum dapat dibatalkan. Cek hasilnya; tindakan yang sudah dimulai tidak boleh diulang.'
+      } finally {
+        busy = false
+        if (!destroyed) syncRecovery()
+      }
+    })()
   })
   if (recoveryUnavailable)
     recoveryState.textContent =
@@ -289,6 +340,10 @@ export function mountCrmConversation(
         make('p', 'Jadwal: ' + data.draft.dueAt),
         make('p', 'Status: draft · perlu persetujuan'),
       )
+      if (options.approvalBase) {
+        renderNativeApproval(entry, data)
+        return
+      }
       const commandsBase = options.commandsBase
       if (commandsBase) {
         const save = make('button', 'Simpan follow-up yang ditinjau')
@@ -393,6 +448,132 @@ export function mountCrmConversation(
         syncRecovery()
       }
     }
+  }
+
+  function renderNativeApproval(
+    entry: HTMLElement,
+    data: Extract<CrmConversationData, { kind: 'draft' }>,
+  ) {
+    const base = options.approvalBase
+    if (!base) return
+    const inputs = {
+      contactId: data.draft.contactId,
+      contactRevision: data.draft.contactRevision,
+      summary: data.draft.summary,
+      dueAt: data.draft.dueAt,
+    }
+    const button = make('button', 'Tinjau penyimpanan'),
+      state = make('p', 'Review dulu; follow-up belum disimpan.')
+    button.type = 'button'
+    button.dataset.archavaSave = ''
+    state.dataset.archavaSaveState = ''
+    let review: ReturnType<typeof nativeReviewSchema.parse> | null = null
+    entry.append(button, state)
+    button.addEventListener('click', () => {
+      if (
+        destroyed ||
+        busy ||
+        recoveryUnavailable ||
+        recoveryActive ||
+        button.dataset.archavaFinal === 'true' ||
+        button.dataset.archavaUncertain === 'true' ||
+        pendingRequestId !== null
+      )
+        return
+      void (async () => {
+        busy = true
+        submit.disabled = true
+        message.disabled = true
+        active = new AbortController()
+        syncRecovery()
+        let presenting = false
+        try {
+          if (!review) {
+            state.textContent = 'Memeriksa draft dan izin…'
+            const response = await transport(base + '/review', {
+              method: 'POST',
+              credentials: 'same-origin',
+              signal: active.signal,
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify(inputs),
+            })
+            if (destroyed) return
+            if (response.status === 409) {
+              button.dataset.archavaFinal = 'true'
+              button.textContent = 'Buat draft baru'
+              state.textContent = 'Kontak berubah. Buat ulang draft setelah meninjau data terbaru.'
+              return
+            }
+            if (!response.ok) throw new Error('Review refused')
+            review = nativeReviewSchema.parse(await response.json())
+            button.dataset.archavaRequestId = review.intentId
+            button.textContent = 'Konfirmasi penyimpanan'
+            state.textContent = 'Draft siap. Konfirmasi untuk membuat satu tugas follow-up di CRM.'
+            return
+          }
+          if (Date.now() >= review.challenge.expiresAt) {
+            review = null
+            button.textContent = 'Tinjau ulang'
+            state.textContent = 'Persetujuan kedaluwarsa. Tinjau draft lagi.'
+            return
+          }
+          if (!options.recovery) throw new Error('Native approval needs recovery storage')
+          try {
+            options.recovery.remember(review.intentId)
+          } catch {
+            recoveryUnavailable = true
+            recoveryState.textContent =
+              'Pemulihan penyimpanan tidak tersedia di tab ini. Penyimpanan baru ditahan.'
+            return
+          }
+          pendingRequestId = review.intentId
+          recoveryState.textContent = 'Ada penyimpanan yang belum terkonfirmasi.'
+          presenting = true
+          button.dataset.archavaUncertain = 'true'
+          state.textContent = 'Menyimpan follow-up yang disetujui…'
+          syncRecovery()
+          const response = await transport(base + '/present', {
+            method: 'POST',
+            credentials: 'same-origin',
+            signal: active.signal,
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              inputs,
+              confirmation: {
+                challengeId: review.challenge.challengeId,
+                token: review.challenge.token,
+              },
+            }),
+          })
+          if (destroyed) return
+          if (!response.ok) throw new Error('Approval refused')
+          const result = nativeExecutionSchema.parse(await response.json())
+          if (result.execution !== 'succeeded') throw new Error('Outcome is uncertain')
+          await recoverSave(true)
+        } catch {
+          if (!destroyed) {
+            if (presenting)
+              state.textContent =
+                'Hasil belum terkonfirmasi. Gunakan “Cek hasil penyimpanan”; jangan membuat penyimpanan baru.'
+            else {
+              review = null
+              button.textContent = 'Tinjau ulang'
+              state.textContent =
+                'Draft belum dapat disetujui. Periksa akses dan data kontak terbaru.'
+            }
+          }
+        } finally {
+          busy = false
+          active = null
+          if (!destroyed) {
+            submit.disabled = false
+            message.disabled = false
+            syncRecovery()
+            if (presenting) void recoverSave()
+          }
+        }
+      })()
+    })
   }
   async function ask(utterance: string, after?: string) {
     if (busy || destroyed) return

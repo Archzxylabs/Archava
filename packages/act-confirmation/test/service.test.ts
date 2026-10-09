@@ -197,6 +197,31 @@ describe('confirmation service', () => {
   })
 
   describe('verifying', () => {
+    it('verifies the MAC of an actual consumed receipt without spending consent again', async () => {
+      const { service, store } = build(),
+        challenge = await minted(service)
+      const result = await service.verify(presentationFor(challenge.token, challenge.id))
+      if (result.status !== 'confirmed') throw new Error('Expected actual receipt')
+      expect(service.verifyReceipt(result.receipt)).toBe(true)
+      expect(service.verifyReceipt(result.receipt)).toBe(true)
+      expect(store.consumeCalls()).toBe(1)
+    })
+    it('rejects forged receipt fields, scope changes and malformed digests', async () => {
+      const { service } = build(),
+        challenge = await minted(service)
+      const result = await service.verify(presentationFor(challenge.token, challenge.id))
+      if (result.status !== 'confirmed') throw new Error('Expected actual receipt')
+      for (const patch of [
+        { tenantId: 'another-tenant' },
+        { sessionId: 'another-owner' },
+        { actionId: 'another.action' },
+        { inputDigest: 'f'.repeat(64) },
+        { receiptDigest: 'f'.repeat(64) },
+        { confirmedAt: result.receipt.expiresAt },
+        { receiptDigest: 'malformed' },
+      ])
+        expect(service.verifyReceipt({ ...result.receipt, ...patch })).toBe(false)
+    })
     it('confirms a correct presentation exactly once', async () => {
       const { store, service } = build()
       const challenge = await minted(service)

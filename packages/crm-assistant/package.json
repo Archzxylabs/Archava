@@ -1,6 +1,6 @@
 {
   "name": "@archava/crm-assistant",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",
@@ -22,6 +22,7 @@
     "@archava/acl": "workspace:*",
     "@archava/core": "workspace:*",
     "@archava/crm": "workspace:*",
+    "@archava/crm-act": "workspace:*",
     "zod": "4.1.12"
   },
   "devDependencies": {

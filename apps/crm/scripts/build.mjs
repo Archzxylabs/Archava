@@ -85,6 +85,7 @@ const browser = await build({
       output,
       'node_modules/@archava/crm-assistant/dist/recovery.js',
     ),
+    '@archava/crm-act/contracts': join(output, 'node_modules/@archava/crm-act/dist/contracts.js'),
   },
   metafile: true,
   logLevel: 'silent',

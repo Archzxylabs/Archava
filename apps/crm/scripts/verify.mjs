@@ -1146,6 +1146,80 @@ try {
   )
   check('live-planner quota/restore tests issue zero external provider requests')
 
+  const nativeBase = '/api/crm/hotel-demo/actions/followup'
+  const nativeContact = await post(
+    origin,
+    '/api/crm/hotel-demo/commands',
+    create('Native approved fixture'),
+    owner,
+  ).then((r) => r.json())
+  const nativeInputs = {
+    contactId: nativeContact.id,
+    contactRevision: 1,
+    summary: 'Native approved fixture',
+    dueAt: '2026-10-20T10:00:00Z',
+  }
+  assert.equal((await post(origin, nativeBase + '/review', nativeInputs, owner)).status, 503)
+  const diagnostic = JSON.parse(operator(['doctor'], 'restored-runtime.json'))
+  assert.equal(diagnostic.nativeActions, 'held')
+  operator(['resume-actions'], 'restored-runtime.json')
+  assert.equal(JSON.parse(operator(['doctor'], 'restored-runtime.json')).nativeActions, 'ready')
+  check(
+    'actual restored database holds native actions until explicit operator resume; diagnostics verify the supported local profile',
+  )
+  assert.equal((await post(origin, nativeBase + '/review', nativeInputs)).status, 401)
+  assert.equal(
+    (await post(origin, nativeBase + '/review', nativeInputs, owner, { 'x-archava-csrf': '' }))
+      .status,
+    403,
+  )
+  assert.equal(
+    (
+      await post(
+        origin,
+        nativeBase + '/review',
+        { ...nativeInputs, principalId: 'forged', confirmed: true },
+        owner,
+      )
+    ).status,
+    400,
+  )
+  const reviewResponse = await post(origin, nativeBase + '/review', nativeInputs, owner)
+  assert.equal(reviewResponse.status, 200)
+  const reviewed = await reviewResponse.json()
+  const body = {
+    inputs: nativeInputs,
+    confirmation: { challengeId: reviewed.challenge.challengeId, token: reviewed.challenge.token },
+  }
+  assert.equal(
+    (
+      await post(
+        origin,
+        nativeBase + '/present',
+        { ...body, inputs: { ...nativeInputs, summary: 'Altered after review' } },
+        owner,
+      )
+    ).status,
+    403,
+  )
+  assert.equal((await post(origin, nativeBase + '/present', body, owner)).status, 200)
+  const status = await get(origin, '/api/crm/hotel-demo/commands/' + reviewed.intentId, owner).then(
+    (r) => r.json(),
+  )
+  assert.equal(status.status, 'committed')
+  assert.equal(status.receipt.kind, 'followup')
+  assert.notEqual((await post(origin, nativeBase + '/present', body, owner)).status, 200)
+  const nativeDetail = await get(
+    origin,
+    '/api/crm/hotel-demo/contacts/' + nativeContact.id,
+    owner,
+  ).then((r) => r.json())
+  assert.equal(nativeDetail.followups.length, 1)
+  assert.ok(!JSON.stringify(status).includes(reviewed.challenge.token))
+  check(
+    'authenticated native HTTP review/confirmation/receipt flow rejects anonymous, CSRF, forged authority, payload drift and repeat execution; exactly one task commits',
+  )
+
   await mkdir(join(root, 'dist/crm-runtime-proof'), { recursive: true })
   await writeFile(
     join(root, 'dist/crm-runtime-proof/results.json'),

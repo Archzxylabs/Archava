@@ -60,6 +60,35 @@ export class CrmService {
       throw new CrmError('unavailable', 'Command recovery could not be verified.')
     return result
   }
+
+  async mutateApproved(tenant: unknown, principal: unknown, input: unknown, approval: unknown) {
+    const identity = this.identity(tenant, principal),
+      mutation = mutationSchema.parse(input)
+    if (
+      identity.principal.kind !== 'service' ||
+      mutation.command.operation !== 'followup.create' ||
+      !this.repository.mutateApproved
+    )
+      throw new CrmError('forbidden', 'A verified native follow-up approval is required.')
+    return await this.repository.mutateApproved(
+      identity.tenant,
+      identity.principal,
+      mutation,
+      approval,
+    )
+  }
+  async approvedCommandStatus(tenant: unknown, principal: unknown, requestId: unknown) {
+    const identity = this.identity(tenant, principal),
+      id = idSchema.parse(requestId)
+    if (identity.principal.kind !== 'service' || !this.repository.approvedCommandStatus)
+      throw new CrmError('forbidden', 'Native receipt recovery is unavailable.')
+    const result = commandStatusSchema.parse(
+      await this.repository.approvedCommandStatus(identity.tenant, identity.principal, id),
+    )
+    if (result.requestId !== id)
+      throw new CrmError('unavailable', 'Native receipt could not be verified.')
+    return result
+  }
 }
 
 /** Explicit read/prepare allowlist. These tools cannot mutate or send messages. */

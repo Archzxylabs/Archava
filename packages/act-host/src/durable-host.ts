@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto'
+import type { ConfirmationReceipt } from '@archava/act-confirmation'
 import {
   buildIdempotencyKey,
   validateActionInputs,
@@ -28,7 +29,11 @@ import {
 /** Intent ids are correlation only: policy, consent, validation and resource auth still run. */
 export interface ActHostIntentExecutor {
   readonly executorId: string
-  execute(request: ActionExecutionRequest, intentId: string): Promise<ActionExecutionResult>
+  execute(
+    request: ActionExecutionRequest,
+    intentId: string,
+    receipt: ConfirmationReceipt,
+  ): Promise<ActionExecutionResult>
 }
 export interface ActHostOutcomeResolver {
   /** Read-only authoritative positive evidence. An absent or uncertain outcome stays unknown. */
@@ -150,11 +155,15 @@ export class DurableActHost {
         )
       const attempt = this.#scope(stored)
       const claimId = reading.envelope.confirmation.challengeId
-      const executor: ActionExecutor = {
-        executorId: 'durable-' + this.#options.executor.executorId,
-        execute: (execution) => this.#execute(attempt, claimId, execution),
-      }
-      return await this.#host(executor).present(request)
+      const host = new ActHost({
+        ...this.#options,
+        executor: undefined,
+        executorForConfirmation: (receipt) => ({
+          executorId: 'durable-' + this.#options.executor.executorId,
+          execute: (execution) => this.#execute(attempt, claimId, execution, receipt),
+        }),
+      })
+      return await host.present(request)
     } catch (error) {
       this.#failure(error)
     }
@@ -163,6 +172,7 @@ export class DurableActHost {
     attempt: DurableActHostAttemptRecord,
     claimId: string,
     request: ActionExecutionRequest,
+    receipt: ConfirmationReceipt,
   ): Promise<ActionExecutionResult> {
     const ledger = this.#options.attempts
     let claimed = false
@@ -200,7 +210,7 @@ export class DurableActHost {
       let result: ActionExecutionResult
       try {
         result = await Promise.race([
-          this.#options.executor.execute(request, attempt.intentId),
+          this.#options.executor.execute(request, attempt.intentId, receipt),
           new Promise<ActionExecutionResult>((resolve) => {
             timer = setTimeout(() => resolve(unknown()), this.#timeout)
           }),

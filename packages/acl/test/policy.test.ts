@@ -16,8 +16,8 @@ const BASE = {
 
 describe('ActionRegistry', () => {
   it('is versioned', () => {
-    expect(ACTION_REGISTRY_VERSION).toBe('1.0.0')
-    expect(new ActionRegistry().version).toBe('1.0.0')
+    expect(ACTION_REGISTRY_VERSION).toBe('1.1.0')
+    expect(new ActionRegistry().version).toBe('1.1.0')
   })
 
   it('gives every action the PRD 18 required fields', () => {

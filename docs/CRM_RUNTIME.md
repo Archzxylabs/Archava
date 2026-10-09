@@ -6,7 +6,9 @@ identity-provider dependency. `@archava/identity-pg` supplies this host's bounde
 password/session implementation; another host can supply an external identity
 adapter. This is a locally verified operational slice of M3. Public deployment,
 TLS/proxy configuration, MFA/SSO, automatic recovery, provider integrations and
-AI writes have separate release gates.
+general AI writes have separate release gates. The supported local release now
+includes one owner-approved native follow-up action; see
+[local pilot operation and acceptance](LOCAL_OWNER_PILOT.md).
 
 ## Start
 
@@ -47,7 +49,9 @@ The host also mounts the [shared CRM conversation panel](CRM_CONVERSATION.md).
 Its local command planner reads contacts, shows notes/follow-ups and prepares
 reviewable drafts through the existing Archava turn pipeline. It uses the same
 verified session and CRM permissions. Local planning makes no model requests;
-an explicit human Save uses the existing command API. The optional
+the installed host uses native **Tinjau penyimpanan → Konfirmasi penyimpanan**
+for follow-up tasks. Consumers without the native adapter retain their human
+Save command API. The optional
 [Gemini pilot](CRM_GEMINI_PILOT.md) accepts only committed synthetic examples.
 [Reviewed Save recovery](CRM_COMMAND_RECOVERY.md) checks the original receipt
 after a lost response/reload without resubmission. Rebuild while the host is
@@ -103,6 +107,8 @@ policy require separate verification. Browsers cannot provision roles or account
 pnpm crm:backup
 pnpm crm:restore /absolute/private/backup.dump new_database_name
 ARCHAVA_CRM_PROFILE=restored-runtime.json pnpm crm:user recover /absolute/private/recovery.json
+ARCHAVA_CRM_PROFILE=restored-runtime.json pnpm crm:doctor
+ARCHAVA_CRM_PROFILE=restored-runtime.json pnpm crm:resume-actions
 ARCHAVA_CRM_PROFILE=restored-runtime.json pnpm crm:start
 ```
 
@@ -120,13 +126,17 @@ fingerprint key, rotates the identity key, deletes restored sessions and makes
 restored accounts inactive. Recover selected accounts with new passwords before
 enabling access. Recovery JSON has the reset shape. Older backups therefore cannot
 silently resurrect revoked sessions or old passwords. Original accounts are unchanged.
+Native actions are held under a fresh private approval epoch until the explicit
+resume command above. Resume does not release the provider/Gemini restoration
+hold; see [the local approval operation boundary](LOCAL_OWNER_PILOT.md).
 Failed restoration leaves its fresh target for inspection; it does not drop another
 database. Use a fresh target/profile for another attempt.
 
 The workflow uses [pg_dump's custom archive](https://www.postgresql.org/docs/current/app-pgdump.html)
 and [pg_restore](https://www.postgresql.org/docs/current/app-pgrestore.html).
-Tests cover actual initial-schema data, memberships, audit and retry receipts;
-they do not establish a later schema upgrade, an RPO or an RTO.
+Tests cover actual initial-schema upgrades, memberships, audit and retry receipts
+through the supported 0.4.0 migration set. They do not establish arbitrary future
+upgrades, an RPO or an RTO.
 
 ## Verification and remaining gates
 
@@ -147,6 +157,8 @@ original suite remain regression gates.
 `/healthz` exposes sanitized database status (200/503). Connection/request errors
 contain no SQL, credentials or customer fields. Alert routing, telemetry aggregation,
 cost budgets, public load/adversarial verification, MFA/SSO, email enrollment and
-automatic backup retention remain deployment work. Machine CRM writes stay refused;
-the Pending Act attempt/recovery tasks and shared realtime gaps remain open.
+automatic backup retention remain deployment work. Ordinary machine CRM writes
+stay refused; only the bounded native follow-up path has verified write authority.
+The Act library attempt/recovery tasks are delivered. Public provider deployment
+and shared realtime gaps remain open.
 No company website or full ERP was added.

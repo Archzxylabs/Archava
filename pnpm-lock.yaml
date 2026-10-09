@@ -50,9 +50,18 @@ importers:
 
   apps/crm:
     dependencies:
+      '@archava/act-host':
+        specifier: workspace:*
+        version: link:../../packages/act-host
+      '@archava/act-host-pg':
+        specifier: workspace:*
+        version: link:../../packages/act-host-pg
       '@archava/crm':
         specifier: workspace:*
         version: link:../../packages/crm
+      '@archava/crm-act':
+        specifier: workspace:*
+        version: link:../../packages/crm-act
       '@archava/crm-assistant':
         specifier: workspace:*
         version: link:../../packages/crm-assistant
@@ -407,6 +416,58 @@ importers:
         specifier: 4.1.11
         version: 4.1.11(@types/node@24.9.1)(@vitest/coverage-v8@4.1.11)(vite@7.3.6(@types/node@24.9.1)(tsx@4.20.6))
 
+  packages/crm-act:
+    dependencies:
+      '@archava/acl':
+        specifier: workspace:*
+        version: link:../acl
+      '@archava/act-confirmation':
+        specifier: workspace:*
+        version: link:../act-confirmation
+      '@archava/act-confirmation-pg':
+        specifier: workspace:*
+        version: link:../act-confirmation-pg
+      '@archava/act-host':
+        specifier: workspace:*
+        version: link:../act-host
+      '@archava/act-host-pg':
+        specifier: workspace:*
+        version: link:../act-host-pg
+      '@archava/act-storage':
+        specifier: workspace:*
+        version: link:../act-storage
+      '@archava/assistant':
+        specifier: workspace:*
+        version: link:../assistant
+      '@archava/config':
+        specifier: workspace:*
+        version: link:../config
+      '@archava/core':
+        specifier: workspace:*
+        version: link:../core
+      '@archava/crm':
+        specifier: workspace:*
+        version: link:../crm
+      '@archava/crm-pg':
+        specifier: workspace:*
+        version: link:../crm-pg
+      '@types/pg':
+        specifier: 8.23.1
+        version: 8.23.1
+      pg:
+        specifier: 8.23.1
+        version: 8.23.1
+      zod:
+        specifier: 4.1.12
+        version: 4.1.12
+    devDependencies:
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@24.9.1)(@vitest/coverage-v8@4.1.11)(vite@7.3.6(@types/node@24.9.1)(tsx@4.20.6))
+
   packages/crm-assistant:
     dependencies:
       '@archava/acl':
@@ -424,6 +485,9 @@ importers:
       '@archava/crm':
         specifier: workspace:*
         version: link:../crm
+      '@archava/crm-act':
+        specifier: workspace:*
+        version: link:../crm-act
       zod:
         specifier: 4.1.12
         version: 4.1.12

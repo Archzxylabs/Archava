@@ -8,6 +8,7 @@ import { pathToFileURL } from 'node:url'
 import { createRequire } from 'node:module'
 import { createHash, randomUUID } from 'node:crypto'
 import { build } from 'esbuild'
+import { verifyNative } from './native-proof.mjs'
 
 const root = resolve(import.meta.dirname, '../../..')
 const self = join(import.meta.dirname, 'verify.mjs')
@@ -156,6 +157,9 @@ if (process.argv[2] === 'worker') {
         '@archava/act-storage',
         '@archava/act',
         '@archava/act-postmark',
+        '@archava/crm-act',
+        '@archava/crm',
+        '@archava/crm-pg',
       ]) {
         const artifact = artifacts.find((a) => a.name === name)
         assert.ok(artifact)
@@ -484,6 +488,19 @@ if (process.argv[2] === 'worker') {
     check(
       'real database restart and second independent installed consumer retain unknown mail; exact positive mocked Postmark read recovers it without claim/send, while missing results do not',
     )
+    await verifyNative({
+      pools: () => ({ admin, app }),
+      reboot: async () => {
+        await admin.end()
+        await app.end()
+        stop()
+        start()
+        pools()
+      },
+      consumers,
+      moduleAt,
+      check,
+    })
     await mkdir(join(root, 'dist/act-proof'), { recursive: true })
     await writeFile(
       join(root, 'dist/act-proof/results.json'),

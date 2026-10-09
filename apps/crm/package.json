@@ -11,12 +11,17 @@
     "backup": "node scripts/run.mjs backup",
     "restore": "node scripts/run.mjs restore",
     "ai-status": "node scripts/run.mjs ai-status",
+    "resume-actions": "node scripts/run.mjs resume-actions",
+    "doctor": "node scripts/run.mjs doctor",
     "verify": "node scripts/run.mjs verify",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
     "@archava/crm": "workspace:*",
     "@archava/crm-assistant": "workspace:*",
+    "@archava/crm-act": "workspace:*",
+    "@archava/act-host": "workspace:*",
+    "@archava/act-host-pg": "workspace:*",
     "@archava/crm-pg": "workspace:*",
     "@archava/identity-pg": "workspace:*",
     "@archava/provider-runtime": "workspace:*",
