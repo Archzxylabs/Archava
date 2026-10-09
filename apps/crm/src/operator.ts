@@ -14,8 +14,8 @@ import {
   NATIVE_SERVICE_ID,
 } from './native-actions.js'
 import { existsSync } from 'node:fs'
-import { join, resolve, dirname } from 'node:path'
-import { chmod, lstat, writeFile } from 'node:fs/promises'
+import { join, resolve } from 'node:path'
+import { lstat } from 'node:fs/promises'
 import { Pool } from 'pg'
 import { z } from 'zod'
 import {
@@ -43,7 +43,6 @@ import {
   databaseName,
   readPrivateJson,
   writePrivateJson,
-  privateDirectory,
   loadSettings,
   connection,
   type RuntimeSettings,
@@ -54,6 +53,7 @@ import {
   pgTool,
   databaseEnvironment,
 } from './local-postgres.js'
+import { runCrmBackup, readBackupStatus, setBackupPolicy } from './backups.js'
 
 const credentialsSchema = z
   .object({
@@ -271,23 +271,43 @@ async function user(args: string[]) {
 }
 async function backup(args: string[]) {
   const settings = await loadSettings()
-  const directory = join(home, 'backups')
-  await privateDirectory(directory, true)
-  const file = args[0] ? resolve(args[0]) : join(directory, `crm-${Date.now()}.dump`)
-  await privateDirectory(dirname(file))
-  if (existsSync(file) || existsSync(file + '.runtime.json'))
-    throw new Error('Backup target already exists')
-  await writeFile(file, '', { mode: 0o600, flag: 'wx' })
-  await withLocalDatabase(settings, async () => {
-    pgTool(
-      'pg_dump',
-      ['--format=custom', '--no-owner', '--no-privileges', '--file', file],
-      databaseEnvironment(settings),
-    )
-    await chmod(file, 0o600)
-    await writePrivateJson(file + '.runtime.json', settings)
-  })
-  process.stdout.write(`Backup saved: ${file}\n`)
+  if (args.length > 1) throw new Error('Expected backup [private-output.dump]')
+  const result = await runCrmBackup(settings, { destination: args[0] })
+  if (result.outcome !== 'succeeded') throw new Error('Backup is already running')
+  process.stdout.write(`Backup saved: ${result.file}\n`)
+}
+async function backupStatus() {
+  const settings = await loadSettings()
+  process.stdout.write(JSON.stringify(await readBackupStatus(settings)) + '\n')
+}
+async function backupPolicy(args: string[]) {
+  const [mode, hours] = args
+  if (
+    !['enable', 'disable'].includes(mode ?? '') ||
+    args.length > 2 ||
+    (mode === 'disable' && hours !== undefined)
+  )
+    throw new Error('Expected backup-policy enable [hours] | disable')
+  const settings = await loadSettings()
+  const policy = await setBackupPolicy(
+    settings,
+    mode === 'enable',
+    hours === undefined ? undefined : Number(hours),
+  )
+  process.stdout.write(
+    JSON.stringify({
+      enabled: policy.enabled,
+      intervalHours: policy.intervalHours,
+      appliesWhileHostRuns: true,
+      automaticDeletion: false,
+    }) + '\n',
+  )
+}
+async function backupRun() {
+  const settings = await loadSettings()
+  process.stdout.write(
+    JSON.stringify({ outcome: (await runCrmBackup(settings, { onlyIfDue: true })).outcome }) + '\n',
+  )
 }
 async function restore(args: string[]) {
   const [rawBackup, rawTarget] = args
@@ -393,6 +413,12 @@ async function resumeActions() {
 }
 async function doctor() {
   const settings = await loadSettings()
+  let backups: { status: string } = { status: 'unavailable' }
+  try {
+    backups = await readBackupStatus(settings)
+  } catch {
+    /* Backup diagnostics must not print configuration or prevent database diagnostics. */
+  }
   await withLocalDatabase(settings, async () => {
     const app = new Pool(connection(settings))
     try {
@@ -415,6 +441,7 @@ async function doctor() {
           workspaces: settings.tenants.length,
           nativeActions: control.held ? 'held' : 'ready',
           externalActions: 'not configured',
+          backups,
           credentialValuesPrinted: false,
         }) + '\n',
       )
@@ -428,6 +455,9 @@ try {
   if (mode === 'setup') await setup()
   else if (mode === 'user') await user(args)
   else if (mode === 'backup') await backup(args)
+  else if (mode === 'backup-status') await backupStatus()
+  else if (mode === 'backup-policy') await backupPolicy(args)
+  else if (mode === 'backup-run') await backupRun()
   else if (mode === 'restore') await restore(args)
   else if (mode === 'ai-status') await aiStatus()
   else if (mode === 'resume-actions') await resumeActions()

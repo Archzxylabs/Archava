@@ -22,7 +22,7 @@ await writeFile(
   JSON.stringify(
     {
       name: 'archava-crm-runtime',
-      version: '0.1.0',
+      version: '0.2.0',
       private: true,
       type: 'module',
       dependencies: Object.fromEntries(

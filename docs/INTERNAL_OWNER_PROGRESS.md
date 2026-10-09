@@ -70,3 +70,9 @@ dashboard and local Archava the same complete contact/task/pipeline aggregates.
 Unavailable sections remain distinct from permitted zero counts; current tenant,
 assigned and delegated read grants govern every refresh. The broader 60% planning
 estimate remains unchanged.
+
+9 October follow-up: [automatic local backups](CRM_BACKUPS.md) add an opt-in
+per-database host schedule, integrity diagnostics and real restoration of an
+automatic archive. Existing library/action behavior is unchanged. Unattended OS
+operation, off-machine storage, retention and production reliability remain open,
+so the broader 60% planning estimate is retained.

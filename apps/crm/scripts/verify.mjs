@@ -1,7 +1,17 @@
 /* global process, fetch, setTimeout, clearTimeout */
 import assert from 'node:assert/strict'
 import { execFileSync, spawn } from 'node:child_process'
-import { mkdtemp, readFile, writeFile, rm, stat, mkdir } from 'node:fs/promises'
+import {
+  mkdtemp,
+  readFile,
+  writeFile,
+  rm,
+  stat,
+  mkdir,
+  readdir,
+  appendFile,
+  chmod,
+} from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { createRequire } from 'node:module'
@@ -190,6 +200,15 @@ try {
   assert.equal((await stat(configPath)).mode & 0o777, 0o600)
   assert.equal((await stat(home)).mode & 0o777, 0o700)
   check('private persistent installation, stable keys and idempotent setup')
+  assert.equal(JSON.parse(operator(['backup-status'])).status, 'disabled')
+  assert.equal(JSON.parse(operator(['backup-run'])).outcome, 'disabled')
+  assert.equal(
+    (await readdir(home)).some((name) => name.startsWith('backup-state-')),
+    false,
+  )
+  check(
+    'existing installations have no automatic backup side effect until an explicit per-database policy is enabled',
+  )
 
   const staff = {
     username: 'staff@archava.local',
@@ -963,10 +982,111 @@ try {
   owner = await login(origin, account.username, changed)
   check('durable login budget and password change invalidates every old session')
 
-  const backup = join(home, 'backup.dump')
-  operator(['backup', backup])
-  assert.equal((await stat(backup)).mode & 0o777, 0o600)
-  assert.equal((await stat(backup + '.runtime.json')).mode & 0o777, 0o600)
+  const manualBackup = join(home, 'backup.dump')
+  operator(['backup', manualBackup])
+  assert.equal((await stat(manualBackup)).mode & 0o777, 0o600)
+  assert.equal((await stat(manualBackup + '.runtime.json')).mode & 0o777, 0o600)
+  const backupStatePath = join(home, 'backup-state-' + settings.database + '.json')
+  const backupPolicyPath = join(home, 'backup-policy-' + settings.database + '.json')
+  const backupHealth = () => JSON.parse(operator(['backup-status']))
+  assert.equal(backupHealth().archiveIntact, true)
+  assert.equal(backupHealth().status, 'disabled')
+  assert.ok(!JSON.stringify(backupHealth()).includes(settings.fingerprintKey))
+  assert.ok(!JSON.stringify(backupHealth()).includes(manualBackup))
+  assert.equal((await stat(backupStatePath)).mode & 0o777, 0o600)
+  assert.throws(() => operator(['backup-policy', 'enable', '0']))
+  assert.throws(() => operator(['backup-policy', 'enable', '169']))
+  const enabled = JSON.parse(operator(['backup-policy', 'enable', '24']))
+  assert.equal(enabled.enabled, true)
+  assert.equal(enabled.automaticDeletion, false)
+  assert.equal((await stat(backupPolicyPath)).mode & 0o777, 0o600)
+  assert.equal(JSON.parse(operator(['backup-run'])).outcome, 'not_due')
+  check(
+    'shared manual and scheduled publisher validates custom archives, private metadata and bounded policy; diagnostics contain no configuration, archive path or credentials',
+  )
+
+  const backupPool = poolFor(settings),
+    backupLock = await backupPool.connect()
+  try {
+    await backupLock.query('SELECT pg_advisory_lock(hashtextextended($1,0))', [
+      'archava/local-backup/v1/' + settings.database,
+    ])
+    const before = await readFile(backupStatePath)
+    assert.equal(JSON.parse(operator(['backup-run'])).outcome, 'busy')
+    assert.deepEqual(await readFile(backupStatePath), before)
+  } finally {
+    backupLock.release()
+    await backupPool.end()
+  }
+  check(
+    'database advisory lock excludes overlapping backup processes and releases without stale filesystem locks or a new success record',
+  )
+
+  const manualBytes = await readFile(manualBackup)
+  const lastSuccess = JSON.parse(await readFile(backupStatePath, 'utf8')).lastSuccess
+  assert.throws(() => operator(['backup', manualBackup]))
+  assert.deepEqual(await readFile(manualBackup), manualBytes)
+  assert.deepEqual(JSON.parse(await readFile(backupStatePath, 'utf8')).lastSuccess, lastSuccess)
+  assert.equal(backupHealth().status, 'failed')
+  assert.equal(JSON.parse(operator(['backup-run'])).outcome, 'succeeded')
+  let latest = JSON.parse(await readFile(backupStatePath, 'utf8'))
+  await appendFile(latest.lastSuccess.file, 'fixture corruption')
+  assert.equal(backupHealth().archiveIntact, false)
+  assert.equal(backupHealth().status, 'stale')
+  assert.equal(JSON.parse(operator(['backup-run'])).outcome, 'succeeded')
+  assert.equal(backupHealth().archiveIntact, true)
+  assert.equal(backupHealth().status, 'fresh')
+  assert.deepEqual(await readFile(manualBackup), manualBytes)
+  assert.ok(!(await readdir(join(home, 'backups'))).some((name) => name.includes('.partial')))
+  check(
+    'existing archives are never overwritten; failed/corrupt snapshots are not fresh and a later backup recovers while retaining the previous material',
+  )
+
+  const archivesBeforeRestart = (await readdir(join(home, 'backups'))).filter((name) =>
+    name.endsWith('.dump'),
+  ).length
+  await stop()
+  origin = await boot()
+  assert.equal(backupHealth().status, 'fresh')
+  assert.equal(JSON.parse(operator(['backup-run'])).outcome, 'not_due')
+  assert.equal(
+    (await readdir(join(home, 'backups'))).filter((name) => name.endsWith('.dump')).length,
+    archivesBeforeRestart,
+  )
+  latest = JSON.parse(await readFile(backupStatePath, 'utf8'))
+  latest.lastSuccess.completedAt = '2020-01-01T00:00:00.000Z'
+  await privateJson(backupStatePath, latest)
+  assert.equal(backupHealth().status, 'stale')
+  await stop()
+  origin = await boot()
+  for (let tries = 0; backupHealth().status !== 'fresh' && tries < 80; tries++)
+    await new Promise((done) => setTimeout(done, 100))
+  assert.equal(backupHealth().status, 'fresh')
+  assert.equal(
+    (await readdir(join(home, 'backups'))).filter((name) => name.endsWith('.dump')).length,
+    archivesBeforeRestart + 1,
+  )
+  assert.equal(JSON.parse(operator(['backup-run'])).outcome, 'not_due')
+  const backup = JSON.parse(await readFile(backupStatePath, 'utf8')).lastSuccess.file
+  assert.notEqual(backup, manualBackup)
+  assert.equal((await get(origin, '/healthz')).status, 200)
+  assert.equal(JSON.parse(operator(['doctor'])).backups.status, 'fresh')
+  check(
+    'real host restart retains freshness and catches up one overdue automatic snapshot without blocking CRM health or repeating the capture',
+  )
+  const privatePolicy = await readFile(backupPolicyPath)
+  await chmod(backupPolicyPath, 0o644)
+  assert.throws(() => operator(['backup-status']))
+  assert.equal(JSON.parse(operator(['doctor'])).backups.status, 'unavailable')
+  await stop()
+  origin = await boot()
+  assert.equal((await get(origin, '/healthz')).status, 200)
+  await chmod(backupPolicyPath, 0o600)
+  assert.deepEqual(await readFile(backupPolicyPath), privatePolicy)
+  assert.equal(backupHealth().status, 'fresh')
+  check(
+    'unsafe private backup policy refuses execution and reports unavailable while a real host restart still serves CRM; repair preserves the prior valid archive',
+  )
   assert.equal(
     (await post(origin, '/api/crm/hotel-demo/commands', create('After snapshot'), owner)).status,
     200,
@@ -993,11 +1113,18 @@ try {
     primaryCount,
   )
   check(
-    'private pg_dump archive plus runtime metadata; restore leaves the original database untouched',
+    'automatically published pg_dump archive plus runtime metadata actually restores into a fresh database and leaves the original database untouched',
   )
 
   await stop()
   origin = await boot('restored-runtime.json')
+  const restoredBackups = JSON.parse(operator(['backup-status'], 'restored-runtime.json'))
+  assert.equal(restoredBackups.enabled, false)
+  assert.equal(restoredBackups.lastSuccessAt, null)
+  assert.equal(JSON.parse(operator(['backup-run'], 'restored-runtime.json')).outcome, 'disabled')
+  check(
+    'restored databases have a separate disabled backup policy and cannot inherit primary freshness or automatic scheduling',
+  )
   assert.equal((await get(origin, '/api/crm/hotel-demo/contacts', owner)).status, 401)
   assert.equal((await get(origin, '/api/crm/hotel-demo/contacts', primaryOwner)).status, 401)
   assert.equal(

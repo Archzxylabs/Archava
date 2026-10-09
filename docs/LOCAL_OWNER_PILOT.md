@@ -132,3 +132,8 @@ monitoring and customer voice/avatar are future releases with separate acceptanc
 The [0.7.0 authorized overview](CRM_OVERVIEW.md) adds a read-only owner/staff CRM
 summary to both dashboard and local Archava. The original acceptance and its dated
 counts above remain historical; overview evidence is recorded separately.
+
+The [0.2.0 local host backup operation](CRM_BACKUPS.md) adds an explicitly enabled
+per-database schedule, private snapshot integrity/status and startup catch-up.
+It preserves the same library, native approvals, identities and restore controls;
+it runs only while the local host is active.

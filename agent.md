@@ -1094,6 +1094,15 @@ readiness across every product surface. Keep runtime state and credential inputs
 private and outside artifacts. Restore into a fresh target, retain command identity,
 invalidate restored sessions and recover selected accounts explicitly.
 
+The local host can opt into per-database automatic backups while running. Missing
+policy stays disabled; a restored target does not inherit its primary policy or
+freshness. Capture under a database advisory lock, publish private complete material
+without overwrite, and verify archive/configuration binding before reporting fresh.
+Do not delete existing backups or expose policy/destination control to browser or
+model tools. Preserve graceful shutdown and all identity/native/provider restore
+holds. See `docs/CRM_BACKUPS.md`; this does not establish unattended OS operation,
+off-machine recovery or production RPO/RTO.
+
 The existing historical v1 delivery percentage is not a v2 module-library score.
 Use PRD §49 evidence gates and build status to describe readiness. Specification,
 offline fixtures and mocked integrations cannot be presented as shipped/live modules.

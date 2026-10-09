@@ -13,6 +13,7 @@ import { startLocalDatabase, stopLocalDatabase } from './local-postgres.js'
 import { startCrmHost } from './host.js'
 import { loadCrmPlanner } from './planner.js'
 import { PostgresProviderAttemptStore } from '@archava/provider-runtime/postgres'
+import { startLocalBackups } from './backups.js'
 
 // This local host also runs on desktops without reliable IPv6 routing.
 setDefaultResultOrder('ipv4first')
@@ -25,6 +26,7 @@ process.on('SIGINT', () => release())
 process.on('SIGTERM', () => release())
 let pool: Pool | undefined
 let host: Awaited<ReturnType<typeof startCrmHost>> | undefined
+let backups: ReturnType<typeof startLocalBackups> | undefined
 let ownsDatabase = false
 let ownsLock = false
 const lock = join(home, 'runtime.lock')
@@ -84,6 +86,7 @@ try {
       }),
   )
   process.stdout.write(`CRM ready: ${host.origin}\n`)
+  backups = startLocalBackups(settings)
   await stopped
 } catch {
   process.stderr.write(
@@ -92,6 +95,7 @@ try {
   process.exitCode = 1
 } finally {
   await host?.close()
+  await backups?.stop()
   await pool?.end()
   if (ownsDatabase) stopLocalDatabase()
   if (ownsLock) await unlink(lock)

@@ -122,8 +122,9 @@ Backup produces a private custom-format database archive and adjacent
 `.runtime.json` with fingerprint/configuration metadata. Preserve both as sensitive
 backup material. Optional output paths must use a private directory; existing
 archives are never overwritten. Records, memberships, command receipts, audit,
-identity accounts and migration ledgers are included. Scheduling, off-machine
-encryption/storage and retention remain operator work.
+identity accounts and migration ledgers are included. Optional
+[automatic local scheduling](CRM_BACKUPS.md) runs while the host is active.
+Off-machine encryption/storage and retention remain operator work.
 
 Restore accepts trusted owned archives, creates a fresh database and refuses an
 existing target. It verifies migrations, reapplies grants and writes a new recovery

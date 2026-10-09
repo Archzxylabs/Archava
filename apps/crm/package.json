@@ -1,6 +1,6 @@
 {
   "name": "@archava/crm-host",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,6 +9,9 @@
     "setup": "node scripts/run.mjs setup",
     "user": "node scripts/run.mjs user",
     "backup": "node scripts/run.mjs backup",
+    "backup-status": "node scripts/run.mjs backup-status",
+    "backup-policy": "node scripts/run.mjs backup-policy",
+    "backup-run": "node scripts/run.mjs backup-run",
     "restore": "node scripts/run.mjs restore",
     "ai-status": "node scripts/run.mjs ai-status",
     "resume-actions": "node scripts/run.mjs resume-actions",

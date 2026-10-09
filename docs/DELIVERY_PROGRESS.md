@@ -231,3 +231,13 @@ and local Archava share its contract and presentation. Current section grants,
 assigned scope and service/human intersections apply to every read. No new domain,
 financial truth, write authority, provider or production infrastructure is claimed;
 the owner planning and historical commercial estimates remain unchanged.
+
+## 9 October 2026 — automatic local snapshot operation
+
+The [0.2.0 CRM host backup operation](CRM_BACKUPS.md) adds an explicitly enabled
+per-database schedule, integrity diagnostics, no-overwrite publication and startup
+catch-up. Real restoration of an automatic archive preserves CRM/action/provider
+recovery boundaries. All 24 library artifacts retain their versions and hashes;
+there is no business fork or new domain capability. Host downtime, off-machine
+storage, retention and production RPO/RTO remain separate work. Existing planning
+and commercial percentages are retained.
