@@ -4,6 +4,7 @@ export interface CrmWorklistOptions {
   readonly apiBase: string
   readonly transport?: typeof fetch
   readonly onContactSelected: (id: string) => Promise<void> | void
+  readonly onFollowupSelected?: (id: string) => void
 }
 
 /** Shared read-only worklist. Opening a contact reuses the host's authorized detail flow. */
@@ -102,6 +103,15 @@ export function mountCrmWorklist(host: HTMLElement, options: CrmWorklistOptions)
             })
         })
         row.append(open)
+        if (options.onFollowupSelected) {
+          const choose = make('button', 'Tinjau penyelesaian di Archava')
+          choose.type = 'button'
+          choose.dataset.crmWorkComplete = item.id
+          choose.addEventListener('click', () => {
+            if (!disposed && !busy) options.onFollowupSelected?.(item.id)
+          })
+          row.append(choose)
+        }
         list.append(row)
       }
       state.textContent = result.items.length

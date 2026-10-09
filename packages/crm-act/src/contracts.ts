@@ -10,6 +10,12 @@ export const followupActionInputsSchema = z
   })
   .strict()
 export type FollowupActionInputs = z.infer<typeof followupActionInputsSchema>
+export const followupCompletionInputsSchema = z
+  .object({
+    followupId: idSchema,
+    expectedRevision: z.number().int().positive(),
+  })
+  .strict()
 export const nativeReviewSchema = z
   .object({
     intentId: idSchema,
@@ -29,9 +35,12 @@ export const nativePresentSchema = z
   })
   .strict()
 export const nativeStatusSchema = commandStatusSchema
+export const nativeCompletionPresentSchema = nativePresentSchema.extend({
+  inputs: followupCompletionInputsSchema,
+})
 export const nativeExecutionSchema = z
   .object({
-    actionId: z.literal('crm.followup.create'),
+    actionId: z.enum(['crm.followup.create', 'crm.followup.complete']),
     execution: z.enum(['not_attempted', 'succeeded', 'failed']),
     text: z.string().max(2000),
     errorCode: z.enum(['provider_outcome_unknown', 'action_not_completed']).optional(),

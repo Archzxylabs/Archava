@@ -173,6 +173,7 @@ if (process.argv.slice(2).join(' ') !== '--live') {
       const operation = item.expected.operation
       const expectedKind = {
         'followups.list': 'followups',
+        'followup.complete.prepare': 'completion_draft',
         'contacts.list': 'contacts',
         'contact.summary': 'summary',
         'followup.prepare': 'draft',

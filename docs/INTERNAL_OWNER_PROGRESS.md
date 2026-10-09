@@ -58,3 +58,9 @@ overdue and upcoming tasks across authorized contacts in both the dashboard and
 local Archava. It reuses existing permissions/data and adds no action authority
 or infrastructure. The broader 60% estimate is retained; this is a useful local
 CRM increment rather than evidence for production/general AI readiness.
+
+9 October follow-up: [reviewed task completion](CRM_COMPLETION.md) adds a second
+bounded native action through the existing approved execution path. Exact task
+reads and selection remain read-only; final completion uses current delegated
+grants and a separate action-bound challenge. The broader 60% estimate remains
+unchanged pending production/general-planning evidence.

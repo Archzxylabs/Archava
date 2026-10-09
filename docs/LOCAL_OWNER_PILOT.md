@@ -8,6 +8,10 @@ The subsequent [0.5.0 worklist release](CRM_WORKLIST.md) adds authorized due tas
 across contacts, using the same local host. The 0.4.0 acceptance evidence below
 remains the historical foundation; its native action/recovery boundary is preserved.
 
+The [0.6.0 release](CRM_COMPLETION.md) registers separate completion consent and
+adds exact task reads/preparation. Creation approval never authorizes completion;
+the existing permission, audit, recovery and restore boundaries apply to both.
+
 ## Supported capability
 
 The same compiled library serves Hospitality and Professional Services without

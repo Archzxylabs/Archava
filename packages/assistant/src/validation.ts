@@ -219,6 +219,10 @@ const INPUT_SCHEMAS: Readonly<Record<string, Readonly<Record<string, InputField>
     summary: { kind: 'string', description: 'the reviewed follow-up text' },
     dueAt: { kind: 'string', description: 'the reviewed due date' },
   },
+  'crm.followup.complete': {
+    followupId: { kind: 'string', entity: 'followup', description: 'the authorized CRM task' },
+    expectedRevision: { kind: 'number', description: 'the reviewed task revision' },
+  },
   'form.submit': {
     formId: { kind: 'string', entity: 'form', description: 'the form' },
     fields: { kind: 'object', description: 'the submitted values' },

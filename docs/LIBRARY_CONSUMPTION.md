@@ -129,3 +129,7 @@ review/present/status, current delegated grants and a private restore hold.
 The 0.5.0 CRM/PG/conversation artifacts add an optional authorized follow-up queue
 and standalone browser component. Both installed business consumers exercise the
 same due-time cursor, permissions and read-only tools; see [worklist contracts](CRM_WORKLIST.md).
+
+The 0.6.0 CRM/PG/conversation artifacts and 0.2.0 native adapter add optional exact
+task reads and separately approved completion. Both native actions use the same
+domain/approval/recovery primitives; see [completion contracts](CRM_COMPLETION.md).

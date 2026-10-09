@@ -24,6 +24,10 @@ const HELP =
   'Coba “tampilkan kontak”, “cari Budi”, “ringkas Budi”, “tampilkan follow-up terlambat”, atau “siapkan follow-up Budi”. Draft belum disimpan atau dikirim.'
 function describe(data: CrmConversationData): string {
   switch (data.kind) {
+    case 'needs_followup':
+      return 'Pilih satu tugas dari daftar follow-up, lalu tinjau penyelesaiannya.'
+    case 'completion_draft':
+      return `Tinjau penyelesaian tugas untuk ${data.task.contact.fullName}. Tugas masih terbuka; konfirmasi terpisah diperlukan.`
     case 'followups':
       return `${data.items.length} follow-up ${data.bucket === 'overdue' ? 'terlambat' : data.bucket === 'upcoming' ? 'mendatang' : 'terbuka'} pada halaman ini${data.next ? '; masih ada halaman berikutnya' : ''}. Batas waktu pemeriksaan: ${data.asOf}.`
     case 'help':
@@ -82,6 +86,13 @@ export function createCrmConversation(
       const tools = createCrmTools(service, tenant, principal)
       const resolve = async (): Promise<CrmConversationData> => {
         if (plan.operation === 'unsupported') return { kind: 'help' }
+        if (plan.operation === 'followup.complete.prepare') {
+          if (!input.followupId) return { kind: 'needs_followup' }
+          return conversationDataSchema.parse({
+            kind: 'completion_draft',
+            ...(await tools.invoke('crm.followup.complete.prepare', { id: input.followupId })),
+          })
+        }
         if (plan.operation === 'followups.list')
           return conversationDataSchema.parse({
             kind: 'followups',
@@ -250,6 +261,7 @@ export function createCrmConversation(
         source: [
           'contacts',
           'followups',
+          'completion_draft',
           'summary',
           'draft',
           'choose',

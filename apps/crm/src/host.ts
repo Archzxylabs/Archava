@@ -116,6 +116,8 @@ export function createHostHandler(
       }
       const conversation = /^\/api\/crm\/([^/]+)\/conversation$/.exec(url.pathname)
       const native = /^\/api\/crm\/([^/]+)\/actions\/followup\/(review|present)$/.exec(url.pathname)
+      const completeNative =
+        /^\/api\/crm\/([^/]+)\/actions\/followup\/complete\/(review|present)$/.exec(url.pathname)
       const cancelNative = /^\/api\/crm\/([^/]+)\/actions\/followup\/([a-f0-9-]+)\/cancel$/.exec(
         url.pathname,
       )
@@ -134,6 +136,17 @@ export function createHostHandler(
         const input: unknown = await request.json()
         return respond(
           native[2] === 'review' ? await action.review(input) : await action.present(input),
+        )
+      }
+      if (completeNative && request.method === 'POST' && nativeFor) {
+        const tenant = settings.tenants.find((item) => item.id === completeNative[1])
+        if (!tenant) return json({ error: { message: 'Workspace access refused.' } }, 403)
+        const action = await nativeFor(tenant.id, session.principalId),
+          input: unknown = await request.json()
+        return respond(
+          completeNative[2] === 'review'
+            ? await action.reviewCompletion(input)
+            : await action.presentCompletion(input),
         )
       }
       const receiptRoute = /^\/api\/crm\/([^/]+)\/commands\/([a-f0-9-]+)$/.exec(url.pathname)

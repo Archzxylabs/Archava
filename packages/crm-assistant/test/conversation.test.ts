@@ -70,6 +70,41 @@ function fixture(
   }
 }
 describe('reusable CRM conversation boundary', () => {
+  it('requires explicit task selection for a read-only completion draft and leaves execution to approval', async () => {
+    const f = fixture()
+    const followupDetail = vi.fn(() =>
+      Promise.resolve({
+        contact: { id, fullName: 'Budi', revision: 2 },
+        followup: {
+          id: otherId,
+          contactId: id,
+          tenantId: 'hotel-demo',
+          summary: 'Call Budi',
+          dueAt: now,
+          status: 'open' as const,
+          revision: 1,
+          createdAt: now,
+          updatedAt: now,
+        },
+      }),
+    )
+    const conversation = createCrmConversation(
+      new CrmService({ ...f.repository, followupDetail }),
+      new LocalCrmPlanner(),
+    )
+    expect(
+      (await conversation.ask(context, { utterance: 'selesaikan follow-up', contactId: id })).data
+        ?.kind,
+    ).toBe('needs_followup')
+    expect(followupDetail).not.toHaveBeenCalled()
+    const result = await conversation.ask(context, {
+      utterance: 'tinjau penyelesaian follow-up',
+      followupId: otherId,
+    })
+    expect(result.data?.kind).toBe('completion_draft')
+    expect(followupDetail).toHaveBeenCalledWith('hotel-demo', context.principal, otherId)
+    expect(f.mutate).not.toHaveBeenCalled()
+  })
   it('reads due work with fixed page time, no contact selection dependency or machine write', async () => {
     const f = fixture()
     const listFollowups = vi.fn(() =>

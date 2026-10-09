@@ -5,6 +5,10 @@ a bounded read projection across contacts. CRM, PostgreSQL and conversation
 artifacts are 0.5.0; the native approval adapter is 0.1.1 with the updated CRM
 dependency. This adds no package, database migration, grant or external provider.
 
+The subsequent [0.6.0 completion release](CRM_COMPLETION.md) lets the installed
+host select a task for Archava and separately review/confirm its completion.
+The standalone worklist's completion-selection callback is optional and read-only.
+
 ## Use
 
 Open `http://127.0.0.1:4175`, sign in and choose a workspace. **Daftar kerja

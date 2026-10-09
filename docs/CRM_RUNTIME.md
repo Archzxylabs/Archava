@@ -13,6 +13,9 @@ includes one owner-approved native follow-up action; see
 The [0.5.0 follow-up worklist](CRM_WORKLIST.md) adds a shared read-only task list
 and local Archava queries across permitted contacts, without a schema/grant change.
 
+The [0.6.0 completion flow](CRM_COMPLETION.md) adds selected-task preparation and
+separate native confirmation through the same session, audit and recovery host.
+
 ## Start
 
 Use Node 22.22.3, pnpm 10.15.1 and PostgreSQL tooling (`pg_config`, `initdb`,

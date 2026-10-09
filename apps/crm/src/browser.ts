@@ -134,6 +134,9 @@ async function mount() {
       ? '/api/crm/' + selected.id + '/actions/followup'
       : undefined,
     pilotEnabled: session.plannerMode === 'gemini-synthetic',
+    onFollowupCompleted: () => {
+      void worklist?.refresh()
+    },
     recovery: createTabFollowupRecovery(
       {
         getItem: (key) => sessionStorage.getItem(key),
@@ -155,9 +158,13 @@ async function mount() {
     },
   })
   const currentDashboard = dashboard
+  const currentConversation = conversation
   worklist = mountCrmWorklist(element<HTMLElement>('#worklist'), {
     apiBase: '/api/crm/' + selected.id,
     onContactSelected: (id) => currentDashboard.selectContact(id),
+    onFollowupSelected: session.nativeActions
+      ? (id) => currentConversation.selectFollowup(id)
+      : undefined,
     transport: async (input, init) => {
       const response = await fetch(input, init)
       if (response.status === 401) signedOut()

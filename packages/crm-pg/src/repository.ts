@@ -26,6 +26,7 @@ import {
   followupQueueSchema,
   type FollowupQueueQuery,
   type FollowupQueue,
+  type FollowupDetail,
 } from '@archava/crm'
 import { crmMigrationLedger } from './migrate.js'
 import {
@@ -409,6 +410,31 @@ export class PostgresCrmRepository implements CrmRepository, CrmPipelineReposito
     })
   }
 
+  followupDetail(tenant: string, principal: CrmPrincipal, rawId: string): Promise<FollowupDetail> {
+    const id = idSchema.parse(rawId)
+    return this.transaction(tenant, principal, 'followups.read', async (client, access) => {
+      if (!access.permissions.includes('contacts.read'))
+        throw new CrmError('forbidden', 'Contact access is required.')
+      const row = (
+        await client.query<Row>(
+          `SELECT f.*,c.full_name,c.revision AS contact_revision FROM archava_crm.followups f
+          JOIN archava_crm.contacts c ON c.tenant_id=f.tenant_id AND c.id=f.contact_id
+          WHERE f.tenant_id=$1 AND c.tenant_id=$1 AND f.id=$2 AND ($3::boolean OR c.owner_id=$4)`,
+          [tenant, id, access.scope === 'all', access.ownerId],
+        )
+      ).rows[0]
+      if (!row) throw new CrmError('not_found', 'CRM follow-up not found.')
+      return {
+        followup: followup(row),
+        contact: {
+          id: String(row.contact_id),
+          fullName: String(row.full_name),
+          revision: Number(row.contact_revision),
+        },
+      }
+    })
+  }
+
   private async ownedOpportunity(
     client: PoolClient,
     tenant: string,
@@ -506,7 +532,7 @@ export class PostgresCrmRepository implements CrmRepository, CrmPipelineReposito
     if (
       principal.kind !== 'service' ||
       !this.approvalVerifier ||
-      raw.command.operation !== 'followup.create'
+      !['followup.create', 'followup.complete'].includes(raw.command.operation)
     )
       throw new CrmError('forbidden', 'A verified native follow-up approval is required.')
     return this.runMutation(tenant, principal, raw, approval)
@@ -625,7 +651,7 @@ export class PostgresCrmRepository implements CrmRepository, CrmPipelineReposito
         ).rows[0]
         if (!row || typeof row.contact_id !== 'string')
           throw new CrmError('not_found', 'CRM follow-up not found.')
-        await this.ownedContact(client, tenant, access, row.contact_id)
+        await this.ownedContact(client, tenant, access, row.contact_id, true)
         if (row.revision !== command.expectedRevision || row.status !== 'open')
           throw new CrmError('conflict', 'CRM follow-up revision changed.')
         await client.query(

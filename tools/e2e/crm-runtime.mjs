@@ -609,6 +609,95 @@ try {
     'session credential stays HttpOnly and business data is absent from localStorage',
     await evaluate('!document.cookie.includes("archava_local_session") && localStorage.length===0'),
   )
+  await wait(
+    'document.querySelector("[data-crm-worklist]")?.textContent.includes("Worklist owner overdue")',
+  )
+  await evaluate(`window.completeOriginalFetch=window.fetch;window.completePosts=0;
+    window.fetch=async(...args)=>{const response=await window.completeOriginalFetch(...args);if(String(args[0]).endsWith('/actions/followup/complete/present')){window.completePosts++;throw new Error('synthetic-completion-response-lost')}return response}`)
+  await evaluate(
+    'Array.from(document.querySelectorAll("[data-crm-worklist] li")).find(row=>row.textContent.includes("Worklist owner overdue")).querySelector("[data-crm-work-complete]").click()',
+  )
+  check(
+    'worklist task selection fills a completion request without performing a write',
+    await evaluate(
+      'document.querySelector("[name=utterance]").value==="tinjau penyelesaian follow-up" && window.completePosts===0',
+    ),
+  )
+  await ask('tinjau penyelesaian follow-up')
+  const completeTaskId = await evaluate(
+    'document.querySelector("[data-archava-action=complete]").dataset.archavaFollowupId',
+  )
+  const taskStatus = () =>
+    evaluate(
+      `fetch('/api/crm/hotel-demo/followups/'+${JSON.stringify(completeTaskId)}).then(r=>r.json()).then(x=>x.followup.status)`,
+    )
+  check(
+    'completion draft shows the selected open task without changing CRM',
+    (await taskStatus()) === 'open',
+  )
+  await evaluate('document.querySelector("[data-archava-action=complete]").click()')
+  await wait(
+    'document.querySelector("[data-archava-action=complete]").textContent==="Konfirmasi selesai"',
+  )
+  check(
+    'completion review issues consent while the task remains open',
+    (await taskStatus()) === 'open',
+  )
+  await evaluate('document.querySelector("[data-archava-action=complete]").click()')
+  await wait('document.querySelector("[data-archava-action=complete]").textContent==="Selesai"')
+  await wait(
+    '!document.querySelector("[data-crm-worklist]").textContent.includes("Worklist owner overdue")',
+  )
+  check(
+    'lost completion response recovers by receipt without another POST and refreshes the open worklist',
+    (await evaluate('window.completePosts===1')) && (await taskStatus()) === 'completed',
+  )
+  await evaluate('window.fetch=window.completeOriginalFetch;delete window.completeOriginalFetch')
+  await ask('selesaikan follow-up')
+  check(
+    'a completed selection is cleared before another task can be prepared',
+    await evaluate(
+      'document.querySelector("[data-archava-log]").lastElementChild.textContent.includes("Pilih satu tugas")',
+    ),
+  )
+
+  await logout()
+  await signIn(accounts.staff)
+  await wait(
+    'document.querySelector("[data-crm-worklist]")?.textContent.includes("Worklist staff overdue")',
+  )
+  await evaluate('document.querySelector("[data-crm-work-complete]").click()')
+  await ask('tinjau penyelesaian follow-up')
+  await evaluate(`window.staffCompleteOriginalFetch=window.fetch;window.staffCompletePosts=0;
+    window.fetch=async(...args)=>{const path=String(args[0]);if(path.includes('/commands/') && (!args[1]?.method || args[1].method==='GET'))return new Response(JSON.stringify({status:'unconfirmed',requestId:path.split('/').pop()}),{status:200,headers:{'content-type':'application/json'}});const response=await window.staffCompleteOriginalFetch(...args);if(path.endsWith('/actions/followup/complete/present')){window.staffCompletePosts++;throw new Error('synthetic-staff-completion-loss')}return response}`)
+  await evaluate('document.querySelector("[data-archava-action=complete]").click()')
+  await wait(
+    'document.querySelector("[data-archava-action=complete]").textContent==="Konfirmasi selesai"',
+  )
+  await evaluate('document.querySelector("[data-archava-action=complete]").click()')
+  await wait(
+    'window.staffCompletePosts===1 && document.querySelector("[data-archava-recovery]").textContent.includes("belum terkonfirmasi")',
+  )
+  check(
+    'assigned staff completes only the selected task and retains one UUID while its receipt is unavailable',
+    await evaluate(
+      'window.staffCompletePosts===1 && document.querySelector("[data-archava-action=complete]").disabled',
+    ),
+  )
+  await page.navigate(origin)
+  await wait(
+    'document.querySelector("[data-archava-recovery]")?.textContent.includes("terkonfirmasi")',
+  )
+  await wait(
+    '!document.querySelector("[data-crm-worklist]").textContent.includes("Worklist staff overdue")',
+  )
+  check(
+    'reload recovers staff completion through GET and the task leaves its assigned worklist',
+    true,
+  )
+  await logout()
+  await signIn(accounts.owner)
+
   await page.send('Emulation.setDeviceMetricsOverride', {
     width: 360,
     height: 900,

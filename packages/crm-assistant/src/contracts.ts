@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { pipelineStageSchema } from '@archava/crm/pipeline-contracts'
+import { followupDetailSchema } from '@archava/crm/contracts'
 import {
   followupBucketSchema,
   followupCursorSchema,
@@ -11,6 +12,7 @@ export const conversationInputSchema = z
     utterance: z.string().trim().min(1).max(1000),
     contactId: z.uuid().optional(),
     opportunityId: z.uuid().optional(),
+    followupId: z.uuid().optional(),
     after: z.uuid().optional(),
     followupAfter: followupCursorSchema.optional(),
     followupAsOf: z.iso.datetime().optional(),
@@ -27,6 +29,7 @@ export type CrmConversationInput = z.infer<typeof conversationInputSchema>
 
 /** Provider output is a request. No tenant, identity, permissions, SQL or write tool exists here. */
 export const conversationPlanSchema = z.discriminatedUnion('operation', [
+  z.object({ operation: z.literal('followup.complete.prepare') }).strict(),
   z
     .object({
       operation: z.literal('followups.list'),
@@ -87,6 +90,14 @@ const opportunityItemSchema = z
   })
   .strict()
 export const conversationDataSchema = z.discriminatedUnion('kind', [
+  z
+    .object({
+      kind: z.literal('completion_draft'),
+      task: followupDetailSchema.refine((task) => task.followup.status === 'open'),
+      requiresApproval: z.literal(true),
+    })
+    .strict(),
+  z.object({ kind: z.literal('needs_followup') }).strict(),
   z
     .object({
       kind: z.literal('followups'),

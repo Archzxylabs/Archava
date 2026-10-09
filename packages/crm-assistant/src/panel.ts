@@ -14,12 +14,14 @@ export function mountCrmConversation(
     pilotEnabled?: boolean
     recovery?: FollowupRecoveryStore
     transport?: typeof fetch
+    onFollowupCompleted?: () => void
   },
 ) {
   let destroyed = false
   let busy = false
   let selected: { id: string; fullName: string } | null = null
   let opportunity: { id: string; title: string } | null = null
+  let followupId: string | null = null
   let active: AbortController | null = null
   const transport = options.transport ?? fetch
   let pendingRequestId: string | null = null
@@ -48,6 +50,7 @@ export function mountCrmConversation(
   const clear = make('button', 'Hapus pilihan')
   clear.type = 'button'
   clear.addEventListener('click', () => {
+    followupId = null
     selected = null
     opportunity = null
     selectedLabel.textContent = 'Belum ada kontak dipilih.'
@@ -152,6 +155,15 @@ export function mountCrmConversation(
       if (result.requestId !== requestId) throw new Error('Receipt does not match')
       if (result.status === 'committed') {
         if (result.receipt.kind !== 'followup') throw new Error('Receipt does not match')
+        const known = host.querySelector<HTMLButtonElement>(
+          `[data-archava-request-id="${requestId}"]`,
+        )
+        if (
+          known?.dataset.archavaFollowupId &&
+          (result.receipt.id !== known.dataset.archavaFollowupId ||
+            String(result.receipt.revision) !== known.dataset.archavaResultRevision)
+        )
+          throw new Error('Completion receipt does not match the reviewed task')
         forgetKnown(requestId)
         recoveryState.textContent =
           'Penyimpanan sebelumnya terkonfirmasi: follow-up tersimpan di CRM.'
@@ -160,11 +172,19 @@ export function mountCrmConversation(
         )
         if (button) {
           button.dataset.archavaFinal = 'true'
-          button.textContent = 'Tersimpan'
+          button.textContent = button.dataset.archavaAction === 'complete' ? 'Selesai' : 'Tersimpan'
           const state = button.parentElement?.querySelector<HTMLElement>(
             '[data-archava-save-state]',
           )
-          if (state) state.textContent = 'Follow-up tersimpan di CRM.'
+          if (state)
+            state.textContent =
+              button.dataset.archavaAction === 'complete'
+                ? 'Tugas ditandai selesai di CRM.'
+                : 'Follow-up tersimpan di CRM.'
+          if (button.dataset.archavaAction === 'complete') {
+            followupId = null
+            options.onFollowupCompleted?.()
+          }
         }
       } else {
         recoveryState.textContent =
@@ -250,6 +270,14 @@ export function mountCrmConversation(
 
   const render = (data: CrmConversationData | null, entry: HTMLElement) => {
     if (!data) return
+    if (data.kind === 'completion_draft') {
+      entry.append(
+        make('p', data.task.followup.summary),
+        make('p', 'Jadwal: ' + data.task.followup.dueAt),
+      )
+      if (options.approvalBase) renderNativeApproval(entry, data)
+      else entry.append(make('p', 'Approval penyelesaian belum tersedia di host ini.'))
+    }
     if (data.kind === 'followups') {
       const list = make('ul')
       list.dataset.archavaFollowups = ''
@@ -260,6 +288,7 @@ export function mountCrmConversation(
         button.dataset.archavaContact = item.contactId
         button.addEventListener('click', () => {
           if (destroyed || busy) return
+          followupId = null
           selected = { id: item.contactId, fullName: item.fullName }
           opportunity = null
           opportunityLabel.textContent = 'Belum ada peluang dipilih.'
@@ -268,6 +297,11 @@ export function mountCrmConversation(
           message.focus()
         })
         row.append(button)
+        const choose = make('button', 'Pilih tugas untuk Archava')
+        choose.type = 'button'
+        choose.dataset.archavaFollowup = item.id
+        choose.addEventListener('click', () => selectFollowup(item.id))
+        row.append(choose)
         list.append(row)
       }
       entry.append(list)
@@ -291,6 +325,7 @@ export function mountCrmConversation(
         button.dataset.archavaContact = item.id
         button.addEventListener('click', () => {
           if (destroyed || busy) return
+          followupId = null
           selected = { id: item.id, fullName: item.fullName }
           opportunity = null
           opportunityLabel.textContent = 'Belum ada peluang dipilih.'
@@ -322,6 +357,7 @@ export function mountCrmConversation(
         button.dataset.archavaOpportunity = item.id
         button.addEventListener('click', () => {
           if (destroyed || busy) return
+          followupId = null
           opportunity = { id: item.id, title: item.title }
           selected = null
           selectedLabel.textContent = 'Belum ada kontak dipilih.'
@@ -484,20 +520,39 @@ export function mountCrmConversation(
 
   function renderNativeApproval(
     entry: HTMLElement,
-    data: Extract<CrmConversationData, { kind: 'draft' }>,
+    data: Extract<CrmConversationData, { kind: 'draft' | 'completion_draft' }>,
   ) {
+    const completion = data.kind === 'completion_draft'
     const base = options.approvalBase
+      ? options.approvalBase + (completion ? '/complete' : '')
+      : undefined
     if (!base) return
-    const inputs = {
-      contactId: data.draft.contactId,
-      contactRevision: data.draft.contactRevision,
-      summary: data.draft.summary,
-      dueAt: data.draft.dueAt,
-    }
-    const button = make('button', 'Tinjau penyimpanan'),
-      state = make('p', 'Review dulu; follow-up belum disimpan.')
+    const inputs =
+      data.kind === 'completion_draft'
+        ? {
+            followupId: data.task.followup.id,
+            expectedRevision: data.task.followup.revision,
+          }
+        : {
+            contactId: data.draft.contactId,
+            contactRevision: data.draft.contactRevision,
+            summary: data.draft.summary,
+            dueAt: data.draft.dueAt,
+          }
+    const button = make('button', completion ? 'Tinjau penyelesaian' : 'Tinjau penyimpanan'),
+      state = make(
+        'p',
+        completion
+          ? 'Tugas masih terbuka; tinjau sebelum menandainya selesai.'
+          : 'Review dulu; follow-up belum disimpan.',
+      )
     button.type = 'button'
     button.dataset.archavaSave = ''
+    button.dataset.archavaAction = completion ? 'complete' : 'create'
+    if (data.kind === 'completion_draft') {
+      button.dataset.archavaFollowupId = data.task.followup.id
+      button.dataset.archavaResultRevision = String(data.task.followup.revision + 1)
+    }
     state.dataset.archavaSaveState = ''
     let review: ReturnType<typeof nativeReviewSchema.parse> | null = null
     entry.append(button, state)
@@ -533,14 +588,18 @@ export function mountCrmConversation(
             if (response.status === 409) {
               button.dataset.archavaFinal = 'true'
               button.textContent = 'Buat draft baru'
-              state.textContent = 'Kontak berubah. Buat ulang draft setelah meninjau data terbaru.'
+              state.textContent = completion
+                ? 'Tugas berubah atau sudah selesai. Pilih dan tinjau ulang data terbaru.'
+                : 'Kontak berubah. Buat ulang draft setelah meninjau data terbaru.'
               return
             }
             if (!response.ok) throw new Error('Review refused')
             review = nativeReviewSchema.parse(await response.json())
             button.dataset.archavaRequestId = review.intentId
-            button.textContent = 'Konfirmasi penyimpanan'
-            state.textContent = 'Draft siap. Konfirmasi untuk membuat satu tugas follow-up di CRM.'
+            button.textContent = completion ? 'Konfirmasi selesai' : 'Konfirmasi penyimpanan'
+            state.textContent = completion
+              ? 'Konfirmasi untuk menandai hanya tugas ini selesai di CRM.'
+              : 'Draft siap. Konfirmasi untuk membuat satu tugas follow-up di CRM.'
             return
           }
           if (Date.now() >= review.challenge.expiresAt) {
@@ -562,7 +621,9 @@ export function mountCrmConversation(
           recoveryState.textContent = 'Ada penyimpanan yang belum terkonfirmasi.'
           presenting = true
           button.dataset.archavaUncertain = 'true'
-          state.textContent = 'Menyimpan follow-up yang disetujui…'
+          state.textContent = completion
+            ? 'Menandai tugas yang disetujui selesai…'
+            : 'Menyimpan follow-up yang disetujui…'
           syncRecovery()
           const response = await transport(base + '/present', {
             method: 'POST',
@@ -580,6 +641,8 @@ export function mountCrmConversation(
           if (destroyed) return
           if (!response.ok) throw new Error('Approval refused')
           const result = nativeExecutionSchema.parse(await response.json())
+          if (result.actionId !== (completion ? 'crm.followup.complete' : 'crm.followup.create'))
+            throw new Error('Action does not match')
           if (result.execution !== 'succeeded') throw new Error('Outcome is uncertain')
           await recoverSave(true)
         } catch {
@@ -634,6 +697,7 @@ export function mountCrmConversation(
           utterance,
           ...(selected ? { contactId: selected.id } : {}),
           ...(opportunity ? { opportunityId: opportunity.id } : {}),
+          ...(followupId ? { followupId } : {}),
           ...(after ? { after } : {}),
           ...(followups ? { followupAfter: followups.after, followupAsOf: followups.asOf } : {}),
           ...(summary && date ? { draft: { summary, dueAt: date.toISOString() } } : {}),
@@ -650,6 +714,20 @@ export function mountCrmConversation(
         )
       const result = conversationReplySchema.parse(await response.json())
       if (destroyed) return
+      if (
+        result.data &&
+        [
+          'followups',
+          'contacts',
+          'summary',
+          'draft',
+          'choose',
+          'opportunities',
+          'opportunity',
+          'choose_opportunity',
+        ].includes(result.data.kind)
+      )
+        followupId = null
       if (result.data?.kind === 'summary')
         selected = { id: result.data.contact.id, fullName: result.data.contact.fullName }
       else if (result.data?.kind === 'draft')
@@ -682,9 +760,11 @@ export function mountCrmConversation(
         ].includes(result.data.kind)
       )
         opportunity = null
-      selectedLabel.textContent = selected
-        ? 'Kontak dipilih: ' + selected.fullName
-        : 'Belum ada kontak dipilih.'
+      selectedLabel.textContent = followupId
+        ? 'Tugas follow-up dipilih untuk ditinjau.'
+        : selected
+          ? 'Kontak dipilih: ' + selected.fullName
+          : 'Belum ada kontak dipilih.'
       opportunityLabel.textContent = opportunity
         ? 'Peluang dipilih: ' + opportunity.title
         : 'Belum ada peluang dipilih.'
@@ -720,14 +800,28 @@ export function mountCrmConversation(
     event.preventDefault()
     void ask(message.value)
   })
+  function selectFollowup(id: string) {
+    if (destroyed || busy) return
+    followupId = idSchema.parse(id)
+    selected = null
+    opportunity = null
+    note.value = ''
+    due.value = ''
+    selectedLabel.textContent = 'Tugas follow-up dipilih untuk ditinjau.'
+    opportunityLabel.textContent = 'Belum ada peluang dipilih.'
+    message.value = 'tinjau penyelesaian follow-up'
+    message.focus()
+  }
   void recoverSave()
   return {
+    selectFollowup,
     destroy() {
       destroyed = true
       active?.abort()
       recoveryActive?.abort()
       selected = null
       opportunity = null
+      followupId = null
       host.replaceChildren()
     },
   }

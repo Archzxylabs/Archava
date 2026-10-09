@@ -16,6 +16,7 @@ import {
   NativeCrmActHost,
   nativeSessionId,
   NATIVE_FOLLOWUP_ACTION,
+  NATIVE_COMPLETE_ACTION,
   type NativeCrmActOptions,
 } from './native-host.js'
 import { actionControlSchema } from './contracts.js'
@@ -114,7 +115,7 @@ const receiptSchema = z
     challengeId: z.string().regex(/^[a-f0-9]{32}$/),
     tenantId: z.string().min(1).max(100),
     sessionId: z.string().min(1).max(256),
-    actionId: z.literal(NATIVE_FOLLOWUP_ACTION),
+    actionId: z.enum([NATIVE_FOLLOWUP_ACTION, NATIVE_COMPLETE_ACTION]),
     inputDigest: z.string().regex(/^[a-f0-9]{64}$/),
     bindingDigest: z.string().regex(/^[a-f0-9]{64}$/),
     receiptDigest: z.string().regex(/^[a-f0-9]{64}$/),
@@ -137,7 +138,7 @@ export function createNativeCrmVerifier(
         !parsed.success ||
         principal.kind !== 'service' ||
         principal.id !== options.serviceId ||
-        mutation.command.operation !== 'followup.create' ||
+        !['followup.create', 'followup.complete'].includes(mutation.command.operation) ||
         mutation.requestId !== parsed.data.intentId
       )
         return false
@@ -164,16 +165,25 @@ export function createNativeCrmVerifier(
         digestKey: key,
         clock: Date.now,
       })
-      const inputs = {
-        contactId: mutation.command.contactId,
-        contactRevision: mutation.command.contactRevision,
-        summary: mutation.command.summary,
-        dueAt: mutation.command.dueAt,
-      }
+      const command = mutation.command
+      let inputs: Record<string, unknown>, actionId: string
+      if (command.operation === 'followup.create') {
+        actionId = NATIVE_FOLLOWUP_ACTION
+        inputs = {
+          contactId: command.contactId,
+          contactRevision: command.contactRevision,
+          summary: command.summary,
+          dueAt: command.dueAt,
+        }
+      } else if (command.operation === 'followup.complete') {
+        actionId = NATIVE_COMPLETE_ACTION
+        inputs = { followupId: command.id, expectedRevision: command.expectedRevision }
+      } else return false
+      if (receipt.actionId !== actionId) return false
       const description = confirmations.describeBinding({
         tenantId: tenant,
         sessionId: session,
-        actionId: NATIVE_FOLLOWUP_ACTION,
+        actionId,
         inputs,
       })
       if (
@@ -192,7 +202,7 @@ export function createNativeCrmVerifier(
         row.challenge.state !== 'consumed' ||
         row.challenge.tenantId !== tenant ||
         row.challenge.sessionId !== session ||
-        row.challenge.actionId !== NATIVE_FOLLOWUP_ACTION ||
+        row.challenge.actionId !== actionId ||
         row.challenge.bindingDigest !== receipt.bindingDigest ||
         row.challenge.issuedAt !== receipt.issuedAt ||
         row.challenge.expiresAt !== receipt.expiresAt ||

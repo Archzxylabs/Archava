@@ -87,6 +87,13 @@ export const followupSchema = z
   })
   .strict()
 export type FollowUp = z.infer<typeof followupSchema>
+export const followupDetailSchema = z
+  .object({
+    followup: followupSchema,
+    contact: z.object({ id: idSchema, fullName: name, revision }).strict(),
+  })
+  .strict()
+export type FollowupDetail = z.infer<typeof followupDetailSchema>
 
 const contactFields = z
   .object({
@@ -184,6 +191,7 @@ export interface CrmRepository {
     page: FollowupQueueQuery,
   ): Promise<FollowupQueue>
   detail(tenant: string, principal: CrmPrincipal, id: string): Promise<ContactDetail>
+  followupDetail?(tenant: string, principal: CrmPrincipal, id: string): Promise<FollowupDetail>
   mutate(tenant: string, principal: CrmPrincipal, mutation: CrmMutation): Promise<MutationReceipt>
   /** Server-only verified approval path. Ordinary machine writes remain forbidden. */
   mutateApproved?(
@@ -218,11 +226,17 @@ export class CrmError extends Error {
 /** Config/installation metadata; it grants no authority and supplies no price. */
 export const CRM_CONTACTS_MANIFEST = {
   id: 'crm_contacts',
-  version: '0.5.0',
+  version: '0.6.0',
   status: 'implemented' as const,
   requires: [],
   permissions: CRM_PERMISSIONS.filter((permission) => !permission.startsWith('pipeline.')),
   persistence: { adapter: '@archava/crm-pg', migration: '001_crm_contacts' },
   apiVersion: '1.0.0',
-  tools: ['crm.contacts.list', 'crm.contact.summary', 'crm.followups.list', 'crm.followup.prepare'],
+  tools: [
+    'crm.contacts.list',
+    'crm.contact.summary',
+    'crm.followups.list',
+    'crm.followup.prepare',
+    'crm.followup.complete.prepare',
+  ],
 }

@@ -165,4 +165,53 @@ export async function verifyWorklist(
   check(
     'worklist rechecks tenant, both read grants, delegated staff scope, revocation and reassignment; dashboard/Archava reads create zero command/audit/task writes',
   )
+  for (const [index, tenant] of tenants.entries()) {
+    const current = services[index],
+      fixture = ids.get(tenant),
+      module = consumers.conversations[index]
+    assert.ok(current && fixture && module)
+    const hiddenId = randomUUID()
+    for (let offset = 0; offset < 21; offset++)
+      await operator.query(
+        'INSERT INTO archava_crm.followups(tenant_id,id,contact_id,summary,due_at) VALUES($1,$2,$3,$4,$5)',
+        [
+          tenant,
+          offset === 20 ? hiddenId : randomUUID(),
+          fixture.ownerContact,
+          'Task beyond contact page',
+          offset === 20 ? '2030-01-02T00:00:00Z' : '2030-01-01T00:00:00Z',
+        ],
+      )
+    assert.ok(
+      !(await current.detail(tenant, owner, fixture.ownerContact)).followups.some(
+        (item) => item.id === hiddenId,
+      ),
+    )
+    const detail = await current.followup(tenant, owner, hiddenId)
+    assert.equal(detail.followup.id, hiddenId)
+    assert.equal(detail.contact.id, fixture.ownerContact)
+    assert.ok(!JSON.stringify(detail).includes('private@example.test'))
+    await assert.rejects(() => current.followup(tenant, staff, hiddenId), { code: 'not_found' })
+    for (const principal of ['queue-no-contact', 'queue-no-task'])
+      await assert.rejects(
+        () => current.followup(tenant, { kind: 'human', id: principal }, hiddenId),
+        { code: 'forbidden' },
+      )
+    await operator.query(
+      "UPDATE archava_crm.memberships SET permissions=ARRAY['contacts.read','followups.read','followups.write'] WHERE tenant_id=$1 AND principal_id=$2",
+      [tenant, owner.id],
+    )
+    const beforeDraft = await counts()
+    const reply = await module
+      .createCrmConversation(current, new module.LocalCrmPlanner())
+      .ask(
+        { tenantId: tenant, principal: owner, turnId: 'complete-prepare', occurredAt: asOf },
+        { utterance: 'tinjau penyelesaian follow-up', followupId: hiddenId },
+      )
+    assert.equal(reply.data?.kind, 'completion_draft')
+    assert.deepEqual(await counts(), beforeDraft)
+  }
+  check(
+    'exact task detail and completion preparation share both installed consumers, reach tasks beyond the contact page, recheck both read grants/resource scope and create no mutation',
+  )
 }

@@ -1063,14 +1063,17 @@ dashboard, Archava or a worker. Keep existing risk/capability/approval boundarie
 general CRM writes require Act even when the module is first-party. Unverified
 payments and unknown provider outcomes are never reported as successful.
 
-The local 0.4.0 CRM pilot has exactly one approved native machine-write path:
-`@archava/crm-act` / `crm.followup.create`. It checks the server receipt MAC,
+The initial local 0.4.0 CRM pilot introduced `crm.followup.create`. The 0.6.0
+pilot adds a separately registered and confirmed `crm.followup.complete` path
+through `@archava/crm-act`. Both check the server receipt MAC,
 consumed scoped confirmation, active intent claim, current service/human grant
 intersection and contact revision inside the CRM transaction. Ordinary machine
 mutations and read/draft conversation tools remain denied write authority.
 Preserve the private per-database restore hold/epoch, and retain unresolved
 receipt markers rather than issuing a blind new command. Do not extend this
-approval to another operation, public visitor, external effect or model flag.
+creation consent to completion, another operation, public visitor, external effect
+or model flag. Completion binds its exact task ID/revision and locks task/contact
+through its status transition. Read-only completion preparation grants no execution.
 
 The 0.5.0 `crm.followups.list` worklist is a read projection of open tasks across
 currently permitted contacts. Require both contact/task read grants and delegated

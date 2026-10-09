@@ -1290,6 +1290,126 @@ try {
     'authenticated worklist and Archava share due tasks while enforcing current assigned staff and tenant scope; partial cursors are refused',
   )
 
+  const completionBase = nativeBase + '/complete'
+  const fixtureTask = nativeDetail.followups[0]
+  assert.ok(fixtureTask)
+  const completionInputs = { followupId: fixtureTask.id, expectedRevision: 1 }
+  assert.equal((await post(origin, completionBase + '/review', completionInputs)).status, 401)
+  assert.equal(
+    (
+      await post(origin, completionBase + '/review', completionInputs, owner, {
+        'x-archava-csrf': '',
+      })
+    ).status,
+    403,
+  )
+  assert.equal(
+    (
+      await post(
+        origin,
+        completionBase + '/review',
+        { ...completionInputs, confirmed: true },
+        owner,
+      )
+    ).status,
+    400,
+  )
+  assert.equal(
+    (await get(origin, '/api/crm/hotel-demo/followups/' + fixtureTask.id, queueStaffSession))
+      .status,
+    404,
+  )
+  const completionDraft = await post(
+    origin,
+    '/api/crm/hotel-demo/conversation',
+    { utterance: 'selesaikan follow-up', followupId: fixtureTask.id },
+    owner,
+  ).then((r) => r.json())
+  assert.equal(completionDraft.data.kind, 'completion_draft')
+  assert.equal(
+    (
+      await get(origin, '/api/crm/hotel-demo/followups/' + fixtureTask.id, owner).then((r) =>
+        r.json(),
+      )
+    ).followup.status,
+    'open',
+  )
+  const completionReview = await post(
+    origin,
+    completionBase + '/review',
+    completionInputs,
+    owner,
+  ).then((r) => r.json())
+  const completeBody = {
+    inputs: completionInputs,
+    confirmation: {
+      challengeId: completionReview.challenge.challengeId,
+      token: completionReview.challenge.token,
+    },
+  }
+  assert.equal(
+    (
+      await post(
+        origin,
+        completionBase + '/present',
+        { ...completeBody, inputs: { ...completionInputs, expectedRevision: 2 } },
+        owner,
+      )
+    ).status,
+    409,
+  )
+  assert.equal((await post(origin, completionBase + '/present', completeBody, owner)).status, 200)
+  const completionStatus = await get(
+    origin,
+    '/api/crm/hotel-demo/commands/' + completionReview.intentId,
+    owner,
+  ).then((r) => r.json())
+  assert.equal(completionStatus.status, 'committed')
+  assert.equal(completionStatus.receipt.id, fixtureTask.id)
+  assert.equal(completionStatus.receipt.revision, 2)
+  assert.notEqual(
+    (await post(origin, completionBase + '/present', completeBody, owner)).status,
+    200,
+  )
+  assert.equal(
+    (
+      await get(origin, '/api/crm/hotel-demo/followups/' + fixtureTask.id, owner).then((r) =>
+        r.json(),
+      )
+    ).followup.status,
+    'completed',
+  )
+  check(
+    'authenticated completion preparation is read-only; current task review/confirmation commits once with exact receipt while anonymous, CSRF, forged flags, staff scope, changed revision and replay are refused',
+  )
+
+  // Keep the browser navigation fixture open; domain/API proof above used its original task.
+  const navigationContact = await get(
+    origin,
+    '/api/crm/hotel-demo/contacts/' + nativeContact.id,
+    owner,
+  ).then((r) => r.json())
+  assert.equal(
+    (
+      await post(
+        origin,
+        '/api/crm/hotel-demo/commands',
+        {
+          requestId: randomUUID(),
+          command: {
+            operation: 'followup.create',
+            contactId: nativeContact.id,
+            contactRevision: navigationContact.contact.revision,
+            summary: 'Native approved fixture',
+            dueAt: '2026-10-20T10:00:00Z',
+          },
+        },
+        owner,
+      )
+    ).status,
+    200,
+  )
+
   await mkdir(join(root, 'dist/crm-runtime-proof'), { recursive: true })
   await writeFile(
     join(root, 'dist/crm-runtime-proof/results.json'),

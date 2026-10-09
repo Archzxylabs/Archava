@@ -9,6 +9,12 @@ export class LocalCrmPlanner implements CrmConversationPlanner {
       .trim()
       .replace(/[?!.]+$/, '')
       .trim()
+    if (
+      /^(?:tinjau penyelesaian|siapkan penyelesaian|selesaikan|review completion of|complete)\s+follow[ -]?up$/i.test(
+        text,
+      )
+    )
+      return Promise.resolve({ operation: 'followup.complete.prepare' })
     const followups =
       /^(?:tampilkan|daftar|lihat|list|show)(?:\s+(?:semua|all))?\s+follow[ -]?ups?(?:\s+(?:yang\s+)?(terlambat|overdue|mendatang|upcoming))?$/i.exec(
         text,

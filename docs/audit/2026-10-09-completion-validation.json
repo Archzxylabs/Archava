@@ -1,0 +1,182 @@
+{
+  "date": "2026-10-09",
+  "baseline": "b869cc9",
+  "releaseScope": "local free reviewed follow-up completion on reusable CRM",
+  "node": "v22.22.3",
+  "command": "fnm exec --using 22.22.3 pnpm verify",
+  "gates": ["install", "structure", "format", "lint", "typecheck", "test", "build", "reuse"],
+  "passed": true,
+  "testFiles": 97,
+  "tests": 1431,
+  "compiledArtifacts": 24,
+  "artifactManifest": {
+    "schema_version": "1.0.0",
+    "artifacts": [
+      {
+        "name": "@archava/crm-act",
+        "version": "0.2.0",
+        "tarball": "tarballs/archava-crm-act-0.2.0.tgz",
+        "sha256": "78c78520e8104325c1c4322e0ae94cd436149300b9acec45a313abcfa3eb5aac"
+      },
+      {
+        "name": "@archava/crm",
+        "version": "0.6.0",
+        "tarball": "tarballs/archava-crm-0.6.0.tgz",
+        "sha256": "eb7b558d8797f26ad2b3160b31e6a3e0f9642d5937b9a80e7025c5a2a339a8a0"
+      },
+      {
+        "name": "@archava/crm-pg",
+        "version": "0.6.0",
+        "tarball": "tarballs/archava-crm-pg-0.6.0.tgz",
+        "sha256": "873375fe8e14c941392c4e1aaf21dac9a3a38f60346c25061444a50b8a6882e2"
+      },
+      {
+        "name": "@archava/act-host",
+        "version": "0.3.0",
+        "tarball": "tarballs/archava-act-host-0.3.0.tgz",
+        "sha256": "aac466ec9ea09b8d22f4f2a5ace076cbc6f23096898b51383f986cbf40041e3a"
+      },
+      {
+        "name": "@archava/acl",
+        "version": "0.3.0",
+        "tarball": "tarballs/archava-acl-0.3.0.tgz",
+        "sha256": "8d1ef6ac490044d21b05ba72bb447a99bda1cdf26a2a875bc61c36f0ce5b64f9"
+      },
+      {
+        "name": "@archava/config",
+        "version": "0.1.0",
+        "tarball": "tarballs/archava-config-0.1.0.tgz",
+        "sha256": "a813a6d480eb4ac793b1c36bdd92e1a5be903bb73708106bde47c2bbb809205b"
+      },
+      {
+        "name": "@archava/core",
+        "version": "0.1.0",
+        "tarball": "tarballs/archava-core-0.1.0.tgz",
+        "sha256": "d922709ba0ba3181e2822bb8a2e601cb35429ae0594d04b8a4a3d3eea0adf690"
+      },
+      {
+        "name": "@archava/act-confirmation",
+        "version": "0.3.0",
+        "tarball": "tarballs/archava-act-confirmation-0.3.0.tgz",
+        "sha256": "160ad9d90b835f91349557ad15987efe9481383edd354b7cf09b65007747c43b"
+      },
+      {
+        "name": "@archava/adapters",
+        "version": "0.1.0",
+        "tarball": "tarballs/archava-adapters-0.1.0.tgz",
+        "sha256": "c2eaa9895125edf61d8b3d10c3f53b3299217c6ecb4b7e4ea65613cb64e38b29"
+      },
+      {
+        "name": "@archava/assistant",
+        "version": "0.5.0",
+        "tarball": "tarballs/archava-assistant-0.5.0.tgz",
+        "sha256": "af7763343a15066341a8166000673bf13bac996f3c36f274bcc7f9637705cd95"
+      },
+      {
+        "name": "@archava/decision",
+        "version": "0.1.0",
+        "tarball": "tarballs/archava-decision-0.1.0.tgz",
+        "sha256": "411f7507335051e5b2c1a661821d4d0c69d2ffc7d1987136250ddedd12c9f693"
+      },
+      {
+        "name": "@archava/knowledge",
+        "version": "0.1.0",
+        "tarball": "tarballs/archava-knowledge-0.1.0.tgz",
+        "sha256": "67ac95d450bc29801649ec415795f2a882bf45545bb8f36c975cd3531f23dd87"
+      },
+      {
+        "name": "@archava/act-host-pg",
+        "version": "0.2.0",
+        "tarball": "tarballs/archava-act-host-pg-0.2.0.tgz",
+        "sha256": "965bc8b97210751b5e27b8f80c087725449dc92ecbdc413a8d78cb288959d6a0"
+      },
+      {
+        "name": "@archava/act-storage",
+        "version": "0.2.0",
+        "tarball": "tarballs/archava-act-storage-0.2.0.tgz",
+        "sha256": "af011132600505d918bc303fe4b7055ab4cc2dc8fe27670d3ad4349534e233c4"
+      },
+      {
+        "name": "@archava/act-booking",
+        "version": "0.2.0",
+        "tarball": "tarballs/archava-act-booking-0.2.0.tgz",
+        "sha256": "39ac16186a72e11220c929cd13190bbfca41d2eec2bf5b4787093ed31bcd9bce"
+      },
+      {
+        "name": "@archava/act-email",
+        "version": "0.2.0",
+        "tarball": "tarballs/archava-act-email-0.2.0.tgz",
+        "sha256": "d812b494935d37e21be380c2156ce6940a32d0e5e177af0cccb6c773f490a9f8"
+      },
+      {
+        "name": "@archava/act-confirmation-pg",
+        "version": "0.1.0",
+        "tarball": "tarballs/archava-act-confirmation-pg-0.1.0.tgz",
+        "sha256": "21e811ecc4ec811be978a2ee082338f29e8f820b3e555ab2bd737152c507e240"
+      },
+      {
+        "name": "@archava/sdk",
+        "version": "0.1.0",
+        "tarball": "tarballs/archava-sdk-0.1.0.tgz",
+        "sha256": "8b694a35506165ac25e54bac2ce3b76a7bff5dac0e261f2c7954a4a2f4557425"
+      },
+      {
+        "name": "@archava/chat",
+        "version": "0.1.0",
+        "tarball": "tarballs/archava-chat-0.1.0.tgz",
+        "sha256": "327f544a0e75e479a2b5f54bc275f3abbc77729c1d25ed4907616f2dde7c6b7b"
+      },
+      {
+        "name": "@archava/identity-pg",
+        "version": "0.1.0",
+        "tarball": "tarballs/archava-identity-pg-0.1.0.tgz",
+        "sha256": "9f105b74aaef696c29a8a4cfb543d8068503d4caaee3090f59b1a091468eb4c9"
+      },
+      {
+        "name": "@archava/crm-assistant",
+        "version": "0.6.0",
+        "tarball": "tarballs/archava-crm-assistant-0.6.0.tgz",
+        "sha256": "56f911cf284b64ba1cfa55450d8e67e59f3a1060a19bc51812534a6f5825a079"
+      },
+      {
+        "name": "@archava/provider-runtime",
+        "version": "0.1.0",
+        "tarball": "tarballs/archava-provider-runtime-0.1.0.tgz",
+        "sha256": "a15001e97bbfd3295ab63c868354884acccd64cbdd403870d9f852f569d2072f"
+      },
+      {
+        "name": "@archava/act",
+        "version": "0.2.0",
+        "tarball": "tarballs/archava-act-0.2.0.tgz",
+        "sha256": "09f8fb8994c273e01d7fc605df3bff1f54c015057c60222f26ba9dd662e5b314"
+      },
+      {
+        "name": "@archava/act-postmark",
+        "version": "0.2.0",
+        "tarball": "tarballs/archava-act-postmark-0.2.0.tgz",
+        "sha256": "c8480afd2e9bd6f5eedb8cfd5847bae76703747bf8e01d0337641f4d269fef51"
+      }
+    ]
+  },
+  "installedRuntimeMatchesVerifiedArtifacts": true,
+  "identicalVersionsAndHashesAcrossIndependentConsumers": true,
+  "actDatabaseCompositionChecks": 18,
+  "crmDatabaseRegressionChecks": 34,
+  "persistentRuntimeChecks": 32,
+  "browserChecks": 61,
+  "actualModelOrExternalActionCalls": 0,
+  "originalDomainIdentityApprovalAndProviderRowsPreserved": true,
+  "originalPrivateFilesPreserved": true,
+  "originalLocalHostHealthStatus": 200,
+  "newSchemaMigrations": 0,
+  "newDependencies": 0,
+  "nativeActions": ["crm.followup.create", "crm.followup.complete"],
+  "creationConsentCannotAuthorizeCompletion": true,
+  "broaderOwnerRoadmapPlanningEstimatePercent": 60,
+  "limits": [
+    "Local vocabulary-based completion preparation; Gemini retains the exact synthetic-only pilot",
+    "One-time completion consent binds exact task ID and revision; no blind replay from missing receipts",
+    "Project delivery scheduling and cross-device action recovery remain separate work",
+    "No public hosting or live mail/booking/payment provider added"
+  ]
+}

@@ -1,5 +1,5 @@
 import { createHmac } from 'node:crypto'
-import { CrmError, type CrmService, type CrmPrincipal } from '@archava/crm'
+import { CrmError, type CrmService, type CrmPrincipal, type CrmMutation } from '@archava/crm'
 import {
   DurableActHost,
   type AtomicActHostAttemptLedger,
@@ -14,10 +14,13 @@ import {
   followupActionInputsSchema,
   nativePresentSchema,
   nativeReviewSchema,
+  followupCompletionInputsSchema,
+  nativeCompletionPresentSchema,
   type ActionControl,
 } from './contracts.js'
 
 export const NATIVE_FOLLOWUP_ACTION = 'crm.followup.create'
+export const NATIVE_COMPLETE_ACTION = 'crm.followup.complete'
 export function nativeSessionId(
   key: Uint8Array,
   tenant: string,
@@ -44,7 +47,7 @@ export interface NativeCrmActOptions {
   confirmations: (sessionId: string) => Promise<ConfirmationService>
   clock: () => number
 }
-/** One bounded native command. Read/draft tools and ordinary machine mutations stay separate. */
+/** Two bounded native commands. Read/prepare tools and ordinary machine mutations stay separate. */
 export class NativeCrmActHost {
   readonly #options: NativeCrmActOptions
   readonly #principal: CrmPrincipal
@@ -77,9 +80,15 @@ export class NativeCrmActHost {
       confirmations = await o.confirmations(sessionId)
     const resolver: EntityResolver = {
       resolveExists: async (tenant, kind, id) => {
-        if (tenant !== o.tenantId || kind !== 'contact' || typeof id !== 'string') return false
+        if (
+          tenant !== o.tenantId ||
+          !['contact', 'followup'].includes(kind) ||
+          typeof id !== 'string'
+        )
+          return false
         try {
-          await o.service.detail(tenant, this.#principal, id)
+          if (kind === 'contact') await o.service.detail(tenant, this.#principal, id)
+          else await o.service.followup(tenant, this.#principal, id)
           return true
         } catch {
           return false
@@ -112,14 +121,22 @@ export class NativeCrmActHost {
         }),
         '/crm',
       ),
-      [{ type: 'action/set', actions: [{ name: NATIVE_FOLLOWUP_ACTION, enabled: true }] }],
+      [
+        {
+          type: 'action/set',
+          actions: [NATIVE_FOLLOWUP_ACTION, NATIVE_COMPLETE_ACTION].map((name) => ({
+            name,
+            enabled: true,
+          })),
+        },
+      ],
     )
     const executor: ActHostIntentExecutor = {
       executorId: 'native-crm-followup-v1',
       execute: async (request, intentId, receipt) => {
         if (
           request.tenantId !== o.tenantId ||
-          request.action !== NATIVE_FOLLOWUP_ACTION ||
+          ![NATIVE_FOLLOWUP_ACTION, NATIVE_COMPLETE_ACTION].includes(request.action) ||
           request.sessionId !== sessionId
         )
           return {
@@ -128,11 +145,24 @@ export class NativeCrmActHost {
             retryable: false,
             message: 'Native scope refused.',
           }
-        const inputs = followupActionInputsSchema.parse(request.inputs)
+        let command: CrmMutation['command']
+        if (request.action === NATIVE_FOLLOWUP_ACTION)
+          command = {
+            operation: 'followup.create',
+            ...followupActionInputsSchema.parse(request.inputs),
+          }
+        else {
+          const inputs = followupCompletionInputsSchema.parse(request.inputs)
+          command = {
+            operation: 'followup.complete',
+            id: inputs.followupId,
+            expectedRevision: inputs.expectedRevision,
+          }
+        }
         const result = await o.service.mutateApproved(
           o.tenantId,
           this.#principal,
-          { requestId: intentId, command: { operation: 'followup.create', ...inputs } },
+          { requestId: intentId, command },
           { intentId, receipt },
         )
         return {
@@ -198,14 +228,13 @@ export class NativeCrmActHost {
       throw new CrmError('conflict', 'Contact changed. Prepare and review a fresh draft.')
     return inputs
   }
-  async review(raw: unknown) {
-    const { host, graph } = await this.#context(true),
-      inputs = await this.#preflight(raw)
+  async #review(actionId: string, inputs: Record<string, unknown>) {
+    const { host, graph } = await this.#context(true)
     const result = await host.review({
       graph,
       envelope: {
         utterance: 'Owner reviewed a CRM follow-up.',
-        action: { actionId: NATIVE_FOLLOWUP_ACTION, inputs },
+        action: { actionId, inputs },
       },
     })
     if (result.status !== 'challenge_issued' || !result.intentId)
@@ -216,6 +245,36 @@ export class NativeCrmActHost {
         challengeId: result.challenge.challengeId,
         token: result.challenge.token,
         expiresAt: result.challenge.expiresAt,
+      },
+    })
+  }
+  async review(raw: unknown) {
+    return this.#review(NATIVE_FOLLOWUP_ACTION, await this.#preflight(raw))
+  }
+  async #preflightCompletion(raw: unknown) {
+    const inputs = followupCompletionInputsSchema.parse(raw)
+    const detail = await this.#options.service.followup(
+      this.#options.tenantId,
+      this.#principal,
+      inputs.followupId,
+    )
+    if (detail.followup.status !== 'open' || detail.followup.revision !== inputs.expectedRevision)
+      throw new CrmError('conflict', 'Follow-up changed. Review the current task again.')
+    return inputs
+  }
+  async reviewCompletion(raw: unknown) {
+    return this.#review(NATIVE_COMPLETE_ACTION, await this.#preflightCompletion(raw))
+  }
+  async presentCompletion(raw: unknown) {
+    const input = nativeCompletionPresentSchema.parse(raw),
+      { host, graph } = await this.#context(true)
+    const inputs = await this.#preflightCompletion(input.inputs)
+    return host.present({
+      graph,
+      envelope: {
+        utterance: 'Owner confirmed completion of one reviewed CRM task.',
+        action: { actionId: NATIVE_COMPLETE_ACTION, inputs },
+        confirmation: input.confirmation,
       },
     })
   }

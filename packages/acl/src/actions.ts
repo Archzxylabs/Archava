@@ -69,7 +69,7 @@ export interface ActionDefinition {
   readonly replacedBy?: string
 }
 
-export const ACTION_REGISTRY_VERSION = '1.1.0'
+export const ACTION_REGISTRY_VERSION = '1.2.0'
 
 const ASSISTANT_ONLY: readonly RoleName[] = ['archava_assistant']
 
@@ -281,6 +281,19 @@ export const BASELINE_ACTIONS: readonly ActionDefinition[] = [
     sensitiveFields: ['summary'],
     description: 'Create an owner-approved CRM follow-up task.',
     requiredInputs: ['contactId', 'contactRevision', 'summary', 'dueAt'],
+  },
+  {
+    id: 'crm.followup.complete',
+    domain: 'crm',
+    level: 'L2',
+    requiresCapability: 'act',
+    confirmation: 'user_confirm',
+    allowedRoles: ASSISTANT_ONLY,
+    idempotent: true,
+    audited: true,
+    sensitiveFields: [],
+    description: 'Mark one owner-reviewed CRM follow-up task completed.',
+    requiredInputs: ['followupId', 'expectedRevision'],
   },
   {
     id: 'email.send',

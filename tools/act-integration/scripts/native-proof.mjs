@@ -267,5 +267,250 @@ export async function verifyNative({ pools, reboot, consumers, moduleAt, check }
     'native lost response recovers through own authoritative receipt after real restart without resubmission; restored execution hold/new epoch refuses old approval',
   )
   // Metadata-level API is correlation only and cannot make an executor bypass consent.
+  for (const [index, tenant] of tenants.entries()) {
+    const contact = await service.mutate(tenant, owner, {
+      requestId: randomUUID(),
+      command: { operation: 'contact.create', data: { fullName: 'Synthetic completion contact' } },
+    })
+    const task = await service.mutate(tenant, owner, {
+      requestId: randomUUID(),
+      command: {
+        operation: 'followup.create',
+        contactId: contact.id,
+        contactRevision: 1,
+        summary: 'Synthetic completion task',
+        dueAt: '2026-10-20T10:00:00Z',
+      },
+    })
+    const host = await make(tenant, 'owner-a', index),
+      inputs = { followupId: task.id, expectedRevision: 1 }
+    const before = await counts()
+    const reviews = await Promise.all(
+      Array.from({ length: 4 }, () => host.reviewCompletion(inputs)),
+    )
+    assert.equal(new Set(reviews.map((x) => x.intentId)).size, 1)
+    assert.deepEqual(await counts(), before)
+    await assert.rejects(
+      () =>
+        host.presentCompletion({
+          inputs: { ...inputs, expectedRevision: 2 },
+          confirmation: consent(reviews[0]),
+        }),
+      { code: 'conflict' },
+    )
+    await assert.rejects(() =>
+      make(tenant, 'owner-b').then((h) =>
+        h.presentCompletion({ inputs, confirmation: consent(reviews[0]) }),
+      ),
+    )
+    const creationReview = await host.review({
+      contactId: contact.id,
+      contactRevision: 2,
+      summary: 'Unused creation challenge',
+      dueAt: '2026-10-20T10:00:00Z',
+    })
+    await assert.rejects(() =>
+      host.presentCompletion({ inputs, confirmation: consent(creationReview) }),
+    )
+    assert.equal(await host.cancelPending(creationReview.intentId), true)
+    const command = {
+      requestId: randomUUID(),
+      command: { operation: 'followup.complete', id: task.id, expectedRevision: 1 },
+    }
+    const machine = { kind: 'service', id: serviceId, onBehalfOf: 'owner-a' }
+    await assert.rejects(() => service.mutate(tenant, machine, command), { code: 'forbidden' })
+    await assert.rejects(
+      () => service.mutateApproved(tenant, machine, command, { confirmed: true }),
+      { code: 'forbidden' },
+    )
+    assert.deepEqual(await counts(), before)
+    const executions = await Promise.allSettled(
+      reviews.map((review) => host.presentCompletion({ inputs, confirmation: consent(review) })),
+    )
+    assert.equal(
+      executions.filter((x) => x.status === 'fulfilled' && x.value.execution === 'succeeded')
+        .length,
+      1,
+    )
+    assert.equal((await service.followup(tenant, owner, task.id)).followup.status, 'completed')
+    assert.equal((await host.status(reviews[0].intentId)).receipt.revision, 2)
+    const after = await counts()
+    assert.equal(after.followups, before.followups)
+    assert.equal(after.commands, before.commands + 1)
+    assert.equal(after.audit, before.audit + 1)
+    assert.deepEqual(
+      (
+        await admin.query(
+          'SELECT actor_id,initiator_id,operation FROM archava_crm.audit WHERE tenant_id=$1 AND request_id=$2',
+          [tenant, reviews[0].intentId],
+        )
+      ).rows[0],
+      { actor_id: serviceId, initiator_id: 'owner-a', operation: 'followup.complete' },
+    )
+    await assert.rejects(() => host.reviewCompletion(inputs), { code: 'conflict' })
+    assert.equal(await host.cancelPending(reviews[0].intentId), false)
+  }
+  check(
+    'two installed native consumers complete one explicitly reviewed task under concurrent presentations, with exact revision and one service/human audit; forged, cross-owner and cross-action consent remains denied',
+  )
+
+  const completionContact = await service.mutate(tenant, owner, {
+    requestId: randomUUID(),
+    command: { operation: 'contact.create', data: { fullName: 'Synthetic completion revocation' } },
+  })
+  const completionTask = await service.mutate(tenant, owner, {
+    requestId: randomUUID(),
+    command: {
+      operation: 'followup.create',
+      contactId: completionContact.id,
+      contactRevision: 1,
+      summary: 'Completion revocation fixture',
+      dueAt: '2026-10-20T10:00:00Z',
+    },
+  })
+  const completionHost = await make(tenant),
+    completionInputs = { followupId: completionTask.id, expectedRevision: 1 }
+  const completionReview = await completionHost.reviewCompletion(completionInputs),
+    beforeCompletion = await counts()
+  for (const principal of [serviceId, owner.id]) {
+    await admin.query(
+      'UPDATE archava_crm.memberships SET active=false WHERE tenant_id=$1 AND principal_id=$2',
+      [tenant, principal],
+    )
+    await assert.rejects(
+      () =>
+        completionHost.presentCompletion({
+          inputs: completionInputs,
+          confirmation: consent(completionReview),
+        }),
+      { code: 'forbidden' },
+    )
+    await admin.query(
+      'UPDATE archava_crm.memberships SET active=true WHERE tenant_id=$1 AND principal_id=$2',
+      [tenant, principal],
+    )
+  }
+  assert.deepEqual(await counts(), beforeCompletion)
+  await service.mutate(tenant, owner, {
+    requestId: randomUUID(),
+    command: { operation: 'followup.complete', id: completionTask.id, expectedRevision: 1 },
+  })
+  await assert.rejects(
+    () =>
+      completionHost.presentCompletion({
+        inputs: completionInputs,
+        confirmation: consent(completionReview),
+      }),
+    { code: 'conflict' },
+  )
+  assert.equal(await completionHost.cancelPending(completionReview.intentId), true)
+  check(
+    'completion rechecks current service/human membership and refuses an already completed stale review before spending consent',
+  )
+
+  const lostTask = await service.mutate(tenant, owner, {
+    requestId: randomUUID(),
+    command: {
+      operation: 'followup.create',
+      contactId: completionContact.id,
+      contactRevision: 2,
+      summary: 'Synthetic completion lost response',
+      dueAt: '2026-10-20T10:00:00Z',
+    },
+  })
+  const completionLosingService = Object.create(service)
+  completionLosingService.mutateApproved = async (...args) => {
+    await service.mutateApproved(...args)
+    throw new Error('Synthetic completion response loss')
+  }
+  const completionLosingHost = await native.createPostgresNativeCrmHost(app, {
+    ...settings,
+    tenantId: tenant,
+    humanId: owner.id,
+    service: completionLosingService,
+    clock: Date.now,
+  })
+  const lostCompletionInputs = { followupId: lostTask.id, expectedRevision: 1 },
+    lostCompletion = await completionLosingHost.reviewCompletion(lostCompletionInputs)
+  assert.equal(
+    (
+      await completionLosingHost.presentCompletion({
+        inputs: lostCompletionInputs,
+        confirmation: consent(lostCompletion),
+      })
+    ).errorCode,
+    'provider_outcome_unknown',
+  )
+  const completedCounts = await counts()
+  await reboot()
+  ;({ admin, app } = pools())
+  repository = await pg.PostgresCrmRepository.create(
+    app,
+    'isolated-stable-fingerprint-key-for-native-proof',
+    verifier,
+  )
+  service = new crm.CrmService(repository)
+  const completionRestarted = await make(tenant, 'owner-a', 1)
+  assert.equal((await completionRestarted.status(lostCompletion.intentId)).receipt.id, lostTask.id)
+  assert.deepEqual(await counts(), completedCounts)
+  assert.equal((await service.followup(tenant, owner, lostTask.id)).followup.revision, 2)
+  check(
+    'lost completion response reconciles from the original receipt after real restart and another installed consumer, without repeating the task transition',
+  )
+  const staffId = 'completion-staff'
+  await admin.query(
+    "INSERT INTO archava_crm.memberships(tenant_id,principal_id,kind,permissions,scope) VALUES($1,$2,'human',$3,'assigned')",
+    [tenant, staffId, ['contacts.read', 'contacts.write', 'followups.read', 'followups.write']],
+  )
+  const staffPrincipal = { kind: 'human', id: staffId }
+  const staffContact = await service.mutate(tenant, staffPrincipal, {
+    requestId: randomUUID(),
+    command: { operation: 'contact.create', data: { fullName: 'Synthetic assigned completion' } },
+  })
+  const staffTask = await service.mutate(tenant, staffPrincipal, {
+    requestId: randomUUID(),
+    command: {
+      operation: 'followup.create',
+      contactId: staffContact.id,
+      contactRevision: 1,
+      summary: 'Assigned task',
+      dueAt: '2026-10-20T10:00:00Z',
+    },
+  })
+  const staffHost = await make(tenant, staffId),
+    staffInputs = { followupId: staffTask.id, expectedRevision: 1 }
+  const staffReview = await staffHost.reviewCompletion(staffInputs),
+    beforeAssignment = await counts()
+  await admin.query('UPDATE archava_crm.contacts SET owner_id=$3 WHERE tenant_id=$1 AND id=$2', [
+    tenant,
+    staffContact.id,
+    owner.id,
+  ])
+  await assert.rejects(
+    () => staffHost.presentCompletion({ inputs: staffInputs, confirmation: consent(staffReview) }),
+    { code: 'not_found' },
+  )
+  assert.deepEqual(await counts(), beforeAssignment)
+  assert.equal((await service.followup(tenant, owner, staffTask.id)).followup.status, 'open')
+  const heldReview = await completionRestarted.reviewCompletion(staffInputs)
+  control = { epoch: randomUUID(), held: true }
+  await assert.rejects(
+    () =>
+      completionRestarted.presentCompletion({
+        inputs: staffInputs,
+        confirmation: consent(heldReview),
+      }),
+    { code: 'unavailable' },
+  )
+  control = { ...control, held: false }
+  await assert.rejects(() =>
+    make(tenant).then((h) =>
+      h.presentCompletion({ inputs: staffInputs, confirmation: consent(heldReview) }),
+    ),
+  )
+  assert.deepEqual(await counts(), beforeAssignment)
+  check(
+    'completion refuses reassigned staff resources and restored execution hold/old-epoch consent, preserving task state and domain audit',
+  )
   assert.equal(typeof NativeCrmActHost, 'function')
 }

@@ -16,8 +16,8 @@ const BASE = {
 
 describe('ActionRegistry', () => {
   it('is versioned', () => {
-    expect(ACTION_REGISTRY_VERSION).toBe('1.1.0')
-    expect(new ActionRegistry().version).toBe('1.1.0')
+    expect(ACTION_REGISTRY_VERSION).toBe('1.2.0')
+    expect(new ActionRegistry().version).toBe('1.2.0')
   })
 
   it('gives every action the PRD 18 required fields', () => {
@@ -77,6 +77,14 @@ describe('capability ordering', () => {
 
 describe('ActionPolicy', () => {
   const policy = new ActionPolicy()
+  it('requires Act and user confirmation for task completion', () => {
+    const action = new ActionRegistry().get('crm.followup.complete')
+    expect(action.requiresCapability).toBe('act')
+    expect(action.confirmation).toBe('user_confirm')
+    expect(policy.evaluate({ ...BASE, actionId: action.id, capability: 'assist' }).decision).toBe(
+      'denied',
+    )
+  })
 
   it('fails closed on an unknown action', () => {
     const result = policy.evaluate({

@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-09",
+  "baseline": "b869cc9",
+  "releaseScope": "local free reviewed follow-up completion on reusable CRM",
+  "node": "v22.22.3",
+  "originalDomainIdentityApprovalAndProviderRowsPreserved": true,
+  "originalPrivateFilesPreserved": true,
+  "crmSchemaUnchanged": true,
+  "domainCommandsSubmitted": 0,
+  "actualModelOrExternalActionCalls": 0,
+  "installedLocalHostHealthStatus": 200,
+  "authenticatedWorklist": true,
+  "configuredWorkspaces": 2,
+  "localCompletionPreparation": true,
+  "localPlannerConfirmed": true,
+  "existingCredentialsPreserved": true,
+  "compiledBrowserCompletion": true
+}

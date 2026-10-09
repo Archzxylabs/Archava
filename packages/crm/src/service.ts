@@ -9,6 +9,7 @@ import {
   mutationSchema,
   followupDraftSchema,
   commandStatusSchema,
+  followupDetailSchema,
   type CrmRepository,
   type CrmPrincipal,
 } from './contracts.js'
@@ -48,6 +49,22 @@ export class CrmService {
       throw new CrmError('unavailable', 'Follow-up worklist could not be verified.')
     return result
   }
+  async followup(tenant: unknown, principal: unknown, rawId: unknown) {
+    const identity = this.identity(tenant, principal),
+      id = idSchema.parse(rawId)
+    if (!this.repository.followupDetail)
+      throw new CrmError('unavailable', 'Follow-up detail is unavailable on this adapter.')
+    const result = followupDetailSchema.parse(
+      await this.repository.followupDetail(identity.tenant, identity.principal, id),
+    )
+    if (
+      result.followup.id !== id ||
+      result.followup.tenantId !== identity.tenant ||
+      result.contact.id !== result.followup.contactId
+    )
+      throw new CrmError('unavailable', 'Follow-up detail could not be verified.')
+    return result
+  }
   async mutate(tenant: unknown, principal: unknown, input: unknown) {
     const identity = this.identity(tenant, principal)
     // No machine write path until the corresponding gated Act boundary ships.
@@ -79,7 +96,7 @@ export class CrmService {
       mutation = mutationSchema.parse(input)
     if (
       identity.principal.kind !== 'service' ||
-      mutation.command.operation !== 'followup.create' ||
+      !['followup.create', 'followup.complete'].includes(mutation.command.operation) ||
       !this.repository.mutateApproved
     )
       throw new CrmError('forbidden', 'A verified native follow-up approval is required.')
@@ -116,6 +133,16 @@ export function createCrmTools(service: CrmService, tenant: string, principal: C
         }
       }
       if (name === 'crm.followups.list') return service.listFollowups(tenant, principal, input)
+      if (name === 'crm.followup.complete.prepare') {
+        const { id } = z.object({ id: idSchema }).strict().parse(input)
+        const access = await service.access(tenant, principal)
+        if (!access.permissions.includes('followups.write'))
+          throw new CrmError('forbidden', 'Follow-up completion preparation is not permitted.')
+        const detail = await service.followup(tenant, principal, id)
+        if (detail.followup.status !== 'open')
+          throw new CrmError('conflict', 'This follow-up is already completed.')
+        return { task: detail, requiresApproval: true }
+      }
       if (name === 'crm.contact.summary') {
         const { id } = z.object({ id: idSchema }).strict().parse(input)
         const detail = await service.detail(tenant, principal, id)

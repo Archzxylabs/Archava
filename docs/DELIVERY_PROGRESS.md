@@ -212,3 +212,13 @@ Exact-time keyset pagination, read-only tools and old-adapter compatibility are
 verified independently from the native approval foundation. No business fork,
 new schema or additional external provider is introduced. Broader commercial
 readiness and the owner planning estimate are unchanged.
+
+## 9 October 2026 — separately approved follow-up completion
+
+The [0.6.0 completion release](CRM_COMPLETION.md) adds selected-task read/prepare
+and a separate registered native completion action. Creation consent cannot be
+reused for completion. Current delegated grants, task revision/open state,
+resource locking and one authoritative audit/receipt remain deterministic.
+Both installed business consumers and restored local operation preserve their
+existing boundaries. Broader commercial coverage and owner planning estimates
+remain unchanged; this release adds no external effect or general AI write planner.
