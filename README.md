@@ -17,8 +17,9 @@ is preserved. Pricing v1 remains unchanged.
 The [business capability map](docs/BUSINESS_CAPABILITY_MATRIX.md), informed by
 [8 October research](docs/BUSINESS_MODEL_RESEARCH_2026-10-08.md), separates operating
 patterns, industry extensions and candidate modules from delivered capabilities.
-The [pre-reuse project audit](docs/PROJECT_AUDIT_2026-10-07.md) records current
-verification, cleanup priorities and the boundaries to complete before live actions.
+The [10 October repository re-audit](docs/PROJECT_REAUDIT_2026-10-10.md) records
+current folder/runtime boundaries, fresh verification and the next work order.
+The [7 October pre-reuse audit](docs/PROJECT_AUDIT_2026-10-07.md) remains historical.
 The Decision Intelligence extension is described in [`docs/DECISION_INTELLIGENCE.md`](docs/DECISION_INTELLIGENCE.md).
 This file is what the repository _actually_ does, which is a smaller thing than
 either document, deliberately so. For the gap, see

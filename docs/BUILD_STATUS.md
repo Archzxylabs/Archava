@@ -1,5 +1,32 @@
 # Build status
 
+## Current checkpoint — 10 October 2026
+
+Source reviewed: `80ea845`. The [repository re-audit](PROJECT_REAUDIT_2026-10-10.md)
+and [current architecture](ARCHITECTURE.md) supersede older absence/readiness claims
+below. The dated entries and original reference tables are retained as history.
+
+| Area                  | Current evidence                                                                                                           | Open boundary                                                                        |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Core reuse            | Two independent cold-installed consumers; identical compiled implementations                                               | Supported release/upgrade profiles and deployed consumers                            |
+| CRM reuse             | Shared persistent contacts/activity/follow-ups/pipeline, worklist and overview across two business contexts                | Broader domain modules and demand-backed vertical extensions                         |
+| Owner operation       | Credential sessions, current resource grants, RLS, two reviewed native actions, atomic audit/receipts and restore controls | General AI planning and public/always-on production operations                       |
+| Backup                | Optional in-process schedule, archive integrity and actual restoration                                                     | Stopped-host scheduling, off-machine copies, retention and recovery guarantees       |
+| Voice/avatar          | Standalone realtime template with offline tests/build                                                                      | Shared core intelligence/action authority, provider validation and dependency triage |
+| External Act/Transact | Booking/email adapters and fake-provider composition with real local persistence                                           | Real provider writes; payment/confirmation/receipt flow                              |
+| Commercial tooling    | Deterministic pricing/configuration and stateless quote API                                                                | New module prices and separate company proposal/contract/project application         |
+
+Fresh verification passed all eight platform gates, 1,442 tests in 99 files,
+38 CRM database checks, 18 durable Act checks, 40 authenticated runtime checks
+and 70 Chromium owner/staff checks.
+Template JavaScript/guardrail/build results and separate browser evidence are
+recorded in [the audit proof](audit/2026-10-10-project-reaudit.json). Root verify
+alone does not run every database/browser/template check. No live provider or
+production deployment is claimed. Historical 30% and owner 60% estimates have
+different denominators; neither is a freshly calculated whole-product score.
+
+## Historical checkpoints and reference implementation details
+
 The [7 October project audit](PROJECT_AUDIT_2026-10-07.md) reruns the platform,
 template, browser and local PostgreSQL checks and records dependency findings.
 It also reproduces the Chat browser-export and config/readiness gaps. Passing

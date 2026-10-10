@@ -1,0 +1,867 @@
+{
+  "date": "2026-10-10",
+  "sourceBaseline": "80ea845",
+  "scope": "whole repository architecture and bounded offline/local acceptance; documentation reconciliation only",
+  "inventory": {
+    "trackedFilesAtBaseline": 682,
+    "sourceTestToolFiles": 400,
+    "workspaceProjects": 32,
+    "libraryPackages": 26,
+    "apps": 2,
+    "manifestTools": 4,
+    "compiledArtifacts": 24,
+    "trackedTopLevelCounts": {
+      ".env.example": 1,
+      ".github": 1,
+      ".gitignore": 1,
+      ".prettierignore": 1,
+      ".prettierrc.json": 1,
+      ".tool-versions": 1,
+      "Archava Template": 78,
+      "PRD.md": 1,
+      "README.md": 1,
+      "agent.md": 1,
+      "apps": 52,
+      "config": 2,
+      "delegation": 26,
+      "design.md": 1,
+      "docs": 99,
+      "eslint.config.mjs": 1,
+      "examples": 32,
+      "package.json": 1,
+      "packages": 301,
+      "pnpm-lock.yaml": 1,
+      "pnpm-workspace.yaml": 1,
+      "tools": 75,
+      "tsconfig.base.json": 1,
+      "tsconfig.json": 1,
+      "vitest.config.ts": 1
+    }
+  },
+  "workspaceGraph": [
+    {
+      "path": "packages/acl",
+      "name": "@archava/acl",
+      "version": "0.3.0",
+      "internalDependencies": {
+        "@archava/config": "workspace:*",
+        "@archava/core": "workspace:*"
+      }
+    },
+    {
+      "path": "packages/act",
+      "name": "@archava/act",
+      "version": "0.2.0",
+      "internalDependencies": {
+        "@archava/acl": "workspace:*",
+        "@archava/act-booking": "workspace:*",
+        "@archava/act-email": "workspace:*",
+        "@archava/adapters": "workspace:*",
+        "@archava/assistant": "workspace:*",
+        "@archava/config": "workspace:*",
+        "@archava/core": "workspace:*",
+        "@archava/knowledge": "workspace:*"
+      }
+    },
+    {
+      "path": "packages/act-booking",
+      "name": "@archava/act-booking",
+      "version": "0.2.0",
+      "internalDependencies": {
+        "@archava/assistant": "workspace:*"
+      }
+    },
+    {
+      "path": "packages/act-confirmation",
+      "name": "@archava/act-confirmation",
+      "version": "0.3.0",
+      "internalDependencies": {}
+    },
+    {
+      "path": "packages/act-confirmation-pg",
+      "name": "@archava/act-confirmation-pg",
+      "version": "0.1.0",
+      "internalDependencies": {
+        "@archava/act-confirmation": "workspace:*",
+        "@archava/act-storage": "workspace:*"
+      }
+    },
+    {
+      "path": "packages/act-email",
+      "name": "@archava/act-email",
+      "version": "0.2.0",
+      "internalDependencies": {
+        "@archava/assistant": "workspace:*"
+      }
+    },
+    {
+      "path": "packages/act-host",
+      "name": "@archava/act-host",
+      "version": "0.3.0",
+      "internalDependencies": {
+        "@archava/acl": "workspace:*",
+        "@archava/act-confirmation": "workspace:*",
+        "@archava/adapters": "workspace:*",
+        "@archava/assistant": "workspace:*",
+        "@archava/config": "workspace:*",
+        "@archava/core": "workspace:*"
+      }
+    },
+    {
+      "path": "packages/act-host-pg",
+      "name": "@archava/act-host-pg",
+      "version": "0.2.0",
+      "internalDependencies": {
+        "@archava/act-host": "workspace:*",
+        "@archava/act-storage": "workspace:*"
+      }
+    },
+    {
+      "path": "packages/act-postmark",
+      "name": "@archava/act-postmark",
+      "version": "0.2.0",
+      "internalDependencies": {
+        "@archava/act-email": "workspace:*"
+      }
+    },
+    {
+      "path": "packages/act-storage",
+      "name": "@archava/act-storage",
+      "version": "0.2.0",
+      "internalDependencies": {
+        "@archava/act-booking": "workspace:*",
+        "@archava/act-email": "workspace:*"
+      }
+    },
+    {
+      "path": "packages/adapters",
+      "name": "@archava/adapters",
+      "version": "0.1.0",
+      "internalDependencies": {
+        "@archava/config": "workspace:*",
+        "@archava/core": "workspace:*"
+      }
+    },
+    {
+      "path": "packages/assistant",
+      "name": "@archava/assistant",
+      "version": "0.5.0",
+      "internalDependencies": {
+        "@archava/acl": "workspace:*",
+        "@archava/adapters": "workspace:*",
+        "@archava/config": "workspace:*",
+        "@archava/core": "workspace:*",
+        "@archava/decision": "workspace:*",
+        "@archava/knowledge": "workspace:*"
+      }
+    },
+    {
+      "path": "packages/chat",
+      "name": "@archava/chat",
+      "version": "0.1.0",
+      "internalDependencies": {
+        "@archava/assistant": "workspace:*",
+        "@archava/config": "workspace:*"
+      }
+    },
+    {
+      "path": "packages/config",
+      "name": "@archava/config",
+      "version": "0.1.0",
+      "internalDependencies": {}
+    },
+    {
+      "path": "packages/core",
+      "name": "@archava/core",
+      "version": "0.1.0",
+      "internalDependencies": {
+        "@archava/config": "workspace:*"
+      }
+    },
+    {
+      "path": "packages/crm",
+      "name": "@archava/crm",
+      "version": "0.7.0",
+      "internalDependencies": {}
+    },
+    {
+      "path": "packages/crm-act",
+      "name": "@archava/crm-act",
+      "version": "0.2.0",
+      "internalDependencies": {
+        "@archava/crm": "workspace:*",
+        "@archava/crm-pg": "workspace:*",
+        "@archava/act-host": "workspace:*",
+        "@archava/act-host-pg": "workspace:*",
+        "@archava/act-confirmation": "workspace:*",
+        "@archava/act-confirmation-pg": "workspace:*",
+        "@archava/act-storage": "workspace:*",
+        "@archava/acl": "workspace:*",
+        "@archava/assistant": "workspace:*",
+        "@archava/config": "workspace:*",
+        "@archava/core": "workspace:*"
+      }
+    },
+    {
+      "path": "packages/crm-assistant",
+      "name": "@archava/crm-assistant",
+      "version": "0.7.0",
+      "internalDependencies": {
+        "@archava/adapters": "workspace:*",
+        "@archava/assistant": "workspace:*",
+        "@archava/acl": "workspace:*",
+        "@archava/core": "workspace:*",
+        "@archava/crm": "workspace:*",
+        "@archava/crm-act": "workspace:*"
+      }
+    },
+    {
+      "path": "packages/crm-pg",
+      "name": "@archava/crm-pg",
+      "version": "0.7.0",
+      "internalDependencies": {
+        "@archava/crm": "workspace:*"
+      }
+    },
+    {
+      "path": "packages/decision",
+      "name": "@archava/decision",
+      "version": "0.1.0",
+      "internalDependencies": {
+        "@archava/adapters": "workspace:*"
+      }
+    },
+    {
+      "path": "packages/identity-pg",
+      "name": "@archava/identity-pg",
+      "version": "0.1.0",
+      "internalDependencies": {}
+    },
+    {
+      "path": "packages/knowledge",
+      "name": "@archava/knowledge",
+      "version": "0.1.0",
+      "internalDependencies": {
+        "@archava/acl": "workspace:*",
+        "@archava/config": "workspace:*",
+        "@archava/core": "workspace:*"
+      }
+    },
+    {
+      "path": "packages/pricing",
+      "name": "@archava/pricing",
+      "version": "0.1.0",
+      "internalDependencies": {
+        "@archava/config": "workspace:*"
+      }
+    },
+    {
+      "path": "packages/provider-runtime",
+      "name": "@archava/provider-runtime",
+      "version": "0.1.0",
+      "internalDependencies": {}
+    },
+    {
+      "path": "packages/reference",
+      "name": "@archava/reference",
+      "version": "0.1.0",
+      "internalDependencies": {
+        "@archava/adapters": "workspace:*",
+        "@archava/assistant": "workspace:*",
+        "@archava/config": "workspace:*",
+        "@archava/core": "workspace:*",
+        "@archava/knowledge": "workspace:*"
+      }
+    },
+    {
+      "path": "packages/sdk",
+      "name": "@archava/sdk",
+      "version": "0.1.0",
+      "internalDependencies": {
+        "@archava/config": "workspace:*",
+        "@archava/core": "workspace:*"
+      }
+    },
+    {
+      "path": "apps/crm",
+      "name": "@archava/crm-host",
+      "version": "0.2.0",
+      "internalDependencies": {
+        "@archava/crm": "workspace:*",
+        "@archava/crm-assistant": "workspace:*",
+        "@archava/crm-act": "workspace:*",
+        "@archava/act-host": "workspace:*",
+        "@archava/act-host-pg": "workspace:*",
+        "@archava/crm-pg": "workspace:*",
+        "@archava/identity-pg": "workspace:*",
+        "@archava/provider-runtime": "workspace:*"
+      }
+    },
+    {
+      "path": "apps/web",
+      "name": "@archava/web",
+      "version": "0.1.0",
+      "internalDependencies": {
+        "@archava/acl": "workspace:*",
+        "@archava/adapters": "workspace:*",
+        "@archava/assistant": "workspace:*",
+        "@archava/chat": "workspace:*",
+        "@archava/config": "workspace:*",
+        "@archava/configurator": "workspace:*",
+        "@archava/core": "workspace:*",
+        "@archava/decision": "workspace:*",
+        "@archava/knowledge": "workspace:*",
+        "@archava/pricing": "workspace:*",
+        "@archava/reference": "workspace:*",
+        "@archava/sdk": "workspace:*"
+      }
+    },
+    {
+      "path": "tools/act-integration",
+      "name": "@archava/act-integration",
+      "version": "0.1.0",
+      "internalDependencies": {
+        "@archava/act": "workspace:*",
+        "@archava/act-host": "workspace:*",
+        "@archava/act-host-pg": "workspace:*",
+        "@archava/act-confirmation": "workspace:*",
+        "@archava/act-confirmation-pg": "workspace:*",
+        "@archava/act-storage": "workspace:*",
+        "@archava/act-booking": "workspace:*",
+        "@archava/act-email": "workspace:*",
+        "@archava/act-postmark": "workspace:*",
+        "@archava/acl": "workspace:*",
+        "@archava/assistant": "workspace:*",
+        "@archava/adapters": "workspace:*",
+        "@archava/config": "workspace:*",
+        "@archava/core": "workspace:*"
+      }
+    },
+    {
+      "path": "tools/configurator",
+      "name": "@archava/configurator",
+      "version": "0.1.0",
+      "internalDependencies": {
+        "@archava/config": "workspace:*",
+        "@archava/pricing": "workspace:*"
+      }
+    },
+    {
+      "path": "tools/crm-reference",
+      "name": "@archava/crm-reference",
+      "version": "0.1.0",
+      "internalDependencies": {
+        "@archava/crm": "workspace:*",
+        "@archava/crm-assistant": "workspace:*",
+        "@archava/crm-pg": "workspace:*",
+        "@archava/provider-runtime": "workspace:*"
+      }
+    },
+    {
+      "path": "tools/decision-eval",
+      "name": "@archava/decision-eval",
+      "version": "0.1.0",
+      "internalDependencies": {
+        "@archava/adapters": "workspace:*",
+        "@archava/decision": "workspace:*",
+        "@archava/knowledge": "workspace:*"
+      }
+    }
+  ],
+  "dependencyCycles": [],
+  "platform": {
+    "command": "fnm exec --using 22.22.3 pnpm verify",
+    "exitCode": 0,
+    "gates": ["install", "structure", "format", "lint", "typecheck", "test", "build", "reuse"],
+    "testFiles": 99,
+    "tests": 1442,
+    "independentCoreConsumers": ["hospitality", "retail"],
+    "identicalCoreArtifacts": true
+  },
+  "crm": {
+    "command": "pnpm crm:verify",
+    "exitCode": 0,
+    "checks": [
+      "migration ledger repeatability and non-owner runtime requirement",
+      "two installed provider runtimes share one durable admission; eight overlapping calls invoke no duplicate provider",
+      "policy mismatches, duplicate identities, unscoped reads/deletes and terminal outcome rewrites are refused",
+      "failed/interrupted requests remain charged; expiration is committed even on denial and late results cannot overwrite unknown",
+      "pacing spans independent consumers and only the authoritative UTC day resets daily usage",
+      "atomic reservation rollback, conservative restoration hold and migration checksum enforcement",
+      "eight concurrent identical requests produce one contact and one audit receipt",
+      "two business contexts persist separate records; cross-tenant and public callers refused",
+      "two cold-installed conversation adapters use identical artifacts and real tenant-scoped CRM data",
+      "optimistic revision race, preserved optional fields and canonical retry/new-intent separation",
+      "viewer writes refused and assigned-only resource access enforced",
+      "machine/initiator permission intersection, projected read tools and no machine write path",
+      "draft remains read-only; human activity/follow-up lifecycle persisted and audited",
+      "bounded keyset pagination, parameterized hostile search and strict mutation schema",
+      "forced tenant RLS, pool scope reset, composite tenant foreign keys and immutable audit",
+      "audit failure rolls back records and command identity; same request can recover",
+      "two independent installed pipeline consumers; tenant isolation and eight retries produce one history/audit event",
+      "installed conversation adapters read both pipelines without SQL writes and enforce grants/resource types",
+      "stage races, invalid jumps, mandatory loss reason, terminal outcomes and current revision enforced",
+      "pipeline-specific grants, assigned resources, delegation intersection, read-only tools and replay revocation",
+      "atomic rollback includes command/history/audit; bounded pages, escaped search, forced RLS and immutable history",
+      "real v1-to-v2 upgrade preserves records, audit, receipts and original grants; modified ledger refused",
+      "two independent cold-installed recovery consumers verify their own receipts with zero command/audit/task changes",
+      "recovery binds tenant and human initiator, rechecks current read grants/revocation and remains outside model tools",
+      "an own receipt no longer exposes its resource after contact reassignment",
+      "an actually blocked in-flight transaction stays unconfirmed and later commits under the original UUID without resubmission",
+      "provider allowance and metadata-only outcomes survive a real PostgreSQL restart",
+      "read-only recovery preserves original UUID receipts across a real PostgreSQL restart",
+      "membership revocation rechecked; database restart preserves records, audit and retry receipt",
+      "pipeline record/history and identical retry survive a PostgreSQL restart",
+      "authenticated HTTP API rejects anonymous, cross-tenant, viewer, cross-origin and oversized requests",
+      "two installed consumers share a read-only due worklist with exact-time keyset pagination, escaped search, completed exclusion and server-time buckets",
+      "worklist rechecks tenant, both read grants, delegated staff scope, revocation and reassignment; dashboard/Archava reads create zero command/audit/task writes",
+      "exact task detail and completion preparation share both installed consumers, reach tasks beyond the contact page, recheck both read grants/resource scope and create no mutation",
+      "two installed business consumers share complete CRM aggregates beyond page limits, microsecond due boundaries, stage totals and local Archava truth without private record fields",
+      "overview distinguishes permitted empty data from missing section grants and refuses missing contacts or tenant membership",
+      "overview rechecks human/service delegation intersections, resource reassignment and inactive membership without cached grants",
+      "dashboard and conversation overview reads leave all CRM record, command and audit counts unchanged and request no provider"
+    ],
+    "consumerProofs": [
+      {
+        "consumer": "hospitality",
+        "modules": [
+          {
+            "name": "@archava/crm",
+            "version": "0.7.0",
+            "implementationSha256": "64787893c54999728e41bd9bb38b2f0625a90fd029e393d099a38d750fc160f3",
+            "tarballSha256": "a6da387030bd012dee0eee276f332cff293239d6ace8860dd94bd6c92307683d"
+          },
+          {
+            "name": "@archava/crm-pg",
+            "version": "0.7.0",
+            "implementationSha256": "860a1625a33e8e6b4cd463f205b1f75dd2213d2ed3b512ed377c2af9aa14b16a",
+            "tarballSha256": "2e4e9134692bf518490888b7b98c17a942d932a611d27546c47a9f739151a91f"
+          },
+          {
+            "name": "@archava/crm-assistant",
+            "version": "0.7.0",
+            "implementationSha256": "e30d1318871c7ac886857b80c3bd2fd80b30b18935894c6c5eadb7d61ca6f7b0",
+            "tarballSha256": "0f1816471abed51aa675cf31f21d7d62870596df820a11acf1b36b440216eef4"
+          },
+          {
+            "name": "@archava/provider-runtime",
+            "version": "0.1.0",
+            "implementationSha256": "de9ed6f451ca38791309c1d6ec9f8d2e0b6e2a85e7b461458b259e3f2461767a",
+            "tarballSha256": "a15001e97bbfd3295ab63c868354884acccd64cbdd403870d9f852f569d2072f"
+          }
+        ]
+      },
+      {
+        "consumer": "professional-services",
+        "modules": [
+          {
+            "name": "@archava/crm",
+            "version": "0.7.0",
+            "implementationSha256": "64787893c54999728e41bd9bb38b2f0625a90fd029e393d099a38d750fc160f3",
+            "tarballSha256": "a6da387030bd012dee0eee276f332cff293239d6ace8860dd94bd6c92307683d"
+          },
+          {
+            "name": "@archava/crm-pg",
+            "version": "0.7.0",
+            "implementationSha256": "860a1625a33e8e6b4cd463f205b1f75dd2213d2ed3b512ed377c2af9aa14b16a",
+            "tarballSha256": "2e4e9134692bf518490888b7b98c17a942d932a611d27546c47a9f739151a91f"
+          },
+          {
+            "name": "@archava/crm-assistant",
+            "version": "0.7.0",
+            "implementationSha256": "e30d1318871c7ac886857b80c3bd2fd80b30b18935894c6c5eadb7d61ca6f7b0",
+            "tarballSha256": "0f1816471abed51aa675cf31f21d7d62870596df820a11acf1b36b440216eef4"
+          },
+          {
+            "name": "@archava/provider-runtime",
+            "version": "0.1.0",
+            "implementationSha256": "de9ed6f451ca38791309c1d6ec9f8d2e0b6e2a85e7b461458b259e3f2461767a",
+            "tarballSha256": "a15001e97bbfd3295ab63c868354884acccd64cbdd403870d9f852f569d2072f"
+          }
+        ]
+      }
+    ],
+    "providerCalls": 0
+  },
+  "act": {
+    "command": "pnpm act:verify",
+    "exitCode": 0,
+    "checks": [
+      "two independent cold installs use identical compiled Act implementations and included owned migrations",
+      "repeat/concurrent migration, checksummed ledger, forced RLS and non-owner runtime requirement",
+      "four separate Node processes atomically open one canonical intent/time and retain every challenge mapping",
+      "four processes admit one executor claimant; cancellation/late settlement cannot replace terminal truth",
+      "explicit same-payload transition has one successor under contention; unknown never opens a new intent",
+      "tenant/session isolation, transaction scope reset and no runtime deletion",
+      "immutable canonical identity and rejection of modified migration ledgers",
+      "real PostgreSQL restart retains canonical identity/unknown; positive reconciliation fences late claimants",
+      "real installed policy/validation/turn, PostgreSQL one-time consent/intent/provider records and bounded mocked gateways compose for two tenants; concurrent presentations perform one reservation",
+      "real database restart and second independent installed consumer retain unknown mail; exact positive mocked Postmark read recovers it without claim/send, while missing results do not",
+      "native review is metadata-only; two installed consumers execute one approved CRM task with service actor plus human initiator audit, and machine/forged/replayed/cross-owner writes remain denied",
+      "native approval rechecks both current memberships and exact text/revision; stale review can be cancelled before execution, while completed execution cannot",
+      "native confirmation schema is checksummed, forced tenant/owner-scope RLS and non-owner; raw drafts/tokens never reach the approval journal",
+      "native lost response recovers through own authoritative receipt after real restart without resubmission; restored execution hold/new epoch refuses old approval",
+      "two installed native consumers complete one explicitly reviewed task under concurrent presentations, with exact revision and one service/human audit; forged, cross-owner and cross-action consent remains denied",
+      "completion rechecks current service/human membership and refuses an already completed stale review before spending consent",
+      "lost completion response reconciles from the original receipt after real restart and another installed consumer, without repeating the task transition",
+      "completion refuses reassigned staff resources and restored execution hold/old-epoch consent, preserving task state and domain audit"
+    ],
+    "scope": "isolated real PostgreSQL and four actual Node processes; no real booking/email",
+    "providerCalls": 0,
+    "mockedProviderCalls": {
+      "reservations": 2,
+      "sends": 3
+    }
+  },
+  "runtime": {
+    "command": "pnpm crm:verify-runtime --browser",
+    "checks": [
+      "private persistent installation, stable keys and idempotent setup",
+      "existing installations have no automatic backup side effect until an explicit per-database policy is enabled",
+      "atomic operator enrollment and non-owner runtime cannot enroll or activate accounts",
+      "real credentials, cookie-only session, origin checks and browser/server isolation",
+      "private connections ignore ambient database credentials, service files and destinations",
+      "owner/staff/viewer permissions, session-bound CSRF and tenant/resource isolation",
+      "session-protected persistent pipeline, canonical stage history, separate grants and configured business labels",
+      "operator explicitly enables pipeline; setup preserves existing grants and retry rechecks revocation",
+      "conversation reads real CRM in two businesses and prepares drafts without commands, audit writes or sending",
+      "conversation rejects anonymous, forged roles/tenants, missing CSRF, viewer preparation and cross-resource staff reads",
+      "pipeline conversation keeps opportunity/contact selections distinct and reads the persisted stage history",
+      "authenticated read-only command recovery binds initiator/tenant, masks absent receipts and rechecks current read permissions without mutations",
+      "human-reviewed Save is idempotent, rechecks permissions and refuses stale drafts without new writes",
+      "authorized tool projection, hashed sessions, idle/absolute expiry and membership revocation",
+      "operator sees safe success/failure/latency metadata; no keys, results or business identifiers stored",
+      "daily usage survives host/database restart; exhausted Gemini request returns correlated 429 before any outbound call",
+      "application/database restart retains records, sessions, revoked logout and retry receipt",
+      "reviewed follow-up and original Save receipt persist across application/database restart",
+      "application/database restart recovers the original Save receipt through GET without replaying its command",
+      "pipeline record, full stage history and retry receipt survive application/database restart",
+      "durable login budget and password change invalidates every old session",
+      "shared manual and scheduled publisher validates custom archives, private metadata and bounded policy; diagnostics contain no configuration, archive path or credentials",
+      "database advisory lock excludes overlapping backup processes and releases without stale filesystem locks or a new success record",
+      "existing archives are never overwritten; failed/corrupt snapshots are not fresh and a later backup recovers while retaining the previous material",
+      "real host restart retains freshness and catches up one overdue automatic snapshot without blocking CRM health or repeating the capture",
+      "unsafe private backup policy refuses execution and reports unavailable while a real host restart still serves CRM; repair preserves the prior valid archive",
+      "automatically published pg_dump archive plus runtime metadata actually restores into a fresh database and leaves the original database untouched",
+      "restored databases have a separate disabled backup policy and cannot inherit primary freshness or automatic scheduling",
+      "after backup/restore and explicit account recovery, receipt lookup remains read-only and keeps the original UUID",
+      "backup restores provider outcomes; conservative UTC-day hold prevents quota reset while local CRM remains available",
+      "pg_dump/pg_restore preserves pipeline history and the original idempotency receipt",
+      "restored records/audit/retry identity survive; old credentials and sessions require explicit recovery",
+      "restore preserves one mutation audit and spoofed forwarding headers cannot bypass login budget",
+      "database failures are observable through sanitized health responses and recover without process crash",
+      "live-planner quota/restore tests issue zero external provider requests",
+      "actual restored database holds native actions until explicit operator resume; diagnostics verify the supported local profile",
+      "authenticated native HTTP review/confirmation/receipt flow rejects anonymous, CSRF, forged authority, payload drift and repeat execution; exactly one task commits",
+      "authenticated worklist and Archava share due tasks while enforcing current assigned staff and tenant scope; partial cursors are refused",
+      "authenticated completion preparation is read-only; current task review/confirmation commits once with exact receipt while anonymous, CSRF, forged flags, staff scope, changed revision and replay are refused",
+      "restored authenticated host and local Archava share complete current owner/staff CRM aggregates with no command, consent or provider call; forged query scope and cross-tenant access are refused"
+    ],
+    "database": "real private persistent PostgreSQL; pg_dump/pg_restore exercised",
+    "providerCalls": 0,
+    "lifecycle": "40 checks completed; fixture intentionally held for browser and interrupted afterwards; isolated database removed"
+  },
+  "browser": {
+    "command": "CDP_PORT=9471 E2E_PROFILE=/tmp/archava-reaudit-browser-profile pnpm e2e:crm-runtime",
+    "exitCode": 0,
+    "checks": [
+      "unauthenticated visitor sees sign-in and no business records",
+      "invalid credentials remain outside the workspace",
+      "shared owner overview displays database totals and configured pipeline labels",
+      "pilot metadata shows six examples; choosing an example fills text without submitting or calling a provider",
+      "exhausted/restored pilot shows its usage limit without creating a reply; local commands stay usable",
+      "local Archava overview renders the same CRM aggregates with no approval or task content",
+      "owner credentials open the persisted shared CRM dashboard",
+      "shared owner worklist renders stored task text literally with no HTML execution",
+      "worklist switches due buckets using authoritative reads",
+      "worklist contact navigation opens the existing authorized detail and pipeline selection",
+      "Archava reads the same overdue tasks without preparing or executing a command",
+      "reload keeps the authenticated session and database records",
+      "shared dashboard writes through the session and CSRF-protected API",
+      "manual overview refresh includes a newly persisted contact",
+      "shared pipeline creates an opportunity linked to the explicitly selected contact",
+      "lost mutation response retries the same UUID and creates one stage event",
+      "canonical stage history reaches Won and the terminal outcome has no move form",
+      "overview refresh reflects authoritative stage changes and leaves Won as a sales count",
+      "conversation uses the explicitly selected opportunity and its persisted history",
+      "Archava conversation lists authorized CRM contacts with a source label",
+      "contact selection clears the independent opportunity selection",
+      "explicit conversation selection resolves a live contact summary",
+      "stored HTML and prompt injection render as inert CRM text",
+      "follow-up draft has user-supplied content and time without creating a task",
+      "conversation does not turn a send request into a side effect",
+      "native review leaves the task uncommitted until the separate confirmation click",
+      "explicit native confirmation recovers a lost response through GET and creates one task without a second POST",
+      "stale reviewed draft is refused and its Save button requires a fresh draft",
+      "lost Save response keeps only one opaque UUID in tab storage",
+      "an unresolved earlier Save blocks a new draft from receiving a second command UUID",
+      "reload recovers the committed receipt with one task and zero command resubmissions",
+      "recovery uses the original request UUID through a read endpoint",
+      "missing receipt stays unconfirmed, retains its marker and prevents a new Save without stopping reads",
+      "a mismatched receipt cannot clear uncertainty or unlock Save",
+      "another workspace does not render or consume the first workspace recovery marker",
+      "another authenticated account has no access to the owner tab recovery state",
+      "blocked browser storage prevents the write before any command request",
+      "direct browser mutation without CSRF is refused",
+      "failed overview refresh removes previous numbers instead of presenting stale totals",
+      "business selection switches configuration and isolated records",
+      "switching business clears conversation, selected contact and draft fields",
+      "business switch clears old pipeline selection and applies the second label configuration",
+      "a late response from the old business cannot repopulate the new conversation",
+      "switching business clears the prior overview and ignores its delayed response",
+      "same conversation component reads the second business without sharing records",
+      "sign-out clears the visible workspace",
+      "sign-out also destroys conversation data",
+      "sign-out destroys pipeline records and pending selections",
+      "logout destroys all overview numbers",
+      "a logged-out session stays logged out after reload",
+      "staff overview counts only assigned records and uses the same shared component",
+      "staff sees only its assigned contacts and allowed business",
+      "worklist masks owner tasks for assigned staff",
+      "Archava worklist preserves assigned staff scope",
+      "pipeline applies assigned staff scope without exposing owner opportunities",
+      "conversation keeps assigned staff scope",
+      "staff cannot bypass tenant selection by calling the API directly",
+      "owner and staff operate through the same module and database",
+      "logout destroys pending Save UI and a late receipt cannot repopulate the signed-out workspace",
+      "session credential stays HttpOnly and business data is absent from localStorage",
+      "worklist task selection fills a completion request without performing a write",
+      "completion draft shows the selected open task without changing CRM",
+      "completion review issues consent while the task remains open",
+      "lost completion response recovers by receipt without another POST and refreshes the open worklist",
+      "confirmed completion also refreshes overview counts from CRM",
+      "a completed selection is cleared before another task can be prepared",
+      "assigned staff completes only the selected task and retains one UUID while its receipt is unavailable",
+      "reload recovers staff completion through GET and the task leaves its assigned worklist",
+      "authenticated CRM remains usable at mobile width",
+      "no unexpected browser errors, CSP violations or failed resources"
+    ],
+    "fixtureOnly": true
+  },
+  "template": {
+    "javascriptTests": 55,
+    "guardrailTests": 4,
+    "testAndBuildExitCode": 0,
+    "buildLargeChunkWarning": true,
+    "pythonSdkIntegration": "not rerun: project venv absent",
+    "liveProviderTested": false
+  },
+  "dependencies": {
+    "pnpmAuditExitCode": 0,
+    "pnpmAdvisories": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0
+    },
+    "templateNpmAuditExitCode": 1,
+    "templateAdvisories": {
+      "info": 0,
+      "low": 0,
+      "moderate": 13,
+      "high": 0,
+      "critical": 0,
+      "total": 13
+    },
+    "templateRootAdvisories": ["https://github.com/advisories/GHSA-8988-4f7v-96qf"],
+    "pythonTransitiveAudit": "not performed; no project venv/transitive lock",
+    "exploitReachabilityAssessed": false
+  },
+  "trackedCredentialPatternScan": {
+    "matchingFiles": [],
+    "gitHistoryScanned": false,
+    "guaranteesNoSecrets": false
+  },
+  "originalInstallation": {
+    "httpListeningAtInitialObservation": false,
+    "doctorStatus": "ready",
+    "workspaces": 2,
+    "nativeActions": "ready",
+    "externalActions": "not configured",
+    "backupPolicyEnabled": true,
+    "backupIntervalHours": 24,
+    "backupArchiveIntact": true,
+    "credentialsPrinted": false,
+    "httpHostStartedByAudit": false
+  },
+  "compiledArtifacts": [
+    {
+      "name": "@archava/crm-act",
+      "version": "0.2.0",
+      "tarball": "tarballs/archava-crm-act-0.2.0.tgz",
+      "sha256": "83c3a75eccfef79192921eed79323e2a4f1bf6dfc33658daeaff9f0411b6a46b"
+    },
+    {
+      "name": "@archava/crm",
+      "version": "0.7.0",
+      "tarball": "tarballs/archava-crm-0.7.0.tgz",
+      "sha256": "a6da387030bd012dee0eee276f332cff293239d6ace8860dd94bd6c92307683d"
+    },
+    {
+      "name": "@archava/crm-pg",
+      "version": "0.7.0",
+      "tarball": "tarballs/archava-crm-pg-0.7.0.tgz",
+      "sha256": "2e4e9134692bf518490888b7b98c17a942d932a611d27546c47a9f739151a91f"
+    },
+    {
+      "name": "@archava/act-host",
+      "version": "0.3.0",
+      "tarball": "tarballs/archava-act-host-0.3.0.tgz",
+      "sha256": "aac466ec9ea09b8d22f4f2a5ace076cbc6f23096898b51383f986cbf40041e3a"
+    },
+    {
+      "name": "@archava/acl",
+      "version": "0.3.0",
+      "tarball": "tarballs/archava-acl-0.3.0.tgz",
+      "sha256": "8d1ef6ac490044d21b05ba72bb447a99bda1cdf26a2a875bc61c36f0ce5b64f9"
+    },
+    {
+      "name": "@archava/config",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-config-0.1.0.tgz",
+      "sha256": "a813a6d480eb4ac793b1c36bdd92e1a5be903bb73708106bde47c2bbb809205b"
+    },
+    {
+      "name": "@archava/core",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-core-0.1.0.tgz",
+      "sha256": "d922709ba0ba3181e2822bb8a2e601cb35429ae0594d04b8a4a3d3eea0adf690"
+    },
+    {
+      "name": "@archava/act-confirmation",
+      "version": "0.3.0",
+      "tarball": "tarballs/archava-act-confirmation-0.3.0.tgz",
+      "sha256": "160ad9d90b835f91349557ad15987efe9481383edd354b7cf09b65007747c43b"
+    },
+    {
+      "name": "@archava/adapters",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-adapters-0.1.0.tgz",
+      "sha256": "c2eaa9895125edf61d8b3d10c3f53b3299217c6ecb4b7e4ea65613cb64e38b29"
+    },
+    {
+      "name": "@archava/assistant",
+      "version": "0.5.0",
+      "tarball": "tarballs/archava-assistant-0.5.0.tgz",
+      "sha256": "af7763343a15066341a8166000673bf13bac996f3c36f274bcc7f9637705cd95"
+    },
+    {
+      "name": "@archava/decision",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-decision-0.1.0.tgz",
+      "sha256": "411f7507335051e5b2c1a661821d4d0c69d2ffc7d1987136250ddedd12c9f693"
+    },
+    {
+      "name": "@archava/knowledge",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-knowledge-0.1.0.tgz",
+      "sha256": "67ac95d450bc29801649ec415795f2a882bf45545bb8f36c975cd3531f23dd87"
+    },
+    {
+      "name": "@archava/act-host-pg",
+      "version": "0.2.0",
+      "tarball": "tarballs/archava-act-host-pg-0.2.0.tgz",
+      "sha256": "965bc8b97210751b5e27b8f80c087725449dc92ecbdc413a8d78cb288959d6a0"
+    },
+    {
+      "name": "@archava/act-storage",
+      "version": "0.2.0",
+      "tarball": "tarballs/archava-act-storage-0.2.0.tgz",
+      "sha256": "af011132600505d918bc303fe4b7055ab4cc2dc8fe27670d3ad4349534e233c4"
+    },
+    {
+      "name": "@archava/act-booking",
+      "version": "0.2.0",
+      "tarball": "tarballs/archava-act-booking-0.2.0.tgz",
+      "sha256": "39ac16186a72e11220c929cd13190bbfca41d2eec2bf5b4787093ed31bcd9bce"
+    },
+    {
+      "name": "@archava/act-email",
+      "version": "0.2.0",
+      "tarball": "tarballs/archava-act-email-0.2.0.tgz",
+      "sha256": "d812b494935d37e21be380c2156ce6940a32d0e5e177af0cccb6c773f490a9f8"
+    },
+    {
+      "name": "@archava/act-confirmation-pg",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-act-confirmation-pg-0.1.0.tgz",
+      "sha256": "21e811ecc4ec811be978a2ee082338f29e8f820b3e555ab2bd737152c507e240"
+    },
+    {
+      "name": "@archava/sdk",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-sdk-0.1.0.tgz",
+      "sha256": "8b694a35506165ac25e54bac2ce3b76a7bff5dac0e261f2c7954a4a2f4557425"
+    },
+    {
+      "name": "@archava/chat",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-chat-0.1.0.tgz",
+      "sha256": "327f544a0e75e479a2b5f54bc275f3abbc77729c1d25ed4907616f2dde7c6b7b"
+    },
+    {
+      "name": "@archava/identity-pg",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-identity-pg-0.1.0.tgz",
+      "sha256": "9f105b74aaef696c29a8a4cfb543d8068503d4caaee3090f59b1a091468eb4c9"
+    },
+    {
+      "name": "@archava/crm-assistant",
+      "version": "0.7.0",
+      "tarball": "tarballs/archava-crm-assistant-0.7.0.tgz",
+      "sha256": "0f1816471abed51aa675cf31f21d7d62870596df820a11acf1b36b440216eef4"
+    },
+    {
+      "name": "@archava/provider-runtime",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-provider-runtime-0.1.0.tgz",
+      "sha256": "a15001e97bbfd3295ab63c868354884acccd64cbdd403870d9f852f569d2072f"
+    },
+    {
+      "name": "@archava/act",
+      "version": "0.2.0",
+      "tarball": "tarballs/archava-act-0.2.0.tgz",
+      "sha256": "09f8fb8994c273e01d7fc605df3bff1f54c015057c60222f26ba9dd662e5b314"
+    },
+    {
+      "name": "@archava/act-postmark",
+      "version": "0.2.0",
+      "tarball": "tarballs/archava-act-postmark-0.2.0.tgz",
+      "sha256": "c8480afd2e9bd6f5eedb8cfd5847bae76703747bf8e01d0337641f4d269fef51"
+    }
+  ],
+  "artifactVersionsAndHashesUnchangedFromPreviousRelease": true,
+  "protectedSourceHashes": {
+    "PRD.md": "55252ab6bb8e1a27897009b7b0958feaa039eb2f80b38599017b283de1975158",
+    "config/pricing.v1.json": "2499bc82220188dad4daff276f73159ddcff9233944169fdf8f0dcc3f14f7831",
+    "config/templates.v1.json": "8b7a9e0a75df5e6e871eb444196b143486afa6332e9a14e69819737d5c7abdeb",
+    "docs/history/PRD.v1.0.0.md": "1a47f2617029310364a52553cec3a0272414b06eb1c2866ac119241cbd05871e",
+    "pnpm-lock.yaml": "0391674ce1eecf9bd6b2dfd99f874d04844a9b1f507c81dce0722009d66b3f29",
+    "Archava Template/package-lock.json": "b12401d628c963d52bf837a75fde65c5d7a00b0fd332c10173f135959f0c6eef"
+  },
+  "logDigests": {
+    "root": "d0c60e34d6f1e1ddb6e4e9df4aea2ad38dbb5406ead41bc95689ddeaf9e7fdf0",
+    "crm": "48e959ae7bb68524e753fe1bbec27d36c32e3f60f9d2bdcc209f6a2116ca08c9",
+    "act": "323fcd2826174d695a21f6ed7e5d5e30c09f3b6ea24809ff5954253d12df03af",
+    "runtime": "91965d136d4c1c660703060d90c44e8121345b2f6ba8b9d2386b4e3ae4c4490a",
+    "browser": "74d636938da965dbd5f8ef55826b8076eb583e2a0d7a0bf1313e3b6f330b13c5",
+    "templateTests": "ace25d806a69a4368c8ff135a322c7af8ce0b463044bd0b676b59de2d7fc3730",
+    "templateGuardrails": "a45d52a9e05d92af255b3ff4c1762707a04e2c2c67cd0a2435f5038aec74a6d5",
+    "templateBuild": "500802d372561fd7882248004c8ec79cc9139d14f1d18c75b4f3ef65c8139431"
+  },
+  "progress": {
+    "historicalV1CommercialPercent": 30,
+    "scopedOwnerPlanningPercent": 60,
+    "overallCurrentPercent": null,
+    "M1": "local acceptance passed",
+    "M2": "local acceptance passed",
+    "M3": "local owner accepted; broader presence/provider/production gates open",
+    "M4": "demand-backed expansion open"
+  },
+  "newLiveModelCalls": 0,
+  "newLiveExternalActionCalls": 0,
+  "published": false,
+  "featureCodeChanged": false,
+  "privatePoliciesChanged": false
+}

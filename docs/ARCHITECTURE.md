@@ -1,317 +1,123 @@
 # Architecture
 
-What the pipeline is, and where the boundaries are. This document describes the
-tree as it is; for what the tree does not yet do, see
-[`BUILD_STATUS.md`](BUILD_STATUS.md).
+Reviewed against `80ea845`, 10 October 2026. The [repository re-audit](PROJECT_REAUDIT_2026-10-10.md) records findings and next priorities. [PRD §§40–49](../PRD.md) describes the target; this document describes the implementation. ARCHZXY's company website is a separate consumer project.
 
-The future reusable business-module architecture is specified in [PRD v2
-§§40–49](../PRD.md) and explained in [the research](REUSABLE_PLATFORM_RESEARCH.md).
-This document continues to describe the implementation, including its separate
-realtime template boundary. A PRD upgrade does not add auth, module resolution or
-CRM/ERP persistence to the code.
+## Folder and runtime map
 
-## The shape
-
-A turn is a sequence of boundaries. Each boundary holds a **port** — an
-interface, in TypeScript, with implementations in the tree — and each
-implementation is an honest in-tree stand-in that says what it is standing in
-for.
-
-```
-browser (SDK)                 packages/assistant                packages/acl
-─────────────                 ─────────────────                 ────────────
-context graph ──────▶ mask / project ──▶ BrainProvider.plan ──▶ ActionPolicy
-(ids, names, flags,              (§16 masking)        │            decide
- never form values)                                   ▼
-                              KnowledgePort.retrieve ─┐
-                              StructuredTruthPort ────┤ answer + components
-                                                      ▼
-                              validateActionInputs (§9) ──▶ EntityResolver
-                                                      ▼
-                              ActionExecutor.execute (§18) ──▶ side effect
-                                                      ▼
-                                        TurnOutcome ──▶ chat renderers
+```text
+Archava_Platform/
+  packages/             reusable assistant, business domains and adapters
+  apps/crm/             authenticated local owner host; compiled-library consumer
+  apps/web/             reference chat, Studio, marketing and browser-storage demos
+  tools/configurator/   deterministic intake/configuration/quote tooling
+  tools/decision-eval/  bounded decision evaluations and optional live commands
+  tools/crm-reference/ isolated PostgreSQL and two-business reuse verification
+  tools/act-integration/ installed-artifact durable-action verification
+  tools/library/        private packaging and independent-consumer proof
+  tools/scripts/        structure gate and platform verification runner
+  tools/e2e/            browser harnesses; separate from unit tests
+  examples/consumers/   independent hospitality/retail core references
+  examples/crm-consumers/ independent hospitality/professional-service references
+  Archava Template/     standalone npm/React/Node/Python realtime starter
+  config/               authoritative pricebook and planning templates
+  docs/                 current guides, dated audits and historical evidence
+  delegation/           historical task/handoff records; not runtime configuration
 ```
 
-Every port returns a promise. That is a deliberate contract
-(`packages/assistant/src/turn.ts:85-107`): a port that may return synchronously
-is a port whose result can be consumed without anyone noticing it had not
-arrived, and a caller that could tell the difference from the outside is a caller
-that could skip an `await`.
+There are 32 pnpm workspace projects: 26 packages, two apps and four tools with manifests. Script-only tool directories and examples are outside those workspace globs. The realtime template has its own npm lockfile and Python dependencies; its [AGENTS.md](<../Archava Template/AGENTS.md>) requires standalone operation without parent-repository imports.
 
-## The ports
+Generated `dist/` and `node_modules/` are build/install output. Ignored `.local/` contains private database state, credentials, approvals and backups; it is not disposable source cleanup. The empty untracked `clients/generic-business/` placeholder implements no consumer. Current boundaries do not require directory relocation.
 
-| Port                  | Declared                                  | In-tree implementation                                                                                                                       | What it would be in production |
-| --------------------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
-| `BrainProvider`       | `packages/assistant/src/turn.ts`          | `ScriptedBrain`, `ReferenceBrain` — deterministic fixtures (`packages/adapters/src/brain.ts`)                                                | a model client                 |
-| `KnowledgePort`       | `turn.ts:85`                              | `@archava/knowledge` — `retrieveContext(request, store)`, wired by `buildKnowledgeStore(config)` (`packages/reference/src/knowledge.ts:224`) | a hosted index                 |
-| `StructuredTruthPort` | `turn.ts:103`                             | `referenceTruth` — date-stated fixtures (`packages/reference/src/rates.ts:421`)                                                              | an inventory / pricing service |
-| `EntityResolver`      | `packages/assistant/src/validation.ts:48` | `pageEntityResolver` (`apps/web/src/surface.ts:142`) — page-scoped                                                                           | a tenant catalog               |
-| `ActionExecutor`      | `packages/assistant/src/execution.ts`     | `pageExecutor` (`apps/web/src/surface.ts:217`) — `ui.*` only                                                                                 | the tenant's real systems      |
+| Runtime              | Entry and command                                                       | Actual authority                                                                               | Limit                                                                                                           |
+| -------------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Reference web        | `apps/web/src/server/server.ts`; root `dev`, `build`, `start`           | Stateless quote endpoint; reference browser context/turn/UI actions                            | Workspace records are fictional browser-storage data, with no persistent CRM identity or business writes        |
+| Persistent owner CRM | `apps/crm/src/server.ts`; `crm:build`, `crm:start`                      | Verified identity, authorized CRM services, PostgreSQL records and two approved native actions | Local POSIX/PostgreSQL host; external email/booking/payment not configured                                      |
+| Realtime starter     | `Archava Template/server/index.mjs`, `backend/agent.py`, React frontend | Bounded anonymous guest sessions, approved facts and navigation tools                          | Separate intelligence/knowledge/session path; no shared core/CRM action authority or new live-provider evidence |
 
-The offline reference does not contact a model, a PMS, or a payment provider. `pageExecutor`
-is the clearest example of the rule: it will highlight a room and it will not
-book one. It answers `not_a_page_action` — _"This page can only draw on itself;
-a browser may not perform that action."_ — for anything a browser is not entitled
-to do on a tenant's behalf. Where a real system would sit, the code returns a
-labelled failure rather than a plausible-looking success.
+Root `start` serves the reference web app, not CRM. Template Python tools do not call `runTurn`. One source repository does not establish one shared runtime.
 
-## What a turn actually does
+## Package ownership and dependencies
 
-`runTurn` (`packages/assistant/src/turn.ts:914`) takes a `TurnRequest` and
-returns a `TurnOutcome`. The order matters, and each step fails closed:
+| Group                 | Packages                                                                                                | Responsibility                                                                                          |
+| --------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Assistant foundation  | `config`, `core`, `acl`, `knowledge`, `adapters`, `decision`, `assistant`                               | Configuration/context, policy/masking, knowledge/truth ports, bounded planning and turn orchestration   |
+| Browser presence      | `sdk`, `chat`                                                                                           | Page awareness, consent/session contracts and shared rendering                                          |
+| Business domain       | `crm`                                                                                                   | Contacts, activities, follow-ups, opportunities, authorized service/API/tools and shared DOM dashboards |
+| Business persistence  | `crm-pg`                                                                                                | PostgreSQL records, membership/resource checks, migrations, command receipts and atomic audit           |
+| CRM composition       | `crm-assistant`, `crm-act`                                                                              | Read/prepare conversation and panel; separately reviewed native creation/completion                     |
+| Host infrastructure   | `identity-pg`, `provider-runtime`, `act-host`, `act-host-pg`, `act-confirmation`, `act-confirmation-pg` | Identity, provider admission/outcomes, atomic host intent and one-time confirmation                     |
+| External Act adapters | `act`, `act-booking`, `act-email`, `act-storage`, `act-postmark`                                        | Booking/email dispatch, durable provider replay/outbox and injected mail transport                      |
+| Commercial/reference  | `pricing`, `reference`                                                                                  | Deterministic pricing; fictional reference tenant/brain/truth                                           |
 
-1. **Mask, then project.** `projectContextGraph` (`turn.ts:221`) emits route,
-   page kind, section, locale, and entity `{id, name}` — never a form value,
-   because the graph carries field _names_ and not field values. A value cannot
-   be projected because it was never carried. Masking strategies are
-   `preserve | redact | partial | tokenise` (`packages/acl/src/mask.ts:15`).
+The assistant foundation has no mandatory CRM dependency. `crm` has no internal runtime package dependency and works through dashboards/APIs without an LLM. `crm-assistant` composes domain reads with the assistant; `crm-act` composes domain, PostgreSQL and approval infrastructure. The PostgreSQL-specific approval verifier belongs to that adapter.
 
-2. **Ask the brain.** The provider returns an answer, optional generative
-   components, and optional action requests. A brain that cannot support a
-   claim is recorded as a `knowledgeGap`, not glossed.
+No declared workspace dependency cycle was found at the audited revision. This is distinct from `pnpm structure`, which checks declared internal imports and relative-path escapes, not dependency direction or cycles. Actual edges include `core → config` and `apps/web → tools/configurator`; there is no claim that core depends only on Zod or that every tool is CLI-only.
 
-3. **Answer from knowledge or structured truth.** `basis` is one of
-   `structured_truth | retrieval | none` — the outcome states which, so a reader
-   can tell a live value from a corpus answer from a refusal.
+## Assistant turn and authority
 
-4. **Gate the actions** (`packages/acl/src/policy.ts`). Levels `L0`–`L5`
-   (`packages/acl/src/actions.ts:18`), roles `archava_assistant | owner | admin
-| editor | viewer`, capability tiers `assist | act | transact | enterprise`
-   (`packages/config/src/pricing/types.ts:8`). `L5` is `NEVER_AUTONOMOUS`. The
-   result is a decision plus a reason — `DENIAL_REASONS` is a closed list, so a
-   refusal is never a bare boolean.
-
-5. **Validate the inputs** `validateActionInputs` (`validation.ts:289`). A
-   declarative contract per action id checks types, required fields, and that no
-   `tenantId` travelled inside the payload. The registry names 24 actions
-   (`packages/acl/src/actions.ts`); 12 of them carry a contract
-   (`INPUT_SCHEMAS`, `validation.ts:181`). The other 12 are refused outright —
-   `No input contract` — and they are not a random sample: `payment.initiate`,
-   `payment.status.read`, `checkout.start`, `order.confirm` and
-   `order.cancel_refund` are all in that half. A commercial action cannot run
-   here because there is no contract for it, which is a stronger statement than
-   "we have not wired it up yet".
-
-6. **Resolve the entity ids.** Every contract field that names a tenant-catalog
-   entity — at any depth, including `customer.customerRef` nested inside
-   `booking.create` — is put to the `EntityResolver`, which is asked with the
-   _turn's_ tenant.
-
-7. **Execute** (`packages/assistant/src/execution.ts`). Only if an executor was
-   supplied, and only for actions the gate allowed and §9 confirmed.
-
-## Three fields, not one
-
-`GatedAction` separates what a gate permitted from what an executor confirmed:
-
-```ts
-policy:     'allowed' | 'denied' | 'confirmation_required' | 'requires_human_approval'
-execution:  'not_attempted' | 'succeeded' | 'failed'
-output:     what the executor returned, when it ran
+```mermaid
+flowchart LR
+  Context[Validated SDK context] --> Mask[Mask and project]
+  Mask --> Brain[BrainProvider and bounded decision advisory]
+  Brain --> Truth[Knowledge and structured truth]
+  Brain --> Gate[ActionPolicy]
+  Gate --> Validate[Input validation and entity resolution]
+  Validate --> Execute[Supplied ActionExecutor]
+  Truth --> Outcome[TurnOutcome and renderers]
+  Execute --> Outcome
 ```
 
-An action can be `allowed` and still `not_attempted`. The reference slice leaves
-the executor out of the turn entirely, so every allowed action on the page is
-`not_attempted` — which is the truth. Collapsing these into one flag is how a
-booking gets reported as existing because it _would have_ been booked.
+`packages/assistant/src/turn.ts` preserves masking, structured truth, action policy, confirmation, strict input validation and tenant entity resolution. `GatedAction` distinguishes policy permission, attempted execution and actual output. An allowed action is not a completed effect. Missing contracts/resolvers and unknown outcomes fail closed.
 
-## The rules the tests enforce
+`BrainProvider` and `DecisionProvider` are separate ports. Rule decisions/reference brains are deterministic. The Jev server adapter has mocked transport coverage, not a live Jev result from this audit. The in-memory knowledge store is not a hosted ingestion/indexing product; production retrieval and external truth need separate adapters and evidence.
 
-These are not style preferences. Each one is a failure mode that looks like a
-pass, and each has a test file that exists to stop it returning.
+## Owner CRM and approved execution
 
-**The absence of a resolver is a refusal, not a permission.**
-`packages/assistant/test/validation.test.ts` states the contract as a table
-rather than enumerating the module, so a drifted action id fails loudly. A
-validator that returns `ok` when no resolver was supplied passes every shape
-test it has — the inputs are the right types, the required fields are present,
-the tenant id is not in there — and an action executes with an id nobody ever
-checked. `ui.highlight` / `ui.compare` are held to the same rule against the
-page's own resolver, with the kind name observed rather than assumed, because a
-kind typed differently from the one the resolver checks is the same hole wearing
-a different hat.
-
-**A stored price's scale comes from the currency contract, never from `Intl`.**
-`packages/chat/test/money.test.ts` fixes `amountMinor: 1_438_000` and asserts the
-digit count is identical in every locale `Intl` will accept, including one it
-does not know (`xx-YY`) and one that renders non-Latin numerals (`ar-EG`, pinned
-by `\p{Nd}` rather than `\d`). The divisor used to be read from
-`Intl.NumberFormat(...).formatToParts(1)`, which made a _stored_ price depend on
-the ICU dataset of the machine printing it: CI proved it — IDR gained two
-fraction digits on the runner and lost them on the laptop that wrote the code,
-so the same amount meant Rp 1.438.000 in one place and Rp 14.380,00 in the other.
-Same input, two prices, and no single-machine gate could see it.
-
-**An unreachable catalog is an answer of no.**
-A throw from the resolver resolves to `ok: false` pointing at the id that went
-unanswered, not an uncaught exception and not a yes. The refusal is _about the
-id_, because that is the question that went unanswered; field `*` would suggest
-the whole action was refused for a generic reason.
-
-## The browser side
-
-```
-apps/web/src/
-  server/server.ts    HOST/PORT (default 127.0.0.1:4173), three modes
-  server/api.ts       POST /api/quote — the only HTTP endpoint
-  slice.ts            createSlice(): wires every port for the reference tenant
-  page.ts             bootstraps the SDK against the served page
-  dom-bridge.ts       SDK events → context graph
-  surface.ts          pageEntityResolver, pageExecutor
-  main.ts / studio.ts the two entry points (chat surface, Studio)
+```mermaid
+flowchart TB
+  Dashboard[Shared CRM dashboards] --> Host[Authenticated owner host]
+  Conversation[Archava read and prepare panel] --> Host
+  Host --> Identity[Verified identity and CSRF]
+  Identity --> Domain[CRM public services and tools]
+  Domain --> PG[CRM PostgreSQL adapter]
+  PG --> Records[Authoritative records and audit]
+  Host --> Review[Exact-action review and confirmation]
+  Review --> Intent[Durable intent and single execution claim]
+  Intent --> Native[Native CRM adapter]
+  Native --> PG
+  PG --> Recovery[Read-only UUID receipt recovery]
 ```
 
-The server holds no conversation state. `pnpm dev` compiles both bundles into
-memory; `pnpm build` writes `apps/web/dist/{app.js,studio.js}`; `pnpm start`
-serves those. Everything else — the awareness graph, the turn, the rendering —
-runs in the visitor's browser against a graph the page produced.
+The host binds principals from verified server sessions. `crm-pg` requires a non-owner/non-superuser role, forced tenant RLS and transaction-local tenant context. Operations recheck current memberships and resource scope. A delegated service receives the intersection of its grants and the initiating human's grants; assigned staff remain scoped to assigned records.
 
-`POST /api/quote` is the only HTTP endpoint, and it is stateless: a POST in, a
-response out, nothing kept. The body is `{ intake, branding?, updatedAt?,
-allowedOrigins? }`. A valid intake returns a variant set — `recommended`,
-`lean` and `full` quotes, a recommendation, a budget verdict and the
-`selectionReason` that produced it — and, when `branding` and `updatedAt` are
-supplied, an emitted `ClientConfig` (`schema_version`, `tenantId`,
-`environment`, `presence`, `capability`, `region`, `template`, …). Two
-identical posts return byte-identical variant sets, which is what makes a quote
-reproducible from a saved intake. It refuses in the other directions too: a
-`GET` is `405` ("A quote is a submission, not a fetch."), a body that is not
-JSON or not an object is `400`, and an invalid intake is `400` carrying the
-per-field Zod issues — the intake schema is `.strict()` and camelCase.
+Contacts, activities, follow-ups, contact-linked opportunities and guarded stage history share one domain. Worklists and overview aggregates read authorized database records, not only the displayed page. Missing section grants are distinct from permitted zero counts. Dashboard mutations and assistant read/prepare tools use public business services.
 
-The SDK (`packages/sdk`) reduces host-page events into a `ContextGraph`:
-`seedContextGraph` → `reduceContextGraph` / `foldContextEvents` →
-`actionableContext` → `parseContextGraph` (`packages/core/src/context-graph.ts`).
-The graph is Zod-parsed on the way in, so a host page cannot hand the pipeline
-an arbitrary object.
+Two native actions are supported: `crm.followup.create` and `crm.followup.complete`. Each has typed inputs and separate action-bound consent. Review itself creates no business task. Execution requires a one-time receipt, server MAC, current private approval epoch, active durable intent claim, current grants and matching resource revision. Approval is verified inside the CRM transaction before command, transition and audit commit together. Ordinary machine mutations/arbitrary model tools cannot write.
 
-## The tools
+Lost responses recover through the original UUID receipt without another POST. An absent receipt remains unconfirmed. Restore invalidates identity sessions/accounts and holds native execution under a fresh epoch until explicit recovery. See [local pilot](LOCAL_OWNER_PILOT.md), [completion](CRM_COMPLETION.md) and [command recovery](CRM_COMMAND_RECOVERY.md).
 
-- `tools/configurator` (`pnpm configurator`) — intake → normalised → variants /
-  recommendation / budget → built client config. `pnpm configurator` is the CLI
-  entry at `tools/configurator/src/cli.ts`.
-- `tools/scripts/structure.mjs` (`pnpm structure`) — the honesty gate on the
-  tree: the runnable web app must exist, every `@archava/*` specifier in source
-  and tests must be a declared dependency, and no file may reach outside the
-  workspace.
-- `tools/scripts/verify.mjs` (`pnpm verify`) — install + structure + lint +
-  typecheck + test + build, the same list in the same order as CI, so "CI
-  passed" and "`pnpm verify` passed" are one fact rather than two. It adds no
-  checks of its own.
-- `tools/e2e/home.mjs` (`pnpm e2e:home`) — drives the served page in a browser
-  and asserts against `BASE` (default `http://127.0.0.1:4173`).
+## AI and local operations
 
-## Package graph
+The local planner handles supported CRM commands. Optional Gemini planning receives only exact committed synthetic examples; arbitrary owner text and CRM records stay local. Tool schemas/current grants constrain results. Historical thirteen-case live evidence is not general private-data planning acceptance and was not rerun here.
 
-```
-core      ChatEvent vocabulary, ContextGraph schemas, tenant shape
-config    pricebook / template / currency contracts — all Zod-parsed
-pricing   deterministic quote engine (+ rounding rules)
-acl       action registry, roles, capability gate, masking
-knowledge retrieval store, ranking, structured-truth port shape
-assistant turn assembly: mask, gate, §9 validation, execution, outcome
-adapters  BrainProvider and presence/renderer adapters
-decision  bounded task catalogue, Rule provider, orchestrator and ranking primitive
-act-booking authoritative booking gateway and booking.create executor port
-act-email approved-template email gateway and email.send executor port
-act       tenant-bound composition and dispatch of the two Act executors
-act-storage PostgreSQL attempt-store adapters and migration
-act-confirmation server-side one-time confirmation challenge contract
-act-confirmation-pg PostgreSQL challenge store and migration
-act-host  server-owned Act review and presentation boundary
-act-postmark injected Postmark template-mail gateway
-chat      DOM renderers: shells, money, knowledge cards
-reference the reference tenant: fixtures, rates, knowledge, brain
-sdk       page awareness graph for a host page
-+ apps/web, tools/configurator
-```
+`provider-runtime` persists admission, daily pacing and metadata-only outcomes. No external booking, email or payment executor is configured in the owner host. Postmark/booking composition checks use fake gateways with real local persistence.
 
-Dependencies point inward: `reference` may depend on everything; `core` depends
-on nothing but `zod`. `pnpm structure` enforces this, so a boundary violation is
-a gate failure rather than a code-review opinion.
+The host provides diagnostics and tested backup/restore. Its optional backup loop runs while the host is active, catches up once after restart, serializes captures with a PostgreSQL advisory lock and verifies private archive integrity/metadata. It does not provide an unattended OS service, off-machine storage, retention deletion, production monitoring or RPO/RTO guarantees. See [backup operation](CRM_BACKUPS.md).
 
-## Decision Intelligence extension (PRD §39)
+## Packaging, configuration and compatibility
 
-The turn now has an optional bounded judgment seam between deterministic classification and the Brain. `packages/adapters/src/decision.ts` declares a vendor-neutral `DecisionProvider`; `packages/decision` owns five task definitions, per-task confidence/direction policy, the offline Rule provider, and the orchestrator. The assistant supplies Foundation baselines and projected/redacted context. The orchestrator's `off` mode makes no call, `shadow` records disagreements without effects, and `assist` may apply an approved answer. Routing can only escalate to a trusted structured-truth subject. ActionPolicy, input validation, entity resolution and ActionExecutor remain separate and authoritative.
+`tools/library/pack.mjs` compiles a selected dependency closure into 24 private ESM/declaration artifacts with exact internal versions and owned migrations. `pricing` and `reference` are workspace packages outside the current artifact set. Independent core/CRM consumers cold-install artifacts without parent source imports; the CRM host resolves installed packages rather than workspace aliases.
 
-Jev lives in `@archava/adapters/server`; no Jev type enters core product logic or the browser. The reference browser can run Rule decisions offline and renders trace metadata under `?inspect`. A server host may inject Jev through the same port. No live Jev verification has occurred. The full contract, privacy boundaries and eval command are documented in [`DECISION_INTELLIGENCE.md`](DECISION_INTELLIGENCE.md).
+Browser subpaths separate DOM/contracts from PostgreSQL, identity, provider keys and server planners. Build metadata rejects server implementation in the CRM browser bundle. Workspace source exports support development; compiled artifacts establish independent installation. See [library consumption](LIBRARY_CONSUMPTION.md).
 
-## Act pilot boundary
+The thin host-owned registry validates IDs and resolves dependency IDs/disabled prerequisites. V2 deployment planning separates declared scope from template suggestions and trusted host connection/health evidence. `resolveLegacy` preserves V1 compatibility and is not provisioning authority. Metadata permissions, config flags and commercial entitlement never grant execution permission.
 
-`packages/act` dispatches only booking.create and email.send to their
-server-side executors. They receive actions only after the existing turn
-pipeline has applied ActionPolicy, user confirmation, input validation and
-tenant-scoped entity resolution. Each executor then asks an injected
-authoritative gateway for a confirmed booking or durable email acceptance.
-The composition factory requires booking replay and email outbox boundaries;
-the PostgreSQL attempt-store adapters provide their durable port implementations.
-`@archava/act-host` can convert a verified challenge receipt into the turn's
-confirmation input and bind one validated action to that turn. It is a
-server-side library, not an HTTP route; the caller must supply a trusted tenant
-session, a durable attempt ledger, and the composed executor. The ledger port
-does not yet guarantee an atomic canonical timestamp under concurrent reviews
-or distinguish a later new intent with identical inputs, so deployment replay
-safety remains incomplete. `@archava/act-confirmation-pg` implements the
-one-time challenge store through an injected SQL client, and
-`@archava/act-postmark` implements a template-send gateway through an injected
-HTTP transport and server token. Neither is wired to a production database or
-provider. The reference browser has no access to these gateways. Current
-integration tests use fakes; no live PMS or mail provider is connected. See
-[`ACT_PILOT.md`](ACT_PILOT.md).
+The registry is not yet the complete PRD §42 contract: version ranges, conflicts, optional dependencies, general environment/health/UI/event ownership and supported release profiles remain unfinished. Artifact hashes and checksummed migrations prove a tested combination, not arbitrary version mixes. Upgrades need compatibility and data recovery; reverting a binary does not reverse a schema migration.
 
-## Internal artifacts and deployment planning — 8 October 2026
+## Verification and next architecture step
 
-`tools/library/pack.mjs` compiles the SDK/assistant/Chat dependency closure into
-nine private ESM/declaration artifacts while retaining module identity.
-`tools/library/verify-consumers.mjs` installs them in two projects outside the
-workspace and checks distinct knowledge/branding/action sets with shared hashes.
-The web browser build now needs no configuration alias. Explicit `/pure` exports
-keep filesystem readers on server paths.
+`pnpm verify` runs eight platform gates: install, structure, format, lint, typecheck, unit tests, reference-web build and independent core consumption. Actual CRM/Act PostgreSQL, authenticated Chromium and template checks are separate commands. CI has platform, CRM/runtime and template jobs; it does not currently run the Chromium owner suite or Python SDK integration suite.
 
-`packages/config/src/client/modules.ts` provides thin host-owned planning
-metadata; `plan.ts` resolves requested modules/dependencies and separates
-suggested integrations from host connection/health snapshots. Existing V1
-resolution is preserved through `resolveLegacy()`; new quote responses add V2
-`deploymentPlan`. Planning readiness never grants action authority. Details and
-migration limitations are in [library consumption](LIBRARY_CONSUMPTION.md).
+Preserve the modular monolith and folder paths. Next establish one supported local package/config/schema profile, then design a versioned presence boundary so the standalone realtime consumer can use shared server-owned intelligence/action authority. Do not bridge through copied credentials, guest-provided roles or parent source imports. Public visitors and authenticated owner sessions require distinct tool access.
 
-## First business module — CRM contacts/activity/follow-up
-
-`@archava/crm` owns schemas, public service/API and explicit read/draft tool ports;
-its `/dashboard` subpath shares one DOM component across two contexts.
-`@archava/crm-pg` supplies the server-only PostgreSQL adapter with a migration
-ledger, membership/resource checks, forced tenant RLS, revision preconditions,
-command identity and atomic metadata audit. Its pinned `pg` dependency is an
-intentional database-driver addition; the Archava core has no CRM dependency.
-
-Compiled artifacts include the owned migration. The CRM verifier loads installed
-exports with plain Node, cold-builds both consumers and exercises an isolated
-real PostgreSQL cluster. Production host identity and live Act integration remain
-separate. See [CRM module](CRM_MODULE.md) for contracts and release boundaries.
-
-## Persistent CRM consumer and identity adapter
-
-`apps/crm` is a host consumer of installed compiled CRM artifacts. It supplies
-verified identities from the optional server-only `@archava/identity-pg` adapter.
-Identity owns credential/session/rate-budget tables, migrations and lifecycle
-events; it does not own business roles. CRM memberships/resources remain the
-authority for record access. Core and CRM do not import this identity adapter.
-
-The host uses private persistent PostgreSQL state, session-bound CSRF transport,
-cookie login and the same dashboard component. Operator enrollment and membership
-creation share one transaction. Backups include private runtime metadata;
-restoration creates a fresh database, preserves mutation identity and requires
-explicit account recovery. See [CRM runtime](CRM_RUNTIME.md). Public deployment,
-shared presence and durable Act/provider execution retain separate release gates.
-
-## Optional CRM conversation adapter
-
-`@archava/crm-assistant` depends on CRM and the existing assistant/core contracts;
-the core has no reverse CRM dependency. Its planner sees the user's bounded text
-and produces a strict read/prepare request. Verified host identity scopes each
-CRM tool. `StructuredTruthPort` carries the authorized projection into `runTurn`;
-the host's optional authoritative routing can only add live-data requirements.
-No executor or page action is available. The browser `/panel` uses the shared
-contracts and renders records as text. See [CRM conversation](CRM_CONVERSATION.md)
-for local commands, independent-consumer evidence and the live-provider/Act gaps.
+Further modules follow demonstrated demand. Company sales/delivery workflows, arbitrary plugins/version mixes, universal ERP and microservice infrastructure are not prerequisites for the current reusable library.

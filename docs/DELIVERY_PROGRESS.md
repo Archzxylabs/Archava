@@ -1,5 +1,13 @@
 # Archava delivery progress
 
+**10 October 2026 re-audit:** [current architecture and milestone assessment](PROJECT_REAUDIT_2026-10-10.md)
+replace the old scorecard as the current implementation reference. M1 and M2 have
+fresh local reuse/database proof; the agreed local owner acceptance is complete,
+while shared presence, external action providers and production operation remain
+open. The v1 score below and the separate owner planning estimate are historical
+or scoped estimates, not a newly calculated percentage of all Archava. Future
+industry/module candidates are not a finite product-completion denominator.
+
 **Baseline:** 27 September 2026, before a1–a3 Decision Intelligence results are audited.
 
 **Target:** Archava v1 commercial readiness in `PRD.md` §34, including the platform needed to operate it.
@@ -28,7 +36,7 @@ evidence. See [pipeline scope](CRM_PIPELINE.md) and
 historical commercial score; no contract, payment or project execution is inferred
 from Won.
 
-**Current estimate after Act pilot audit:** **about 30% weighted delivery coverage. Release readiness: not met.**
+**Historical v1 estimate after the Act pilot audit:** **about 30% weighted delivery coverage. Release readiness was not met.**
 
 **Source consolidation, 7 October 2026:** Decision Intelligence, Act host/storage/
 confirmation/Postmark packages, the website and local CRM/ERP frontend, and the

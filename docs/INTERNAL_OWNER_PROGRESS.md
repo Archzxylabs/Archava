@@ -1,5 +1,12 @@
 # Internal owner pilot — scope and planning progress
 
+**10 October re-audit:** [repository review](PROJECT_REAUDIT_2026-10-10.md) confirms
+the delivered local owner scope and refreshes the separate verification evidence.
+The 50% baseline and broader 60% planning estimate below retain their declared
+denominator; this audit does not recalculate them as whole-product progress.
+Current next work is a supported local release profile and a shared presence
+boundary, with production/general AI and new business modules scoped separately.
+
 Baseline: 9 October 2026, source `83b65a8`. Estimated delivery coverage for the
 bounded internal owner pilot is **50%**. This is a planning estimate, not measured
 productivity, revenue, percentage of tests, or a claim of release readiness.
