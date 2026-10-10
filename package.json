@@ -54,7 +54,10 @@
     "library:assemble": "node tools/library/assemble.mjs",
     "crm:modules": "pnpm --fail-if-no-match --filter @archava/crm-host run modules",
     "assembly:verify": "node tools/library/verify-assembly.mjs",
-    "security:verify": "node tools/security/verify.mjs --run"
+    "security:verify": "node tools/security/verify.mjs --run",
+    "crm:benchmark": "pnpm --fail-if-no-match --filter @archava/crm-host run verify -- --benchmark",
+    "crm:verify-upgrade": "node apps/crm/scripts/upgrade.mjs",
+    "crm:verify-browser": "pnpm --fail-if-no-match --filter @archava/crm-host run verify -- --browser-once"
   },
   "devDependencies": {
     "@eslint/js": "9.37.0",

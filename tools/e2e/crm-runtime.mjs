@@ -7,7 +7,10 @@ process.env.CDP_PORT ??= '9459'
 process.env.E2E_PROFILE ??= '/tmp/archava-crm-runtime-browser/profile'
 const { launchDebugBrowser, Session } = await import('./cdp.mjs')
 const { origin, credentials } = JSON.parse(
-  await readFile('/tmp/archava-crm-runtime-browser-target.json', 'utf8'),
+  await readFile(
+    process.env.ARCHAVA_CRM_BROWSER_TARGET ?? '/tmp/archava-crm-runtime-browser-target.json',
+    'utf8',
+  ),
 )
 if (
   new URL(origin).hostname !== '127.0.0.1' ||

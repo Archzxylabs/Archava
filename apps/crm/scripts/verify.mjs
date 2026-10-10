@@ -17,6 +17,8 @@ import { join, resolve } from 'node:path'
 import { createRequire } from 'node:module'
 import { pathToFileURL } from 'node:url'
 import { randomBytes, randomUUID } from 'node:crypto'
+import { runCapacityBaseline } from './benchmark.mjs'
+import { verifyAuthenticatedBrowser } from './browser-proof.mjs'
 
 const root = resolve(import.meta.dirname, '../../..')
 let stopRequested = false
@@ -1100,6 +1102,13 @@ try {
     (await get(origin, '/api/session', owner).then((r) => r.json())).modules,
     minimal,
   )
+  if (process.argv.includes('--browser-once')) {
+    const credentials = join(home, 'minimal-browser-credentials.json')
+    await privateJson(credentials, {
+      owner: { username: account.username, password: account.password },
+    })
+    await verifyAuthenticatedBrowser({ root, home, origin, credentials, minimal: true })
+  }
   assert.equal((await get(origin, '/api/crm/hotel-demo/contacts', owner)).status, 200)
   assert.equal((await get(origin, '/api/crm/hotel-demo/opportunities', owner)).status, 404)
   assert.equal(
@@ -1880,15 +1889,37 @@ try {
     ) + '\n',
   )
   process.stdout.write(`${checks.length}/${checks.length} persistent CRM runtime checks passed.\n`)
-  if (process.argv.includes('--browser') && !stopRequested) {
+  if (
+    (process.argv.includes('--browser') || process.argv.includes('--browser-once')) &&
+    !stopRequested
+  ) {
     const credentials = join(home, 'browser-credentials.json')
     await privateJson(credentials, {
       owner: { username: actor, password: recoveredPassword },
       staff: { username: staff.username, password: recoveredStaff },
     })
-    await privateJson('/tmp/archava-crm-runtime-browser-target.json', { origin, credentials })
-    process.stdout.write('Persistent CRM browser target ready; Ctrl-C stops the fixture.\n')
-    await stopped
+    if (process.argv.includes('--browser-once'))
+      await verifyAuthenticatedBrowser({ root, home, origin, credentials })
+    else {
+      await privateJson('/tmp/archava-crm-runtime-browser-target.json', { origin, credentials })
+      process.stdout.write('Persistent CRM browser target ready; Ctrl-C stops the fixture.\n')
+      await stopped
+    }
+  }
+  if (process.argv.includes('--benchmark')) {
+    const benchmarkPool = poolFor(restored)
+    try {
+      await runCapacityBaseline({
+        root,
+        home,
+        origin,
+        session: owner,
+        pool: benchmarkPool,
+        hostPid: live.child.pid,
+      })
+    } finally {
+      await benchmarkPool.end()
+    }
   }
 } finally {
   await stop()

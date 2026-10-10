@@ -1,9 +1,11 @@
 # Architecture
 
-Reviewed against `80ea845`, 10 October 2026. The [repository re-audit](PROJECT_REAUDIT_2026-10-10.md) records findings and next priorities. [PRD §§40–50](../PRD.md) describes the target; this document describes the implementation. ARCHZXY's company website is a separate consumer project.
+Updated for local profile `1.3.0`, 10 October 2026. Baseline re-audit source: `80ea845`. The [repository re-audit](PROJECT_REAUDIT_2026-10-10.md) records findings and next priorities. [PRD §§40–50](../PRD.md) describes the target; this document describes the implementation. ARCHZXY's company website is a separate consumer project.
 
-PRD v2.1 §50 orders the next local release work and its acceptance. Its six
-execution requirements are specification, not additional implementation evidence.
+PRD v2.1 §50 bounds the implemented local library release.
+[Acceptance and decisions](LOCAL_LIBRARY_RELEASE.md) map its six items to runnable
+evidence; [handoff](LOCAL_LIBRARY_HANDOFF.md) defines supported operation.
+Live providers and production operation keep their separate gates.
 
 ## Folder and runtime map
 
@@ -16,18 +18,20 @@ Archava_Platform/
   tools/decision-eval/  bounded decision evaluations and optional live commands
   tools/crm-reference/ isolated PostgreSQL and two-business reuse verification
   tools/act-integration/ installed-artifact durable-action verification
-  tools/library/        private packaging and independent-consumer proof
+  tools/library/        private packaging, deterministic assembly and consumer proof
+  tools/security/       scoped controls, dependency inventory and advisory verification
   tools/scripts/        structure gate and platform verification runner
   tools/e2e/            browser harnesses; separate from unit tests
   examples/consumers/   independent hospitality/retail core references
   examples/crm-consumers/ independent hospitality/professional-service references
+  examples/presence-consumers/ standalone Python synthetic transcript transport
   Archava Template/     standalone npm/React/Node/Python realtime starter
-  config/               authoritative pricebook and planning templates
+  config/               trusted local release catalogue, pricebook and planning templates
   docs/                 current guides, dated audits and historical evidence
   delegation/           historical task/handoff records; not runtime configuration
 ```
 
-There are 32 pnpm workspace projects: 26 packages, two apps and four tools with manifests. Script-only tool directories and examples are outside those workspace globs. The realtime template has its own npm lockfile and Python dependencies; its [AGENTS.md](<../Archava Template/AGENTS.md>) requires standalone operation without parent-repository imports.
+There are 33 pnpm workspace projects: 27 packages, two apps and four tools with manifests. Script-only tool directories and examples are outside those workspace globs. The realtime template has its own npm lockfile and Python dependencies; its [AGENTS.md](<../Archava Template/AGENTS.md>) requires standalone operation without parent-repository imports.
 
 Generated `dist/` and `node_modules/` are build/install output. Ignored `.local/` contains private database state, credentials, approvals and backups; it is not disposable source cleanup. The empty untracked `clients/generic-business/` placeholder implements no consumer. Current boundaries do not require directory relocation.
 
@@ -124,3 +128,25 @@ The registry is not yet the complete PRD §42 contract: version ranges, conflict
 Preserve the modular monolith and folder paths. Next establish one supported local package/config/schema profile, then design a versioned presence boundary so the standalone realtime consumer can use shared server-owned intelligence/action authority. Do not bridge through copied credentials, guest-provided roles or parent source imports. Public visitors and authenticated owner sessions require distinct tool access.
 
 Further modules follow demonstrated demand. Company sales/delivery workflows, arbitrary plugins/version mixes, universal ERP and microservice infrastructure are not prerequisites for the current reusable library.
+
+## Supported composition and presence
+
+Profile `1.3.0` installs 25 private compiled packages and pins 18 external runtime
+versions. The build embeds hashes/contracts/owned migration checks; install and
+startup reject unsupported combinations. Config `0.5.0` exposes pure assembly
+contracts separately from Node-only release verification. Four logical module
+contracts cover contacts, pipeline, assistant and native actions within the
+existing monolith. Selection closes UI/API/tool surfaces and native disable
+refuses unresolved effects; records, audit and receipts remain stored.
+
+`@archava/presence` has a pure versioned browser contract/client and a server-only
+bounded session gateway. The owner host verifies its credential cookie and current
+CRM grants; guests use a distinct server-issued cookie and public-only projection.
+Chat and standalone Python synthetic transcript requests share session/revision/
+replay policy and the existing `runTurn` implementation. Native consent still
+travels through the original exact review/present routes. The Template LiveKit
+worker remains independently packaged; its provider migration is a separate gate.
+
+The isolated baseline measures this local host and its eight-connection database
+pool with two synthetic tenants; it is not a new production service topology.
+No framework, microservice, broker or cloud infrastructure was added.

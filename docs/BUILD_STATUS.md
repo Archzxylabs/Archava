@@ -2,33 +2,32 @@
 
 ## Current checkpoint — 10 October 2026
 
-**Execution specification:** PRD v2.1 §50 now defines six ordered tasks for the
-next supported local library release. EXEC-01–EXEC-06 are not yet accepted;
-writing their criteria changes no package, schema, provider or runtime readiness.
-The already completed local owner pilot remains accepted within its original scope.
+**Supported local scope:** profile `1.3.0` implements PRD v2.1 §50.
+EXEC-01–EXEC-06 have accepted runnable evidence and completed local handoff. The earlier local owner pilot remains accepted. See
+[release acceptance](LOCAL_LIBRARY_RELEASE.md), [handoff](LOCAL_LIBRARY_HANDOFF.md)
+and [architecture](ARCHITECTURE.md). The original re-audit at `80ea845` remains a
+dated baseline.
 
-Source reviewed: `80ea845`. The [repository re-audit](PROJECT_REAUDIT_2026-10-10.md)
-and [current architecture](ARCHITECTURE.md) supersede older absence/readiness claims
-below. The dated entries and original reference tables are retained as history.
+| Area             | Current evidence                                                                                                  | Open boundary                                                                   |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Supported reuse  | Exact version/hash/contracts/schema profile; two independent core and two CRM business consumers                  | More deployed/version combinations                                              |
+| Composition      | Minimal/full installed entries; deterministic planner; server refusal on disabled capabilities; retained receipts | Broader demand-backed business modules                                          |
+| Offline presence | Scoped guest/owner chat and standalone Python synthetic transcript reach shared server intelligence               | Template live worker migration and provider validation                          |
+| Owner operation  | Current grants/RLS, exact native create/complete consent, atomic audit/receipts and restoration                   | General AI planning and production operation                                    |
+| Security         | 15-control evidence matrix, real PostgreSQL race/restart checks, exact runtime dependency inventory               | Template 13 moderate findings; SDK integration; wider threat/penetration review |
+| Capacity         | Two tenants with 200 additional contacts each; 1/5/20 concurrency baseline and separate mutation race             | Production load and SLA evidence                                                |
+| Recovery         | Prior profile upgrades with data/grants/audit/UUID retention; fresh restore invalidates identity and old consent  | New schema profiles and production recovery guarantees                          |
+| Commercial       | Existing deterministic pricing/configuration preserved                                                            | ARCHZXY website and proposal/contract/payment/delivery application              |
 
-| Area                  | Current evidence                                                                                                           | Open boundary                                                                        |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| Core reuse            | Two independent cold-installed consumers; identical compiled implementations                                               | Supported release/upgrade profiles and deployed consumers                            |
-| CRM reuse             | Shared persistent contacts/activity/follow-ups/pipeline, worklist and overview across two business contexts                | Broader domain modules and demand-backed vertical extensions                         |
-| Owner operation       | Credential sessions, current resource grants, RLS, two reviewed native actions, atomic audit/receipts and restore controls | General AI planning and public/always-on production operations                       |
-| Backup                | Optional in-process schedule, archive integrity and actual restoration                                                     | Stopped-host scheduling, off-machine copies, retention and recovery guarantees       |
-| Voice/avatar          | Standalone realtime template with offline tests/build                                                                      | Shared core intelligence/action authority, provider validation and dependency triage |
-| External Act/Transact | Booking/email adapters and fake-provider composition with real local persistence                                           | Real provider writes; payment/confirmation/receipt flow                              |
-| Commercial tooling    | Deterministic pricing/configuration and stateless quote API                                                                | New module prices and separate company proposal/contract/project application         |
+All eight root gates passed with 1,458 tests/102 files; CRM 38, Act 18, host 44
+and Chromium minimal/full 3/70 passed. Template passed 55 JS tests, four guardrails
+and build; seven SDK integration checks remain unverified.
 
-Fresh verification passed all eight platform gates, 1,442 tests in 99 files,
-38 CRM database checks, 18 durable Act checks, 40 authenticated runtime checks
-and 70 Chromium owner/staff checks.
-Template JavaScript/guardrail/build results and separate browser evidence are
-recorded in [the audit proof](audit/2026-10-10-project-reaudit.json). Root verify
-alone does not run every database/browser/template check. No live provider or
-production deployment is claimed. Historical 30% and owner 60% estimates have
-different denominators; neither is a freshly calculated whole-product score.
+Current executed gates and sanitized reports are linked from
+[local release acceptance](LOCAL_LIBRARY_RELEASE.md). Root verification does not
+include all database/browser/template checks. No live provider or production
+deployment is claimed. Historical whole-product/owner percentages retain their
+original denominators; no new total is inferred from this finite release.
 
 ## Historical checkpoints and reference implementation details
 

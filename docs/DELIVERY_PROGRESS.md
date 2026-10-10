@@ -1,15 +1,15 @@
 # Archava delivery progress
 
-**Active execution target:** PRD v2.1 §50 defines a finite supported local library
-release with six ordered acceptance items. Track each item against runnable
-evidence; they currently have specification only. This scope does not recalculate
-the historical commercial/owner percentages or reopen the accepted local pilot.
+**Current local release:** PRD v2.1 §50 is implemented as profile `1.3.0`.
+[Acceptance](LOCAL_LIBRARY_RELEASE.md) tracks the six scoped items and evidence;
+all six finite items are accepted with local handoff. This scope does not recalculate
+historical commercial/owner percentages or reopen the accepted pilot.
 
 **10 October 2026 re-audit:** [current architecture and milestone assessment](PROJECT_REAUDIT_2026-10-10.md)
 replace the old scorecard as the current implementation reference. M1 and M2 have
 fresh local reuse/database proof; the agreed local owner acceptance is complete,
-while shared presence, external action providers and production operation remain
-open. The v1 score below and the separate owner planning estimate are historical
+while live provider integration, external action providers and production
+operation remain open. Offline shared presence now has its separate local proof. The v1 score below and the separate owner planning estimate are historical
 or scoped estimates, not a newly calculated percentage of all Archava. Future
 industry/module candidates are not a finite product-completion denominator.
 

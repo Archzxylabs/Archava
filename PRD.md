@@ -2015,6 +2015,12 @@ present release need not wait for an entire enterprise/ERP roadmap.
 
 ### 50.5 Completion and progress reporting
 
+Local implementation evidence for profile `1.3.0` is recorded in
+[release acceptance](docs/LOCAL_LIBRARY_RELEASE.md) and the
+[sanitized manifest](docs/audit/local-library/manifest.json). All six items have
+passed their finite local acceptance; live/provider/production gates retain their
+separate requirements. The criteria below continue to apply to changes.
+
 The local reusable-library release is complete only when all six execution items
 have passing applicable acceptance, both independent consumers use supported
 artifacts without forks, existing regression behavior is preserved, and current

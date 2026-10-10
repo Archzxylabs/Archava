@@ -4,14 +4,14 @@ The finite acceptance scope is PRD 2.1 §50. Company website, live voice/avatar,
 public deployment and the broader ERP catalogue remain separate milestones.
 Evidence below describes executed checks, not product/security percentages.
 
-| Item                               | Status      | Evidence                                                                                                                                                                                  |
-| ---------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| EXEC-01 supported profile          | Accepted    | 7 profile tests; two cold consumers with identical implementation hashes; 41 isolated persistent runtime checks including changed-package startup refusal, migration ledgers and restore. |
-| EXEC-02 composition/lifecycle      | Not started | —                                                                                                                                                                                         |
-| EXEC-03 presence boundary          | Not started | —                                                                                                                                                                                         |
-| EXEC-04 security/dependency matrix | Not started | —                                                                                                                                                                                         |
-| EXEC-05 isolated capacity baseline | Not started | —                                                                                                                                                                                         |
-| EXEC-06 upgrade/recovery/handoff   | Not started | —                                                                                                                                                                                         |
+| Item                               | Status   | Evidence                                                                                                                                                                             |
+| ---------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| EXEC-01 supported profile          | Accepted | 8 profile tests; identical cold consumer implementations; exact installed hashes/dependencies/schema and changed-package startup refusal; final host proof 44 checks.                |
+| EXEC-02 composition/lifecycle      | Accepted | Typed planner/assembly; independent minimal/full installs; disabled routes/writes/tools; retained receipts and unresolved-effect refusal; minimal Chromium DOM proof.                |
+| EXEC-03 presence boundary          | Accepted | Six gateway tests; installed chat and standalone Python transcript share server policy; forged identity, binding, revision, replay, expiry, private-tool and timeout refusal.        |
+| EXEC-04 security/dependency matrix | Accepted | 15 source/control evidence rows; 38 real PostgreSQL CRM checks, 18 Act checks, 44 host checks; exact external inventory; root/runtime scans clean; separate template gates recorded. |
+| EXEC-05 isolated capacity baseline | Accepted | Two tenants, 200 additional contacts each plus tasks/opportunities; 32 warm-up reads; 1/5/20 concurrency for 15s each, zero failures; 20 duplicate writes commit/recover once.       |
+| EXEC-06 upgrade/recovery/handoff   | Accepted | Cold prior-source upgrade and fresh-target restore; Chromium minimal/full 3/70; eight root gates, 1,458 tests/102 files; template JS 55/guardrails 4/build; handoff and manifest.    |
 
 The host embeds its trusted resolved profile at build time. The generated
 `dist/library/release-profile.json` is an inventory; replacing its sidecar does
@@ -100,3 +100,33 @@ External SPDX metadata and shipped notice files are inventoried; generated
 Internal artifacts remain private with no declared public license. Public
 distribution and client IP terms need their own legal/contract review. This is
 scoped engineering evidence, not a penetration test or certification.
+
+`pnpm crm:benchmark` reruns the disposable persistent host fixture and then seeds
+200 additional contacts per tenant, 20 tasks and 10 opportunities. It warms up
+32 authenticated reads and runs a mixed contacts/worklist/pipeline/overview load
+for 15 seconds at each concurrency. Login and fixture creation are outside the
+timed workload. Only the fixture's loopback host and socket directory are accepted;
+the original database and external providers cannot be benchmark targets.
+
+The [capacity report](audit/local-library/capacity.json) includes runtime/database
+versions, machine resources, fixture sizes, samples, throughput, p50/p95, failures
+and the separate 20-request mutation/recovery race. The observed read envelope is
+for this machine, fixture and eight-connection app pool. It is not a production
+SLA or number of supported users.
+
+The six finite items are accepted for local profile `1.3.0`.
+[Handoff](LOCAL_LIBRARY_HANDOFF.md) covers cold setup, independent assembly,
+account recovery, upgrade and binary/schema compatibility. The
+[sanitized manifest](audit/local-library/manifest.json) links the generated
+profile, identical-consumer proof, control matrix, capacity, upgrade and browser
+results. The final eight root gates passed with 1,458 tests in 102 files; CRM
+38, durable Act 18, persistent host 44 and Chromium minimal/full 3/70 passed.
+Template regression passed 55 JavaScript tests, four Python guardrail checks
+and build; its seven SDK integration checks and live gates remain open.
+
+The existing owner's installation passed `crm:doctor` with the exact supported
+profile and two workspaces. Its enabled backup was due while the HTTP host was
+stopped; `crm:backup-run` published a new intact private snapshot, retaining all
+previous archives. Doctor now reports fresh backup. Tests used synthetic isolated
+data; the real owner database was only diagnosed and backed up through its
+existing policy. No real record, grant, credential or pricebook was changed.

@@ -1,0 +1,83 @@
+{
+  "schemaVersion": "1.0.0",
+  "release": "archava-local-library",
+  "profile": "1.3.0",
+  "acceptance": {
+    "EXEC-01": "accepted",
+    "EXEC-02": "accepted",
+    "EXEC-03": "accepted",
+    "EXEC-04": "accepted",
+    "EXEC-05": "accepted",
+    "EXEC-06": "accepted"
+  },
+  "commands": [
+    {
+      "command": "pnpm verify",
+      "result": "passed",
+      "gates": 8,
+      "unitTests": 1458,
+      "unitFiles": 102
+    },
+    {
+      "command": "pnpm security:verify",
+      "result": "passed",
+      "controls": 15,
+      "crmChecks": 38,
+      "actChecks": 18,
+      "hostChecks": 44
+    },
+    {
+      "command": "pnpm crm:benchmark",
+      "result": "passed",
+      "concurrency": [1, 5, 20],
+      "secondsPerLevel": 15,
+      "providerCalls": 0
+    },
+    {
+      "command": "pnpm crm:verify-browser",
+      "result": "passed",
+      "minimalChecks": 3,
+      "fullChecks": 70
+    },
+    {
+      "command": "pnpm crm:verify-upgrade --cold-prior",
+      "result": "passed",
+      "priorCommit": "f5cb768",
+      "fromProfile": "1.0.0",
+      "toProfile": "1.3.0"
+    },
+    {
+      "command": "npm test / npm run test:agent / npm run build (standalone Template)",
+      "result": "passed",
+      "javascriptTests": 55,
+      "guardrailTests": 4,
+      "pythonSdkIntegration": "not run; required project venv absent"
+    },
+    {
+      "command": "pnpm crm:backup-run / pnpm crm:doctor",
+      "result": "passed",
+      "ownerInstallation": "ready",
+      "backup": "fresh and intact",
+      "credentialValuesPrinted": false
+    }
+  ],
+  "limits": [
+    "Local reusable-library acceptance only",
+    "No live audio/avatar, real external provider write, company website or production deployment",
+    "Template: 13 moderate OpenTelemetry-chain findings and seven missing SDK checks remain separate realtime gates",
+    "Historical whole-product estimates are not recalculated"
+  ],
+  "reportFiles": [
+    "act.json",
+    "assembly.json",
+    "browser.json",
+    "capacity.json",
+    "crm.json",
+    "minimal-browser.json",
+    "release-profile.json",
+    "reuse.json",
+    "runtime.json",
+    "security.json",
+    "upgrade.json"
+  ]
+}

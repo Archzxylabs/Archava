@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0.0",
+  "profile": "1.3.0",
+  "node": "v22.22.3",
+  "checks": [
+    "two independent cold installs use identical compiled Act implementations and included owned migrations",
+    "repeat/concurrent migration, checksummed ledger, forced RLS and non-owner runtime requirement",
+    "four separate Node processes atomically open one canonical intent/time and retain every challenge mapping",
+    "four processes admit one executor claimant; cancellation/late settlement cannot replace terminal truth",
+    "explicit same-payload transition has one successor under contention; unknown never opens a new intent",
+    "tenant/session isolation, transaction scope reset and no runtime deletion",
+    "immutable canonical identity and rejection of modified migration ledgers",
+    "real PostgreSQL restart retains canonical identity/unknown; positive reconciliation fences late claimants",
+    "real installed policy/validation/turn, PostgreSQL one-time consent/intent/provider records and bounded mocked gateways compose for two tenants; concurrent presentations perform one reservation",
+    "real database restart and second independent installed consumer retain unknown mail; exact positive mocked Postmark read recovers it without claim/send, while missing results do not",
+    "native review is metadata-only; two installed consumers execute one approved CRM task with service actor plus human initiator audit, and machine/forged/replayed/cross-owner writes remain denied",
+    "native approval rechecks both current memberships and exact text/revision; stale review can be cancelled before execution, while completed execution cannot",
+    "native confirmation schema is checksummed, forced tenant/owner-scope RLS and non-owner; raw drafts/tokens never reach the approval journal",
+    "native lost response recovers through own authoritative receipt after real restart without resubmission; restored execution hold/new epoch refuses old approval",
+    "two installed native consumers complete one explicitly reviewed task under concurrent presentations, with exact revision and one service/human audit; forged, cross-owner and cross-action consent remains denied",
+    "completion rechecks current service/human membership and refuses an already completed stale review before spending consent",
+    "lost completion response reconciles from the original receipt after real restart and another installed consumer, without repeating the task transition",
+    "completion refuses reassigned staff resources and restored execution hold/old-epoch consent, preserving task state and domain audit"
+  ],
+  "providerCalls": 0,
+  "result": "passed"
+}

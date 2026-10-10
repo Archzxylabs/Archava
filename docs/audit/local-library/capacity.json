@@ -1,0 +1,98 @@
+{
+  "schemaVersion": "1.0.0",
+  "profile": "1.3.0",
+  "node": "v22.22.3",
+  "postgres": "PostgreSQL 18.6 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 16.2.1 20260810, 64-bit",
+  "checkedAt": "2026-10-10T14:24:44.710Z",
+  "syntheticOnly": true,
+  "providerCalls": 0,
+  "loginOutsideTimedWork": true,
+  "warmupReads": 32,
+  "workloads": [
+    "/api/crm/hotel-demo/contacts?limit=20",
+    "/api/crm/hotel-demo/followups?limit=20",
+    "/api/crm/hotel-demo/opportunities?limit=20",
+    "/api/crm/hotel-demo/overview",
+    "/api/crm/studio-demo/contacts?limit=20",
+    "/api/crm/studio-demo/followups?limit=20",
+    "/api/crm/studio-demo/opportunities?limit=20",
+    "/api/crm/studio-demo/overview"
+  ],
+  "fixture": {
+    "hotel-demo": {
+      "contacts": 204,
+      "followups": 25,
+      "opportunities": 11
+    },
+    "studio-demo": {
+      "contacts": 201,
+      "followups": 20,
+      "opportunities": 10
+    }
+  },
+  "resources": {
+    "platform": "linux",
+    "arch": "x64",
+    "cpu": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+    "logicalCpus": 16,
+    "totalMemoryBytes": 16446357504,
+    "freeMemoryBefore": 4922716160,
+    "hostBefore": {
+      "rssKiB": 127092,
+      "cpuPercent": 92.7
+    },
+    "freeMemoryAfter": 5203263488,
+    "hostAfter": {
+      "rssKiB": 206556,
+      "cpuPercent": 84.3
+    }
+  },
+  "measurements": [
+    {
+      "concurrency": 1,
+      "durationRequestedSeconds": 15,
+      "elapsedSeconds": 15.001574544000002,
+      "successfulSamples": 5771,
+      "failedSamples": 0,
+      "totalSamples": 5771,
+      "successfulRequestsPerSecond": 384.6929522680109,
+      "p50Ms": 2.2685209999981453,
+      "p95Ms": 4.905717000001459,
+      "failures": {}
+    },
+    {
+      "concurrency": 5,
+      "durationRequestedSeconds": 15,
+      "elapsedSeconds": 15.001630127999997,
+      "successfulSamples": 27664,
+      "failedSamples": 0,
+      "totalSamples": 27664,
+      "successfulRequestsPerSecond": 1844.0662623967878,
+      "p50Ms": 2.5543330000000424,
+      "p95Ms": 4.314674000001105,
+      "failures": {}
+    },
+    {
+      "concurrency": 20,
+      "durationRequestedSeconds": 15,
+      "elapsedSeconds": 15.00630747,
+      "successfulSamples": 34635,
+      "failedSamples": 0,
+      "totalSamples": 34635,
+      "successfulRequestsPerSecond": 2308.0294782204674,
+      "p50Ms": 8.472617999999784,
+      "p95Ms": 11.369075000009616,
+      "failures": {}
+    }
+  ],
+  "contention": {
+    "concurrency": 20,
+    "identicalReceipts": true,
+    "committedEffects": 1,
+    "audits": 1,
+    "commands": 1,
+    "readOnlyRecovery": true,
+    "crossTenantReceiptRefused": true
+  },
+  "limits": "One local machine, one bounded synthetic fixture, app pool max=8; not a production capacity/SLA claim. p50/p95 describe successful reads; failures and timeouts are recorded separately."
+}

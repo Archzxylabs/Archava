@@ -473,8 +473,10 @@ try {
   else if (mode === 'resume-actions') await resumeActions()
   else if (mode === 'doctor') await doctor()
   else if (mode === 'modules') {
-    if (process.argv.length !== 4) throw new Error('Expected modules private-selection.json')
-    process.stdout.write(JSON.stringify(await setModules(resolve(process.argv[3]!))) + '\n')
+    const file = process.argv[3]
+    if (process.argv.length !== 4 || !file)
+      throw new Error('Expected modules private-selection.json')
+    process.stdout.write(JSON.stringify(await setModules(resolve(file))) + '\n')
   } else throw new Error('Unknown CRM operator command')
 } catch (error) {
   if (error instanceof ReleaseProfileError) process.stderr.write(error.message + '\n')

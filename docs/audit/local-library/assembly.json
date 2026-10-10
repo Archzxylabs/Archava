@@ -1,0 +1,25 @@
+{
+  "checks": [
+    {
+      "consumer": "minimal-contacts",
+      "entries": ["@archava/crm"],
+      "profile": "1.3.0",
+      "verified": true
+    },
+    {
+      "consumer": "full-owner",
+      "entries": [
+        "@archava/crm",
+        "@archava/crm/pipeline",
+        "@archava/crm-assistant",
+        "@archava/crm-act"
+      ],
+      "profile": "1.3.0",
+      "verified": true
+    }
+  ],
+  "identicalProfileHashes": true,
+  "refusedOverwrite": true,
+  "refusedDependencies": true,
+  "generatedDomainCode": false
+}

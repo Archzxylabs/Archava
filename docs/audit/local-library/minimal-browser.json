@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0.0",
+  "profile": "1.3.0",
+  "composition": "minimal",
+  "checks": [
+    "minimal composition exposes contacts while optional pipeline, assistant and overview DOM stay empty and hidden",
+    "authenticated browser cannot bypass disabled pipeline, conversation or native mutation routes",
+    "mandatory contacts remain accessible with current credential identity"
+  ],
+  "result": "passed",
+  "browser": "isolated headless Chromium",
+  "fixture": "synthetic authenticated persistent owner/staff CRM",
+  "providerCalls": 0
+}

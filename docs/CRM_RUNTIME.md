@@ -7,7 +7,7 @@ password/session implementation; another host can supply an external identity
 adapter. This is a locally verified operational slice of M3. Public deployment,
 TLS/proxy configuration, MFA/SSO, automatic recovery, provider integrations and
 general AI writes have separate release gates. The supported local release now
-includes one owner-approved native follow-up action; see
+includes separately reviewed native follow-up creation and completion; see
 [local pilot operation and acceptance](LOCAL_OWNER_PILOT.md).
 
 The [0.5.0 follow-up worklist](CRM_WORKLIST.md) adds a shared read-only task list
@@ -15,6 +15,9 @@ and local Archava queries across permitted contacts, without a schema/grant chan
 
 The [0.6.0 completion flow](CRM_COMPLETION.md) adds selected-task preparation and
 separate native confirmation through the same session, audit and recovery host.
+
+The supported profile and module lifecycle are documented in
+[local library handoff](LOCAL_LIBRARY_HANDOFF.md).
 
 ## Start
 

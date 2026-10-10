@@ -7,7 +7,9 @@ against the policy that produced it.
 The product requirement is [PRD v2.1](PRD.md). The operational contract is `agent.md`.
 PRD §50 defines the active finite local release: supported versions, safe module
 composition, shared presence contracts, scoped security, measured capacity and
-upgrade/recovery acceptance. These are next requirements, not delivered features.
+upgrade/recovery acceptance. Profile `1.3.0` implements the bounded local scope;
+see [release acceptance](docs/LOCAL_LIBRARY_RELEASE.md) and the
+[cold-install/handoff guide](docs/LOCAL_LIBRARY_HANDOFF.md).
 ARCHZXY is the company; Archava is its flagship product. The target internal module
 library includes reusable assistant/presence contracts and deterministic CRM/ERP
 business modules, composed across business models. The ARCHZXY company website is

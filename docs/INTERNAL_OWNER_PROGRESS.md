@@ -4,8 +4,9 @@
 the delivered local owner scope and refreshes the separate verification evidence.
 The 50% baseline and broader 60% planning estimate below retain their declared
 denominator; this audit does not recalculate them as whole-product progress.
-Current next work is a supported local release profile and a shared presence
-boundary, with production/general AI and new business modules scoped separately.
+Supported profile `1.3.0` and the offline shared presence boundary now have
+[local release evidence](LOCAL_LIBRARY_RELEASE.md). Production/general AI and new
+business modules remain separate; the historical estimates below are unchanged.
 
 Baseline: 9 October 2026, source `83b65a8`. Estimated delivery coverage for the
 bounded internal owner pilot is **50%**. This is a planning estimate, not measured

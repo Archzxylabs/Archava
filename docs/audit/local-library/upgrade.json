@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0.0",
+  "priorCommit": "f5cb768",
+  "fromProfile": "1.0.0",
+  "toProfile": "1.3.0",
+  "node": "v22.22.3",
+  "checks": [
+    "previous supported 1.0.0 installation creates real data, grants, immutable audit and manual/native UUID receipts in an isolated PostgreSQL cluster",
+    "new supported profile upgrades the prior installation without changing records, memberships, audit, command UUIDs or authoritative receipts",
+    "fresh restore preserves upgraded data/grants/audit/receipts while invalidating identity and holding provider/native execution with a fresh approval epoch",
+    "explicit identity recovery and native resume recover the original UUID read-only; old-epoch/consumed consent cannot execute again"
+  ],
+  "providerCalls": 0,
+  "fixture": "isolated synthetic PostgreSQL; previous compiled installation or cold locked git archive",
+  "retainedSnapshotSha256": "b585c1f6ecce48e09d12eca6d5e553ae54137b536b3a9ed3263818d3249c0c7d",
+  "binaryRollbackIsSchemaRollback": false
+}

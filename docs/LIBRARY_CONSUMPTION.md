@@ -1,5 +1,10 @@
 # Internal library consumption — M1/M2 and local host
 
+Current supported profile `1.3.0`, deterministic assembly and lifecycle operation:
+[local library handoff](LOCAL_LIBRARY_HANDOFF.md). Earlier dated milestones below
+remain historical; shared offline presence and exact profile checks are now
+covered by [release acceptance](LOCAL_LIBRARY_RELEASE.md).
+
 ARCHZXY owns the internal library; Archava is the flagship product. The company
 website remains an independent future consumer. This milestone distributes
 artifacts internally without publishing a live service or public package.

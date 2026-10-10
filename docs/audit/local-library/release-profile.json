@@ -1,0 +1,480 @@
+{
+  "catalog": {
+    "schemaVersion": "1.0.0",
+    "id": "archava-local-library",
+    "version": "1.3.0",
+    "host": {
+      "name": "@archava/crm-host",
+      "version": "0.6.0"
+    },
+    "contracts": {
+      "clientConfig": "1.0.0",
+      "deploymentPlan": "2.0.0",
+      "hostSettings": 1,
+      "assembly": "1.0.0",
+      "presence": "1.0.0"
+    },
+    "packages": [
+      {
+        "name": "@archava/crm-act",
+        "version": "0.2.0",
+        "migrations": [
+          {
+            "file": "001_native_confirmations.sql",
+            "checksum": "591a2fb0e8c62e13fd01c375e155a66ea70b1fa62049ddb23d4adf1300b8ebb3"
+          }
+        ]
+      },
+      {
+        "name": "@archava/crm",
+        "version": "0.7.0",
+        "migrations": []
+      },
+      {
+        "name": "@archava/crm-pg",
+        "version": "0.7.0",
+        "migrations": [
+          {
+            "file": "001_crm_contacts.sql",
+            "checksum": "400869cc13e7f5ffa4c4aa25993555b88a59f464a1ba5087694fbf6618fe22d9"
+          },
+          {
+            "file": "002_sales_pipeline.sql",
+            "checksum": "e3e62bbd1e1b7a7efa7a89b52daa368e88d5219cf151a88d570d1148878099b4"
+          },
+          {
+            "file": "003_native_approval.sql",
+            "checksum": "361f807212921599ca2a546a19bf14007824105f3c5e54dc82b218eace179281"
+          }
+        ]
+      },
+      {
+        "name": "@archava/act-host",
+        "version": "0.3.0",
+        "migrations": []
+      },
+      {
+        "name": "@archava/acl",
+        "version": "0.3.0",
+        "migrations": []
+      },
+      {
+        "name": "@archava/config",
+        "version": "0.5.0",
+        "migrations": []
+      },
+      {
+        "name": "@archava/core",
+        "version": "0.1.0",
+        "migrations": []
+      },
+      {
+        "name": "@archava/act-confirmation",
+        "version": "0.3.0",
+        "migrations": []
+      },
+      {
+        "name": "@archava/adapters",
+        "version": "0.1.0",
+        "migrations": []
+      },
+      {
+        "name": "@archava/assistant",
+        "version": "0.5.0",
+        "migrations": []
+      },
+      {
+        "name": "@archava/decision",
+        "version": "0.1.0",
+        "migrations": []
+      },
+      {
+        "name": "@archava/knowledge",
+        "version": "0.1.0",
+        "migrations": []
+      },
+      {
+        "name": "@archava/act-host-pg",
+        "version": "0.2.0",
+        "migrations": [
+          {
+            "file": "001_host_intents.sql",
+            "checksum": "349fbb17938e5426d9c911911a262216d139a33f20ba5fe9154aef238baae894"
+          }
+        ]
+      },
+      {
+        "name": "@archava/act-storage",
+        "version": "0.2.0",
+        "migrations": [
+          {
+            "file": "001_act_attempts.sql",
+            "checksum": "2810236f26d029cce734fbacc726a179abc629ee90b1caaa73634a581c780934"
+          }
+        ]
+      },
+      {
+        "name": "@archava/act-booking",
+        "version": "0.2.0",
+        "migrations": []
+      },
+      {
+        "name": "@archava/act-email",
+        "version": "0.2.0",
+        "migrations": []
+      },
+      {
+        "name": "@archava/act-confirmation-pg",
+        "version": "0.1.0",
+        "migrations": [
+          {
+            "file": "001_confirmation_challenges.sql",
+            "checksum": "e08b510c105f36339e549ff08c0210d132c66c74057209f7fadeacc5df9cda3c"
+          }
+        ]
+      },
+      {
+        "name": "@archava/sdk",
+        "version": "0.1.0",
+        "migrations": []
+      },
+      {
+        "name": "@archava/chat",
+        "version": "0.1.0",
+        "migrations": []
+      },
+      {
+        "name": "@archava/identity-pg",
+        "version": "0.1.0",
+        "migrations": [
+          {
+            "file": "001_identity.sql",
+            "checksum": "6071a4d73cf915557c2c7058550c35e40819be77e1792eb9907179ff8639022b"
+          }
+        ]
+      },
+      {
+        "name": "@archava/crm-assistant",
+        "version": "0.7.0",
+        "migrations": []
+      },
+      {
+        "name": "@archava/provider-runtime",
+        "version": "0.1.0",
+        "migrations": [
+          {
+            "file": "001_provider_attempts.sql",
+            "checksum": "dd2698e6c090167f154a1c8a0cecc784388a3cadb5f7db312b311dbf3851c61f"
+          }
+        ]
+      },
+      {
+        "name": "@archava/act",
+        "version": "0.2.0",
+        "migrations": []
+      },
+      {
+        "name": "@archava/act-postmark",
+        "version": "0.2.0",
+        "migrations": []
+      },
+      {
+        "name": "@archava/presence",
+        "version": "0.1.0",
+        "migrations": []
+      }
+    ],
+    "externals": [
+      {
+        "name": "@types/node",
+        "version": "24.9.1"
+      },
+      {
+        "name": "@types/pg",
+        "version": "8.23.1"
+      },
+      {
+        "name": "pg",
+        "version": "8.23.1"
+      },
+      {
+        "name": "pg-cloudflare",
+        "version": "1.4.1"
+      },
+      {
+        "name": "pg-connection-string",
+        "version": "2.14.1"
+      },
+      {
+        "name": "pg-int8",
+        "version": "1.0.1"
+      },
+      {
+        "name": "pg-pool",
+        "version": "3.14.0"
+      },
+      {
+        "name": "pg-protocol",
+        "version": "1.16.1"
+      },
+      {
+        "name": "pg-types",
+        "version": "2.2.0"
+      },
+      {
+        "name": "pgpass",
+        "version": "1.0.5"
+      },
+      {
+        "name": "postgres-array",
+        "version": "2.0.0"
+      },
+      {
+        "name": "postgres-bytea",
+        "version": "1.0.1"
+      },
+      {
+        "name": "postgres-date",
+        "version": "1.0.7"
+      },
+      {
+        "name": "postgres-interval",
+        "version": "1.2.0"
+      },
+      {
+        "name": "split2",
+        "version": "4.2.0"
+      },
+      {
+        "name": "undici-types",
+        "version": "7.16.0"
+      },
+      {
+        "name": "xtend",
+        "version": "4.0.2"
+      },
+      {
+        "name": "zod",
+        "version": "4.1.12"
+      }
+    ],
+    "databaseLedgers": [
+      {
+        "schema": "archava_crm",
+        "package": "@archava/crm-pg",
+        "migrations": ["001_crm_contacts", "002_sales_pipeline", "003_native_approval"]
+      },
+      {
+        "schema": "archava_identity",
+        "package": "@archava/identity-pg",
+        "migrations": ["001_identity"]
+      },
+      {
+        "schema": "archava_provider",
+        "package": "@archava/provider-runtime",
+        "migrations": ["001_provider_attempts"]
+      },
+      {
+        "schema": "archava_act_host",
+        "package": "@archava/act-host-pg",
+        "migrations": ["001_host_intents"]
+      },
+      {
+        "schema": "archava_crm_act",
+        "package": "@archava/crm-act",
+        "migrations": ["001_native_confirmations"]
+      }
+    ],
+    "requiredAdapters": [
+      "@archava/crm-pg",
+      "@archava/identity-pg",
+      "@archava/provider-runtime",
+      "@archava/act-host-pg",
+      "@archava/crm-act"
+    ],
+    "operatorChecks": [
+      "non-owner runtime database role",
+      "checksummed owned database schemas",
+      "current tenant and resource permissions",
+      "private identity/native/provider state",
+      "backup restoration and execution holds"
+    ]
+  },
+  "artifacts": [
+    {
+      "name": "@archava/crm-act",
+      "version": "0.2.0",
+      "tarball": "tarballs/archava-crm-act-0.2.0.tgz",
+      "sha256": "924a59aabbc86cbdc6a77093b79b0aaa9269ebf8cf512ae772be17695adf081a",
+      "implementationSha256": "87b74af3ff089f9ac70206b9c9246e52cae985bfcfec5b36e9d45b6f957ae683"
+    },
+    {
+      "name": "@archava/crm",
+      "version": "0.7.0",
+      "tarball": "tarballs/archava-crm-0.7.0.tgz",
+      "sha256": "a6da387030bd012dee0eee276f332cff293239d6ace8860dd94bd6c92307683d",
+      "implementationSha256": "264e3962831c275f281862bcbc3ce3c9637168d8c4d51b2976084e3f9107a6f4"
+    },
+    {
+      "name": "@archava/crm-pg",
+      "version": "0.7.0",
+      "tarball": "tarballs/archava-crm-pg-0.7.0.tgz",
+      "sha256": "2e4e9134692bf518490888b7b98c17a942d932a611d27546c47a9f739151a91f",
+      "implementationSha256": "4d1078b2907ce586f11387e9497f4f1ef08767c56d3fe7cd29b8a0ef0e2dff73"
+    },
+    {
+      "name": "@archava/act-host",
+      "version": "0.3.0",
+      "tarball": "tarballs/archava-act-host-0.3.0.tgz",
+      "sha256": "3a1a29650c33abf5130ccc910a191a7668f60fff334c56fab264e7d826658fc2",
+      "implementationSha256": "c5e667dccd10de0f78f262b749502c7d42cc24887cee939013bde7309d5cf24d"
+    },
+    {
+      "name": "@archava/acl",
+      "version": "0.3.0",
+      "tarball": "tarballs/archava-acl-0.3.0.tgz",
+      "sha256": "28c4a5e93795b9f145580ed26fbf3e88b33c7dc37b5b7f74998ea946467261ed",
+      "implementationSha256": "bbb19edf7f6896647b98e6ef754c576adf98b0fba80ea24db5c1d9825ab31f1f"
+    },
+    {
+      "name": "@archava/config",
+      "version": "0.5.0",
+      "tarball": "tarballs/archava-config-0.5.0.tgz",
+      "sha256": "89125fdc22dc04b709385f4dfef15977ff3106a83301c8f1ad08e473055bf3f8",
+      "implementationSha256": "35c8d24136221bc43263cc4bf16d3a9310b842c295c57486221afae5f8fb04f0"
+    },
+    {
+      "name": "@archava/core",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-core-0.1.0.tgz",
+      "sha256": "5a0108ccbe2e6919033219a5f9cb4de899d32f9cd07daa058542d865ff157f76",
+      "implementationSha256": "ca208a56494c78ca09acda94fdf61cd23e49b25c38cc9ef58a6569bbf2ca5102"
+    },
+    {
+      "name": "@archava/act-confirmation",
+      "version": "0.3.0",
+      "tarball": "tarballs/archava-act-confirmation-0.3.0.tgz",
+      "sha256": "160ad9d90b835f91349557ad15987efe9481383edd354b7cf09b65007747c43b",
+      "implementationSha256": "37dbe66d6d5094104fc968ed7813aee29591a7132298a25040defa406640dcb4"
+    },
+    {
+      "name": "@archava/adapters",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-adapters-0.1.0.tgz",
+      "sha256": "0d67efbc28e36784109e340180716979cb59896cad47657942f4c8508935ed50",
+      "implementationSha256": "938b9ce11831646f7b0cc9af0003f92076a0a57a9474b35dfca30364e5d95212"
+    },
+    {
+      "name": "@archava/assistant",
+      "version": "0.5.0",
+      "tarball": "tarballs/archava-assistant-0.5.0.tgz",
+      "sha256": "63e8b3f197b3261a164757f1fccaba5ac8735cd4fd984ab0e789589afb21ed73",
+      "implementationSha256": "a521fa7ab9af886c65ed97e780aebf95153dbef20f0ec21985f8b18781a36b54"
+    },
+    {
+      "name": "@archava/decision",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-decision-0.1.0.tgz",
+      "sha256": "411f7507335051e5b2c1a661821d4d0c69d2ffc7d1987136250ddedd12c9f693",
+      "implementationSha256": "b5648818caa633cf4919a6a3096de753534ecf56f5f1a9bf7a8687b4989aa217"
+    },
+    {
+      "name": "@archava/knowledge",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-knowledge-0.1.0.tgz",
+      "sha256": "8aa3b7c1907cfd072b698ff6740d2d0b72f41f369cb6774b01fe8f0db195c54c",
+      "implementationSha256": "aac26fbbc7c34adef1fadd3a9b3d7fa82269605880467d112050021dcfa3994d"
+    },
+    {
+      "name": "@archava/act-host-pg",
+      "version": "0.2.0",
+      "tarball": "tarballs/archava-act-host-pg-0.2.0.tgz",
+      "sha256": "965bc8b97210751b5e27b8f80c087725449dc92ecbdc413a8d78cb288959d6a0",
+      "implementationSha256": "5e9769f112258240d53a78c4ff1c087360621e33ed93dc9f5cc55d63fc9a6e44"
+    },
+    {
+      "name": "@archava/act-storage",
+      "version": "0.2.0",
+      "tarball": "tarballs/archava-act-storage-0.2.0.tgz",
+      "sha256": "af011132600505d918bc303fe4b7055ab4cc2dc8fe27670d3ad4349534e233c4",
+      "implementationSha256": "aefbb56d97e6bc7bcb470246acab234b135b5e397659ac38d14ea4f4dbca6276"
+    },
+    {
+      "name": "@archava/act-booking",
+      "version": "0.2.0",
+      "tarball": "tarballs/archava-act-booking-0.2.0.tgz",
+      "sha256": "39ac16186a72e11220c929cd13190bbfca41d2eec2bf5b4787093ed31bcd9bce",
+      "implementationSha256": "6fc4bfd8dcdcee1b9208730b5a91730d58850ed3f2c5f3945945b9114d94201b"
+    },
+    {
+      "name": "@archava/act-email",
+      "version": "0.2.0",
+      "tarball": "tarballs/archava-act-email-0.2.0.tgz",
+      "sha256": "d812b494935d37e21be380c2156ce6940a32d0e5e177af0cccb6c773f490a9f8",
+      "implementationSha256": "b9969471b7a2fb8b7792ce1b6a220570ee6bf4f24fd3423ca550fcf54223565f"
+    },
+    {
+      "name": "@archava/act-confirmation-pg",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-act-confirmation-pg-0.1.0.tgz",
+      "sha256": "21e811ecc4ec811be978a2ee082338f29e8f820b3e555ab2bd737152c507e240",
+      "implementationSha256": "4493325f2c3e25b32fb6f78701bbaf7cb42b7773659fb0e238961f2c10dfc6d9"
+    },
+    {
+      "name": "@archava/presence",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-presence-0.1.0.tgz",
+      "sha256": "6a7e250f35af08c3c5b718d883491e7a7ce30a115d6962db3c461aceb3cb3285",
+      "implementationSha256": "93723c505959155689ff1932a73a37a7fae5737e9994d8d3809a333235a7b520"
+    },
+    {
+      "name": "@archava/sdk",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-sdk-0.1.0.tgz",
+      "sha256": "66aa47162d38e0a78236f6f374679d61853fc816f045517bf2b46946a9817853",
+      "implementationSha256": "0c84af69cb79f0f4c840005cda6ead5b6f1b31dd6dd6c47803c7f77be1ac263a"
+    },
+    {
+      "name": "@archava/chat",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-chat-0.1.0.tgz",
+      "sha256": "169d2fdae5afcca35ba2e2928cc50b0902577119ee4617b25b598b3de56a32c5",
+      "implementationSha256": "fcd1c0f8d8330ed88bb6a417e99767b5531bcbb39a79a793877d9b8d1623b5e7"
+    },
+    {
+      "name": "@archava/identity-pg",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-identity-pg-0.1.0.tgz",
+      "sha256": "9f105b74aaef696c29a8a4cfb543d8068503d4caaee3090f59b1a091468eb4c9",
+      "implementationSha256": "44ceef698ce0fce7116a847ada1298a789b997c5d4b2d57822c7c1f3cfc140a7"
+    },
+    {
+      "name": "@archava/crm-assistant",
+      "version": "0.7.0",
+      "tarball": "tarballs/archava-crm-assistant-0.7.0.tgz",
+      "sha256": "0f1816471abed51aa675cf31f21d7d62870596df820a11acf1b36b440216eef4",
+      "implementationSha256": "add4627f5e2c541baa4ff2736c42f84e11215cadef1f396b9751d96ee28813ac"
+    },
+    {
+      "name": "@archava/provider-runtime",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-provider-runtime-0.1.0.tgz",
+      "sha256": "21c86657bc4ede6b10ddd0bb13a1462a4df505ea4b82b7ba81b123cd5aa3bf7e",
+      "implementationSha256": "8616bcb4eb0d0a98b6d61395c2d9114655ae61d903ddf991884770e9a4755223"
+    },
+    {
+      "name": "@archava/act",
+      "version": "0.2.0",
+      "tarball": "tarballs/archava-act-0.2.0.tgz",
+      "sha256": "60f8318e8b28cf8ed685cedda9e6bea5d8a8ea00ba9fa60bd246819ddc7bedb7",
+      "implementationSha256": "0c2e059acf72d0287afe8e58854b1174e71c6fccad69a5c6808d8bc53e670063"
+    },
+    {
+      "name": "@archava/act-postmark",
+      "version": "0.2.0",
+      "tarball": "tarballs/archava-act-postmark-0.2.0.tgz",
+      "sha256": "c8480afd2e9bd6f5eedb8cfd5847bae76703747bf8e01d0337641f4d269fef51",
+      "implementationSha256": "59d6cbe65eea6a338f3e787c654d59009b076ae2f8f81b52fb7bb294199d7a0d"
+    }
+  ]
+}
