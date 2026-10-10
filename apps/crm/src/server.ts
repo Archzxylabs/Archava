@@ -14,6 +14,7 @@ import { startCrmHost } from './host.js'
 import { loadCrmPlanner } from './planner.js'
 import { PostgresProviderAttemptStore } from '@archava/provider-runtime/postgres'
 import { startLocalBackups } from './backups.js'
+import { verifyRuntimeRelease, verifyReleaseDatabase, ReleaseProfileError } from './release.js'
 
 // This local host also runs on desktops without reliable IPv6 routing.
 setDefaultResultOrder('ipv4first')
@@ -31,6 +32,7 @@ let ownsDatabase = false
 let ownsLock = false
 const lock = join(home, 'runtime.lock')
 try {
+  const releaseProfile = await verifyRuntimeRelease()
   const settings = await loadSettings()
   try {
     const previous = Number(await readFile(lock, 'utf8'))
@@ -53,6 +55,7 @@ try {
   ownsDatabase = await startLocalDatabase(settings)
   pool = new Pool(connection(settings))
   pool.on('error', () => process.stderr.write('CRM database connection unavailable.\n'))
+  await verifyReleaseDatabase(releaseProfile, pool)
   const nativeOptions = {
     serviceId: NATIVE_SERVICE_ID,
     confirmationKey: nativeConfirmationKey(settings),
@@ -88,7 +91,8 @@ try {
   process.stdout.write(`CRM ready: ${host.origin}\n`)
   backups = startLocalBackups(settings)
   await stopped
-} catch {
+} catch (error) {
+  if (error instanceof ReleaseProfileError) process.stderr.write(error.message + '\n')
   process.stderr.write(
     'CRM startup failed. Check setup, private settings, port and runtime lock.\n',
   )

@@ -9,9 +9,9 @@
     "verify": "node verify.mjs"
   },
   "dependencies": {
-    "@archava/crm": "0.2.0",
-    "@archava/crm-assistant": "0.2.0",
-    "@archava/crm-pg": "0.2.0"
+    "@archava/crm": "0.7.0",
+    "@archava/crm-assistant": "0.7.0",
+    "@archava/crm-pg": "0.7.0"
   },
   "devDependencies": {
     "esbuild": "0.25.12",

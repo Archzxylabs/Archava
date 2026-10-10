@@ -2,13 +2,14 @@
 import { mkdtemp, cp, readFile, writeFile, rm, mkdir, readdir } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve, dirname } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
+import { createRequire } from 'node:module'
 import { createHash } from 'node:crypto'
 import { spawnSync } from 'node:child_process'
 import { packLibrary } from './pack.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
-const { output, artifacts } = await packLibrary()
+const { output, artifacts, profile } = await packLibrary()
 const scratch = await mkdtemp(join(tmpdir(), 'archava-consumers-'))
 const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm'
 const results = []
@@ -54,6 +55,10 @@ try {
     )
     await writeFile(join(consumer, 'package.json'), JSON.stringify(manifest, null, 2))
     run(['install', '--ignore-scripts', '--no-audit', '--no-fund'], consumer)
+    await cp(join(output, 'release-profile.json'), join(consumer, 'release-profile.json'))
+    const require = createRequire(join(consumer, 'package.json'))
+    const release = await import(pathToFileURL(require.resolve('@archava/config/release')).href)
+    await release.verifyInstalledRelease(profile, profile.catalog, join(consumer, 'node_modules'))
     run(['run', 'typecheck'], consumer)
     run(['run', 'build'], consumer)
     const verified = run(['run', 'verify'], consumer).trim().split('\n').at(-1)
@@ -70,7 +75,12 @@ try {
         tarballSha256: artifact.sha256,
       })
     }
-    results.push({ consumer: name, checks: JSON.parse(verified), installed })
+    results.push({
+      consumer: name,
+      checks: JSON.parse(verified),
+      installed,
+      releaseProfile: profile.catalog.version,
+    })
     const demo = join(root, 'dist/reuse-demo', name)
     await mkdir(demo, { recursive: true })
     await cp(join(consumer, 'dist'), join(demo, 'dist'), { recursive: true })

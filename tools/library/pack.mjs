@@ -2,7 +2,7 @@
 /** Internal compiled artifacts; no publication and no source-workspace imports. */
 import { readdir, readFile, mkdir, rm, cp, writeFile } from 'node:fs/promises'
 import { resolve, dirname, relative, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { createHash } from 'node:crypto'
 import { spawnSync } from 'node:child_process'
 import ts from 'typescript'
@@ -31,6 +31,7 @@ async function sourceFiles(directory) {
 }
 
 export async function packLibrary() {
+  const catalog = JSON.parse(await readFile(join(root, 'config/library-release.v1.json'), 'utf8'))
   const manifests = new Map()
   async function include(name) {
     if (manifests.has(name)) return
@@ -58,6 +59,16 @@ export async function packLibrary() {
     '@archava/act-postmark',
   ])
     await include(name)
+  if (
+    catalog.packages.length !== manifests.size ||
+    catalog.packages.some((pkg) => manifests.get(pkg.name)?.manifest.version !== pkg.version)
+  )
+    throw new Error(
+      'Unsupported release package/version set; update the trusted local profile explicitly',
+    )
+  const host = JSON.parse(await readFile(join(root, 'apps/crm/package.json'), 'utf8'))
+  if (host.name !== catalog.host.name || host.version !== catalog.host.version)
+    throw new Error('Unsupported release host version')
   await rm(output, { recursive: true, force: true })
   await mkdir(join(output, 'tarballs'), { recursive: true })
 
@@ -93,6 +104,8 @@ export async function packLibrary() {
   if (program.emit().emitSkipped) throw new Error('Declaration build skipped')
 
   const artifacts = []
+  // Compile the shared validator before importing it; never require a TS loader in consumers.
+  let releaseValidator
   for (const [name, { manifest, directory }] of manifests) {
     const shortName = name.slice('@archava/'.length)
     const stage = join(output, 'packages', shortName)
@@ -144,6 +157,10 @@ export async function packLibrary() {
         2,
       ) + '\n',
     )
+    if (shortName === 'config')
+      releaseValidator = await import(
+        pathToFileURL(join(stage, 'dist/release.js')).href + '?build=' + Date.now()
+      )
     const packed = spawnSync(
       process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm',
       ['pack', '--pack-destination', join(output, 'tarballs')],
@@ -156,6 +173,20 @@ export async function packLibrary() {
       .digest('hex')
     artifacts.push({ name, version: manifest.version, tarball: relative(output, tarball), sha256 })
   }
+  if (!releaseValidator) throw new Error('Missing release validator')
+  const trusted = releaseValidator.releaseCatalogSchema.parse(catalog)
+  const resolved = { catalog: trusted, artifacts: [] }
+  for (const artifact of artifacts) {
+    const pkg = trusted.packages.find((item) => item.name === artifact.name)
+    const directory = join(output, 'packages', artifact.name.slice('@archava/'.length))
+    await releaseValidator.verifyReleasePackage(directory, pkg)
+    resolved.artifacts.push({
+      ...artifact,
+      implementationSha256: await releaseValidator.releaseImplementationHash(directory),
+    })
+  }
+  releaseValidator.validateResolvedRelease(resolved, trusted)
+  await writeFile(join(output, 'release-profile.json'), JSON.stringify(resolved, null, 2) + '\n')
   await writeFile(
     join(output, 'artifacts.json'),
     JSON.stringify({ schema_version: '1.0.0', artifacts }, null, 2) + '\n',
@@ -163,7 +194,7 @@ export async function packLibrary() {
   process.stdout.write(
     `Packed ${artifacts.length} compiled internal packages in dist/library/tarballs.\n`,
   )
-  return { output, artifacts }
+  return { output, artifacts, profile: resolved }
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

@@ -177,6 +177,30 @@ const poolFor = (settings, user = 'archava_operator') =>
   })
 const bin = execFileSync('pg_config', ['--bindir'], { encoding: 'utf8' }).trim()
 try {
+  const implementation = require.resolve('@archava/crm')
+  const originalImplementation = await readFile(implementation)
+  try {
+    await appendFile(implementation, '\n// incompatible local installation\n')
+    assert.throws(
+      () =>
+        execFileSync(process.execPath, [join(runtime, 'server.mjs')], {
+          cwd: root,
+          env,
+          stdio: 'pipe',
+        }),
+      (error) => error.status === 1 && error.stderr.toString().includes('installed_hash_mismatch'),
+    )
+    assert.equal(
+      (await readdir(home)).length,
+      1,
+      'startup touched private state before profile validation',
+    )
+  } finally {
+    await writeFile(implementation, originalImplementation)
+  }
+  check(
+    'host startup refuses changed installed implementation before accessing private state or database',
+  )
   operator(['setup'])
   const configPath = join(home, 'runtime.json')
   let settings = JSON.parse(await readFile(configPath, 'utf8'))

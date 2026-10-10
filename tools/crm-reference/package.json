@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "@archava/config": "workspace:*",
     "@archava/crm": "workspace:*",
     "@archava/crm-assistant": "workspace:*",
     "@archava/crm-pg": "workspace:*",

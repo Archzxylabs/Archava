@@ -9,12 +9,12 @@
     "verify": "node verify.mjs"
   },
   "dependencies": {
-    "@archava/config": "0.1.0",
+    "@archava/config": "0.2.0",
     "@archava/core": "0.1.0",
     "@archava/sdk": "0.1.0",
-    "@archava/assistant": "0.1.0",
+    "@archava/assistant": "0.5.0",
     "@archava/chat": "0.1.0",
-    "@archava/acl": "0.1.0",
+    "@archava/acl": "0.3.0",
     "@archava/knowledge": "0.1.0",
     "@archava/adapters": "0.1.0",
     "@archava/decision": "0.1.0"

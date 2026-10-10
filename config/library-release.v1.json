@@ -1,0 +1,220 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "archava-local-library",
+  "version": "1.0.0",
+  "host": {
+    "name": "@archava/crm-host",
+    "version": "0.3.0"
+  },
+  "contracts": {
+    "clientConfig": "1.0.0",
+    "deploymentPlan": "2.0.0",
+    "hostSettings": 1
+  },
+  "packages": [
+    {
+      "name": "@archava/crm-act",
+      "version": "0.2.0",
+      "migrations": [
+        {
+          "file": "001_native_confirmations.sql",
+          "checksum": "591a2fb0e8c62e13fd01c375e155a66ea70b1fa62049ddb23d4adf1300b8ebb3"
+        }
+      ]
+    },
+    {
+      "name": "@archava/crm",
+      "version": "0.7.0",
+      "migrations": []
+    },
+    {
+      "name": "@archava/crm-pg",
+      "version": "0.7.0",
+      "migrations": [
+        {
+          "file": "001_crm_contacts.sql",
+          "checksum": "400869cc13e7f5ffa4c4aa25993555b88a59f464a1ba5087694fbf6618fe22d9"
+        },
+        {
+          "file": "002_sales_pipeline.sql",
+          "checksum": "e3e62bbd1e1b7a7efa7a89b52daa368e88d5219cf151a88d570d1148878099b4"
+        },
+        {
+          "file": "003_native_approval.sql",
+          "checksum": "361f807212921599ca2a546a19bf14007824105f3c5e54dc82b218eace179281"
+        }
+      ]
+    },
+    {
+      "name": "@archava/act-host",
+      "version": "0.3.0",
+      "migrations": []
+    },
+    {
+      "name": "@archava/acl",
+      "version": "0.3.0",
+      "migrations": []
+    },
+    {
+      "name": "@archava/config",
+      "version": "0.2.0",
+      "migrations": []
+    },
+    {
+      "name": "@archava/core",
+      "version": "0.1.0",
+      "migrations": []
+    },
+    {
+      "name": "@archava/act-confirmation",
+      "version": "0.3.0",
+      "migrations": []
+    },
+    {
+      "name": "@archava/adapters",
+      "version": "0.1.0",
+      "migrations": []
+    },
+    {
+      "name": "@archava/assistant",
+      "version": "0.5.0",
+      "migrations": []
+    },
+    {
+      "name": "@archava/decision",
+      "version": "0.1.0",
+      "migrations": []
+    },
+    {
+      "name": "@archava/knowledge",
+      "version": "0.1.0",
+      "migrations": []
+    },
+    {
+      "name": "@archava/act-host-pg",
+      "version": "0.2.0",
+      "migrations": [
+        {
+          "file": "001_host_intents.sql",
+          "checksum": "349fbb17938e5426d9c911911a262216d139a33f20ba5fe9154aef238baae894"
+        }
+      ]
+    },
+    {
+      "name": "@archava/act-storage",
+      "version": "0.2.0",
+      "migrations": [
+        {
+          "file": "001_act_attempts.sql",
+          "checksum": "2810236f26d029cce734fbacc726a179abc629ee90b1caaa73634a581c780934"
+        }
+      ]
+    },
+    {
+      "name": "@archava/act-booking",
+      "version": "0.2.0",
+      "migrations": []
+    },
+    {
+      "name": "@archava/act-email",
+      "version": "0.2.0",
+      "migrations": []
+    },
+    {
+      "name": "@archava/act-confirmation-pg",
+      "version": "0.1.0",
+      "migrations": [
+        {
+          "file": "001_confirmation_challenges.sql",
+          "checksum": "e08b510c105f36339e549ff08c0210d132c66c74057209f7fadeacc5df9cda3c"
+        }
+      ]
+    },
+    {
+      "name": "@archava/sdk",
+      "version": "0.1.0",
+      "migrations": []
+    },
+    {
+      "name": "@archava/chat",
+      "version": "0.1.0",
+      "migrations": []
+    },
+    {
+      "name": "@archava/identity-pg",
+      "version": "0.1.0",
+      "migrations": [
+        {
+          "file": "001_identity.sql",
+          "checksum": "6071a4d73cf915557c2c7058550c35e40819be77e1792eb9907179ff8639022b"
+        }
+      ]
+    },
+    {
+      "name": "@archava/crm-assistant",
+      "version": "0.7.0",
+      "migrations": []
+    },
+    {
+      "name": "@archava/provider-runtime",
+      "version": "0.1.0",
+      "migrations": [
+        {
+          "file": "001_provider_attempts.sql",
+          "checksum": "dd2698e6c090167f154a1c8a0cecc784388a3cadb5f7db312b311dbf3851c61f"
+        }
+      ]
+    },
+    {
+      "name": "@archava/act",
+      "version": "0.2.0",
+      "migrations": []
+    },
+    {
+      "name": "@archava/act-postmark",
+      "version": "0.2.0",
+      "migrations": []
+    }
+  ],
+  "databaseLedgers": [
+    {
+      "schema": "archava_crm",
+      "package": "@archava/crm-pg",
+      "migrations": ["001_crm_contacts", "002_sales_pipeline", "003_native_approval"]
+    },
+    {
+      "schema": "archava_identity",
+      "package": "@archava/identity-pg",
+      "migrations": ["001_identity"]
+    },
+    {
+      "schema": "archava_provider",
+      "package": "@archava/provider-runtime",
+      "migrations": ["001_provider_attempts"]
+    },
+    {
+      "schema": "archava_act_host",
+      "package": "@archava/act-host-pg",
+      "migrations": ["001_host_intents"]
+    },
+    {
+      "schema": "archava_crm_act",
+      "package": "@archava/crm-act",
+      "migrations": ["001_native_confirmations"]
+    }
+  ],
+  "requiredAdapters": [
+    "@archava/crm-pg",
+    "@archava/identity-pg",
+    "@archava/provider-runtime",
+    "@archava/act-host-pg",
+    "@archava/crm-act"
+  ],
+  "operatorChecks": [
+    "non-owner runtime database role",
+    "checksummed owned database schemas",
+    "current tenant and resource permissions",
+    "private identity/native/provider state",
+    "backup restoration and execution holds"
+  ]
+}

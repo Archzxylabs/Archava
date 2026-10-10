@@ -1,6 +1,6 @@
 {
   "name": "@archava/config",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",
@@ -8,6 +8,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./pure": "./src/pure.ts",
+    "./release": "./src/release.ts",
+    "./release-contracts": "./src/release-contracts.ts",
     "./pricing": "./src/pricing/index.ts",
     "./templates": "./src/templates/index.ts",
     "./client": "./src/client/index.ts"

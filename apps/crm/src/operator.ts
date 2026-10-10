@@ -54,6 +54,7 @@ import {
   databaseEnvironment,
 } from './local-postgres.js'
 import { runCrmBackup, readBackupStatus, setBackupPolicy } from './backups.js'
+import { verifyRuntimeRelease, verifyReleaseDatabase, ReleaseProfileError } from './release.js'
 
 const credentialsSchema = z
   .object({
@@ -412,6 +413,7 @@ async function resumeActions() {
   process.stdout.write('Native follow-up actions resumed with a fresh approval epoch.\n')
 }
 async function doctor() {
+  const releaseProfile = await verifyRuntimeRelease()
   const settings = await loadSettings()
   let backups: { status: string } = { status: 'unavailable' }
   try {
@@ -422,6 +424,7 @@ async function doctor() {
   await withLocalDatabase(settings, async () => {
     const app = new Pool(connection(settings))
     try {
+      await verifyReleaseDatabase(releaseProfile, app)
       const repository = await PostgresCrmRepository.create(app, settings.fingerprintKey)
       const control = await readNativeControl(settings)
       const tenant = settings.tenants[0]
@@ -438,6 +441,7 @@ async function doctor() {
       process.stdout.write(
         JSON.stringify({
           status: 'ready',
+          release: { id: releaseProfile.catalog.id, version: releaseProfile.catalog.version, verified: true },
           workspaces: settings.tenants.length,
           nativeActions: control.held ? 'held' : 'ready',
           externalActions: 'not configured',
@@ -451,6 +455,7 @@ async function doctor() {
   })
 }
 try {
+  await verifyRuntimeRelease()
   const [mode, ...args] = process.argv.slice(2)
   if (mode === 'setup') await setup()
   else if (mode === 'user') await user(args)
@@ -464,6 +469,7 @@ try {
   else if (mode === 'doctor') await doctor()
   else throw new Error('Unknown CRM operator command')
 } catch (error) {
+  if (error instanceof ReleaseProfileError) process.stderr.write(error.message + '\n')
   if (
     typeof error === 'object' &&
     error !== null &&

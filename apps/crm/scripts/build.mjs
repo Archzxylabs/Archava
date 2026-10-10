@@ -3,12 +3,15 @@ import { execFileSync } from 'node:child_process'
 import { readFile, writeFile, mkdir, cp, rm } from 'node:fs/promises'
 import { resolve, join } from 'node:path'
 import { build } from 'esbuild'
+import { createRequire } from 'node:module'
+import { pathToFileURL } from 'node:url'
 
 const root = resolve(import.meta.dirname, '../../..')
 const output = join(root, 'dist/crm-runtime')
 execFileSync('pnpm', ['library:pack'], { cwd: root, stdio: 'pipe' })
 await mkdir(output, { recursive: true })
 const { artifacts } = JSON.parse(await readFile(join(root, 'dist/library/artifacts.json'), 'utf8'))
+const profile = JSON.parse(await readFile(join(root, 'dist/library/release-profile.json'), 'utf8'))
 // Development artifacts can change before a release version is assigned.
 // Remove the generated install so its local-file lock cannot retain older code.
 await rm(join(output, 'node_modules'), { recursive: true, force: true })
@@ -22,7 +25,7 @@ await writeFile(
   JSON.stringify(
     {
       name: 'archava-crm-runtime',
-      version: '0.2.0',
+      version: profile.catalog.host.version,
       private: true,
       type: 'module',
       dependencies: Object.fromEntries(
@@ -37,12 +40,17 @@ execFileSync('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund'], 
   cwd: output,
   stdio: 'pipe',
 })
+const installed = createRequire(join(output, 'package.json'))
+const release = await import(pathToFileURL(installed.resolve('@archava/config/release')).href)
+await release.verifyInstalledRelease(profile, profile.catalog, join(output, 'node_modules'))
+await writeFile(join(output, 'release-profile.json'), JSON.stringify(profile, null, 2) + '\n')
 const server = await build({
   entryPoints: [join(root, 'apps/crm/src/server.ts'), join(root, 'apps/crm/src/operator.ts')],
   outdir: output,
   outExtension: { '.js': '.mjs' },
   bundle: true,
   packages: 'external',
+  define: { ARCHAVA_RELEASE_PROFILE: JSON.stringify(profile) },
   // Workspace TypeScript paths must not replace the installed public artifacts.
   tsconfigRaw: { compilerOptions: {} },
   platform: 'node',

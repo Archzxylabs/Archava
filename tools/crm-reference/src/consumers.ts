@@ -5,6 +5,7 @@ import { resolve, join } from 'node:path'
 import { createRequire } from 'node:module'
 import { pathToFileURL } from 'node:url'
 import { createHash } from 'node:crypto'
+import type * as ReleaseModule from '@archava/config/release'
 import type * as CrmModule from '@archava/crm'
 import type * as PostgresModule from '@archava/crm-pg'
 import type * as ConversationModule from '@archava/crm-assistant'
@@ -40,6 +41,9 @@ export async function prepareConsumers() {
   const artifacts = JSON.parse(
     await readFile(join(root, 'dist/library/artifacts.json'), 'utf8'),
   ) as { artifacts: { name: string; version: string; tarball: string; sha256: string }[] }
+  const profile = JSON.parse(
+    await readFile(join(root, 'dist/library/release-profile.json'), 'utf8'),
+  ) as unknown
   const scratch = await mkdtemp(join(tmpdir(), 'archava-crm-consumers-'))
   const proofs: {
     consumer: string
@@ -72,6 +76,10 @@ export async function prepareConsumers() {
         ]),
       )
       await writeFile(join(directory, 'package.json'), JSON.stringify(manifest, null, 2))
+      await cp(
+        join(root, 'dist/library/release-profile.json'),
+        join(directory, 'release-profile.json'),
+      )
       for (const args of [
         ['install', '--ignore-scripts', '--no-audit', '--no-fund'],
         ['run', 'typecheck'],
@@ -97,6 +105,15 @@ export async function prepareConsumers() {
       }
       proofs.push({ consumer: name, modules })
       const consumerRequire = createRequire(join(directory, 'package.json'))
+      const release = (await import(
+        pathToFileURL(consumerRequire.resolve('@archava/config/release')).href
+      )) as typeof ReleaseModule
+      const resolved = release.resolvedReleaseSchema.parse(profile)
+      await release.verifyInstalledRelease(
+        profile,
+        resolved.catalog,
+        join(directory, 'node_modules'),
+      )
       const crmEntry = consumerRequire.resolve('@archava/crm')
       const pgEntry = consumerRequire.resolve('@archava/crm-pg')
       if (![crmEntry, pgEntry].every((entry) => entry.includes('/node_modules/')))

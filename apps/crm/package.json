@@ -1,6 +1,6 @@
 {
   "name": "@archava/crm-host",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -20,6 +20,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "@archava/config": "workspace:*",
     "@archava/crm": "workspace:*",
     "@archava/crm-assistant": "workspace:*",
     "@archava/crm-act": "workspace:*",
