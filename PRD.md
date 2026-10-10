@@ -2,9 +2,9 @@
 
 **Company:** ARCHZXY — AI-native Creative & Product Studio\
 **Product:** Archava\
-**Document version:** 2.0.0\
+**Document version:** 2.1.0\
 **Commercial baseline:** Pricing v1.0\
-**Effective date:** 7 October 2026 (product scope); 22 September 2026 (unchanged Pricing v1.0)\
+**Effective date:** 10 October 2026 (execution scope); 7 October 2026 (reusable product scope); 22 September 2026 (unchanged Pricing v1.0)\
 **Primary implementation workspace:** `/home/haikaru/Archverse/Lab/Archava_Platform/`\
 **Status:** Research-informed product specification and incremental roadmap. Reusable modules and production readiness require the acceptance evidence below.
 
@@ -13,6 +13,12 @@
 and [capability map](docs/BUSINESS_CAPABILITY_MATRIX.md), reviewed 8 October 2026.
 **Previous specification:** [Preserved PRD v1.0.0](docs/history/PRD.v1.0.0.md).
 **Scope of this revision:** ARCHZXY is the company; Archava is its flagship product. The internal ARCHZXY module library supports Archava and reusable CRM/ERP business capabilities. The ARCHZXY company website is a separate project. §§40–49 define the new reuse scope; existing section numbers remain stable. Document version, product/package versions and pricebook version are independent.
+
+**Execution target:** §50 defines the next bounded local reusable-library release,
+its ordered work and acceptance evidence, following the owner's local-first/free
+choice. Completing that release does not complete the full commercial §34 target
+or every future industry module. The [10 October re-audit](docs/PROJECT_REAUDIT_2026-10-10.md)
+is the implementation baseline; requirement text does not replace its evidence.
 
 ---
 
@@ -1099,6 +1105,12 @@ Archava must remain usable.
 
 The audited platform uses pnpm workspaces, TypeScript, Zod, Node HTTP hosting, esbuild, Vitest and GitHub Actions. Workspace packages expose assistant, knowledge, SDK, policy, configuration, deterministic pricing and Act contracts. PostgreSQL attempt/confirmation adapters use injected SQL clients and explicit migrations; this is not a deployed general business database.
 
+The 10 October checkpoint additionally verifies private compiled artifacts,
+independent core/CRM consumers, persistent authenticated owner hosting, two native
+approved follow-up actions and actual backup restoration. Preserve those working
+implementations. They are bounded local business capabilities, not a full ERP or
+production deployment. Current evidence is linked from build status.
+
 The portable realtime template has a separate React/Vite frontend, Node API and Python LiveKit worker. Its own provider dependencies and deploy recipes do not prove shared Chat/Voice/Human intelligence or live readiness. See [architecture](docs/ARCHITECTURE.md) and [build status](docs/BUILD_STATUS.md).
 
 ### 22.2 Proposed architecture
@@ -1392,7 +1404,11 @@ This is the minimum demo that proves Archava is not merely a talking avatar.
 
 ## 33. Build phases
 
-The immediate roadmap is the evidence-gated reusable-platform sequence in §49. Initial work is contract inventory, independently consumable artifacts and configuration/module boundaries. The next business slice is contacts + activities/follow-up in two contexts, then demand-backed CRM/ERP expansion.
+The reusable-platform milestones are defined in §49. The active implementation
+order and definition of done are the bounded local release in §50. Inventory,
+independent core consumption and the first persistent CRM slice already have
+local acceptance evidence; do not restart those completed milestones merely
+because the broader roadmap still lists their original requirements.
 
 Existing Chat/Voice/Human, Act/Transact, Studio and reference-product commitments remain broader product targets. Shared presence and live business integrations progress incrementally while preserving the current core. No mandatory stack rewrite or company-website implementation is a prerequisite to reuse.
 
@@ -1454,16 +1470,16 @@ Research does not authorize changes to quote numbers or contractual commitments.
 
 Authority is separated by subject:
 
-| Subject                                        | Authority                                                                                               |
-| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Active standard quote numbers/rules            | `config/pricing.v1.json`; research, prose or models do not alter them.                                  |
-| Legacy template defaults                       | `config/templates.v1.json`; defaults are suggestions/configuration, not readiness evidence.             |
-| Quote-selection behavior                       | `agent.md`, constrained by active pricebook and current requirements.                                   |
-| Product scope and future acceptance            | This PRD, including §§40–49. Supporting research/proposals explain decisions.                           |
-| Client contractual scope/ownership/obligations | The applicable signed agreement/change order; a later PRD/pricebook does not silently modify it.        |
-| Operational business records                   | The designated authoritative business module or external system, including verified payment outcomes.   |
-| Permissions and actions                        | Server-verified identity, module/resource authorization and deterministic action/confirmation policy.   |
-| What is implemented                            | Source, verification evidence and `docs/BUILD_STATUS.md`; requirement text is not implementation proof. |
+| Subject                                        | Authority                                                                                                                        |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Active standard quote numbers/rules            | `config/pricing.v1.json`; research, prose or models do not alter them.                                                           |
+| Legacy template defaults                       | `config/templates.v1.json`; defaults are suggestions/configuration, not readiness evidence.                                      |
+| Quote-selection behavior                       | `agent.md`, constrained by active pricebook and current requirements.                                                            |
+| Product scope and future acceptance            | This PRD, including §§40–50. Section 50 selects the current finite local scope; supporting research/proposals explain decisions. |
+| Client contractual scope/ownership/obligations | The applicable signed agreement/change order; a later PRD/pricebook does not silently modify it.                                 |
+| Operational business records                   | The designated authoritative business module or external system, including verified payment outcomes.                            |
+| Permissions and actions                        | Server-verified identity, module/resource authorization and deterministic action/confirmation policy.                            |
+| What is implemented                            | Source, verification evidence and `docs/BUILD_STATUS.md`; requirement text is not implementation proof.                          |
 
 If a requirement, pricebook, client agreement or supported configuration conflicts, stop automatic finalization and surface the conflict. Never bypass security or silently rewrite commitments to reconcile it. The v2 module registry will govern validated composition once implemented; it does not retroactively make legacy free-form toggles valid.
 
@@ -1623,7 +1639,10 @@ Illustrative future manifest, **not an existing installed module or schema**:
 
 **MOD-03:** disabling a module prevents new invocations and removes its active UI/tools from the supported projection. It must not delete business data, invalidate legal retention or abandon already-started effects without a recovery policy. Uninstall/data purge requires an explicit authorized lifecycle.
 
-**MOD-04:** additional actions use the existing closed action registry, risk classification and validated executor boundary. Manifest strings alone do not create executable tools or extend the current 24-action registry.
+**MOD-04:** additional actions use the existing versioned closed action registry,
+risk classification and validated executor boundary. Manifest strings alone do
+not create executable tools or extend that registry. Preserve the separately
+registered native follow-up creation/completion actions and their distinct consent.
 
 ---
 
@@ -1671,7 +1690,10 @@ Dedicated deployment/database may serve justified isolation requirements using t
 
 **AUTH-04:** preserve one canonical intent/attempt across retries and restarts. Distinguish a retried action from an intentionally new identical action. Atomic durable attempt identity and one-time approval consumption must be demonstrated before the corresponding real writes. Unknown results remain unknown until authoritative reconciliation or a defined operator recovery.
 
-These requirements extend the existing `ActionExecutor`, `GatedAction`, policy and host contracts incrementally; they are not claims that authenticated hosting or a durable host ledger is already implemented.
+These requirements extend the existing `ActionExecutor`, `GatedAction`, policy and
+host contracts incrementally. Local authenticated CRM hosting and durable native
+intents now have the evidence recorded in the 10 October re-audit. Those local
+implementations do not establish public identity or live external-provider readiness.
 
 ---
 
@@ -1794,13 +1816,18 @@ No broad performance or financial guarantee is inferred from desk research. Esta
 
 ### 49.1 Four priority buckets
 
+These categories describe the original reusable-platform rollout. Consult current
+evidence for already accepted work; §50 selects the remaining tasks for the next
+finite local release. One exact local profile is immediate work; broader profile
+combinations and provisioning remain later scope.
+
 | Priority                              | Deliverable                                                                                                                                                                  | Exit evidence                                                                                                                                     |
 | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **MUST BUILD NOW**                    | Existing public contract inventory, browser/server packaging, thin module registry/config readiness and independent consumption proof                                        | Same core artifact works in two consumers without source copies or workspace aliases; legacy regressions pass.                                    |
 | **MUST BUILD NOW for design**         | Shared CRM/ERP primitives, resource ownership and first contacts/activity slice contract                                                                                     | Two business scenarios with reviewable schema/API/UI/tools and config/extension boundaries.                                                       |
 | **MUST BUILD NOW before live writes** | Trusted principal/tenant hosting, atomic durable intent/attempt, confirmation/recovery and audit                                                                             | Race/restart/forged-confirmation/stale-resource/unknown-outcome cases pass before external effects.                                               |
 | **SHOULD BUILD NEXT**                 | One persistent reusable CRM slice, shared Voice/Human contracts, one authoritative adapter                                                                                   | Two business compositions use the same module; dashboard/Archava access the same authorized data; controlled live evidence for claimed providers. |
-| **BUILD LATER**                       | Demand-backed ERP capabilities, vertical kits, additional providers, supported profiles and provisioning                                                                     | Repeated requirements, operator/support capacity, migration and domain evidence.                                                                  |
+| **BUILD LATER**                       | Demand-backed ERP capabilities, vertical kits, additional providers, broader supported profile combinations and provisioning                                                 | Repeated requirements, operator/support capacity, migration and domain evidence.                                                                  |
 | **DO NOT BUILD YET**                  | Company website inside this repo; universal ERP, no-code schema/workflow platform, arbitrary plugins/version combinations, wholesale stack rewrite, microservices/Kubernetes | Revisit only for concrete requirements with evidence the simpler design cannot meet them.                                                         |
 
 ### 49.2 Milestones
@@ -1819,8 +1846,186 @@ M1–M4 do not silently waive any broader §34 gate or authorize unsupported hig
 
 ### 49.3 Work order and open decisions
 
-Start with package/API inventory and packaging before new business code. Introduce thin metadata/config contracts, then the smallest supported two-consumer proof. Complete security/persistence gates before real state changes. Build one business slice; generalize from actual repeated needs.
+The original sequence started with inventory/packaging, thin metadata, two-consumer
+proof and one persistent business slice. Those local milestones now have recorded
+acceptance. Continue from the supported-profile and composition work in §50;
+preserve their existing security/persistence proofs and generalize only from
+demonstrated requirements.
 
 Distribution registry, first production provider, backend framework/ORM and queue vendor remain implementation ADR decisions. Native module versus an existing backend must be assessed on total integration, license, migration and operation cost. Do not delay all contract work while waiting for those choices, and do not mark a planned option as supported.
 
 This PRD upgrade authorizes specification work and establishes the target. It does not implement modules, publish packages, create the company website, change pricebook numbers or certify deployment readiness.
+
+---
+
+## 50. Current execution scope and definition of done
+
+### 50.1 Finite release target
+
+Deliver one supported local reusable-library release that a developer can install
+and configure in two independent consumers without copying core/business logic.
+The shared CRM works without an LLM; supported assistant tools use the same
+authorized domain services. Include safe composition/lifecycle behavior, existing
+native approvals/recovery, a typed shared-presence contract, scoped security
+verification and a measured local capacity baseline.
+
+The owner selected local-first/free operation. Current implementation evidence is
+the 10 October audit at feature revision `80ea845`; later documentation changes
+do not change that feature baseline. Core and CRM reuse plus the agreed owner
+pilot are accepted foundations, not tasks to rebuild. New requirements below
+remain unimplemented until their specific evidence passes.
+
+This target excludes the separate ARCHZXY website, its automated sales/delivery
+workflow, arbitrary ERP industries, public production hosting, paid services,
+general private-data AI planning, actual payment/email/booking effects and live
+audio/avatar provider acceptance. The shared-presence contract is a local/offline
+integration milestone; it is not permission to advertise working realtime providers.
+
+### 50.2 Defaults for implementation
+
+| Decision                 | Current default                                                                                                               | Revisit when                                                                                            |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Architecture and folders | Preserve the current TypeScript modular monolith, Node hosts and explicit PostgreSQL adapters/migrations                      | A measured requirement demonstrates that an incremental adapter cannot meet it                          |
+| Distribution             | Private compiled ESM/declaration artifacts; begin with one exact supported release profile                                    | Routine releases across real consumers justify a private registry                                       |
+| Business scope           | Existing contacts/activity/follow-up/pipeline domain; hospitality and professional-service inquiry references                 | A concrete repeated requirement defines another module/extension and its support owner                  |
+| Configuration            | Trusted host registry, closed validated schemas, exact resolved versions and explicit readiness                               | Another supported combination requires a small compatibility extension                                  |
+| Presence integration     | Versioned server contract and synthetic transcript/session transport first; preserve template independence                    | A separately scoped live provider test has the required account, data policy and cost boundary          |
+| AI operation             | Keep local commands and the existing synthetic-only Free-project Gemini pilot; no new provider calls required by this release | Approved private-data policy or another specifically scoped provider capability exists                  |
+| Operation                | Loopback/POSIX local installation and isolated test databases                                                                 | An always-on/public deployment with hosting, identity, monitoring and recovery requirements is selected |
+
+Unknown future vendor/framework choices do not block these defaults. Do not install
+an ORM, queue, workflow engine or backend framework just to fill a roadmap cell.
+
+### 50.3 Ordered work and acceptance
+
+Implement EXEC-01 through EXEC-06 in order; retain applicable prior gates. These
+are execution requirements, not declarations of implemented functionality.
+
+**EXEC-01 — Supported release profile.** Record a versioned host-owned profile with
+exact package versions/hashes, public/config contract versions, owned migration
+versions, required adapters and operator checks. Validate it at packaging/install
+and host startup. Refuse unsupported package/config/schema combinations with
+explicit reasons. Artifact filenames, package versions and schema compatibility
+must agree. Both independently installed consumers must use the supported profile;
+their implementation hashes must match. Preserve existing browser/server separation.
+
+**EXEC-02 — Safe composition and module lifecycle.** Expose validated declared
+module selection for the supported profile and a developer-facing local assembly
+command with a dry-run plan. Initial compositions cover the existing deterministic
+CRM domain, its optional sales pipeline and optional assistant/native-action
+surface; prerequisite and availability rules remain explicit. Generate only
+configuration/entry references to shared installed implementation, not copied
+domain code. Refuse unknown modules, incompatible selections, disabled required
+dependencies and output-directory overwrite. Show unresolved legacy planning names
+rather than silently aliasing them to installed modules.
+
+Prove minimal and fuller supported compositions in independent consumers. Disabled
+features expose no new UI/tools/invocations or mutation authority. Changes apply
+through a validated build/restart; runtime hot-swapping is not required. Preserve
+stored records, audit and original receipt identities across disable/re-enable.
+Do not delete module data. Refuse a lifecycle change that would abandon unresolved
+effects unless the supported recovery policy preserves authorized reconciliation.
+Receipt recovery never becomes a new execution permission.
+
+Expose the planner/validator through a typed library/API contract that the future
+ARCHZXY website's Archava can consume. Treat model-produced selections as untrusted
+configuration requiring the same deterministic validation. A valid assembly plan
+does not grant deployment, secret access, pricing or business-action authority.
+Building that company website or autonomous deployment is outside this release.
+
+**EXEC-03 — Shared intelligence/presence boundary.** Define a versioned server
+request/result/error contract for approved context, session scope, request identity
+and bounded tool access. Bind public visitor and authenticated owner contexts
+server-side; clients cannot supply roles, grants or reusable approval authority.
+Do not let the standalone Python consumer import parent source or access owner
+database credentials. Preserve page/session revision, guest-binding and expiry
+contracts. Keep one common intelligence/policy implementation, with explicit
+public versus owner tool projections.
+
+Prove chat and a synthetic voice-transcript transport reach that common server
+implementation from independently installed consumers. Test forged identity,
+cross-tenant context, replay/expiry, malformed schema, private-tool access,
+timeouts and truthful provider-unavailable/fallback results. CRM reads/actions
+must retain their existing domain authorization and exact native consent. No live
+audio or avatar call is required to pass this offline contract milestone.
+
+**EXEC-04 — Scoped security and dependency verification.** Maintain a versioned
+control/evidence matrix for the supported local profile: credential/session/CSRF
+checks; current tenant/resource/service-human authorization; strict inputs;
+browser/server separation; one-time action-bound consent; revision/replay/unknown
+outcome handling; private secrets/artifacts; and safe backup/restore. Every
+applicable control has a source path, a runnable positive/refusal check and an
+explicit result. Preserve actual PostgreSQL race/restart tests rather than
+replacing them with mocks. A count of tests is not a security coverage percentage.
+
+Record exact dependency versions, lockfile/install-script policy, advisory
+findings and distribution/license-review scope. Applicable unresolved high/critical
+findings block support of that affected profile until corrected or mitigated with
+evidence. Moderate findings require recorded impact/disposition; a scanner's
+automatic downgrade/override is not compatibility proof. The template's existing
+OpenTelemetry-chain findings and missing Python SDK integration evidence remain
+explicit separate realtime release gates, not a clean security claim for the
+whole repository. Do not claim a penetration test or certification from this matrix.
+
+**EXEC-05 — Local capacity baseline.** Add a reproducible, bounded benchmark against
+an isolated synthetic PostgreSQL/host installation. Use two tenants, at least 200
+contacts per tenant and representative tasks/opportunities; measure authenticated
+read workloads at concurrency 1, 5 and 20 for 15 seconds each after warm-up.
+Keep login outside the timed read workload so password hashing is not mislabeled
+as query capacity. Record workload/fixture size, runtime/database versions,
+concurrency, sample counts, throughput, p50/p95 latency, failures/timeouts and
+machine resources. Never load-test the owner's original data or call providers.
+
+Run bounded mutation/replay races separately and verify tenant scope, single
+committed effects, audit consistency and recovery under contention. Functional
+correctness/refusal and a complete reproducible report are local acceptance;
+there is no invented production users-per-second or SLA threshold. Report the
+observed operating envelope and limits. §29's hosted targets remain separate.
+
+**EXEC-06 — Upgrade, recovery and release handoff.** Prove a previously supported
+installation can reach the new profile while retaining data, grants, audit and
+UUID receipts. Use isolated upgrade fixtures; never overwrite the owner's database
+as a test. Restore to a fresh target, invalidate restored identity, preserve native
+and provider holds, and verify explicit recovery with a fresh approval epoch.
+Document binary/config/schema compatibility and the recovery path; do not imply
+that reverting a binary reverses a schema migration.
+
+Complete a repeatable cold-install/build/start/doctor/backup/restore guide, a
+profile/module inventory, changelog and sanitized evidence manifest. Verify both
+business consumers and the applicable authenticated Chromium flow. Keep existing
+root/platform, CRM, Act and template regression commands; their scopes remain
+distinct. Update current architecture/build status from actual outcomes.
+
+### 50.4 Work rules and external dependencies
+
+Continue reversible local implementation, documentation and applicable validation
+within these defaults without repeated routine confirmation. Preserve current
+tests and working behavior. Record material design choices and explain scope
+changes; no default silently expands the release or changes the pricebook.
+
+Missing provider/hosting credentials, paid usage, public publishing, a new data
+disclosure policy or unresolved product requirements need their concrete inputs
+before dependent work. Keep independent authorized local tasks moving while an
+input is missing; do not mark the blocked capability passed or substitute a mock
+for live evidence. Existing authorization and cost/data restrictions remain in force.
+
+The company website and provider/commercial milestones can consume the completed
+release later. Their integration is future work with separate acceptance; the
+present release need not wait for an entire enterprise/ERP roadmap.
+
+### 50.5 Completion and progress reporting
+
+The local reusable-library release is complete only when all six execution items
+have passing applicable acceptance, both independent consumers use supported
+artifacts without forks, existing regression behavior is preserved, and current
+guides/evidence agree. Open live/provider/production gates must still be visible.
+
+Report EXEC-01–EXEC-06 as not started, in progress, blocked on a named input, or
+accepted, with evidence. Do not derive product percentages from code volume,
+number of tests or completed checklist rows. Historical v1 commercial and scoped
+owner estimates retain their denominators. Security controls, measured capacity,
+module composition and provider readiness are reported separately.
+
+When this finite release is accepted, state that outcome and its limitations.
+Select the next demand-backed release explicitly; do not invent more industries,
+infrastructure or features simply to keep implementation running indefinitely.

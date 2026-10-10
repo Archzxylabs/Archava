@@ -1027,7 +1027,16 @@ Every external request needs tenant scope and projected/redacted context. Do not
 
 ---
 
-## 26. Reusable platform operating rules (PRD v2 §§40–49)
+## 26. Reusable platform operating rules (PRD v2.1 §§40–50)
+
+The active finite implementation target is PRD §50, following the owner's
+local-first/free choice. Work through EXEC-01–EXEC-06 using the declared defaults
+and acceptance, preserving the already accepted core/CRM/local owner behavior.
+Routine reversible local work does not require repeated confirmation. Missing
+external credentials, a paid/public step or a new data-disclosure policy requires
+its concrete input before dependent work; continue independent authorized tasks.
+Keep those external/provider gates separate from the local release. Specification
+updates do not mark any new execution item accepted or replace runnable evidence.
 
 ARCHZXY is the company; Archava is the flagship AI interface product. The internal
 library can include deterministic CRM/ERP modules as well as Archava capabilities.

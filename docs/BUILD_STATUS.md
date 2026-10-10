@@ -2,6 +2,11 @@
 
 ## Current checkpoint — 10 October 2026
 
+**Execution specification:** PRD v2.1 §50 now defines six ordered tasks for the
+next supported local library release. EXEC-01–EXEC-06 are not yet accepted;
+writing their criteria changes no package, schema, provider or runtime readiness.
+The already completed local owner pilot remains accepted within its original scope.
+
 Source reviewed: `80ea845`. The [repository re-audit](PROJECT_REAUDIT_2026-10-10.md)
 and [current architecture](ARCHITECTURE.md) supersede older absence/readiness claims
 below. The dated entries and original reference tables are retained as history.

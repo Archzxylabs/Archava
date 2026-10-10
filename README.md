@@ -4,7 +4,10 @@ A multi-tenant AI assistant platform where an assistant's behaviour is decided b
 **data** rather than by prompt text, and where every decision it makes is auditable
 against the policy that produced it.
 
-The product requirement is [PRD v2](PRD.md). The operational contract is `agent.md`.
+The product requirement is [PRD v2.1](PRD.md). The operational contract is `agent.md`.
+PRD §50 defines the active finite local release: supported versions, safe module
+composition, shared presence contracts, scoped security, measured capacity and
+upgrade/recovery acceptance. These are next requirements, not delivered features.
 ARCHZXY is the company; Archava is its flagship product. The target internal module
 library includes reusable assistant/presence contracts and deterministic CRM/ERP
 business modules, composed across business models. The ARCHZXY company website is

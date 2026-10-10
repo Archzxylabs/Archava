@@ -1,6 +1,9 @@
 # Architecture
 
-Reviewed against `80ea845`, 10 October 2026. The [repository re-audit](PROJECT_REAUDIT_2026-10-10.md) records findings and next priorities. [PRD §§40–49](../PRD.md) describes the target; this document describes the implementation. ARCHZXY's company website is a separate consumer project.
+Reviewed against `80ea845`, 10 October 2026. The [repository re-audit](PROJECT_REAUDIT_2026-10-10.md) records findings and next priorities. [PRD §§40–50](../PRD.md) describes the target; this document describes the implementation. ARCHZXY's company website is a separate consumer project.
+
+PRD v2.1 §50 orders the next local release work and its acceptance. Its six
+execution requirements are specification, not additional implementation evidence.
 
 ## Folder and runtime map
 
