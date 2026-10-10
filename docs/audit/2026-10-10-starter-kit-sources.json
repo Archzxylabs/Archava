@@ -1,0 +1,363 @@
+{
+  "schema": "archzxy-starter-kit-research-sources-v1",
+  "reviewed": "2026-10-10",
+  "repositoryBaseline": "478ba438eb580803994da5d6d31c5ea133aa7d8d",
+  "scope": "Planning catalogue for vertical-kit coverage; NOT runtime registry, module installation, pricing or implementation evidence.",
+  "primaryDocuments": 9,
+  "officialIndexedExcerpts": 29,
+  "sourceCount": 38,
+  "limitations": [
+    "No customer interviews, market-weighted sample or universal-completeness proof.",
+    "Some official pages timed out on direct access; official indexed excerpts are labelled.",
+    "Vendor product descriptions show advertised workflows, not verified interoperability or Archava support.",
+    "KBLI press/dictionary leaf-count discrepancy (1560/1559) is not resolved here; only agreed 22 categories are used.",
+    "K30/K33/K35/K40 have taxonomy-level evidence; detailed domain invariants remain design hypotheses."
+  ],
+  "runtimeChanges": false,
+  "pricebookChanged": false,
+  "providersInvoked": false,
+  "sources": [
+    {
+      "id": "S01",
+      "publisher": "BPS",
+      "title": "Rilis KBLI 2025",
+      "url": "https://www.bps.go.id/id/news/2025/12/19/828/bps-rilis-klasifikasi-baku-lapangan-usaha-indonesia--kbli-.html",
+      "evidence": "official_indexed_excerpt",
+      "supports": "22 kategori ekonomi; taxonomy statistik tidak menentukan jumlah kit software.",
+      "reviewed": "2026-10-10"
+    },
+    {
+      "id": "S02",
+      "publisher": "BPS",
+      "title": "KBLI 2025, buku publikasi",
+      "url": "https://ppid.bps.go.id/upload/doc/Klasifikasi_Baku_Lapangan_Usaha_Indonesia_2025_1769138593.pdf",
+      "evidence": "primary_document",
+      "supports": "Daftar isi kategori A–V (halaman PDF 10–11), batas kegiatan; crosswalk sektor, bukan verifikasi workflow.",
+      "reviewed": "2026-10-10"
+    },
+    {
+      "id": "S03",
+      "publisher": "United Nations Statistics Division",
+      "title": "ISIC Revision 5",
+      "url": "https://unstats.un.org/unsd/classifications/Econ/isic",
+      "evidence": "primary_document",
+      "supports": "Klasifikasi kegiatan ekonomi; publikasi saat ditinjau masih dalam penyuntingan, bukan katalog solusi.",
+      "reviewed": "2026-10-10"
+    },
+    {
+      "id": "S04",
+      "publisher": "Odoo",
+      "title": "All industries",
+      "url": "https://www.odoo.com/all-industries",
+      "evidence": "official_indexed_excerpt",
+      "supports": "Vendor mengelompokkan banyak industri dan varian; daftar vendor bukan bukti kesiapan Archava.",
+      "reviewed": "2026-10-10"
+    },
+    {
+      "id": "S05",
+      "publisher": "Medusa",
+      "title": "Commerce Modules",
+      "url": "https://docs.medusajs.com/learn/fundamentals/modules/commerce-modules",
+      "evidence": "primary_document",
+      "supports": "Products, orders, inventory dan fulfillment dapat dikomposisi melalui services/workflows.",
+      "reviewed": "2026-10-10"
+    },
+    {
+      "id": "S06",
+      "publisher": "Frappe",
+      "title": "Sales Order",
+      "url": "https://docs.frappe.io/erpnext/sales-order",
+      "evidence": "official_indexed_excerpt",
+      "supports": "Order-to-cash memisahkan confirmed order, delivery, invoice dan pembayaran.",
+      "reviewed": "2026-10-10"
+    },
+    {
+      "id": "S07",
+      "publisher": "Odoo",
+      "title": "Appointments 19.0",
+      "url": "https://www.odoo.com/documentation/19.0/applications/productivity/appointments.html",
+      "evidence": "official_indexed_excerpt",
+      "supports": "Appointment memakai availability user/resource dan kapasitas.",
+      "reviewed": "2026-10-10"
+    },
+    {
+      "id": "S08",
+      "publisher": "Odoo",
+      "title": "Project milestones",
+      "url": "https://www.odoo.com/documentation/saas-19.1/es/applications/services/project/project_management/project_milestones.html",
+      "evidence": "official_indexed_excerpt",
+      "supports": "Milestone berkaitan dengan task dan dapat menjadi dasar billing.",
+      "reviewed": "2026-10-10"
+    },
+    {
+      "id": "S09",
+      "publisher": "Odoo",
+      "title": "Field-service itinerary 19.0",
+      "url": "https://www.odoo.com/documentation/19.0/applications/services/field_service/planning_itinerary.html",
+      "evidence": "official_indexed_excerpt",
+      "supports": "Kunjungan field service memiliki alamat, tanggal dan itinerary.",
+      "reviewed": "2026-10-10"
+    },
+    {
+      "id": "S10",
+      "publisher": "Odoo",
+      "title": "Rental pickup and return 19.0",
+      "url": "https://www.odoo.com/documentation/19.0/applications/sales/rental/rental_orders/pickup_return.html",
+      "evidence": "official_indexed_excerpt",
+      "supports": "Reservasi, pickup/return dan tracking produk; physical goods dan service rental berbeda.",
+      "reviewed": "2026-10-10"
+    },
+    {
+      "id": "S11",
+      "publisher": "Odoo",
+      "title": "Hotel industry",
+      "url": "https://www.odoo.com/industries/hotel",
+      "evidence": "official_indexed_excerpt",
+      "supports": "Hotel menawarkan operasi reservasi, room status/housekeeping dan channel integration; klaim vendor.",
+      "reviewed": "2026-10-10"
+    },
+    {
+      "id": "S12",
+      "publisher": "Odoo",
+      "title": "Restaurant floors and tables 17.0",
+      "url": "https://www.odoo.com/documentation/17.0/applications/sales/point_of_sale/restaurant/floors_tables.html",
+      "evidence": "official_indexed_excerpt",
+      "supports": "Floor/table status dan order terkait meja; versi dokumentasi eksplisit.",
+      "reviewed": "2026-10-10"
+    },
+    {
+      "id": "S13",
+      "publisher": "Odoo",
+      "title": "Preparation display 18.0",
+      "url": "https://www.odoo.com/documentation/18.0/applications/sales/point_of_sale/preparation.html",
+      "evidence": "official_indexed_excerpt",
+      "supports": "Order persiapan memiliki routing dan tahap kerja kitchen/display.",
+      "reviewed": "2026-10-10"
+    },
+    {
+      "id": "S14",
+      "publisher": "Stripe",
+      "title": "Subscription overview",
+      "url": "https://docs.stripe.com/billing/subscriptions/overview",
+      "evidence": "primary_document",
+      "supports": "Subscription, invoice, payment dan akses mempunyai lifecycle terpisah.",
+      "reviewed": "2026-10-10"
+    },
+    {
+      "id": "S15",
+      "publisher": "Frappe",
+      "title": "Program Enrollment",
+      "url": "https://docs.frappe.io/education/program-enrollment",
+      "evidence": "primary_document",
+      "supports": "Enrollment mengaitkan student, program/course, academic term dan fee.",
+      "reviewed": "2026-10-10"
+    },
+    {
+      "id": "S16",
+      "publisher": "Odoo",
+      "title": "Create events 19.0",
+      "url": "https://www.odoo.com/documentation/19.0/applications/marketing/events/event_setup/create_events.html",
+      "evidence": "official_indexed_excerpt",
+      "supports": "Event mempunyai registration, attendee dan ticket/sponsor options.",
+      "reviewed": "2026-10-10"
+    },
+    {
+      "id": "S17",
+      "publisher": "Odoo",
+      "title": "Recruitment 19.0",
+      "url": "https://www.odoo.com/documentation/19.0/applications/hr/recruitment.html",
+      "evidence": "official_indexed_excerpt",
+      "supports": "Applicant terkait job position dan recruitment stages.",
+      "reviewed": "2026-10-10"
+    },
+    {
+      "id": "S18",
+      "publisher": "Odoo",
+      "title": "Property Management",
+      "url": "https://www.odoo.com/industries/property-management",
+      "evidence": "official_indexed_excerpt",
+      "supports": "Property listings, rental contracts dan recurring billing; klaim vendor.",
+      "reviewed": "2026-10-10"
+    },
+    {
+      "id": "S19",
+      "publisher": "Frappe",
+      "title": "Delivery Trip",
+      "url": "https://docs.frappe.io/erpnext/delivery-trip",
+      "evidence": "official_indexed_excerpt",
+      "supports": "Trip memiliki vehicle/driver, delivery stops dan referensi delivery notes.",
+      "reviewed": "2026-10-10"
+    },
+    {
+      "id": "S20",
+      "publisher": "Frappe",
+      "title": "Production Plan",
+      "url": "https://docs.frappe.io/erpnext/production-plan",
+      "evidence": "primary_document",
+      "supports": "Manufacturing menghubungkan demand, BOM, routing dan material procurement.",
+      "reviewed": "2026-10-10"
+    },
+    {
+      "id": "S21",
+      "publisher": "Frappe",
+      "title": "Donation",
+      "url": "https://docs.frappe.io/erpnext/donation",
+      "evidence": "primary_document",
+      "supports": "Donor, donation dan payment entry/webhook memiliki hubungan eksplisit.",
+      "reviewed": "2026-10-10"
+    },
+    {
+      "id": "S22",
+      "publisher": "Frappe",
+      "title": "Healthcare / Marley Health",
+      "url": "https://docs.frappe.io/erpnext/frappe-healthcare",
+      "evidence": "primary_document",
+      "supports": "Patient, encounter, inpatient, lab dan billing mempunyai workflow khusus; healthcare kini aplikasi terpisah.",
+      "reviewed": "2026-10-10"
+    },
+    {
+      "id": "S23",
+      "publisher": "HL7",
+      "title": "FHIR DiagnosticReport R5",
+      "url": "https://fhir.hl7.org/fhir/diagnosticreport.html",
+      "evidence": "official_indexed_excerpt",
+      "supports": "Diagnostic report mengaitkan konteks, specimen, observations dan hasil; interoperabilitas bukan sertifikasi.",
+      "reviewed": "2026-10-10"
+    },
+    {
+      "id": "S24",
+      "publisher": "GS1",
+      "title": "Healthcare GTIN Allocation Rules",
+      "url": "https://www.gs1.org/1/gtinrules/en/healthcare",
+      "evidence": "official_indexed_excerpt",
+      "supports": "Identity item bersama batch dan expiry mendukung traceability healthcare.",
+      "reviewed": "2026-10-10"
+    },
+    {
+      "id": "S25",
+      "publisher": "Frappe",
+      "title": "Crop Cycle",
+      "url": "https://docs.frappe.io/erpnext/crop_cycle",
+      "evidence": "official_indexed_excerpt",
+      "supports": "Crop cycle mengaitkan land unit, crop, waktu dan project/tasks.",
+      "reviewed": "2026-10-10"
+    },
+    {
+      "id": "S26",
+      "publisher": "Frappe",
+      "title": "Loan Repayment",
+      "url": "https://docs.frappe.io/lending/loan-repayment",
+      "evidence": "official_indexed_excerpt",
+      "supports": "Lending memiliki allocation principal/interest/fees dan repayment constraints, bukan invoice generik.",
+      "reviewed": "2026-10-10"
+    },
+    {
+      "id": "S27",
+      "publisher": "Guidewire",
+      "title": "Report and submit claims",
+      "url": "https://docs.guidewire.com/cloud/in/20261/apiusage/PortalDevelopment/topics/c_submitClaim.html",
+      "evidence": "official_indexed_excerpt",
+      "supports": "Insurance claim mempunyai policy, loss-event type, detail dan submission boundary.",
+      "reviewed": "2026-10-10"
+    },
+    {
+      "id": "S28",
+      "publisher": "Oracle",
+      "title": "Utilities Customer Cloud Service overview",
+      "url": "https://docs.oracle.com/en/industries/energy-water/customer-cloud-service/24a/ccs-overview-guide/CCS_OVERVIEW_24A/OUCCS_Overview_Guide.2.2.html",
+      "evidence": "official_indexed_excerpt",
+      "supports": "Utilities memisahkan customer/service orders, device/meter measurements, usage dan billing.",
+      "reviewed": "2026-10-10"
+    },
+    {
+      "id": "S29",
+      "publisher": "ServiceNow",
+      "title": "Public Sector Digital Services",
+      "url": "https://www.servicenow.com/products/public-sector-digital-services.html",
+      "evidence": "official_indexed_excerpt",
+      "supports": "Public services mencakup case, permit, grant dan service-request workflows; klaim vendor.",
+      "reviewed": "2026-10-10"
+    },
+    {
+      "id": "S30",
+      "publisher": "CleanCloud",
+      "title": "Dry Cleaning and Laundry API",
+      "url": "https://www.cleancloudapp.com/api",
+      "evidence": "official_indexed_excerpt",
+      "supports": "Order dapat memiliki individual garments/barcodes dan garment status.",
+      "reviewed": "2026-10-10"
+    },
+    {
+      "id": "S31",
+      "publisher": "Oracle",
+      "title": "Construction Change Orders integration",
+      "url": "https://docs.oracle.com/construction-engineering/Prime_Open_Integration/PRIME/D144351.html",
+      "evidence": "official_indexed_excerpt",
+      "supports": "Perubahan approved contract/commitment mempunyai change-order API.",
+      "reviewed": "2026-10-10"
+    },
+    {
+      "id": "S32",
+      "publisher": "Odoo",
+      "title": "Expiration dates 19.0",
+      "url": "https://www.odoo.com/documentation/19.0/applications/inventory_and_mrp/inventory/product_management/product_tracking/expiration_dates.html",
+      "evidence": "official_indexed_excerpt",
+      "supports": "Inventory perishable memakai lot/serial identity dan expiry.",
+      "reviewed": "2026-10-10"
+    },
+    {
+      "id": "S33",
+      "publisher": "Frappe",
+      "title": "Payroll Entry",
+      "url": "https://docs.frappe.io/hr/payroll-entry",
+      "evidence": "official_indexed_excerpt",
+      "supports": "Payroll adalah proses tersendiri dengan employee/pay period dan salary-slip processing.",
+      "reviewed": "2026-10-10"
+    },
+    {
+      "id": "S34",
+      "publisher": "Odoo",
+      "title": "Fitness Center",
+      "url": "https://www.odoo.com/industries/fitness-center",
+      "evidence": "official_indexed_excerpt",
+      "supports": "Membership, classes, appointments dan retail dapat dikomposisi; klaim vendor.",
+      "reviewed": "2026-10-10"
+    },
+    {
+      "id": "S35",
+      "publisher": "Odoo",
+      "title": "Accounting Firm",
+      "url": "https://www.odoo.com/industries/accounting-firm",
+      "evidence": "official_indexed_excerpt",
+      "supports": "Client work menggabungkan projects/documents/invoicing; statutory accounting tidak dibuktikan.",
+      "reviewed": "2026-10-10"
+    },
+    {
+      "id": "S36",
+      "publisher": "Odoo",
+      "title": "Law Firm",
+      "url": "https://www.odoo.com/industries/law-firm",
+      "evidence": "official_indexed_excerpt",
+      "supports": "Existence of specialized law-firm industry offering; detail domain perlu discovery.",
+      "reviewed": "2026-10-10"
+    },
+    {
+      "id": "S37",
+      "publisher": "Odoo",
+      "title": "Repair orders 19.0",
+      "url": "https://www.odoo.com/documentation/19.0/applications/inventory_and_mrp/repairs/repair_orders.html",
+      "evidence": "official_indexed_excerpt",
+      "supports": "Return/repair/redelivery, serial identity, parts dan warranty mempunyai workflow khusus.",
+      "reviewed": "2026-10-10"
+    },
+    {
+      "id": "S38",
+      "publisher": "Stripe",
+      "title": "Connect",
+      "url": "https://docs.stripe.com/connect",
+      "evidence": "primary_document",
+      "supports": "Platform/marketplace memodelkan beberapa akun dan perpindahan dana antar pihak.",
+      "reviewed": "2026-10-10"
+    }
+  ]
+}

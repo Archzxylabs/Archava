@@ -8,6 +8,12 @@ Peta ini mencakup 13 pola operasi, 20 contoh konteks industri, dan 25 kapabilita
 bisnis. Ini katalog discovery yang dapat berkembang. Baris kandidat belum menjadi
 implementasi, harga, runtime module id, dependency graph, atau janji delivery.
 
+[Riset starter kit 10 Oktober](STARTER_KIT_COVERAGE_RESEARCH_2026-10-10.md) menambahkan
+katalog kandidat 40 keluarga kit (24 bisnis umum + 16 sektor khusus), komposisi,
+status dan celah terhadap 22 kategori KBLI 2025. Peta pola di bawah tetap menjadi
+dasar discovery; jumlah pola, kapabilitas, kit dan template mempunyai denominator
+berbeda. Katalog baru tidak mengaktifkan runtime atau menyatakan kit sudah selesai.
+
 ## Empat sumbu discovery
 
 | Sumbu             | Pertanyaan                                                 | Contoh                                                                               |

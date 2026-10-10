@@ -1,0 +1,62 @@
+{
+  "schema": "archzxy-starter-kit-research-validation-v1",
+  "reviewed": "2026-10-10",
+  "repositoryBaseline": "478ba438eb580803994da5d6d31c5ea133aa7d8d",
+  "scope": "Documentation and research catalogue consistency only; not kit acceptance or runtime tests.",
+  "checks": [
+    {
+      "name": "Unique kit/source/capability/overlay IDs and reference integrity",
+      "result": "passed"
+    },
+    {
+      "name": "40 kit families = 24 general + 16 specialist",
+      "result": "passed"
+    },
+    {
+      "name": "20 shared capability candidates, 10 overlays, 22 A–V sector dispositions",
+      "result": "passed"
+    },
+    {
+      "name": "Candidate waves = 8 + 16 + 16",
+      "result": "passed"
+    },
+    {
+      "name": "38 official references = 9 direct documents + 29 indexed excerpts",
+      "result": "passed"
+    },
+    {
+      "name": "All 40 kit rows represented in report; source/sector/capability/template references resolve",
+      "result": "passed"
+    },
+    {
+      "name": "Four taxonomy-only specialist families flagged: K30, K33, K35, K40",
+      "result": "passed"
+    },
+    {
+      "name": "All families remain research candidates with no runtime IDs or supported release profiles",
+      "result": "passed"
+    },
+    {
+      "name": "49 local Markdown links exist across report, PRD, README and capability map",
+      "result": "passed"
+    },
+    {
+      "name": "Pricebook, active template catalogue and supported runtime release catalogue identical to baseline",
+      "result": "passed"
+    },
+    {
+      "name": "Prettier check of seven research/document files",
+      "result": "passed"
+    },
+    {
+      "name": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "operationalKitsAccepted": 0,
+  "universalCompletenessProven": false,
+  "customerDemandValidated": false,
+  "marketCoverageMeasured": false,
+  "runtimeRegressionRerun": false,
+  "runtimeRegressionReason": "Changes are confined to Markdown and planning JSON not consumed by runtime; data/links/format checked without provider or owner-data operations."
+}

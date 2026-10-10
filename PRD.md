@@ -1764,6 +1764,37 @@ catalog from validated requirements while preserving §§41–46 and the M3 gate
 
 ---
 
+### 46.5 Starter-kit coverage research
+
+The [10 October starter-kit research](docs/STARTER_KIT_COVERAGE_RESEARCH_2026-10-10.md)
+proposes a planning catalogue of 40 kit families: 24 general business and 16
+specialist, with 20 shared capability candidates and ten configuration dimensions.
+These are ARCHZXY design choices, not a universal minimum or market-coverage claim.
+The [machine-readable research catalogue](docs/audit/2026-10-10-starter-kit-catalog.json)
+records workflow, composition candidates, invariants, evidence depth and residual
+gaps against all 22 KBLI 2025 categories. It is not consumed by the runtime registry.
+
+A kit must address its actual business operations: hotel room/stay/housekeeping,
+restaurant order/preparation/service, and other domain-owned workflows. Shared CRM
+is a component of relevant kits, not acceptance of an operational industry kit.
+The eight existing website/planning templates do not establish these capabilities.
+No complete operational kit from this research catalogue is currently accepted;
+existing local library/CRM acceptance remains unchanged.
+
+Require a traceable disposition for each mandatory requirement. Unsupported,
+unimplemented, unconfigured, unhealthy or domain-unreviewed requirements block
+assembly; a generic template cannot conceal them. A proposed external adapter
+does not count as supported until its scoped integration acceptance exists.
+Kit/profile selection never grants authorization or invents a price. Unpriced
+native scope retains manual review under the unchanged pricebook.
+
+Preparing this catalogue does not authorize implementing all families, paid calls,
+publishing, the company website or a universal ERP. Build bounded kits from
+validated demand, preserve §§41–50, and generalize from proven reuse. Missing
+workflow evidence remains explicit, especially taxonomy-only specialist families.
+
+---
+
 ## 47. Packaging and incremental migration
 
 **DIST-01:** prove consumption through packed artifacts in at least two host/configuration contexts outside workspace source resolution. Declare transitive dependencies and runtime support. No package may rely on parent paths, test aliases, private environment files or another project's build output.

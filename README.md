@@ -22,6 +22,9 @@ is preserved. Pricing v1 remains unchanged.
 The [business capability map](docs/BUSINESS_CAPABILITY_MATRIX.md), informed by
 [8 October research](docs/BUSINESS_MODEL_RESEARCH_2026-10-08.md), separates operating
 patterns, industry extensions and candidate modules from delivered capabilities.
+The [starter-kit coverage research](docs/STARTER_KIT_COVERAGE_RESEARCH_2026-10-10.md)
+proposes 40 kit families with source evidence, composition candidates and explicit
+sector gaps; it remains planning data, with no complete operational kit accepted.
 The [10 October repository re-audit](docs/PROJECT_REAUDIT_2026-10-10.md) records
 current folder/runtime boundaries, fresh verification and the next work order.
 The [7 October pre-reuse audit](docs/PROJECT_AUDIT_2026-10-07.md) remains historical.
