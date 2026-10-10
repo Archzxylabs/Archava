@@ -1,5 +1,39 @@
 # Local reusable library release
 
+## Current extension — profile 1.4.0, 11 October 2026
+
+The accepted 1.3.0 baseline below is extended by three private artifacts: `kits`,
+`projects` and `projects-pg`. There are 28 internal artifacts, 18 unchanged external
+pins, host 0.7.0, config 0.6.0 and six owned database ledgers. The project schema is
+additive and does not migrate CRM records or automatically grant account access.
+
+| Extension                                 | Accepted evidence                                                                                                                                                       | Limit                                                            |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Trusted catalogue and requirement planner | 40 immutable families; exact installed-profile checks; positive/narrow and missing/forged-authority refusals                                                            | No complete operating kit accepted                               |
+| Independent consumption and assembly      | Two cold-installed kit consumers, browser-safe contracts and scoped v1/v2 assembly; 7 checks                                                                            | Full kit requirements stay blockers; assembly is configuration   |
+| Persistent project domain                 | Two independent consumers; real PostgreSQL grants/RLS, 20-request idempotency race, parent revisions, delivery invariants, SQL immutability, restart/restore; 15 checks | Internal scope/task/milestone tracking only                      |
+| Owner composition                         | Explicit grants, authenticated APIs/read tools, Chromium workflow and response-loss recovery, disable/re-enable and backup/account recovery; 11 checks                  | No project machine writes, client contract, invoice or payment   |
+| Existing behaviour                        | Eight root gates; 1,475 tests/104 files; CRM 38, Act 18, host 44, Chromium 3/70, prior-profile upgrade 4                                                                | Local/synthetic acceptance                                       |
+| Security extension                        | 22 applicable controls; fresh root/runtime zero findings; exact dependency inventory                                                                                    | Template 13 moderate findings remains its separate realtime gate |
+
+[Sanitized current evidence](audit/2026-10-11-kit-project-release.json) links the
+executed reports. The original owner state was backed up before and after additive
+migration; all eight CRM tables, existing grants and identity/fingerprint keys are
+unchanged. Doctor verifies the new profile. Project activation remains explicit.
+
+Assembly 2.0.0 adds optional `projects`; assembly 1.0.0 and original four-module
+settings still work. Narrow `crm_inquiry` (K01/K05) and `project_tracking` (K05/K31)
+are accepted configuration scopes. Both full services and EPC requests remain
+blocked on missing domains/capabilities. The approved pricebook is unchanged.
+See [project integration and limitations](PROJECT_DELIVERY_MODULE.md) and
+[the full work ledger](STARTER_KIT_IMPLEMENTATION.md).
+
+`pnpm security:verify` now also invokes kit, project and project-host proofs. The
+runtime report records its actual verified profile; security verification rejects
+stale runtime/kit/project proof profiles before accepting the matrix.
+
+## Historical baseline — profile 1.3.0
+
 The finite acceptance scope is PRD 2.1 §50. Company website, live voice/avatar,
 public deployment and the broader ERP catalogue remain separate milestones.
 Evidence below describes executed checks, not product/security percentages.
@@ -30,7 +64,7 @@ Reproduce the profile checks with `pnpm test -- packages/config/test/release.tes
 Node/pnpm versions. Runtime verification creates and removes an isolated private
 PostgreSQL installation; it does not replace the owner's data or call providers.
 
-The current profile is `1.3.0` (host `0.6.0`, config `0.5.0`). Initial modules
+The historical baseline profile is `1.3.0` (host `0.6.0`, config `0.5.0`). Initial modules
 are mandatory `contacts` (including activities/follow-ups), optional `pipeline`,
 optional `assistant`, and `nativeActions` requiring `assistant`. No database data
 is dropped. This is a logical composition within a modular monolith: the supported

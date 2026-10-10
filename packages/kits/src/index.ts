@@ -1,0 +1,231 @@
+import { KIT_CATALOGUE_DATA, KIT_CATALOGUE_VERSION, CAPABILITY_IDS } from './catalogue.js'
+import {
+  kitManifestSchema,
+  kitRequestSchema,
+  KitPlanningError,
+  type KitManifest,
+  type KitPlan,
+  type KitRequirement,
+} from './contracts.js'
+import { moduleSelectionSchema, planAssembly, type ModuleSelection } from '@archava/config/assembly'
+import { releaseCatalogSchema, type ReleaseCatalog } from '@archava/config/release-contracts'
+
+export * from './contracts.js'
+export { KIT_CATALOGUE_VERSION, CAPABILITY_IDS } from './catalogue.js'
+
+/** Freeze nested host-owned material; a returned reference cannot add capabilities. */
+function freeze<T>(value: T): T {
+  if (value !== null && typeof value === 'object') {
+    for (const child of Object.values(value)) freeze(child)
+    Object.freeze(value)
+  }
+  return value
+}
+const manifests = freeze(KIT_CATALOGUE_DATA.map((raw) => kitManifestSchema.parse(raw)))
+const byId = new Map(manifests.map((manifest) => [manifest.id, manifest]))
+if (byId.size !== 40 || new Set(manifests.map((m) => m.slug)).size !== 40)
+  throw new KitPlanningError('invalid_builtin_catalogue')
+
+export function listKits(): readonly KitManifest[] {
+  return manifests
+}
+export function getKit(id: string): KitManifest {
+  const manifest = byId.get(id)
+  if (!manifest) throw new KitPlanningError('unknown_kit')
+  return manifest
+}
+
+const LOCAL_IMPLEMENTATIONS = freeze({
+  crm_contacts: [
+    { name: '@archava/crm', version: '0.7.0' },
+    { name: '@archava/crm-pg', version: '0.7.0' },
+    { name: '@archava/identity-pg', version: '0.1.0' },
+  ],
+  crm_sales_pipeline: [
+    { name: '@archava/crm', version: '0.7.0' },
+    { name: '@archava/crm-pg', version: '0.7.0' },
+  ],
+  project_delivery: [
+    { name: '@archava/projects', version: '0.1.0' },
+    { name: '@archava/projects-pg', version: '0.1.0' },
+    { name: '@archava/identity-pg', version: '0.1.0' },
+  ],
+})
+
+/**
+ * Construct only from the trusted host after installed-profile verification.
+ * Request JSON never supplies the catalogue, module policy, implementation or
+ * provider evidence. The plan does not replace startup health or authorization.
+ */
+export class KitPlanner {
+  private readonly release: ReleaseCatalog
+  private readonly modules: ModuleSelection
+  constructor(trustedRelease: ReleaseCatalog, trustedModules: ModuleSelection) {
+    this.release = freeze(releaseCatalogSchema.parse(trustedRelease))
+    this.modules = freeze(moduleSelectionSchema.parse(trustedModules))
+  }
+
+  plan(raw: unknown): KitPlan {
+    const request = kitRequestSchema.parse(raw)
+    if (request.profile !== this.release.version) throw new KitPlanningError('unsupported_profile')
+    const required = new Map<string, Set<string>>()
+    const add = (id: string, by: string) => {
+      const owners = required.get(id) ?? new Set<string>()
+      owners.add(by)
+      required.set(id, owners)
+    }
+    for (const selected of request.selections) {
+      const kit = getKit(selected.id)
+      if (selected.scope === 'crm_inquiry') {
+        // Existing reuse evidence covers these two inquiry contexts only.
+        if (kit.id !== 'K01' && kit.id !== 'K05') add(`scope.${kit.id}.crm_inquiry`, kit.id)
+        add('crm_contacts', kit.id)
+      } else if (selected.scope === 'project_tracking') {
+        if (kit.id !== 'K05' && kit.id !== 'K31') add(`scope.${kit.id}.project_tracking`, kit.id)
+        add('crm_contacts', kit.id)
+        add('project_delivery', kit.id)
+      } else {
+        for (const capability of kit.capabilities) add(capability, kit.id)
+        add(kit.domainRequirement, kit.id)
+      }
+    }
+    for (const id of request.requirements) add(id, 'explicit-requirement')
+    if (request.pipeline) add('crm_sales_pipeline', 'pipeline')
+    if (required.has('crm_sales_pipeline')) add('crm_contacts', 'crm_sales_pipeline')
+    if (request.assistant) add('surface.assistant', 'assistant')
+    if (request.nativeActions) add('surface.native_actions', 'nativeActions')
+    if (required.has('surface.native_actions')) add('surface.assistant', 'surface.native_actions')
+    for (const channel of new Set(request.channels))
+      if (channel !== 'web' && channel !== 'api') add(`channel.${channel}`, 'channel')
+
+    const requirements: KitRequirement[] = [...required].map(([id, owners]) => {
+      const base = { id, requiredBy: [...owners].sort(), packages: [] }
+      const implementation = Object.hasOwn(LOCAL_IMPLEMENTATIONS, id)
+        ? LOCAL_IMPLEMENTATIONS[id as keyof typeof LOCAL_IMPLEMENTATIONS]
+        : undefined
+      if (implementation) {
+        if (
+          implementation.some(
+            (pkg) =>
+              !this.release.packages.some(
+                (installed) => installed.name === pkg.name && installed.version === pkg.version,
+              ),
+          )
+        )
+          return {
+            ...base,
+            disposition: 'needs_implementation',
+            reason: 'Required exact local implementation is absent from the trusted profile.',
+          }
+        if (
+          (id === 'crm_sales_pipeline' && !this.modules.pipeline) ||
+          (id === 'project_delivery' && !this.modules.projects)
+        )
+          return {
+            ...base,
+            packages: implementation,
+            disposition: 'needs_configuration',
+            reason: 'Requested domain is disabled by the trusted host module policy.',
+          }
+        return {
+          ...base,
+          packages: implementation,
+          disposition: 'implemented_local_contract',
+          reason:
+            'Exact local domain implementation is in the trusted verified profile; this does not accept the full kit.',
+        }
+      }
+      if (id === 'surface.assistant' || id === 'surface.native_actions') {
+        const enabled =
+          id === 'surface.assistant' ? this.modules.assistant : this.modules.nativeActions
+        const selected = {
+          contacts: true as const,
+          pipeline: false,
+          assistant: true,
+          nativeActions: id === 'surface.native_actions',
+        }
+        try {
+          planAssembly(
+            { version: '1.0.0', profile: this.release.version, modules: selected },
+            this.release,
+          )
+        } catch {
+          return {
+            ...base,
+            disposition: 'needs_implementation',
+            reason: 'The requested assistant/action implementation is absent from the profile.',
+          }
+        }
+        return {
+          ...base,
+          disposition: enabled ? 'implemented_local_contract' : 'needs_configuration',
+          reason: enabled
+            ? 'Local surface exists; current domain grants and exact consent remain required.'
+            : 'Requested surface is disabled by trusted host policy.',
+        }
+      }
+      const domain = manifests.find((kit) => kit.domainRequirement === id)
+      if (domain)
+        return {
+          ...base,
+          disposition:
+            domain.evidenceDepth === 'taxonomy_only'
+              ? 'needs_domain_review'
+              : 'needs_implementation',
+          reason:
+            domain.evidenceDepth === 'taxonomy_only'
+              ? 'Taxonomy evidence is insufficient to accept this domain workflow.'
+              : 'Domain manifest is a candidate; no accepted implementation/adapter is registered.',
+        }
+      if ((CAPABILITY_IDS as readonly string[]).includes(id))
+        return {
+          ...base,
+          disposition: 'needs_implementation',
+          reason:
+            'Capability is a research candidate, not a registered native service or live adapter.',
+        }
+      return {
+        ...base,
+        disposition: 'unsupported',
+        reason:
+          'No accepted scope, channel or capability contract is registered for this requirement.',
+      }
+    })
+    const blockers = requirements.filter(
+      (item) => item.disposition !== 'implemented_local_contract',
+    )
+    const modules: ModuleSelection = {
+      contacts: true,
+      pipeline: required.has('crm_sales_pipeline'),
+      assistant: required.has('surface.assistant'),
+      nativeActions: required.has('surface.native_actions'),
+      ...(required.has('project_delivery') ? { projects: true } : {}),
+    }
+    // Reuse the existing assembly validator; planning metadata cannot bypass it.
+    let assembly: ModuleSelection | null = null
+    if (blockers.length === 0) {
+      planAssembly(
+        {
+          version: modules.projects !== undefined ? '2.0.0' : '1.0.0',
+          profile: this.release.version,
+          modules,
+        },
+        this.release,
+      )
+      assembly = modules
+    }
+    return freeze({
+      schemaVersion: '1.0.0',
+      catalogueVersion: KIT_CATALOGUE_VERSION,
+      profile: this.release.version,
+      selections: request.selections,
+      requirements,
+      blockers,
+      readyToAssemble: blockers.length === 0,
+      assembly,
+      operationalKitsAccepted: [],
+      authority: 'configuration-only',
+      pricing: 'manual-review-required-for-new-kit-scope',
+    })
+  }
+}

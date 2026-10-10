@@ -56,6 +56,8 @@ import {
 import { runCrmBackup, readBackupStatus, setBackupPolicy } from './backups.js'
 import { verifyRuntimeRelease, verifyReleaseDatabase, ReleaseProfileError } from './release.js'
 import { setModules } from './modules.js'
+import { migrateProjects, grantProjectsRuntime } from '@archava/projects-pg'
+import { PROJECT_PERMISSIONS } from '@archava/projects'
 
 const credentialsSchema = z
   .object({
@@ -70,6 +72,7 @@ async function grant(pool: Pool) {
   await grantCrmRuntime(pool, role)
   await grantIdentityRuntime(pool, role)
   await grantProviderRuntime(pool, role)
+  await grantProjectsRuntime(pool, role)
   await grantNativeCrmAct(pool, role)
   await grantActHostRuntime(nativeSqlClient(pool, 'operator', 'operator'), role)
 }
@@ -164,6 +167,7 @@ async function setup() {
       await migrateIdentity(owner)
       await migrateProviderRuntime(owner)
       await migrateNative(owner)
+      await migrateProjects(owner)
       await grant(owner)
       for (const tenant of settings.tenants) {
         await owner.query(
@@ -205,15 +209,64 @@ async function setup() {
 }
 async function user(args: string[]) {
   const [mode, file] = args
-  if (!['add', 'reset', 'recover', 'pipeline'].includes(mode ?? '') || !file)
-    throw new Error('Expected user add|reset|recover|pipeline private-input.json')
+  if (!['add', 'reset', 'recover', 'pipeline', 'projects'].includes(mode ?? '') || !file)
+    throw new Error('Expected user add|reset|recover|pipeline|projects private-input.json')
   const settings = await loadSettings()
   const input = await readPrivateJson(resolve(file))
   await withLocalDatabase(settings, async () => {
     const owner = new Pool(connection(settings, 'archava_operator'))
     try {
       if (mode === 'add') await enroll(owner, settings, input)
-      else if (mode === 'pipeline') {
+      else if (mode === 'projects') {
+        const account = z
+          .object({
+            username: usernameSchema,
+            tenants: z.array(z.string()).min(1).max(20),
+            access: z.enum(['read', 'write', 'none']),
+            scope: z.enum(['all', 'assigned']),
+          })
+          .strict()
+          .parse(input)
+        if (account.tenants.some((tenant) => !settings.tenants.some((item) => item.id === tenant)))
+          throw new Error('Unknown tenant')
+        const client = await owner.connect()
+        try {
+          await client.query('BEGIN')
+          const person = (
+            await client.query<{ principal_id: string }>(
+              'SELECT id AS principal_id FROM archava_identity.users WHERE username=$1 AND active FOR SHARE',
+              [account.username],
+            )
+          ).rows[0]
+          if (!person) throw new Error('Active identity required')
+          const permissions =
+            account.access === 'none'
+              ? []
+              : PROJECT_PERMISSIONS.filter(
+                  (permission) => account.access === 'write' || permission.endsWith('.read'),
+                )
+          for (const tenant of account.tenants) {
+            const member = (
+              await client.query<{ kind: string; active: boolean }>(
+                'SELECT kind,active FROM archava_crm.memberships WHERE tenant_id=$1 AND principal_id=$2 FOR SHARE',
+                [tenant, person.principal_id],
+              )
+            ).rows[0]
+            if (member?.kind !== 'human' || !member.active)
+              throw new Error('Active workspace membership required')
+            await client.query(
+              "INSERT INTO archava_projects.memberships(tenant_id,principal_id,kind,permissions,scope,active) VALUES($1,$2,'human',$3,$4,$5) ON CONFLICT(tenant_id,principal_id) DO UPDATE SET permissions=excluded.permissions,scope=excluded.scope,active=excluded.active",
+              [tenant, person.principal_id, permissions, account.scope, account.access !== 'none'],
+            )
+          }
+          await client.query('COMMIT')
+        } catch (error) {
+          await client.query('ROLLBACK')
+          throw error
+        } finally {
+          client.release()
+        }
+      } else if (mode === 'pipeline') {
         const account = z
           .object({
             username: usernameSchema,
@@ -365,6 +418,7 @@ async function restore(args: string[]) {
       await holdProviderAfterRestore(owner, CRM_PROVIDER_POLICY)
       await writeNativeControl(recovered, true, true)
       await migrateNative(owner)
+      await migrateProjects(owner)
       await grant(owner)
       // Restoring an older backup must never resurrect a logged-out session.
       await owner.query('DELETE FROM archava_identity.sessions')
@@ -399,6 +453,7 @@ async function resumeActions() {
     try {
       await migrateCrm(owner)
       await migrateNative(owner)
+      await migrateProjects(owner)
       await grant(owner)
       const active = (
         await owner.query(

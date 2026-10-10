@@ -17,6 +17,8 @@ import { startLocalBackups } from './backups.js'
 import { verifyRuntimeRelease, verifyReleaseDatabase, ReleaseProfileError } from './release.js'
 import { assertModuleLifecycle } from './modules.js'
 import { FULL_MODULES } from '@archava/config/assembly'
+import { ProjectService } from '@archava/projects'
+import { PostgresProjectRepository } from '@archava/projects-pg'
 
 // This local host also runs on desktops without reliable IPv6 routing.
 setDefaultResultOrder('ipv4first')
@@ -97,6 +99,11 @@ try {
         service,
         clock: Date.now,
       }),
+    (settings.modules ?? FULL_MODULES).projects
+      ? new ProjectService(
+          await PostgresProjectRepository.create(runtimePool, settings.fingerprintKey),
+        )
+      : undefined,
   )
   process.stdout.write(`CRM ready: ${host.origin}\n`)
   backups = startLocalBackups(settings)

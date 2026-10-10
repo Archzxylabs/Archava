@@ -1795,6 +1795,37 @@ workflow evidence remains explicit, especially taxonomy-only specialist families
 
 ---
 
+### 46.6 Authorized kit implementation programme
+
+The user subsequently authorized implementation of the researched programme and
+delegated its order. Track the objective and outstanding work in
+[the kit implementation ledger](docs/STARTER_KIT_IMPLEMENTATION.md). The research
+catalogue alone remains insufficient evidence of operational support.
+
+Implement shared capabilities and bounded kit scopes incrementally, with explicit
+domain ownership and real persistence/integration evidence. The first extension
+is internal project/task/milestone tracking through a reusable domain service,
+PostgreSQL adapter, strict API, read tools and owner dashboard. Its local scope and
+limits are defined in [the project module contract](docs/PROJECT_DELIVERY_MODULE.md).
+It does not create client contracts, accept payments, promise capacity or expand
+scope through an LLM.
+
+Profile 1.4.0 extends historical profile 1.3.0 with the kit planner and project
+module. Assembly contract 2.0.0 adds an optional project flag; contract 1.0.0 and
+the existing four-module defaults remain supported. New domain grants are explicit.
+The new schema is additive; original CRM behaviour, data and audit remain intact.
+
+Kit assembly must resolve every requirement against a verified installed profile.
+Unknown, missing, disabled and domain-review requirements are blockers. Narrow
+`crm_inquiry` or `project_tracking` scopes must never imply acceptance of the
+corresponding full operating kit. New scope does not change the approved pricebook.
+An assembly is configuration, not authentication, execution approval or deployment.
+
+Scheduling and resource reservations come next, then accommodation and commerce/
+food-service ownership. All 40 families remain in the work ledger. Specialist
+adapters require an explicit authoritative backend and supported domain contract;
+an unspecified integration cannot be labelled operational.
+
 ## 47. Packaging and incremental migration
 
 **DIST-01:** prove consumption through packed artifacts in at least two host/configuration contexts outside workspace source resolution. Declare transitive dependencies and runtime support. No package may rely on parent paths, test aliases, private environment files or another project's build output.

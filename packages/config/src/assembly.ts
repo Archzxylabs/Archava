@@ -7,6 +7,7 @@ export const moduleSelectionSchema = z
     pipeline: z.boolean(),
     assistant: z.boolean(),
     nativeActions: z.boolean(),
+    projects: z.boolean().optional(),
   })
   .strict()
   .superRefine((modules, ctx) => {
@@ -25,6 +26,11 @@ export const MINIMAL_MODULES: ModuleSelection = Object.freeze({
   pipeline: false,
   assistant: false,
   nativeActions: false,
+})
+/** Prospective assembly inventory. Existing four-module runtime defaults remain unchanged. */
+export const COMPOSABLE_MODULES: ModuleSelection = Object.freeze({
+  ...FULL_MODULES,
+  projects: true,
 })
 export const MODULE_CONTRACTS = [
   {
@@ -52,6 +58,14 @@ export const MODULE_CONTRACTS = [
     entry: '@archava/crm-assistant',
   },
   {
+    id: 'projects',
+    version: '1.0.0',
+    requires: ['contacts'],
+    packages: ['@archava/projects', '@archava/projects-pg', '@archava/identity-pg'],
+    permissions: ['projects.read', 'projects.write'],
+    entry: '@archava/projects',
+  },
+  {
     id: 'nativeActions',
     version: '1.0.0',
     requires: ['contacts', 'assistant'],
@@ -60,17 +74,32 @@ export const MODULE_CONTRACTS = [
     entry: '@archava/crm-act',
   },
 ] as const
-export const assemblyRequestSchema = z
-  .object({
-    version: z.literal('1.0.0'),
-    profile: z.string().regex(/^\d+\.\d+\.\d+$/),
-    modules: moduleSelectionSchema,
-  })
-  .strict()
+const legacyModules = moduleSelectionSchema.refine(
+  (modules) => modules.projects === undefined,
+  'Project composition requires assembly contract 2.0.0',
+)
+export const assemblyRequestSchema = z.discriminatedUnion('version', [
+  z
+    .object({
+      version: z.literal('1.0.0'),
+      profile: z.string().regex(/^\d+\.\d+\.\d+$/),
+      modules: legacyModules,
+    })
+    .strict(),
+  z
+    .object({
+      version: z.literal('2.0.0'),
+      profile: z.string().regex(/^\d+\.\d+\.\d+$/),
+      modules: moduleSelectionSchema,
+    })
+    .strict(),
+])
 export function planAssembly(raw: unknown, trustedCatalog: ReleaseCatalog) {
   const catalog = releaseCatalogSchema.parse(trustedCatalog)
   const request = assemblyRequestSchema.parse(raw)
   if (request.profile !== catalog.version) throw new Error('Unsupported assembly profile')
+  if (request.version === '2.0.0' && catalog.contracts.assembly !== '2.0.0')
+    throw new Error('Unsupported assembly contract')
   const enabled = MODULE_CONTRACTS.filter((module) => request.modules[module.id])
   for (const module of enabled) {
     if (module.requires.some((id) => !request.modules[id]))
@@ -79,7 +108,7 @@ export function planAssembly(raw: unknown, trustedCatalog: ReleaseCatalog) {
       throw new Error('Module implementation unavailable')
   }
   return {
-    version: '1.0.0' as const,
+    version: request.version,
     profile: catalog.version,
     modules: request.modules,
     entries: enabled.map((module) => ({

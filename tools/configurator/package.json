@@ -16,6 +16,7 @@
   "dependencies": {
     "@archava/config": "workspace:*",
     "@archava/pricing": "workspace:*",
+    "@archava/kits": "workspace:*",
     "zod": "4.1.12"
   },
   "devDependencies": {

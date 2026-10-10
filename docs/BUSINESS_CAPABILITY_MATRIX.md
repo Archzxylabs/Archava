@@ -58,37 +58,37 @@ vendor. Kombinasi dapat berubah berdasarkan discovery dan sumber data klien.
 
 `crm_contacts` dan `crm_sales_pipeline` memiliki implementasi lokal. Pipeline
 ditambahkan pada 9 Oktober sebagai ekstensi domain CRM; lihat
-[scope dan migrasi](CRM_PIPELINE.md). ID lain di tabel adalah label kandidat
+[scope dan migrasi](CRM_PIPELINE.md). Project tracking ditambahkan pada 11 Oktober; lihat [scope dan integrasi](PROJECT_DELIVERY_MODULE.md). ID lain di tabel adalah label kandidat
 dokumen. Tabel ini tidak mengaktifkan module dalam config, registry atau pricing
 catalog. Dependensi kandidat tetap konseptual sampai slice disepakati dan dibangun.
 
-| Label                  | Record / aturan yang dimiliki                                     | Reuse atau hubungan                                                   | Status / arah                                                              |
-| ---------------------- | ----------------------------------------------------------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| crm_contacts           | Contact, immutable activity, follow-up; scope/revision/audit      | Hubungan bisnis berizin; dua konteks sudah diuji                      | **Terbukti lokal**, scope terbatas; bukan CRM lengkap.                     |
-| crm_sales_pipeline     | Opportunity, stage, inherited owner, immutable transition history | Referensi contact; label config mempertahankan transition guard       | **Terbukti lokal** di dua consumer inquiry; bukan booking/project/payment. |
-| organization_accounts  | Organization, contact affiliation                                 | B2B/account ownership; organization text saat ini belum model account | Kondisional pada pipeline B2B.                                             |
-| project_delivery       | Project, task, milestone, dependency, review                      | Referensi agreed scope dan contact; assignment sendiri                | Kandidat **NEXT**, satu workflow kecil.                                    |
-| delivery_capacity      | Capacity/reservation, delivery queue, estimate evidence           | Project delivery; estimasi tidak menjadi janji otomatis               | Kandidat bersamaan jika queue benar-benar dibutuhkan.                      |
-| proposals_scope        | Scope version, proposal acceptance, amendment reference           | Memakai quote engine saat sesuai; signature port terpisah             | Planned; bekukan isi/versi yang disetujui.                                 |
-| invoicing              | Invoice snapshot, numbering, line/currency, correction refs       | Order/project/subscription mengirim billing intent                    | Planned; accounting/tax lokal dievaluasi lewat backend/adapter khusus.     |
-| payment_processing     | Payment attempt/event, verification, reconciliation, refund ref   | Provider authoritative; bind tenant/order/amount/currency             | Planned; payment success/receipt belum terbukti.                           |
-| catalog_products       | Product/service identity, attributes, variant refs                | Channel/pattern memakai public service yang sama                      | Planned; physical stock bukan milik catalog.                               |
-| commerce_orders        | Order lines, totals snapshot, fulfillment/return lifecycle        | Catalog, inventory/payment lewat aplikasi orkestrasi                  | Planned; payment processing tetap terpisah.                                |
-| inventory_quantities   | Stock movements/reservation per lokasi/item                       | Orders/purchasing/manufacturing; units/lots sesuai kebutuhan          | Later; finance/valuation bukan boolean stock.                              |
-| purchasing             | Supplier, request/order, goods receipt refs                       | Inventory dan billing via service yang dimiliki masing-masing         | Later; approval limits/receipt mismatch eksplisit.                         |
-| appointment_scheduling | Resource/time, holds, confirmation, reschedule                    | Users/resource directories; catalog optional                          | Later; overlap/capacity/timezone concurrency wajib diuji.                  |
-| asset_register         | Asset identity, condition, maintenance/availability refs          | Rental atau field-service; SKU tidak menggantikan serialized asset    | Later; kebutuhan berbeda dari fixed-assets accounting.                     |
-| asset_rental           | Rental terms, handover, return, overdue/damage refs               | Asset register dan scheduling; payment provider optional              | Later; kontrak pengembalian milik rental.                                  |
-| accommodation_ops      | Stay/room assignment, housekeeping, room status                   | Shared scheduling/payment refs; domain hotel sendiri                  | Later; PMS adapter layak dievaluasi sebelum native suite.                  |
-| subscriptions_usage    | Subscription lifecycle, usage evidence/adjustments                | Payment/invoicing source refs; provider meter jika dipilih            | Later; fixed recurring dan metered berbeda aturan.                         |
-| entitlements           | Feature/resource rights, quota, lifecycle policy                  | Subscription/customer references; authorization tetap server-side     | Later; pembayaran atau paid tier tidak memberi admin role.                 |
-| support_cases          | Ticket, status/priority, routing, SLA applicability               | Contact/knowledge/integration refs                                    | Later atau adapter; follow-up task bukan ticketing penuh.                  |
-| education_programs     | Student/program/course, term/enrollment/access                    | Scheduling dan fees; pisahkan guardian/student dari sales contacts    | Extension khusus; mulai dari kursus jika demand ada.                       |
-| foodservice_ops        | Table/service/kitchen lifecycle, menu availability                | Catalog/order/POS; recipe consumption jika diperlukan                 | Extension khusus; assess POS existing.                                     |
-| manufacturing_ops      | BOM version, production/work order, yield/material refs           | Inventory/procurement; specialized quality/costing                    | **DEFER**, evaluate mature ERP first.                                      |
-| marketplace_settlement | Seller scope, fee contract, transfer/settlement evidence          | Multi-party provider adapter, orders/service refs                     | **DEFER**, bukan checkout satu merchant.                                   |
-| fundraising            | Donor relation, pledge/donation, campaign allocation              | Payment refs; recurring optional                                      | Later, profil nonprofit tervalidasi.                                       |
-| clinical_admin         | Patient-facing scheduling/admin refs dan akses khusus             | Link ke patient system via authorized service; scope terseleksi       | **DEFER**, clinical record/EHR bukan generic CRM.                          |
+| Label                  | Record / aturan yang dimiliki                                     | Reuse atau hubungan                                                   | Status / arah                                                                     |
+| ---------------------- | ----------------------------------------------------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| crm_contacts           | Contact, immutable activity, follow-up; scope/revision/audit      | Hubungan bisnis berizin; dua konteks sudah diuji                      | **Terbukti lokal**, scope terbatas; bukan CRM lengkap.                            |
+| crm_sales_pipeline     | Opportunity, stage, inherited owner, immutable transition history | Referensi contact; label config mempertahankan transition guard       | **Terbukti lokal** di dua consumer inquiry; bukan booking/project/payment.        |
+| organization_accounts  | Organization, contact affiliation                                 | B2B/account ownership; organization text saat ini belum model account | Kondisional pada pipeline B2B.                                                    |
+| project_delivery       | Project, task, milestone, revision dan audit                      | Scope internal dan ownership sendiri; tidak tergantung CRM/LLM        | **Terbukti lokal** untuk tracking; dependency graph, proposal dan capacity belum. |
+| delivery_capacity      | Capacity/reservation, delivery queue, estimate evidence           | Project delivery; estimasi tidak menjadi janji otomatis               | Kandidat bersamaan jika queue benar-benar dibutuhkan.                             |
+| proposals_scope        | Scope version, proposal acceptance, amendment reference           | Memakai quote engine saat sesuai; signature port terpisah             | Planned; bekukan isi/versi yang disetujui.                                        |
+| invoicing              | Invoice snapshot, numbering, line/currency, correction refs       | Order/project/subscription mengirim billing intent                    | Planned; accounting/tax lokal dievaluasi lewat backend/adapter khusus.            |
+| payment_processing     | Payment attempt/event, verification, reconciliation, refund ref   | Provider authoritative; bind tenant/order/amount/currency             | Planned; payment success/receipt belum terbukti.                                  |
+| catalog_products       | Product/service identity, attributes, variant refs                | Channel/pattern memakai public service yang sama                      | Planned; physical stock bukan milik catalog.                                      |
+| commerce_orders        | Order lines, totals snapshot, fulfillment/return lifecycle        | Catalog, inventory/payment lewat aplikasi orkestrasi                  | Planned; payment processing tetap terpisah.                                       |
+| inventory_quantities   | Stock movements/reservation per lokasi/item                       | Orders/purchasing/manufacturing; units/lots sesuai kebutuhan          | Later; finance/valuation bukan boolean stock.                                     |
+| purchasing             | Supplier, request/order, goods receipt refs                       | Inventory dan billing via service yang dimiliki masing-masing         | Later; approval limits/receipt mismatch eksplisit.                                |
+| appointment_scheduling | Resource/time, holds, confirmation, reschedule                    | Users/resource directories; catalog optional                          | Later; overlap/capacity/timezone concurrency wajib diuji.                         |
+| asset_register         | Asset identity, condition, maintenance/availability refs          | Rental atau field-service; SKU tidak menggantikan serialized asset    | Later; kebutuhan berbeda dari fixed-assets accounting.                            |
+| asset_rental           | Rental terms, handover, return, overdue/damage refs               | Asset register dan scheduling; payment provider optional              | Later; kontrak pengembalian milik rental.                                         |
+| accommodation_ops      | Stay/room assignment, housekeeping, room status                   | Shared scheduling/payment refs; domain hotel sendiri                  | Later; PMS adapter layak dievaluasi sebelum native suite.                         |
+| subscriptions_usage    | Subscription lifecycle, usage evidence/adjustments                | Payment/invoicing source refs; provider meter jika dipilih            | Later; fixed recurring dan metered berbeda aturan.                                |
+| entitlements           | Feature/resource rights, quota, lifecycle policy                  | Subscription/customer references; authorization tetap server-side     | Later; pembayaran atau paid tier tidak memberi admin role.                        |
+| support_cases          | Ticket, status/priority, routing, SLA applicability               | Contact/knowledge/integration refs                                    | Later atau adapter; follow-up task bukan ticketing penuh.                         |
+| education_programs     | Student/program/course, term/enrollment/access                    | Scheduling dan fees; pisahkan guardian/student dari sales contacts    | Extension khusus; mulai dari kursus jika demand ada.                              |
+| foodservice_ops        | Table/service/kitchen lifecycle, menu availability                | Catalog/order/POS; recipe consumption jika diperlukan                 | Extension khusus; assess POS existing.                                            |
+| manufacturing_ops      | BOM version, production/work order, yield/material refs           | Inventory/procurement; specialized quality/costing                    | **DEFER**, evaluate mature ERP first.                                             |
+| marketplace_settlement | Seller scope, fee contract, transfer/settlement evidence          | Multi-party provider adapter, orders/service refs                     | **DEFER**, bukan checkout satu merchant.                                          |
+| fundraising            | Donor relation, pledge/donation, campaign allocation              | Payment refs; recurring optional                                      | Later, profil nonprofit tervalidasi.                                              |
+| clinical_admin         | Patient-facing scheduling/admin refs dan akses khusus             | Link ke patient system via authorized service; scope terseleksi       | **DEFER**, clinical record/EHR bukan generic CRM.                                 |
 
 Pembagian ini merupakan rancangan ownership kita. Fakta vendor mendukung adanya
 workflow terkait, bukan keharusan bahwa 25 label tersebut harus menjadi 25 package.
@@ -167,8 +167,9 @@ sudah didukung. Tidak ada target 80–90% reuse yang diklaim sudah terukur.
 ## Prioritas untuk tim kecil
 
 Selesaikan gate operasional pada slice yang ada. **crm_sales_pipeline** sudah
-memiliki bukti lokal pada dua consumer inquiry. Pilih **project_delivery** berikutnya
-jika workflow nyata memintanya.
+memiliki bukti lokal pada dua consumer inquiry. **project_delivery** kini juga
+memiliki bukti untuk tracking internal di dua consumer. Slice berikutnya adalah
+scheduling/resource reservations; operasi hotel tetap memerlukan domain tersendiri.
 Scheduling, invoicing/payment, atau commerce dipilih mengikuti pelanggan pertama
 yang kebutuhannya berulang. Clinical EHR, universal accounting/payroll, MRP penuh,
 dan settlement marketplace native tetap ditunda. Website ARCHZXY berada di proyek

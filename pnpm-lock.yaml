@@ -89,6 +89,12 @@ importers:
       '@archava/presence':
         specifier: workspace:*
         version: link:../../packages/presence
+      '@archava/projects':
+        specifier: workspace:*
+        version: link:../../packages/projects
+      '@archava/projects-pg':
+        specifier: workspace:*
+        version: link:../../packages/projects-pg
       '@archava/provider-runtime':
         specifier: workspace:*
         version: link:../../packages/provider-runtime
@@ -568,6 +574,22 @@ importers:
         specifier: 4.1.11
         version: 4.1.11(@types/node@24.9.1)(@vitest/coverage-v8@4.1.11)(vite@7.3.6(@types/node@24.9.1)(tsx@4.20.6))
 
+  packages/kits:
+    dependencies:
+      '@archava/config':
+        specifier: workspace:*
+        version: link:../config
+      zod:
+        specifier: 4.1.12
+        version: 4.1.12
+    devDependencies:
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@24.9.1)(@vitest/coverage-v8@4.1.11)(vite@7.3.6(@types/node@24.9.1)(tsx@4.20.6))
+
   packages/knowledge:
     dependencies:
       '@archava/acl':
@@ -612,6 +634,41 @@ importers:
         specifier: 4.1.12
         version: 4.1.12
     devDependencies:
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@24.9.1)(@vitest/coverage-v8@4.1.11)(vite@7.3.6(@types/node@24.9.1)(tsx@4.20.6))
+
+  packages/projects:
+    dependencies:
+      zod:
+        specifier: 4.1.12
+        version: 4.1.12
+    devDependencies:
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@24.9.1)(@vitest/coverage-v8@4.1.11)(vite@7.3.6(@types/node@24.9.1)(tsx@4.20.6))
+
+  packages/projects-pg:
+    dependencies:
+      '@archava/projects':
+        specifier: workspace:*
+        version: link:../projects
+      pg:
+        specifier: 8.23.1
+        version: 8.23.1
+      zod:
+        specifier: 4.1.12
+        version: 4.1.12
+    devDependencies:
+      '@types/pg':
+        specifier: 8.23.1
+        version: 8.23.1
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -742,6 +799,9 @@ importers:
       '@archava/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@archava/kits':
+        specifier: workspace:*
+        version: link:../../packages/kits
       '@archava/pricing':
         specifier: workspace:*
         version: link:../../packages/pricing

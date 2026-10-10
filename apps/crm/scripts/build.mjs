@@ -94,6 +94,7 @@ const browser = await build({
   format: 'esm',
   target: 'es2022',
   alias: {
+    '@archava/projects/dashboard': join(output, 'node_modules/@archava/projects/dist/dashboard.js'),
     '@archava/config/assembly': join(output, 'node_modules/@archava/config/dist/assembly.js'),
     '@archava/crm/contracts': join(output, 'node_modules/@archava/crm/dist/contracts.js'),
     '@archava/crm/overview-contracts': join(
@@ -143,6 +144,7 @@ if (
     (path) =>
       path.includes('identity-pg') ||
       path.includes('crm-pg') ||
+      path.includes('projects-pg') ||
       path.includes('provider-runtime') ||
       path.includes('node:') ||
       /crm-assistant\/dist\/(conversation|planner|gemini-planner|server|index)\.js/.test(path) ||

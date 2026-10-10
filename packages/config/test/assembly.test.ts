@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { releaseCatalogSchema } from '../src/release-contracts.js'
-import { planAssembly, MINIMAL_MODULES, FULL_MODULES } from '../src/assembly.js'
+import { planAssembly, MINIMAL_MODULES, FULL_MODULES, COMPOSABLE_MODULES } from '../src/assembly.js'
 const trusted = releaseCatalogSchema.parse({
   schemaVersion: '1.0.0',
   id: 'archava-local-library',
@@ -22,6 +22,28 @@ const trusted = releaseCatalogSchema.parse({
 })
 const request = (modules: unknown) => ({ version: '1.0.0', profile: trusted.version, modules })
 describe('untrusted composition requests', () => {
+  it('composes projects only under the supported v2 contract and never silently changes legacy defaults', () => {
+    const available = {
+      ...trusted,
+      contracts: { ...trusted.contracts, assembly: '2.0.0' as const },
+      packages: [
+        ...trusted.packages,
+        { name: '@archava/projects', version: '0.1.0', migrations: [] },
+        { name: '@archava/projects-pg', version: '0.1.0', migrations: [] },
+      ],
+    }
+    const input = { version: '2.0.0', profile: trusted.version, modules: COMPOSABLE_MODULES }
+    expect(planAssembly(input, available).entries.map((x) => x.id)).toContain('projects')
+    expect(planAssembly(request(FULL_MODULES), available).entries).toHaveLength(4)
+    expect(() => planAssembly({ ...input, version: '1.0.0' }, available)).toThrow()
+    expect(() => planAssembly(input, trusted)).toThrow('contract')
+    expect(() =>
+      planAssembly(input, {
+        ...available,
+        packages: available.packages.filter((x) => x.name !== '@archava/projects-pg'),
+      }),
+    ).toThrow('unavailable')
+  })
   it('plans minimal and full configurations using shared installed entries without authority', () => {
     expect(planAssembly(request(MINIMAL_MODULES), trusted).entries.map((x) => x.id)).toEqual([
       'contacts',

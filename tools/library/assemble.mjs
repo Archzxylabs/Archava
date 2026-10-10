@@ -8,9 +8,12 @@ import { createHash } from 'node:crypto'
 const root = resolve(import.meta.dirname, '../..')
 const args = process.argv.slice(2)
 const dry = args.includes('--dry-run')
-const positional = args.filter((value) => value !== '--dry-run')
+const kitMode = args.includes('--kit')
+if (args.some((value) => value.startsWith('--') && value !== '--kit' && value !== '--dry-run'))
+  throw new Error('Unknown assembly option')
+const positional = args.filter((value) => value !== '--dry-run' && value !== '--kit')
 if (positional.length !== 2)
-  throw new Error('Usage: library:assemble selection.json NEW_DIRECTORY [--dry-run]')
+  throw new Error('Usage: library:assemble selection.json NEW_DIRECTORY [--kit] [--dry-run]')
 const library = join(root, 'dist/library')
 const require = createRequire(join(root, 'dist/crm-runtime/package.json'))
 const api = await import(pathToFileURL(require.resolve('@archava/config/assembly')).href)
@@ -26,7 +29,26 @@ for (const artifact of profile.artifacts) {
   if (createHash('sha256').update(bytes).digest('hex') !== artifact.sha256)
     throw new Error('Artifact hash mismatch')
 }
-const plan = api.planAssembly(JSON.parse(await readFile(resolve(positional[0]), 'utf8')), trusted)
+const raw = JSON.parse(await readFile(resolve(positional[0]), 'utf8'))
+let kitPlan
+if (kitMode) {
+  const kits = await import(pathToFileURL(require.resolve('@archava/kits')).href)
+  kitPlan = new kits.KitPlanner(trusted, api.COMPOSABLE_MODULES).plan(raw)
+  if (!kitPlan.readyToAssemble || !kitPlan.assembly) {
+    process.stdout.write(JSON.stringify({ kitPlan, dryRun: dry }, null, 2) + '\n')
+    process.exit(2)
+  }
+}
+const plan = api.planAssembly(
+  kitPlan
+    ? {
+        version: kitPlan.assembly.projects !== undefined ? '2.0.0' : '1.0.0',
+        profile: trusted.version,
+        modules: kitPlan.assembly,
+      }
+    : raw,
+  trusted,
+)
 const output = resolve(positional[1])
 try {
   await lstat(output)
@@ -40,6 +62,10 @@ if (!dry) {
     await writeFile(join(output, 'assembly.json'), JSON.stringify(plan, null, 2) + '\n', {
       flag: 'wx',
     })
+    if (kitPlan)
+      await writeFile(join(output, 'kit-plan.json'), JSON.stringify(kitPlan, null, 2) + '\n', {
+        flag: 'wx',
+      })
     await writeFile(join(output, 'release-profile.json'), JSON.stringify(profile, null, 2) + '\n', {
       flag: 'wx',
     })
@@ -74,4 +100,6 @@ if (!dry) {
     throw error
   }
 }
-process.stdout.write(JSON.stringify({ ...plan, dryRun: dry }, null, 2) + '\n')
+process.stdout.write(
+  JSON.stringify({ ...plan, ...(kitPlan ? { kitPlan } : {}), dryRun: dry }, null, 2) + '\n',
+)

@@ -41,6 +41,9 @@ if (process.argv.includes('--run')) {
   run('runtime', ['pnpm', 'crm:verify-runtime'])
   run('reuse', ['pnpm', 'reuse:verify'])
   run('assembly', ['pnpm', 'assembly:verify'])
+  run('kits', ['pnpm', 'kits:verify'])
+  run('projects', ['pnpm', 'projects:verify'])
+  run('project-host', ['pnpm', 'projects:verify-host'])
 }
 run('platform-audit', ['pnpm', 'audit', '--json'], root, [0, 1])
 run('runtime-audit', ['npm', 'audit', '--json'], join(root, 'dist/crm-runtime'), [0, 1])
@@ -78,9 +81,15 @@ const proofs = {
   runtime: await json(join(root, 'dist/crm-runtime-proof/results.json')),
   crm: await json(join(root, 'dist/crm-proof/results.json')),
   act: await json(join(root, 'dist/act-proof/results.json')),
+  kits: await json(join(root, 'dist/kit-proof/results.json')),
+  projects: await json(join(root, 'dist/project-proof/results.json')),
+  projectHost: await json(join(root, 'dist/project-host-proof/results.json')),
 }
+for (const name of ['runtime', 'kits', 'projects', 'projectHost'])
+  assert.equal(proofs[name].profile, profile.catalog.version, 'Stale release proof: ' + name)
 assert.equal(proofs.runtime.providerCalls, 0)
 assert.equal(proofs.act.providerCalls, 0)
+assert.equal(proofs.projectHost.providerCalls, 0)
 const controls = [
   [
     'identity-session-csrf',
@@ -167,6 +176,51 @@ const controls = [
     'runtime',
     'startup refuses changed installed',
   ],
+  [
+    'kit-readiness-no-implicit-support',
+    ['packages/kits/src/index.ts', 'tools/library/assemble.mjs'],
+    'kits',
+    'all 40 full operation|refuses missing requirements',
+  ],
+  [
+    'project-current-grants-and-scope',
+    ['packages/projects-pg/src/repository.ts'],
+    'projects',
+    'tenant separation|revocation blocks stale receipts',
+  ],
+  [
+    'project-human-writes-only',
+    ['packages/projects/src/service.ts', 'packages/projects/src/tools.ts'],
+    'projects',
+    'viewer cannot write|read operations only',
+  ],
+  [
+    'project-parent-revision-and-idempotency',
+    ['packages/projects-pg/src/repository.ts'],
+    'projects',
+    '20 concurrent submissions|competing child mutations',
+  ],
+  [
+    'project-delivery-and-scope-boundary',
+    [
+      'packages/projects-pg/src/repository.ts',
+      'packages/projects-pg/migrations/001_project_delivery.sql',
+    ],
+    'projects',
+    'unfinished required work|cancelled required tasks',
+  ],
+  [
+    'project-host-auth-and-lifecycle',
+    ['apps/crm/src/host.ts', 'apps/crm/src/operator.ts'],
+    'projectHost',
+    'CSRF|never grants domain access|disable and re-enable',
+  ],
+  [
+    'project-recovery-and-restore',
+    ['packages/projects/src/dashboard.ts', 'apps/crm/src/backups.ts'],
+    'projectHost',
+    'response loss|backup restore',
+  ],
 ]
 const matrix = []
 for (const [id, sources, proof, pattern] of controls) {
@@ -176,12 +230,14 @@ for (const [id, sources, proof, pattern] of controls) {
   matrix.push({
     id,
     sources,
-    command:
-      proof === 'runtime'
-        ? 'pnpm crm:verify-runtime'
-        : proof === 'crm'
-          ? 'pnpm crm:verify'
-          : 'pnpm act:verify',
+    command: {
+      runtime: 'pnpm crm:verify-runtime',
+      crm: 'pnpm crm:verify',
+      act: 'pnpm act:verify',
+      kits: 'pnpm kits:verify',
+      projects: 'pnpm projects:verify',
+      projectHost: 'pnpm projects:verify-host',
+    }[proof],
     positiveAndRefusalChecks: checks,
     result: 'passed',
   })

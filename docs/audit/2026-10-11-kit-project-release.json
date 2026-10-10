@@ -1,0 +1,264 @@
+{
+  "schemaVersion": "1.0.0",
+  "profile": "1.4.0",
+  "checkedAt": "2026-10-10T17:35:01.499Z",
+  "sourceBaseline": "2317d5b",
+  "scope": "trusted kit catalogue/planning and bounded local internal project tracking",
+  "kitCandidates": 40,
+  "operationalKitsAccepted": [],
+  "inventory": {
+    "workspaces": 36,
+    "internalArtifacts": 28,
+    "externalPins": 18,
+    "databaseLedgers": 6,
+    "host": {
+      "name": "@archava/crm-host",
+      "version": "0.7.0"
+    },
+    "contracts": {
+      "clientConfig": "1.0.0",
+      "deploymentPlan": "2.0.0",
+      "hostSettings": 1,
+      "assembly": "2.0.0",
+      "presence": "1.0.0",
+      "kitPlan": "1.0.0",
+      "kitCatalogue": "1.0.0"
+    }
+  },
+  "verification": {
+    "root": {
+      "command": "pnpm verify",
+      "gatesPassed": 8,
+      "unitTests": 1475,
+      "unitFiles": 104
+    },
+    "kits": {
+      "checksPassed": 7,
+      "report": "dist/kit-proof/results.json"
+    },
+    "projects": {
+      "checksPassed": 15,
+      "report": "dist/project-proof/results.json"
+    },
+    "projectHost": {
+      "checksPassed": 11,
+      "report": "dist/project-host-proof/results.json"
+    },
+    "runtime": {
+      "checksPassed": 44,
+      "report": "dist/crm-runtime-proof/results.json"
+    },
+    "crm": {
+      "checksPassed": 38,
+      "report": "dist/crm-proof/results.json"
+    },
+    "act": {
+      "checksPassed": 18,
+      "report": "dist/act-proof/results.json"
+    },
+    "upgrade": {
+      "checksPassed": 4,
+      "report": "dist/upgrade-proof/results.json"
+    },
+    "browser": {
+      "checksPassed": 70,
+      "report": "dist/browser-proof/results.json"
+    },
+    "minimalBrowser": {
+      "checksPassed": 3,
+      "profile": "1.4.0"
+    }
+  },
+  "security": {
+    "controlsPassed": 22,
+    "scans": {
+      "platform": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0
+      },
+      "runtime": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      },
+      "template": {
+        "info": 0,
+        "low": 0,
+        "moderate": 13,
+        "high": 0,
+        "critical": 0,
+        "total": 13
+      }
+    },
+    "report": "dist/security-proof/results.json",
+    "certification": false
+  },
+  "ownerUpgrade": {
+    "backupBeforeAndAfter": true,
+    "originalCrmTablesVerifiedUnchanged": 8,
+    "identityAndFingerprintKeysUnchanged": true,
+    "settingsMatchPreUpgradeSnapshot": true,
+    "existingDomainGrantsUnchanged": true,
+    "doctorProfileVerified": "1.4.0",
+    "projectActivation": "explicit; not automatically granted",
+    "privateDataIncluded": false
+  },
+  "limits": [
+    "No full operational kit accepted from research manifests or narrow tracking",
+    "Project scope confirmation is internal and not a client signature",
+    "Proposal, pricing for new kits, deposit verification, capacity and change orders remain separate work",
+    "Project dashboard holds uncertain writes in memory; durable reload recovery is not implemented",
+    "Existing CRM conversation does not yet route project-language requests to the project read tools",
+    "API supports initial deadlines; deadline editing, assignment and project risk reports remain future work",
+    "Remaining general and specialist kits stay in the implementation ledger",
+    "Realtime template findings, SDK integration and live/production evidence remain separate gates"
+  ],
+  "artifacts": [
+    {
+      "name": "@archava/projects-pg",
+      "version": "0.1.0",
+      "implementationSha256": "7b5848b78ad82549484a278a02981ada2bbfeb47762f0bdca2e2e35aa96881de"
+    },
+    {
+      "name": "@archava/projects",
+      "version": "0.1.0",
+      "implementationSha256": "de2dcec40737815527cc4a89556da1eaa2750ed7d7ce57a7d47acda859ad33b3"
+    },
+    {
+      "name": "@archava/kits",
+      "version": "0.1.0",
+      "implementationSha256": "c185d09a1ce007ac855a8c2e98c085f9f95c6e0c2d1082dda154e7d0d86b0a86"
+    },
+    {
+      "name": "@archava/config",
+      "version": "0.6.0",
+      "implementationSha256": "2c27a7a0953a9b8107e878e6b24a4dc765f086b0aa5f9766b531e9a43e0ceb24"
+    },
+    {
+      "name": "@archava/crm-act",
+      "version": "0.2.0",
+      "implementationSha256": "dd1d4d10836c57550f0e65b1635707b1ec7cfc0c709ae538f41eff9779edbe3b"
+    },
+    {
+      "name": "@archava/crm",
+      "version": "0.7.0",
+      "implementationSha256": "00792f899ecbef59ebd9f9eb0feba6ff8f08fcd3feb8ece7fb569110cdcf3514"
+    },
+    {
+      "name": "@archava/crm-pg",
+      "version": "0.7.0",
+      "implementationSha256": "4d1078b2907ce586f11387e9497f4f1ef08767c56d3fe7cd29b8a0ef0e2dff73"
+    },
+    {
+      "name": "@archava/act-host",
+      "version": "0.3.0",
+      "implementationSha256": "4b95cd32a149cafa9941cc87db6994127d08193b53cb214db10b466d6290c189"
+    },
+    {
+      "name": "@archava/acl",
+      "version": "0.3.0",
+      "implementationSha256": "387c686076c27039ca15e5467b439e38c37f5c1e1193177e59ce8a0a716a5572"
+    },
+    {
+      "name": "@archava/core",
+      "version": "0.1.0",
+      "implementationSha256": "bb9dd57d3878ae3cf65a2790d7ab49dea49bb39824b3953006d68c8ec2b1f71a"
+    },
+    {
+      "name": "@archava/act-confirmation",
+      "version": "0.3.0",
+      "implementationSha256": "37dbe66d6d5094104fc968ed7813aee29591a7132298a25040defa406640dcb4"
+    },
+    {
+      "name": "@archava/adapters",
+      "version": "0.1.0",
+      "implementationSha256": "64877cc902efa7308f314e0deac903270d6be35682dfe69290087faae404273a"
+    },
+    {
+      "name": "@archava/assistant",
+      "version": "0.5.0",
+      "implementationSha256": "87ca88e5ff43c32e3a0008c5006a2f33dc6b6002124a9360d5003b601ec263b0"
+    },
+    {
+      "name": "@archava/decision",
+      "version": "0.1.0",
+      "implementationSha256": "b5648818caa633cf4919a6a3096de753534ecf56f5f1a9bf7a8687b4989aa217"
+    },
+    {
+      "name": "@archava/knowledge",
+      "version": "0.1.0",
+      "implementationSha256": "4abe2ed9ff1c4bfe572131fc2d817c26cf48622221c3cc0d06e8df36e6a5d29b"
+    },
+    {
+      "name": "@archava/act-host-pg",
+      "version": "0.2.0",
+      "implementationSha256": "5e9769f112258240d53a78c4ff1c087360621e33ed93dc9f5cc55d63fc9a6e44"
+    },
+    {
+      "name": "@archava/act-storage",
+      "version": "0.2.0",
+      "implementationSha256": "aefbb56d97e6bc7bcb470246acab234b135b5e397659ac38d14ea4f4dbca6276"
+    },
+    {
+      "name": "@archava/act-booking",
+      "version": "0.2.0",
+      "implementationSha256": "6fc4bfd8dcdcee1b9208730b5a91730d58850ed3f2c5f3945945b9114d94201b"
+    },
+    {
+      "name": "@archava/act-email",
+      "version": "0.2.0",
+      "implementationSha256": "b9969471b7a2fb8b7792ce1b6a220570ee6bf4f24fd3423ca550fcf54223565f"
+    },
+    {
+      "name": "@archava/act-confirmation-pg",
+      "version": "0.1.0",
+      "implementationSha256": "4493325f2c3e25b32fb6f78701bbaf7cb42b7773659fb0e238961f2c10dfc6d9"
+    },
+    {
+      "name": "@archava/presence",
+      "version": "0.1.0",
+      "implementationSha256": "59833f8a6071f4360b0062dee6f5c60bad8efd5c7febe41ce519a4190f31371f"
+    },
+    {
+      "name": "@archava/sdk",
+      "version": "0.1.0",
+      "implementationSha256": "c898264e93e0f6649977d69d0b35f9621229302ab4fd5e1dbae81b9b4cbdb4c3"
+    },
+    {
+      "name": "@archava/chat",
+      "version": "0.1.0",
+      "implementationSha256": "d642165b556c3ae490d770cd80429cb3953148b465d2ce2124fd7fd249eb66a4"
+    },
+    {
+      "name": "@archava/identity-pg",
+      "version": "0.1.0",
+      "implementationSha256": "44ceef698ce0fce7116a847ada1298a789b997c5d4b2d57822c7c1f3cfc140a7"
+    },
+    {
+      "name": "@archava/crm-assistant",
+      "version": "0.7.0",
+      "implementationSha256": "d5c2b841137b35bd6c842fbf516db322866d1db90665de0ec896200b90b5d0a6"
+    },
+    {
+      "name": "@archava/provider-runtime",
+      "version": "0.1.0",
+      "implementationSha256": "8616bcb4eb0d0a98b6d61395c2d9114655ae61d903ddf991884770e9a4755223"
+    },
+    {
+      "name": "@archava/act",
+      "version": "0.2.0",
+      "implementationSha256": "0abbcc2d51ab243279c519ed5c8ba7d636f3d8bfbd4bdb963ae72afa0699b084"
+    },
+    {
+      "name": "@archava/act-postmark",
+      "version": "0.2.0",
+      "implementationSha256": "59d6cbe65eea6a338f3e787c654d59009b076ae2f8f81b52fb7bb294199d7a0d"
+    }
+  ]
+}

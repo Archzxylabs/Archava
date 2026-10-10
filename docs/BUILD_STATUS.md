@@ -1,6 +1,33 @@
 # Build status
 
-## Current checkpoint — 10 October 2026
+## Current checkpoint — 11 October 2026
+
+Profile `1.4.0` adds the trusted 40-family catalogue/readiness planner and a reusable
+internal project/task/milestone module. The pure domain and PostgreSQL adapter work
+without CRM or an LLM; the existing owner host composes them with explicit project
+grants and an optional module flag. See [project scope](PROJECT_DELIVERY_MODULE.md),
+[kit work ledger](STARTER_KIT_IMPLEMENTATION.md) and
+[release evidence](audit/2026-10-11-kit-project-release.json).
+
+All eight root gates passed: 1,475 tests in 104 files. Fresh checks passed CRM 38,
+Act 18, persistent host 44, Chromium minimal/full 3/70, kit planning/consumption 7,
+project domain 15, project owner/browser 11 and prior-profile upgrade 4. The
+22-control security matrix and current root/runtime advisory scans passed; the
+separate realtime template still has 13 moderate findings and its earlier SDK gap.
+
+The original owner installation was backed up and upgraded additively. Hash/count
+comparisons preserve all eight CRM tables and both identity/fingerprint keys.
+Doctor verifies profile 1.4.0. Existing account grants and four-module settings stay
+unchanged; project activation requires the explicit steps in its module guide.
+
+Full operational kits accepted: **0 of 40 researched candidates**. This is a kit
+count, not a whole-product percentage. Narrow inquiry/tracking scopes do not count
+as complete hotel, agency or construction systems. Scheduling/accommodation,
+commerce/food service, remaining general families and specialist integrations remain
+in the work ledger. Dashboard project reload recovery and project-language routing
+in the existing CRM conversation are also outside this first slice.
+
+## Previous accepted checkpoint — 10 October 2026
 
 **Supported local scope:** profile `1.3.0` implements PRD v2.1 §50.
 EXEC-01–EXEC-06 have accepted runnable evidence and completed local handoff. The earlier local owner pilot remains accepted. See

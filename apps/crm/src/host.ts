@@ -21,6 +21,7 @@ import { ActHostRefusal } from '@archava/act-host'
 import { FULL_MODULES } from '@archava/config/assembly'
 import { PresenceRefusal } from '@archava/presence'
 import { createHostPresence, presenceRefusalResponse } from './presence.js'
+import { createProjectApi, type ProjectService } from '@archava/projects'
 
 const json = (value: unknown, status = 200, headers: Record<string, string> = {}) =>
   Response.json(value, { status, headers: { 'cache-control': 'no-store', ...headers } })
@@ -48,6 +49,7 @@ export function createHostHandler(
     new LocalCrmPlanner(),
   plannerMode: 'local' | 'gemini-synthetic' = 'local',
   nativeFor?: (tenantId: string, humanId: string) => Promise<NativeCrmActHost>,
+  projects?: ProjectService,
 ) {
   const modules = settings.modules ?? FULL_MODULES
   if (!modules.pipeline) pipeline = undefined
@@ -146,6 +148,23 @@ export function createHostHandler(
         return json({ authenticated: false }, 200, {
           'set-cookie': sessionCookie(cookieName, '', secure, true),
         })
+      }
+      if (url.pathname.startsWith('/api/projects/')) {
+        const tenant = /^\/api\/projects\/([^/]+)/.exec(url.pathname)?.[1]
+        if (
+          !tenant ||
+          !modules.projects ||
+          !projects ||
+          !settings.tenants.some((item) => item.id === tenant)
+        )
+          return json({ error: 'not_found' }, 404)
+        await service.access(tenant, { kind: 'human', id: session.principalId })
+        return await createProjectApi(projects, () =>
+          Promise.resolve({
+            kind: 'human',
+            id: session.principalId,
+          }),
+        )(request)
       }
       if (url.pathname.startsWith('/api/crm/')) {
         const unavailable = () =>
@@ -331,6 +350,7 @@ export async function startCrmHost(
   plannerFor?: (utterance: string, attemptId: string) => CrmConversationPlanner,
   plannerMode?: 'local' | 'gemini-synthetic',
   nativeFor?: (tenantId: string, humanId: string) => Promise<NativeCrmActHost>,
+  projects?: ProjectService,
 ) {
   let handler: ReturnType<typeof createHostHandler> | undefined
   const handle = (request: Request, source: string) => {
@@ -344,6 +364,7 @@ export async function startCrmHost(
       plannerFor,
       plannerMode,
       nativeFor,
+      projects,
     )
     return handler(request, source)
   }

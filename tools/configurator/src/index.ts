@@ -74,3 +74,6 @@ export {
 
 // Orchestration: intake in, priced variants and a selection out.
 export { buildConfigSet, type ConfigSet, type PricedVariant } from './build.js'
+
+// Host-owned business scope planning; no runtime implementation or price authority.
+export { KitPlanner, listKits, getKit, type KitPlan, type KitRequest } from '@archava/kits'

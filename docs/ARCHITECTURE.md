@@ -1,6 +1,6 @@
 # Architecture
 
-Updated for local profile `1.3.0`, 10 October 2026. Baseline re-audit source: `80ea845`. The [repository re-audit](PROJECT_REAUDIT_2026-10-10.md) records findings and next priorities. [PRD §§40–50](../PRD.md) describes the target; this document describes the implementation. ARCHZXY's company website is a separate consumer project.
+Updated for local profile `1.4.0`, 11 October 2026. Baseline re-audit source: `80ea845`. The [repository re-audit](PROJECT_REAUDIT_2026-10-10.md) records historical findings. [PRD §§40–50](../PRD.md) describes the target; this document describes the implementation. ARCHZXY's company website is a separate consumer project.
 
 PRD v2.1 §50 bounds the implemented local library release.
 [Acceptance and decisions](LOCAL_LIBRARY_RELEASE.md) map its six items to runnable
@@ -31,7 +31,7 @@ Archava_Platform/
   delegation/           historical task/handoff records; not runtime configuration
 ```
 
-There are 33 pnpm workspace projects: 27 packages, two apps and four tools with manifests. Script-only tool directories and examples are outside those workspace globs. The realtime template has its own npm lockfile and Python dependencies; its [AGENTS.md](<../Archava Template/AGENTS.md>) requires standalone operation without parent-repository imports.
+There are 36 pnpm workspace projects: 30 packages, two apps and four tools with manifests. Script-only tool directories and examples are outside those workspace globs. The realtime template has its own npm lockfile and Python dependencies; its [AGENTS.md](<../Archava Template/AGENTS.md>) requires standalone operation without parent-repository imports.
 
 Generated `dist/` and `node_modules/` are build/install output. Ignored `.local/` contains private database state, credentials, approvals and backups; it is not disposable source cleanup. The empty untracked `clients/generic-business/` placeholder implements no consumer. Current boundaries do not require directory relocation.
 
@@ -59,6 +59,32 @@ Root `start` serves the reference web app, not CRM. Template Python tools do not
 The assistant foundation has no mandatory CRM dependency. `crm` has no internal runtime package dependency and works through dashboards/APIs without an LLM. `crm-assistant` composes domain reads with the assistant; `crm-act` composes domain, PostgreSQL and approval infrastructure. The PostgreSQL-specific approval verifier belongs to that adapter.
 
 No declared workspace dependency cycle was found at the audited revision. This is distinct from `pnpm structure`, which checks declared internal imports and relative-path escapes, not dependency direction or cycles. Actual edges include `core → config` and `apps/web → tools/configurator`; there is no claim that core depends only on Zod or that every tool is CLI-only.
+
+## Kit planning and project ownership
+
+Profile 1.4.0 adds `kits`, `projects` and `projects-pg`. The immutable kit catalogue
+has 40 candidate families. Its deterministic planner resolves explicit requirements
+against a verified installed profile and trusted module policy. Missing domains,
+unknown requirements and unsupported scopes block assembly. It supplies no prices,
+permissions or execution authority.
+
+The pure project domain owns internal project/task/milestone services, strict APIs,
+read tools and a shared dashboard. Its PostgreSQL adapter owns `archava_projects`
+with six forced-RLS tables and its own memberships, revision checks and atomic
+audit/command receipts. It can run independently of CRM or an LLM. The existing
+owner host additionally requires an authenticated session, CSRF, configured tenant
+and active CRM workspace membership. Enabling the module never creates domain grants.
+
+Assembly 2.0.0 adds the optional `projects` flag while preserving assembly 1.0.0
+and previous four-module defaults. Installed profiles now have 28 artifacts, 18
+unchanged external pins and six owned database ledgers. Disabling project surfaces
+retains their records and receipts.
+
+Accepted `crm_inquiry` (K01/K05) and `project_tracking` (K05/K31) are narrow scopes.
+The latter shares internal tracking, not construction costing or full agency sales/
+delivery operations. All 40 full operating kits remain unaccepted. See the
+[module contract](PROJECT_DELIVERY_MODULE.md) and
+[programme ledger](STARTER_KIT_IMPLEMENTATION.md).
 
 ## Assistant turn and authority
 
@@ -113,19 +139,19 @@ The host provides diagnostics and tested backup/restore. Its optional backup loo
 
 ## Packaging, configuration and compatibility
 
-`tools/library/pack.mjs` compiles a selected dependency closure into 24 private ESM/declaration artifacts with exact internal versions and owned migrations. `pricing` and `reference` are workspace packages outside the current artifact set. Independent core/CRM consumers cold-install artifacts without parent source imports; the CRM host resolves installed packages rather than workspace aliases.
+`tools/library/pack.mjs` compiles a selected dependency closure into 28 private ESM/declaration artifacts with exact internal versions and owned migrations. `pricing` and `reference` are workspace packages outside the current artifact set. Independent core/CRM consumers cold-install artifacts without parent source imports; the CRM host resolves installed packages rather than workspace aliases.
 
 Browser subpaths separate DOM/contracts from PostgreSQL, identity, provider keys and server planners. Build metadata rejects server implementation in the CRM browser bundle. Workspace source exports support development; compiled artifacts establish independent installation. See [library consumption](LIBRARY_CONSUMPTION.md).
 
 The thin host-owned registry validates IDs and resolves dependency IDs/disabled prerequisites. V2 deployment planning separates declared scope from template suggestions and trusted host connection/health evidence. `resolveLegacy` preserves V1 compatibility and is not provisioning authority. Metadata permissions, config flags and commercial entitlement never grant execution permission.
 
-The registry is not yet the complete PRD §42 contract: version ranges, conflicts, optional dependencies, general environment/health/UI/event ownership and supported release profiles remain unfinished. Artifact hashes and checksummed migrations prove a tested combination, not arbitrary version mixes. Upgrades need compatibility and data recovery; reverting a binary does not reverse a schema migration.
+The registry is not yet the complete PRD §42 contract: version ranges, conflicts, optional dependencies and general environment/health/UI/event ownership remain unfinished. Supported fixed release profiles are verified; artifact hashes and checksummed migrations prove a tested combination, not arbitrary version mixes. Upgrades need compatibility and data recovery; reverting a binary does not reverse a schema migration.
 
 ## Verification and next architecture step
 
 `pnpm verify` runs eight platform gates: install, structure, format, lint, typecheck, unit tests, reference-web build and independent core consumption. Actual CRM/Act PostgreSQL, authenticated Chromium and template checks are separate commands. CI has platform, CRM/runtime and template jobs; it does not currently run the Chromium owner suite or Python SDK integration suite.
 
-Preserve the modular monolith and folder paths. Next establish one supported local package/config/schema profile, then design a versioned presence boundary so the standalone realtime consumer can use shared server-owned intelligence/action authority. Do not bridge through copied credentials, guest-provided roles or parent source imports. Public visitors and authenticated owner sessions require distinct tool access.
+Preserve the modular monolith and folder paths. Fixed profiles and offline presence now have local acceptance; the next shared business service is scheduling/resource reservations. Template live-provider migration remains separate work. Public visitors and authenticated owner sessions require distinct tool access, with no copied credentials, guest-provided roles or parent source imports.
 
 Further modules follow demonstrated demand. Company sales/delivery workflows, arbitrary plugins/version mixes, universal ERP and microservice infrastructure are not prerequisites for the current reusable library.
 

@@ -1879,8 +1879,9 @@ try {
     JSON.stringify(
       {
         node: process.version,
+        profile: supported.catalog.version,
+        hostVersion: supported.catalog.host.version,
         checks,
-        checkpoint: '4f24164',
         database: 'real private persistent PostgreSQL; pg_dump/pg_restore exercised',
         providerCalls: 0,
       },

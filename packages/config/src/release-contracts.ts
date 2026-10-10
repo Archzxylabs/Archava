@@ -26,8 +26,10 @@ export const releaseCatalogSchema = z
         clientConfig: z.literal('1.0.0'),
         deploymentPlan: z.literal('2.0.0'),
         hostSettings: z.literal(1),
-        assembly: z.literal('1.0.0').optional(),
+        assembly: z.enum(['1.0.0', '2.0.0']).optional(),
         presence: z.literal('1.0.0').optional(),
+        kitPlan: z.literal('1.0.0').optional(),
+        kitCatalogue: z.literal('1.0.0').optional(),
       })
       .strict(),
     packages: z.array(entry).min(1).max(64),
