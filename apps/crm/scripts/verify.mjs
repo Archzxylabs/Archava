@@ -349,6 +349,9 @@ try {
     JSON.stringify({
       private: true,
       type: 'module',
+      overrides: Object.fromEntries(
+        (supported.catalog.externals ?? []).map((item) => [item.name, item.version]),
+      ),
       dependencies: Object.fromEntries(
         supported.artifacts.map((a) => [a.name, 'file:' + join(root, 'dist/library', a.tarball)]),
       ),

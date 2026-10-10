@@ -65,6 +65,24 @@ async function fixture() {
   return { root, directory, catalog, profile }
 }
 describe('supported installed release boundary', () => {
+  it('checks pinned external versions independently of internal implementation hashes', async () => {
+    const { root, catalog, profile } = await fixture()
+    catalog.externals = [{ name: 'zod', version: '4.1.12' }]
+    profile.catalog = catalog
+    await mkdir(join(root, 'zod'))
+    await writeFile(
+      join(root, 'zod/package.json'),
+      JSON.stringify({ name: 'zod', version: '4.1.12' }),
+    )
+    await expect(verifyInstalledRelease(profile, catalog, root)).resolves.toEqual(profile)
+    await writeFile(
+      join(root, 'zod/package.json'),
+      JSON.stringify({ name: 'zod', version: '4.2.0' }),
+    )
+    await expect(verifyInstalledRelease(profile, catalog, root)).rejects.toThrow(
+      'external_version_mismatch',
+    )
+  })
   it('accepts the exact cold-installed implementation and a matching authoritative database ledger', async () => {
     const { root, catalog, profile } = await fixture()
     await expect(verifyInstalledRelease(profile, catalog, root)).resolves.toEqual(profile)

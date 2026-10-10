@@ -54,6 +54,9 @@ try {
     manifest.dependencies = Object.fromEntries(
       artifacts.map((item) => [item.name, `file:${join(output, item.tarball)}`]),
     )
+    manifest.overrides = Object.fromEntries(
+      (profile.catalog.externals ?? []).map((item) => [item.name, item.version]),
+    )
     await writeFile(join(consumer, 'package.json'), JSON.stringify(manifest, null, 2))
     run(['install', '--ignore-scripts', '--no-audit', '--no-fund'], consumer)
     await cp(join(output, 'release-profile.json'), join(consumer, 'release-profile.json'))

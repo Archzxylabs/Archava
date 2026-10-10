@@ -8,6 +8,26 @@ import { pathToFileURL } from 'node:url'
 
 const root = resolve(import.meta.dirname, '../../..')
 const output = join(root, 'dist/crm-runtime')
+try {
+  const pid = Number(
+    await readFile(
+      join(resolve(process.env.ARCHAVA_CRM_HOME ?? join(root, '.local/crm')), 'runtime.lock'),
+      'utf8',
+    ),
+  )
+  if (!Number.isSafeInteger(pid) || pid <= 0)
+    throw new Error('Invalid runtime lock; inspect before rebuilding')
+  let live = true
+  try {
+    process.kill(pid, 0)
+  } catch (error) {
+    if (error.code !== 'ESRCH') throw error
+    live = false
+  }
+  if (live) throw new Error('Stop the CRM host before replacing its installed runtime')
+} catch (error) {
+  if (error.code !== 'ENOENT') throw error
+}
 execFileSync('pnpm', ['library:pack'], { cwd: root, stdio: 'pipe' })
 await mkdir(output, { recursive: true })
 const { artifacts } = JSON.parse(await readFile(join(root, 'dist/library/artifacts.json'), 'utf8'))
@@ -28,6 +48,9 @@ await writeFile(
       version: profile.catalog.host.version,
       private: true,
       type: 'module',
+      overrides: Object.fromEntries(
+        (profile.catalog.externals ?? []).map((item) => [item.name, item.version]),
+      ),
       dependencies: Object.fromEntries(
         artifacts.map((item) => [item.name, 'file:' + join(root, 'dist/library', item.tarball)]),
       ),

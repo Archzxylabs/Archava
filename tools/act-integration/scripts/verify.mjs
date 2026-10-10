@@ -60,6 +60,9 @@ if (process.argv[2] === 'worker') {
   }
 } else {
   execFileSync('pnpm', ['library:pack'], { cwd: root, stdio: 'pipe' })
+  const profile = JSON.parse(
+    await readFile(join(root, 'dist/library/release-profile.json'), 'utf8'),
+  )
   const scratch = await mkdtemp(join(tmpdir(), 'archava-act-proof-'))
   const socket = join(scratch, 'socket'),
     data = join(scratch, 'data')
@@ -130,6 +133,9 @@ if (process.argv[2] === 'worker') {
           name: 'independent-act-' + name,
           type: 'module',
           private: true,
+          overrides: Object.fromEntries(
+            (profile.catalog.externals ?? []).map((item) => [item.name, item.version]),
+          ),
           dependencies: Object.fromEntries(
             artifacts.map((a) => [a.name, 'file:' + join(root, 'dist/library', a.tarball)]),
           ),

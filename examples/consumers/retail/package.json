@@ -9,7 +9,7 @@
     "verify": "node verify.mjs"
   },
   "dependencies": {
-    "@archava/config": "0.4.0",
+    "@archava/config": "0.5.0",
     "@archava/core": "0.1.0",
     "@archava/sdk": "0.1.0",
     "@archava/assistant": "0.5.0",

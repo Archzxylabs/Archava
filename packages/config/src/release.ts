@@ -79,6 +79,13 @@ export async function verifyInstalledRelease(
   nodeModules: string,
 ): Promise<ResolvedRelease> {
   const profile = validateResolvedRelease(raw, expected)
+  for (const pkg of profile.catalog.externals ?? []) {
+    const manifest = JSON.parse(
+      await readFile(join(nodeModules, pkg.name, 'package.json'), 'utf8'),
+    ) as { name?: string; version?: string }
+    if (manifest.name !== pkg.name || manifest.version !== pkg.version)
+      throw new ReleaseProfileError('external_version_mismatch')
+  }
   for (const pkg of profile.catalog.packages) {
     const directory = join(nodeModules, pkg.name)
     const manifest = await verifyReleasePackage(directory, pkg)

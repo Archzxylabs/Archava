@@ -1,10 +1,10 @@
 {
   "schemaVersion": "1.0.0",
   "id": "archava-local-library",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "host": {
     "name": "@archava/crm-host",
-    "version": "0.5.0"
+    "version": "0.6.0"
   },
   "contracts": {
     "clientConfig": "1.0.0",
@@ -59,7 +59,7 @@
     },
     {
       "name": "@archava/config",
-      "version": "0.4.0",
+      "version": "0.5.0",
       "migrations": []
     },
     {
@@ -187,39 +187,27 @@
     {
       "schema": "archava_crm",
       "package": "@archava/crm-pg",
-      "migrations": [
-        "001_crm_contacts",
-        "002_sales_pipeline",
-        "003_native_approval"
-      ]
+      "migrations": ["001_crm_contacts", "002_sales_pipeline", "003_native_approval"]
     },
     {
       "schema": "archava_identity",
       "package": "@archava/identity-pg",
-      "migrations": [
-        "001_identity"
-      ]
+      "migrations": ["001_identity"]
     },
     {
       "schema": "archava_provider",
       "package": "@archava/provider-runtime",
-      "migrations": [
-        "001_provider_attempts"
-      ]
+      "migrations": ["001_provider_attempts"]
     },
     {
       "schema": "archava_act_host",
       "package": "@archava/act-host-pg",
-      "migrations": [
-        "001_host_intents"
-      ]
+      "migrations": ["001_host_intents"]
     },
     {
       "schema": "archava_crm_act",
       "package": "@archava/crm-act",
-      "migrations": [
-        "001_native_confirmations"
-      ]
+      "migrations": ["001_native_confirmations"]
     }
   ],
   "requiredAdapters": [
@@ -235,5 +223,79 @@
     "current tenant and resource permissions",
     "private identity/native/provider state",
     "backup restoration and execution holds"
+  ],
+  "externals": [
+    {
+      "name": "@types/node",
+      "version": "24.9.1"
+    },
+    {
+      "name": "@types/pg",
+      "version": "8.23.1"
+    },
+    {
+      "name": "pg",
+      "version": "8.23.1"
+    },
+    {
+      "name": "pg-cloudflare",
+      "version": "1.4.1"
+    },
+    {
+      "name": "pg-connection-string",
+      "version": "2.14.1"
+    },
+    {
+      "name": "pg-int8",
+      "version": "1.0.1"
+    },
+    {
+      "name": "pg-pool",
+      "version": "3.14.0"
+    },
+    {
+      "name": "pg-protocol",
+      "version": "1.16.1"
+    },
+    {
+      "name": "pg-types",
+      "version": "2.2.0"
+    },
+    {
+      "name": "pgpass",
+      "version": "1.0.5"
+    },
+    {
+      "name": "postgres-array",
+      "version": "2.0.0"
+    },
+    {
+      "name": "postgres-bytea",
+      "version": "1.0.1"
+    },
+    {
+      "name": "postgres-date",
+      "version": "1.0.7"
+    },
+    {
+      "name": "postgres-interval",
+      "version": "1.2.0"
+    },
+    {
+      "name": "split2",
+      "version": "4.2.0"
+    },
+    {
+      "name": "undici-types",
+      "version": "7.16.0"
+    },
+    {
+      "name": "xtend",
+      "version": "4.0.2"
+    },
+    {
+      "name": "zod",
+      "version": "4.1.12"
+    }
   ]
 }

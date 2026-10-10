@@ -31,6 +31,13 @@ export const releaseCatalogSchema = z
       })
       .strict(),
     packages: z.array(entry).min(1).max(64),
+    externals: z
+      .array(
+        z.object({ name: z.string().regex(/^(?:@[a-z0-9-]+\/)?[a-z0-9-]+$/), version }).strict(),
+      )
+      .min(1)
+      .max(128)
+      .optional(),
     databaseLedgers: z.array(ledger).min(1).max(16),
     requiredAdapters: z.array(packageName).min(1),
     operatorChecks: z.array(z.string().min(1).max(120)).min(1),
@@ -38,6 +45,11 @@ export const releaseCatalogSchema = z
   .strict()
   .superRefine((catalog, context) => {
     const names = catalog.packages.map((item) => item.name)
+    if (
+      catalog.externals &&
+      new Set(catalog.externals.map((item) => item.name)).size !== catalog.externals.length
+    )
+      context.addIssue({ code: 'custom', message: 'Duplicate external package' })
     if (new Set(names).size !== names.length)
       context.addIssue({ code: 'custom', message: 'Duplicate release package' })
     for (const item of catalog.packages)
@@ -87,8 +99,10 @@ export const resolvedReleaseSchema = z
 export type ReleaseCatalog = z.infer<typeof releaseCatalogSchema>
 export type ResolvedRelease = z.infer<typeof resolvedReleaseSchema>
 export class ReleaseProfileError extends Error {
-  constructor(readonly code: string) {
+  readonly code: string
+  constructor(code: string) {
     super(`Unsupported local release: ${code}`)
+    this.code = code
   }
 }
 

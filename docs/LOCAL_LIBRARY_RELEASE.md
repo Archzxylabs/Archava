@@ -30,7 +30,7 @@ Reproduce the profile checks with `pnpm test -- packages/config/test/release.tes
 Node/pnpm versions. Runtime verification creates and removes an isolated private
 PostgreSQL installation; it does not replace the owner's data or call providers.
 
-The current profile is `1.2.0` (host `0.5.0`, config `0.4.0`). Initial modules
+The current profile is `1.3.0` (host `0.6.0`, config `0.5.0`). Initial modules
 are mandatory `contacts` (including activities/follow-ups), optional `pipeline`,
 optional `assistant`, and `nativeActions` requiring `assistant`. No database data
 is dropped. This is a logical composition within a modular monolith: the supported
@@ -76,3 +76,27 @@ with no owner/database environment. Synthetic transcript evidence is not a live
 audio/avatar test. The existing Template LiveKit worker remains an independent
 realtime consumer and retains its protocol; connecting its live provider path to
 this gateway is a separate gated migration.
+
+`pnpm security:verify` reruns unit, real PostgreSQL CRM/Act/host, reuse and
+assembly proofs, then checks the control matrix against their executed labels.
+It also scans both the root lock and the installed runtime's npm lock.
+The [sanitized matrix](audit/local-library/security.json) records 15 applicable
+controls, exact runtime dependencies, licenses/notices and both lock digests.
+Each external runtime version is pinned in the host-owned catalogue, installed
+using those pins and checked at startup. These pins capture the tested dependency
+combination; they are not a vulnerability-driven forced downgrade.
+
+The template's 13 moderate findings derive from
+[GHSA-8988-4f7v-96qf](https://github.com/advisories/GHSA-8988-4f7v-96qf):
+oversized inbound baggage can allocate excess memory; transport header limits
+reduce the HTTP impact but do not prove safety of arbitrary transports. The
+owner profile does not install this dependency chain. Template dependency/client
+reachability has not been proved; vendor-compatible remediation and its missing
+seven Python SDK integration checks remain open realtime release gates. No SDK
+downgrade, override or claim of unexploitable code is inferred from scanner output.
+
+External SPDX metadata and shipped notice files are inventoried; generated
+`dist/security-proof/third-party-notices.txt` contains their included notices.
+Internal artifacts remain private with no declared public license. Public
+distribution and client IP terms need their own legal/contract review. This is
+scoped engineering evidence, not a penetration test or certification.

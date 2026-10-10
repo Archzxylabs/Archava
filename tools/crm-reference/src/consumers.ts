@@ -6,6 +6,7 @@ import { createRequire } from 'node:module'
 import { pathToFileURL } from 'node:url'
 import { createHash } from 'node:crypto'
 import type * as ReleaseModule from '@archava/config/release'
+import { resolvedReleaseSchema } from '@archava/config/release-contracts'
 import type * as CrmModule from '@archava/crm'
 import type * as PostgresModule from '@archava/crm-pg'
 import type * as ConversationModule from '@archava/crm-assistant'
@@ -41,9 +42,9 @@ export async function prepareConsumers() {
   const artifacts = JSON.parse(
     await readFile(join(root, 'dist/library/artifacts.json'), 'utf8'),
   ) as { artifacts: { name: string; version: string; tarball: string; sha256: string }[] }
-  const profile = JSON.parse(
-    await readFile(join(root, 'dist/library/release-profile.json'), 'utf8'),
-  ) as unknown
+  const profile = resolvedReleaseSchema.parse(
+    JSON.parse(await readFile(join(root, 'dist/library/release-profile.json'), 'utf8')),
+  )
   const scratch = await mkdtemp(join(tmpdir(), 'archava-crm-consumers-'))
   const proofs: {
     consumer: string
@@ -68,12 +69,16 @@ export async function prepareConsumers() {
       await cp(join(root, 'examples/crm-consumers', name), directory, { recursive: true })
       const manifest = JSON.parse(await readFile(join(directory, 'package.json'), 'utf8')) as {
         dependencies: Record<string, string>
+        overrides?: Record<string, string>
       }
       manifest.dependencies = Object.fromEntries(
         artifacts.artifacts.map((item) => [
           item.name,
           'file:' + join(root, 'dist/library', item.tarball),
         ]),
+      )
+      manifest.overrides = Object.fromEntries(
+        (profile.catalog.externals ?? []).map((item) => [item.name, item.version]),
       )
       await writeFile(join(directory, 'package.json'), JSON.stringify(manifest, null, 2))
       await cp(

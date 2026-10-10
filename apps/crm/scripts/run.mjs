@@ -19,6 +19,7 @@ if (
     'ai-status',
     'resume-actions',
     'doctor',
+    'modules',
   ].includes(mode)
 )
   throw new Error('Unknown CRM command')

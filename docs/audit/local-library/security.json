@@ -1,0 +1,465 @@
+{
+  "schemaVersion": "1.0.0",
+  "profile": "1.3.0",
+  "checkedAt": "2026-10-10T14:19:36.357Z",
+  "node": "v22.22.3",
+  "commands": [
+    {
+      "name": "unit",
+      "command": "pnpm exec vitest run --reporter=json --outputFile=dist/security-proof/unit.json",
+      "exitCode": 0
+    },
+    {
+      "name": "crm",
+      "command": "pnpm crm:verify",
+      "exitCode": 0
+    },
+    {
+      "name": "act",
+      "command": "pnpm act:verify",
+      "exitCode": 0
+    },
+    {
+      "name": "runtime",
+      "command": "pnpm crm:verify-runtime",
+      "exitCode": 0
+    },
+    {
+      "name": "reuse",
+      "command": "pnpm reuse:verify",
+      "exitCode": 0
+    },
+    {
+      "name": "assembly",
+      "command": "pnpm assembly:verify",
+      "exitCode": 0
+    },
+    {
+      "name": "platform-audit",
+      "command": "pnpm audit --json",
+      "exitCode": 0
+    },
+    {
+      "name": "runtime-audit",
+      "command": "npm audit --json",
+      "exitCode": 0
+    },
+    {
+      "name": "template-audit",
+      "command": "npm audit --json",
+      "exitCode": 1
+    }
+  ],
+  "controls": [
+    {
+      "id": "identity-session-csrf",
+      "sources": ["packages/identity-pg/src/index.ts", "apps/crm/src/host.ts"],
+      "command": "pnpm crm:verify-runtime",
+      "positiveAndRefusalChecks": [
+        "real credentials, cookie-only session, origin checks and browser/server isolation",
+        "owner/staff/viewer permissions, session-bound CSRF and tenant/resource isolation"
+      ],
+      "result": "passed"
+    },
+    {
+      "id": "current-tenant-resource-grants",
+      "sources": ["packages/crm-pg/src/repository.ts"],
+      "command": "pnpm crm:verify-runtime",
+      "positiveAndRefusalChecks": [
+        "owner/staff/viewer permissions, session-bound CSRF and tenant/resource isolation"
+      ],
+      "result": "passed"
+    },
+    {
+      "id": "non-owner-rls",
+      "sources": [
+        "packages/crm-pg/src/repository.ts",
+        "packages/crm-pg/migrations/001_crm_contacts.sql"
+      ],
+      "command": "pnpm crm:verify",
+      "positiveAndRefusalChecks": [
+        "migration ledger repeatability and non-owner runtime requirement"
+      ],
+      "result": "passed"
+    },
+    {
+      "id": "service-human-intersection",
+      "sources": ["packages/crm-pg/src/repository.ts"],
+      "command": "pnpm act:verify",
+      "positiveAndRefusalChecks": [
+        "tenant/session isolation, transaction scope reset and no runtime deletion",
+        "native review is metadata-only; two installed consumers execute one approved CRM task with service actor plus human initiator audit, and machine/forged/replayed/cross-owner writes remain denied",
+        "native approval rechecks both current memberships and exact text/revision; stale review can be cancelled before execution, while completed execution cannot",
+        "native confirmation schema is checksummed, forced tenant/owner-scope RLS and non-owner; raw drafts/tokens never reach the approval journal",
+        "native lost response recovers through own authoritative receipt after real restart without resubmission; restored execution hold/new epoch refuses old approval",
+        "two installed native consumers complete one explicitly reviewed task under concurrent presentations, with exact revision and one service/human audit; forged, cross-owner and cross-action consent remains denied"
+      ],
+      "result": "passed"
+    },
+    {
+      "id": "strict-inputs-no-model-authority",
+      "sources": ["apps/crm/src/host.ts", "packages/crm-assistant/src/contracts.ts"],
+      "command": "pnpm crm:verify-runtime",
+      "positiveAndRefusalChecks": [
+        "authenticated native HTTP review/confirmation/receipt flow rejects anonymous, CSRF, forged authority, payload drift and repeat execution; exactly one task commits",
+        "authenticated completion preparation is read-only; current task review/confirmation commits once with exact receipt while anonymous, CSRF, forged flags, staff scope, changed revision and replay are refused"
+      ],
+      "result": "passed"
+    },
+    {
+      "id": "browser-server-separation",
+      "sources": ["apps/crm/scripts/build.mjs", "tools/library/verify-consumers.mjs"],
+      "command": "pnpm crm:verify-runtime",
+      "positiveAndRefusalChecks": [
+        "real credentials, cookie-only session, origin checks and browser/server isolation"
+      ],
+      "result": "passed"
+    },
+    {
+      "id": "one-time-exact-consent",
+      "sources": ["packages/crm-act/src/postgres.ts", "packages/act-host/src/index.ts"],
+      "command": "pnpm crm:verify-runtime",
+      "positiveAndRefusalChecks": [
+        "authenticated native HTTP review/confirmation/receipt flow rejects anonymous, CSRF, forged authority, payload drift and repeat execution; exactly one task commits"
+      ],
+      "result": "passed"
+    },
+    {
+      "id": "revision-and-replay",
+      "sources": ["packages/crm-pg/src/repository.ts", "packages/crm-act/src/postgres.ts"],
+      "command": "pnpm crm:verify-runtime",
+      "positiveAndRefusalChecks": [
+        "authenticated completion preparation is read-only; current task review/confirmation commits once with exact receipt while anonymous, CSRF, forged flags, staff scope, changed revision and replay are refused"
+      ],
+      "result": "passed"
+    },
+    {
+      "id": "unknown-outcome-recovery",
+      "sources": ["packages/act-host/src/index.ts", "packages/crm/src/service.ts"],
+      "command": "pnpm crm:verify-runtime",
+      "positiveAndRefusalChecks": [
+        "authenticated read-only command recovery binds initiator/tenant, masks absent receipts and rechecks current read permissions without mutations"
+      ],
+      "result": "passed"
+    },
+    {
+      "id": "private-state-and-secret-isolation",
+      "sources": ["apps/crm/src/settings.ts", "apps/crm/src/planner.ts"],
+      "command": "pnpm crm:verify-runtime",
+      "positiveAndRefusalChecks": [
+        "private persistent installation, stable keys and idempotent setup",
+        "private connections ignore ambient database credentials, service files and destinations"
+      ],
+      "result": "passed"
+    },
+    {
+      "id": "restore-identity-holds-epoch",
+      "sources": ["apps/crm/src/operator.ts", "apps/crm/src/native-actions.ts"],
+      "command": "pnpm crm:verify-runtime",
+      "positiveAndRefusalChecks": [
+        "restored records/audit/retry identity survive; old credentials and sessions require explicit recovery",
+        "actual restored database holds native actions until explicit operator resume; diagnostics verify the supported local profile"
+      ],
+      "result": "passed"
+    },
+    {
+      "id": "backup-integrity-and-overwrite",
+      "sources": ["apps/crm/src/backups.ts"],
+      "command": "pnpm crm:verify-runtime",
+      "positiveAndRefusalChecks": [
+        "existing archives are never overwritten; failed/corrupt snapshots are not fresh and a later backup recovers while retaining the previous material"
+      ],
+      "result": "passed"
+    },
+    {
+      "id": "module-lifecycle-no-abandonment",
+      "sources": ["apps/crm/src/modules.ts", "apps/crm/src/host.ts"],
+      "command": "pnpm crm:verify-runtime",
+      "positiveAndRefusalChecks": [
+        "minimal composition disables UI projection, tools, pipeline writes and assistant; re-enable retains records, identity grants and original UUID receipts without copying implementation",
+        "lifecycle refuses disabling unresolved native effects and retains authorized reconciliation"
+      ],
+      "result": "passed"
+    },
+    {
+      "id": "presence-guest-binding-and-scope",
+      "sources": ["packages/presence/src/index.ts", "apps/crm/src/presence.ts"],
+      "command": "pnpm crm:verify-runtime",
+      "positiveAndRefusalChecks": [
+        "independent installed chat and standalone Python synthetic voice share the server policy; guest binding, exact page revisions, request replay, malformed identity, private tools and current owner/tenant access are enforced without provider calls"
+      ],
+      "result": "passed"
+    },
+    {
+      "id": "profile-install-and-schema",
+      "sources": ["packages/config/src/release.ts", "apps/crm/src/server.ts"],
+      "command": "pnpm crm:verify-runtime",
+      "positiveAndRefusalChecks": [
+        "host startup refuses changed installed implementation before accessing private state or database"
+      ],
+      "result": "passed"
+    }
+  ],
+  "unit": {
+    "passed": 1458,
+    "failed": 0
+  },
+  "audits": {
+    "platform": {
+      "counts": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0
+      },
+      "findings": []
+    },
+    "runtime": {
+      "counts": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      },
+      "findings": []
+    },
+    "template": {
+      "counts": {
+        "info": 0,
+        "low": 0,
+        "moderate": 13,
+        "high": 0,
+        "critical": 0,
+        "total": 13
+      },
+      "findings": [
+        {
+          "package": "@opentelemetry/core",
+          "severity": "moderate",
+          "range": "<2.8.0",
+          "advisories": [
+            {
+              "title": "OpenTelemetry Core: Unbounded memory allocation in W3C Baggage propagation",
+              "url": "https://github.com/advisories/GHSA-8988-4f7v-96qf",
+              "range": "<2.8.0"
+            }
+          ]
+        },
+        {
+          "package": "@opentelemetry/exporter-logs-otlp-http",
+          "severity": "moderate",
+          "range": "<=0.218.0",
+          "advisories": []
+        },
+        {
+          "package": "@opentelemetry/exporter-metrics-otlp-http",
+          "severity": "moderate",
+          "range": "<=0.218.0",
+          "advisories": []
+        },
+        {
+          "package": "@opentelemetry/exporter-trace-otlp-http",
+          "severity": "moderate",
+          "range": "<=0.218.0",
+          "advisories": []
+        },
+        {
+          "package": "@opentelemetry/otlp-exporter-base",
+          "severity": "moderate",
+          "range": "<=0.218.0",
+          "advisories": []
+        },
+        {
+          "package": "@opentelemetry/otlp-transformer",
+          "severity": "moderate",
+          "range": "<=0.218.0",
+          "advisories": []
+        },
+        {
+          "package": "@opentelemetry/resources",
+          "severity": "moderate",
+          "range": "0.8.0 - 2.7.1",
+          "advisories": []
+        },
+        {
+          "package": "@opentelemetry/sdk-logs",
+          "severity": "moderate",
+          "range": "<=0.218.0",
+          "advisories": []
+        },
+        {
+          "package": "@opentelemetry/sdk-metrics",
+          "severity": "moderate",
+          "range": "<=2.7.1",
+          "advisories": []
+        },
+        {
+          "package": "@opentelemetry/sdk-trace-base",
+          "severity": "moderate",
+          "range": "<=2.7.1",
+          "advisories": []
+        },
+        {
+          "package": "@opentelemetry/sdk-trace-web",
+          "severity": "moderate",
+          "range": "<=2.7.1",
+          "advisories": []
+        },
+        {
+          "package": "@spatius/avatarkit",
+          "severity": "moderate",
+          "range": ">=1.1.0-beta.1",
+          "advisories": []
+        },
+        {
+          "package": "@spatius/avatarkit-rtc",
+          "severity": "moderate",
+          "range": ">=1.1.2-beta.1",
+          "advisories": []
+        }
+      ]
+    }
+  },
+  "dependencies": [
+    {
+      "name": "@types/node",
+      "version": "24.9.1",
+      "license": "MIT",
+      "noticeFiles": ["LICENSE"],
+      "installScripts": []
+    },
+    {
+      "name": "@types/pg",
+      "version": "8.23.1",
+      "license": "MIT",
+      "noticeFiles": ["LICENSE"],
+      "installScripts": []
+    },
+    {
+      "name": "pg",
+      "version": "8.23.1",
+      "license": "MIT",
+      "noticeFiles": ["LICENSE"],
+      "installScripts": []
+    },
+    {
+      "name": "pg-cloudflare",
+      "version": "1.4.1",
+      "license": "MIT",
+      "noticeFiles": ["LICENSE"],
+      "installScripts": []
+    },
+    {
+      "name": "pg-connection-string",
+      "version": "2.14.1",
+      "license": "MIT",
+      "noticeFiles": ["LICENSE"],
+      "installScripts": []
+    },
+    {
+      "name": "pg-int8",
+      "version": "1.0.1",
+      "license": "ISC",
+      "noticeFiles": ["LICENSE"],
+      "installScripts": []
+    },
+    {
+      "name": "pg-pool",
+      "version": "3.14.0",
+      "license": "MIT",
+      "noticeFiles": ["LICENSE"],
+      "installScripts": []
+    },
+    {
+      "name": "pg-protocol",
+      "version": "1.16.1",
+      "license": "MIT",
+      "noticeFiles": ["LICENSE"],
+      "installScripts": []
+    },
+    {
+      "name": "pg-types",
+      "version": "2.2.0",
+      "license": "MIT",
+      "noticeFiles": [],
+      "installScripts": []
+    },
+    {
+      "name": "pgpass",
+      "version": "1.0.5",
+      "license": "MIT",
+      "noticeFiles": [],
+      "installScripts": []
+    },
+    {
+      "name": "postgres-array",
+      "version": "2.0.0",
+      "license": "MIT",
+      "noticeFiles": ["license"],
+      "installScripts": []
+    },
+    {
+      "name": "postgres-bytea",
+      "version": "1.0.1",
+      "license": "MIT",
+      "noticeFiles": ["license"],
+      "installScripts": []
+    },
+    {
+      "name": "postgres-date",
+      "version": "1.0.7",
+      "license": "MIT",
+      "noticeFiles": ["license"],
+      "installScripts": []
+    },
+    {
+      "name": "postgres-interval",
+      "version": "1.2.0",
+      "license": "MIT",
+      "noticeFiles": ["license"],
+      "installScripts": []
+    },
+    {
+      "name": "split2",
+      "version": "4.2.0",
+      "license": "ISC",
+      "noticeFiles": ["LICENSE"],
+      "installScripts": []
+    },
+    {
+      "name": "undici-types",
+      "version": "7.16.0",
+      "license": "MIT",
+      "noticeFiles": ["LICENSE"],
+      "installScripts": []
+    },
+    {
+      "name": "xtend",
+      "version": "4.0.2",
+      "license": "MIT",
+      "noticeFiles": ["LICENSE"],
+      "installScripts": []
+    },
+    {
+      "name": "zod",
+      "version": "4.1.12",
+      "license": "MIT",
+      "noticeFiles": ["LICENSE"],
+      "installScripts": []
+    }
+  ],
+  "locks": {
+    "pnpm": "8172ef6b9aeaee9631ff41462b8627a778d603415c598834415608013e3f55ce",
+    "runtimeNpm": "c9c59430595e2b2714251920bd1cb88c07975a9e789de9a6d68ac62608e8feee"
+  },
+  "installPolicy": "Exact validated runtime external pins use already-tested resolved versions; artifact consumer installs disable lifecycle scripts. Root pnpm defaults refuse unapproved dependency build scripts; no new script approval.",
+  "distributionScope": "Private internal artifacts only. External SPDX metadata and included notices inventoried; no legal/IP-transfer opinion or public-distribution approval. Internal packages have no declared public license.",
+  "limits": {
+    "certification": false,
+    "penetrationTest": false,
+    "realtimeTemplate": "13 moderate OpenTelemetry-chain findings require compatibility/reachability review; separate SDK integration evidence missing. Public realtime release is not accepted."
+  }
+}

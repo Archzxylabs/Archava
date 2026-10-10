@@ -50,6 +50,9 @@ if (!dry) {
           name: 'archava-local-assembly',
           private: true,
           type: 'module',
+          overrides: Object.fromEntries(
+            (profile.catalog.externals ?? []).map((item) => [item.name, item.version]),
+          ),
           dependencies: Object.fromEntries(
             profile.artifacts.map((a) => [a.name, 'file:' + join(library, a.tarball)]),
           ),
