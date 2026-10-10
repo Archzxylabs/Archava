@@ -1,9 +1,11 @@
 # Local library 1.3.0 handoff
 
-This remains the historical finite baseline. Current profile `1.4.0` preserves
-these four-module defaults and adds optional project tracking plus kit planning.
+This remains the historical finite baseline. Current profile `1.5.0` preserves
+these four-module defaults and adds optional project tracking/resource reservations
+plus kit planning.
 Use the exact current profile when generating a new assembly. See
 [project activation and API](PROJECT_DELIVERY_MODULE.md),
+[reservation activation and API](RESOURCE_RESERVATIONS_MODULE.md),
 [current acceptance](LOCAL_LIBRARY_RELEASE.md) and
 [kit programme status](STARTER_KIT_IMPLEMENTATION.md). Company website and full
 operating kits remain separate work.

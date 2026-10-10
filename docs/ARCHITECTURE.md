@@ -1,6 +1,6 @@
 # Architecture
 
-Updated for local profile `1.4.0`, 11 October 2026. Baseline re-audit source: `80ea845`. The [repository re-audit](PROJECT_REAUDIT_2026-10-10.md) records historical findings. [PRD §§40–50](../PRD.md) describes the target; this document describes the implementation. ARCHZXY's company website is a separate consumer project.
+Updated for local profile `1.5.0`, 11 October 2026. Baseline re-audit source: `80ea845`. The [repository re-audit](PROJECT_REAUDIT_2026-10-10.md) records historical findings. [PRD §§40–50](../PRD.md) describes the target; this document describes the implementation. ARCHZXY's company website is a separate consumer project.
 
 PRD v2.1 §50 bounds the implemented local library release.
 [Acceptance and decisions](LOCAL_LIBRARY_RELEASE.md) map its six items to runnable
@@ -31,7 +31,7 @@ Archava_Platform/
   delegation/           historical task/handoff records; not runtime configuration
 ```
 
-There are 36 pnpm workspace projects: 30 packages, two apps and four tools with manifests. Script-only tool directories and examples are outside those workspace globs. The realtime template has its own npm lockfile and Python dependencies; its [AGENTS.md](<../Archava Template/AGENTS.md>) requires standalone operation without parent-repository imports.
+There are 38 pnpm workspace projects: 32 packages, two apps and four tools with manifests. Script-only tool directories and examples are outside those workspace globs. The realtime template has its own npm lockfile and Python dependencies; its [AGENTS.md](<../Archava Template/AGENTS.md>) requires standalone operation without parent-repository imports.
 
 Generated `dist/` and `node_modules/` are build/install output. Ignored `.local/` contains private database state, credentials, approvals and backups; it is not disposable source cleanup. The empty untracked `clients/generic-business/` placeholder implements no consumer. Current boundaries do not require directory relocation.
 
@@ -51,6 +51,7 @@ Root `start` serves the reference web app, not CRM. Template Python tools do not
 | Browser presence      | `sdk`, `chat`                                                                                           | Page awareness, consent/session contracts and shared rendering                                          |
 | Business domain       | `crm`                                                                                                   | Contacts, activities, follow-ups, opportunities, authorized service/API/tools and shared DOM dashboards |
 | Business persistence  | `crm-pg`                                                                                                | PostgreSQL records, membership/resource checks, migrations, command receipts and atomic audit           |
+| Additional domains    | `projects`, `projects-pg`, `scheduling`, `scheduling-pg`, `kits`                                        | Independent project/reservation records and adapters; trusted bounded kit planning                      |
 | CRM composition       | `crm-assistant`, `crm-act`                                                                              | Read/prepare conversation and panel; separately reviewed native creation/completion                     |
 | Host infrastructure   | `identity-pg`, `provider-runtime`, `act-host`, `act-host-pg`, `act-confirmation`, `act-confirmation-pg` | Identity, provider admission/outcomes, atomic host intent and one-time confirmation                     |
 | External Act adapters | `act`, `act-booking`, `act-email`, `act-storage`, `act-postmark`                                        | Booking/email dispatch, durable provider replay/outbox and injected mail transport                      |
@@ -60,9 +61,9 @@ The assistant foundation has no mandatory CRM dependency. `crm` has no internal 
 
 No declared workspace dependency cycle was found at the audited revision. This is distinct from `pnpm structure`, which checks declared internal imports and relative-path escapes, not dependency direction or cycles. Actual edges include `core → config` and `apps/web → tools/configurator`; there is no claim that core depends only on Zod or that every tool is CLI-only.
 
-## Kit planning and project ownership
+## Kit planning and business domain ownership
 
-Profile 1.4.0 adds `kits`, `projects` and `projects-pg`. The immutable kit catalogue
+Profile 1.4.0 added `kits`, `projects` and `projects-pg`. The immutable kit catalogue
 has 40 candidate families. Its deterministic planner resolves explicit requirements
 against a verified installed profile and trusted module policy. Missing domains,
 unknown requirements and unsupported scopes block assembly. It supplies no prices,
@@ -76,9 +77,24 @@ owner host additionally requires an authenticated session, CSRF, configured tena
 and active CRM workspace membership. Enabling the module never creates domain grants.
 
 Assembly 2.0.0 adds the optional `projects` flag while preserving assembly 1.0.0
-and previous four-module defaults. Installed profiles now have 28 artifacts, 18
-unchanged external pins and six owned database ledgers. Disabling project surfaces
+and previous four-module defaults. The historical 1.4.0 profile has 28 artifacts, 18
+external pins and six owned database ledgers. Disabling project surfaces
 retains their records and receipts.
+
+Profile 1.5.0 adds `scheduling` and `scheduling-pg`: pure timed reservation
+contracts/API/read tools/dashboard and the independent `archava_scheduling`
+schema. Capacity-one resources serialize holds/confirmation/moves/cancellation
+and maintenance blocks, with a database-clock expiry and SQL overlap guard. Five
+forced-RLS tables own memberships, resources, reservations, commands and audit.
+The adapter does not depend on CRM, LLMs or external booking providers. The local
+host adds its existing session/workspace boundary and explicit scheduling grants.
+
+Current inventory is 30 compiled internal artifacts, 18 unchanged external pins,
+seven owned ledgers, host 0.8.0 and config 0.7.0. Assembly v3 adds optional
+`scheduling`; v1/v2 and old defaults retain their original fields and behavior.
+The new bounded `resource_reservations` scope supports K07/K10 composition, not
+full appointment/rental operations or accommodation. See
+[contract and integration](RESOURCE_RESERVATIONS_MODULE.md).
 
 Accepted `crm_inquiry` (K01/K05) and `project_tracking` (K05/K31) are narrow scopes.
 The latter shares internal tracking, not construction costing or full agency sales/
@@ -139,7 +155,7 @@ The host provides diagnostics and tested backup/restore. Its optional backup loo
 
 ## Packaging, configuration and compatibility
 
-`tools/library/pack.mjs` compiles a selected dependency closure into 28 private ESM/declaration artifacts with exact internal versions and owned migrations. `pricing` and `reference` are workspace packages outside the current artifact set. Independent core/CRM consumers cold-install artifacts without parent source imports; the CRM host resolves installed packages rather than workspace aliases.
+`tools/library/pack.mjs` compiles a selected dependency closure into 30 private ESM/declaration artifacts with exact internal versions and owned migrations. `pricing` and `reference` are workspace packages outside the current artifact set. Independent core/CRM consumers cold-install artifacts without parent source imports; the CRM host resolves installed packages rather than workspace aliases.
 
 Browser subpaths separate DOM/contracts from PostgreSQL, identity, provider keys and server planners. Build metadata rejects server implementation in the CRM browser bundle. Workspace source exports support development; compiled artifacts establish independent installation. See [library consumption](LIBRARY_CONSUMPTION.md).
 
@@ -151,7 +167,7 @@ The registry is not yet the complete PRD §42 contract: version ranges, conflict
 
 `pnpm verify` runs eight platform gates: install, structure, format, lint, typecheck, unit tests, reference-web build and independent core consumption. Actual CRM/Act PostgreSQL, authenticated Chromium and template checks are separate commands. CI has platform, CRM/runtime and template jobs; it does not currently run the Chromium owner suite or Python SDK integration suite.
 
-Preserve the modular monolith and folder paths. Fixed profiles and offline presence now have local acceptance; the next shared business service is scheduling/resource reservations. Template live-provider migration remains separate work. Public visitors and authenticated owner sessions require distinct tool access, with no copied credentials, guest-provided roles or parent source imports.
+Preserve the modular monolith and folder paths. Fixed profiles and offline presence now have local acceptance; shared project and exclusive resource reservation services now have scoped local acceptance; the next domain extension is accommodation. Template live-provider migration remains separate work. Public visitors and authenticated owner sessions require distinct tool access, with no copied credentials, guest-provided roles or parent source imports.
 
 Further modules follow demonstrated demand. Company sales/delivery workflows, arbitrary plugins/version mixes, universal ERP and microservice infrastructure are not prerequisites for the current reusable library.
 

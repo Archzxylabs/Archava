@@ -1,16 +1,16 @@
 {
   "schemaVersion": "1.0.0",
   "id": "archava-local-library",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "host": {
     "name": "@archava/crm-host",
-    "version": "0.7.0"
+    "version": "0.8.0"
   },
   "contracts": {
     "clientConfig": "1.0.0",
     "deploymentPlan": "2.0.0",
     "hostSettings": 1,
-    "assembly": "2.0.0",
+    "assembly": "3.0.0",
     "presence": "1.0.0",
     "kitPlan": "1.0.0",
     "kitCatalogue": "1.0.0"
@@ -61,7 +61,7 @@
     },
     {
       "name": "@archava/config",
-      "version": "0.6.0",
+      "version": "0.7.0",
       "migrations": []
     },
     {
@@ -186,7 +186,7 @@
     },
     {
       "name": "@archava/kits",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "migrations": []
     },
     {
@@ -201,6 +201,21 @@
         {
           "file": "001_project_delivery.sql",
           "checksum": "f157d38588c9cd6493de87c7d00c454252f64ff34f12e5d5b5d5403864cbbcc0"
+        }
+      ]
+    },
+    {
+      "name": "@archava/scheduling",
+      "version": "0.1.0",
+      "migrations": []
+    },
+    {
+      "name": "@archava/scheduling-pg",
+      "version": "0.1.0",
+      "migrations": [
+        {
+          "file": "001_resource_reservations.sql",
+          "checksum": "83c9b7e255c09ab81a063823cfba3e6ea8a4df2c9b7eaabfa981fde1114bb058"
         }
       ]
     }
@@ -235,6 +250,11 @@
       "schema": "archava_projects",
       "package": "@archava/projects-pg",
       "migrations": ["001_project_delivery"]
+    },
+    {
+      "schema": "archava_scheduling",
+      "package": "@archava/scheduling-pg",
+      "migrations": ["001_resource_reservations"]
     }
   ],
   "requiredAdapters": [
@@ -243,7 +263,8 @@
     "@archava/provider-runtime",
     "@archava/act-host-pg",
     "@archava/crm-act",
-    "@archava/projects-pg"
+    "@archava/projects-pg",
+    "@archava/scheduling-pg"
   ],
   "operatorChecks": [
     "non-owner runtime database role",

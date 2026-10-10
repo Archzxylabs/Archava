@@ -1815,13 +1815,24 @@ module. Assembly contract 2.0.0 adds an optional project flag; contract 1.0.0 an
 the existing four-module defaults remain supported. New domain grants are explicit.
 The new schema is additive; original CRM behaviour, data and audit remain intact.
 
+Profile 1.5.0 adds exclusive resource reservations through `scheduling` and
+`scheduling-pg`, without requiring CRM in the domain packages. The
+[reservation contract](docs/RESOURCE_RESERVATIONS_MODULE.md) defines capacity one,
+explicit time offsets, database-clock holds, overlap protection, current grants,
+atomic audit/receipts and local owner operation. Assembly 3.0.0 adds optional
+`scheduling` while supporting old v1/v2 compositions. K07/K10 may select the narrow
+`resource_reservations` scope; full operating kits remain blocked. This does not
+accept hotel room nights, recurring calendars, pooled capacity, customer booking,
+rental lifecycle, payment or external effects. Accommodation is the next domain
+extension; existing scopes and data must survive that work.
+
 Kit assembly must resolve every requirement against a verified installed profile.
 Unknown, missing, disabled and domain-review requirements are blockers. Narrow
-`crm_inquiry` or `project_tracking` scopes must never imply acceptance of the
+`crm_inquiry`, `project_tracking` or `resource_reservations` scopes must never imply acceptance of the
 corresponding full operating kit. New scope does not change the approved pricebook.
 An assembly is configuration, not authentication, execution approval or deployment.
 
-Scheduling and resource reservations come next, then accommodation and commerce/
+Accommodation room-night/stay/housekeeping comes next, then commerce/
 food-service ownership. All 40 families remain in the work ledger. Specialist
 adapters require an explicit authoritative backend and supported domain contract;
 an unspecified integration cannot be labelled operational.

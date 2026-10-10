@@ -50,6 +50,11 @@ const LOCAL_IMPLEMENTATIONS = freeze({
     { name: '@archava/projects-pg', version: '0.1.0' },
     { name: '@archava/identity-pg', version: '0.1.0' },
   ],
+  appointment_scheduling: [
+    { name: '@archava/scheduling', version: '0.1.0' },
+    { name: '@archava/scheduling-pg', version: '0.1.0' },
+    { name: '@archava/identity-pg', version: '0.1.0' },
+  ],
 })
 
 /**
@@ -84,6 +89,11 @@ export class KitPlanner {
         if (kit.id !== 'K05' && kit.id !== 'K31') add(`scope.${kit.id}.project_tracking`, kit.id)
         add('crm_contacts', kit.id)
         add('project_delivery', kit.id)
+      } else if (selected.scope === 'resource_reservations') {
+        if (kit.id !== 'K07' && kit.id !== 'K10')
+          add(`scope.${kit.id}.resource_reservations`, kit.id)
+        add('crm_contacts', kit.id)
+        add('appointment_scheduling', kit.id)
       } else {
         for (const capability of kit.capabilities) add(capability, kit.id)
         add(kit.domainRequirement, kit.id)
@@ -119,7 +129,8 @@ export class KitPlanner {
           }
         if (
           (id === 'crm_sales_pipeline' && !this.modules.pipeline) ||
-          (id === 'project_delivery' && !this.modules.projects)
+          (id === 'project_delivery' && !this.modules.projects) ||
+          (id === 'appointment_scheduling' && !this.modules.scheduling)
         )
           return {
             ...base,
@@ -200,13 +211,19 @@ export class KitPlanner {
       assistant: required.has('surface.assistant'),
       nativeActions: required.has('surface.native_actions'),
       ...(required.has('project_delivery') ? { projects: true } : {}),
+      ...(required.has('appointment_scheduling') ? { scheduling: true } : {}),
     }
     // Reuse the existing assembly validator; planning metadata cannot bypass it.
     let assembly: ModuleSelection | null = null
     if (blockers.length === 0) {
       planAssembly(
         {
-          version: modules.projects !== undefined ? '2.0.0' : '1.0.0',
+          version:
+            modules.scheduling !== undefined
+              ? '3.0.0'
+              : modules.projects !== undefined
+                ? '2.0.0'
+                : '1.0.0',
           profile: this.release.version,
           modules,
         },

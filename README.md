@@ -8,7 +8,8 @@ The product requirement is [PRD v2.1](PRD.md). The operational contract is `agen
 PRD §50 defines the active finite local release: supported versions, safe module
 composition, shared presence contracts, scoped security, measured capacity and
 upgrade/recovery acceptance. Profile `1.3.0` is the accepted baseline; `1.4.0`
-adds the kit planner and bounded internal project delivery under PRD §46.6;
+adds the kit planner and bounded internal project delivery, and `1.5.0` adds
+exclusive resource reservations under PRD §46.6;
 see [release acceptance](docs/LOCAL_LIBRARY_RELEASE.md) and the
 [cold-install/handoff guide](docs/LOCAL_LIBRARY_HANDOFF.md).
 ARCHZXY is the company; Archava is its flagship product. The target internal module
@@ -31,6 +32,9 @@ full programme. The trusted `@archava/kits` catalogue and readiness planner now
 report missing requirements before assembly. The first additional business module
 is [project/task/milestone delivery](docs/PROJECT_DELIVERY_MODULE.md), reused by
 independent consumers and composed into the local owner host with explicit grants.
+The [resource reservation module](docs/RESOURCE_RESERVATIONS_MODULE.md) now shares
+timed holds, confirmation, moves and cancellation across appointment and asset-rental
+consumers, with an optional owner panel and independent permissions.
 These bounded capabilities do not mark any of the 40 operating kits complete.
 The [10 October repository re-audit](docs/PROJECT_REAUDIT_2026-10-10.md) records
 current folder/runtime boundaries, fresh verification and the next work order.

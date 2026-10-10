@@ -61,7 +61,9 @@
     "kits:plan": "node tools/library/plan-kits.mjs",
     "kits:verify": "node tools/library/verify-kits.mjs",
     "projects:verify": "node tools/library/verify-projects.mjs",
-    "projects:verify-host": "node tools/library/verify-project-host.mjs"
+    "projects:verify-host": "node tools/library/verify-project-host.mjs",
+    "scheduling:verify": "node tools/library/verify-scheduling.mjs",
+    "scheduling:verify-host": "node tools/library/verify-scheduling-host.mjs"
   },
   "devDependencies": {
     "@eslint/js": "9.37.0",

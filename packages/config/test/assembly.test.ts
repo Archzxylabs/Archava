@@ -22,6 +22,41 @@ const trusted = releaseCatalogSchema.parse({
 })
 const request = (modules: unknown) => ({ version: '1.0.0', profile: trusted.version, modules })
 describe('untrusted composition requests', () => {
+  it('requires v3 and installed scheduling packages while retaining v1/v2 compatibility', () => {
+    const available = {
+      ...trusted,
+      contracts: { ...trusted.contracts, assembly: '3.0.0' as const },
+      packages: [
+        ...trusted.packages,
+        ...['projects', 'projects-pg', 'scheduling', 'scheduling-pg'].map((name) => ({
+          name: '@archava/' + name,
+          version: '0.1.0',
+          migrations: [],
+        })),
+      ],
+    }
+    const input = { version: '3.0.0', profile: trusted.version, modules: COMPOSABLE_MODULES }
+    expect(planAssembly(input, available).entries.map((x) => x.id)).toContain('scheduling')
+    expect(planAssembly(request(FULL_MODULES), available).entries).toHaveLength(4)
+    expect(
+      planAssembly(
+        {
+          version: '2.0.0',
+          profile: trusted.version,
+          modules: { ...FULL_MODULES, projects: true },
+        },
+        available,
+      ).entries,
+    ).toHaveLength(5)
+    expect(() => planAssembly({ ...input, version: '2.0.0' }, available)).toThrow()
+    expect(() => planAssembly(input, trusted)).toThrow('contract')
+    expect(() =>
+      planAssembly(input, {
+        ...available,
+        packages: available.packages.filter((x) => x.name !== '@archava/scheduling-pg'),
+      }),
+    ).toThrow('unavailable')
+  })
   it('composes projects only under the supported v2 contract and never silently changes legacy defaults', () => {
     const available = {
       ...trusted,
@@ -32,7 +67,11 @@ describe('untrusted composition requests', () => {
         { name: '@archava/projects-pg', version: '0.1.0', migrations: [] },
       ],
     }
-    const input = { version: '2.0.0', profile: trusted.version, modules: COMPOSABLE_MODULES }
+    const input = {
+      version: '2.0.0',
+      profile: trusted.version,
+      modules: { ...FULL_MODULES, projects: true },
+    }
     expect(planAssembly(input, available).entries.map((x) => x.id)).toContain('projects')
     expect(planAssembly(request(FULL_MODULES), available).entries).toHaveLength(4)
     expect(() => planAssembly({ ...input, version: '1.0.0' }, available)).toThrow()

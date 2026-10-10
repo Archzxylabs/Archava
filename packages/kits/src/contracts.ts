@@ -59,7 +59,12 @@ export const kitRequestSchema = z
         z
           .object({
             id: kitIdSchema,
-            scope: z.enum(['operations', 'crm_inquiry', 'project_tracking']),
+            scope: z.enum([
+              'operations',
+              'crm_inquiry',
+              'project_tracking',
+              'resource_reservations',
+            ]),
           })
           .strict(),
       )
@@ -107,7 +112,7 @@ export interface KitPlan {
   readonly profile: string
   readonly selections: readonly {
     id: string
-    scope: 'operations' | 'crm_inquiry' | 'project_tracking'
+    scope: 'operations' | 'crm_inquiry' | 'project_tracking' | 'resource_reservations'
   }[]
   readonly requirements: readonly KitRequirement[]
   readonly blockers: readonly KitRequirement[]

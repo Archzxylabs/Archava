@@ -39,6 +39,34 @@ const request = (id = 'K01', scope = 'operations') => ({
 })
 
 describe('trusted kit contracts and support boundary', () => {
+  it('accepts bounded exclusive reservations in appointment and asset rental contexts while full kits remain blocked', () => {
+    const supported = release()
+    supported.contracts.assembly = '3.0.0'
+    supported.packages.push(
+      { name: '@archava/scheduling', version: '0.1.0', migrations: [] },
+      { name: '@archava/scheduling-pg', version: '0.1.0', migrations: [] },
+    )
+    const planner = new KitPlanner(supported, COMPOSABLE_MODULES)
+    for (const id of ['K07', 'K10']) {
+      expect(planner.plan(request(id, 'resource_reservations')).assembly).toEqual({
+        ...MINIMAL_MODULES,
+        scheduling: true,
+      })
+      expect(planner.plan(request(id)).readyToAssemble).toBe(false)
+      expect(planner.plan(request(id, 'resource_reservations')).operationalKitsAccepted).toEqual([])
+    }
+    expect(planner.plan(request('K01', 'resource_reservations')).readyToAssemble).toBe(false)
+    expect(
+      new KitPlanner(supported, FULL_MODULES)
+        .plan(request('K07', 'resource_reservations'))
+        .blockers.some((x) => x.disposition === 'needs_configuration'),
+    ).toBe(true)
+    expect(
+      new KitPlanner(release(), COMPOSABLE_MODULES)
+        .plan(request('K07', 'resource_reservations'))
+        .blockers.some((x) => x.disposition === 'needs_implementation'),
+    ).toBe(true)
+  })
   it('accepts explicit internal project tracking in two contexts while full project/EPC kits remain blocked', () => {
     const supported = release()
     supported.contracts.assembly = '2.0.0'

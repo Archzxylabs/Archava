@@ -1,6 +1,6 @@
 {
   "name": "@archava/crm-host",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -38,7 +38,9 @@
     "@archava/acl": "workspace:*",
     "@archava/adapters": "workspace:*",
     "@archava/projects": "workspace:*",
-    "@archava/projects-pg": "workspace:*"
+    "@archava/projects-pg": "workspace:*",
+    "@archava/scheduling": "workspace:*",
+    "@archava/scheduling-pg": "workspace:*"
   },
   "devDependencies": {
     "@types/pg": "8.23.1",

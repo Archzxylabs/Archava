@@ -8,6 +8,7 @@ import { createTabFollowupRecovery } from '@archava/crm-assistant/recovery'
 import { z } from 'zod'
 import { moduleSelectionSchema, FULL_MODULES } from '@archava/config/assembly'
 import { mountProjectDashboard } from '@archava/projects/dashboard'
+import { mountSchedulingDashboard } from '@archava/scheduling/dashboard'
 
 const sessionSchema = z.discriminatedUnion('authenticated', [
   z.object({ authenticated: z.literal(false) }).strict(),
@@ -51,8 +52,11 @@ let overview: ReturnType<typeof mountCrmOverview> | null = null
 let pipeline: ReturnType<typeof mountPipelineDashboard> | null = null
 let conversation: ReturnType<typeof mountCrmConversation> | null = null
 let projects: ReturnType<typeof mountProjectDashboard> | null = null
+let scheduling: ReturnType<typeof mountSchedulingDashboard> | null = null
 let session: z.infer<typeof sessionSchema> = { authenticated: false }
 function signedOut() {
+  scheduling?.destroy()
+  scheduling = null
   projects?.destroy()
   projects = null
   overview?.destroy()
@@ -100,6 +104,8 @@ async function send(path: string, body?: unknown) {
 async function mount() {
   if (!session.authenticated) return
   const selected = session.tenants.find((item) => item.id === tenants.value)
+  scheduling?.destroy()
+  scheduling = null
   projects?.destroy()
   projects = null
   overview?.destroy()
@@ -121,6 +127,7 @@ async function mount() {
     ['conversation', modules.assistant],
     ['overview', modules.pipeline],
     ['projects', modules.projects ?? false],
+    ['scheduling', modules.scheduling ?? false],
   ] as const) {
     const node = element<HTMLElement>('#' + id)
     node.hidden = !enabled
@@ -144,6 +151,17 @@ async function mount() {
   if (modules.projects)
     projects = mountProjectDashboard(element<HTMLElement>('#projects'), {
       apiBase: '/api/projects/' + selected.id,
+      transport: async (input, init) => {
+        const headers = new Headers(init?.headers)
+        if (init?.method === 'POST') headers.set('x-archava-csrf', csrf)
+        const response = await fetch(input, { ...init, headers })
+        if (response.status === 401) signedOut()
+        return response
+      },
+    })
+  if (modules.scheduling)
+    scheduling = mountSchedulingDashboard(element<HTMLElement>('#scheduling'), {
+      apiBase: '/api/scheduling/' + selected.id,
       transport: async (input, init) => {
         const headers = new Headers(init?.headers)
         if (init?.method === 'POST') headers.set('x-archava-csrf', csrf)

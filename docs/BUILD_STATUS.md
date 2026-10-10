@@ -1,6 +1,37 @@
 # Build status
 
-## Current checkpoint — 11 October 2026
+## Current checkpoint — profile 1.5.0, 11 October 2026
+
+The shared [resource reservation module](RESOURCE_RESERVATIONS_MODULE.md) now
+operates independently for timed staff appointments and individual asset rental.
+It supports capacity-one resources, temporary holds with database-clock expiry,
+confirmation, moves, cancellation and maintenance blocks, with strict API/read
+tools, independent grants/RLS and an optional composed owner panel. This extends
+the existing project and CRM modules; the [full kit ledger](STARTER_KIT_IMPLEMENTATION.md)
+retains accommodation and every remaining operating-kit requirement.
+
+All eight root gates passed: **1,485 tests in 105 files**. Fresh checks passed
+CRM 38, Act 18, owner runtime 44, Chromium minimal/full 3/70, kit planning/assembly 8,
+project domain 15, project owner/browser 11, scheduling domain 14, scheduling
+owner/browser 9 and prior-profile upgrade 4. The 27-control security matrix passed;
+root/runtime advisory scans have zero findings. The separate realtime template
+retains 13 moderate findings and its earlier SDK/live integration gap.
+
+The original owner installation was backed up before and after additive migration.
+All **30 pre-existing tables**, including eight CRM tables and existing grants,
+match their prior hashes/counts. Identity/fingerprint keys and settings are unchanged.
+Doctor verifies profile 1.5.0. Scheduling has no automatically enrolled accounts or
+business records; activation and permissions remain explicit. See
+[sanitized release evidence](audit/2026-10-11-resource-reservations-release.json).
+
+Full operating kits accepted: **0 of 40 researched candidates**. Narrow reservation
+scopes for K07/K10 do not accept entire appointment/rental systems. Hotel room
+nights, stay/check-in/out and housekeeping are next; recurring calendars, pooled
+capacity, rental handover/return, natural-language scheduling routing and durable
+browser recovery remain open. The programme does not remove remaining general or
+specialist-kit work or claim a whole-product completion/security percentage.
+
+## Previous extension checkpoint — profile 1.4.0, 11 October 2026
 
 Profile `1.4.0` adds the trusted 40-family catalogue/readiness planner and a reusable
 internal project/task/milestone module. The pure domain and PostgreSQL adapter work

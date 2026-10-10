@@ -58,6 +58,8 @@ import { verifyRuntimeRelease, verifyReleaseDatabase, ReleaseProfileError } from
 import { setModules } from './modules.js'
 import { migrateProjects, grantProjectsRuntime } from '@archava/projects-pg'
 import { PROJECT_PERMISSIONS } from '@archava/projects'
+import { migrateScheduling, grantSchedulingRuntime } from '@archava/scheduling-pg'
+import { SCHEDULING_PERMISSIONS } from '@archava/scheduling'
 
 const credentialsSchema = z
   .object({
@@ -73,6 +75,7 @@ async function grant(pool: Pool) {
   await grantIdentityRuntime(pool, role)
   await grantProviderRuntime(pool, role)
   await grantProjectsRuntime(pool, role)
+  await grantSchedulingRuntime(pool, role)
   await grantNativeCrmAct(pool, role)
   await grantActHostRuntime(nativeSqlClient(pool, 'operator', 'operator'), role)
 }
@@ -168,6 +171,7 @@ async function setup() {
       await migrateProviderRuntime(owner)
       await migrateNative(owner)
       await migrateProjects(owner)
+      await migrateScheduling(owner)
       await grant(owner)
       for (const tenant of settings.tenants) {
         await owner.query(
@@ -209,15 +213,20 @@ async function setup() {
 }
 async function user(args: string[]) {
   const [mode, file] = args
-  if (!['add', 'reset', 'recover', 'pipeline', 'projects'].includes(mode ?? '') || !file)
-    throw new Error('Expected user add|reset|recover|pipeline|projects private-input.json')
+  if (
+    !['add', 'reset', 'recover', 'pipeline', 'projects', 'scheduling'].includes(mode ?? '') ||
+    !file
+  )
+    throw new Error(
+      'Expected user add|reset|recover|pipeline|projects|scheduling private-input.json',
+    )
   const settings = await loadSettings()
   const input = await readPrivateJson(resolve(file))
   await withLocalDatabase(settings, async () => {
     const owner = new Pool(connection(settings, 'archava_operator'))
     try {
       if (mode === 'add') await enroll(owner, settings, input)
-      else if (mode === 'projects') {
+      else if (mode === 'projects' || mode === 'scheduling') {
         const account = z
           .object({
             username: usernameSchema,
@@ -242,7 +251,7 @@ async function user(args: string[]) {
           const permissions =
             account.access === 'none'
               ? []
-              : PROJECT_PERMISSIONS.filter(
+              : (mode === 'projects' ? PROJECT_PERMISSIONS : SCHEDULING_PERMISSIONS).filter(
                   (permission) => account.access === 'write' || permission.endsWith('.read'),
                 )
           for (const tenant of account.tenants) {
@@ -255,7 +264,7 @@ async function user(args: string[]) {
             if (member?.kind !== 'human' || !member.active)
               throw new Error('Active workspace membership required')
             await client.query(
-              "INSERT INTO archava_projects.memberships(tenant_id,principal_id,kind,permissions,scope,active) VALUES($1,$2,'human',$3,$4,$5) ON CONFLICT(tenant_id,principal_id) DO UPDATE SET permissions=excluded.permissions,scope=excluded.scope,active=excluded.active",
+              `INSERT INTO ${mode === 'projects' ? 'archava_projects' : 'archava_scheduling'}.memberships(tenant_id,principal_id,kind,permissions,scope,active) VALUES($1,$2,'human',$3,$4,$5) ON CONFLICT(tenant_id,principal_id) DO UPDATE SET permissions=excluded.permissions,scope=excluded.scope,active=excluded.active`,
               [tenant, person.principal_id, permissions, account.scope, account.access !== 'none'],
             )
           }
@@ -419,6 +428,7 @@ async function restore(args: string[]) {
       await writeNativeControl(recovered, true, true)
       await migrateNative(owner)
       await migrateProjects(owner)
+      await migrateScheduling(owner)
       await grant(owner)
       // Restoring an older backup must never resurrect a logged-out session.
       await owner.query('DELETE FROM archava_identity.sessions')
@@ -454,6 +464,7 @@ async function resumeActions() {
       await migrateCrm(owner)
       await migrateNative(owner)
       await migrateProjects(owner)
+      await migrateScheduling(owner)
       await grant(owner)
       const active = (
         await owner.query(

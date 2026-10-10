@@ -19,6 +19,8 @@ import { assertModuleLifecycle } from './modules.js'
 import { FULL_MODULES } from '@archava/config/assembly'
 import { ProjectService } from '@archava/projects'
 import { PostgresProjectRepository } from '@archava/projects-pg'
+import { SchedulingService } from '@archava/scheduling'
+import { PostgresSchedulingRepository } from '@archava/scheduling-pg'
 
 // This local host also runs on desktops without reliable IPv6 routing.
 setDefaultResultOrder('ipv4first')
@@ -102,6 +104,11 @@ try {
     (settings.modules ?? FULL_MODULES).projects
       ? new ProjectService(
           await PostgresProjectRepository.create(runtimePool, settings.fingerprintKey),
+        )
+      : undefined,
+    (settings.modules ?? FULL_MODULES).scheduling
+      ? new SchedulingService(
+          await PostgresSchedulingRepository.create(runtimePool, settings.fingerprintKey),
         )
       : undefined,
   )

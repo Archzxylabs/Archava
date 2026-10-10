@@ -42,7 +42,12 @@ if (kitMode) {
 const plan = api.planAssembly(
   kitPlan
     ? {
-        version: kitPlan.assembly.projects !== undefined ? '2.0.0' : '1.0.0',
+        version:
+          kitPlan.assembly.scheduling !== undefined
+            ? '3.0.0'
+            : kitPlan.assembly.projects !== undefined
+              ? '2.0.0'
+              : '1.0.0',
         profile: trusted.version,
         modules: kitPlan.assembly,
       }

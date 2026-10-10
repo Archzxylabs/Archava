@@ -76,7 +76,7 @@ catalog. Dependensi kandidat tetap konseptual sampai slice disepakati dan dibang
 | commerce_orders        | Order lines, totals snapshot, fulfillment/return lifecycle        | Catalog, inventory/payment lewat aplikasi orkestrasi                  | Planned; payment processing tetap terpisah.                                       |
 | inventory_quantities   | Stock movements/reservation per lokasi/item                       | Orders/purchasing/manufacturing; units/lots sesuai kebutuhan          | Later; finance/valuation bukan boolean stock.                                     |
 | purchasing             | Supplier, request/order, goods receipt refs                       | Inventory dan billing via service yang dimiliki masing-masing         | Later; approval limits/receipt mismatch eksplisit.                                |
-| appointment_scheduling | Resource/time, holds, confirmation, reschedule                    | Users/resource directories; catalog optional                          | Later; overlap/capacity/timezone concurrency wajib diuji.                         |
+| appointment_scheduling | Resource/time, holds, confirmation, reschedule                    | Users/resource directories; catalog optional                          | **Terbukti lokal** untuk resource eksklusif; recurring/buffer/pooling belum.      |
 | asset_register         | Asset identity, condition, maintenance/availability refs          | Rental atau field-service; SKU tidak menggantikan serialized asset    | Later; kebutuhan berbeda dari fixed-assets accounting.                            |
 | asset_rental           | Rental terms, handover, return, overdue/damage refs               | Asset register dan scheduling; payment provider optional              | Later; kontrak pengembalian milik rental.                                         |
 | accommodation_ops      | Stay/room assignment, housekeeping, room status                   | Shared scheduling/payment refs; domain hotel sendiri                  | Later; PMS adapter layak dievaluasi sebelum native suite.                         |
@@ -174,3 +174,7 @@ Scheduling, invoicing/payment, atau commerce dipilih mengikuti pelanggan pertama
 yang kebutuhannya berulang. Clinical EHR, universal accounting/payroll, MRP penuh,
 dan settlement marketplace native tetap ditunda. Website ARCHZXY berada di proyek
 terpisah dan kelak mengonsumsi capability ini lewat API/SDK.
+
+Checkpoint 11 October profile 1.5.0: [resource reservations](RESOURCE_RESERVATIONS_MODULE.md)
+membuktikan overlap/expiry/revision/restore dan reuse appointment/rental tanpa fork.
+Kapasitas satu dan interval eksplisit bukan penerimaan penuh calendar/rental/hotel kit.

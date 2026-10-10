@@ -44,6 +44,8 @@ if (process.argv.includes('--run')) {
   run('kits', ['pnpm', 'kits:verify'])
   run('projects', ['pnpm', 'projects:verify'])
   run('project-host', ['pnpm', 'projects:verify-host'])
+  run('scheduling', ['pnpm', 'scheduling:verify'])
+  run('scheduling-host', ['pnpm', 'scheduling:verify-host'])
 }
 run('platform-audit', ['pnpm', 'audit', '--json'], root, [0, 1])
 run('runtime-audit', ['npm', 'audit', '--json'], join(root, 'dist/crm-runtime'), [0, 1])
@@ -84,12 +86,16 @@ const proofs = {
   kits: await json(join(root, 'dist/kit-proof/results.json')),
   projects: await json(join(root, 'dist/project-proof/results.json')),
   projectHost: await json(join(root, 'dist/project-host-proof/results.json')),
+  scheduling: await json(join(root, 'dist/scheduling-proof/results.json')),
+  schedulingHost: await json(join(root, 'dist/scheduling-host-proof/results.json')),
 }
-for (const name of ['runtime', 'kits', 'projects', 'projectHost'])
+for (const name of ['runtime', 'kits', 'projects', 'projectHost', 'scheduling', 'schedulingHost'])
   assert.equal(proofs[name].profile, profile.catalog.version, 'Stale release proof: ' + name)
 assert.equal(proofs.runtime.providerCalls, 0)
 assert.equal(proofs.act.providerCalls, 0)
 assert.equal(proofs.projectHost.providerCalls, 0)
+assert.equal(proofs.scheduling.providerCalls, 0)
+assert.equal(proofs.schedulingHost.providerCalls, 0)
 const controls = [
   [
     'identity-session-csrf',
@@ -222,6 +228,44 @@ const controls = [
     'response loss|backup restore',
   ],
 ]
+controls.push(
+  [
+    'scheduling-current-grants-and-tools',
+    ['packages/scheduling-pg/src/repository.ts', 'packages/scheduling/src/tools.ts'],
+    'scheduling',
+    'current grants|read-only tools',
+  ],
+  [
+    'scheduling-atomic-overlap-and-revisions',
+    [
+      'packages/scheduling-pg/src/repository.ts',
+      'packages/scheduling-pg/migrations/001_resource_reservations.sql',
+    ],
+    'scheduling',
+    '20 distinct competing|20 duplicate|competing revisions',
+  ],
+  [
+    'scheduling-database-clock-and-expiry',
+    [
+      'packages/scheduling-pg/src/repository.ts',
+      'packages/scheduling-pg/migrations/001_resource_reservations.sql',
+    ],
+    'scheduling',
+    'expiry uses database time',
+  ],
+  [
+    'scheduling-host-auth-and-lifecycle',
+    ['apps/crm/src/host.ts', 'apps/crm/src/operator.ts'],
+    'schedulingHost',
+    'CSRF|never grants domain|disable and re-enable',
+  ],
+  [
+    'scheduling-recovery-and-restore',
+    ['packages/scheduling/src/dashboard.ts', 'apps/crm/src/backups.ts'],
+    'schedulingHost',
+    'response loss|backup restore',
+  ],
+)
 const matrix = []
 for (const [id, sources, proof, pattern] of controls) {
   for (const source of sources) await readFile(join(root, source))
@@ -237,6 +281,8 @@ for (const [id, sources, proof, pattern] of controls) {
       kits: 'pnpm kits:verify',
       projects: 'pnpm projects:verify',
       projectHost: 'pnpm projects:verify-host',
+      scheduling: 'pnpm scheduling:verify',
+      schedulingHost: 'pnpm scheduling:verify-host',
     }[proof],
     positiveAndRefusalChecks: checks,
     result: 'passed',

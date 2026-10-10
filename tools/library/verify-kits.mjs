@@ -72,6 +72,12 @@ try {
       assert.equal(tracking.assembly.projects, true)
       assert.deepEqual(tracking.operationalKitsAccepted, [])
     }
+    for (const kitId of ['K07', 'K10']) {
+      const reservations = planner.plan(raw(kitId, 'resource_reservations'))
+      assert.equal(reservations.readyToAssemble, true)
+      assert.equal(reservations.assembly.scheduling, true)
+      assert.deepEqual(reservations.operationalKitsAccepted, [])
+    }
     for (const kit of kits.listKits()) {
       const operation = planner.plan(raw(kit.id))
       assert.equal(operation.readyToAssemble, false)
@@ -162,6 +168,21 @@ try {
   assert.equal(
     JSON.parse(await readFile(join(trackingOut, 'kit-plan.json'), 'utf8')).selections[0].scope,
     'project_tracking',
+  )
+  const scheduleFile = join(scratch, 'resource-reservations.json'),
+    scheduleOut = join(scratch, 'assembled-scheduling')
+  await writeFile(scheduleFile, JSON.stringify(raw('K07', 'resource_reservations')))
+  const schedule = command('assemble.mjs', [scheduleFile, scheduleOut, '--kit'])
+  assert.equal(schedule.status, 0, schedule.stderr)
+  const scheduleAssembly = JSON.parse(await readFile(join(scheduleOut, 'assembly.json'), 'utf8'))
+  assert.equal(scheduleAssembly.version, '3.0.0')
+  assert.ok(scheduleAssembly.entries.some((entry) => entry.entry === '@archava/scheduling'))
+  assert.equal(
+    JSON.parse(await readFile(join(scheduleOut, 'kit-plan.json'), 'utf8')).selections[0].scope,
+    'resource_reservations',
+  )
+  checks.push(
+    'narrow appointment and rental reservations assemble under v3 without accepting full operating kits',
   )
   await writeFile(
     join(scratch, 'forged.json'),

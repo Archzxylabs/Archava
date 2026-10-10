@@ -1,6 +1,35 @@
 # Local reusable library release
 
-## Current extension — profile 1.4.0, 11 October 2026
+## Current extension — profile 1.5.0, 11 October 2026
+
+The reusable scheduling domain and PostgreSQL adapter extend profile 1.4.0:
+30 internal artifacts, 18 unchanged external pins, seven owned database ledgers,
+host 0.8.0, config 0.7.0 and kits 0.2.0. New assembly v3 supports optional
+`scheduling`; existing v1/v2 compositions and four-module defaults remain supported.
+The pure module needs no CRM or LLM. The existing host composes it with current
+identity/workspace membership plus independent scheduling grants.
+
+| Extension                    | Accepted evidence                                                                                                                                                                                                                                                   | Limit                                                                     |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Exclusive timed reservations | Two independently installed consumers use the same implementation for staff appointments and individual asset rental; PostgreSQL current-grant/RLS checks, duplicate/overlap races, revision rollback, expiry during a proven lock wait, restart/restore; 14 checks | Capacity one; explicit instants; no complete appointment/rental/hotel kit |
+| Local owner composition      | Auth/CSRF/current grants, real Chromium resource/hold/confirm/move/cancel flow, response-loss recovery, viewer refusal, disable/re-enable and fresh backup restore; 9 checks                                                                                        | Human writes; in-memory browser recovery; blocks/audit details via API    |
+| Trusted composition          | K07/K10 narrow `resource_reservations` scope composes through v3; updated 8-check kit proof and retained v1/v2 scopes                                                                                                                                               | All 40 full operating kits remain blocked on mandatory gaps               |
+| Preserved behavior           | Eight root gates, 1,485 tests/105 files; fresh CRM 38, Act 18, runtime 44, Chromium 3/70, project 15/11 and upgrade 4                                                                                                                                               | Local/synthetic scope; no new live-provider acceptance                    |
+| Security and owner migration | 27 controls, zero supported root/runtime advisories; original 30 tables, keys/settings/grants retained; verified doctor and backups before/after                                                                                                                    | Template 13 moderate findings remains separate; no security certification |
+
+[Sanitized release evidence](audit/2026-10-11-resource-reservations-release.json)
+records current artifact hashes and runnable reports. See
+[the module contract and activation](RESOURCE_RESERVATIONS_MODULE.md) and
+[the complete programme ledger](STARTER_KIT_IMPLEMENTATION.md). No existing account
+receives scheduling access automatically and no pricing/provider policy is changed.
+
+`pnpm security:verify` also runs scheduling domain/host proofs; acceptance rejects
+stale profile evidence. Availability is a database observation: only a successfully
+committed hold reserves a slot. Confirmation is an internal operator action and
+has no customer agreement, financial or external-provider meaning. Next build the
+accommodation domain's room-night/stay/housekeeping rules.
+
+## Previous extension — profile 1.4.0, 11 October 2026
 
 The accepted 1.3.0 baseline below is extended by three private artifacts: `kits`,
 `projects` and `projects-pg`. There are 28 internal artifacts, 18 unchanged external

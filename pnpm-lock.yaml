@@ -98,6 +98,12 @@ importers:
       '@archava/provider-runtime':
         specifier: workspace:*
         version: link:../../packages/provider-runtime
+      '@archava/scheduling':
+        specifier: workspace:*
+        version: link:../../packages/scheduling
+      '@archava/scheduling-pg':
+        specifier: workspace:*
+        version: link:../../packages/scheduling-pg
       pg:
         specifier: 8.23.1
         version: 8.23.1
@@ -716,6 +722,41 @@ importers:
       typescript:
         specifier: 5.9.3
         version: 5.9.3
+
+  packages/scheduling:
+    dependencies:
+      zod:
+        specifier: 4.1.12
+        version: 4.1.12
+    devDependencies:
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@24.9.1)(@vitest/coverage-v8@4.1.11)(vite@7.3.6(@types/node@24.9.1)(tsx@4.20.6))
+
+  packages/scheduling-pg:
+    dependencies:
+      '@archava/scheduling':
+        specifier: workspace:*
+        version: link:../scheduling
+      pg:
+        specifier: 8.23.1
+        version: 8.23.1
+      zod:
+        specifier: 4.1.12
+        version: 4.1.12
+    devDependencies:
+      '@types/pg':
+        specifier: 8.23.1
+        version: 8.23.1
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@24.9.1)(@vitest/coverage-v8@4.1.11)(vite@7.3.6(@types/node@24.9.1)(tsx@4.20.6))
 
   packages/sdk:
     dependencies:
