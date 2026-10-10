@@ -7,6 +7,7 @@ import { createRequire } from 'node:module'
 import { createHash } from 'node:crypto'
 import { spawnSync } from 'node:child_process'
 import { packLibrary } from './pack.mjs'
+import { build } from 'esbuild'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 const { output, artifacts, profile } = await packLibrary()
@@ -59,6 +60,24 @@ try {
     const require = createRequire(join(consumer, 'package.json'))
     const release = await import(pathToFileURL(require.resolve('@archava/config/release')).href)
     await release.verifyInstalledRelease(profile, profile.catalog, join(consumer, 'node_modules'))
+    const presenceBrowser = await build({
+      entryPoints: [require.resolve('@archava/presence/client')],
+      outfile: join(consumer, 'dist/presence-client.js'),
+      bundle: true,
+      platform: 'browser',
+      format: 'esm',
+      metafile: true,
+      logLevel: 'silent',
+    })
+    if (
+      Object.keys(presenceBrowser.metafile.inputs).some(
+        (path) =>
+          path.includes('@archava/presence/dist/index.js') ||
+          path.includes('node:') ||
+          /crm-pg|identity-pg|provider-runtime/.test(path),
+      )
+    )
+      throw new Error('Presence browser client contains server authority')
     run(['run', 'typecheck'], consumer)
     run(['run', 'build'], consumer)
     const verified = run(['run', 'verify'], consumer).trim().split('\n').at(-1)
@@ -80,6 +99,7 @@ try {
       checks: JSON.parse(verified),
       installed,
       releaseProfile: profile.catalog.version,
+      presenceBrowserIsolated: true,
     })
     const demo = join(root, 'dist/reuse-demo', name)
     await mkdir(demo, { recursive: true })

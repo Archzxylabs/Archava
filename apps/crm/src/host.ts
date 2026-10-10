@@ -19,6 +19,8 @@ import type { RuntimeSettings } from './settings.js'
 import type { NativeCrmActHost } from '@archava/crm-act'
 import { ActHostRefusal } from '@archava/act-host'
 import { FULL_MODULES } from '@archava/config/assembly'
+import { PresenceRefusal } from '@archava/presence'
+import { createHostPresence, presenceRefusalResponse } from './presence.js'
 
 const json = (value: unknown, status = 200, headers: Record<string, string> = {}) =>
   Response.json(value, { status, headers: { 'cache-control': 'no-store', ...headers } })
@@ -49,6 +51,7 @@ export function createHostHandler(
 ) {
   const modules = settings.modules ?? FULL_MODULES
   if (!modules.pipeline) pipeline = undefined
+  const presence = createHostPresence(service, settings, pipeline)
   const secure = new URL(origin).protocol === 'https:'
   const cookieName = secure ? '__Host-archava_session' : 'archava_local_session'
   return async (request: Request, source: string): Promise<Response> => {
@@ -76,6 +79,31 @@ export function createHostHandler(
         })
       }
       const session = await identity.authenticate(token)
+      if (
+        request.method === 'POST' &&
+        /^\/api\/presence\/(session|context|turn)$/.test(url.pathname)
+      ) {
+        if (
+          session &&
+          (!token || !identity.validCsrf(token, request.headers.get('x-archava-csrf')))
+        )
+          return json({ error: { message: 'Request verification failed.' } }, 403)
+        const body: unknown = await request.json()
+        const ownerId = session?.principalId
+        const guestName = secure ? '__Host-archava_presence_guest' : 'archava_presence_guest'
+        let guest = presence.guest(cookieToken(request.headers.get('cookie'), guestName))
+        let setCookie: string | undefined
+        if (!ownerId && !guest && url.pathname.endsWith('/session')) {
+          guest = presence.issueGuest()
+          setCookie = sessionCookie(guestName, guest, secure)
+        }
+        const binding = ownerId ? token : guest
+        if (!binding) return json({ error: { message: 'Presence session required.' } }, 401)
+        const result = url.pathname.endsWith('/session')
+          ? await presence.issue(body, binding, ownerId)
+          : await presence.handle(body, binding, ownerId, url.pathname.endsWith('/context'))
+        return respond(result, 200, setCookie ? { 'set-cookie': setCookie } : {})
+      }
       if (request.method === 'GET' && url.pathname === '/api/session') {
         if (!session) return json({ authenticated: false })
         const tenants = []
@@ -240,6 +268,7 @@ export function createHostHandler(
         )(request)
       return json({ error: { message: 'Unknown route.' } }, 404)
     } catch (error) {
+      if (error instanceof PresenceRefusal) return presenceRefusalResponse(error)
       if (error instanceof ActHostRefusal)
         return respond(
           {
@@ -303,8 +332,9 @@ export async function startCrmHost(
   plannerMode?: 'local' | 'gemini-synthetic',
   nativeFor?: (tenantId: string, humanId: string) => Promise<NativeCrmActHost>,
 ) {
-  const handle = (request: Request, source: string) =>
-    createHostHandler(
+  let handler: ReturnType<typeof createHostHandler> | undefined
+  const handle = (request: Request, source: string) => {
+    handler ??= createHostHandler(
       service,
       identity,
       pool,
@@ -314,7 +344,9 @@ export async function startCrmHost(
       plannerFor,
       plannerMode,
       nativeFor,
-    )(request, source)
+    )
+    return handler(request, source)
+  }
   const server = createServer(
     { maxHeaderSize: 8192, requestTimeout: 10000, headersTimeout: 10000 },
     (incoming, outgoing) => {

@@ -50,15 +50,27 @@ importers:
 
   apps/crm:
     dependencies:
+      '@archava/acl':
+        specifier: workspace:*
+        version: link:../../packages/acl
       '@archava/act-host':
         specifier: workspace:*
         version: link:../../packages/act-host
       '@archava/act-host-pg':
         specifier: workspace:*
         version: link:../../packages/act-host-pg
+      '@archava/adapters':
+        specifier: workspace:*
+        version: link:../../packages/adapters
+      '@archava/assistant':
+        specifier: workspace:*
+        version: link:../../packages/assistant
       '@archava/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@archava/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@archava/crm':
         specifier: workspace:*
         version: link:../../packages/crm
@@ -74,6 +86,9 @@ importers:
       '@archava/identity-pg':
         specifier: workspace:*
         version: link:../../packages/identity-pg
+      '@archava/presence':
+        specifier: workspace:*
+        version: link:../../packages/presence
       '@archava/provider-runtime':
         specifier: workspace:*
         version: link:../../packages/provider-runtime
@@ -564,6 +579,19 @@ importers:
       '@archava/core':
         specifier: workspace:*
         version: link:../core
+      zod:
+        specifier: 4.1.12
+        version: 4.1.12
+    devDependencies:
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@24.9.1)(@vitest/coverage-v8@4.1.11)(vite@7.3.6(@types/node@24.9.1)(tsx@4.20.6))
+
+  packages/presence:
+    dependencies:
       zod:
         specifier: 4.1.12
         version: 4.1.12

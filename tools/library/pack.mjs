@@ -45,6 +45,7 @@ export async function packLibrary() {
   }
   for (const name of [
     '@archava/crm-act',
+    '@archava/presence',
     '@archava/sdk',
     '@archava/assistant',
     '@archava/chat',

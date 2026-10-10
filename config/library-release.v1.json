@@ -1,15 +1,17 @@
 {
   "schemaVersion": "1.0.0",
   "id": "archava-local-library",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "host": {
     "name": "@archava/crm-host",
-    "version": "0.4.0"
+    "version": "0.5.0"
   },
   "contracts": {
     "clientConfig": "1.0.0",
     "deploymentPlan": "2.0.0",
-    "hostSettings": 1
+    "hostSettings": 1,
+    "assembly": "1.0.0",
+    "presence": "1.0.0"
   },
   "packages": [
     {
@@ -57,7 +59,7 @@
     },
     {
       "name": "@archava/config",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "migrations": []
     },
     {
@@ -173,6 +175,11 @@
     {
       "name": "@archava/act-postmark",
       "version": "0.2.0",
+      "migrations": []
+    },
+    {
+      "name": "@archava/presence",
+      "version": "0.1.0",
       "migrations": []
     }
   ],

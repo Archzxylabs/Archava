@@ -336,6 +336,148 @@ try {
       !publicBundle.includes('password_hash'),
   )
   check('real credentials, cookie-only session, origin checks and browser/server isolation')
+  const publicStart = await post(origin, '/api/presence/session', { tenantId: 'hotel-demo' })
+  assert.equal(publicStart.status, 200)
+  const guestCookie = publicStart.headers.get('set-cookie').split(';')[0]
+  const presenceSession = await publicStart.json()
+  assert.equal(presenceSession.kind, 'guest')
+  const independent = join(home, 'independent-chat')
+  await mkdir(independent)
+  const supported = JSON.parse(await readFile(join(runtime, 'release-profile.json'), 'utf8'))
+  await writeFile(
+    join(independent, 'package.json'),
+    JSON.stringify({
+      private: true,
+      type: 'module',
+      dependencies: Object.fromEntries(
+        supported.artifacts.map((a) => [a.name, 'file:' + join(root, 'dist/library', a.tarball)]),
+      ),
+    }),
+  )
+  execFileSync('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund'], {
+    cwd: independent,
+    stdio: 'pipe',
+  })
+  const chatRequire = createRequire(join(independent, 'package.json'))
+  const chatRelease = await import(
+    pathToFileURL(chatRequire.resolve('@archava/config/release')).href
+  )
+  await chatRelease.verifyInstalledRelease(
+    supported,
+    supported.catalog,
+    join(independent, 'node_modules'),
+  )
+  const { createPresenceClient } = await import(
+    pathToFileURL(chatRequire.resolve('@archava/presence/client')).href
+  )
+  const chat = createPresenceClient(origin, (input, init) =>
+    fetch(input, { ...init, headers: { ...init.headers, origin, cookie: guestCookie } }),
+  )
+  const turn = {
+    version: '1.0.0',
+    sessionId: presenceSession.sessionId,
+    requestId: randomUUID(),
+    pageRevision: 0,
+    transport: 'chat',
+    utterance: 'What is Archava?',
+  }
+  const chatAnswer = await chat.turn(turn)
+  const standalone = join(home, 'voice_transcript.py')
+  await writeFile(
+    standalone,
+    await readFile(join(root, 'examples/presence-consumers/voice_transcript.py')),
+  )
+  const voiceRequest = { ...turn, requestId: randomUUID() }
+  const voiceAnswer = JSON.parse(
+    execFileSync('python3', [standalone], {
+      env: { PATH: process.env.PATH },
+      input: JSON.stringify({ origin, guest_cookie: guestCookie, request: voiceRequest }),
+      encoding: 'utf8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    }),
+  )
+  assert.equal(chatAnswer.text, voiceAnswer.text)
+  assert.equal(voiceAnswer.transport, 'synthetic-voice-transcript')
+  assert.deepEqual(voiceAnswer.allowedTools, ['public.help'])
+  const publicIdentity = { cookie: guestCookie, csrf: '' }
+  assert.equal((await post(origin, '/api/presence/turn', turn, publicIdentity)).status, 409)
+  assert.equal(
+    (
+      await post(
+        origin,
+        '/api/presence/turn',
+        { ...turn, requestId: randomUUID(), role: 'owner' },
+        publicIdentity,
+      )
+    ).status,
+    400,
+  )
+  assert.equal(
+    (
+      await post(
+        origin,
+        '/api/presence/turn',
+        { ...turn, requestId: randomUUID(), requestedTool: 'crm.contacts.list' },
+        publicIdentity,
+      )
+    ).status,
+    403,
+  )
+  const otherStart = await post(origin, '/api/presence/session', { tenantId: 'hotel-demo' })
+  const otherGuest = { cookie: otherStart.headers.get('set-cookie').split(';')[0], csrf: '' }
+  assert.equal(
+    (await post(origin, '/api/presence/turn', { ...turn, requestId: randomUUID() }, otherGuest))
+      .status,
+    403,
+  )
+  assert.deepEqual(
+    await post(
+      origin,
+      '/api/presence/context',
+      { version: '1.0.0', sessionId: turn.sessionId, section: 'protocol-section', revision: 1 },
+      publicIdentity,
+    ).then((r) => r.json()),
+    { section: 'protocol-section', revision: 1 },
+  )
+  assert.equal(
+    (await post(origin, '/api/presence/turn', { ...turn, requestId: randomUUID() }, publicIdentity))
+      .status,
+    409,
+  )
+  const ownerPresence = await post(
+    origin,
+    '/api/presence/session',
+    { tenantId: 'hotel-demo' },
+    owner,
+  ).then((r) => r.json())
+  assert.equal(ownerPresence.kind, 'owner')
+  const ownerReply = await post(
+    origin,
+    '/api/presence/turn',
+    {
+      ...turn,
+      sessionId: ownerPresence.sessionId,
+      requestId: randomUUID(),
+      utterance: 'tampilkan kontak',
+    },
+    owner,
+  )
+  assert.equal(ownerReply.status, 200)
+  assert.equal((await ownerReply.json()).source, 'crm')
+  assert.equal(
+    (
+      await post(
+        origin,
+        '/api/presence/turn',
+        { ...turn, sessionId: ownerPresence.sessionId, requestId: randomUUID() },
+        publicIdentity,
+      )
+    ).status,
+    403,
+  )
+  check(
+    'independent installed chat and standalone Python synthetic voice share the server policy; guest binding, exact page revisions, request replay, malformed identity, private tools and current owner/tenant access are enforced without provider calls',
+  )
   check('private connections ignore ambient database credentials, service files and destinations')
 
   const first = create('Owner contact')
@@ -364,6 +506,10 @@ try {
     403,
   )
   const staffSession = await login(origin, staff.username, staff.password)
+  assert.equal(
+    (await post(origin, '/api/presence/session', { tenantId: 'studio-demo' }, staffSession)).status,
+    403,
+  )
   assert.equal(staffSession.session.tenants.length, 1)
   assert.equal(
     (

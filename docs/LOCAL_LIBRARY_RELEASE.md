@@ -30,7 +30,7 @@ Reproduce the profile checks with `pnpm test -- packages/config/test/release.tes
 Node/pnpm versions. Runtime verification creates and removes an isolated private
 PostgreSQL installation; it does not replace the owner's data or call providers.
 
-The current profile is `1.1.0` (host `0.4.0`, config `0.3.0`). Initial modules
+The current profile is `1.2.0` (host `0.5.0`, config `0.4.0`). Initial modules
 are mandatory `contacts` (including activities/follow-ups), optional `pipeline`,
 optional `assistant`, and `nativeActions` requiring `assistant`. No database data
 is dropped. This is a logical composition within a modular monolith: the supported
@@ -56,3 +56,23 @@ this policy even after manual settings edits. A transient operator connection
 only checks unresolved-state existence; request execution still uses the existing
 non-owner application role with RLS and current grants. Receipt GET recovery and
 pending cancellation remain reconciliation operations, never new execution grants.
+
+The shared `@archava/presence` boundary has strict versioned contracts and a
+server-only session gateway. `POST /api/presence/session` accepts only a configured
+`tenantId`; identity comes from a verified owner cookie or a server-issued guest
+cookie. Owner presence uses current CRM authorization and the offline planner;
+guests receive public help only. Neither transport accepts roles, grants, SQL,
+approval tokens or execution tools. `/context` accepts an allowlisted section and
+a strictly increasing revision; `/turn` binds the current revision, session and
+request UUID. Sessions expire within 120 seconds (hard maximum 300); restart
+invalidates these ephemeral scopes. Capacity and per-session requests are bounded.
+Timeout aborts read work, reports a refusal and keeps the lane busy until late
+work settles. Presence creates no new mutation/consent route.
+
+Both public and owner replies use the existing `runTurn` intelligence/policy
+implementation. The Python example is a standalone HTTP transport using only its
+standard library and public guest scope. It runs from a copied isolated directory
+with no owner/database environment. Synthetic transcript evidence is not a live
+audio/avatar test. The existing Template LiveKit worker remains an independent
+realtime consumer and retains its protocol; connecting its live provider path to
+this gateway is a separate gated migration.
