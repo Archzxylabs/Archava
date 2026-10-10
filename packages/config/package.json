@@ -1,6 +1,6 @@
 {
   "name": "@archava/config",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",
@@ -12,7 +12,8 @@
     "./release-contracts": "./src/release-contracts.ts",
     "./pricing": "./src/pricing/index.ts",
     "./templates": "./src/templates/index.ts",
-    "./client": "./src/client/index.ts"
+    "./client": "./src/client/index.ts",
+    "./assembly": "./src/assembly.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",

@@ -71,6 +71,7 @@ const browser = await build({
   format: 'esm',
   target: 'es2022',
   alias: {
+    '@archava/config/assembly': join(output, 'node_modules/@archava/config/dist/assembly.js'),
     '@archava/crm/contracts': join(output, 'node_modules/@archava/crm/dist/contracts.js'),
     '@archava/crm/overview-contracts': join(
       output,

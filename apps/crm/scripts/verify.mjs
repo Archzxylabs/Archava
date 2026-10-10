@@ -940,6 +940,79 @@ try {
   )
   assert.equal((await get(origin, '/api/crm/hotel-demo/contacts', logoutSession)).status, 401)
   check('application/database restart retains records, sessions, revoked logout and retry receipt')
+  const modulesFile = join(home, 'module-selection.json')
+  const minimal = { contacts: true, pipeline: false, assistant: false, nativeActions: false }
+  await privateJson(modulesFile, minimal)
+  assert.throws(() => operator(['modules', modulesFile]), 'live host must refuse lifecycle changes')
+  await stop()
+  operator(['modules', modulesFile])
+  origin = await boot()
+  assert.deepEqual(
+    (await get(origin, '/api/session', owner).then((r) => r.json())).modules,
+    minimal,
+  )
+  assert.equal((await get(origin, '/api/crm/hotel-demo/contacts', owner)).status, 200)
+  assert.equal((await get(origin, '/api/crm/hotel-demo/opportunities', owner)).status, 404)
+  assert.equal(
+    (await post(origin, '/api/crm/hotel-demo/conversation', { utterance: 'list contacts' }, owner))
+      .status,
+    404,
+  )
+  assert.equal(
+    (
+      await post(
+        origin,
+        '/api/crm/hotel-demo/tools',
+        { name: 'crm.contacts.list', input: {} },
+        owner,
+      )
+    ).status,
+    404,
+  )
+  assert.equal(
+    (
+      await post(
+        origin,
+        '/api/crm/hotel-demo/commands',
+        {
+          requestId: randomUUID(),
+          command: {
+            operation: 'opportunity.create',
+            contactId: receipt.id,
+            contactRevision: 1,
+            title: 'Disabled write',
+            amountMinor: 1,
+            currency: 'IDR',
+          },
+        },
+        owner,
+      )
+    ).status,
+    404,
+  )
+  assert.deepEqual(
+    await get(origin, '/api/crm/hotel-demo/commands/' + first.requestId, owner).then((r) =>
+      r.json(),
+    ),
+    { status: 'committed', requestId: first.requestId, receipt },
+  )
+  await stop()
+  await privateJson(modulesFile, {
+    contacts: true,
+    pipeline: true,
+    assistant: true,
+    nativeActions: true,
+  })
+  operator(['modules', modulesFile])
+  origin = await boot()
+  assert.equal((await get(origin, '/api/crm/hotel-demo/opportunities', owner)).status, 200)
+  assert.deepEqual(
+    await post(origin, '/api/crm/hotel-demo/commands', first, owner).then((r) => r.json()),
+    receipt,
+  )
+  check(
+    'minimal composition disables UI projection, tools, pipeline writes and assistant; re-enable retains records, identity grants and original UUID receipts without copying implementation',
+  )
   assert.deepEqual(
     await post(origin, '/api/crm/hotel-demo/commands', reviewedFollowup, owner).then((response) =>
       response.json(),
@@ -1338,6 +1411,20 @@ try {
   const reviewResponse = await post(origin, nativeBase + '/review', nativeInputs, owner)
   assert.equal(reviewResponse.status, 200)
   const reviewed = await reviewResponse.json()
+  await stop()
+  await privateJson(modulesFile, minimal)
+  assert.throws(
+    () => operator(['modules', modulesFile], 'restored-runtime.json'),
+    'unresolved native review must block disable',
+  )
+  assert.equal(
+    JSON.parse(await readFile(join(home, 'restored-runtime.json'), 'utf8')).modules.nativeActions,
+    true,
+  )
+  origin = await boot('restored-runtime.json')
+  check(
+    'lifecycle refuses disabling unresolved native effects and retains authorized reconciliation',
+  )
   const body = {
     inputs: nativeInputs,
     confirmation: { challengeId: reviewed.challenge.challengeId, token: reviewed.challenge.token },

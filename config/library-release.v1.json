@@ -1,10 +1,10 @@
 {
   "schemaVersion": "1.0.0",
   "id": "archava-local-library",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "host": {
     "name": "@archava/crm-host",
-    "version": "0.3.0"
+    "version": "0.4.0"
   },
   "contracts": {
     "clientConfig": "1.0.0",
@@ -57,7 +57,7 @@
     },
     {
       "name": "@archava/config",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "migrations": []
     },
     {
@@ -180,27 +180,39 @@
     {
       "schema": "archava_crm",
       "package": "@archava/crm-pg",
-      "migrations": ["001_crm_contacts", "002_sales_pipeline", "003_native_approval"]
+      "migrations": [
+        "001_crm_contacts",
+        "002_sales_pipeline",
+        "003_native_approval"
+      ]
     },
     {
       "schema": "archava_identity",
       "package": "@archava/identity-pg",
-      "migrations": ["001_identity"]
+      "migrations": [
+        "001_identity"
+      ]
     },
     {
       "schema": "archava_provider",
       "package": "@archava/provider-runtime",
-      "migrations": ["001_provider_attempts"]
+      "migrations": [
+        "001_provider_attempts"
+      ]
     },
     {
       "schema": "archava_act_host",
       "package": "@archava/act-host-pg",
-      "migrations": ["001_host_intents"]
+      "migrations": [
+        "001_host_intents"
+      ]
     },
     {
       "schema": "archava_crm_act",
       "package": "@archava/crm-act",
-      "migrations": ["001_native_confirmations"]
+      "migrations": [
+        "001_native_confirmations"
+      ]
     }
   ],
   "requiredAdapters": [

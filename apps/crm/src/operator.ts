@@ -55,6 +55,7 @@ import {
 } from './local-postgres.js'
 import { runCrmBackup, readBackupStatus, setBackupPolicy } from './backups.js'
 import { verifyRuntimeRelease, verifyReleaseDatabase, ReleaseProfileError } from './release.js'
+import { setModules } from './modules.js'
 
 const credentialsSchema = z
   .object({
@@ -441,7 +442,11 @@ async function doctor() {
       process.stdout.write(
         JSON.stringify({
           status: 'ready',
-          release: { id: releaseProfile.catalog.id, version: releaseProfile.catalog.version, verified: true },
+          release: {
+            id: releaseProfile.catalog.id,
+            version: releaseProfile.catalog.version,
+            verified: true,
+          },
           workspaces: settings.tenants.length,
           nativeActions: control.held ? 'held' : 'ready',
           externalActions: 'not configured',
@@ -467,7 +472,10 @@ try {
   else if (mode === 'ai-status') await aiStatus()
   else if (mode === 'resume-actions') await resumeActions()
   else if (mode === 'doctor') await doctor()
-  else throw new Error('Unknown CRM operator command')
+  else if (mode === 'modules') {
+    if (process.argv.length !== 4) throw new Error('Expected modules private-selection.json')
+    process.stdout.write(JSON.stringify(await setModules(resolve(process.argv[3]!))) + '\n')
+  } else throw new Error('Unknown CRM operator command')
 } catch (error) {
   if (error instanceof ReleaseProfileError) process.stderr.write(error.message + '\n')
   if (

@@ -50,7 +50,10 @@
     "crm:resume-actions": "pnpm --fail-if-no-match --filter @archava/crm-host run resume-actions",
     "crm:doctor": "pnpm --fail-if-no-match --filter @archava/crm-host run doctor",
     "crm:verify-runtime": "pnpm --fail-if-no-match --filter @archava/crm-host run verify",
-    "e2e:crm-runtime": "node tools/e2e/crm-runtime.mjs"
+    "e2e:crm-runtime": "node tools/e2e/crm-runtime.mjs",
+    "library:assemble": "node tools/library/assemble.mjs",
+    "crm:modules": "pnpm --fail-if-no-match --filter @archava/crm-host run modules",
+    "assembly:verify": "node tools/library/verify-assembly.mjs"
   },
   "devDependencies": {
     "@eslint/js": "9.37.0",

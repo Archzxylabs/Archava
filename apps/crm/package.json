@@ -1,6 +1,6 @@
 {
   "name": "@archava/crm-host",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -17,7 +17,8 @@
     "resume-actions": "node scripts/run.mjs resume-actions",
     "doctor": "node scripts/run.mjs doctor",
     "verify": "node scripts/run.mjs verify",
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "modules": "node scripts/run.mjs modules"
   },
   "dependencies": {
     "@archava/config": "workspace:*",

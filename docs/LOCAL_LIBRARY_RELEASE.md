@@ -29,3 +29,30 @@ Reproduce the profile checks with `pnpm test -- packages/config/test/release.tes
 `pnpm reuse:verify`, `pnpm crm:build` and `pnpm crm:verify-runtime` on the pinned
 Node/pnpm versions. Runtime verification creates and removes an isolated private
 PostgreSQL installation; it does not replace the owner's data or call providers.
+
+The current profile is `1.1.0` (host `0.4.0`, config `0.3.0`). Initial modules
+are mandatory `contacts` (including activities/follow-ups), optional `pipeline`,
+optional `assistant`, and `nativeActions` requiring `assistant`. No database data
+is dropped. This is a logical composition within a modular monolith: the supported
+installation keeps the common artifact closure; selection controls public surfaces
+and execution, not uninstalling database ownership. Module metadata and the typed
+`planAssembly` API ship in `@archava/config/assembly`. Legacy planning names in
+the plan remain unresolved, never implicit installed capabilities.
+
+After `pnpm crm:build`, use `pnpm library:assemble selection.json NEW_DIRECTORY
+--dry-run`, then the same command without `--dry-run`. Selection has
+`version: "1.0.0"`, the exact `profile`, and `modules` with all four boolean keys
+(`contacts` must be true). Generated entries reference installed package exports;
+no CRM implementation is copied. Run `npm install --ignore-scripts --no-audit
+--no-fund` inside the new private consumer. `pnpm assembly:verify` reproduces the
+independent-install, hash, dry-run, dependency and overwrite checks.
+
+For an existing owner host, stop it, place the four-key module selection in a
+privately owned mode-0600 file, and run `pnpm crm:modules /absolute/selection.json`.
+Restart the host. Old profiles without module selection keep the previous full
+behavior. Native disable refuses pending/executing/unknown intents; reconcile or
+cancel through the original authorized host first. Startup independently checks
+this policy even after manual settings edits. A transient operator connection
+only checks unresolved-state existence; request execution still uses the existing
+non-owner application role with RLS and current grants. Receipt GET recovery and
+pending cancellation remain reconciliation operations, never new execution grants.

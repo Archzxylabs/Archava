@@ -1,6 +1,7 @@
 import { lstat, mkdir, readFile, writeFile } from 'node:fs/promises'
 import { resolve, join } from 'node:path'
 import { z } from 'zod'
+import { moduleSelectionSchema } from '@archava/config/assembly'
 import { tenantSchema } from '@archava/crm'
 import { pipelineLabelsSchema } from '@archava/crm/pipeline-contracts'
 
@@ -23,6 +24,7 @@ export const settingsSchema = z
     fingerprintKey: z.string().min(43).max(128),
     identityKey: z.string().min(43).max(128),
     publicOrigin: z.url().optional(),
+    modules: moduleSelectionSchema.optional(),
     tenants: z
       .array(tenantConfig)
       .min(1)

@@ -6,6 +6,7 @@ import { pipelineLabelsSchema } from '@archava/crm/pipeline-contracts'
 import { mountCrmConversation } from '@archava/crm-assistant/panel'
 import { createTabFollowupRecovery } from '@archava/crm-assistant/recovery'
 import { z } from 'zod'
+import { moduleSelectionSchema, FULL_MODULES } from '@archava/config/assembly'
 
 const sessionSchema = z.discriminatedUnion('authenticated', [
   z.object({ authenticated: z.literal(false) }).strict(),
@@ -16,6 +17,7 @@ const sessionSchema = z.discriminatedUnion('authenticated', [
       csrf: z.string(),
       plannerMode: z.enum(['local', 'gemini-synthetic']).optional(),
       nativeActions: z.boolean().optional(),
+      modules: moduleSelectionSchema.optional(),
       tenants: z.array(
         z
           .object({
@@ -107,6 +109,16 @@ async function mount() {
     host.textContent = 'No workspace access. Contact your administrator.'
     return
   }
+  const modules = session.modules ?? FULL_MODULES
+  for (const [id, enabled] of [
+    ['pipeline', modules.pipeline],
+    ['conversation', modules.assistant],
+    ['overview', modules.pipeline],
+  ] as const) {
+    const node = element<HTMLElement>('#' + id)
+    node.hidden = !enabled
+    if (!enabled) node.replaceChildren()
+  }
   dashboard = mountCrmDashboard(host, {
     apiBase: '/api/crm/' + selected.id,
     labels: selected,
@@ -122,56 +134,58 @@ async function mount() {
       return response
     },
   })
-  pipeline = mountPipelineDashboard(element<HTMLElement>('#pipeline'), {
-    apiBase: '/api/crm/' + selected.id,
-    labels: selected.pipelineLabels,
-    transport: async (input, init) => {
-      const headers = new Headers(init?.headers)
-      if (init?.method === 'POST') headers.set('x-archava-csrf', csrf)
-      const response = await fetch(input, { ...init, headers })
-      if (response.status === 401) signedOut()
-      return response
-    },
-  })
-  conversation = mountCrmConversation(element<HTMLElement>('#conversation'), {
-    apiBase: '/api/crm/' + selected.id + '/conversation',
-    commandsBase: '/api/crm/' + selected.id + '/commands',
-    approvalBase: session.nativeActions
-      ? '/api/crm/' + selected.id + '/actions/followup'
-      : undefined,
-    pilotEnabled: session.plannerMode === 'gemini-synthetic',
-    pipelineLabels: selected.pipelineLabels,
-    onFollowupCompleted: () => {
-      void worklist?.refresh()
-      void overview?.refresh()
-    },
-    recovery: createTabFollowupRecovery(
-      {
-        getItem: (key) => sessionStorage.getItem(key),
-        setItem: (key, value) => sessionStorage.setItem(key, value),
-        removeItem: (key) => sessionStorage.removeItem(key),
+  if (modules.pipeline)
+    pipeline = mountPipelineDashboard(element<HTMLElement>('#pipeline'), {
+      apiBase: '/api/crm/' + selected.id,
+      labels: selected.pipelineLabels,
+      transport: async (input, init) => {
+        const headers = new Headers(init?.headers)
+        if (init?.method === 'POST') headers.set('x-archava-csrf', csrf)
+        const response = await fetch(input, { ...init, headers })
+        if (response.status === 401) signedOut()
+        return response
       },
-      JSON.stringify([session.username, selected.id]),
-    ),
-    transport: async (input, init) => {
-      const headers = new Headers(init?.headers)
-      headers.set('x-archava-csrf', csrf)
-      const response = await fetch(input, { ...init, headers })
-      if (response.status === 401) signedOut()
-      if (response.status === 429)
-        throw new Error(
-          'Batas permintaan AI tercapai. Coba lagi nanti atau gunakan perintah lokal.',
-        )
-      return response
-    },
-  })
+    })
+  if (modules.assistant)
+    conversation = mountCrmConversation(element<HTMLElement>('#conversation'), {
+      apiBase: '/api/crm/' + selected.id + '/conversation',
+      commandsBase: '/api/crm/' + selected.id + '/commands',
+      approvalBase: session.nativeActions
+        ? '/api/crm/' + selected.id + '/actions/followup'
+        : undefined,
+      pilotEnabled: session.plannerMode === 'gemini-synthetic',
+      pipelineLabels: selected.pipelineLabels,
+      onFollowupCompleted: () => {
+        void worklist?.refresh()
+        void overview?.refresh()
+      },
+      recovery: createTabFollowupRecovery(
+        {
+          getItem: (key) => sessionStorage.getItem(key),
+          setItem: (key, value) => sessionStorage.setItem(key, value),
+          removeItem: (key) => sessionStorage.removeItem(key),
+        },
+        JSON.stringify([session.username, selected.id]),
+      ),
+      transport: async (input, init) => {
+        const headers = new Headers(init?.headers)
+        headers.set('x-archava-csrf', csrf)
+        const response = await fetch(input, { ...init, headers })
+        if (response.status === 401) signedOut()
+        if (response.status === 429)
+          throw new Error(
+            'Batas permintaan AI tercapai. Coba lagi nanti atau gunakan perintah lokal.',
+          )
+        return response
+      },
+    })
   const currentDashboard = dashboard
   const currentConversation = conversation
   worklist = mountCrmWorklist(element<HTMLElement>('#worklist'), {
     apiBase: '/api/crm/' + selected.id,
     onContactSelected: (id) => currentDashboard.selectContact(id),
     onFollowupSelected: session.nativeActions
-      ? (id) => currentConversation.selectFollowup(id)
+      ? (id) => currentConversation?.selectFollowup(id)
       : undefined,
     transport: async (input, init) => {
       const response = await fetch(input, init)
@@ -179,17 +193,18 @@ async function mount() {
       return response
     },
   })
-  overview = mountCrmOverview(element<HTMLElement>('#overview'), {
-    apiBase: '/api/crm/' + selected.id,
-    tenantId: selected.id,
-    pipelineLabels: selected.pipelineLabels,
-    transport: async (input, init) => {
-      const response = await fetch(input, init)
-      if (response.status === 401) signedOut()
-      return response
-    },
-  })
-  await Promise.all([dashboard.ready, pipeline.ready, worklist.ready, overview.ready])
+  if (modules.pipeline)
+    overview = mountCrmOverview(element<HTMLElement>('#overview'), {
+      apiBase: '/api/crm/' + selected.id,
+      tenantId: selected.id,
+      pipelineLabels: selected.pipelineLabels,
+      transport: async (input, init) => {
+        const response = await fetch(input, init)
+        if (response.status === 401) signedOut()
+        return response
+      },
+    })
+  await Promise.all([dashboard.ready, pipeline?.ready, worklist.ready, overview?.ready])
 }
 async function refreshSession() {
   session = sessionSchema.parse(await send('/api/session'))

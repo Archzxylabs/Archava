@@ -9,6 +9,7 @@ import {
   createCrmConversation,
   LocalCrmPlanner,
   conversationInputSchema,
+  conversationPlanSchema,
   type CrmConversationPlanner,
 } from '@archava/crm-assistant'
 import { randomUUID } from 'node:crypto'
@@ -17,6 +18,7 @@ import { IdentityError, type PostgresIdentity } from '@archava/identity-pg'
 import type { RuntimeSettings } from './settings.js'
 import type { NativeCrmActHost } from '@archava/crm-act'
 import { ActHostRefusal } from '@archava/act-host'
+import { FULL_MODULES } from '@archava/config/assembly'
 
 const json = (value: unknown, status = 200, headers: Record<string, string> = {}) =>
   Response.json(value, { status, headers: { 'cache-control': 'no-store', ...headers } })
@@ -45,6 +47,8 @@ export function createHostHandler(
   plannerMode: 'local' | 'gemini-synthetic' = 'local',
   nativeFor?: (tenantId: string, humanId: string) => Promise<NativeCrmActHost>,
 ) {
+  const modules = settings.modules ?? FULL_MODULES
+  if (!modules.pipeline) pipeline = undefined
   const secure = new URL(origin).protocol === 'https:'
   const cookieName = secure ? '__Host-archava_session' : 'archava_local_session'
   return async (request: Request, source: string): Promise<Response> => {
@@ -89,7 +93,8 @@ export function createHostHandler(
           csrf: session.csrf,
           tenants,
           plannerMode,
-          nativeActions: nativeFor !== undefined,
+          modules,
+          nativeActions: modules.nativeActions && nativeFor !== undefined,
         })
       }
       if (!session || !token) return json({ error: { message: 'Sign in to continue.' } }, 401)
@@ -113,6 +118,39 @@ export function createHostHandler(
         return json({ authenticated: false }, 200, {
           'set-cookie': sessionCookie(cookieName, '', secure, true),
         })
+      }
+      if (url.pathname.startsWith('/api/crm/')) {
+        const unavailable = () =>
+          json({ error: { message: 'Module unavailable in this composition.' } }, 404)
+        if (
+          !modules.assistant &&
+          (url.pathname.endsWith('/conversation') || url.pathname.endsWith('/tools'))
+        )
+          return unavailable()
+        if (
+          !modules.nativeActions &&
+          url.pathname.includes('/actions/') &&
+          !url.pathname.endsWith('/cancel')
+        )
+          return unavailable()
+        if (!modules.pipeline) {
+          if (/\/(opportunities|overview)(\/|$)/.test(url.pathname)) return unavailable()
+          if (request.method === 'POST' && /\/(commands|tools)$/.test(url.pathname)) {
+            const body = z
+              .object({
+                command: z.object({ operation: z.string() }).passthrough().optional(),
+                name: z.string().optional(),
+              })
+              .passthrough()
+              .parse(await request.clone().json())
+            if (
+              (typeof body.command?.operation === 'string' &&
+                body.command.operation.startsWith('opportunity.')) ||
+              (typeof body.name === 'string' && /^crm\.opportunit/.test(body.name))
+            )
+              return unavailable()
+          }
+        }
       }
       const conversation = /^\/api\/crm\/([^/]+)\/conversation$/.exec(url.pathname)
       const native = /^\/api\/crm\/([^/]+)\/actions\/followup\/(review|present)$/.exec(url.pathname)
@@ -163,12 +201,27 @@ export function createHostHandler(
         const tenant = settings.tenants.find((item) => item.id === conversation[1])
         if (!tenant) return json({ error: { message: 'Workspace access refused.' } }, 403)
         const input = conversationInputSchema.parse(await request.json())
+        const selectedPlanner = plannerFor(input.utterance, attemptId)
+        const boundedPlanner: CrmConversationPlanner = {
+          providerId: selectedPlanner.providerId,
+          model: selectedPlanner.model,
+          plan: async (utterance) => {
+            const plan = conversationPlanSchema.parse(await selectedPlanner.plan(utterance))
+            if (
+              !modules.pipeline &&
+              ['crm.overview', 'opportunities.list', 'opportunity.summary'].includes(plan.operation)
+            )
+              throw new CrmError('not_found', 'Pipeline module is disabled.')
+            if (
+              !modules.nativeActions &&
+              ['followup.prepare', 'followup.complete.prepare'].includes(plan.operation)
+            )
+              throw new CrmError('not_found', 'Native actions module is disabled.')
+            return plan
+          },
+        }
         return respond(
-          await createCrmConversation(
-            service,
-            plannerFor(input.utterance, attemptId),
-            pipeline,
-          ).ask(
+          await createCrmConversation(service, boundedPlanner, pipeline).ask(
             {
               tenantId: tenant.id,
               principal: { kind: 'human', id: session.principalId },

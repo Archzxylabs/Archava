@@ -15,6 +15,8 @@ import { loadCrmPlanner } from './planner.js'
 import { PostgresProviderAttemptStore } from '@archava/provider-runtime/postgres'
 import { startLocalBackups } from './backups.js'
 import { verifyRuntimeRelease, verifyReleaseDatabase, ReleaseProfileError } from './release.js'
+import { assertModuleLifecycle } from './modules.js'
+import { FULL_MODULES } from '@archava/config/assembly'
 
 // This local host also runs on desktops without reliable IPv6 routing.
 setDefaultResultOrder('ipv4first')
@@ -53,6 +55,14 @@ try {
   await file.close()
   ownsLock = true
   ownsDatabase = await startLocalDatabase(settings)
+  if (!(settings.modules ?? FULL_MODULES).nativeActions) {
+    const operator = new Pool(connection(settings, 'archava_operator'))
+    try {
+      await assertModuleLifecycle(operator, settings.modules ?? FULL_MODULES)
+    } finally {
+      await operator.end()
+    }
+  }
   pool = new Pool(connection(settings))
   pool.on('error', () => process.stderr.write('CRM database connection unavailable.\n'))
   await verifyReleaseDatabase(releaseProfile, pool)
