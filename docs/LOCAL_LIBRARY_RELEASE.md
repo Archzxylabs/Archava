@@ -1,6 +1,41 @@
 # Local reusable library release
 
-## Current extension — profile 1.8.0, 11 October 2026
+## Current extension — profile 1.9.0, 11 October 2026
+
+Shared support adds 38 compiled artifacts, 18 unchanged external pins, eleven
+owned ledgers, host 0.12.0, config 0.11.0 and kits 0.6.0. Support/support-pg 0.1.0
+run without CRM or an LLM. Assembly v7 adds optional support while preserving
+previous contracts and four-module defaults. Existing identities require explicit
+independent support permissions; migration does not enroll accounts.
+
+| Extension                   | Accepted evidence                                                                                                                                                                                                                                                | Limit                                                                                            |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Assigned cases and findings | Two cold-installed service/property consumers; real PostgreSQL duplicate/revision races, current assignment, projection/reassignment locking, atomic failure rollback, immutable history, internal targets, resolution/reopen cycles, restart/restore; 19 checks | Internal case management; no contractual SLA or customer message                                 |
+| Owner composition           | Compiled host and Chromium intake, staff assignment, investigation/wait/resume, resolution/close/reopen, lost-response/denied recovery, viewers, toggles and backup restore; 9 checks                                                                            | Human writes; pending browser recovery in memory; assignee selector first 100 with paginated API |
+| Trusted assembly            | K05/K06/K12/K18/K21 narrow `support_cases` under v7; kits 12 and assembly 2                                                                                                                                                                                      | No full operating kit accepted                                                                   |
+| Database shutdown           | Actual runtime pool clients, including idle-expiry sockets already closing, drain before stopping an owned database                                                                                                                                              | Local process lifecycle; no production HA guarantee                                              |
+
+All eight root gates passed: 1,523 tests/111 files. Fresh regression evidence
+retains CRM 38, Act 18, runtime 44, Chromium 3/70, projects 15/11, scheduling 14/9,
+accommodation 17/9, commerce 18/10, food-service 23/10 and upgrade 4. The security
+matrix has 47 controls; root/runtime scans have zero advisories. The separate
+realtime template retains thirteen moderate findings and independent SDK/live
+gates. These checks do not establish production load or security certification.
+
+The original owner was backed up before/after and upgraded to verified 1.9.0.
+SQL JSON hashes preserve microsecond timestamps and original rows/columns across
+all 67 pre-existing tables, including eight CRM business tables and all previous
+schema ledgers. Settings, identity/fingerprint keys and existing domain grants are
+unchanged. Six new support business tables remain empty. Activation is explicit.
+
+See [support contract and activation](SUPPORT_CASES_MODULE.md),
+[sanitized evidence](audit/2026-10-11-support-release.json) and
+[the programme ledger](STARTER_KIT_IMPLEMENTATION.md). Continue KIT-07 with
+[purchasing](PURCHASING_MODULE_PLAN.md), remaining general/specialist requirements
+and full handoff. All forty full operating kits remain unaccepted. No company
+pricebook, external execution or private-data disclosure boundary changes.
+
+## Previous extension — profile 1.8.0, 11 October 2026
 
 Restaurant/catering service extends commerce: 36 compiled artifacts, 18 unchanged
 external pins, ten owned ledgers, host 0.11.0, config 0.10.0 and kits 0.5.0.

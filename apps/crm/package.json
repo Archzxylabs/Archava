@@ -1,6 +1,6 @@
 {
   "name": "@archava/crm-host",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -46,7 +46,9 @@
     "@archava/commerce": "workspace:*",
     "@archava/commerce-pg": "workspace:*",
     "@archava/foodservice": "workspace:*",
-    "@archava/foodservice-pg": "workspace:*"
+    "@archava/foodservice-pg": "workspace:*",
+    "@archava/support": "workspace:*",
+    "@archava/support-pg": "workspace:*"
   },
   "devDependencies": {
     "@types/pg": "8.23.1",

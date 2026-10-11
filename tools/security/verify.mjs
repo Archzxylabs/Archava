@@ -52,6 +52,8 @@ if (process.argv.includes('--run')) {
   run('commerce-host', ['pnpm', 'commerce:verify-host'])
   run('foodservice', ['pnpm', 'foodservice:verify'])
   run('foodservice-host', ['pnpm', 'foodservice:verify-host'])
+  run('support', ['pnpm', 'support:verify'])
+  run('support-host', ['pnpm', 'support:verify-host'])
 }
 run('platform-audit', ['pnpm', 'audit', '--json'], root, [0, 1])
 run('runtime-audit', ['npm', 'audit', '--json'], join(root, 'dist/crm-runtime'), [0, 1])
@@ -100,6 +102,8 @@ const proofs = {
   commerceHost: await json(join(root, 'dist/commerce-host-proof/results.json')),
   foodservice: await json(join(root, 'dist/foodservice-proof/results.json')),
   foodserviceHost: await json(join(root, 'dist/foodservice-host-proof/results.json')),
+  support: await json(join(root, 'dist/support-proof/results.json')),
+  supportHost: await json(join(root, 'dist/support-host-proof/results.json')),
 }
 for (const name of [
   'runtime',
@@ -114,6 +118,8 @@ for (const name of [
   'commerceHost',
   'foodservice',
   'foodserviceHost',
+  'support',
+  'supportHost',
 ])
   assert.equal(proofs[name].profile, profile.catalog.version, 'Stale release proof: ' + name)
 assert.equal(proofs.runtime.providerCalls, 0)
@@ -127,6 +133,8 @@ assert.equal(proofs.commerce.providerCalls, 0)
 assert.equal(proofs.commerceHost.providerCalls, 0)
 assert.equal(proofs.foodservice.providerCalls, 0)
 assert.equal(proofs.foodserviceHost.providerCalls, 0)
+assert.equal(proofs.support.providerCalls, 0)
+assert.equal(proofs.supportHost.providerCalls, 0)
 const controls = [
   [
     'identity-session-csrf',
@@ -406,6 +414,47 @@ controls.push(
     'CSRF|pending UUID|backup restore|never enrolls',
   ],
 )
+controls.push(
+  [
+    'support-current-grants-and-assignment',
+    [
+      'packages/support-pg/src/repository.ts',
+      'packages/support-pg/migrations/001_cases_notes_resolution.sql',
+    ],
+    'support',
+    'current human/service|globally authorized assignment|reassignment immediately',
+  ],
+  [
+    'support-atomic-commands-and-history',
+    ['packages/support-pg/src/repository.ts'],
+    'support',
+    '20 duplicate|20 competing revisions|failure after header',
+  ],
+  [
+    'support-resolution-cycles-and-targets',
+    ['packages/support-pg/migrations/001_cases_notes_resolution.sql'],
+    'support',
+    'reopening starts a new cycle|database-clock due|immutable notes/history',
+  ],
+  [
+    'support-private-tools',
+    ['packages/support/src/api.ts', 'packages/support/src/tools.ts'],
+    'support',
+    'strict bounded API and private read-only tools',
+  ],
+  [
+    'support-host-and-recovery',
+    ['packages/support/src/dashboard.ts', 'apps/crm/src/operator.ts', 'apps/crm/src/host.ts'],
+    'supportHost',
+    'CSRF|pending UUID|backup restore|never enrolls',
+  ],
+  [
+    'owned-postgres-shutdown',
+    ['apps/crm/src/postgres-pool.ts', 'apps/crm/src/server.ts', 'apps/crm/src/backups.ts'],
+    'runtime',
+    'application/database restart|shared manual and scheduled publisher',
+  ],
+)
 for (const [id, sources, proof, pattern] of controls) {
   for (const source of sources) await readFile(join(root, source))
   const checks = proofs[proof].checks.filter((label) => new RegExp(pattern).test(label))
@@ -428,6 +477,8 @@ for (const [id, sources, proof, pattern] of controls) {
       commerceHost: 'pnpm commerce:verify-host',
       foodservice: 'pnpm foodservice:verify',
       foodserviceHost: 'pnpm foodservice:verify-host',
+      support: 'pnpm support:verify',
+      supportHost: 'pnpm support:verify-host',
     }[proof],
     positiveAndRefusalChecks: checks,
     result: 'passed',

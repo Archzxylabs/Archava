@@ -4,7 +4,7 @@ import { promisify } from 'node:util'
 import { createReadStream } from 'node:fs'
 import { link, lstat, open, rename, unlink } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
-import { Pool } from 'pg'
+import { createRuntimePool, closeRuntimePool } from './postgres-pool.js'
 import { z } from 'zod'
 import {
   home,
@@ -241,9 +241,9 @@ export async function runCrmBackup(
   options: { onlyIfDue?: boolean; destination?: string; signal?: AbortSignal } = {},
 ) {
   return withLocalDatabase(settings, async () => {
-    const pool = new Pool({ ...connection(settings, 'archava_operator'), max: 1 })
+    const pool = createRuntimePool({ ...connection(settings, 'archava_operator'), max: 1 })
     const client = await pool.connect().catch(async (error: unknown) => {
-      await pool.end()
+      await closeRuntimePool(pool)
       throw error
     })
     client.on('error', () => {})
@@ -296,7 +296,7 @@ export async function runCrmBackup(
           .query('SELECT pg_advisory_unlock(hashtextextended($1,0))', [lockName])
           .catch(() => {})
       client.release()
-      await pool.end()
+      await closeRuntimePool(pool)
     }
   })
 }

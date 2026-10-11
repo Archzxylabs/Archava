@@ -16,7 +16,8 @@ import {
 import { existsSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { lstat } from 'node:fs/promises'
-import { Pool } from 'pg'
+import type { Pool } from 'pg'
+import { createRuntimePool, closeRuntimePool } from './postgres-pool.js'
 import { z } from 'zod'
 import {
   migrateProviderRuntime,
@@ -62,6 +63,8 @@ import { migrateScheduling, grantSchedulingRuntime } from '@archava/scheduling-p
 import { SCHEDULING_PERMISSIONS } from '@archava/scheduling'
 import { ACCOMMODATION_PERMISSIONS } from '@archava/accommodation'
 import { migrateAccommodation, grantAccommodationRuntime } from '@archava/accommodation-pg'
+import { SUPPORT_PERMISSIONS } from '@archava/support'
+import { migrateSupport, grantSupportRuntime } from '@archava/support-pg'
 import { FOOD_PERMISSIONS } from '@archava/foodservice'
 import { migrateFoodService, grantFoodServiceRuntime } from '@archava/foodservice-pg'
 import { COMMERCE_PERMISSIONS } from '@archava/commerce'
@@ -85,6 +88,7 @@ async function grant(pool: Pool) {
   await grantAccommodationRuntime(pool, role)
   await grantCommerceRuntime(pool, role)
   await grantFoodServiceRuntime(pool, role)
+  await grantSupportRuntime(pool, role)
   await grantNativeCrmAct(pool, role)
   await grantActHostRuntime(nativeSqlClient(pool, 'operator', 'operator'), role)
 }
@@ -161,7 +165,10 @@ async function setup() {
   }
   const settings = await loadSettings()
   await withLocalDatabase(settings, async () => {
-    const cluster = new Pool({ ...connection(settings, 'archava_operator'), database: 'postgres' })
+    const cluster = createRuntimePool({
+      ...connection(settings, 'archava_operator'),
+      database: 'postgres',
+    })
     try {
       if (
         (await cluster.query('SELECT 1 FROM pg_database WHERE datname=$1', [settings.database]))
@@ -171,9 +178,9 @@ async function setup() {
       if ((await cluster.query('SELECT 1 FROM pg_roles WHERE rolname=$1', [role])).rowCount === 0)
         await cluster.query(`CREATE ROLE "${role}" LOGIN NOSUPERUSER NOBYPASSRLS`)
     } finally {
-      await cluster.end()
+      await closeRuntimePool(cluster)
     }
-    const owner = new Pool(connection(settings, 'archava_operator'))
+    const owner = createRuntimePool(connection(settings, 'archava_operator'))
     try {
       await migrateCrm(owner)
       await migrateIdentity(owner)
@@ -184,6 +191,7 @@ async function setup() {
       await migrateAccommodation(owner)
       await migrateCommerce(owner)
       await migrateFoodService(owner)
+      await migrateSupport(owner)
       await grant(owner)
       for (const tenant of settings.tenants) {
         await owner.query(
@@ -216,7 +224,7 @@ async function setup() {
         await enroll(owner, settings, await readPrivateJson(credentialPath))
       }
     } finally {
-      await owner.end()
+      await closeRuntimePool(owner)
     }
   })
   process.stdout.write(
@@ -236,16 +244,17 @@ async function user(args: string[]) {
       'accommodation',
       'commerce',
       'foodservice',
+      'support',
     ].includes(mode ?? '') ||
     !file
   )
     throw new Error(
-      'Expected user add|reset|recover|pipeline|projects|scheduling|accommodation|commerce|foodservice private-input.json',
+      'Expected user add|reset|recover|pipeline|projects|scheduling|accommodation|commerce|foodservice|support private-input.json',
     )
   const settings = await loadSettings()
   const input = await readPrivateJson(resolve(file))
   await withLocalDatabase(settings, async () => {
-    const owner = new Pool(connection(settings, 'archava_operator'))
+    const owner = createRuntimePool(connection(settings, 'archava_operator'))
     try {
       if (mode === 'add') await enroll(owner, settings, input)
       else if (
@@ -253,7 +262,8 @@ async function user(args: string[]) {
         mode === 'scheduling' ||
         mode === 'accommodation' ||
         mode === 'commerce' ||
-        mode === 'foodservice'
+        mode === 'foodservice' ||
+        mode === 'support'
       ) {
         const account = z
           .object({
@@ -287,7 +297,9 @@ async function user(args: string[]) {
                       ? ACCOMMODATION_PERMISSIONS
                       : mode === 'commerce'
                         ? COMMERCE_PERMISSIONS
-                        : FOOD_PERMISSIONS
+                        : mode === 'foodservice'
+                          ? FOOD_PERMISSIONS
+                          : SUPPORT_PERMISSIONS
                 ).filter((permission) => account.access === 'write' || permission.endsWith('.read'))
           for (const tenant of account.tenants) {
             const member = (
@@ -299,9 +311,14 @@ async function user(args: string[]) {
             if (member?.kind !== 'human' || !member.active)
               throw new Error('Active workspace membership required')
             await client.query(
-              `INSERT INTO ${mode === 'projects' ? 'archava_projects' : mode === 'scheduling' ? 'archava_scheduling' : mode === 'accommodation' ? 'archava_accommodation' : mode === 'commerce' ? 'archava_commerce' : 'archava_foodservice'}.memberships(tenant_id,principal_id,kind,permissions,scope,active) VALUES($1,$2,'human',$3,$4,$5) ON CONFLICT(tenant_id,principal_id) DO UPDATE SET permissions=excluded.permissions,scope=excluded.scope,active=excluded.active`,
+              `INSERT INTO ${mode === 'projects' ? 'archava_projects' : mode === 'scheduling' ? 'archava_scheduling' : mode === 'accommodation' ? 'archava_accommodation' : mode === 'commerce' ? 'archava_commerce' : mode === 'foodservice' ? 'archava_foodservice' : 'archava_support'}.memberships(tenant_id,principal_id,kind,permissions,scope,active) VALUES($1,$2,'human',$3,$4,$5) ON CONFLICT(tenant_id,principal_id) DO UPDATE SET permissions=excluded.permissions,scope=excluded.scope,active=excluded.active`,
               [tenant, person.principal_id, permissions, account.scope, account.access !== 'none'],
             )
+            if (mode === 'support')
+              await client.query(
+                'UPDATE archava_support.memberships SET display_name=$3 WHERE tenant_id=$1 AND principal_id=$2',
+                [tenant, person.principal_id, account.username],
+              )
           }
           await client.query('COMMIT')
         } catch (error) {
@@ -363,7 +380,7 @@ async function user(args: string[]) {
         await resetIdentityPassword(owner, account.username, account.password, mode === 'recover')
       }
     } finally {
-      await owner.end()
+      await closeRuntimePool(owner)
     }
   })
   process.stdout.write('Account operation completed; no credential was printed.\n')
@@ -428,11 +445,14 @@ async function restore(args: string[]) {
   const recoveryProfile = join(home, 'restored-runtime.json')
   if (existsSync(recoveryProfile)) throw new Error('Recovery profile already exists; preserve it')
   await withLocalDatabase(settings, async () => {
-    const cluster = new Pool({ ...connection(settings, 'archava_operator'), database: 'postgres' })
+    const cluster = createRuntimePool({
+      ...connection(settings, 'archava_operator'),
+      database: 'postgres',
+    })
     try {
       await cluster.query(`CREATE DATABASE "${target}"`)
     } finally {
-      await cluster.end()
+      await closeRuntimePool(cluster)
     }
     pgTool(
       'pg_restore',
@@ -454,7 +474,7 @@ async function restore(args: string[]) {
       appPort: settings.appPort,
       identityKey: randomBytes(32).toString('base64url'),
     })
-    const owner = new Pool(connection(recovered, 'archava_operator'))
+    const owner = createRuntimePool(connection(recovered, 'archava_operator'))
     try {
       await migrateCrm(owner)
       await migrateIdentity(owner)
@@ -467,13 +487,14 @@ async function restore(args: string[]) {
       await migrateAccommodation(owner)
       await migrateCommerce(owner)
       await migrateFoodService(owner)
+      await migrateSupport(owner)
       await grant(owner)
       // Restoring an older backup must never resurrect a logged-out session.
       await owner.query('DELETE FROM archava_identity.sessions')
       await owner.query('DELETE FROM archava_identity.login_buckets')
       await owner.query('UPDATE archava_identity.users SET active=false,version=version+1')
     } finally {
-      await owner.end()
+      await closeRuntimePool(owner)
     }
     await writePrivateJson(recoveryProfile, recovered)
   })
@@ -484,20 +505,20 @@ async function restore(args: string[]) {
 async function aiStatus() {
   const settings = await loadSettings()
   await withLocalDatabase(settings, async () => {
-    const owner = new Pool(connection(settings, 'archava_operator'))
+    const owner = createRuntimePool(connection(settings, 'archava_operator'))
     try {
       process.stdout.write(
         JSON.stringify(await readProviderStatus(owner, CRM_PROVIDER_POLICY), null, 2) + '\n',
       )
     } finally {
-      await owner.end()
+      await closeRuntimePool(owner)
     }
   })
 }
 async function resumeActions() {
   const settings = await loadSettings()
   await withLocalDatabase(settings, async () => {
-    const owner = new Pool(connection(settings, 'archava_operator'))
+    const owner = createRuntimePool(connection(settings, 'archava_operator'))
     try {
       await migrateCrm(owner)
       await migrateNative(owner)
@@ -506,6 +527,7 @@ async function resumeActions() {
       await migrateAccommodation(owner)
       await migrateCommerce(owner)
       await migrateFoodService(owner)
+      await migrateSupport(owner)
       await grant(owner)
       const active = (
         await owner.query(
@@ -515,7 +537,7 @@ async function resumeActions() {
       if (!active) throw new Error('Recover an authorized account before resuming native actions')
       await writeNativeControl(settings, false, true)
     } finally {
-      await owner.end()
+      await closeRuntimePool(owner)
     }
   })
   process.stdout.write('Native follow-up actions resumed with a fresh approval epoch.\n')
@@ -530,7 +552,7 @@ async function doctor() {
     /* Backup diagnostics must not print configuration or prevent database diagnostics. */
   }
   await withLocalDatabase(settings, async () => {
-    const app = new Pool(connection(settings))
+    const app = createRuntimePool(connection(settings))
     try {
       await verifyReleaseDatabase(releaseProfile, app)
       const repository = await PostgresCrmRepository.create(app, settings.fingerprintKey)
@@ -562,7 +584,7 @@ async function doctor() {
         }) + '\n',
       )
     } finally {
-      await app.end()
+      await closeRuntimePool(app)
     }
   })
 }

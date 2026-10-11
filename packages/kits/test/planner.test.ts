@@ -39,6 +39,28 @@ const request = (id = 'K01', scope = 'operations') => ({
 })
 
 describe('trusted kit contracts and support boundary', () => {
+  it('composes shared internal support cases across service models without accepting specialized case systems', () => {
+    const supported = release()
+    supported.contracts.assembly = '7.0.0'
+    supported.packages.push(
+      ...['support', 'support-pg'].map((name) => ({
+        name: '@archava/' + name,
+        version: '0.1.0',
+        migrations: [],
+      })),
+    )
+    const planner = new KitPlanner(supported, COMPOSABLE_MODULES)
+    for (const id of ['K05', 'K06', 'K12', 'K18', 'K21']) {
+      const plan = planner.plan(request(id, 'support_cases'))
+      expect(plan.readyToAssemble).toBe(true)
+      expect(plan.assembly).toEqual({ ...MINIMAL_MODULES, support: true })
+      expect(planner.plan(request(id)).readyToAssemble).toBe(false)
+    }
+    expect(planner.plan(request('K26', 'support_cases')).readyToAssemble).toBe(false)
+    expect(
+      new KitPlanner(supported, FULL_MODULES).plan(request('K06', 'support_cases')).readyToAssemble,
+    ).toBe(false)
+  })
   it('composes bounded restaurant tickets with shared commerce and retains all full kit gaps', () => {
     const supported = release()
     supported.contracts.assembly = '6.0.0'

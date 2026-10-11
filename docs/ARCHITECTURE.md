@@ -1,6 +1,6 @@
 # Architecture
 
-Updated for local profile `1.8.0`, 11 October 2026. Baseline re-audit source: `80ea845`. The [repository re-audit](PROJECT_REAUDIT_2026-10-10.md) records historical findings. [PRD §§40–50](../PRD.md) describes the target; this document describes the implementation. ARCHZXY's company website is a separate consumer project.
+Updated for local profile `1.9.0`, 11 October 2026. Baseline re-audit source: `80ea845`. The [repository re-audit](PROJECT_REAUDIT_2026-10-10.md) records historical findings. [PRD §§40–50](../PRD.md) describes the target; this document describes the implementation. ARCHZXY's company website is a separate consumer project.
 
 PRD v2.1 §50 bounds the implemented local library release.
 [Acceptance and decisions](LOCAL_LIBRARY_RELEASE.md) map its six items to runnable
@@ -31,7 +31,7 @@ Archava_Platform/
   delegation/           historical task/handoff records; not runtime configuration
 ```
 
-There are 44 pnpm workspace projects: 38 packages, two apps and four tools with manifests. Script-only tool directories and examples are outside those workspace globs. The realtime template has its own npm lockfile and Python dependencies; its [AGENTS.md](<../Archava Template/AGENTS.md>) requires standalone operation without parent-repository imports.
+There are 46 pnpm workspace projects: 40 packages, two apps and four tools with manifests. Script-only tool directories and examples are outside those workspace globs. The realtime template has its own npm lockfile and Python dependencies; its [AGENTS.md](<../Archava Template/AGENTS.md>) requires standalone operation without parent-repository imports.
 
 Generated `dist/` and `node_modules/` are build/install output. Ignored `.local/` contains private database state, credentials, approvals and backups; it is not disposable source cleanup. The empty untracked `clients/generic-business/` placeholder implements no consumer. Current boundaries do not require directory relocation.
 
@@ -139,13 +139,33 @@ recipe allocations and both lifecycle states. Shared stock remains the only
 physical ingredient truth. No payment or customer signature follows from closing
 service.
 
-Current inventory is 36 compiled artifacts, 18 unchanged external pins, ten owned
+At profile 1.8.0 inventory was 36 compiled artifacts, 18 unchanged external pins, ten owned
 ledgers, host 0.11.0, config 0.10.0 and kits 0.5.0. Assembly v6 adds optional
 food-service requiring commerce in the owner-host composition. Earlier contracts
 and defaults remain supported. Independent restaurant/catering consumers reuse
 the same code; narrow K02 `foodservice_tickets` retains full-kit gaps. See
-[domain contract](FOODSERVICE_MODULE.md). Shared support cases are
-[the next capability](SUPPORT_CASES_MODULE_PLAN.md).
+[domain contract](FOODSERVICE_MODULE.md).
+
+Profile 1.9.0 adds `support`/`support-pg` 0.1.0. Six forced-RLS business tables
+own memberships, case headers, immutable internal notes, full state/assignment/
+priority/target/cycle transitions, commands and audit. Current global or creator/
+assignee scope governs every read, write and recovery. A shared case-row lock
+holds authorized detail projections until completion; reassignment serializes
+against that read. Domain writes/recovery remain human-only. Explicit targets
+use database time; waiting does not pause them or imply contractual SLA. Reopen
+starts another cycle without deleting previous solutions. There is no mandatory
+CRM, AI, commerce or identity dependency in the pure domain.
+
+Current inventory is 38 compiled artifacts, 18 unchanged external pins, eleven
+owned ledgers, host 0.12.0, config 0.11.0 and kits 0.6.0. Assembly v7 preserves
+older defaults/contracts. The owner host composes support through explicit
+identity/workspace and independent domain grants. Its PostgreSQL pool closure
+waits for actual client removal, including sockets already closing after idle
+expiry, before stopping an owned database. Independent professional-service and
+property-operations consumers reuse the same support package. Narrow
+`support_cases` does not accept full sector operations. See
+[support contract and activation](SUPPORT_CASES_MODULE.md). Next build
+[purchasing](PURCHASING_MODULE_PLAN.md) and remaining programme requirements.
 
 Accepted `crm_inquiry` (K01/K05) and `project_tracking` (K05/K31) are narrow scopes.
 The latter shares internal tracking, not construction costing or full agency sales/
@@ -218,7 +238,7 @@ The registry is not yet the complete PRD §42 contract: version ranges, conflict
 
 `pnpm verify` runs eight platform gates: install, structure, format, lint, typecheck, unit tests, reference-web build and independent core consumption. Actual CRM/Act PostgreSQL, authenticated Chromium and template checks are separate commands. CI has platform, CRM/runtime and template jobs; it does not currently run the Chromium owner suite or Python SDK integration suite.
 
-Preserve the modular monolith and folder paths. Fixed profiles and offline presence now have local acceptance; shared project and exclusive resource reservation services now have scoped local acceptance; the next domain extension is accommodation. Template live-provider migration remains separate work. Public visitors and authenticated owner sessions require distinct tool access, with no copied credentials, guest-provided roles or parent source imports.
+Preserve the modular monolith and folder paths. Fixed profiles and offline presence now have local acceptance; shared project and exclusive resource reservation services now have scoped local acceptance; the next shared capability is purchasing. Template live-provider migration remains separate work. Public visitors and authenticated owner sessions require distinct tool access, with no copied credentials, guest-provided roles or parent source imports.
 
 Further modules follow demonstrated demand. Company sales/delivery workflows, arbitrary plugins/version mixes, universal ERP and microservice infrastructure are not prerequisites for the current reusable library.
 

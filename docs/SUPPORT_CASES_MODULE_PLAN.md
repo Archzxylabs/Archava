@@ -1,4 +1,8 @@
-# Support-case implementation plan
+# Historical support-case implementation plan
+
+Accepted bounded profile 1.9.0 supersedes this proposal. Use the implemented
+[contract and activation guide](SUPPORT_CASES_MODULE.md) and
+[release evidence](LOCAL_LIBRARY_RELEASE.md). The proposal below remains history.
 
 KIT-07 follows accepted KIT-06 scopes while preserving all full-kit gaps. The next
 shared capability is `support_cases`: real service issues rather than CRM follow-up

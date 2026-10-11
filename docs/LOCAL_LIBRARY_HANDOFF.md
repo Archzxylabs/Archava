@@ -1,14 +1,15 @@
 # Local library 1.3.0 handoff
 
-This remains the historical finite baseline. Current profile `1.8.0` preserves
+This remains the historical finite baseline. Current profile `1.9.0` preserves
 these four-module defaults and adds optional project tracking/resource reservations
-plus accommodation, shared commerce, restaurant service and kit planning.
+plus accommodation, shared commerce, restaurant service, support cases and kit planning.
 Use the exact current profile when generating a new assembly. See
 [project activation and API](PROJECT_DELIVERY_MODULE.md),
 [reservation activation and API](RESOURCE_RESERVATIONS_MODULE.md),
 [hotel activation and API](ACCOMMODATION_MODULE.md),
 [commerce activation and API](COMMERCE_MODULE.md),
 [restaurant activation and API](FOODSERVICE_MODULE.md),
+[support activation and API](SUPPORT_CASES_MODULE.md),
 [current acceptance](LOCAL_LIBRARY_RELEASE.md) and
 [kit programme status](STARTER_KIT_IMPLEMENTATION.md). Company website and full
 operating kits remain separate work.

@@ -244,6 +244,21 @@ try {
   checks.push(
     'bounded restaurant tickets compose shared commerce under v6 while full restaurant operations retain missing requirements',
   )
+  const supportFile = join(scratch, 'support-cases.json'),
+    supportOut = join(scratch, 'assembled-support')
+  await writeFile(supportFile, JSON.stringify(raw('K06', 'support_cases')))
+  const support = command('assemble.mjs', [supportFile, supportOut, '--kit'])
+  assert.equal(support.status, 0, support.stderr)
+  const supportAssembly = JSON.parse(await readFile(join(supportOut, 'assembly.json'), 'utf8'))
+  assert.equal(supportAssembly.version, '7.0.0')
+  assert.ok(supportAssembly.entries.some((entry) => entry.entry === '@archava/support'))
+  assert.equal(
+    JSON.parse(await readFile(join(supportOut, 'kit-plan.json'), 'utf8')).selections[0].scope,
+    'support_cases',
+  )
+  checks.push(
+    'bounded support cases compose under v7 across service models while full specialized case operations retain missing requirements',
+  )
   await writeFile(
     join(scratch, 'forged.json'),
     JSON.stringify({ ...raw('K01'), apiKey: 'fixture-private' }),

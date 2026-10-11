@@ -22,6 +22,35 @@ const trusted = releaseCatalogSchema.parse({
 })
 const request = (modules: unknown) => ({ version: '1.0.0', profile: trusted.version, modules })
 describe('untrusted composition requests', () => {
+  it('requires v7 and current support implementation while preserving earlier contracts and defaults', () => {
+    const available = {
+      ...trusted,
+      contracts: { ...trusted.contracts, assembly: '7.0.0' as const },
+      packages: [
+        ...trusted.packages,
+        ...['support', 'support-pg'].map((name) => ({
+          name: '@archava/' + name,
+          version: '0.1.0',
+          migrations: [],
+        })),
+      ],
+    }
+    const input = {
+      version: '7.0.0',
+      profile: trusted.version,
+      modules: { ...MINIMAL_MODULES, support: true },
+    }
+    expect(planAssembly(input, available).entries.map((x) => x.id)).toEqual(['contacts', 'support'])
+    for (const version of ['1.0.0', '2.0.0', '3.0.0', '4.0.0', '5.0.0', '6.0.0'])
+      expect(() => planAssembly({ ...input, version }, available)).toThrow()
+    expect(() =>
+      planAssembly(input, {
+        ...available,
+        packages: available.packages.filter((x) => x.name !== '@archava/support-pg'),
+      }),
+    ).toThrow()
+    expect(FULL_MODULES.support).toBeUndefined()
+  })
   it('requires v6 and shared commerce for food-service while refusing unavailable domain implementations', () => {
     const available = {
       ...trusted,

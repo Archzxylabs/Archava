@@ -1,4 +1,5 @@
-import { Pool } from 'pg'
+import type { Pool } from 'pg'
+import { createRuntimePool, closeRuntimePool } from './postgres-pool.js'
 import { setDefaultResultOrder } from 'node:dns'
 import { open, readFile, unlink } from 'node:fs/promises'
 import { join } from 'node:path'
@@ -23,6 +24,8 @@ import { SchedulingService } from '@archava/scheduling'
 import { PostgresSchedulingRepository } from '@archava/scheduling-pg'
 import { AccommodationService } from '@archava/accommodation'
 import { PostgresAccommodationRepository } from '@archava/accommodation-pg'
+import { SupportService } from '@archava/support'
+import { PostgresSupportRepository } from '@archava/support-pg'
 import { FoodService } from '@archava/foodservice'
 import { PostgresFoodRepository } from '@archava/foodservice-pg'
 import { CommerceService } from '@archava/commerce'
@@ -66,14 +69,14 @@ try {
   ownsLock = true
   ownsDatabase = await startLocalDatabase(settings)
   if (!(settings.modules ?? FULL_MODULES).nativeActions) {
-    const operator = new Pool(connection(settings, 'archava_operator'))
+    const operator = createRuntimePool(connection(settings, 'archava_operator'))
     try {
       await assertModuleLifecycle(operator, settings.modules ?? FULL_MODULES)
     } finally {
-      await operator.end()
+      await closeRuntimePool(operator)
     }
   }
-  pool = new Pool(connection(settings))
+  pool = createRuntimePool(connection(settings))
   pool.on('error', () => process.stderr.write('CRM database connection unavailable.\n'))
   await verifyReleaseDatabase(releaseProfile, pool)
   const nativeOptions = {
@@ -130,6 +133,11 @@ try {
     (settings.modules ?? FULL_MODULES).foodservice
       ? new FoodService(await PostgresFoodRepository.create(runtimePool, settings.fingerprintKey))
       : undefined,
+    (settings.modules ?? FULL_MODULES).support
+      ? new SupportService(
+          await PostgresSupportRepository.create(runtimePool, settings.fingerprintKey),
+        )
+      : undefined,
   )
   process.stdout.write(`CRM ready: ${host.origin}\n`)
   backups = startLocalBackups(settings)
@@ -143,7 +151,7 @@ try {
 } finally {
   await host?.close()
   await backups?.stop()
-  await pool?.end()
+  if (pool) await closeRuntimePool(pool)
   if (ownsDatabase) stopLocalDatabase()
   if (ownsLock) await unlink(lock)
 }

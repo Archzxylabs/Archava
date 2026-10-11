@@ -1,16 +1,16 @@
 {
   "schemaVersion": "1.0.0",
   "id": "archava-local-library",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "host": {
     "name": "@archava/crm-host",
-    "version": "0.11.0"
+    "version": "0.12.0"
   },
   "contracts": {
     "clientConfig": "1.0.0",
     "deploymentPlan": "2.0.0",
     "hostSettings": 1,
-    "assembly": "6.0.0",
+    "assembly": "7.0.0",
     "presence": "1.0.0",
     "kitPlan": "1.0.0",
     "kitCatalogue": "1.0.0"
@@ -61,7 +61,7 @@
     },
     {
       "name": "@archava/config",
-      "version": "0.10.0",
+      "version": "0.11.0",
       "migrations": []
     },
     {
@@ -186,7 +186,7 @@
     },
     {
       "name": "@archava/kits",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "migrations": []
     },
     {
@@ -271,6 +271,21 @@
           "checksum": "48f40f77cf51b47da53c08f77648b23ca7969b50b6eb887c646c52f03d58d4b5"
         }
       ]
+    },
+    {
+      "name": "@archava/support",
+      "version": "0.1.0",
+      "migrations": []
+    },
+    {
+      "name": "@archava/support-pg",
+      "version": "0.1.0",
+      "migrations": [
+        {
+          "file": "001_cases_notes_resolution.sql",
+          "checksum": "339785aed708a97ddb4410b08e834cc7fd1236acd94c9f77ec8182efefdf7961"
+        }
+      ]
     }
   ],
   "databaseLedgers": [
@@ -323,6 +338,11 @@
       "schema": "archava_foodservice",
       "package": "@archava/foodservice-pg",
       "migrations": ["001_tables_recipes_tickets"]
+    },
+    {
+      "schema": "archava_support",
+      "package": "@archava/support-pg",
+      "migrations": ["001_cases_notes_resolution"]
     }
   ],
   "requiredAdapters": [
@@ -335,7 +355,8 @@
     "@archava/scheduling-pg",
     "@archava/accommodation-pg",
     "@archava/commerce-pg",
-    "@archava/foodservice-pg"
+    "@archava/foodservice-pg",
+    "@archava/support-pg"
   ],
   "operatorChecks": [
     "non-owner runtime database role",
@@ -344,7 +365,8 @@
     "private identity/native/provider state",
     "backup restoration and execution holds",
     "commerce quote, stock ledger, current grants and receipt recovery",
-    "food-service recipe/table/kitchen grants, consumption and recovery"
+    "food-service recipe/table/kitchen grants, consumption and recovery",
+    "support assignment, resolution cycles, private notes and receipt recovery"
   ],
   "externals": [
     {

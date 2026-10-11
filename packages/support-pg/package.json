@@ -1,0 +1,26 @@
+{
+  "name": "@archava/support-pg",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Reusable support cases, current assignment, immutable investigation notes and resolution cycles.",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "build": "echo \"@archava/support-pg ships TypeScript source\""
+  },
+  "dependencies": {
+    "zod": "4.1.12",
+    "pg": "8.23.1",
+    "@archava/support": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vitest": "4.1.11",
+    "@types/pg": "8.23.1"
+  }
+}

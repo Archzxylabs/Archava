@@ -1858,7 +1858,16 @@ consumes once; waste cancellation does not restore raw ingredients. Assembly v6
 requires commerce, preserves older contracts/defaults and supports narrow K02
 `foodservice_tickets`. This does not establish per-item POS, payment or public booking.
 
-Next build shared [support-case ownership](docs/SUPPORT_CASES_MODULE_PLAN.md) and
+Profile 1.9.0 adds [bounded support cases](docs/SUPPORT_CASES_MODULE.md):
+current assignment, internal findings, investigation/waiting, resolution, closure
+and explicit reopening with immutable previous-cycle evidence. Detail projections
+hold resource authorization through the complete read; reassignment changes staff
+access and receipt recovery. Explicit internal due instants are not contractual
+SLA or customer-response evidence. Assembly v7 adds optional support, preserves
+older contracts/defaults and supports narrow `support_cases` scopes across
+K05/K06/K12/K18/K21. No full operating kit is accepted by those scopes.
+
+Next build [purchasing and physical receipts](docs/PURCHASING_MODULE_PLAN.md) and
 remaining KIT-07 requirements. The user requested
 continued execution across accepted milestones until the programme is complete.
 All 40 full operating families

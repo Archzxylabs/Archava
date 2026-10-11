@@ -1,34 +1,33 @@
 # Build status
 
-## Current checkpoint — profile 1.8.0, 11 October 2026
+## Current checkpoint — profile 1.9.0, 11 October 2026
 
-The accepted bounded [commerce](COMMERCE_MODULE.md) and
-[restaurant/catering](FOODSERVICE_MODULE.md) workflows add immutable backend-priced
-orders, shared stock holds/fulfillment/returns, physical tables, sealed recipe
-versions and explicit kitchen/service transitions. CRM, projects, scheduling and
-accommodation remain supported. Generic commerce cannot bypass managed menu rules.
+The accepted bounded [support module](SUPPORT_CASES_MODULE.md) adds internal cases,
+current staff assignment, findings, investigation/waiting, explicit resolution,
+closure and reopening with immutable previous-cycle evidence. Current resource
+access remains locked through complete detail projections. CRM, projects,
+scheduling, accommodation, commerce and food-service remain supported.
 
-All eight root gates passed: **1,514 tests in 109 files**. Fresh evidence includes
+All eight root gates passed: **1,523 tests in 111 files**. Fresh evidence includes
 CRM 38, Act 18, runtime 44, Chromium minimal/full 3/70, projects 15/11, scheduling
-14/9, accommodation 17/9, commerce 18/10, food-service 23/10, kit planning/assembly
-11, assembly 2 and prior-profile upgrade 4. The security matrix has 41 controls;
-root/runtime scans have zero advisories. The separate realtime template retains
-13 moderate findings and independent SDK/live gates.
+14/9, accommodation 17/9, commerce 18/10, food-service 23/10, support 19/9, kit
+planning/assembly 12, assembly 2 and prior-profile upgrade 4. The security matrix
+has 47 controls; root/runtime scans have zero advisories. The separate realtime
+template retains 13 moderate findings and independent SDK/live gates.
 
-The original owner was backed up before/after and upgraded to verified 1.8.0.
+The original owner was backed up before/after and upgraded to verified 1.9.0.
 SQL JSON hashes preserve original rows/columns with microsecond timestamps across
-57 pre-existing tables; commerce's ledger gains only its expected additive entry.
-Eight CRM business tables, settings, keys and existing grants remain unchanged.
-Nine new food business tables are empty; activation/grants remain explicit.
-See [sanitized evidence](audit/2026-10-11-foodservice-release.json) and
-[current release acceptance](LOCAL_LIBRARY_RELEASE.md).
+67 pre-existing tables. Eight CRM business tables, settings, keys and existing
+grants remain unchanged. Six new support business tables are empty; activation
+and grants remain explicit. See [sanitized evidence](audit/2026-10-11-support-release.json)
+and [current release acceptance](LOCAL_LIBRARY_RELEASE.md).
 
 Full operating kits accepted: **0 of 40 researched candidates**. Narrow domain
-scopes are usable independently but do not accept entire hotel/POS/ERP systems.
-KIT-07 continues with [support cases](SUPPORT_CASES_MODULE_PLAN.md), followed by
-remaining general/specialist requirements and programme handoff. Payment/provider,
-customer portal, regulatory/system adapters and broader operational dimensions
-retain their evidence gates. No whole-product percentage is inferred from test counts.
+scopes do not accept complete hotel/POS/ERP systems. KIT-07 continues with
+[purchasing](PURCHASING_MODULE_PLAN.md), then remaining general/specialist
+requirements and programme handoff. Payment/provider, customer portal, regulatory
+adapters and broader operational dimensions retain their evidence gates. No
+whole-product percentage is inferred from test counts.
 
 ## Previous checkpoint — profile 1.5.0, 11 October 2026
 

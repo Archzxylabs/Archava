@@ -10,8 +10,9 @@ composition, shared presence contracts, scoped security, measured capacity and
 upgrade/recovery acceptance. Profile `1.3.0` is the accepted baseline; `1.4.0`
 adds the kit planner and bounded internal project delivery; `1.5.0` adds
 exclusive resource reservations, `1.6.0` adds room-night stays and housekeeping,
-`1.7.0` adds shared catalog/orders/stock, and `1.8.0` adds restaurant
-tables, recipes and kitchen tickets under PRD §46.6;
+`1.7.0` adds shared catalog/orders/stock, `1.8.0` adds restaurant
+tables, recipes and kitchen tickets, and `1.9.0` adds assigned support cases,
+internal findings and resolution cycles under PRD §46.6;
 see [release acceptance](docs/LOCAL_LIBRARY_RELEASE.md) and the
 [cold-install/handoff guide](docs/LOCAL_LIBRARY_HANDOFF.md).
 ARCHZXY is the company; Archava is its flagship product. The target internal module
