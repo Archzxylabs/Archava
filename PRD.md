@@ -1876,11 +1876,13 @@ earlier receipts and prevents future deliveries; multi-SKU failures roll back at
 Assembly v8 adds optional purchasing, preserves older contracts/defaults and supports narrow
 `purchase_receipts` scopes across K02/K04/K18/K23. No full operating kit is accepted by those scopes.
 
-Next build organizations, versioned proposals/scopes, and capacity estimation, continuing
-KIT-07 requirements. The user requested continued execution across accepted milestones until
-the programme is complete. All 40 full operating families remain in the work ledger. Specialist
-adapters require an explicit authoritative backend and supported domain contract; an
-unspecified integration cannot be labelled operational.
+Bounded organizations (accounts, primary contact uniqueness constraint, secondary affiliations, revision locking, forced tenant RLS) are proven independently across wholesale (K04) and recruitment (K21) consumers.
+
+Versioned proposals and scope amendments (draft deliverables, client acceptance, immutable baseline Scope Version 1 snapshot, versioned change requests advancing scope to v2+, forced tenant RLS) are proven independently across agency (K05) and construction/EPC (K31) consumers.
+
+Delivery capacity estimation (capacity pool windows, deterministic daily burn-rate calculations, queueing upon concurrency saturation, dynamic finish handover, burned-unit progress, slot release upon completion/cancellation, forced tenant RLS) is proven independently across agency (K05) and construction/EPC (K31) consumers.
+
+All 40 full operating families remain candidates in the work ledger with declared gaps. Specialist adapters require an explicit authoritative backend and supported domain contract; an unspecified integration cannot be labelled operational.
 
 ## 47. Packaging and incremental migration
 

@@ -11,6 +11,9 @@ import { build } from 'esbuild'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 const output = join(root, 'dist/library')
 const migrationPackages = new Set([
+  'capacity-pg',
+  'proposals-pg',
+  'organizations-pg',
   'commerce-pg',
   'foodservice-pg',
   'support-pg',
@@ -51,6 +54,9 @@ export async function packLibrary() {
     }
   }
   for (const name of [
+    '@archava/capacity-pg',
+    '@archava/proposals-pg',
+    '@archava/organizations-pg',
     '@archava/commerce-pg',
     '@archava/foodservice-pg',
     '@archava/support-pg',

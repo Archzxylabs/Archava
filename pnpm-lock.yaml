@@ -468,6 +468,41 @@ importers:
         specifier: 5.9.3
         version: 5.9.3
 
+  packages/capacity:
+    dependencies:
+      zod:
+        specifier: 4.1.12
+        version: 4.1.12
+    devDependencies:
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@24.9.1)(@vitest/coverage-v8@4.1.11)(vite@7.3.6(@types/node@24.9.1)(tsx@4.20.6))
+
+  packages/capacity-pg:
+    dependencies:
+      '@archava/capacity':
+        specifier: workspace:*
+        version: link:../capacity
+      pg:
+        specifier: 8.23.1
+        version: 8.23.1
+      zod:
+        specifier: 4.1.12
+        version: 4.1.12
+    devDependencies:
+      '@types/pg':
+        specifier: 8.23.1
+        version: 8.23.1
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@24.9.1)(@vitest/coverage-v8@4.1.11)(vite@7.3.6(@types/node@24.9.1)(tsx@4.20.6))
+
   packages/chat:
     dependencies:
       '@archava/assistant':
@@ -768,6 +803,41 @@ importers:
         specifier: 4.1.11
         version: 4.1.11(@types/node@24.9.1)(@vitest/coverage-v8@4.1.11)(vite@7.3.6(@types/node@24.9.1)(tsx@4.20.6))
 
+  packages/organizations:
+    dependencies:
+      zod:
+        specifier: 4.1.12
+        version: 4.1.12
+    devDependencies:
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@24.9.1)(@vitest/coverage-v8@4.1.11)(vite@7.3.6(@types/node@24.9.1)(tsx@4.20.6))
+
+  packages/organizations-pg:
+    dependencies:
+      '@archava/organizations':
+        specifier: workspace:*
+        version: link:../organizations
+      pg:
+        specifier: 8.23.1
+        version: 8.23.1
+      zod:
+        specifier: 4.1.12
+        version: 4.1.12
+    devDependencies:
+      '@types/pg':
+        specifier: 8.23.1
+        version: 8.23.1
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@24.9.1)(@vitest/coverage-v8@4.1.11)(vite@7.3.6(@types/node@24.9.1)(tsx@4.20.6))
+
   packages/presence:
     dependencies:
       zod:
@@ -815,6 +885,41 @@ importers:
       '@archava/projects':
         specifier: workspace:*
         version: link:../projects
+      pg:
+        specifier: 8.23.1
+        version: 8.23.1
+      zod:
+        specifier: 4.1.12
+        version: 4.1.12
+    devDependencies:
+      '@types/pg':
+        specifier: 8.23.1
+        version: 8.23.1
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@24.9.1)(@vitest/coverage-v8@4.1.11)(vite@7.3.6(@types/node@24.9.1)(tsx@4.20.6))
+
+  packages/proposals:
+    dependencies:
+      zod:
+        specifier: 4.1.12
+        version: 4.1.12
+    devDependencies:
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@24.9.1)(@vitest/coverage-v8@4.1.11)(vite@7.3.6(@types/node@24.9.1)(tsx@4.20.6))
+
+  packages/proposals-pg:
+    dependencies:
+      '@archava/proposals':
+        specifier: workspace:*
+        version: link:../proposals
       pg:
         specifier: 8.23.1
         version: 8.23.1

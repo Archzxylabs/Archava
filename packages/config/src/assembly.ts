@@ -14,6 +14,9 @@ export const moduleSelectionSchema = z
     foodservice: z.boolean().optional(),
     support: z.boolean().optional(),
     purchasing: z.boolean().optional(),
+    organizations: z.boolean().optional(),
+    proposals: z.boolean().optional(),
+    capacity: z.boolean().optional(),
   })
   .strict()
   .superRefine((modules, ctx) => {
@@ -49,6 +52,9 @@ export const COMPOSABLE_MODULES: ModuleSelection = Object.freeze({
   foodservice: true,
   support: true,
   purchasing: true,
+  organizations: true,
+  proposals: true,
+  capacity: true,
 })
 export const MODULE_CONTRACTS = [
   {
@@ -161,6 +167,58 @@ export const MODULE_CONTRACTS = [
     ],
     entry: '@archava/purchasing',
   },
+  {
+    id: 'organizations',
+    version: '1.0.0',
+    requires: ['contacts'],
+    packages: [
+      '@archava/organizations',
+      '@archava/organizations-pg',
+      '@archava/identity-pg',
+    ],
+    permissions: [
+      'organizations.read',
+      'organizations.write',
+      'affiliations.read',
+      'affiliations.write',
+    ],
+    entry: '@archava/organizations',
+  },
+  {
+    id: 'proposals',
+    version: '1.0.0',
+    requires: ['contacts'],
+    packages: [
+      '@archava/proposals',
+      '@archava/proposals-pg',
+      '@archava/identity-pg',
+    ],
+    permissions: [
+      'proposals.read',
+      'proposals.write',
+      'proposals.decide',
+      'changerequests.read',
+      'changerequests.write',
+      'changerequests.decide',
+    ],
+    entry: '@archava/proposals',
+  },
+  {
+    id: 'capacity',
+    version: '1.0.0',
+    requires: ['contacts'],
+    packages: [
+      '@archava/capacity',
+      '@archava/capacity-pg',
+      '@archava/identity-pg',
+    ],
+    permissions: [
+      'capacity.read',
+      'capacity.write',
+      'capacity.allocate',
+    ],
+    entry: '@archava/capacity',
+  },
 ] as const
 const legacyModules = moduleSelectionSchema.refine(
   (modules) =>
@@ -170,7 +228,10 @@ const legacyModules = moduleSelectionSchema.refine(
     modules.commerce === undefined &&
     modules.foodservice === undefined &&
     modules.support === undefined &&
-    modules.purchasing === undefined,
+    modules.purchasing === undefined &&
+    modules.organizations === undefined &&
+    modules.proposals === undefined &&
+    modules.capacity === undefined,
   'Project composition requires assembly contract 2.0.0',
 )
 export const assemblyRequestSchema = z.discriminatedUnion('version', [

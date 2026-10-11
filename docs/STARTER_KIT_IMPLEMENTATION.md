@@ -14,17 +14,17 @@ support are not authorized by this instruction.
 
 ## Work ledger
 
-| Work                                                   | Acceptance                                                                                                                                                                             | Current state                                        |
-| ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| KIT-01 typed trusted catalogue                         | Forty families, explicit domain ownership/configuration/API/action/UI/operability requirements; immutable public contracts; no implicit support from research status                   | Accepted: local catalogue/planner scope              |
-| KIT-02 deterministic requirement and readiness planner | Every selected requirement has a disposition; full kits with missing implementations refuse assembly; narrow accepted scopes remain explicitly narrow; typed API and local CLI         | Accepted: local catalogue/planner scope              |
-| KIT-03 packaged consumption                            | Two cold-installed consumers use the same catalogue/planner without source imports; browser-safe contracts; existing profile/CRM behaviour preserved                                   | Accepted: verified independent consumers             |
-| KIT-04 project services                                | A bounded persistent project/task/milestone workflow through authorized API/dashboard; scope/revision/audit/recovery; reuse without CRM forks                                          | Accepted: bounded local tracking                     |
-| KIT-05 scheduling and accommodation                    | Time/resource scheduling and domain-specific room-night/stay/housekeeping ownership; concurrency/cancellation/restore evidence                                                         | Accepted: bounded reservations and accommodation     |
-| KIT-06 orders, retail and food service                 | Catalogue/orders/stock and restaurant table/kitchen rules; validated composition and failure semantics                                                                                 | Accepted: bounded commerce and food service          |
-| KIT-07 remaining general kits                          | Build the 24 general families' explicit scopes from shared services and separate extensions; each needs its own evidence                                                               | In progress: bounded support and purchasing accepted |
-| KIT-08 specialist kits                                 | Domain review plus selected authoritative-system adapters, supported configuration, privacy and live integration evidence; 16 research families are not native full-system commitments | Pending                                              |
-| KIT-09 operator handoff                                | Reproducible releases, migration/recovery, acceptance manifest and honest support catalogue                                                                                            | Pending                                              |
+| Work                                                   | Acceptance                                                                                                                                                                             | Current state                                                                                   |
+| ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| KIT-01 typed trusted catalogue                         | Forty families, explicit domain ownership/configuration/API/action/UI/operability requirements; immutable public contracts; no implicit support from research status                   | Accepted: local catalogue/planner scope                                                         |
+| KIT-02 deterministic requirement and readiness planner | Every selected requirement has a disposition; full kits with missing implementations refuse assembly; narrow accepted scopes remain explicitly narrow; typed API and local CLI         | Accepted: local catalogue/planner scope                                                         |
+| KIT-03 packaged consumption                            | Two cold-installed consumers use the same catalogue/planner without source imports; browser-safe contracts; existing profile/CRM behaviour preserved                                   | Accepted: verified independent consumers                                                        |
+| KIT-04 project services                                | A bounded persistent project/task/milestone workflow through authorized API/dashboard; scope/revision/audit/recovery; reuse without CRM forks                                          | Accepted: bounded local tracking                                                                |
+| KIT-05 scheduling and accommodation                    | Time/resource scheduling and domain-specific room-night/stay/housekeeping ownership; concurrency/cancellation/restore evidence                                                         | Accepted: bounded reservations and accommodation                                                |
+| KIT-06 orders, retail and food service                 | Catalogue/orders/stock and restaurant table/kitchen rules; validated composition and failure semantics                                                                                 | Accepted: bounded commerce and food service                                                     |
+| KIT-07 remaining general kits                          | Build the 24 general families' explicit scopes from shared services and separate extensions; each needs its own evidence                                                               | In progress: bounded support, purchasing, organizations, proposals/scope, and capacity accepted |
+| KIT-08 specialist kits                                 | Domain review plus selected authoritative-system adapters, supported configuration, privacy and live integration evidence; 16 research families are not native full-system commitments | Pending                                                                                         |
+| KIT-09 operator handoff                                | Reproducible releases, migration/recovery, acceptance manifest and honest support catalogue                                                                                            | Pending                                                                                         |
 
 No candidate is promoted to accepted from a file count, generated manifest, UI
 visibility, mocked provider response or a generic CRUD engine. Specialist adapter
@@ -161,7 +161,38 @@ into a single shared commerce stock pool, forced tenant RLS, machine mutation
 denial, restart/restore, and owner data baseline preservation.
 Narrow K02/K04/K18/K23 `purchase_receipts` scopes compose current purchasing evidence.
 
-KIT-07 continues. Next: Organizations, proposal/scope/amendments, and capacity
-estimation according to the programme priority ledger. All forty full operating
-kits retain their declared gaps. The uninterrupted-execution instruction continues
-across this checkpoint.
+KIT-07 continues with Organizations, Proposals/Scope, and Capacity Estimation.
+
+## Eighth implementation slice
+
+Adds `organizations` and `organizations-pg` 0.1.0: 42 compiled artifacts,
+18 unchanged external pins, thirteen owned ledgers (`001_organizations_affiliations.sql`),
+and assembly v8 optional composition. Independent wholesale (`K04`) and
+recruitment (`K21`) consumers share identical domain code and browser-safe dashboards.
+Narrow `organization_accounts` scope proves organization master data, primary
+affiliation uniqueness constraint (at most one active primary contact per organization),
+secondary contact links, revision locking, forced tenant RLS, and restart/restore.
+
+## Ninth implementation slice
+
+Adds `proposals` and `proposals-pg` 0.1.0: 44 compiled artifacts, 18 unchanged
+external pins, fourteen owned ledgers (`001_proposals_scope_amendments.sql`),
+and assembly v8 optional composition. Independent agency (`K05`) and construction/EPC
+(`K31`) consumers share identical domain code and browser-safe dashboards.
+Narrow `proposals_scope` scope proves proposal draft deliverables, client acceptance,
+immutable baseline Scope Version 1 snapshot, versioned change request amendments
+advancing scope to v2+, forced tenant RLS, and restart/restore.
+
+## Tenth implementation slice
+
+Adds `capacity` and `capacity-pg` 0.1.0: 46 compiled artifacts, 18 unchanged
+external pins, fifteen owned ledgers (`001_delivery_capacity_pools.sql`),
+and assembly v8 optional composition. Independent agency (`K05`) and construction/EPC
+(`K31`) consumers share identical domain code and browser-safe dashboards.
+Narrow `delivery_capacity` scope proves capacity pool windows, deterministic daily
+burn-rate calculations, queueing upon concurrency saturation, dynamic finish handover,
+burned-unit progress updates, slot completion/cancellation release, forced tenant RLS,
+and restart/restore.
+
+All forty full operating kits continue to retain their declared domain and adapter gaps.
+No complete operating kit is promoted by these narrow scopes.

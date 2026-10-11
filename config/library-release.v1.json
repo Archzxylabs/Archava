@@ -305,6 +305,51 @@
           "checksum": "45773eefa96889dc1d538587c53da7eb0d4b9f915cdb3ae22e9abcfad560d8ae"
         }
       ]
+    },
+    {
+      "name": "@archava/organizations",
+      "version": "0.1.0",
+      "migrations": []
+    },
+    {
+      "name": "@archava/organizations-pg",
+      "version": "0.1.0",
+      "migrations": [
+        {
+          "file": "001_organizations_affiliations.sql",
+          "checksum": "0480df5ab70a1e7b2effaa424636c80f1540d4ce59584c4bb54dbf2e32bb411a"
+        }
+      ]
+    },
+    {
+      "name": "@archava/proposals",
+      "version": "0.1.0",
+      "migrations": []
+    },
+    {
+      "name": "@archava/proposals-pg",
+      "version": "0.1.0",
+      "migrations": [
+        {
+          "file": "001_proposals_scope_amendments.sql",
+          "checksum": "966d4a5ad28b1535f058e72cdf6bd2bd59fc9dc4c147968d3637fcb069ece4a8"
+        }
+      ]
+    },
+    {
+      "name": "@archava/capacity",
+      "version": "0.1.0",
+      "migrations": []
+    },
+    {
+      "name": "@archava/capacity-pg",
+      "version": "0.1.0",
+      "migrations": [
+        {
+          "file": "001_delivery_capacity_pools.sql",
+          "checksum": "df1f3b29e3c39ccddabb0a31a7e025709eeccd2c44ed80e2104b3d0c673c30c3"
+        }
+      ]
     }
   ],
   "databaseLedgers": [
@@ -371,6 +416,21 @@
       "schema": "archava_purchasing",
       "package": "@archava/purchasing-pg",
       "migrations": ["001_suppliers_orders_receipts"]
+    },
+    {
+      "schema": "archava_organizations",
+      "package": "@archava/organizations-pg",
+      "migrations": ["001_organizations_affiliations"]
+    },
+    {
+      "schema": "archava_proposals",
+      "package": "@archava/proposals-pg",
+      "migrations": ["001_proposals_scope_amendments"]
+    },
+    {
+      "schema": "archava_capacity",
+      "package": "@archava/capacity-pg",
+      "migrations": ["001_delivery_capacity_pools"]
     }
   ],
   "requiredAdapters": [
@@ -385,7 +445,10 @@
     "@archava/commerce-pg",
     "@archava/foodservice-pg",
     "@archava/support-pg",
-    "@archava/purchasing-pg"
+    "@archava/purchasing-pg",
+    "@archava/organizations-pg",
+    "@archava/proposals-pg",
+    "@archava/capacity-pg"
   ],
   "operatorChecks": [
     "non-owner runtime database role",
@@ -396,7 +459,8 @@
     "commerce quote, stock ledger, current grants and receipt recovery",
     "food-service recipe/table/kitchen grants, consumption and recovery",
     "support assignment, resolution cycles, private notes and receipt recovery",
-    "supplier quote, purchase receipt, current grants and shared stock recovery"
+    "supplier quote, purchase receipt, current grants and shared stock recovery",
+    "organization accounts, contact affiliations and receipt recovery"
   ],
   "externals": [
     {
