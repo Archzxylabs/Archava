@@ -22,7 +22,7 @@ support are not authorized by this instruction.
 | KIT-04 project services                                | A bounded persistent project/task/milestone workflow through authorized API/dashboard; scope/revision/audit/recovery; reuse without CRM forks                                          | Accepted: bounded local tracking                 |
 | KIT-05 scheduling and accommodation                    | Time/resource scheduling and domain-specific room-night/stay/housekeeping ownership; concurrency/cancellation/restore evidence                                                         | Accepted: bounded reservations and accommodation |
 | KIT-06 orders, retail and food service                 | Catalogue/orders/stock and restaurant table/kitchen rules; validated composition and failure semantics                                                                                 | Accepted: bounded commerce and food service      |
-| KIT-07 remaining general kits                          | Build the 24 general families' explicit scopes from shared services and separate extensions; each needs its own evidence                                                               | In progress: bounded support accepted            |
+| KIT-07 remaining general kits                          | Build the 24 general families' explicit scopes from shared services and separate extensions; each needs its own evidence                                                               | In progress: bounded support and purchasing accepted |
 | KIT-08 specialist kits                                 | Domain review plus selected authoritative-system adapters, supported configuration, privacy and live integration evidence; 16 research families are not native full-system commitments | Pending                                          |
 | KIT-09 operator handoff                                | Reproducible releases, migration/recovery, acceptance manifest and honest support catalogue                                                                                            | Pending                                          |
 
@@ -146,3 +146,23 @@ Continue with [purchasing and physical receipts](PURCHASING_MODULE_PLAN.md), the
 remaining general/specialist requirements and programme handoff. All forty full
 operating kits still retain their declared gaps. The uninterrupted-execution
 instruction continues across this checkpoint.
+
+## Seventh implementation slice
+
+Profile 1.10.0 adds `purchasing` and `purchasing-pg` 0.1.0 alongside commerce
+0.3.0 (with additive `003_purchase_receipts.sql` migration, private transaction SPI
+`receivePurchaseStock`): 40 compiled artifacts, 18 unchanged external pins, twelve
+owned ledgers, host 0.13.0, config 0.12.0 and kits 0.7.0. Assembly v8 preserves
+previous contracts/defaults and introduces optional purchasing composition.
+
+The domain proves supplier quotes, backend offer validation, reviewed drafts,
+confirmed POs, physical partial inspection, rejection findings, stock receipts
+into a single shared commerce stock pool, forced tenant RLS, machine mutation
+denial, restart/restore, and owner data baseline preservation.
+Narrow K04/K20 `purchase_receipts` scopes compose current purchasing evidence.
+
+KIT-07 continues. Next: Organizations, proposal/scope/amendments, and capacity
+estimation according to the programme priority ledger. All forty full operating
+kits retain their declared gaps. The uninterrupted-execution instruction continues
+across this checkpoint.
+

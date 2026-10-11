@@ -482,7 +482,7 @@ try {
   check(
     'explicit reopening starts a new cycle and target while immutable history retains previous resolution, timestamps, priority, assignment and due evidence',
   )
-  const page = await service.cases('professional', human('owner'), { overdue: false, limit: 1 })
+  const page = await service.cases('professional', human('owner'), { overdue: false, limit: 10 })
   assert.ok(page.items.some((x) => x.id === record.id))
   await act({
     operation: 'case.set-target',

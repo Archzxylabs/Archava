@@ -22,6 +22,36 @@ const trusted = releaseCatalogSchema.parse({
 })
 const request = (modules: unknown) => ({ version: '1.0.0', profile: trusted.version, modules })
 describe('untrusted composition requests', () => {
+  it('requires v8 and shared stock for purchasing without extending old composition defaults', () => {
+    const available = {
+      ...trusted,
+      contracts: { ...trusted.contracts, assembly: '8.0.0' as const },
+      packages: [
+        ...trusted.packages,
+        ...['commerce', 'commerce-pg', 'purchasing', 'purchasing-pg'].map((name) => ({
+          name: '@archava/' + name,
+          version: '0.1.0',
+          migrations: [],
+        })),
+      ],
+    }
+    const input = {
+      version: '8.0.0',
+      profile: trusted.version,
+      modules: { ...MINIMAL_MODULES, commerce: true, purchasing: true },
+    }
+    expect(planAssembly(input, available).entries.map((x) => x.id)).toEqual([
+      'contacts',
+      'commerce',
+      'purchasing',
+    ])
+    for (const version of ['1.0.0', '2.0.0', '3.0.0', '4.0.0', '5.0.0', '6.0.0', '7.0.0'])
+      expect(() => planAssembly({ ...input, version }, available)).toThrow()
+    expect(() =>
+      planAssembly({ ...input, modules: { ...input.modules, commerce: false } }, available),
+    ).toThrow()
+    expect(FULL_MODULES.purchasing).toBeUndefined()
+  })
   it('requires v7 and current support implementation while preserving earlier contracts and defaults', () => {
     const available = {
       ...trusted,

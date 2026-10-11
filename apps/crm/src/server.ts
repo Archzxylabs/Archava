@@ -24,6 +24,8 @@ import { SchedulingService } from '@archava/scheduling'
 import { PostgresSchedulingRepository } from '@archava/scheduling-pg'
 import { AccommodationService } from '@archava/accommodation'
 import { PostgresAccommodationRepository } from '@archava/accommodation-pg'
+import { PurchasingService } from '@archava/purchasing'
+import { PostgresPurchaseRepository } from '@archava/purchasing-pg'
 import { SupportService } from '@archava/support'
 import { PostgresSupportRepository } from '@archava/support-pg'
 import { FoodService } from '@archava/foodservice'
@@ -136,6 +138,11 @@ try {
     (settings.modules ?? FULL_MODULES).support
       ? new SupportService(
           await PostgresSupportRepository.create(runtimePool, settings.fingerprintKey),
+        )
+      : undefined,
+    (settings.modules ?? FULL_MODULES).purchasing
+      ? new PurchasingService(
+          await PostgresPurchaseRepository.create(runtimePool, settings.fingerprintKey),
         )
       : undefined,
   )

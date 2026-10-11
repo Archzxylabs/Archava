@@ -67,7 +67,7 @@ describe('trusted kit contracts and support boundary', () => {
     supported.packages.push(
       ...['commerce', 'commerce-pg', 'foodservice', 'foodservice-pg'].map((name) => ({
         name: '@archava/' + name,
-        version: name.startsWith('commerce') ? '0.2.0' : '0.1.0',
+        version: name.startsWith('commerce') ? '0.3.0' : '0.1.0',
         migrations: [],
       })),
     )
@@ -83,13 +83,37 @@ describe('trusted kit contracts and support boundary', () => {
         .readyToAssemble,
     ).toBe(false)
   })
+  it('composes bounded purchasing in wholesale and food contexts while full kits remain blocked', () => {
+    const supported = release()
+    supported.contracts.assembly = '8.0.0'
+    supported.packages.push(
+      ...['commerce', 'commerce-pg', 'purchasing', 'purchasing-pg'].map((name) => ({
+        name: '@archava/' + name,
+        version: name.startsWith('commerce') ? '0.3.0' : '0.1.0',
+        migrations: [],
+      })),
+    )
+    const planner = new KitPlanner(supported, COMPOSABLE_MODULES)
+    for (const id of ['K02', 'K04', 'K18', 'K23']) {
+      const plan = planner.plan(request(id, 'purchase_receipts'))
+      expect(plan.readyToAssemble).toBe(true)
+      expect(plan.assembly).toEqual({ ...MINIMAL_MODULES, commerce: true, purchasing: true })
+      expect(plan.operationalKitsAccepted).toEqual([])
+      expect(planner.plan(request(id)).readyToAssemble).toBe(false)
+    }
+    expect(planner.plan(request('K01', 'purchase_receipts')).readyToAssemble).toBe(false)
+    expect(
+      new KitPlanner(supported, FULL_MODULES).plan(request('K04', 'purchase_receipts'))
+        .readyToAssemble,
+    ).toBe(false)
+  })
   it('accepts bounded shared orders and stock for retail and wholesale while retaining full kit gaps', () => {
     const supported = release()
     supported.contracts.assembly = '5.0.0'
     supported.packages.push(
       ...['commerce', 'commerce-pg'].map((name) => ({
         name: '@archava/' + name,
-        version: '0.2.0',
+        version: '0.3.0',
         migrations: [],
       })),
     )

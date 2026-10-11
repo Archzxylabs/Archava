@@ -1867,13 +1867,20 @@ SLA or customer-response evidence. Assembly v7 adds optional support, preserves
 older contracts/defaults and supports narrow `support_cases` scopes across
 K05/K06/K12/K18/K21. No full operating kit is accepted by those scopes.
 
-Next build [purchasing and physical receipts](docs/PURCHASING_MODULE_PLAN.md) and
-remaining KIT-07 requirements. The user requested
-continued execution across accepted milestones until the programme is complete.
-All 40 full operating families
-remain in the work ledger. Specialist
-adapters require an explicit authoritative backend and supported domain contract;
-an unspecified integration cannot be labelled operational.
+Profile 1.10.0 adds [bounded purchasing](docs/PURCHASING_MODULE.md): supplier offers,
+frozen draft quotes, purchase orders, partial physical inspection findings, and stock
+receipts into the single shared commerce stock pool. Additive commerce migration 003
+adds purchase provenance to stock movements. Cumulative accepted plus rejected units cannot
+exceed ordered quantities; rejected goods never enter usable stock; short closure retains
+earlier receipts and prevents future deliveries; multi-SKU failures roll back atomically.
+Assembly v8 adds optional purchasing, preserves older contracts/defaults and supports narrow
+`purchase_receipts` scopes across K02/K04/K18/K23. No full operating kit is accepted by those scopes.
+
+Next build organizations, versioned proposals/scopes, and capacity estimation, continuing
+KIT-07 requirements. The user requested continued execution across accepted milestones until
+the programme is complete. All 40 full operating families remain in the work ledger. Specialist
+adapters require an explicit authoritative backend and supported domain contract; an
+unspecified integration cannot be labelled operational.
 
 ## 47. Packaging and incremental migration
 

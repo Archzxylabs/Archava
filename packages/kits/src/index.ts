@@ -36,6 +36,13 @@ export function getKit(id: string): KitManifest {
 }
 
 const LOCAL_IMPLEMENTATIONS = freeze({
+  purchasing: [
+    { name: '@archava/purchasing', version: '0.1.0' },
+    { name: '@archava/purchasing-pg', version: '0.1.0' },
+    { name: '@archava/commerce', version: '0.3.0' },
+    { name: '@archava/commerce-pg', version: '0.3.0' },
+    { name: '@archava/identity-pg', version: '0.1.0' },
+  ],
   support_cases: [
     { name: '@archava/support', version: '0.1.0' },
     { name: '@archava/support-pg', version: '0.1.0' },
@@ -44,8 +51,8 @@ const LOCAL_IMPLEMENTATIONS = freeze({
   foodservice_ops: [
     { name: '@archava/foodservice', version: '0.1.0' },
     { name: '@archava/foodservice-pg', version: '0.1.0' },
-    { name: '@archava/commerce', version: '0.2.0' },
-    { name: '@archava/commerce-pg', version: '0.2.0' },
+    { name: '@archava/commerce', version: '0.3.0' },
+    { name: '@archava/commerce-pg', version: '0.3.0' },
     { name: '@archava/identity-pg', version: '0.1.0' },
   ],
   crm_contacts: [
@@ -75,18 +82,18 @@ const LOCAL_IMPLEMENTATIONS = freeze({
     { name: '@archava/identity-pg', version: '0.1.0' },
   ],
   catalog_products: [
-    { name: '@archava/commerce', version: '0.2.0' },
-    { name: '@archava/commerce-pg', version: '0.2.0' },
+    { name: '@archava/commerce', version: '0.3.0' },
+    { name: '@archava/commerce-pg', version: '0.3.0' },
     { name: '@archava/identity-pg', version: '0.1.0' },
   ],
   commerce_orders: [
-    { name: '@archava/commerce', version: '0.2.0' },
-    { name: '@archava/commerce-pg', version: '0.2.0' },
+    { name: '@archava/commerce', version: '0.3.0' },
+    { name: '@archava/commerce-pg', version: '0.3.0' },
     { name: '@archava/identity-pg', version: '0.1.0' },
   ],
   inventory_quantities: [
-    { name: '@archava/commerce', version: '0.2.0' },
-    { name: '@archava/commerce-pg', version: '0.2.0' },
+    { name: '@archava/commerce', version: '0.3.0' },
+    { name: '@archava/commerce-pg', version: '0.3.0' },
     { name: '@archava/identity-pg', version: '0.1.0' },
   ],
 })
@@ -133,6 +140,10 @@ export class KitPlanner {
         add('crm_contacts', kit.id)
         add('appointment_scheduling', kit.id)
         add('accommodation_stays', kit.id)
+      } else if (selected.scope === 'purchase_receipts') {
+        if (!['K02', 'K04', 'K18', 'K23'].includes(kit.id))
+          add(`scope.${kit.id}.purchase_receipts`, kit.id)
+        add('purchasing', kit.id)
       } else if (selected.scope === 'support_cases') {
         if (!['K05', 'K06', 'K12', 'K18', 'K21'].includes(kit.id))
           add(`scope.${kit.id}.support_cases`, kit.id)
@@ -156,6 +167,9 @@ export class KitPlanner {
       }
     }
     for (const id of request.requirements) add(id, 'explicit-requirement')
+    if (required.has('purchasing'))
+      for (const id of ['crm_contacts', 'catalog_products', 'inventory_quantities'])
+        add(id, 'purchasing')
     if (required.has('support_cases')) add('crm_contacts', 'support_cases')
     if (required.has('foodservice_ops'))
       for (const id of [
@@ -204,6 +218,7 @@ export class KitPlanner {
           (id === 'crm_sales_pipeline' && !this.modules.pipeline) ||
           (id === 'project_delivery' && !this.modules.projects) ||
           (id === 'appointment_scheduling' && !this.modules.scheduling) ||
+          (id === 'purchasing' && !this.modules.purchasing) ||
           (id === 'support_cases' && !this.modules.support) ||
           (id === 'foodservice_ops' && !this.modules.foodservice) ||
           (id === 'accommodation_stays' && !this.modules.accommodation) ||
@@ -285,6 +300,7 @@ export class KitPlanner {
     )
     const modules: ModuleSelection = {
       contacts: true,
+      ...(required.has('purchasing') ? { purchasing: true } : {}),
       ...(required.has('support_cases') ? { support: true } : {}),
       ...(required.has('foodservice_ops') ? { foodservice: true } : {}),
       pipeline: required.has('crm_sales_pipeline'),
@@ -305,19 +321,21 @@ export class KitPlanner {
       planAssembly(
         {
           version:
-            modules.support !== undefined
-              ? '7.0.0'
-              : modules.foodservice !== undefined
-                ? '6.0.0'
-                : modules.commerce !== undefined
-                  ? '5.0.0'
-                  : modules.accommodation !== undefined
-                    ? '4.0.0'
-                    : modules.scheduling !== undefined
-                      ? '3.0.0'
-                      : modules.projects !== undefined
-                        ? '2.0.0'
-                        : '1.0.0',
+            modules.purchasing !== undefined
+              ? '8.0.0'
+              : modules.support !== undefined
+                ? '7.0.0'
+                : modules.foodservice !== undefined
+                  ? '6.0.0'
+                  : modules.commerce !== undefined
+                    ? '5.0.0'
+                    : modules.accommodation !== undefined
+                      ? '4.0.0'
+                      : modules.scheduling !== undefined
+                        ? '3.0.0'
+                        : modules.projects !== undefined
+                          ? '2.0.0'
+                          : '1.0.0',
           profile: this.release.version,
           modules,
         },

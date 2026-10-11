@@ -1,6 +1,39 @@
 # Build status
 
-## Current checkpoint — profile 1.9.0, 11 October 2026
+## Current checkpoint — profile 1.10.0, 11 October 2026
+
+The accepted bounded [purchasing module](PURCHASING_MODULE.md) adds supplier offers,
+frozen draft quotes, purchase orders, partial physical inspection findings, and stock
+receipts into the shared commerce stock ledger. Additive commerce migration 003 preserves
+earlier commerce data and adds inbound provenance. Current purchasing and commerce permissions
+govern execution; cumulative accepted plus rejected units cannot exceed ordered quantities;
+rejected goods never enter usable stock; short closure prevents future receipts while retaining
+physical truth; multi-SKU failures roll back atomically. CRM, projects, scheduling,
+accommodation, commerce, food-service and support remain supported.
+
+All eight root gates passed: **1,531 tests in 112 files**. Fresh evidence includes
+CRM 38, Act 18, runtime 44, Chromium minimal/full 3/70, projects 15/11, scheduling
+14/9, accommodation 17/9, commerce 18/10, food-service 23/10, support 19/9, purchasing
+19/11, kit planning/assembly 13, assembly 2 and prior-profile upgrade 4. The security matrix
+has 53 controls; root/runtime scans have zero advisories. The separate realtime template
+retains 13 moderate findings and independent SDK/live gates.
+
+The original owner was backed up before/after (`pre-purchasing-1.10.0-20261011.dump`,
+`post-purchasing-1.10.0-20261011.dump`) and upgraded to verified 1.10.0. SQL JSON hashes
+preserve original rows/columns with microsecond timestamps across 74 pre-existing tables.
+Eight CRM business tables, settings, keys and existing grants remain unchanged. Nine new
+purchasing business tables are empty; activation and grants remain explicit. See
+[sanitized evidence](audit/2026-10-11-purchasing-release.json) and
+[current release acceptance](LOCAL_LIBRARY_RELEASE.md).
+
+Full operating kits accepted: **0 of 40 researched candidates**. Narrow domain scopes
+do not accept complete hotel/POS/ERP systems. KIT-07 continues with organizations,
+proposals/scopes and capacity, then remaining general/specialist requirements and
+programme handoff. Payment/provider, customer portal, regulatory adapters and broader
+operational dimensions retain their evidence gates. No whole-product percentage is
+inferred from test counts.
+
+## Previous checkpoint — profile 1.9.0, 11 October 2026
 
 The accepted bounded [support module](SUPPORT_CASES_MODULE.md) adds internal cases,
 current staff assignment, findings, investigation/waiting, explicit resolution,

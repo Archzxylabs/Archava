@@ -5,6 +5,7 @@ import type { Pool } from 'pg'
 export const COMMERCE_MIGRATIONS = [
   '001_catalog_orders_stock',
   '002_managed_menu_products',
+  '003_purchase_receipts',
 ] as const
 export async function commerceMigrationLedger() {
   return await Promise.all(

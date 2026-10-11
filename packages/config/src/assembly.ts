@@ -13,11 +13,14 @@ export const moduleSelectionSchema = z
     commerce: z.boolean().optional(),
     foodservice: z.boolean().optional(),
     support: z.boolean().optional(),
+    purchasing: z.boolean().optional(),
   })
   .strict()
   .superRefine((modules, ctx) => {
     if (modules.nativeActions && !modules.assistant)
       ctx.addIssue({ code: 'custom', message: 'nativeActions requires assistant' })
+    if (modules.purchasing && !modules.commerce)
+      ctx.addIssue({ code: 'custom', message: 'purchasing requires commerce' })
     if (modules.foodservice && !modules.commerce)
       ctx.addIssue({ code: 'custom', message: 'foodservice requires commerce' })
     if (modules.accommodation && !modules.scheduling)
@@ -45,6 +48,7 @@ export const COMPOSABLE_MODULES: ModuleSelection = Object.freeze({
   commerce: true,
   foodservice: true,
   support: true,
+  purchasing: true,
 })
 export const MODULE_CONTRACTS = [
   {
@@ -137,6 +141,26 @@ export const MODULE_CONTRACTS = [
     permissions: ['cases.read', 'cases.write', 'cases.assign', 'notes.read', 'notes.write'],
     entry: '@archava/support',
   },
+  {
+    id: 'purchasing',
+    version: '1.0.0',
+    requires: ['contacts', 'commerce'],
+    packages: [
+      '@archava/purchasing',
+      '@archava/purchasing-pg',
+      '@archava/commerce-pg',
+      '@archava/identity-pg',
+    ],
+    permissions: [
+      'suppliers.read',
+      'offers.read',
+      'orders.read',
+      'orders.write',
+      'receipts.read',
+      'receipts.write',
+    ],
+    entry: '@archava/purchasing',
+  },
 ] as const
 const legacyModules = moduleSelectionSchema.refine(
   (modules) =>
@@ -145,7 +169,8 @@ const legacyModules = moduleSelectionSchema.refine(
     modules.accommodation === undefined &&
     modules.commerce === undefined &&
     modules.foodservice === undefined &&
-    modules.support === undefined,
+    modules.support === undefined &&
+    modules.purchasing === undefined,
   'Project composition requires assembly contract 2.0.0',
 )
 export const assemblyRequestSchema = z.discriminatedUnion('version', [
@@ -166,7 +191,8 @@ export const assemblyRequestSchema = z.discriminatedUnion('version', [
           modules.accommodation === undefined &&
           modules.commerce === undefined &&
           modules.foodservice === undefined &&
-          modules.support === undefined,
+          modules.support === undefined &&
+          modules.purchasing === undefined,
         'Scheduling requires assembly contract 3.0.0',
       ),
     })
@@ -180,7 +206,8 @@ export const assemblyRequestSchema = z.discriminatedUnion('version', [
           modules.accommodation === undefined &&
           modules.commerce === undefined &&
           modules.foodservice === undefined &&
-          modules.support === undefined,
+          modules.support === undefined &&
+          modules.purchasing === undefined,
         'Accommodation requires assembly contract 4.0.0',
       ),
     })
@@ -193,7 +220,8 @@ export const assemblyRequestSchema = z.discriminatedUnion('version', [
         (modules) =>
           modules.commerce === undefined &&
           modules.foodservice === undefined &&
-          modules.support === undefined,
+          modules.support === undefined &&
+          modules.purchasing === undefined,
         'Commerce requires assembly contract 5.0.0',
       ),
     })
@@ -203,7 +231,10 @@ export const assemblyRequestSchema = z.discriminatedUnion('version', [
       version: z.literal('5.0.0'),
       profile: z.string().regex(/^\d+\.\d+\.\d+$/),
       modules: moduleSelectionSchema.refine(
-        (modules) => modules.foodservice === undefined && modules.support === undefined,
+        (modules) =>
+          modules.foodservice === undefined &&
+          modules.support === undefined &&
+          modules.purchasing === undefined,
         'Food service requires assembly contract 6.0.0',
       ),
     })
@@ -213,7 +244,7 @@ export const assemblyRequestSchema = z.discriminatedUnion('version', [
       version: z.literal('6.0.0'),
       profile: z.string().regex(/^\d+\.\d+\.\d+$/),
       modules: moduleSelectionSchema.refine(
-        (modules) => modules.support === undefined,
+        (modules) => modules.support === undefined && modules.purchasing === undefined,
         'Support cases require assembly contract 7.0.0',
       ),
     })
@@ -221,6 +252,16 @@ export const assemblyRequestSchema = z.discriminatedUnion('version', [
   z
     .object({
       version: z.literal('7.0.0'),
+      profile: z.string().regex(/^\d+\.\d+\.\d+$/),
+      modules: moduleSelectionSchema.refine(
+        (m) => m.purchasing === undefined,
+        'Purchasing requires assembly contract 8.0.0',
+      ),
+    })
+    .strict(),
+  z
+    .object({
+      version: z.literal('8.0.0'),
       profile: z.string().regex(/^\d+\.\d+\.\d+$/),
       modules: moduleSelectionSchema,
     })
@@ -232,18 +273,22 @@ export function planAssembly(raw: unknown, trustedCatalog: ReleaseCatalog) {
   if (request.profile !== catalog.version) throw new Error('Unsupported assembly profile')
   if (
     (request.version === '2.0.0' &&
-      !['2.0.0', '3.0.0', '4.0.0', '5.0.0', '6.0.0', '7.0.0'].includes(
+      !['2.0.0', '3.0.0', '4.0.0', '5.0.0', '6.0.0', '7.0.0', '8.0.0'].includes(
         catalog.contracts.assembly ?? '',
       )) ||
     (request.version === '3.0.0' &&
-      !['3.0.0', '4.0.0', '5.0.0', '6.0.0', '7.0.0'].includes(catalog.contracts.assembly ?? '')) ||
+      !['3.0.0', '4.0.0', '5.0.0', '6.0.0', '7.0.0', '8.0.0'].includes(
+        catalog.contracts.assembly ?? '',
+      )) ||
     (request.version === '4.0.0' &&
-      !['4.0.0', '5.0.0', '6.0.0', '7.0.0'].includes(catalog.contracts.assembly ?? '')) ||
+      !['4.0.0', '5.0.0', '6.0.0', '7.0.0', '8.0.0'].includes(catalog.contracts.assembly ?? '')) ||
     (request.version === '5.0.0' &&
-      !['5.0.0', '6.0.0', '7.0.0'].includes(catalog.contracts.assembly ?? '')) ||
+      !['5.0.0', '6.0.0', '7.0.0', '8.0.0'].includes(catalog.contracts.assembly ?? '')) ||
     (request.version === '6.0.0' &&
-      !['6.0.0', '7.0.0'].includes(catalog.contracts.assembly ?? '')) ||
-    (request.version === '7.0.0' && catalog.contracts.assembly !== '7.0.0')
+      !['6.0.0', '7.0.0', '8.0.0'].includes(catalog.contracts.assembly ?? '')) ||
+    (request.version === '7.0.0' &&
+      !['7.0.0', '8.0.0'].includes(catalog.contracts.assembly ?? '')) ||
+    (request.version === '8.0.0' && catalog.contracts.assembly !== '8.0.0')
   )
     throw new Error('Unsupported assembly contract')
   const enabled = MODULE_CONTRACTS.filter((module) => request.modules[module.id])

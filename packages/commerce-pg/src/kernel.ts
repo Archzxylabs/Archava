@@ -477,3 +477,92 @@ export async function prepareFoodCommerceOrder(
   )
   return changed
 }
+
+/** Private inbound port; purchasing owns the authorized source receipt in this transaction. */
+export async function receivePurchaseStock(
+  client: PoolClient,
+  raw: {
+    tenant: string
+    requestId: string
+    actorId: string
+    fingerprint: string
+    id: string
+    revision: number
+    reason: string
+    lines: readonly { productId: string; quantity: number }[]
+  },
+) {
+  await context(client, raw.tenant)
+  const input = z
+    .object({
+      requestId: z.uuid(),
+      actorId: commerceIdSchema,
+      fingerprint: z.string().regex(/^[a-f0-9]{64}$/),
+      id: z.uuid(),
+      revision: z.number().int().positive().max(2147483647),
+      reason: z.string().trim().min(1).max(2000),
+      lines: z
+        .array(
+          z
+            .object({ productId: z.uuid(), quantity: z.number().int().min(1).max(1000000) })
+            .strict(),
+        )
+        .max(50),
+    })
+    .strict()
+    .parse({
+      requestId: raw.requestId,
+      actorId: raw.actorId,
+      fingerprint: raw.fingerprint,
+      id: raw.id,
+      revision: raw.revision,
+      reason: raw.reason,
+      lines: raw.lines,
+    })
+  if (new Set(input.lines.map((x) => x.productId)).size !== input.lines.length)
+    throw new CommerceError('conflict')
+  const claimed = await client.query(
+    'INSERT INTO archava_commerce.commands(tenant_id,request_id,actor_id,fingerprint) VALUES($1,$2,$3,$4) ON CONFLICT DO NOTHING',
+    [raw.tenant, input.requestId, input.actorId, input.fingerprint],
+  )
+  if (claimed.rowCount !== 1) throw new CommerceError('conflict')
+  const products = input.lines.length
+    ? await lockCommerceProducts(
+        client,
+        raw.tenant,
+        input.lines.map((x) => x.productId),
+      )
+    : []
+  if (products.some((p) => !p.trackStock)) throw new CommerceError('conflict')
+  await client.query(
+    'UPDATE archava_commerce.commands SET receipt=$3 WHERE tenant_id=$1 AND request_id=$2',
+    [
+      raw.tenant,
+      input.requestId,
+      { domain: 'purchasing', id: input.id, revision: input.revision, lines: input.lines },
+    ],
+  )
+  for (const p of products) {
+    const l = input.lines.find((x) => x.productId === p.id)
+    if (!l) throw new CommerceError('conflict')
+    const stock = await readCommerceStock(client, raw.tenant, p.id, await commerceClock(client))
+    if (stock.onHand + l.quantity > 1000000000 || stock.revision >= 2147483647)
+      throw new CommerceError('conflict')
+    await client.query(
+      "INSERT INTO archava_commerce.movements(tenant_id,request_id,product_id,kind,quantity,reason,purchase_id) VALUES($1,$2,$3,'purchase',$4,$5,$6)",
+      [raw.tenant, input.requestId, p.id, l.quantity, input.reason, input.id],
+    )
+  }
+  await client.query(
+    'INSERT INTO archava_commerce.audit(tenant_id,request_id,actor_id,operation,record_id,revision,reason) VALUES($1,$2,$3,$4,$5,$6,$7)',
+    [
+      raw.tenant,
+      input.requestId,
+      input.actorId,
+      'purchase.receive',
+      input.id,
+      input.revision,
+      input.reason,
+    ],
+  )
+}

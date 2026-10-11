@@ -254,6 +254,7 @@ export class PostgresCommerceRepository implements CommerceRepository {
             productId: x.product_id,
             orderId: x.order_id,
             kind: x.kind,
+            purchaseId: x.purchase_id ?? null,
             quantity: x.quantity,
             reason: x.reason,
             occurredAt: commerceInstant(x.occurred_at),
@@ -385,6 +386,13 @@ export class PostgresCommerceRepository implements CommerceRepository {
       ).rows[0]
       if (!row) return { status: 'not_committed', requestId: id }
       if (row.actor_id !== principal.id) throw new CommerceError('forbidden')
+      if (
+        row.receipt &&
+        typeof row.receipt === 'object' &&
+        'domain' in row.receipt &&
+        row.receipt.domain === 'purchasing'
+      )
+        throw new CommerceError('forbidden')
       const receipt = commerceReceiptSchema.parse(row.receipt)
       await this.receiptAccess(client, tenant, access, receipt)
       return { status: 'committed', requestId: id, receipt }
@@ -433,6 +441,13 @@ export class PostgresCommerceRepository implements CommerceRepository {
         ).rows[0]
         if (!row || row.actor_id !== principal.id || row.fingerprint !== fingerprint)
           throw new CommerceError('conflict')
+        if (
+          row.receipt &&
+          typeof row.receipt === 'object' &&
+          'domain' in row.receipt &&
+          row.receipt.domain === 'purchasing'
+        )
+          throw new CommerceError('forbidden')
         const receipt = commerceReceiptSchema.parse(row.receipt)
         await this.receiptAccess(client, tenant, access, receipt)
         return receipt

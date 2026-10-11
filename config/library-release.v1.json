@@ -1,16 +1,16 @@
 {
   "schemaVersion": "1.0.0",
   "id": "archava-local-library",
-  "version": "1.9.0",
+  "version": "1.10.0",
   "host": {
     "name": "@archava/crm-host",
-    "version": "0.12.0"
+    "version": "0.13.0"
   },
   "contracts": {
     "clientConfig": "1.0.0",
     "deploymentPlan": "2.0.0",
     "hostSettings": 1,
-    "assembly": "7.0.0",
+    "assembly": "8.0.0",
     "presence": "1.0.0",
     "kitPlan": "1.0.0",
     "kitCatalogue": "1.0.0"
@@ -61,7 +61,7 @@
     },
     {
       "name": "@archava/config",
-      "version": "0.11.0",
+      "version": "0.12.0",
       "migrations": []
     },
     {
@@ -186,7 +186,7 @@
     },
     {
       "name": "@archava/kits",
-      "version": "0.6.0",
+      "version": "0.7.0",
       "migrations": []
     },
     {
@@ -240,12 +240,12 @@
     },
     {
       "name": "@archava/commerce",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "migrations": []
     },
     {
       "name": "@archava/commerce-pg",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "migrations": [
         {
           "file": "001_catalog_orders_stock.sql",
@@ -254,6 +254,10 @@
         {
           "file": "002_managed_menu_products.sql",
           "checksum": "3ae7debc5b2dc1c53e47f10f317a2656aec0d47c644fd006d1809e30fbb76ffe"
+        },
+        {
+          "file": "003_purchase_receipts.sql",
+          "checksum": "de658b69951dc030dd750a53ef797b1ebfaf2d39619ac0d4c8d33a00f1cbd8d1"
         }
       ]
     },
@@ -284,6 +288,21 @@
         {
           "file": "001_cases_notes_resolution.sql",
           "checksum": "339785aed708a97ddb4410b08e834cc7fd1236acd94c9f77ec8182efefdf7961"
+        }
+      ]
+    },
+    {
+      "name": "@archava/purchasing",
+      "version": "0.1.0",
+      "migrations": []
+    },
+    {
+      "name": "@archava/purchasing-pg",
+      "version": "0.1.0",
+      "migrations": [
+        {
+          "file": "001_suppliers_orders_receipts.sql",
+          "checksum": "45773eefa96889dc1d538587c53da7eb0d4b9f915cdb3ae22e9abcfad560d8ae"
         }
       ]
     }
@@ -332,7 +351,11 @@
     {
       "schema": "archava_commerce",
       "package": "@archava/commerce-pg",
-      "migrations": ["001_catalog_orders_stock", "002_managed_menu_products"]
+      "migrations": [
+        "001_catalog_orders_stock",
+        "002_managed_menu_products",
+        "003_purchase_receipts"
+      ]
     },
     {
       "schema": "archava_foodservice",
@@ -343,6 +366,11 @@
       "schema": "archava_support",
       "package": "@archava/support-pg",
       "migrations": ["001_cases_notes_resolution"]
+    },
+    {
+      "schema": "archava_purchasing",
+      "package": "@archava/purchasing-pg",
+      "migrations": ["001_suppliers_orders_receipts"]
     }
   ],
   "requiredAdapters": [
@@ -356,7 +384,8 @@
     "@archava/accommodation-pg",
     "@archava/commerce-pg",
     "@archava/foodservice-pg",
-    "@archava/support-pg"
+    "@archava/support-pg",
+    "@archava/purchasing-pg"
   ],
   "operatorChecks": [
     "non-owner runtime database role",
@@ -366,7 +395,8 @@
     "backup restoration and execution holds",
     "commerce quote, stock ledger, current grants and receipt recovery",
     "food-service recipe/table/kitchen grants, consumption and recovery",
-    "support assignment, resolution cycles, private notes and receipt recovery"
+    "support assignment, resolution cycles, private notes and receipt recovery",
+    "supplier quote, purchase receipt, current grants and shared stock recovery"
   ],
   "externals": [
     {

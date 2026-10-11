@@ -1,6 +1,42 @@
 # Local reusable library release
 
-## Current extension — profile 1.9.0, 11 October 2026
+## Current extension — profile 1.10.0, 11 October 2026
+
+Shared purchasing adds 40 compiled artifacts, 18 unchanged external pins, twelve
+owned ledgers, host 0.13.0, config 0.12.0 and kits 0.7.0. Purchasing/purchasing-pg 0.1.0
+run without CRM or an LLM; commerce 0.3.0 additive 003 provides inbound stock provenance.
+Assembly v8 adds optional purchasing while preserving previous contracts and four-module defaults.
+Existing identities require explicit independent purchasing permissions; migration does not enroll accounts.
+
+| Extension                 | Accepted evidence                                                                                                                                                                                                                                                | Limit                                                                                            |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Supplier quotes and orders| Two cold-installed wholesale/restaurant consumers; real PostgreSQL supplier/offer races, stale draft quote refusal, immutable confirmed quotes, 1–50 lines, bounded integer IDR totals, restart/restore; 19 checks                                                | Backend supplier unit cost distinct from sales price/pricebook; no landed cost or freight       |
+| Physical stock receipts   | Partial goods receipt findings, accepted + rejected <= ordered, source-bound inbound movements via commerce transaction SPI, rejected findings separated from usable stock, over-receipt refusal, short closure, multi-SKU atomic rollback; 19 checks          | Initial policy: received means all units accounted for; replacement uses new PO; no auto dispute |
+| Owner composition         | Compiled host and Chromium supplier creation, offers, PO create/review/confirm, goods inspection receipt, lost-response/denied recovery, short-close, viewer controls, disable/enable and backup restore; 11 checks                                             | Human writes; pending browser recovery in memory; catalog/order selector paginated up to 1,000   |
+| Trusted assembly          | K02/K04/K18/K23 narrow `purchase_receipts` under v8; kits 13 and assembly 2                                                                                                                                                                                       | No full operating kit accepted                                                                   |
+
+All eight root gates passed: 1,531 tests/112 files. Fresh regression evidence
+retains CRM 38, Act 18, runtime 44, Chromium 3/70, projects 15/11, scheduling 14/9,
+accommodation 17/9, commerce 18/10, food-service 23/10, support 19/9 and upgrade 4. The security
+matrix has 53 controls; root/runtime scans have zero advisories. The separate
+realtime template retains thirteen moderate findings and independent SDK/live
+gates. These checks do not establish production load or security certification.
+
+The original owner was backed up before/after (`pre-purchasing-1.10.0-20261011.dump`,
+`post-purchasing-1.10.0-20261011.dump`) and upgraded to verified 1.10.0.
+SQL JSON hashes preserve microsecond timestamps and original rows/columns across
+all 74 pre-existing tables, including eight CRM business tables and all previous
+schema ledgers. Settings, identity/fingerprint keys and existing domain grants are
+unchanged. Nine new purchasing business tables remain empty. Activation is explicit.
+
+See [purchasing contract and activation](PURCHASING_MODULE.md),
+[sanitized evidence](audit/2026-10-11-purchasing-release.json) and
+[the programme ledger](STARTER_KIT_IMPLEMENTATION.md). Continue KIT-07 with
+organizations, proposals/scopes and capacity, remaining general/specialist requirements
+and full handoff. All forty full operating kits remain unaccepted. No company
+pricebook, external execution or private-data disclosure boundary changes.
+
+## Previous extension — profile 1.9.0, 11 October 2026
 
 Shared support adds 38 compiled artifacts, 18 unchanged external pins, eleven
 owned ledgers, host 0.12.0, config 0.11.0 and kits 0.6.0. Support/support-pg 0.1.0

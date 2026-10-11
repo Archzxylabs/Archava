@@ -10,6 +10,7 @@ import { moduleSelectionSchema, FULL_MODULES } from '@archava/config/assembly'
 import { mountProjectDashboard } from '@archava/projects/dashboard'
 import { mountSchedulingDashboard } from '@archava/scheduling/dashboard'
 import { mountAccommodationDashboard } from '@archava/accommodation/dashboard'
+import { mountPurchasingDashboard } from '@archava/purchasing/dashboard'
 import { mountSupportDashboard } from '@archava/support/dashboard'
 import { mountFoodDashboard } from '@archava/foodservice/dashboard'
 import { mountCommerceDashboard } from '@archava/commerce/dashboard'
@@ -58,11 +59,14 @@ let conversation: ReturnType<typeof mountCrmConversation> | null = null
 let projects: ReturnType<typeof mountProjectDashboard> | null = null
 let scheduling: ReturnType<typeof mountSchedulingDashboard> | null = null
 let accommodation: ReturnType<typeof mountAccommodationDashboard> | null = null
+let purchasing: ReturnType<typeof mountPurchasingDashboard> | null = null
 let support: ReturnType<typeof mountSupportDashboard> | null = null
 let foodservice: ReturnType<typeof mountFoodDashboard> | null = null
 let commerce: ReturnType<typeof mountCommerceDashboard> | null = null
 let session: z.infer<typeof sessionSchema> = { authenticated: false }
 function signedOut() {
+  purchasing?.destroy()
+  purchasing = null
   support?.destroy()
   support = null
   foodservice?.destroy()
@@ -120,6 +124,8 @@ async function send(path: string, body?: unknown) {
 async function mount() {
   if (!session.authenticated) return
   const selected = session.tenants.find((item) => item.id === tenants.value)
+  purchasing?.destroy()
+  purchasing = null
   support?.destroy()
   support = null
   foodservice?.destroy()
@@ -156,6 +162,7 @@ async function mount() {
     ['commerce', modules.commerce ?? false],
     ['foodservice', modules.foodservice ?? false],
     ['support', modules.support ?? false],
+    ['purchasing', modules.purchasing ?? false],
   ] as const) {
     const node = element<HTMLElement>('#' + id)
     node.hidden = !enabled
@@ -179,6 +186,18 @@ async function mount() {
   if (modules.projects)
     projects = mountProjectDashboard(element<HTMLElement>('#projects'), {
       apiBase: '/api/projects/' + selected.id,
+      transport: async (input, init) => {
+        const headers = new Headers(init?.headers)
+        if (init?.method === 'POST') headers.set('x-archava-csrf', csrf)
+        const response = await fetch(input, { ...init, headers })
+        if (response.status === 401) signedOut()
+        return response
+      },
+    })
+  if (modules.purchasing)
+    purchasing = mountPurchasingDashboard(element<HTMLElement>('#purchasing'), {
+      apiBase: '/api/purchasing/' + selected.id,
+      commerceApiBase: '/api/commerce/' + selected.id,
       transport: async (input, init) => {
         const headers = new Headers(init?.headers)
         if (init?.method === 'POST') headers.set('x-archava-csrf', csrf)

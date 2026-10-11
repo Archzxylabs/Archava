@@ -71,7 +71,9 @@
     "foodservice:verify": "node tools/library/verify-foodservice.mjs",
     "foodservice:verify-host": "node tools/library/verify-foodservice-host.mjs",
     "support:verify": "node tools/library/verify-support.mjs",
-    "support:verify-host": "node tools/library/verify-support-host.mjs"
+    "support:verify-host": "node tools/library/verify-support-host.mjs",
+    "purchasing:verify": "node tools/library/pack.mjs && node tools/library/verify-purchasing.mjs",
+    "purchasing:verify-host": "pnpm crm:build && node tools/library/verify-purchasing-host.mjs"
   },
   "devDependencies": {
     "@eslint/js": "9.37.0",

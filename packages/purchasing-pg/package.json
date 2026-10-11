@@ -1,0 +1,28 @@
+{
+  "name": "@archava/purchasing-pg",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Reusable supplier offers, immutable purchase orders and partial physical stock receipts.",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "build": "echo \"@archava/purchasing-pg ships TypeScript source\""
+  },
+  "dependencies": {
+    "zod": "4.1.12",
+    "pg": "8.23.1",
+    "@archava/commerce": "workspace:*",
+    "@archava/commerce-pg": "workspace:*",
+    "@archava/purchasing": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vitest": "4.1.11",
+    "@types/pg": "8.23.1"
+  }
+}

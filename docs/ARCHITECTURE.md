@@ -156,16 +156,15 @@ use database time; waiting does not pause them or imply contractual SLA. Reopen
 starts another cycle without deleting previous solutions. There is no mandatory
 CRM, AI, commerce or identity dependency in the pure domain.
 
-Current inventory is 38 compiled artifacts, 18 unchanged external pins, eleven
-owned ledgers, host 0.12.0, config 0.11.0 and kits 0.6.0. Assembly v7 preserves
-older defaults/contracts. The owner host composes support through explicit
-identity/workspace and independent domain grants. Its PostgreSQL pool closure
-waits for actual client removal, including sockets already closing after idle
-expiry, before stopping an owned database. Independent professional-service and
-property-operations consumers reuse the same support package. Narrow
-`support_cases` does not accept full sector operations. See
-[support contract and activation](SUPPORT_CASES_MODULE.md). Next build
-[purchasing](PURCHASING_MODULE_PLAN.md) and remaining programme requirements.
+Current inventory is 40 compiled artifacts, 18 unchanged external pins, twelve
+owned ledgers, host 0.13.0, config 0.12.0 and kits 0.7.0. Assembly v8 adds optional
+purchasing while preserving older defaults/contracts. The owner host composes support
+and purchasing through explicit identity/workspace and independent domain grants.
+`@archava/purchasing` and `@archava/purchasing-pg` add supplier offers, immutable purchase
+orders, and partial physical goods receipt findings without changing the pricebook or
+maintaining a duplicate stock balance. Commerce 0.3.0 additive migration 003 provides the
+transaction SPI for inbound goods provenance. See [support contract](SUPPORT_CASES_MODULE.md)
+and [purchasing contract](PURCHASING_MODULE.md). Next build organizations, proposals and capacity.
 
 Accepted `crm_inquiry` (K01/K05) and `project_tracking` (K05/K31) are narrow scopes.
 The latter shares internal tracking, not construction costing or full agency sales/
@@ -238,7 +237,7 @@ The registry is not yet the complete PRD §42 contract: version ranges, conflict
 
 `pnpm verify` runs eight platform gates: install, structure, format, lint, typecheck, unit tests, reference-web build and independent core consumption. Actual CRM/Act PostgreSQL, authenticated Chromium and template checks are separate commands. CI has platform, CRM/runtime and template jobs; it does not currently run the Chromium owner suite or Python SDK integration suite.
 
-Preserve the modular monolith and folder paths. Fixed profiles and offline presence now have local acceptance; shared project and exclusive resource reservation services now have scoped local acceptance; the next shared capability is purchasing. Template live-provider migration remains separate work. Public visitors and authenticated owner sessions require distinct tool access, with no copied credentials, guest-provided roles or parent source imports.
+Preserve the modular monolith and folder paths. Fixed profiles and offline presence now have local acceptance; shared project, scheduling, accommodation, commerce, foodservice, support and purchasing services now have scoped local acceptance; the next shared capabilities are organizations, proposals and capacity. Template live-provider migration remains separate work. Public visitors and authenticated owner sessions require distinct tool access, with no copied credentials, guest-provided roles or parent source imports.
 
 Further modules follow demonstrated demand. Company sales/delivery workflows, arbitrary plugins/version mixes, universal ERP and microservice infrastructure are not prerequisites for the current reusable library.
 

@@ -54,6 +54,8 @@ if (process.argv.includes('--run')) {
   run('foodservice-host', ['pnpm', 'foodservice:verify-host'])
   run('support', ['pnpm', 'support:verify'])
   run('support-host', ['pnpm', 'support:verify-host'])
+  run('purchasing', ['pnpm', 'purchasing:verify'])
+  run('purchasing-host', ['pnpm', 'purchasing:verify-host'])
 }
 run('platform-audit', ['pnpm', 'audit', '--json'], root, [0, 1])
 run('runtime-audit', ['npm', 'audit', '--json'], join(root, 'dist/crm-runtime'), [0, 1])
@@ -104,6 +106,8 @@ const proofs = {
   foodserviceHost: await json(join(root, 'dist/foodservice-host-proof/results.json')),
   support: await json(join(root, 'dist/support-proof/results.json')),
   supportHost: await json(join(root, 'dist/support-host-proof/results.json')),
+  purchasing: await json(join(root, 'dist/purchasing-proof/results.json')),
+  purchasingHost: await json(join(root, 'dist/purchasing-host-proof/results.json')),
 }
 for (const name of [
   'runtime',
@@ -120,6 +124,8 @@ for (const name of [
   'foodserviceHost',
   'support',
   'supportHost',
+  'purchasing',
+  'purchasingHost',
 ])
   assert.equal(proofs[name].profile, profile.catalog.version, 'Stale release proof: ' + name)
 assert.equal(proofs.runtime.providerCalls, 0)
@@ -135,6 +141,8 @@ assert.equal(proofs.foodservice.providerCalls, 0)
 assert.equal(proofs.foodserviceHost.providerCalls, 0)
 assert.equal(proofs.support.providerCalls, 0)
 assert.equal(proofs.supportHost.providerCalls, 0)
+assert.equal(proofs.purchasing.providerCalls, 0)
+assert.equal(proofs.purchasingHost.providerCalls, 0)
 const controls = [
   [
     'identity-session-csrf',
@@ -455,6 +463,48 @@ controls.push(
     'application/database restart|shared manual and scheduled publisher',
   ],
 )
+controls.push(
+  [
+    'purchasing-current-grants-and-scope',
+    ['packages/purchasing-pg/src/repository.ts'],
+    'purchasing',
+    'current independent purchasing/commerce grants',
+  ],
+  [
+    'purchasing-frozen-backend-quotes',
+    ['packages/purchasing-pg/src/repository.ts', 'packages/purchasing/src/contracts.ts'],
+    'purchasing',
+    'stale drafts refuse confirmation',
+  ],
+  [
+    'purchasing-atomic-stock-receipts',
+    [
+      'packages/purchasing-pg/src/repository.ts',
+      'packages/commerce-pg/src/kernel.ts',
+      'packages/commerce-pg/migrations/003_purchase_receipts.sql',
+    ],
+    'purchasing',
+    'failure after purchase findings and shared stock writes',
+  ],
+  [
+    'purchasing-immutable-physical-truth',
+    ['packages/purchasing-pg/migrations/001_suppliers_orders_receipts.sql'],
+    'purchasing',
+    'exact inbound quantity binding resist direct runtime SQL bypass',
+  ],
+  [
+    'purchasing-private-tools',
+    ['packages/purchasing/src/api.ts', 'packages/purchasing/src/tools.ts'],
+    'purchasing',
+    'strict bounded API and read-only tools',
+  ],
+  [
+    'purchasing-host-recovery',
+    ['packages/purchasing/src/dashboard.ts', 'apps/crm/src/host.ts', 'apps/crm/src/operator.ts'],
+    'purchasingHost',
+    'original UUID.*pending outcome|backup restore retains supplier quote',
+  ],
+)
 for (const [id, sources, proof, pattern] of controls) {
   for (const source of sources) await readFile(join(root, source))
   const checks = proofs[proof].checks.filter((label) => new RegExp(pattern).test(label))
@@ -479,6 +529,8 @@ for (const [id, sources, proof, pattern] of controls) {
       foodserviceHost: 'pnpm foodservice:verify-host',
       support: 'pnpm support:verify',
       supportHost: 'pnpm support:verify-host',
+      purchasing: 'pnpm purchasing:verify',
+      purchasingHost: 'pnpm purchasing:verify-host',
     }[proof],
     positiveAndRefusalChecks: checks,
     result: 'passed',

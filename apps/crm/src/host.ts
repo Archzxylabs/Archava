@@ -24,6 +24,7 @@ import { createHostPresence, presenceRefusalResponse } from './presence.js'
 import { createProjectApi, type ProjectService } from '@archava/projects'
 import { createSchedulingApi, type SchedulingService } from '@archava/scheduling'
 import { createAccommodationApi, type AccommodationService } from '@archava/accommodation'
+import { createPurchasingApi, type PurchasingService } from '@archava/purchasing'
 import { createSupportApi, type SupportService } from '@archava/support'
 import { createFoodApi, type FoodService } from '@archava/foodservice'
 import { createCommerceApi, type CommerceService } from '@archava/commerce'
@@ -60,6 +61,7 @@ export function createHostHandler(
   commerce?: CommerceService,
   foodservice?: FoodService,
   support?: SupportService,
+  purchasing?: PurchasingService,
 ) {
   const modules = settings.modules ?? FULL_MODULES
   if (!modules.pipeline) pipeline = undefined
@@ -158,6 +160,20 @@ export function createHostHandler(
         return json({ authenticated: false }, 200, {
           'set-cookie': sessionCookie(cookieName, '', secure, true),
         })
+      }
+      if (url.pathname.startsWith('/api/purchasing/')) {
+        const tenant = /^\/api\/purchasing\/([^/]+)/.exec(url.pathname)?.[1]
+        if (
+          !tenant ||
+          !modules.purchasing ||
+          !purchasing ||
+          !settings.tenants.some((item) => item.id === tenant)
+        )
+          return json({ error: 'not_found' }, 404)
+        await service.access(tenant, { kind: 'human', id: session.principalId })
+        return await createPurchasingApi(purchasing, () =>
+          Promise.resolve({ kind: 'human', id: session.principalId }),
+        )(request)
       }
       if (url.pathname.startsWith('/api/support/')) {
         const tenant = /^\/api\/support\/([^/]+)/.exec(url.pathname)?.[1]
@@ -436,6 +452,7 @@ export async function startCrmHost(
   commerce?: CommerceService,
   foodservice?: FoodService,
   support?: SupportService,
+  purchasing?: PurchasingService,
 ) {
   let handler: ReturnType<typeof createHostHandler> | undefined
   const handle = (request: Request, source: string) => {
@@ -455,6 +472,7 @@ export async function startCrmHost(
       commerce,
       foodservice,
       support,
+      purchasing,
     )
     return handler(request, source)
   }

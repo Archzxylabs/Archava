@@ -123,7 +123,8 @@ export const stockMovementSchema = z
     requestId: z.uuid(),
     productId: z.uuid(),
     orderId: z.uuid().nullable(),
-    kind: z.enum(['adjust', 'consume', 'return']),
+    kind: z.enum(['adjust', 'consume', 'return', 'purchase']),
+    purchaseId: z.uuid().nullable().optional(),
     quantity: z
       .number()
       .int()

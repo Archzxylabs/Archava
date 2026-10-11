@@ -68,6 +68,7 @@ export const kitRequestSchema = z
               'commerce_orders',
               'foodservice_tickets',
               'support_cases',
+              'purchase_receipts',
             ]),
           })
           .strict(),
@@ -125,6 +126,7 @@ export interface KitPlan {
       | 'commerce_orders'
       | 'foodservice_tickets'
       | 'support_cases'
+      | 'purchase_receipts'
   }[]
   readonly requirements: readonly KitRequirement[]
   readonly blockers: readonly KitRequirement[]

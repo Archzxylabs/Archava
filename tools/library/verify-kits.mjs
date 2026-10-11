@@ -78,6 +78,13 @@ try {
       assert.equal(reservations.assembly.scheduling, true)
       assert.deepEqual(reservations.operationalKitsAccepted, [])
     }
+    for (const kitId of ['K02', 'K04', 'K18', 'K23']) {
+      const purchases = planner.plan(raw(kitId, 'purchase_receipts'))
+      assert.equal(purchases.readyToAssemble, true)
+      assert.equal(purchases.assembly.purchasing, true)
+      assert.equal(purchases.assembly.commerce, true)
+      assert.deepEqual(purchases.operationalKitsAccepted, [])
+    }
     const stays = planner.plan(raw('K01', 'accommodation_stays'))
     assert.equal(stays.readyToAssemble, true)
     assert.equal(stays.assembly.accommodation, true)
@@ -258,6 +265,22 @@ try {
   )
   checks.push(
     'bounded support cases compose under v7 across service models while full specialized case operations retain missing requirements',
+  )
+  const purchaseFile = join(scratch, 'purchases.json'),
+    purchaseOut = join(scratch, 'assembled-purchasing')
+  await writeFile(purchaseFile, JSON.stringify(raw('K04', 'purchase_receipts')))
+  const purchase = command('assemble.mjs', [purchaseFile, purchaseOut, '--kit'])
+  assert.equal(purchase.status, 0, purchase.stderr)
+  const purchaseAssembly = JSON.parse(await readFile(join(purchaseOut, 'assembly.json'), 'utf8'))
+  assert.equal(purchaseAssembly.version, '8.0.0')
+  assert.ok(purchaseAssembly.entries.some((x) => x.entry === '@archava/purchasing'))
+  assert.ok(purchaseAssembly.entries.some((x) => x.entry === '@archava/commerce'))
+  assert.equal(
+    JSON.parse(await readFile(join(purchaseOut, 'kit-plan.json'), 'utf8')).selections[0].scope,
+    'purchase_receipts',
+  )
+  checks.push(
+    'bounded purchasing composes under v8 across wholesale and food contexts while full operational procurement retains missing requirements',
   )
   await writeFile(
     join(scratch, 'forged.json'),
