@@ -99,6 +99,7 @@ const browser = await build({
       output,
       'node_modules/@archava/scheduling/dist/dashboard.js',
     ),
+    '@archava/commerce/dashboard': join(output, 'node_modules/@archava/commerce/dist/dashboard.js'),
     '@archava/accommodation/dashboard': join(
       output,
       'node_modules/@archava/accommodation/dist/dashboard.js',
@@ -155,6 +156,7 @@ if (
       path.includes('projects-pg') ||
       path.includes('scheduling-pg') ||
       path.includes('accommodation-pg') ||
+      path.includes('commerce-pg') ||
       path.includes('provider-runtime') ||
       path.includes('node:') ||
       /crm-assistant\/dist\/(conversation|planner|gemini-planner|server|index)\.js/.test(path) ||

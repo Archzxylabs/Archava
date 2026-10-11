@@ -39,6 +39,34 @@ const request = (id = 'K01', scope = 'operations') => ({
 })
 
 describe('trusted kit contracts and support boundary', () => {
+  it('accepts bounded shared orders and stock for retail and wholesale while retaining full kit gaps', () => {
+    const supported = release()
+    supported.contracts.assembly = '5.0.0'
+    supported.packages.push(
+      ...['commerce', 'commerce-pg'].map((name) => ({
+        name: '@archava/' + name,
+        version: '0.1.0',
+        migrations: [],
+      })),
+    )
+    const planner = new KitPlanner(supported, COMPOSABLE_MODULES)
+    for (const id of ['K03', 'K04']) {
+      const plan = planner.plan(request(id, 'commerce_orders'))
+      expect(plan.readyToAssemble).toBe(true)
+      expect(plan.assembly).toEqual({ ...MINIMAL_MODULES, commerce: true })
+      expect(plan.operationalKitsAccepted).toEqual([])
+      expect(planner.plan(request(id)).readyToAssemble).toBe(false)
+    }
+    expect(planner.plan(request('K02', 'commerce_orders')).readyToAssemble).toBe(false)
+    expect(
+      new KitPlanner(supported, FULL_MODULES).plan(request('K03', 'commerce_orders'))
+        .readyToAssemble,
+    ).toBe(false)
+    expect(
+      new KitPlanner(release(), COMPOSABLE_MODULES).plan(request('K03', 'commerce_orders'))
+        .readyToAssemble,
+    ).toBe(false)
+  })
   it('accepts only bounded room-night stays for K01 with exact hotel and shared kernel packages', () => {
     const supported = release()
     supported.contracts.assembly = '4.0.0'

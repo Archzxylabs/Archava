@@ -1,6 +1,39 @@
 # Local reusable library release
 
-## Current extension — profile 1.6.0, 11 October 2026
+## Current extension — profile 1.7.0, 11 October 2026
+
+Shared commerce extends profile 1.6.0: 34 compiled artifacts, 18 unchanged
+external pins, nine owned ledgers, host 0.10.0, config 0.9.0 and kits 0.4.0.
+Assembly v5 adds optional commerce while preserving previous contracts/defaults.
+Pure catalog/order/stock code and the PostgreSQL adapter run without CRM or an LLM.
+The local host requires its existing workspace identity plus explicit commerce grants.
+
+| Extension            | Accepted evidence                                                                                                                                                                                                             | Limit                                                                                |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Catalog/orders/stock | Two cold-installed retail/wholesale consumers; 20-request retry and last-unit races, immutable price snapshots, multi-SKU rollback, lock-wait expiry, partial restock/discard returns, scopes/RLS, restart/restore; 18 checks | One stock pool; integer unit/gram/millilitre; IDR estimates; no financial settlement |
+| Owner composition    | Actual compiled host and Chromium catalog/cart/reserve/fulfill/return flow; lost-response UUID recovery, viewers, module toggles and restored database; 10 checks                                                             | Human writes; in-memory pending browser command; no NL order routing                 |
+| Trusted assembly     | K03/K04 bounded `commerce_orders` composes under v5; earlier narrow scopes retained; kits 10 and assembly 2                                                                                                                   | All forty full operating kits remain unaccepted                                      |
+| Preserved behavior   | Eight root gates; 1,506 tests/108 files; fresh CRM 38, Act 18, runtime 44, Chromium 3/70, projects 15/11, scheduling 14/9, accommodation 17/9 and upgrade 4                                                                   | Local controls and regression evidence, not production/load certification            |
+
+The security matrix has 36 controls. Root/runtime dependency scans have zero
+advisories; the separate realtime template retains thirteen moderate findings and
+its own SDK/live gates. Restart proofs now await completed pool-client removal
+before stopping their isolated PostgreSQL clusters.
+
+The original owner was backed up before/after and upgraded to verified 1.7.0.
+SQL JSON snapshots preserve microsecond timestamps: all original rows/columns in
+46 pre-existing tables, eight CRM business tables, settings, keys and domain grants
+remain unchanged. Ten new commerce business tables remain empty. Enabling the
+feature and granting accounts are explicit operations; migration enrolls no account.
+
+See [commerce contract, activation and proofs](COMMERCE_MODULE.md),
+[sanitized release evidence](audit/2026-10-11-commerce-release.json) and
+[the complete work ledger](STARTER_KIT_IMPLEMENTATION.md). Continue with
+[food-service ownership](FOODSERVICE_MODULE_PLAN.md) and the remaining programme;
+this accepted slice does not complete restaurant, retail or wholesale full kits.
+Pricing, tax, invoice and payment authority retain their existing boundaries.
+
+## Previous extension — profile 1.6.0, 11 October 2026
 
 The accommodation domain and PostgreSQL adapter extend profile 1.5.0: 32 compiled
 artifacts, 18 unchanged external pins, eight owned ledgers, host 0.9.0, config

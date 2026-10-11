@@ -72,9 +72,9 @@ catalog. Dependensi kandidat tetap konseptual sampai slice disepakati dan dibang
 | proposals_scope        | Scope version, proposal acceptance, amendment reference           | Memakai quote engine saat sesuai; signature port terpisah             | Planned; bekukan isi/versi yang disetujui.                                        |
 | invoicing              | Invoice snapshot, numbering, line/currency, correction refs       | Order/project/subscription mengirim billing intent                    | Planned; accounting/tax lokal dievaluasi lewat backend/adapter khusus.            |
 | payment_processing     | Payment attempt/event, verification, reconciliation, refund ref   | Provider authoritative; bind tenant/order/amount/currency             | Planned; payment success/receipt belum terbukti.                                  |
-| catalog_products       | Product/service identity, attributes, variant refs                | Channel/pattern memakai public service yang sama                      | Planned; physical stock bukan milik catalog.                                      |
-| commerce_orders        | Order lines, totals snapshot, fulfillment/return lifecycle        | Catalog, inventory/payment lewat aplikasi orkestrasi                  | Planned; payment processing tetap terpisah.                                       |
-| inventory_quantities   | Stock movements/reservation per lokasi/item                       | Orders/purchasing/manufacturing; units/lots sesuai kebutuhan          | Later; finance/valuation bukan boolean stock.                                     |
+| catalog_products       | Product/service identity, attributes, variant refs                | Channel/pattern memakai public service yang sama                      | **Terbukti lokal**: SKU, base units dan integer IDR; variants belum.              |
+| commerce_orders        | Order lines, totals snapshot, fulfillment/return lifecycle        | Catalog, inventory/payment lewat aplikasi orkestrasi                  | **Terbukti lokal**: frozen quote, reserve/fulfill/return; payment terpisah.       |
+| inventory_quantities   | Stock movements/reservation per lokasi/item                       | Orders/purchasing/manufacturing; units/lots sesuai kebutuhan          | **Terbukti lokal**: satu pool, immutable movements/holds; lot/warehouse belum.    |
 | purchasing             | Supplier, request/order, goods receipt refs                       | Inventory dan billing via service yang dimiliki masing-masing         | Later; approval limits/receipt mismatch eksplisit.                                |
 | appointment_scheduling | Resource/time, holds, confirmation, reschedule                    | Users/resource directories; catalog optional                          | **Terbukti lokal** untuk resource eksklusif; recurring/buffer/pooling belum.      |
 | asset_register         | Asset identity, condition, maintenance/availability refs          | Rental atau field-service; SKU tidak menggantikan serialized asset    | Later; kebutuhan berbeda dari fixed-assets accounting.                            |
@@ -182,3 +182,9 @@ Kapasitas satu dan interval eksplisit bukan penerimaan penuh calendar/rental/hot
 Checkpoint profile 1.6.0: [accommodation](ACCOMMODATION_MODULE.md) membuktikan
 room-night/guest stay, frozen tariff, shared occupancy, check-in/out dan housekeeping
 pada hotel/villa tanpa fork. Full K01/payment/OTA/public booking tetap belum diterima.
+
+Checkpoint profile 1.7.0: [commerce](COMMERCE_MODULE.md) membuktikan shared catalog,
+quoted orders, last-unit races, fulfillment, partial restock/discard returns dan
+restart/restore pada retail/wholesale tanpa fork. Satu pool dan integer base unit
+belum mendukung full POS/warehouse/invoice/payment. Food-service masih dibangun
+sebagai domain resep/meja/dapur tersendiri.

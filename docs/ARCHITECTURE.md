@@ -1,6 +1,6 @@
 # Architecture
 
-Updated for local profile `1.6.0`, 11 October 2026. Baseline re-audit source: `80ea845`. The [repository re-audit](PROJECT_REAUDIT_2026-10-10.md) records historical findings. [PRD §§40–50](../PRD.md) describes the target; this document describes the implementation. ARCHZXY's company website is a separate consumer project.
+Updated for local profile `1.7.0`, 11 October 2026. Baseline re-audit source: `80ea845`. The [repository re-audit](PROJECT_REAUDIT_2026-10-10.md) records historical findings. [PRD §§40–50](../PRD.md) describes the target; this document describes the implementation. ARCHZXY's company website is a separate consumer project.
 
 PRD v2.1 §50 bounds the implemented local library release.
 [Acceptance and decisions](LOCAL_LIBRARY_RELEASE.md) map its six items to runnable
@@ -31,7 +31,7 @@ Archava_Platform/
   delegation/           historical task/handoff records; not runtime configuration
 ```
 
-There are 40 pnpm workspace projects: 34 packages, two apps and four tools with manifests. Script-only tool directories and examples are outside those workspace globs. The realtime template has its own npm lockfile and Python dependencies; its [AGENTS.md](<../Archava Template/AGENTS.md>) requires standalone operation without parent-repository imports.
+There are 42 pnpm workspace projects: 36 packages, two apps and four tools with manifests. Script-only tool directories and examples are outside those workspace globs. The realtime template has its own npm lockfile and Python dependencies; its [AGENTS.md](<../Archava Template/AGENTS.md>) requires standalone operation without parent-repository imports.
 
 Generated `dist/` and `node_modules/` are build/install output. Ignored `.local/` contains private database state, credentials, approvals and backups; it is not disposable source cleanup. The empty untracked `clients/generic-business/` placeholder implements no consumer. Current boundaries do not require directory relocation.
 
@@ -106,12 +106,29 @@ hide/refuse hotel-managed rooms; the occupancy kernel contains no guest or rate
 data. Calendar primitives remain in pure scheduling. No CRM or AI is required by
 the standalone hotel domain.
 
-Current inventory is 32 compiled artifacts, 18 unchanged external pins, eight
+Historical 1.6.0 inventory is 32 compiled artifacts, 18 unchanged external pins, eight
 owned database ledgers, host 0.9.0, config 0.8.0 and kits 0.3.0. Assembly v4 adds
 optional accommodation, requiring scheduling in the owner-host composition;
 earlier contracts and defaults remain unchanged. K01 `accommodation_stays` is a
 bounded local scope, without complete PMS, customer booking, payment or OTA
 acceptance. See [contract and activation](ACCOMMODATION_MODULE.md).
+
+Profile 1.7.0 adds `commerce` and `commerce-pg`: strict catalog/stock/order APIs,
+private read tools and shared owner dashboard. Ten forced-RLS business tables
+own memberships, products, derived stock balances, orders/lines, allocations,
+commands, append-only stock movements, returns and audit. Header/product locks
+serialize revision changes and sorted multi-SKU reservations. Catalog revisions
+and stock revisions are independent. Prices come from backend products and freeze
+in order lines; fulfillment consumes once, and returns explicitly restock or
+discard. No event implies payment. The trusted transaction kernel is reusable by
+future food-service without duplicating its stock ledger.
+
+Current inventory is 34 compiled artifacts, 18 unchanged external pins, nine owned
+ledgers, host 0.10.0, config 0.9.0 and kits 0.4.0. Assembly v5 adds optional
+commerce and preserves earlier contracts/defaults. K03/K04 `commerce_orders` is
+bounded retail/wholesale scope. Restaurant menu/recipe/table/kitchen ownership is
+[the next domain slice](FOODSERVICE_MODULE_PLAN.md). See
+[commerce contract and activation](COMMERCE_MODULE.md).
 
 Accepted `crm_inquiry` (K01/K05) and `project_tracking` (K05/K31) are narrow scopes.
 The latter shares internal tracking, not construction costing or full agency sales/

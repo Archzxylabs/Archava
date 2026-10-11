@@ -9,8 +9,8 @@ PRD §50 defines the active finite local release: supported versions, safe modul
 composition, shared presence contracts, scoped security, measured capacity and
 upgrade/recovery acceptance. Profile `1.3.0` is the accepted baseline; `1.4.0`
 adds the kit planner and bounded internal project delivery; `1.5.0` adds
-exclusive resource reservations, and `1.6.0` adds room-night stays and housekeeping
-under PRD §46.6;
+exclusive resource reservations, `1.6.0` adds room-night stays and housekeeping,
+and `1.7.0` adds shared catalog/orders/stock under PRD §46.6;
 see [release acceptance](docs/LOCAL_LIBRARY_RELEASE.md) and the
 [cold-install/handoff guide](docs/LOCAL_LIBRARY_HANDOFF.md).
 ARCHZXY is the company; Archava is its flagship product. The target internal module
@@ -36,7 +36,10 @@ independent consumers and composed into the local owner host with explicit grant
 The [resource reservation module](docs/RESOURCE_RESERVATIONS_MODULE.md) now shares
 timed holds, confirmation, moves and cancellation across appointment and asset-rental
 consumers, with an optional owner panel and independent permissions.
-These bounded capabilities do not mark any of the 40 operating kits complete.
+The [commerce module](docs/COMMERCE_MODULE.md) shares catalog prices, immutable
+order quotes, stock reservations, fulfillment and partial returns across retail
+and wholesale consumers. Restaurant recipe/table/kitchen rules remain the next
+domain slice. These bounded capabilities do not mark any of the 40 operating kits complete.
 The [10 October repository re-audit](docs/PROJECT_REAUDIT_2026-10-10.md) records
 current folder/runtime boundaries, fresh verification and the next work order.
 The [7 October pre-reuse audit](docs/PROJECT_AUDIT_2026-10-07.md) remains historical.

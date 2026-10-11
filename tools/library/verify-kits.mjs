@@ -84,6 +84,13 @@ try {
     assert.equal(stays.assembly.scheduling, true)
     assert.deepEqual(stays.operationalKitsAccepted, [])
     assert.equal(planner.plan(raw('K02', 'accommodation_stays')).readyToAssemble, false)
+    for (const kitId of ['K03', 'K04']) {
+      const commerce = planner.plan(raw(kitId, 'commerce_orders'))
+      assert.equal(commerce.readyToAssemble, true)
+      assert.equal(commerce.assembly.commerce, true)
+      assert.deepEqual(commerce.operationalKitsAccepted, [])
+    }
+    assert.equal(planner.plan(raw('K02', 'commerce_orders')).readyToAssemble, false)
     for (const kit of kits.listKits()) {
       const operation = planner.plan(raw(kit.id))
       assert.equal(operation.readyToAssemble, false)
@@ -205,6 +212,21 @@ try {
   )
   checks.push(
     'bounded hotel stays assemble with shared occupancy under v4 while full hotel operations remain blocked',
+  )
+  const commerceFile = join(scratch, 'commerce-orders.json'),
+    commerceOut = join(scratch, 'assembled-commerce')
+  await writeFile(commerceFile, JSON.stringify(raw('K03', 'commerce_orders')))
+  const commerce = command('assemble.mjs', [commerceFile, commerceOut, '--kit'])
+  assert.equal(commerce.status, 0, commerce.stderr)
+  const commerceAssembly = JSON.parse(await readFile(join(commerceOut, 'assembly.json'), 'utf8'))
+  assert.equal(commerceAssembly.version, '5.0.0')
+  assert.ok(commerceAssembly.entries.some((entry) => entry.entry === '@archava/commerce'))
+  assert.equal(
+    JSON.parse(await readFile(join(commerceOut, 'kit-plan.json'), 'utf8')).selections[0].scope,
+    'commerce_orders',
+  )
+  checks.push(
+    'bounded retail and wholesale orders compose shared stock under v5 while full operating kits retain missing requirements',
   )
   await writeFile(
     join(scratch, 'forged.json'),

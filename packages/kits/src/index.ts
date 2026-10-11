@@ -62,6 +62,21 @@ const LOCAL_IMPLEMENTATIONS = freeze({
     { name: '@archava/scheduling-pg', version: '0.2.0' },
     { name: '@archava/identity-pg', version: '0.1.0' },
   ],
+  catalog_products: [
+    { name: '@archava/commerce', version: '0.1.0' },
+    { name: '@archava/commerce-pg', version: '0.1.0' },
+    { name: '@archava/identity-pg', version: '0.1.0' },
+  ],
+  commerce_orders: [
+    { name: '@archava/commerce', version: '0.1.0' },
+    { name: '@archava/commerce-pg', version: '0.1.0' },
+    { name: '@archava/identity-pg', version: '0.1.0' },
+  ],
+  inventory_quantities: [
+    { name: '@archava/commerce', version: '0.1.0' },
+    { name: '@archava/commerce-pg', version: '0.1.0' },
+    { name: '@archava/identity-pg', version: '0.1.0' },
+  ],
 })
 
 /**
@@ -106,6 +121,15 @@ export class KitPlanner {
         add('crm_contacts', kit.id)
         add('appointment_scheduling', kit.id)
         add('accommodation_stays', kit.id)
+      } else if (selected.scope === 'commerce_orders') {
+        if (kit.id !== 'K03' && kit.id !== 'K04') add(`scope.${kit.id}.commerce_orders`, kit.id)
+        for (const id of [
+          'crm_contacts',
+          'catalog_products',
+          'commerce_orders',
+          'inventory_quantities',
+        ])
+          add(id, kit.id)
       } else {
         for (const capability of kit.capabilities) add(capability, kit.id)
         add(kit.domainRequirement, kit.id)
@@ -116,6 +140,10 @@ export class KitPlanner {
       add('appointment_scheduling', 'accommodation_stays')
       add('crm_contacts', 'accommodation_stays')
     }
+    if (
+      ['catalog_products', 'commerce_orders', 'inventory_quantities'].some((id) => required.has(id))
+    )
+      add('crm_contacts', 'commerce')
     if (request.pipeline) add('crm_sales_pipeline', 'pipeline')
     if (required.has('crm_sales_pipeline')) add('crm_contacts', 'crm_sales_pipeline')
     if (request.assistant) add('surface.assistant', 'assistant')
@@ -147,7 +175,9 @@ export class KitPlanner {
           (id === 'crm_sales_pipeline' && !this.modules.pipeline) ||
           (id === 'project_delivery' && !this.modules.projects) ||
           (id === 'appointment_scheduling' && !this.modules.scheduling) ||
-          (id === 'accommodation_stays' && !this.modules.accommodation)
+          (id === 'accommodation_stays' && !this.modules.accommodation) ||
+          (['catalog_products', 'commerce_orders', 'inventory_quantities'].includes(id) &&
+            !this.modules.commerce)
         )
           return {
             ...base,
@@ -230,6 +260,11 @@ export class KitPlanner {
       ...(required.has('project_delivery') ? { projects: true } : {}),
       ...(required.has('appointment_scheduling') ? { scheduling: true } : {}),
       ...(required.has('accommodation_stays') ? { accommodation: true } : {}),
+      ...(['catalog_products', 'commerce_orders', 'inventory_quantities'].some((id) =>
+        required.has(id),
+      )
+        ? { commerce: true }
+        : {}),
     }
     // Reuse the existing assembly validator; planning metadata cannot bypass it.
     let assembly: ModuleSelection | null = null
@@ -237,13 +272,15 @@ export class KitPlanner {
       planAssembly(
         {
           version:
-            modules.accommodation !== undefined
-              ? '4.0.0'
-              : modules.scheduling !== undefined
-                ? '3.0.0'
-                : modules.projects !== undefined
-                  ? '2.0.0'
-                  : '1.0.0',
+            modules.commerce !== undefined
+              ? '5.0.0'
+              : modules.accommodation !== undefined
+                ? '4.0.0'
+                : modules.scheduling !== undefined
+                  ? '3.0.0'
+                  : modules.projects !== undefined
+                    ? '2.0.0'
+                    : '1.0.0',
           profile: this.release.version,
           modules,
         },

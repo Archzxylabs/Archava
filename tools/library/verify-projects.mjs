@@ -8,6 +8,7 @@ import { createRequire } from 'node:module'
 import { pathToFileURL } from 'node:url'
 import { randomBytes, randomUUID, createHash } from 'node:crypto'
 import { build } from 'esbuild'
+import { endProofPool } from './pg-proof.mjs'
 
 const root = resolve(import.meta.dirname, '../..'),
   library = join(root, 'dist/library')
@@ -487,8 +488,8 @@ try {
     archive,
     'postgres',
   ])
-  await app.end()
-  await owner.end()
+  await endProofPool(app)
+  await endProofPool(owner)
   stop()
   start()
   owner = new Pool(target)
@@ -539,8 +540,8 @@ try {
       'closed',
     )
   } finally {
-    await restoredApp.end()
-    await restoredOwner.end()
+    await endProofPool(restoredApp)
+    await endProofPool(restoredOwner)
   }
   check(
     'backup restore into a new database retains domain grants and receipts without changing the original',
@@ -562,8 +563,8 @@ try {
     ) + '\n',
   )
 } finally {
-  if (app && !app.ended) await app.end()
-  if (owner && !owner.ended) await owner.end()
+  if (app && !app.ended) await endProofPool(app)
+  if (owner && !owner.ended) await endProofPool(owner)
   stop()
   await rm(scratch, { recursive: true, force: true })
 }

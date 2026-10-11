@@ -48,6 +48,8 @@ if (process.argv.includes('--run')) {
   run('scheduling-host', ['pnpm', 'scheduling:verify-host'])
   run('accommodation', ['pnpm', 'accommodation:verify'])
   run('accommodation-host', ['pnpm', 'accommodation:verify-host'])
+  run('commerce', ['pnpm', 'commerce:verify'])
+  run('commerce-host', ['pnpm', 'commerce:verify-host'])
 }
 run('platform-audit', ['pnpm', 'audit', '--json'], root, [0, 1])
 run('runtime-audit', ['npm', 'audit', '--json'], join(root, 'dist/crm-runtime'), [0, 1])
@@ -92,6 +94,8 @@ const proofs = {
   schedulingHost: await json(join(root, 'dist/scheduling-host-proof/results.json')),
   accommodation: await json(join(root, 'dist/accommodation-proof/results.json')),
   accommodationHost: await json(join(root, 'dist/accommodation-host-proof/results.json')),
+  commerce: await json(join(root, 'dist/commerce-proof/results.json')),
+  commerceHost: await json(join(root, 'dist/commerce-host-proof/results.json')),
 }
 for (const name of [
   'runtime',
@@ -102,6 +106,8 @@ for (const name of [
   'schedulingHost',
   'accommodation',
   'accommodationHost',
+  'commerce',
+  'commerceHost',
 ])
   assert.equal(proofs[name].profile, profile.catalog.version, 'Stale release proof: ' + name)
 assert.equal(proofs.runtime.providerCalls, 0)
@@ -111,6 +117,8 @@ assert.equal(proofs.scheduling.providerCalls, 0)
 assert.equal(proofs.schedulingHost.providerCalls, 0)
 assert.equal(proofs.accommodation.providerCalls, 0)
 assert.equal(proofs.accommodationHost.providerCalls, 0)
+assert.equal(proofs.commerce.providerCalls, 0)
+assert.equal(proofs.commerceHost.providerCalls, 0)
 const controls = [
   [
     'identity-session-csrf',
@@ -320,6 +328,38 @@ controls.push(
   ],
 )
 const matrix = []
+controls.push(
+  [
+    'commerce-current-grants-and-tools',
+    ['packages/commerce-pg/src/repository.ts', 'packages/commerce/src/tools.ts'],
+    'commerce',
+    'grant intersection|actor-bound|read-only tools',
+  ],
+  [
+    'commerce-atomic-stock-and-quote',
+    [
+      'packages/commerce-pg/src/kernel.ts',
+      'packages/commerce-pg/migrations/001_catalog_orders_stock.sql',
+    ],
+    'commerce',
+    '20 distinct orders|20 duplicate fulfillment|multi-product shortage|future quotes',
+  ],
+  [
+    'commerce-expiry-and-returns',
+    [
+      'packages/commerce-pg/src/repository.ts',
+      'packages/commerce-pg/migrations/001_catalog_orders_stock.sql',
+    ],
+    'commerce',
+    'hold expiry uses database clock|partial returns|derived balances',
+  ],
+  [
+    'commerce-host-and-recovery',
+    ['packages/commerce/src/dashboard.ts', 'apps/crm/src/operator.ts', 'apps/crm/src/host.ts'],
+    'commerceHost',
+    'CSRF|pending UUID|backup restore|never enrolls',
+  ],
+)
 for (const [id, sources, proof, pattern] of controls) {
   for (const source of sources) await readFile(join(root, source))
   const checks = proofs[proof].checks.filter((label) => new RegExp(pattern).test(label))
@@ -338,6 +378,8 @@ for (const [id, sources, proof, pattern] of controls) {
       schedulingHost: 'pnpm scheduling:verify-host',
       accommodation: 'pnpm accommodation:verify',
       accommodationHost: 'pnpm accommodation:verify-host',
+      commerce: 'pnpm commerce:verify',
+      commerceHost: 'pnpm commerce:verify-host',
     }[proof],
     positiveAndRefusalChecks: checks,
     result: 'passed',

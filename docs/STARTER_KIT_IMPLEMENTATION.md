@@ -5,6 +5,13 @@ The objective covers the 40-family catalogue and usable domain implementations,
 not only metadata. Local/free constraints and existing action/privacy boundaries
 continue to apply. ARCHZXY's website remains an independent consumer project.
 
+On 11 October the user requested uninterrupted execution across milestones until
+the authorized programme is complete. Continue after accepted slices; milestone
+reports are progress, not reasons to stop. Identify required external access or
+domain decisions concretely while independent work continues. Full-kit acceptance
+still requires declared domain/capability evidence; paid services and fabricated
+support are not authorized by this instruction.
+
 ## Work ledger
 
 | Work                                                   | Acceptance                                                                                                                                                                             | Current state                                    |
@@ -14,7 +21,7 @@ continue to apply. ARCHZXY's website remains an independent consumer project.
 | KIT-03 packaged consumption                            | Two cold-installed consumers use the same catalogue/planner without source imports; browser-safe contracts; existing profile/CRM behaviour preserved                                   | Accepted: verified independent consumers         |
 | KIT-04 project services                                | A bounded persistent project/task/milestone workflow through authorized API/dashboard; scope/revision/audit/recovery; reuse without CRM forks                                          | Accepted: bounded local tracking                 |
 | KIT-05 scheduling and accommodation                    | Time/resource scheduling and domain-specific room-night/stay/housekeeping ownership; concurrency/cancellation/restore evidence                                                         | Accepted: bounded reservations and accommodation |
-| KIT-06 orders, retail and food service                 | Catalogue/orders/stock and restaurant table/kitchen rules; validated composition and failure semantics                                                                                 | Pending                                          |
+| KIT-06 orders, retail and food service                 | Catalogue/orders/stock and restaurant table/kitchen rules; validated composition and failure semantics                                                                                 | In progress: commerce accepted, food pending     |
 | KIT-07 remaining general kits                          | Build the 24 general families' explicit scopes from shared services and separate extensions; each needs its own evidence                                                               | Pending                                          |
 | KIT-08 specialist kits                                 | Domain review plus selected authoritative-system adapters, supported configuration, privacy and live integration evidence; 16 research families are not native full-system commitments | Pending                                          |
 | KIT-09 operator handoff                                | Reproducible releases, migration/recovery, acceptance manifest and honest support catalogue                                                                                            | Pending                                          |
@@ -83,3 +90,19 @@ Next implement KIT-06 shared catalogue/orders/stock and explicit retail and
 restaurant extensions. KIT-07/08/09 and all forty full operating kits retain their
 outstanding acceptance requirements. Current release acceptance is recorded in
 [the release ledger](LOCAL_LIBRARY_RELEASE.md).
+
+## Fourth implementation slice
+
+Profile 1.7.0 adds commerce 0.1.0 and its PostgreSQL adapter: 34 artifacts,
+18 unchanged external pins, nine owned ledgers, host 0.10.0, config 0.9.0 and kits
+0.4.0. Assembly v5 adds optional commerce without changing earlier contracts or
+defaults. Independent retail/wholesale consumers share one catalog/order/stock
+implementation; narrow K03/K04 `commerce_orders` composes the validated scope.
+
+The domain proves frozen prices, atomic expiring stock reservations, fulfillment,
+partial restock/discard returns, current authority, idempotency, audit and recovery.
+KIT-06 remains in progress until explicit restaurant ownership also passes its
+acceptance. Continue with [food-service implementation](FOODSERVICE_MODULE_PLAN.md),
+then KIT-07/08/09. All forty full operating kits retain their missing requirements;
+no milestone completion ends the authorized programme. See
+[commerce contract](COMMERCE_MODULE.md) and [release evidence](LOCAL_LIBRARY_RELEASE.md).

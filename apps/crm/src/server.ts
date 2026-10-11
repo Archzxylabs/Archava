@@ -23,6 +23,8 @@ import { SchedulingService } from '@archava/scheduling'
 import { PostgresSchedulingRepository } from '@archava/scheduling-pg'
 import { AccommodationService } from '@archava/accommodation'
 import { PostgresAccommodationRepository } from '@archava/accommodation-pg'
+import { CommerceService } from '@archava/commerce'
+import { PostgresCommerceRepository } from '@archava/commerce-pg'
 
 // This local host also runs on desktops without reliable IPv6 routing.
 setDefaultResultOrder('ipv4first')
@@ -116,6 +118,11 @@ try {
     (settings.modules ?? FULL_MODULES).accommodation
       ? new AccommodationService(
           await PostgresAccommodationRepository.create(runtimePool, settings.fingerprintKey),
+        )
+      : undefined,
+    (settings.modules ?? FULL_MODULES).commerce
+      ? new CommerceService(
+          await PostgresCommerceRepository.create(runtimePool, settings.fingerprintKey),
         )
       : undefined,
   )

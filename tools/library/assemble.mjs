@@ -43,13 +43,15 @@ const plan = api.planAssembly(
   kitPlan
     ? {
         version:
-          kitPlan.assembly.accommodation !== undefined
-            ? '4.0.0'
-            : kitPlan.assembly.scheduling !== undefined
-              ? '3.0.0'
-              : kitPlan.assembly.projects !== undefined
-                ? '2.0.0'
-                : '1.0.0',
+          kitPlan.assembly.commerce !== undefined
+            ? '5.0.0'
+            : kitPlan.assembly.accommodation !== undefined
+              ? '4.0.0'
+              : kitPlan.assembly.scheduling !== undefined
+                ? '3.0.0'
+                : kitPlan.assembly.projects !== undefined
+                  ? '2.0.0'
+                  : '1.0.0',
         profile: trusted.version,
         modules: kitPlan.assembly,
       }

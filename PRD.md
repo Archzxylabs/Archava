@@ -1841,7 +1841,18 @@ preserves v1/v2/v3 contracts. Narrow K01 `accommodation_stays` acceptance does n
 complete hotel operations, payment, OTA integration or public booking. Enabling
 the module never grants human or machine permissions automatically.
 
-Orders/retail/food-service ownership comes next. All 40 full operating families
+Profile 1.7.0 adds [bounded commerce](docs/COMMERCE_MODULE.md): backend-priced
+catalog items, immutable order quotes, expiring stock reservations, fulfillment
+and partial restock/discard returns. Retail and wholesale share the same pure
+module and PostgreSQL ledger without CRM or an LLM. Assembly v5 adds optional
+commerce and preserves prior contracts/defaults. Narrow K03/K04 `commerce_orders`
+is not full retail/wholesale acceptance. One stock pool, integer base units and
+IDR estimates do not establish warehouse, tax, invoice or payment support.
+
+Food-service recipe/table/kitchen ownership comes next; see the
+[executable domain plan](docs/FOODSERVICE_MODULE_PLAN.md). The user requested
+continued execution across accepted milestones until the programme is complete.
+All 40 full operating families
 remain in the work ledger. Specialist
 adapters require an explicit authoritative backend and supported domain contract;
 an unspecified integration cannot be labelled operational.

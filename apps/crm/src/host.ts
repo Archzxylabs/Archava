@@ -24,6 +24,7 @@ import { createHostPresence, presenceRefusalResponse } from './presence.js'
 import { createProjectApi, type ProjectService } from '@archava/projects'
 import { createSchedulingApi, type SchedulingService } from '@archava/scheduling'
 import { createAccommodationApi, type AccommodationService } from '@archava/accommodation'
+import { createCommerceApi, type CommerceService } from '@archava/commerce'
 
 const json = (value: unknown, status = 200, headers: Record<string, string> = {}) =>
   Response.json(value, { status, headers: { 'cache-control': 'no-store', ...headers } })
@@ -54,6 +55,7 @@ export function createHostHandler(
   projects?: ProjectService,
   scheduling?: SchedulingService,
   accommodation?: AccommodationService,
+  commerce?: CommerceService,
 ) {
   const modules = settings.modules ?? FULL_MODULES
   if (!modules.pipeline) pipeline = undefined
@@ -152,6 +154,20 @@ export function createHostHandler(
         return json({ authenticated: false }, 200, {
           'set-cookie': sessionCookie(cookieName, '', secure, true),
         })
+      }
+      if (url.pathname.startsWith('/api/commerce/')) {
+        const tenant = /^\/api\/commerce\/([^/]+)/.exec(url.pathname)?.[1]
+        if (
+          !tenant ||
+          !modules.commerce ||
+          !commerce ||
+          !settings.tenants.some((item) => item.id === tenant)
+        )
+          return json({ error: 'not_found' }, 404)
+        await service.access(tenant, { kind: 'human', id: session.principalId })
+        return await createCommerceApi(commerce, () =>
+          Promise.resolve({ kind: 'human', id: session.principalId }),
+        )(request)
       }
       if (url.pathname.startsWith('/api/accommodation/')) {
         const tenant = /^\/api\/accommodation\/([^/]+)/.exec(url.pathname)?.[1]
@@ -385,6 +401,7 @@ export async function startCrmHost(
   projects?: ProjectService,
   scheduling?: SchedulingService,
   accommodation?: AccommodationService,
+  commerce?: CommerceService,
 ) {
   let handler: ReturnType<typeof createHostHandler> | undefined
   const handle = (request: Request, source: string) => {
@@ -401,6 +418,7 @@ export async function startCrmHost(
       projects,
       scheduling,
       accommodation,
+      commerce,
     )
     return handler(request, source)
   }

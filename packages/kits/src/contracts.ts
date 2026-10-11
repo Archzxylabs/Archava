@@ -65,6 +65,7 @@ export const kitRequestSchema = z
               'project_tracking',
               'resource_reservations',
               'accommodation_stays',
+              'commerce_orders',
             ]),
           })
           .strict(),
@@ -119,6 +120,7 @@ export interface KitPlan {
       | 'project_tracking'
       | 'resource_reservations'
       | 'accommodation_stays'
+      | 'commerce_orders'
   }[]
   readonly requirements: readonly KitRequirement[]
   readonly blockers: readonly KitRequirement[]

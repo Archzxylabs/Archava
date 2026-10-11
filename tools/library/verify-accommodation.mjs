@@ -8,6 +8,7 @@ import { createRequire } from 'node:module'
 import { pathToFileURL } from 'node:url'
 import { randomBytes, randomUUID, createHash } from 'node:crypto'
 import { build } from 'esbuild'
+import { endProofPool } from './pg-proof.mjs'
 
 const root = resolve(import.meta.dirname, '../..'),
   library = join(root, 'dist/library')
@@ -881,8 +882,8 @@ try {
     archive,
     'postgres',
   ])
-  await app.end()
-  await owner.end()
+  await endProofPool(app)
+  await endProofPool(owner)
   stop()
   start()
   owner = new Pool(target)
@@ -940,8 +941,8 @@ try {
     await failed(restored.room('hotel', human('viewer'), hotel.room.id), 'forbidden')
     await service.room('hotel', human('viewer'), hotel.room.id)
   } finally {
-    await ra.end()
-    await ro.end()
+    await endProofPool(ra)
+    await endProofPool(ro)
   }
   check(
     'fresh backup restore retains hotel records and capacity while grant changes do not affect original database',
@@ -973,8 +974,8 @@ try {
   process.stderr.write(String(error.stack ?? error) + '\n')
   throw error
 } finally {
-  if (app && !app.ended) await app.end()
-  if (owner && !owner.ended) await owner.end()
+  if (app && !app.ended) await endProofPool(app)
+  if (owner && !owner.ended) await endProofPool(owner)
   stop()
   await rm(scratch, { recursive: true, force: true })
 }

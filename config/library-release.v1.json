@@ -1,16 +1,16 @@
 {
   "schemaVersion": "1.0.0",
   "id": "archava-local-library",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "host": {
     "name": "@archava/crm-host",
-    "version": "0.9.0"
+    "version": "0.10.0"
   },
   "contracts": {
     "clientConfig": "1.0.0",
     "deploymentPlan": "2.0.0",
     "hostSettings": 1,
-    "assembly": "4.0.0",
+    "assembly": "5.0.0",
     "presence": "1.0.0",
     "kitPlan": "1.0.0",
     "kitCatalogue": "1.0.0"
@@ -61,7 +61,7 @@
     },
     {
       "name": "@archava/config",
-      "version": "0.8.0",
+      "version": "0.9.0",
       "migrations": []
     },
     {
@@ -186,7 +186,7 @@
     },
     {
       "name": "@archava/kits",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "migrations": []
     },
     {
@@ -237,6 +237,21 @@
           "checksum": "45f558b7e22d7ef12dc6c1eabbe9c5655870786cb74d552def60edceb1e61098"
         }
       ]
+    },
+    {
+      "name": "@archava/commerce",
+      "version": "0.1.0",
+      "migrations": []
+    },
+    {
+      "name": "@archava/commerce-pg",
+      "version": "0.1.0",
+      "migrations": [
+        {
+          "file": "001_catalog_orders_stock.sql",
+          "checksum": "afbfdec5d977dd2cea2eaf52ad0c60ad8731375af1447c299dd58a3aba53d9df"
+        }
+      ]
     }
   ],
   "databaseLedgers": [
@@ -279,6 +294,11 @@
       "schema": "archava_accommodation",
       "package": "@archava/accommodation-pg",
       "migrations": ["001_room_night_stays"]
+    },
+    {
+      "schema": "archava_commerce",
+      "package": "@archava/commerce-pg",
+      "migrations": ["001_catalog_orders_stock"]
     }
   ],
   "requiredAdapters": [
@@ -289,14 +309,16 @@
     "@archava/crm-act",
     "@archava/projects-pg",
     "@archava/scheduling-pg",
-    "@archava/accommodation-pg"
+    "@archava/accommodation-pg",
+    "@archava/commerce-pg"
   ],
   "operatorChecks": [
     "non-owner runtime database role",
     "checksummed owned database schemas",
     "current tenant and resource permissions",
     "private identity/native/provider state",
-    "backup restoration and execution holds"
+    "backup restoration and execution holds",
+    "commerce quote, stock ledger, current grants and receipt recovery"
   ],
   "externals": [
     {

@@ -65,7 +65,9 @@
     "scheduling:verify": "node tools/library/verify-scheduling.mjs",
     "scheduling:verify-host": "node tools/library/verify-scheduling-host.mjs",
     "accommodation:verify": "node tools/library/verify-accommodation.mjs",
-    "accommodation:verify-host": "node tools/library/verify-accommodation-host.mjs"
+    "accommodation:verify-host": "node tools/library/verify-accommodation-host.mjs",
+    "commerce:verify": "node tools/library/verify-commerce.mjs",
+    "commerce:verify-host": "node tools/library/verify-commerce-host.mjs"
   },
   "devDependencies": {
     "@eslint/js": "9.37.0",
