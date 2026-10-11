@@ -1,6 +1,6 @@
 # Resource reservations module
 
-Profile 1.5.0 adds `@archava/scheduling` and `@archava/scheduling-pg` version
+Historical profile 1.5.0 added `@archava/scheduling` and `@archava/scheduling-pg` version
 0.1.0. This is the shared foundation for timed appointments and individual asset
 reservations. It is not acceptance of a full salon, rental company or hotel kit.
 The [programme ledger](STARTER_KIT_IMPLEMENTATION.md) retains those domain gaps.
@@ -168,3 +168,11 @@ waitlists, calendar sync, public customer booking, reminder delivery, deposits,
 refunds, customer cancellation policies, rental handover/damage/return, hotel
 room-night inventory/tariffs/stay lifecycle/housekeeping, durable browser recovery,
 or a general scheduling AI planner. These remain explicit kit requirements.
+
+Profile 1.6.0 adds a separate [accommodation domain](ACCOMMODATION_MODULE.md)
+for room nights, stays and housekeeping. Scheduling 0.2.0 adds an additive shared
+occupancy migration and pure calendar primitives. The five original scheduling
+tables retain their contracts; occupancy is the sixth forced-RLS table. Generic
+timed APIs hide/refuse accommodation-managed rooms, including with all generic
+grants. The kernel contains no guest/quote data. Scheduling migration 001 remains
+unchanged. Current kit requests use profile 1.6.0; the 1.5.0 example above is historical.

@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import type { Pool } from 'pg'
 
-export const SCHEDULING_MIGRATIONS = ['001_resource_reservations'] as const
+export const SCHEDULING_MIGRATIONS = ['001_resource_reservations', '002_shared_occupancy'] as const
 export async function schedulingMigrationLedger() {
   return await Promise.all(
     SCHEDULING_MIGRATIONS.map(async (id) => ({
@@ -62,6 +62,7 @@ export async function grantSchedulingRuntime(pool: Pool, role: string): Promise<
     `GRANT SELECT,INSERT,UPDATE ON archava_scheduling.resources,archava_scheduling.reservations,archava_scheduling.commands TO "${role}"`,
   )
   await pool.query(`GRANT SELECT,INSERT ON archava_scheduling.audit TO "${role}"`)
+  await pool.query(`GRANT SELECT,INSERT,UPDATE ON archava_scheduling.occupancy TO "${role}"`)
   await pool.query(
     `GRANT EXECUTE ON FUNCTION archava_scheduling.lock_membership(text,text) TO "${role}"`,
   )

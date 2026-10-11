@@ -60,6 +60,8 @@ import { migrateProjects, grantProjectsRuntime } from '@archava/projects-pg'
 import { PROJECT_PERMISSIONS } from '@archava/projects'
 import { migrateScheduling, grantSchedulingRuntime } from '@archava/scheduling-pg'
 import { SCHEDULING_PERMISSIONS } from '@archava/scheduling'
+import { ACCOMMODATION_PERMISSIONS } from '@archava/accommodation'
+import { migrateAccommodation, grantAccommodationRuntime } from '@archava/accommodation-pg'
 
 const credentialsSchema = z
   .object({
@@ -76,6 +78,7 @@ async function grant(pool: Pool) {
   await grantProviderRuntime(pool, role)
   await grantProjectsRuntime(pool, role)
   await grantSchedulingRuntime(pool, role)
+  await grantAccommodationRuntime(pool, role)
   await grantNativeCrmAct(pool, role)
   await grantActHostRuntime(nativeSqlClient(pool, 'operator', 'operator'), role)
 }
@@ -172,6 +175,7 @@ async function setup() {
       await migrateNative(owner)
       await migrateProjects(owner)
       await migrateScheduling(owner)
+      await migrateAccommodation(owner)
       await grant(owner)
       for (const tenant of settings.tenants) {
         await owner.query(
@@ -214,11 +218,13 @@ async function setup() {
 async function user(args: string[]) {
   const [mode, file] = args
   if (
-    !['add', 'reset', 'recover', 'pipeline', 'projects', 'scheduling'].includes(mode ?? '') ||
+    !['add', 'reset', 'recover', 'pipeline', 'projects', 'scheduling', 'accommodation'].includes(
+      mode ?? '',
+    ) ||
     !file
   )
     throw new Error(
-      'Expected user add|reset|recover|pipeline|projects|scheduling private-input.json',
+      'Expected user add|reset|recover|pipeline|projects|scheduling|accommodation private-input.json',
     )
   const settings = await loadSettings()
   const input = await readPrivateJson(resolve(file))
@@ -226,7 +232,7 @@ async function user(args: string[]) {
     const owner = new Pool(connection(settings, 'archava_operator'))
     try {
       if (mode === 'add') await enroll(owner, settings, input)
-      else if (mode === 'projects' || mode === 'scheduling') {
+      else if (mode === 'projects' || mode === 'scheduling' || mode === 'accommodation') {
         const account = z
           .object({
             username: usernameSchema,
@@ -251,9 +257,12 @@ async function user(args: string[]) {
           const permissions =
             account.access === 'none'
               ? []
-              : (mode === 'projects' ? PROJECT_PERMISSIONS : SCHEDULING_PERMISSIONS).filter(
-                  (permission) => account.access === 'write' || permission.endsWith('.read'),
-                )
+              : (mode === 'projects'
+                  ? PROJECT_PERMISSIONS
+                  : mode === 'scheduling'
+                    ? SCHEDULING_PERMISSIONS
+                    : ACCOMMODATION_PERMISSIONS
+                ).filter((permission) => account.access === 'write' || permission.endsWith('.read'))
           for (const tenant of account.tenants) {
             const member = (
               await client.query<{ kind: string; active: boolean }>(
@@ -264,7 +273,7 @@ async function user(args: string[]) {
             if (member?.kind !== 'human' || !member.active)
               throw new Error('Active workspace membership required')
             await client.query(
-              `INSERT INTO ${mode === 'projects' ? 'archava_projects' : 'archava_scheduling'}.memberships(tenant_id,principal_id,kind,permissions,scope,active) VALUES($1,$2,'human',$3,$4,$5) ON CONFLICT(tenant_id,principal_id) DO UPDATE SET permissions=excluded.permissions,scope=excluded.scope,active=excluded.active`,
+              `INSERT INTO ${mode === 'projects' ? 'archava_projects' : mode === 'scheduling' ? 'archava_scheduling' : 'archava_accommodation'}.memberships(tenant_id,principal_id,kind,permissions,scope,active) VALUES($1,$2,'human',$3,$4,$5) ON CONFLICT(tenant_id,principal_id) DO UPDATE SET permissions=excluded.permissions,scope=excluded.scope,active=excluded.active`,
               [tenant, person.principal_id, permissions, account.scope, account.access !== 'none'],
             )
           }
@@ -429,6 +438,7 @@ async function restore(args: string[]) {
       await migrateNative(owner)
       await migrateProjects(owner)
       await migrateScheduling(owner)
+      await migrateAccommodation(owner)
       await grant(owner)
       // Restoring an older backup must never resurrect a logged-out session.
       await owner.query('DELETE FROM archava_identity.sessions')
@@ -465,6 +475,7 @@ async function resumeActions() {
       await migrateNative(owner)
       await migrateProjects(owner)
       await migrateScheduling(owner)
+      await migrateAccommodation(owner)
       await grant(owner)
       const active = (
         await owner.query(

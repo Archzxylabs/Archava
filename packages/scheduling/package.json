@@ -1,6 +1,6 @@
 {
   "name": "@archava/scheduling",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "Reusable exclusive resource reservations with strict commands, read tools and dashboard.",
@@ -9,7 +9,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./contracts": "./src/contracts.ts",
-    "./dashboard": "./src/dashboard.ts"
+    "./dashboard": "./src/dashboard.ts",
+    "./calendar": "./src/calendar.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",

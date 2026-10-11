@@ -1,6 +1,46 @@
 # Local reusable library release
 
-## Current extension — profile 1.5.0, 11 October 2026
+## Current extension — profile 1.6.0, 11 October 2026
+
+The accommodation domain and PostgreSQL adapter extend profile 1.5.0: 32 compiled
+artifacts, 18 unchanged external pins, eight owned ledgers, host 0.9.0, config
+0.8.0 and kits 0.3.0. Scheduling 0.2.0 owns the shared capacity kernel through
+additive migration 002; migration 001 remains unchanged. Assembly v4 adds optional
+accommodation while preserving earlier compositions and four-module defaults.
+Standalone hotel/villa consumers need neither CRM nor an LLM. Owner-host access
+requires explicit accommodation grants plus current identity/workspace checks.
+
+| Extension         | Accepted evidence                                                                                                                                                                                                | Limit                                                                     |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Room-night stays  | Two independently installed hotel/villa consumers; real PostgreSQL duplicate/overlap races, frozen rates, DST, expiry after lock waits, assigned scopes, readiness and overdue guest; restart/restore; 17 checks | Individual assigned rooms; internal confirmation; no full PMS/payment/OTA |
+| Shared capacity   | Non-empty historical 1.5 migration preserves original records and receipts; generic APIs refuse managed hotel rooms; stay, quote, audit and capacity commit atomically                                           | Kernel is a private trusted-server boundary                               |
+| Owner composition | Actual compiled host and Chromium create property/type/room, clean/inspect, hold/confirm/check-in/out; lost-response recovery, viewer refusal, disable/re-enable and restore; 9 checks                           | Human writes; memory-only browser recovery; rate updates via API          |
+| Trusted assembly  | K01 bounded `accommodation_stays` composes under v4; earlier narrow scopes remain accepted                                                                                                                       | All forty full operating kits remain blocked                              |
+
+See [accommodation contract, activation and proofs](ACCOMMODATION_MODULE.md),
+[sanitized release evidence](audit/2026-10-11-accommodation-release.json) and
+[the complete programme ledger](STARTER_KIT_IMPLEMENTATION.md). No existing
+account is automatically enrolled in hotel permissions. Quotes do not change the
+approved ARCHZXY pricebook or represent verified payment. Next: orders/retail/food
+service. `pnpm security:verify` includes the new domain and host evidence and
+rejects stale release profiles.
+
+All eight root gates passed: 1,498 tests across 107 files. Fresh regression evidence
+retains CRM 38, Act 18, runtime 44, Chromium 3/70, project 15/11, scheduling 14/9,
+assembly 2 and upgrade 4 checks; kit proof now has 9 checks. The security matrix
+has 32 controls, with zero root/runtime dependency advisories. The separate
+realtime template retains thirteen moderate findings and its own live/SDK gates.
+These are local controls and tests, not security certification or production load
+acceptance.
+
+The original owner was backed up before/after and upgraded to verified 1.6.0.
+Hashes of original rows and columns in all 36 pre-existing tables were retained;
+the scheduling ledger gained its expected additive entry and resources gained the
+new management column. Eight CRM business tables, keys, settings and existing
+domain grants stayed unchanged. The new hotel's eight business tables are empty,
+with no automatic account enrollment. Activation remains explicit.
+
+## Previous extension — profile 1.5.0, 11 October 2026
 
 The reusable scheduling domain and PostgreSQL adapter extend profile 1.4.0:
 30 internal artifacts, 18 unchanged external pins, seven owned database ledgers,

@@ -1,6 +1,6 @@
 # Architecture
 
-Updated for local profile `1.5.0`, 11 October 2026. Baseline re-audit source: `80ea845`. The [repository re-audit](PROJECT_REAUDIT_2026-10-10.md) records historical findings. [PRD §§40–50](../PRD.md) describes the target; this document describes the implementation. ARCHZXY's company website is a separate consumer project.
+Updated for local profile `1.6.0`, 11 October 2026. Baseline re-audit source: `80ea845`. The [repository re-audit](PROJECT_REAUDIT_2026-10-10.md) records historical findings. [PRD §§40–50](../PRD.md) describes the target; this document describes the implementation. ARCHZXY's company website is a separate consumer project.
 
 PRD v2.1 §50 bounds the implemented local library release.
 [Acceptance and decisions](LOCAL_LIBRARY_RELEASE.md) map its six items to runnable
@@ -31,7 +31,7 @@ Archava_Platform/
   delegation/           historical task/handoff records; not runtime configuration
 ```
 
-There are 38 pnpm workspace projects: 32 packages, two apps and four tools with manifests. Script-only tool directories and examples are outside those workspace globs. The realtime template has its own npm lockfile and Python dependencies; its [AGENTS.md](<../Archava Template/AGENTS.md>) requires standalone operation without parent-repository imports.
+There are 40 pnpm workspace projects: 34 packages, two apps and four tools with manifests. Script-only tool directories and examples are outside those workspace globs. The realtime template has its own npm lockfile and Python dependencies; its [AGENTS.md](<../Archava Template/AGENTS.md>) requires standalone operation without parent-repository imports.
 
 Generated `dist/` and `node_modules/` are build/install output. Ignored `.local/` contains private database state, credentials, approvals and backups; it is not disposable source cleanup. The empty untracked `clients/generic-business/` placeholder implements no consumer. Current boundaries do not require directory relocation.
 
@@ -51,7 +51,7 @@ Root `start` serves the reference web app, not CRM. Template Python tools do not
 | Browser presence      | `sdk`, `chat`                                                                                           | Page awareness, consent/session contracts and shared rendering                                          |
 | Business domain       | `crm`                                                                                                   | Contacts, activities, follow-ups, opportunities, authorized service/API/tools and shared DOM dashboards |
 | Business persistence  | `crm-pg`                                                                                                | PostgreSQL records, membership/resource checks, migrations, command receipts and atomic audit           |
-| Additional domains    | `projects`, `projects-pg`, `scheduling`, `scheduling-pg`, `kits`                                        | Independent project/reservation records and adapters; trusted bounded kit planning                      |
+| Additional domains    | `projects`, `projects-pg`, `scheduling`, `scheduling-pg`, `accommodation`, `accommodation-pg`, `kits`   | Independent project/reservation records and adapters; trusted bounded kit planning                      |
 | CRM composition       | `crm-assistant`, `crm-act`                                                                              | Read/prepare conversation and panel; separately reviewed native creation/completion                     |
 | Host infrastructure   | `identity-pg`, `provider-runtime`, `act-host`, `act-host-pg`, `act-confirmation`, `act-confirmation-pg` | Identity, provider admission/outcomes, atomic host intent and one-time confirmation                     |
 | External Act adapters | `act`, `act-booking`, `act-email`, `act-storage`, `act-postmark`                                        | Booking/email dispatch, durable provider replay/outbox and injected mail transport                      |
@@ -89,12 +89,29 @@ forced-RLS tables own memberships, resources, reservations, commands and audit.
 The adapter does not depend on CRM, LLMs or external booking providers. The local
 host adds its existing session/workspace boundary and explicit scheduling grants.
 
-Current inventory is 30 compiled internal artifacts, 18 unchanged external pins,
+The historical 1.5.0 inventory has 30 compiled internal artifacts, 18 unchanged external pins,
 seven owned ledgers, host 0.8.0 and config 0.7.0. Assembly v3 adds optional
 `scheduling`; v1/v2 and old defaults retain their original fields and behavior.
 The new bounded `resource_reservations` scope supports K07/K10 composition, not
 full appointment/rental operations or accommodation. See
 [contract and integration](RESOURCE_RESERVATIONS_MODULE.md).
+
+Profile 1.6.0 adds `accommodation` and `accommodation-pg`: property/room-type/room
+records, calendar-night stays, immutable nightly IDR estimates, guest check-in/out
+and dirty/clean/inspected readiness. Eight hotel tables have forced tenant RLS,
+with independent grants. The PostgreSQL adapter composes capacity atomically with
+the same scheduling resource lock and new occupancy table. Migration 002 backfills
+old timed reservations without changing migration 001. Generic reservation APIs
+hide/refuse hotel-managed rooms; the occupancy kernel contains no guest or rate
+data. Calendar primitives remain in pure scheduling. No CRM or AI is required by
+the standalone hotel domain.
+
+Current inventory is 32 compiled artifacts, 18 unchanged external pins, eight
+owned database ledgers, host 0.9.0, config 0.8.0 and kits 0.3.0. Assembly v4 adds
+optional accommodation, requiring scheduling in the owner-host composition;
+earlier contracts and defaults remain unchanged. K01 `accommodation_stays` is a
+bounded local scope, without complete PMS, customer booking, payment or OTA
+acceptance. See [contract and activation](ACCOMMODATION_MODULE.md).
 
 Accepted `crm_inquiry` (K01/K05) and `project_tracking` (K05/K31) are narrow scopes.
 The latter shares internal tracking, not construction costing or full agency sales/

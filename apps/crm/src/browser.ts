@@ -9,6 +9,7 @@ import { z } from 'zod'
 import { moduleSelectionSchema, FULL_MODULES } from '@archava/config/assembly'
 import { mountProjectDashboard } from '@archava/projects/dashboard'
 import { mountSchedulingDashboard } from '@archava/scheduling/dashboard'
+import { mountAccommodationDashboard } from '@archava/accommodation/dashboard'
 
 const sessionSchema = z.discriminatedUnion('authenticated', [
   z.object({ authenticated: z.literal(false) }).strict(),
@@ -53,8 +54,11 @@ let pipeline: ReturnType<typeof mountPipelineDashboard> | null = null
 let conversation: ReturnType<typeof mountCrmConversation> | null = null
 let projects: ReturnType<typeof mountProjectDashboard> | null = null
 let scheduling: ReturnType<typeof mountSchedulingDashboard> | null = null
+let accommodation: ReturnType<typeof mountAccommodationDashboard> | null = null
 let session: z.infer<typeof sessionSchema> = { authenticated: false }
 function signedOut() {
+  accommodation?.destroy()
+  accommodation = null
   scheduling?.destroy()
   scheduling = null
   projects?.destroy()
@@ -104,6 +108,8 @@ async function send(path: string, body?: unknown) {
 async function mount() {
   if (!session.authenticated) return
   const selected = session.tenants.find((item) => item.id === tenants.value)
+  accommodation?.destroy()
+  accommodation = null
   scheduling?.destroy()
   scheduling = null
   projects?.destroy()
@@ -128,6 +134,7 @@ async function mount() {
     ['overview', modules.pipeline],
     ['projects', modules.projects ?? false],
     ['scheduling', modules.scheduling ?? false],
+    ['accommodation', modules.accommodation ?? false],
   ] as const) {
     const node = element<HTMLElement>('#' + id)
     node.hidden = !enabled
@@ -151,6 +158,17 @@ async function mount() {
   if (modules.projects)
     projects = mountProjectDashboard(element<HTMLElement>('#projects'), {
       apiBase: '/api/projects/' + selected.id,
+      transport: async (input, init) => {
+        const headers = new Headers(init?.headers)
+        if (init?.method === 'POST') headers.set('x-archava-csrf', csrf)
+        const response = await fetch(input, { ...init, headers })
+        if (response.status === 401) signedOut()
+        return response
+      },
+    })
+  if (modules.accommodation)
+    accommodation = mountAccommodationDashboard(element<HTMLElement>('#accommodation'), {
+      apiBase: '/api/accommodation/' + selected.id,
       transport: async (input, init) => {
         const headers = new Headers(init?.headers)
         if (init?.method === 'POST') headers.set('x-archava-csrf', csrf)

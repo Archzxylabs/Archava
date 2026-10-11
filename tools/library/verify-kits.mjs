@@ -78,6 +78,12 @@ try {
       assert.equal(reservations.assembly.scheduling, true)
       assert.deepEqual(reservations.operationalKitsAccepted, [])
     }
+    const stays = planner.plan(raw('K01', 'accommodation_stays'))
+    assert.equal(stays.readyToAssemble, true)
+    assert.equal(stays.assembly.accommodation, true)
+    assert.equal(stays.assembly.scheduling, true)
+    assert.deepEqual(stays.operationalKitsAccepted, [])
+    assert.equal(planner.plan(raw('K02', 'accommodation_stays')).readyToAssemble, false)
     for (const kit of kits.listKits()) {
       const operation = planner.plan(raw(kit.id))
       assert.equal(operation.readyToAssemble, false)
@@ -183,6 +189,22 @@ try {
   )
   checks.push(
     'narrow appointment and rental reservations assemble under v3 without accepting full operating kits',
+  )
+  const hotelFile = join(scratch, 'accommodation-stays.json'),
+    hotelOut = join(scratch, 'assembled-hotel')
+  await writeFile(hotelFile, JSON.stringify(raw('K01', 'accommodation_stays')))
+  const hotel = command('assemble.mjs', [hotelFile, hotelOut, '--kit'])
+  assert.equal(hotel.status, 0, hotel.stderr)
+  const hotelAssembly = JSON.parse(await readFile(join(hotelOut, 'assembly.json'), 'utf8'))
+  assert.equal(hotelAssembly.version, '4.0.0')
+  assert.ok(hotelAssembly.entries.some((entry) => entry.entry === '@archava/accommodation'))
+  assert.ok(hotelAssembly.entries.some((entry) => entry.entry === '@archava/scheduling'))
+  assert.equal(
+    JSON.parse(await readFile(join(hotelOut, 'kit-plan.json'), 'utf8')).selections[0].scope,
+    'accommodation_stays',
+  )
+  checks.push(
+    'bounded hotel stays assemble with shared occupancy under v4 while full hotel operations remain blocked',
   )
   await writeFile(
     join(scratch, 'forged.json'),

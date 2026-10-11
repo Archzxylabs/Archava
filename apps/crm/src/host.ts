@@ -23,6 +23,7 @@ import { PresenceRefusal } from '@archava/presence'
 import { createHostPresence, presenceRefusalResponse } from './presence.js'
 import { createProjectApi, type ProjectService } from '@archava/projects'
 import { createSchedulingApi, type SchedulingService } from '@archava/scheduling'
+import { createAccommodationApi, type AccommodationService } from '@archava/accommodation'
 
 const json = (value: unknown, status = 200, headers: Record<string, string> = {}) =>
   Response.json(value, { status, headers: { 'cache-control': 'no-store', ...headers } })
@@ -52,6 +53,7 @@ export function createHostHandler(
   nativeFor?: (tenantId: string, humanId: string) => Promise<NativeCrmActHost>,
   projects?: ProjectService,
   scheduling?: SchedulingService,
+  accommodation?: AccommodationService,
 ) {
   const modules = settings.modules ?? FULL_MODULES
   if (!modules.pipeline) pipeline = undefined
@@ -150,6 +152,20 @@ export function createHostHandler(
         return json({ authenticated: false }, 200, {
           'set-cookie': sessionCookie(cookieName, '', secure, true),
         })
+      }
+      if (url.pathname.startsWith('/api/accommodation/')) {
+        const tenant = /^\/api\/accommodation\/([^/]+)/.exec(url.pathname)?.[1]
+        if (
+          !tenant ||
+          !modules.accommodation ||
+          !accommodation ||
+          !settings.tenants.some((item) => item.id === tenant)
+        )
+          return json({ error: 'not_found' }, 404)
+        await service.access(tenant, { kind: 'human', id: session.principalId })
+        return await createAccommodationApi(accommodation, () =>
+          Promise.resolve({ kind: 'human', id: session.principalId }),
+        )(request)
       }
       if (url.pathname.startsWith('/api/scheduling/')) {
         const tenant = /^\/api\/scheduling\/([^/]+)/.exec(url.pathname)?.[1]
@@ -368,6 +384,7 @@ export async function startCrmHost(
   nativeFor?: (tenantId: string, humanId: string) => Promise<NativeCrmActHost>,
   projects?: ProjectService,
   scheduling?: SchedulingService,
+  accommodation?: AccommodationService,
 ) {
   let handler: ReturnType<typeof createHostHandler> | undefined
   const handle = (request: Request, source: string) => {
@@ -383,6 +400,7 @@ export async function startCrmHost(
       nativeFor,
       projects,
       scheduling,
+      accommodation,
     )
     return handler(request, source)
   }

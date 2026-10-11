@@ -115,9 +115,9 @@ export class PostgresSchedulingRepository implements SchedulingRepository {
       throw new Error('Unsupported scheduling schema version/checksum')
     const policies = await pool.query<{ count: number }>(
       "SELECT count(*)::integer AS count FROM pg_class WHERE relnamespace='archava_scheduling'::regnamespace AND relname=ANY($1::text[]) AND relrowsecurity AND relforcerowsecurity",
-      [['memberships', 'resources', 'reservations', 'commands', 'audit']],
+      [['memberships', 'resources', 'reservations', 'commands', 'audit', 'occupancy']],
     )
-    if (policies.rows[0]?.count !== 5)
+    if (policies.rows[0]?.count !== 6)
       throw new Error('Scheduling tenant row policies must be enabled/forced')
     return new PostgresSchedulingRepository(pool, fingerprintKey)
   }
@@ -196,7 +196,7 @@ export class PostgresSchedulingRepository implements SchedulingRepository {
   ) {
     const row = (
       await client.query<Row>(
-        `SELECT * FROM archava_scheduling.resources WHERE tenant_id=$1 AND id=$2 AND ($3::boolean OR owner_id=$4) FOR ${lock === 'update' ? 'UPDATE' : 'SHARE'}`,
+        `SELECT * FROM archava_scheduling.resources WHERE tenant_id=$1 AND id=$2 AND managed_by IS NULL AND ($3::boolean OR owner_id=$4) FOR ${lock === 'update' ? 'UPDATE' : 'SHARE'}`,
         [tenant, id, access.scope === 'all', access.ownerId],
       )
     ).rows[0]
@@ -227,7 +227,7 @@ export class PostgresSchedulingRepository implements SchedulingRepository {
       const observed = await clock(client)
       const rows = (
         await client.query<Row>(
-          'SELECT * FROM archava_scheduling.resources WHERE tenant_id=$1 AND ($2::boolean OR owner_id=$3) AND ($4::uuid IS NULL OR id>$4) AND ($5::boolean IS NULL OR active=$5) ORDER BY id LIMIT $6',
+          'SELECT * FROM archava_scheduling.resources WHERE tenant_id=$1 AND managed_by IS NULL AND ($2::boolean OR owner_id=$3) AND ($4::uuid IS NULL OR id>$4) AND ($5::boolean IS NULL OR active=$5) ORDER BY id LIMIT $6',
           [
             tenant,
             access.scope === 'all',

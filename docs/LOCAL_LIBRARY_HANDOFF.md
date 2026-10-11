@@ -1,6 +1,6 @@
 # Local library 1.3.0 handoff
 
-This remains the historical finite baseline. Current profile `1.5.0` preserves
+This remains the historical finite baseline. Current profile `1.6.0` preserves
 these four-module defaults and adds optional project tracking/resource reservations
 plus kit planning.
 Use the exact current profile when generating a new assembly. See

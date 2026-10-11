@@ -79,7 +79,7 @@ catalog. Dependensi kandidat tetap konseptual sampai slice disepakati dan dibang
 | appointment_scheduling | Resource/time, holds, confirmation, reschedule                    | Users/resource directories; catalog optional                          | **Terbukti lokal** untuk resource eksklusif; recurring/buffer/pooling belum.      |
 | asset_register         | Asset identity, condition, maintenance/availability refs          | Rental atau field-service; SKU tidak menggantikan serialized asset    | Later; kebutuhan berbeda dari fixed-assets accounting.                            |
 | asset_rental           | Rental terms, handover, return, overdue/damage refs               | Asset register dan scheduling; payment provider optional              | Later; kontrak pengembalian milik rental.                                         |
-| accommodation_ops      | Stay/room assignment, housekeeping, room status                   | Shared scheduling/payment refs; domain hotel sendiri                  | Later; PMS adapter layak dievaluasi sebelum native suite.                         |
+| accommodation_ops      | Stay/room assignment, housekeeping, room status                   | Shared scheduling/payment refs; domain hotel sendiri                  | **Terbukti lokal**: individual room/night/stay/readiness; bukan full PMS.         |
 | subscriptions_usage    | Subscription lifecycle, usage evidence/adjustments                | Payment/invoicing source refs; provider meter jika dipilih            | Later; fixed recurring dan metered berbeda aturan.                                |
 | entitlements           | Feature/resource rights, quota, lifecycle policy                  | Subscription/customer references; authorization tetap server-side     | Later; pembayaran atau paid tier tidak memberi admin role.                        |
 | support_cases          | Ticket, status/priority, routing, SLA applicability               | Contact/knowledge/integration refs                                    | Later atau adapter; follow-up task bukan ticketing penuh.                         |
@@ -168,13 +168,17 @@ sudah didukung. Tidak ada target 80–90% reuse yang diklaim sudah terukur.
 
 Selesaikan gate operasional pada slice yang ada. **crm_sales_pipeline** sudah
 memiliki bukti lokal pada dua consumer inquiry. **project_delivery** kini juga
-memiliki bukti untuk tracking internal di dua consumer. Slice berikutnya adalah
-scheduling/resource reservations; operasi hotel tetap memerlukan domain tersendiri.
+memiliki bukti untuk tracking internal di dua consumer. Scheduling dan domain hotel sekarang mempunyai bukti bounded lokal. Slice
+berikutnya adalah orders/retail/food service.
 Scheduling, invoicing/payment, atau commerce dipilih mengikuti pelanggan pertama
 yang kebutuhannya berulang. Clinical EHR, universal accounting/payroll, MRP penuh,
 dan settlement marketplace native tetap ditunda. Website ARCHZXY berada di proyek
 terpisah dan kelak mengonsumsi capability ini lewat API/SDK.
 
-Checkpoint 11 October profile 1.5.0: [resource reservations](RESOURCE_RESERVATIONS_MODULE.md)
+Historical checkpoint 11 October profile 1.5.0: [resource reservations](RESOURCE_RESERVATIONS_MODULE.md)
 membuktikan overlap/expiry/revision/restore dan reuse appointment/rental tanpa fork.
 Kapasitas satu dan interval eksplisit bukan penerimaan penuh calendar/rental/hotel kit.
+
+Checkpoint profile 1.6.0: [accommodation](ACCOMMODATION_MODULE.md) membuktikan
+room-night/guest stay, frozen tariff, shared occupancy, check-in/out dan housekeeping
+pada hotel/villa tanpa fork. Full K01/payment/OTA/public booking tetap belum diterima.

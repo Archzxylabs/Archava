@@ -39,12 +39,38 @@ const request = (id = 'K01', scope = 'operations') => ({
 })
 
 describe('trusted kit contracts and support boundary', () => {
+  it('accepts only bounded room-night stays for K01 with exact hotel and shared kernel packages', () => {
+    const supported = release()
+    supported.contracts.assembly = '4.0.0'
+    supported.packages.push(
+      ...['scheduling', 'scheduling-pg', 'accommodation', 'accommodation-pg'].map((name) => ({
+        name: '@archava/' + name,
+        version: name.startsWith('scheduling') ? '0.2.0' : '0.1.0',
+        migrations: [],
+      })),
+    )
+    const planner = new KitPlanner(supported, COMPOSABLE_MODULES)
+    const plan = planner.plan(request('K01', 'accommodation_stays'))
+    expect(plan.readyToAssemble).toBe(true)
+    expect(plan.assembly).toEqual({ ...MINIMAL_MODULES, scheduling: true, accommodation: true })
+    expect(plan.operationalKitsAccepted).toEqual([])
+    expect(planner.plan(request('K01')).readyToAssemble).toBe(false)
+    expect(planner.plan(request('K02', 'accommodation_stays')).readyToAssemble).toBe(false)
+    expect(
+      new KitPlanner(supported, FULL_MODULES).plan(request('K01', 'accommodation_stays'))
+        .readyToAssemble,
+    ).toBe(false)
+    expect(
+      new KitPlanner(release(), COMPOSABLE_MODULES).plan(request('K01', 'accommodation_stays'))
+        .readyToAssemble,
+    ).toBe(false)
+  })
   it('accepts bounded exclusive reservations in appointment and asset rental contexts while full kits remain blocked', () => {
     const supported = release()
     supported.contracts.assembly = '3.0.0'
     supported.packages.push(
-      { name: '@archava/scheduling', version: '0.1.0', migrations: [] },
-      { name: '@archava/scheduling-pg', version: '0.1.0', migrations: [] },
+      { name: '@archava/scheduling', version: '0.2.0', migrations: [] },
+      { name: '@archava/scheduling-pg', version: '0.2.0', migrations: [] },
     )
     const planner = new KitPlanner(supported, COMPOSABLE_MODULES)
     for (const id of ['K07', 'K10']) {

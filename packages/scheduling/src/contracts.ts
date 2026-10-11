@@ -257,7 +257,7 @@ export class SchedulingError extends Error {
 }
 export const SCHEDULING_MANIFEST = {
   id: 'appointment_scheduling',
-  version: '0.1.0',
+  version: '0.2.0',
   apiVersion: '1.0.0',
   capacity: 1,
   owns: ['resources', 'reservations', 'commands', 'audit'],

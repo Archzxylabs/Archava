@@ -7,17 +7,17 @@ continue to apply. ARCHZXY's website remains an independent consumer project.
 
 ## Work ledger
 
-| Work                                                   | Acceptance                                                                                                                                                                             | Current state                                             |
-| ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| KIT-01 typed trusted catalogue                         | Forty families, explicit domain ownership/configuration/API/action/UI/operability requirements; immutable public contracts; no implicit support from research status                   | Accepted: local catalogue/planner scope                   |
-| KIT-02 deterministic requirement and readiness planner | Every selected requirement has a disposition; full kits with missing implementations refuse assembly; narrow accepted scopes remain explicitly narrow; typed API and local CLI         | Accepted: local catalogue/planner scope                   |
-| KIT-03 packaged consumption                            | Two cold-installed consumers use the same catalogue/planner without source imports; browser-safe contracts; existing profile/CRM behaviour preserved                                   | Accepted: verified independent consumers                  |
-| KIT-04 project services                                | A bounded persistent project/task/milestone workflow through authorized API/dashboard; scope/revision/audit/recovery; reuse without CRM forks                                          | Accepted: bounded local tracking                          |
-| KIT-05 scheduling and accommodation                    | Time/resource scheduling and domain-specific room-night/stay/housekeeping ownership; concurrency/cancellation/restore evidence                                                         | In progress: reservations accepted; accommodation pending |
-| KIT-06 orders, retail and food service                 | Catalogue/orders/stock and restaurant table/kitchen rules; validated composition and failure semantics                                                                                 | Pending                                                   |
-| KIT-07 remaining general kits                          | Build the 24 general families' explicit scopes from shared services and separate extensions; each needs its own evidence                                                               | Pending                                                   |
-| KIT-08 specialist kits                                 | Domain review plus selected authoritative-system adapters, supported configuration, privacy and live integration evidence; 16 research families are not native full-system commitments | Pending                                                   |
-| KIT-09 operator handoff                                | Reproducible releases, migration/recovery, acceptance manifest and honest support catalogue                                                                                            | Pending                                                   |
+| Work                                                   | Acceptance                                                                                                                                                                             | Current state                                    |
+| ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| KIT-01 typed trusted catalogue                         | Forty families, explicit domain ownership/configuration/API/action/UI/operability requirements; immutable public contracts; no implicit support from research status                   | Accepted: local catalogue/planner scope          |
+| KIT-02 deterministic requirement and readiness planner | Every selected requirement has a disposition; full kits with missing implementations refuse assembly; narrow accepted scopes remain explicitly narrow; typed API and local CLI         | Accepted: local catalogue/planner scope          |
+| KIT-03 packaged consumption                            | Two cold-installed consumers use the same catalogue/planner without source imports; browser-safe contracts; existing profile/CRM behaviour preserved                                   | Accepted: verified independent consumers         |
+| KIT-04 project services                                | A bounded persistent project/task/milestone workflow through authorized API/dashboard; scope/revision/audit/recovery; reuse without CRM forks                                          | Accepted: bounded local tracking                 |
+| KIT-05 scheduling and accommodation                    | Time/resource scheduling and domain-specific room-night/stay/housekeeping ownership; concurrency/cancellation/restore evidence                                                         | Accepted: bounded reservations and accommodation |
+| KIT-06 orders, retail and food service                 | Catalogue/orders/stock and restaurant table/kitchen rules; validated composition and failure semantics                                                                                 | Pending                                          |
+| KIT-07 remaining general kits                          | Build the 24 general families' explicit scopes from shared services and separate extensions; each needs its own evidence                                                               | Pending                                          |
+| KIT-08 specialist kits                                 | Domain review plus selected authoritative-system adapters, supported configuration, privacy and live integration evidence; 16 research families are not native full-system commitments | Pending                                          |
+| KIT-09 operator handoff                                | Reproducible releases, migration/recovery, acceptance manifest and honest support catalogue                                                                                            | Pending                                          |
 
 No candidate is promoted to accepted from a file count, generated manifest, UI
 visibility, mocked provider response or a generic CRUD engine. Specialist adapter
@@ -59,8 +59,27 @@ operating kits remain blocked. See [reservation scope](RESOURCE_RESERVATIONS_MOD
 
 KIT-05 scheduling foundation is accepted locally for capacity-one resources,
 holds/expiry, confirmation, moves/cancellation, maintenance blocks, current grants,
-idempotency/audit and restart/restore. Accommodation is still pending: room-night
+idempotency/audit and restart/restore. At the 1.5.0 checkpoint accommodation was pending: room-night
 inventory, room types/tariffs, guest stays, check-in/out and housekeeping need
 separate domain rules. Next implement that bounded accommodation extension, then
 orders/retail/food service. Remaining general/specialist families and full-programme
 handoff remain in this ledger. No complete operating kit is promoted by this slice.
+
+## Third implementation slice
+
+Profile 1.6.0 adds accommodation 0.1.0 and scheduling's shared capacity kernel
+0.2.0: 32 compiled artifacts, 18 unchanged external pins, eight owned database
+ledgers, host 0.9.0, config 0.8.0 and kits 0.3.0. Assembly v4 adds optional
+accommodation and preserves earlier contracts and defaults. Hotel/villa consumers
+install identical domain code. Narrow K01 `accommodation_stays` now composes
+individual rooms, frozen nightly rates, guest stay lifecycle and housekeeping.
+
+KIT-05 is accepted for these bounded local scheduling and accommodation scopes.
+It does not accept full appointment, rental or hotel kits: group/pooled bookings,
+rate calendars, OTA/public booking, financial flows and other explicit requirements
+remain open. See [accommodation scope and proof](ACCOMMODATION_MODULE.md).
+
+Next implement KIT-06 shared catalogue/orders/stock and explicit retail and
+restaurant extensions. KIT-07/08/09 and all forty full operating kits retain their
+outstanding acceptance requirements. Current release acceptance is recorded in
+[the release ledger](LOCAL_LIBRARY_RELEASE.md).

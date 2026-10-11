@@ -1,16 +1,16 @@
 {
   "schemaVersion": "1.0.0",
   "id": "archava-local-library",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "host": {
     "name": "@archava/crm-host",
-    "version": "0.8.0"
+    "version": "0.9.0"
   },
   "contracts": {
     "clientConfig": "1.0.0",
     "deploymentPlan": "2.0.0",
     "hostSettings": 1,
-    "assembly": "3.0.0",
+    "assembly": "4.0.0",
     "presence": "1.0.0",
     "kitPlan": "1.0.0",
     "kitCatalogue": "1.0.0"
@@ -61,7 +61,7 @@
     },
     {
       "name": "@archava/config",
-      "version": "0.7.0",
+      "version": "0.8.0",
       "migrations": []
     },
     {
@@ -186,7 +186,7 @@
     },
     {
       "name": "@archava/kits",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "migrations": []
     },
     {
@@ -206,16 +206,35 @@
     },
     {
       "name": "@archava/scheduling",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "migrations": []
     },
     {
       "name": "@archava/scheduling-pg",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "migrations": [
         {
           "file": "001_resource_reservations.sql",
           "checksum": "83c9b7e255c09ab81a063823cfba3e6ea8a4df2c9b7eaabfa981fde1114bb058"
+        },
+        {
+          "file": "002_shared_occupancy.sql",
+          "checksum": "d6f005c5c51f54711133282b829b84e8669b1ab6de4f85d6dcd1f8cb5eb0503b"
+        }
+      ]
+    },
+    {
+      "name": "@archava/accommodation",
+      "version": "0.1.0",
+      "migrations": []
+    },
+    {
+      "name": "@archava/accommodation-pg",
+      "version": "0.1.0",
+      "migrations": [
+        {
+          "file": "001_room_night_stays.sql",
+          "checksum": "45f558b7e22d7ef12dc6c1eabbe9c5655870786cb74d552def60edceb1e61098"
         }
       ]
     }
@@ -254,7 +273,12 @@
     {
       "schema": "archava_scheduling",
       "package": "@archava/scheduling-pg",
-      "migrations": ["001_resource_reservations"]
+      "migrations": ["001_resource_reservations", "002_shared_occupancy"]
+    },
+    {
+      "schema": "archava_accommodation",
+      "package": "@archava/accommodation-pg",
+      "migrations": ["001_room_night_stays"]
     }
   ],
   "requiredAdapters": [
@@ -264,7 +288,8 @@
     "@archava/act-host-pg",
     "@archava/crm-act",
     "@archava/projects-pg",
-    "@archava/scheduling-pg"
+    "@archava/scheduling-pg",
+    "@archava/accommodation-pg"
   ],
   "operatorChecks": [
     "non-owner runtime database role",

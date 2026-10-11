@@ -22,6 +22,37 @@ const trusted = releaseCatalogSchema.parse({
 })
 const request = (modules: unknown) => ({ version: '1.0.0', profile: trusted.version, modules })
 describe('untrusted composition requests', () => {
+  it('requires v4 and both occupancy and accommodation implementations without changing earlier contracts', () => {
+    const available = {
+      ...trusted,
+      contracts: { ...trusted.contracts, assembly: '4.0.0' as const },
+      packages: [
+        ...trusted.packages,
+        ...[
+          'projects',
+          'projects-pg',
+          'scheduling',
+          'scheduling-pg',
+          'accommodation',
+          'accommodation-pg',
+        ].map((name) => ({ name: '@archava/' + name, version: '0.1.0', migrations: [] })),
+      ],
+    }
+    const input = { version: '4.0.0', profile: trusted.version, modules: COMPOSABLE_MODULES }
+    expect(planAssembly(input, available).entries.map((x) => x.id)).toContain('accommodation')
+    for (const version of ['1.0.0', '2.0.0', '3.0.0'])
+      expect(() => planAssembly({ ...input, version }, available)).toThrow()
+    expect(() =>
+      planAssembly({ ...input, modules: { ...COMPOSABLE_MODULES, scheduling: false } }, available),
+    ).toThrow()
+    expect(() =>
+      planAssembly(input, {
+        ...available,
+        packages: available.packages.filter((p) => p.name !== '@archava/accommodation-pg'),
+      }),
+    ).toThrow('unavailable')
+    expect(planAssembly(request(FULL_MODULES), available).entries).toHaveLength(4)
+  })
   it('requires v3 and installed scheduling packages while retaining v1/v2 compatibility', () => {
     const available = {
       ...trusted,
@@ -35,7 +66,11 @@ describe('untrusted composition requests', () => {
         })),
       ],
     }
-    const input = { version: '3.0.0', profile: trusted.version, modules: COMPOSABLE_MODULES }
+    const input = {
+      version: '3.0.0',
+      profile: trusted.version,
+      modules: { ...FULL_MODULES, projects: true, scheduling: true },
+    }
     expect(planAssembly(input, available).entries.map((x) => x.id)).toContain('scheduling')
     expect(planAssembly(request(FULL_MODULES), available).entries).toHaveLength(4)
     expect(

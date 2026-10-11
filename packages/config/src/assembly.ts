@@ -9,11 +9,14 @@ export const moduleSelectionSchema = z
     nativeActions: z.boolean(),
     projects: z.boolean().optional(),
     scheduling: z.boolean().optional(),
+    accommodation: z.boolean().optional(),
   })
   .strict()
   .superRefine((modules, ctx) => {
     if (modules.nativeActions && !modules.assistant)
       ctx.addIssue({ code: 'custom', message: 'nativeActions requires assistant' })
+    if (modules.accommodation && !modules.scheduling)
+      ctx.addIssue({ code: 'custom', message: 'accommodation requires scheduling' })
   })
 export type ModuleSelection = z.infer<typeof moduleSelectionSchema>
 export const FULL_MODULES: ModuleSelection = Object.freeze({
@@ -33,6 +36,7 @@ export const COMPOSABLE_MODULES: ModuleSelection = Object.freeze({
   ...FULL_MODULES,
   projects: true,
   scheduling: true,
+  accommodation: true,
 })
 export const MODULE_CONTRACTS = [
   {
@@ -76,6 +80,19 @@ export const MODULE_CONTRACTS = [
     entry: '@archava/scheduling',
   },
   {
+    id: 'accommodation',
+    version: '1.0.0',
+    requires: ['contacts', 'scheduling'],
+    packages: [
+      '@archava/accommodation',
+      '@archava/accommodation-pg',
+      '@archava/scheduling-pg',
+      '@archava/identity-pg',
+    ],
+    permissions: ['properties.read', 'rooms.read', 'stays.read', 'stays.write'],
+    entry: '@archava/accommodation',
+  },
+  {
     id: 'nativeActions',
     version: '1.0.0',
     requires: ['contacts', 'assistant'],
@@ -85,7 +102,10 @@ export const MODULE_CONTRACTS = [
   },
 ] as const
 const legacyModules = moduleSelectionSchema.refine(
-  (modules) => modules.projects === undefined && modules.scheduling === undefined,
+  (modules) =>
+    modules.projects === undefined &&
+    modules.scheduling === undefined &&
+    modules.accommodation === undefined,
   'Project composition requires assembly contract 2.0.0',
 )
 export const assemblyRequestSchema = z.discriminatedUnion('version', [
@@ -101,7 +121,7 @@ export const assemblyRequestSchema = z.discriminatedUnion('version', [
       version: z.literal('2.0.0'),
       profile: z.string().regex(/^\d+\.\d+\.\d+$/),
       modules: moduleSelectionSchema.refine(
-        (modules) => modules.scheduling === undefined,
+        (modules) => modules.scheduling === undefined && modules.accommodation === undefined,
         'Scheduling requires assembly contract 3.0.0',
       ),
     })
@@ -109,6 +129,16 @@ export const assemblyRequestSchema = z.discriminatedUnion('version', [
   z
     .object({
       version: z.literal('3.0.0'),
+      profile: z.string().regex(/^\d+\.\d+\.\d+$/),
+      modules: moduleSelectionSchema.refine(
+        (modules) => modules.accommodation === undefined,
+        'Accommodation requires assembly contract 4.0.0',
+      ),
+    })
+    .strict(),
+  z
+    .object({
+      version: z.literal('4.0.0'),
       profile: z.string().regex(/^\d+\.\d+\.\d+$/),
       modules: moduleSelectionSchema,
     })
@@ -120,8 +150,10 @@ export function planAssembly(raw: unknown, trustedCatalog: ReleaseCatalog) {
   if (request.profile !== catalog.version) throw new Error('Unsupported assembly profile')
   if (
     (request.version === '2.0.0' &&
-      !['2.0.0', '3.0.0'].includes(catalog.contracts.assembly ?? '')) ||
-    (request.version === '3.0.0' && catalog.contracts.assembly !== '3.0.0')
+      !['2.0.0', '3.0.0', '4.0.0'].includes(catalog.contracts.assembly ?? '')) ||
+    (request.version === '3.0.0' &&
+      !['3.0.0', '4.0.0'].includes(catalog.contracts.assembly ?? '')) ||
+    (request.version === '4.0.0' && catalog.contracts.assembly !== '4.0.0')
   )
     throw new Error('Unsupported assembly contract')
   const enabled = MODULE_CONTRACTS.filter((module) => request.modules[module.id])

@@ -51,8 +51,15 @@ const LOCAL_IMPLEMENTATIONS = freeze({
     { name: '@archava/identity-pg', version: '0.1.0' },
   ],
   appointment_scheduling: [
-    { name: '@archava/scheduling', version: '0.1.0' },
-    { name: '@archava/scheduling-pg', version: '0.1.0' },
+    { name: '@archava/scheduling', version: '0.2.0' },
+    { name: '@archava/scheduling-pg', version: '0.2.0' },
+    { name: '@archava/identity-pg', version: '0.1.0' },
+  ],
+  accommodation_stays: [
+    { name: '@archava/accommodation', version: '0.1.0' },
+    { name: '@archava/accommodation-pg', version: '0.1.0' },
+    { name: '@archava/scheduling', version: '0.2.0' },
+    { name: '@archava/scheduling-pg', version: '0.2.0' },
     { name: '@archava/identity-pg', version: '0.1.0' },
   ],
 })
@@ -94,12 +101,21 @@ export class KitPlanner {
           add(`scope.${kit.id}.resource_reservations`, kit.id)
         add('crm_contacts', kit.id)
         add('appointment_scheduling', kit.id)
+      } else if (selected.scope === 'accommodation_stays') {
+        if (kit.id !== 'K01') add(`scope.${kit.id}.accommodation_stays`, kit.id)
+        add('crm_contacts', kit.id)
+        add('appointment_scheduling', kit.id)
+        add('accommodation_stays', kit.id)
       } else {
         for (const capability of kit.capabilities) add(capability, kit.id)
         add(kit.domainRequirement, kit.id)
       }
     }
     for (const id of request.requirements) add(id, 'explicit-requirement')
+    if (required.has('accommodation_stays')) {
+      add('appointment_scheduling', 'accommodation_stays')
+      add('crm_contacts', 'accommodation_stays')
+    }
     if (request.pipeline) add('crm_sales_pipeline', 'pipeline')
     if (required.has('crm_sales_pipeline')) add('crm_contacts', 'crm_sales_pipeline')
     if (request.assistant) add('surface.assistant', 'assistant')
@@ -130,7 +146,8 @@ export class KitPlanner {
         if (
           (id === 'crm_sales_pipeline' && !this.modules.pipeline) ||
           (id === 'project_delivery' && !this.modules.projects) ||
-          (id === 'appointment_scheduling' && !this.modules.scheduling)
+          (id === 'appointment_scheduling' && !this.modules.scheduling) ||
+          (id === 'accommodation_stays' && !this.modules.accommodation)
         )
           return {
             ...base,
@@ -212,6 +229,7 @@ export class KitPlanner {
       nativeActions: required.has('surface.native_actions'),
       ...(required.has('project_delivery') ? { projects: true } : {}),
       ...(required.has('appointment_scheduling') ? { scheduling: true } : {}),
+      ...(required.has('accommodation_stays') ? { accommodation: true } : {}),
     }
     // Reuse the existing assembly validator; planning metadata cannot bypass it.
     let assembly: ModuleSelection | null = null
@@ -219,11 +237,13 @@ export class KitPlanner {
       planAssembly(
         {
           version:
-            modules.scheduling !== undefined
-              ? '3.0.0'
-              : modules.projects !== undefined
-                ? '2.0.0'
-                : '1.0.0',
+            modules.accommodation !== undefined
+              ? '4.0.0'
+              : modules.scheduling !== undefined
+                ? '3.0.0'
+                : modules.projects !== undefined
+                  ? '2.0.0'
+                  : '1.0.0',
           profile: this.release.version,
           modules,
         },

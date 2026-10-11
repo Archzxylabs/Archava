@@ -46,6 +46,8 @@ if (process.argv.includes('--run')) {
   run('project-host', ['pnpm', 'projects:verify-host'])
   run('scheduling', ['pnpm', 'scheduling:verify'])
   run('scheduling-host', ['pnpm', 'scheduling:verify-host'])
+  run('accommodation', ['pnpm', 'accommodation:verify'])
+  run('accommodation-host', ['pnpm', 'accommodation:verify-host'])
 }
 run('platform-audit', ['pnpm', 'audit', '--json'], root, [0, 1])
 run('runtime-audit', ['npm', 'audit', '--json'], join(root, 'dist/crm-runtime'), [0, 1])
@@ -88,14 +90,27 @@ const proofs = {
   projectHost: await json(join(root, 'dist/project-host-proof/results.json')),
   scheduling: await json(join(root, 'dist/scheduling-proof/results.json')),
   schedulingHost: await json(join(root, 'dist/scheduling-host-proof/results.json')),
+  accommodation: await json(join(root, 'dist/accommodation-proof/results.json')),
+  accommodationHost: await json(join(root, 'dist/accommodation-host-proof/results.json')),
 }
-for (const name of ['runtime', 'kits', 'projects', 'projectHost', 'scheduling', 'schedulingHost'])
+for (const name of [
+  'runtime',
+  'kits',
+  'projects',
+  'projectHost',
+  'scheduling',
+  'schedulingHost',
+  'accommodation',
+  'accommodationHost',
+])
   assert.equal(proofs[name].profile, profile.catalog.version, 'Stale release proof: ' + name)
 assert.equal(proofs.runtime.providerCalls, 0)
 assert.equal(proofs.act.providerCalls, 0)
 assert.equal(proofs.projectHost.providerCalls, 0)
 assert.equal(proofs.scheduling.providerCalls, 0)
 assert.equal(proofs.schedulingHost.providerCalls, 0)
+assert.equal(proofs.accommodation.providerCalls, 0)
+assert.equal(proofs.accommodationHost.providerCalls, 0)
 const controls = [
   [
     'identity-session-csrf',
@@ -266,6 +281,44 @@ controls.push(
     'response loss|backup restore',
   ],
 )
+controls.push(
+  [
+    'accommodation-current-grants-and-tools',
+    ['packages/accommodation-pg/src/repository.ts', 'packages/accommodation/src/tools.ts'],
+    'accommodation',
+    'tenant and parent ownership|retries recheck write grants|strictly read-only tool',
+  ],
+  [
+    'accommodation-shared-atomic-capacity',
+    [
+      'packages/scheduling-pg/migrations/002_shared_occupancy.sql',
+      'packages/accommodation-pg/src/repository.ts',
+    ],
+    'accommodation',
+    '20 independent room-night|20 duplicate requests|generic reservation API',
+  ],
+  [
+    'accommodation-calendar-and-quote',
+    [
+      'packages/scheduling/src/calendar.ts',
+      'packages/accommodation-pg/migrations/001_room_night_stays.sql',
+    ],
+    'accommodation',
+    'rate changes|calendar nights remain|expiry is evaluated',
+  ],
+  [
+    'accommodation-room-readiness',
+    ['packages/accommodation-pg/migrations/001_room_night_stays.sql'],
+    'accommodation',
+    'walk-in requires confirmed',
+  ],
+  [
+    'accommodation-host-and-recovery',
+    ['packages/accommodation/src/dashboard.ts', 'apps/crm/src/operator.ts', 'apps/crm/src/host.ts'],
+    'accommodationHost',
+    'CSRF|pending UUID|backup restore|enabling it never',
+  ],
+)
 const matrix = []
 for (const [id, sources, proof, pattern] of controls) {
   for (const source of sources) await readFile(join(root, source))
@@ -283,6 +336,8 @@ for (const [id, sources, proof, pattern] of controls) {
       projectHost: 'pnpm projects:verify-host',
       scheduling: 'pnpm scheduling:verify',
       schedulingHost: 'pnpm scheduling:verify-host',
+      accommodation: 'pnpm accommodation:verify',
+      accommodationHost: 'pnpm accommodation:verify-host',
     }[proof],
     positiveAndRefusalChecks: checks,
     result: 'passed',

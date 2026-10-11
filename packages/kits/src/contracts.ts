@@ -64,6 +64,7 @@ export const kitRequestSchema = z
               'crm_inquiry',
               'project_tracking',
               'resource_reservations',
+              'accommodation_stays',
             ]),
           })
           .strict(),
@@ -112,7 +113,12 @@ export interface KitPlan {
   readonly profile: string
   readonly selections: readonly {
     id: string
-    scope: 'operations' | 'crm_inquiry' | 'project_tracking' | 'resource_reservations'
+    scope:
+      | 'operations'
+      | 'crm_inquiry'
+      | 'project_tracking'
+      | 'resource_reservations'
+      | 'accommodation_stays'
   }[]
   readonly requirements: readonly KitRequirement[]
   readonly blockers: readonly KitRequirement[]

@@ -1832,8 +1832,17 @@ Unknown, missing, disabled and domain-review requirements are blockers. Narrow
 corresponding full operating kit. New scope does not change the approved pricebook.
 An assembly is configuration, not authentication, execution approval or deployment.
 
-Accommodation room-night/stay/housekeeping comes next, then commerce/
-food-service ownership. All 40 families remain in the work ledger. Specialist
+Profile 1.6.0 adds [bounded accommodation](docs/ACCOMMODATION_MODULE.md): individual
+rooms, calendar nights, frozen nightly rates, holds/confirmation, guest check-in/out
+and room readiness. Capacity composes in one PostgreSQL transaction with the
+shared scheduling kernel through additive migration 002; generic scheduling tools
+cannot operate hotel-managed rooms. Assembly v4 adds optional accommodation and
+preserves v1/v2/v3 contracts. Narrow K01 `accommodation_stays` acceptance does not
+complete hotel operations, payment, OTA integration or public booking. Enabling
+the module never grants human or machine permissions automatically.
+
+Orders/retail/food-service ownership comes next. All 40 full operating families
+remain in the work ledger. Specialist
 adapters require an explicit authoritative backend and supported domain contract;
 an unspecified integration cannot be labelled operational.
 

@@ -1,13 +1,14 @@
 {
   "name": "@archava/scheduling-pg",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "PostgreSQL exclusive scheduling with tenant RLS, database clock, overlap locks and atomic audit receipts.",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./occupancy": "./src/occupancy.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
