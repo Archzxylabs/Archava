@@ -23,6 +23,8 @@ import { SchedulingService } from '@archava/scheduling'
 import { PostgresSchedulingRepository } from '@archava/scheduling-pg'
 import { AccommodationService } from '@archava/accommodation'
 import { PostgresAccommodationRepository } from '@archava/accommodation-pg'
+import { FoodService } from '@archava/foodservice'
+import { PostgresFoodRepository } from '@archava/foodservice-pg'
 import { CommerceService } from '@archava/commerce'
 import { PostgresCommerceRepository } from '@archava/commerce-pg'
 
@@ -124,6 +126,9 @@ try {
       ? new CommerceService(
           await PostgresCommerceRepository.create(runtimePool, settings.fingerprintKey),
         )
+      : undefined,
+    (settings.modules ?? FULL_MODULES).foodservice
+      ? new FoodService(await PostgresFoodRepository.create(runtimePool, settings.fingerprintKey))
       : undefined,
   )
   process.stdout.write(`CRM ready: ${host.origin}\n`)

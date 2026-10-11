@@ -1849,8 +1849,17 @@ commerce and preserves prior contracts/defaults. Narrow K03/K04 `commerce_orders
 is not full retail/wholesale acceptance. One stock pool, integer base units and
 IDR estimates do not establish warehouse, tax, invoice or payment support.
 
-Food-service recipe/table/kitchen ownership comes next; see the
-[executable domain plan](docs/FOODSERVICE_MODULE_PLAN.md). The user requested
+Profile 1.8.0 adds [food-service ownership](docs/FOODSERVICE_MODULE.md): physical
+tables, sealed recipe versions, frozen ticket lines and explicit kitchen/service
+transitions. The shared commerce kernel owns every cross-domain stock/price write;
+additive commerce migration 002 privately marks managed menu portions. Generic
+commerce cannot sell or alter these portions. Queue holds ingredients; preparation
+consumes once; waste cancellation does not restore raw ingredients. Assembly v6
+requires commerce, preserves older contracts/defaults and supports narrow K02
+`foodservice_tickets`. This does not establish per-item POS, payment or public booking.
+
+Next build shared [support-case ownership](docs/SUPPORT_CASES_MODULE_PLAN.md) and
+remaining KIT-07 requirements. The user requested
 continued execution across accepted milestones until the programme is complete.
 All 40 full operating families
 remain in the work ledger. Specialist

@@ -21,7 +21,7 @@ support are not authorized by this instruction.
 | KIT-03 packaged consumption                            | Two cold-installed consumers use the same catalogue/planner without source imports; browser-safe contracts; existing profile/CRM behaviour preserved                                   | Accepted: verified independent consumers         |
 | KIT-04 project services                                | A bounded persistent project/task/milestone workflow through authorized API/dashboard; scope/revision/audit/recovery; reuse without CRM forks                                          | Accepted: bounded local tracking                 |
 | KIT-05 scheduling and accommodation                    | Time/resource scheduling and domain-specific room-night/stay/housekeeping ownership; concurrency/cancellation/restore evidence                                                         | Accepted: bounded reservations and accommodation |
-| KIT-06 orders, retail and food service                 | Catalogue/orders/stock and restaurant table/kitchen rules; validated composition and failure semantics                                                                                 | In progress: commerce accepted, food pending     |
+| KIT-06 orders, retail and food service                 | Catalogue/orders/stock and restaurant table/kitchen rules; validated composition and failure semantics                                                                                 | Accepted: bounded commerce and food service      |
 | KIT-07 remaining general kits                          | Build the 24 general families' explicit scopes from shared services and separate extensions; each needs its own evidence                                                               | Pending                                          |
 | KIT-08 specialist kits                                 | Domain review plus selected authoritative-system adapters, supported configuration, privacy and live integration evidence; 16 research families are not native full-system commitments | Pending                                          |
 | KIT-09 operator handoff                                | Reproducible releases, migration/recovery, acceptance manifest and honest support catalogue                                                                                            | Pending                                          |
@@ -106,3 +106,24 @@ acceptance. Continue with [food-service implementation](FOODSERVICE_MODULE_PLAN.
 then KIT-07/08/09. All forty full operating kits retain their missing requirements;
 no milestone completion ends the authorized programme. See
 [commerce contract](COMMERCE_MODULE.md) and [release evidence](LOCAL_LIBRARY_RELEASE.md).
+
+## Fifth implementation slice
+
+Profile 1.8.0 adds food-service 0.1.0 and commerce's shared domain SPI 0.2.0:
+36 artifacts, 18 unchanged external pins, ten owned ledgers, host 0.11.0, config
+0.10.0 and kits 0.5.0. Assembly v6 adds optional restaurant service, requiring
+shared commerce in the owner host; previous contracts and defaults are preserved.
+The additive managed-menu migration preserves non-empty archived 1.7 records.
+
+KIT-06 is accepted for bounded catalog/orders/stock and whole-ticket restaurant/
+catering operation: physical tables, sealed recipe snapshots, backend prices,
+ingredient reservation/consumption, kitchen/service progression and waste/refusal.
+It does not accept any full operating kit. Per-item POS, financial flows, hardware,
+public ordering and every other declared kit gap remain open. See
+[food-service contract](FOODSERVICE_MODULE.md) and [release evidence](LOCAL_LIBRARY_RELEASE.md).
+
+Continue KIT-07 with [shared support cases](SUPPORT_CASES_MODULE_PLAN.md), then
+remaining general/specialist requirements and full-programme handoff. Specialist
+backend selection/access and domain review remain explicit gates rather than
+invented integration evidence. The user's uninterrupted-execution instruction
+continues across this accepted slice.

@@ -2,7 +2,10 @@ import { createHash } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import type { Pool } from 'pg'
 
-export const COMMERCE_MIGRATIONS = ['001_catalog_orders_stock'] as const
+export const COMMERCE_MIGRATIONS = [
+  '001_catalog_orders_stock',
+  '002_managed_menu_products',
+] as const
 export async function commerceMigrationLedger() {
   return await Promise.all(
     COMMERCE_MIGRATIONS.map(async (id) => ({
@@ -33,7 +36,7 @@ export async function migrateCommerce(pool: Pool): Promise<void> {
         (row, i) => row.id !== ledger[i]?.id || row.checksum !== ledger[i]?.checksum,
       )
     )
-      throw new Error('Unsupported or modified project migration history')
+      throw new Error('Unsupported or modified commerce migration history')
     for (const item of ledger.slice(existing.rows.length)) {
       await client.query(
         await readFile(new URL(`../migrations/${item.id}.sql`, import.meta.url), 'utf8'),

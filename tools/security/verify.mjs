@@ -50,6 +50,8 @@ if (process.argv.includes('--run')) {
   run('accommodation-host', ['pnpm', 'accommodation:verify-host'])
   run('commerce', ['pnpm', 'commerce:verify'])
   run('commerce-host', ['pnpm', 'commerce:verify-host'])
+  run('foodservice', ['pnpm', 'foodservice:verify'])
+  run('foodservice-host', ['pnpm', 'foodservice:verify-host'])
 }
 run('platform-audit', ['pnpm', 'audit', '--json'], root, [0, 1])
 run('runtime-audit', ['npm', 'audit', '--json'], join(root, 'dist/crm-runtime'), [0, 1])
@@ -96,6 +98,8 @@ const proofs = {
   accommodationHost: await json(join(root, 'dist/accommodation-host-proof/results.json')),
   commerce: await json(join(root, 'dist/commerce-proof/results.json')),
   commerceHost: await json(join(root, 'dist/commerce-host-proof/results.json')),
+  foodservice: await json(join(root, 'dist/foodservice-proof/results.json')),
+  foodserviceHost: await json(join(root, 'dist/foodservice-host-proof/results.json')),
 }
 for (const name of [
   'runtime',
@@ -108,6 +112,8 @@ for (const name of [
   'accommodationHost',
   'commerce',
   'commerceHost',
+  'foodservice',
+  'foodserviceHost',
 ])
   assert.equal(proofs[name].profile, profile.catalog.version, 'Stale release proof: ' + name)
 assert.equal(proofs.runtime.providerCalls, 0)
@@ -119,6 +125,8 @@ assert.equal(proofs.accommodation.providerCalls, 0)
 assert.equal(proofs.accommodationHost.providerCalls, 0)
 assert.equal(proofs.commerce.providerCalls, 0)
 assert.equal(proofs.commerceHost.providerCalls, 0)
+assert.equal(proofs.foodservice.providerCalls, 0)
+assert.equal(proofs.foodserviceHost.providerCalls, 0)
 const controls = [
   [
     'identity-session-csrf',
@@ -360,6 +368,44 @@ controls.push(
     'CSRF|pending UUID|backup restore|never enrolls',
   ],
 )
+controls.push(
+  [
+    'foodservice-current-grants-and-tools',
+    ['packages/foodservice-pg/src/repository.ts', 'packages/foodservice/src/tools.ts'],
+    'foodservice',
+    'current food and commerce grants|read-only tools',
+  ],
+  [
+    'foodservice-atomic-ingredients-and-tables',
+    [
+      'packages/foodservice-pg/src/repository.ts',
+      'packages/foodservice-pg/migrations/001_tables_recipes_tickets.sql',
+    ],
+    'foodservice',
+    'last physical table|last ingredient|failure after stock consumption|20 preparation retries',
+  ],
+  [
+    'foodservice-frozen-recipes-and-waste',
+    [
+      'packages/foodservice-pg/migrations/001_tables_recipes_tickets.sql',
+      'packages/commerce-pg/migrations/002_managed_menu_products.sql',
+    ],
+    'foodservice',
+    'sealed recipe|generic catalog/order|records waste|preparation expiry',
+  ],
+  [
+    'foodservice-upgrade-and-restore',
+    ['packages/foodservice-pg/src/migrate.ts', 'packages/commerce-pg/src/migrate.ts'],
+    'foodservice',
+    'non-empty archived|database restart|fresh backup restore',
+  ],
+  [
+    'foodservice-host-and-recovery',
+    ['packages/foodservice/src/dashboard.ts', 'apps/crm/src/operator.ts', 'apps/crm/src/host.ts'],
+    'foodserviceHost',
+    'CSRF|pending UUID|backup restore|never enrolls',
+  ],
+)
 for (const [id, sources, proof, pattern] of controls) {
   for (const source of sources) await readFile(join(root, source))
   const checks = proofs[proof].checks.filter((label) => new RegExp(pattern).test(label))
@@ -380,6 +426,8 @@ for (const [id, sources, proof, pattern] of controls) {
       accommodationHost: 'pnpm accommodation:verify-host',
       commerce: 'pnpm commerce:verify',
       commerceHost: 'pnpm commerce:verify-host',
+      foodservice: 'pnpm foodservice:verify',
+      foodserviceHost: 'pnpm foodservice:verify-host',
     }[proof],
     positiveAndRefusalChecks: checks,
     result: 'passed',

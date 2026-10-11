@@ -22,6 +22,42 @@ const trusted = releaseCatalogSchema.parse({
 })
 const request = (modules: unknown) => ({ version: '1.0.0', profile: trusted.version, modules })
 describe('untrusted composition requests', () => {
+  it('requires v6 and shared commerce for food-service while refusing unavailable domain implementations', () => {
+    const available = {
+      ...trusted,
+      contracts: { ...trusted.contracts, assembly: '6.0.0' as const },
+      packages: [
+        ...trusted.packages,
+        ...['commerce', 'commerce-pg', 'foodservice', 'foodservice-pg'].map((name) => ({
+          name: '@archava/' + name,
+          version: '0.1.0',
+          migrations: [],
+        })),
+      ],
+    }
+    const input = {
+      version: '6.0.0',
+      profile: trusted.version,
+      modules: { ...MINIMAL_MODULES, commerce: true, foodservice: true },
+    }
+    expect(planAssembly(input, available).entries.map((x) => x.id)).toEqual([
+      'contacts',
+      'commerce',
+      'foodservice',
+    ])
+    for (const version of ['1.0.0', '2.0.0', '3.0.0', '4.0.0', '5.0.0'])
+      expect(() => planAssembly({ ...input, version }, available)).toThrow()
+    expect(() =>
+      planAssembly({ ...input, modules: { ...input.modules, commerce: false } }, available),
+    ).toThrow()
+    expect(() =>
+      planAssembly(input, {
+        ...available,
+        packages: available.packages.filter((x) => x.name !== '@archava/foodservice-pg'),
+      }),
+    ).toThrow()
+    expect(FULL_MODULES.foodservice).toBeUndefined()
+  })
   it('requires v5 for commerce while preserving old defaults and refusing missing stock adapters', () => {
     const available = {
       ...trusted,

@@ -88,8 +88,10 @@ export async function lockCommerceProducts(
   client: PoolClient,
   tenant: string,
   raw: readonly string[],
+  ownerModule: 'commerce' | 'foodservice' = 'commerce',
 ): Promise<readonly Product[]> {
   await context(client, tenant)
+  z.enum(['commerce', 'foodservice']).parse(ownerModule)
   const ids = z
     .array(z.uuid())
     .min(1)
@@ -97,8 +99,8 @@ export async function lockCommerceProducts(
     .parse([...new Set(raw)].sort())
   const rows = (
     await client.query<CommerceRow>(
-      'SELECT * FROM archava_commerce.products WHERE tenant_id=$1 AND id=ANY($2::uuid[]) ORDER BY id FOR UPDATE',
-      [tenant, ids],
+      'SELECT * FROM archava_commerce.products WHERE tenant_id=$1 AND id=ANY($2::uuid[]) AND (managed_by IS NULL OR managed_by=$3) ORDER BY id FOR UPDATE',
+      [tenant, ids, ownerModule === 'foodservice' ? ownerModule : null],
     )
   ).rows
   if (rows.length !== ids.length) throw new CommerceError('not_found')
@@ -152,12 +154,18 @@ export async function lockCommerceOrder(
     throw new CommerceError('conflict')
   return row
 }
-export async function quoteCommerceLines(client: PoolClient, tenant: string, raw: unknown) {
+export async function quoteCommerceLines(
+  client: PoolClient,
+  tenant: string,
+  raw: unknown,
+  ownerModule: 'commerce' | 'foodservice' = 'commerce',
+) {
   const input = orderLinesInputSchema.parse(raw),
     products = await lockCommerceProducts(
       client,
       tenant,
       input.map((x) => x.productId),
+      ownerModule,
     )
   return input.map((line) => {
     const p = products.find((x) => x.id === line.productId)
@@ -215,7 +223,12 @@ export async function createCommerceDraft(
   await context(client, raw.tenant)
   commerceIdSchema.parse(raw.ownerId)
   z.string().trim().min(1).max(160).parse(raw.customerName)
-  const lines = await quoteCommerceLines(client, raw.tenant, raw.lines),
+  const lines = await quoteCommerceLines(
+      client,
+      raw.tenant,
+      raw.lines,
+      raw.managedBy ?? 'commerce',
+    ),
     id = randomUUID(),
     total = lines.reduce((sum, l) => sum + l.price * l.quantity, 0)
   if (!Number.isSafeInteger(total) || total > 500000000000000) throw new CommerceError('conflict')
@@ -264,10 +277,12 @@ export async function reserveCommerceOrder(
           .map((x) => ({ productId: x.product_id, quantity: x.quantity }))
       : raw.allocations,
   )
-  const products = await lockCommerceProducts(client, raw.tenant, [
-    ...lines.map((x) => z.uuid().parse(x.product_id)),
-    ...allocations.map((x) => x.productId),
-  ])
+  const products = await lockCommerceProducts(
+    client,
+    raw.tenant,
+    [...lines.map((x) => z.uuid().parse(x.product_id)), ...allocations.map((x) => x.productId)],
+    raw.ownerModule,
+  )
   if (
     products.some((x) => !x.active) ||
     allocations.some((x) => !products.find((p) => p.id === x.productId)?.trackStock)
@@ -358,4 +373,107 @@ export async function cancelCommerceOrder(
     [raw.tenant, raw.id],
   )
   return { revision: Number(o.revision) + 1 }
+}
+
+/** Private domain product creation: caller must hold current catalog administration grants. */
+export async function createFoodMenuProduct(client: PoolClient, tenant: string, raw: unknown) {
+  await context(client, tenant)
+  const input = z
+    .object({
+      sku: z.string().regex(/^[A-Z0-9][A-Z0-9_-]{0,39}$/),
+      title: z.string().trim().min(1).max(160),
+      price: z.number().int().min(0).max(1000000000),
+    })
+    .strict()
+    .parse(raw)
+  const id = randomUUID()
+  return commerceProduct(
+    (
+      await client.query<CommerceRow>(
+        "INSERT INTO archava_commerce.products(tenant_id,id,sku,title,unit,track_stock,price,managed_by) VALUES($1,$2,$3,$4,'unit',false,$5,'foodservice') RETURNING *",
+        [tenant, id, input.sku, input.title, input.price],
+      )
+    ).rows[0],
+  )
+}
+
+/** Private menu policy: no generic API receives this product administration port. */
+export async function updateFoodMenuProduct(
+  client: PoolClient,
+  tenant: string,
+  id: string,
+  raw: unknown,
+) {
+  await context(client, tenant)
+  z.uuid().parse(id)
+  const input = z
+    .discriminatedUnion('kind', [
+      z
+        .object({
+          kind: z.literal('price'),
+          value: z.number().int().min(0).max(1000000000),
+          expectedRevision: z.number().int().positive(),
+        })
+        .strict(),
+      z
+        .object({
+          kind: z.literal('active'),
+          value: z.boolean(),
+          expectedRevision: z.number().int().positive(),
+        })
+        .strict(),
+    ])
+    .parse(raw)
+  const row = (
+    await client.query<CommerceRow>(
+      "SELECT * FROM archava_commerce.products WHERE tenant_id=$1 AND id=$2 AND managed_by='foodservice' FOR UPDATE",
+      [tenant, id],
+    )
+  ).rows[0]
+  if (!row) throw new CommerceError('not_found')
+  if (row.revision !== input.expectedRevision) throw new CommerceError('conflict')
+  await client.query(
+    `UPDATE archava_commerce.products SET ${input.kind === 'price' ? 'price' : 'active'}=$3,revision=revision+1,updated_at=clock_timestamp() WHERE tenant_id=$1 AND id=$2`,
+    [tenant, id, input.value],
+  )
+}
+
+/** Compose the shared command, consumption and audit with the caller's domain transaction. */
+export async function prepareFoodCommerceOrder(
+  client: PoolClient,
+  raw: { tenant: string; id: string; requestId: string; actorId: string; fingerprint: string },
+) {
+  await context(client, raw.tenant)
+  z.uuid().parse(raw.requestId)
+  commerceIdSchema.parse(raw.actorId)
+  z.string()
+    .regex(/^[a-f0-9]{64}$/)
+    .parse(raw.fingerprint)
+  const claimed = await client.query(
+    'INSERT INTO archava_commerce.commands(tenant_id,request_id,actor_id,fingerprint) VALUES($1,$2,$3,$4) ON CONFLICT DO NOTHING',
+    [raw.tenant, raw.requestId, raw.actorId, raw.fingerprint],
+  )
+  if (claimed.rowCount !== 1) throw new CommerceError('conflict')
+  const changed = await fulfillCommerceOrder(client, {
+      tenant: raw.tenant,
+      id: raw.id,
+      requestId: raw.requestId,
+      ownerModule: 'foodservice',
+    }),
+    receipt = {
+      requestId: raw.requestId,
+      operation: 'order.fulfill',
+      id: raw.id,
+      revision: changed.revision,
+      replayed: false,
+    }
+  await client.query(
+    'UPDATE archava_commerce.commands SET receipt=$3 WHERE tenant_id=$1 AND request_id=$2',
+    [raw.tenant, raw.requestId, receipt],
+  )
+  await client.query(
+    'INSERT INTO archava_commerce.audit(tenant_id,request_id,actor_id,operation,record_id,revision) VALUES($1,$2,$3,$4,$5,$6)',
+    [raw.tenant, raw.requestId, raw.actorId, 'order.fulfill', raw.id, changed.revision],
+  )
+  return changed
 }

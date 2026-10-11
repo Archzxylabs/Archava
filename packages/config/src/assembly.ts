@@ -11,11 +11,14 @@ export const moduleSelectionSchema = z
     scheduling: z.boolean().optional(),
     accommodation: z.boolean().optional(),
     commerce: z.boolean().optional(),
+    foodservice: z.boolean().optional(),
   })
   .strict()
   .superRefine((modules, ctx) => {
     if (modules.nativeActions && !modules.assistant)
       ctx.addIssue({ code: 'custom', message: 'nativeActions requires assistant' })
+    if (modules.foodservice && !modules.commerce)
+      ctx.addIssue({ code: 'custom', message: 'foodservice requires commerce' })
     if (modules.accommodation && !modules.scheduling)
       ctx.addIssue({ code: 'custom', message: 'accommodation requires scheduling' })
   })
@@ -39,6 +42,7 @@ export const COMPOSABLE_MODULES: ModuleSelection = Object.freeze({
   scheduling: true,
   accommodation: true,
   commerce: true,
+  foodservice: true,
 })
 export const MODULE_CONTRACTS = [
   {
@@ -110,13 +114,27 @@ export const MODULE_CONTRACTS = [
     permissions: ['catalog.read', 'stock.read', 'orders.read', 'orders.write'],
     entry: '@archava/commerce',
   },
+  {
+    id: 'foodservice',
+    version: '1.0.0',
+    requires: ['contacts', 'commerce'],
+    packages: [
+      '@archava/foodservice',
+      '@archava/foodservice-pg',
+      '@archava/commerce-pg',
+      '@archava/identity-pg',
+    ],
+    permissions: ['tables.read', 'menu.read', 'tickets.read', 'tickets.write', 'kitchen.write'],
+    entry: '@archava/foodservice',
+  },
 ] as const
 const legacyModules = moduleSelectionSchema.refine(
   (modules) =>
     modules.projects === undefined &&
     modules.scheduling === undefined &&
     modules.accommodation === undefined &&
-    modules.commerce === undefined,
+    modules.commerce === undefined &&
+    modules.foodservice === undefined,
   'Project composition requires assembly contract 2.0.0',
 )
 export const assemblyRequestSchema = z.discriminatedUnion('version', [
@@ -135,7 +153,8 @@ export const assemblyRequestSchema = z.discriminatedUnion('version', [
         (modules) =>
           modules.scheduling === undefined &&
           modules.accommodation === undefined &&
-          modules.commerce === undefined,
+          modules.commerce === undefined &&
+          modules.foodservice === undefined,
         'Scheduling requires assembly contract 3.0.0',
       ),
     })
@@ -145,7 +164,10 @@ export const assemblyRequestSchema = z.discriminatedUnion('version', [
       version: z.literal('3.0.0'),
       profile: z.string().regex(/^\d+\.\d+\.\d+$/),
       modules: moduleSelectionSchema.refine(
-        (modules) => modules.accommodation === undefined && modules.commerce === undefined,
+        (modules) =>
+          modules.accommodation === undefined &&
+          modules.commerce === undefined &&
+          modules.foodservice === undefined,
         'Accommodation requires assembly contract 4.0.0',
       ),
     })
@@ -155,7 +177,7 @@ export const assemblyRequestSchema = z.discriminatedUnion('version', [
       version: z.literal('4.0.0'),
       profile: z.string().regex(/^\d+\.\d+\.\d+$/),
       modules: moduleSelectionSchema.refine(
-        (modules) => modules.commerce === undefined,
+        (modules) => modules.commerce === undefined && modules.foodservice === undefined,
         'Commerce requires assembly contract 5.0.0',
       ),
     })
@@ -163,6 +185,16 @@ export const assemblyRequestSchema = z.discriminatedUnion('version', [
   z
     .object({
       version: z.literal('5.0.0'),
+      profile: z.string().regex(/^\d+\.\d+\.\d+$/),
+      modules: moduleSelectionSchema.refine(
+        (modules) => modules.foodservice === undefined,
+        'Food service requires assembly contract 6.0.0',
+      ),
+    })
+    .strict(),
+  z
+    .object({
+      version: z.literal('6.0.0'),
       profile: z.string().regex(/^\d+\.\d+\.\d+$/),
       modules: moduleSelectionSchema,
     })
@@ -174,12 +206,14 @@ export function planAssembly(raw: unknown, trustedCatalog: ReleaseCatalog) {
   if (request.profile !== catalog.version) throw new Error('Unsupported assembly profile')
   if (
     (request.version === '2.0.0' &&
-      !['2.0.0', '3.0.0', '4.0.0', '5.0.0'].includes(catalog.contracts.assembly ?? '')) ||
+      !['2.0.0', '3.0.0', '4.0.0', '5.0.0', '6.0.0'].includes(catalog.contracts.assembly ?? '')) ||
     (request.version === '3.0.0' &&
-      !['3.0.0', '4.0.0', '5.0.0'].includes(catalog.contracts.assembly ?? '')) ||
+      !['3.0.0', '4.0.0', '5.0.0', '6.0.0'].includes(catalog.contracts.assembly ?? '')) ||
     (request.version === '4.0.0' &&
-      !['4.0.0', '5.0.0'].includes(catalog.contracts.assembly ?? '')) ||
-    (request.version === '5.0.0' && catalog.contracts.assembly !== '5.0.0')
+      !['4.0.0', '5.0.0', '6.0.0'].includes(catalog.contracts.assembly ?? '')) ||
+    (request.version === '5.0.0' &&
+      !['5.0.0', '6.0.0'].includes(catalog.contracts.assembly ?? '')) ||
+    (request.version === '6.0.0' && catalog.contracts.assembly !== '6.0.0')
   )
     throw new Error('Unsupported assembly contract')
   const enabled = MODULE_CONTRACTS.filter((module) => request.modules[module.id])

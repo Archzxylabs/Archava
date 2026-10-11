@@ -36,6 +36,13 @@ export function getKit(id: string): KitManifest {
 }
 
 const LOCAL_IMPLEMENTATIONS = freeze({
+  foodservice_ops: [
+    { name: '@archava/foodservice', version: '0.1.0' },
+    { name: '@archava/foodservice-pg', version: '0.1.0' },
+    { name: '@archava/commerce', version: '0.2.0' },
+    { name: '@archava/commerce-pg', version: '0.2.0' },
+    { name: '@archava/identity-pg', version: '0.1.0' },
+  ],
   crm_contacts: [
     { name: '@archava/crm', version: '0.7.0' },
     { name: '@archava/crm-pg', version: '0.7.0' },
@@ -63,18 +70,18 @@ const LOCAL_IMPLEMENTATIONS = freeze({
     { name: '@archava/identity-pg', version: '0.1.0' },
   ],
   catalog_products: [
-    { name: '@archava/commerce', version: '0.1.0' },
-    { name: '@archava/commerce-pg', version: '0.1.0' },
+    { name: '@archava/commerce', version: '0.2.0' },
+    { name: '@archava/commerce-pg', version: '0.2.0' },
     { name: '@archava/identity-pg', version: '0.1.0' },
   ],
   commerce_orders: [
-    { name: '@archava/commerce', version: '0.1.0' },
-    { name: '@archava/commerce-pg', version: '0.1.0' },
+    { name: '@archava/commerce', version: '0.2.0' },
+    { name: '@archava/commerce-pg', version: '0.2.0' },
     { name: '@archava/identity-pg', version: '0.1.0' },
   ],
   inventory_quantities: [
-    { name: '@archava/commerce', version: '0.1.0' },
-    { name: '@archava/commerce-pg', version: '0.1.0' },
+    { name: '@archava/commerce', version: '0.2.0' },
+    { name: '@archava/commerce-pg', version: '0.2.0' },
     { name: '@archava/identity-pg', version: '0.1.0' },
   ],
 })
@@ -121,6 +128,9 @@ export class KitPlanner {
         add('crm_contacts', kit.id)
         add('appointment_scheduling', kit.id)
         add('accommodation_stays', kit.id)
+      } else if (selected.scope === 'foodservice_tickets') {
+        if (kit.id !== 'K02') add(`scope.${kit.id}.foodservice_tickets`, kit.id)
+        add('foodservice_ops', kit.id)
       } else if (selected.scope === 'commerce_orders') {
         if (kit.id !== 'K03' && kit.id !== 'K04') add(`scope.${kit.id}.commerce_orders`, kit.id)
         for (const id of [
@@ -136,6 +146,14 @@ export class KitPlanner {
       }
     }
     for (const id of request.requirements) add(id, 'explicit-requirement')
+    if (required.has('foodservice_ops'))
+      for (const id of [
+        'crm_contacts',
+        'catalog_products',
+        'commerce_orders',
+        'inventory_quantities',
+      ])
+        add(id, 'foodservice_ops')
     if (required.has('accommodation_stays')) {
       add('appointment_scheduling', 'accommodation_stays')
       add('crm_contacts', 'accommodation_stays')
@@ -175,6 +193,7 @@ export class KitPlanner {
           (id === 'crm_sales_pipeline' && !this.modules.pipeline) ||
           (id === 'project_delivery' && !this.modules.projects) ||
           (id === 'appointment_scheduling' && !this.modules.scheduling) ||
+          (id === 'foodservice_ops' && !this.modules.foodservice) ||
           (id === 'accommodation_stays' && !this.modules.accommodation) ||
           (['catalog_products', 'commerce_orders', 'inventory_quantities'].includes(id) &&
             !this.modules.commerce)
@@ -254,6 +273,7 @@ export class KitPlanner {
     )
     const modules: ModuleSelection = {
       contacts: true,
+      ...(required.has('foodservice_ops') ? { foodservice: true } : {}),
       pipeline: required.has('crm_sales_pipeline'),
       assistant: required.has('surface.assistant'),
       nativeActions: required.has('surface.native_actions'),
@@ -272,15 +292,17 @@ export class KitPlanner {
       planAssembly(
         {
           version:
-            modules.commerce !== undefined
-              ? '5.0.0'
-              : modules.accommodation !== undefined
-                ? '4.0.0'
-                : modules.scheduling !== undefined
-                  ? '3.0.0'
-                  : modules.projects !== undefined
-                    ? '2.0.0'
-                    : '1.0.0',
+            modules.foodservice !== undefined
+              ? '6.0.0'
+              : modules.commerce !== undefined
+                ? '5.0.0'
+                : modules.accommodation !== undefined
+                  ? '4.0.0'
+                  : modules.scheduling !== undefined
+                    ? '3.0.0'
+                    : modules.projects !== undefined
+                      ? '2.0.0'
+                      : '1.0.0',
           profile: this.release.version,
           modules,
         },

@@ -95,6 +95,12 @@ importers:
       '@archava/crm-pg':
         specifier: workspace:*
         version: link:../../packages/crm-pg
+      '@archava/foodservice':
+        specifier: workspace:*
+        version: link:../../packages/foodservice
+      '@archava/foodservice-pg':
+        specifier: workspace:*
+        version: link:../../packages/foodservice-pg
       '@archava/identity-pg':
         specifier: workspace:*
         version: link:../../packages/identity-pg
@@ -645,6 +651,47 @@ importers:
         specifier: workspace:*
         version: link:../adapters
     devDependencies:
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@24.9.1)(@vitest/coverage-v8@4.1.11)(vite@7.3.6(@types/node@24.9.1)(tsx@4.20.6))
+
+  packages/foodservice:
+    dependencies:
+      zod:
+        specifier: 4.1.12
+        version: 4.1.12
+    devDependencies:
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@24.9.1)(@vitest/coverage-v8@4.1.11)(vite@7.3.6(@types/node@24.9.1)(tsx@4.20.6))
+
+  packages/foodservice-pg:
+    dependencies:
+      '@archava/commerce':
+        specifier: workspace:*
+        version: link:../commerce
+      '@archava/commerce-pg':
+        specifier: workspace:*
+        version: link:../commerce-pg
+      '@archava/foodservice':
+        specifier: workspace:*
+        version: link:../foodservice
+      pg:
+        specifier: 8.23.1
+        version: 8.23.1
+      zod:
+        specifier: 4.1.12
+        version: 4.1.12
+    devDependencies:
+      '@types/pg':
+        specifier: 8.23.1
+        version: 8.23.1
       typescript:
         specifier: 5.9.3
         version: 5.9.3

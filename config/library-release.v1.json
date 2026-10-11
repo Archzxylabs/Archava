@@ -1,16 +1,16 @@
 {
   "schemaVersion": "1.0.0",
   "id": "archava-local-library",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "host": {
     "name": "@archava/crm-host",
-    "version": "0.10.0"
+    "version": "0.11.0"
   },
   "contracts": {
     "clientConfig": "1.0.0",
     "deploymentPlan": "2.0.0",
     "hostSettings": 1,
-    "assembly": "5.0.0",
+    "assembly": "6.0.0",
     "presence": "1.0.0",
     "kitPlan": "1.0.0",
     "kitCatalogue": "1.0.0"
@@ -61,7 +61,7 @@
     },
     {
       "name": "@archava/config",
-      "version": "0.9.0",
+      "version": "0.10.0",
       "migrations": []
     },
     {
@@ -186,7 +186,7 @@
     },
     {
       "name": "@archava/kits",
-      "version": "0.4.0",
+      "version": "0.5.0",
       "migrations": []
     },
     {
@@ -240,16 +240,35 @@
     },
     {
       "name": "@archava/commerce",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "migrations": []
     },
     {
       "name": "@archava/commerce-pg",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "migrations": [
         {
           "file": "001_catalog_orders_stock.sql",
           "checksum": "afbfdec5d977dd2cea2eaf52ad0c60ad8731375af1447c299dd58a3aba53d9df"
+        },
+        {
+          "file": "002_managed_menu_products.sql",
+          "checksum": "3ae7debc5b2dc1c53e47f10f317a2656aec0d47c644fd006d1809e30fbb76ffe"
+        }
+      ]
+    },
+    {
+      "name": "@archava/foodservice",
+      "version": "0.1.0",
+      "migrations": []
+    },
+    {
+      "name": "@archava/foodservice-pg",
+      "version": "0.1.0",
+      "migrations": [
+        {
+          "file": "001_tables_recipes_tickets.sql",
+          "checksum": "48f40f77cf51b47da53c08f77648b23ca7969b50b6eb887c646c52f03d58d4b5"
         }
       ]
     }
@@ -298,7 +317,12 @@
     {
       "schema": "archava_commerce",
       "package": "@archava/commerce-pg",
-      "migrations": ["001_catalog_orders_stock"]
+      "migrations": ["001_catalog_orders_stock", "002_managed_menu_products"]
+    },
+    {
+      "schema": "archava_foodservice",
+      "package": "@archava/foodservice-pg",
+      "migrations": ["001_tables_recipes_tickets"]
     }
   ],
   "requiredAdapters": [
@@ -310,7 +334,8 @@
     "@archava/projects-pg",
     "@archava/scheduling-pg",
     "@archava/accommodation-pg",
-    "@archava/commerce-pg"
+    "@archava/commerce-pg",
+    "@archava/foodservice-pg"
   ],
   "operatorChecks": [
     "non-owner runtime database role",
@@ -318,7 +343,8 @@
     "current tenant and resource permissions",
     "private identity/native/provider state",
     "backup restoration and execution holds",
-    "commerce quote, stock ledger, current grants and receipt recovery"
+    "commerce quote, stock ledger, current grants and receipt recovery",
+    "food-service recipe/table/kitchen grants, consumption and recovery"
   ],
   "externals": [
     {

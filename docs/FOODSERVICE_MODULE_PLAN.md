@@ -1,7 +1,8 @@
 # Food-service implementation plan
 
-This is the next executable domain slice after commerce acceptance, not an
-accepted restaurant kit. The user requested continued execution across milestones.
+This is the historical implementation plan authored before profile 1.8.0.
+The [implemented domain contract](FOODSERVICE_MODULE.md) defines the current
+bounded scope; this plan grants no additional restaurant-kit acceptance. The user requested continued execution across milestones.
 Restaurant rules compose with the shared catalog/order/stock kernel; they do not
 fork retail inventory or treat a restaurant ticket as a generic CRM record.
 

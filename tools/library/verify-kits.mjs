@@ -228,6 +228,22 @@ try {
   checks.push(
     'bounded retail and wholesale orders compose shared stock under v5 while full operating kits retain missing requirements',
   )
+  const foodFile = join(scratch, 'food-tickets.json'),
+    foodOut = join(scratch, 'assembled-food')
+  await writeFile(foodFile, JSON.stringify(raw('K02', 'foodservice_tickets')))
+  const food = command('assemble.mjs', [foodFile, foodOut, '--kit'])
+  assert.equal(food.status, 0, food.stderr)
+  const foodAssembly = JSON.parse(await readFile(join(foodOut, 'assembly.json'), 'utf8'))
+  assert.equal(foodAssembly.version, '6.0.0')
+  assert.ok(foodAssembly.entries.some((entry) => entry.entry === '@archava/foodservice'))
+  assert.ok(foodAssembly.entries.some((entry) => entry.entry === '@archava/commerce'))
+  assert.equal(
+    JSON.parse(await readFile(join(foodOut, 'kit-plan.json'), 'utf8')).selections[0].scope,
+    'foodservice_tickets',
+  )
+  checks.push(
+    'bounded restaurant tickets compose shared commerce under v6 while full restaurant operations retain missing requirements',
+  )
   await writeFile(
     join(scratch, 'forged.json'),
     JSON.stringify({ ...raw('K01'), apiKey: 'fixture-private' }),

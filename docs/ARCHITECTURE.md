@@ -1,6 +1,6 @@
 # Architecture
 
-Updated for local profile `1.7.0`, 11 October 2026. Baseline re-audit source: `80ea845`. The [repository re-audit](PROJECT_REAUDIT_2026-10-10.md) records historical findings. [PRD §§40–50](../PRD.md) describes the target; this document describes the implementation. ARCHZXY's company website is a separate consumer project.
+Updated for local profile `1.8.0`, 11 October 2026. Baseline re-audit source: `80ea845`. The [repository re-audit](PROJECT_REAUDIT_2026-10-10.md) records historical findings. [PRD §§40–50](../PRD.md) describes the target; this document describes the implementation. ARCHZXY's company website is a separate consumer project.
 
 PRD v2.1 §50 bounds the implemented local library release.
 [Acceptance and decisions](LOCAL_LIBRARY_RELEASE.md) map its six items to runnable
@@ -31,7 +31,7 @@ Archava_Platform/
   delegation/           historical task/handoff records; not runtime configuration
 ```
 
-There are 42 pnpm workspace projects: 36 packages, two apps and four tools with manifests. Script-only tool directories and examples are outside those workspace globs. The realtime template has its own npm lockfile and Python dependencies; its [AGENTS.md](<../Archava Template/AGENTS.md>) requires standalone operation without parent-repository imports.
+There are 44 pnpm workspace projects: 38 packages, two apps and four tools with manifests. Script-only tool directories and examples are outside those workspace globs. The realtime template has its own npm lockfile and Python dependencies; its [AGENTS.md](<../Archava Template/AGENTS.md>) requires standalone operation without parent-repository imports.
 
 Generated `dist/` and `node_modules/` are build/install output. Ignored `.local/` contains private database state, credentials, approvals and backups; it is not disposable source cleanup. The empty untracked `clients/generic-business/` placeholder implements no consumer. Current boundaries do not require directory relocation.
 
@@ -123,12 +123,29 @@ in order lines; fulfillment consumes once, and returns explicitly restock or
 discard. No event implies payment. The trusted transaction kernel is reusable by
 future food-service without duplicating its stock ledger.
 
-Current inventory is 34 compiled artifacts, 18 unchanged external pins, nine owned
+Historical 1.7.0 inventory is 34 compiled artifacts, 18 unchanged external pins, nine owned
 ledgers, host 0.10.0, config 0.9.0 and kits 0.4.0. Assembly v5 adds optional
 commerce and preserves earlier contracts/defaults. K03/K04 `commerce_orders` is
-bounded retail/wholesale scope. Restaurant menu/recipe/table/kitchen ownership is
-[the next domain slice](FOODSERVICE_MODULE_PLAN.md). See
+bounded retail/wholesale scope. Restaurant ownership is implemented by the next profile below. See
 [commerce contract and activation](COMMERCE_MODULE.md).
+
+Profile 1.8.0 adds `foodservice`/`foodservice-pg` 0.1.0. Nine forced-RLS tables
+own physical tables, managed menus, sealed versioned recipes, frozen ticket lines,
+kitchen/service state, memberships and immutable history. The commerce 0.2.0
+transaction SPI owns managed product creation/updates and preparation receipts,
+audit and stock writes. Food-service never writes commerce tables directly. Its
+bounded read projections join the same transaction/tenant; deferred checks bind
+recipe allocations and both lifecycle states. Shared stock remains the only
+physical ingredient truth. No payment or customer signature follows from closing
+service.
+
+Current inventory is 36 compiled artifacts, 18 unchanged external pins, ten owned
+ledgers, host 0.11.0, config 0.10.0 and kits 0.5.0. Assembly v6 adds optional
+food-service requiring commerce in the owner-host composition. Earlier contracts
+and defaults remain supported. Independent restaurant/catering consumers reuse
+the same code; narrow K02 `foodservice_tickets` retains full-kit gaps. See
+[domain contract](FOODSERVICE_MODULE.md). Shared support cases are
+[the next capability](SUPPORT_CASES_MODULE_PLAN.md).
 
 Accepted `crm_inquiry` (K01/K05) and `project_tracking` (K05/K31) are narrow scopes.
 The latter shares internal tracking, not construction costing or full agency sales/

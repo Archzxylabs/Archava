@@ -201,7 +201,7 @@ export class PostgresCommerceRepository implements CommerceRepository {
       const observed = await commerceClock(client),
         rows = (
           await client.query<CommerceRow>(
-            'SELECT * FROM archava_commerce.products WHERE tenant_id=$1 AND ($2::uuid IS NULL OR id>$2) AND ($3::boolean IS NULL OR active=$3) ORDER BY id LIMIT $4',
+            'SELECT * FROM archava_commerce.products WHERE tenant_id=$1 AND managed_by IS NULL AND ($2::uuid IS NULL OR id>$2) AND ($3::boolean IS NULL OR active=$3) ORDER BY id LIMIT $4',
             [tenant, q.after ?? null, q.active ?? null, q.limit + 1],
           )
         ).rows,
@@ -219,7 +219,7 @@ export class PostgresCommerceRepository implements CommerceRepository {
       commerceProduct(
         (
           await client.query<CommerceRow>(
-            'SELECT * FROM archava_commerce.products WHERE tenant_id=$1 AND id=$2',
+            'SELECT * FROM archava_commerce.products WHERE tenant_id=$1 AND id=$2 AND managed_by IS NULL',
             [tenant, id],
           )
         ).rows[0],
@@ -362,7 +362,7 @@ export class PostgresCommerceRepository implements CommerceRepository {
       commerceProduct(
         (
           await client.query<CommerceRow>(
-            'SELECT * FROM archava_commerce.products WHERE tenant_id=$1 AND id=$2',
+            'SELECT * FROM archava_commerce.products WHERE tenant_id=$1 AND id=$2 AND managed_by IS NULL',
             [tenant, receipt.id],
           )
         ).rows[0],

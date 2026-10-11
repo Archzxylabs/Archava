@@ -1,6 +1,45 @@
 # Local reusable library release
 
-## Current extension — profile 1.7.0, 11 October 2026
+## Current extension — profile 1.8.0, 11 October 2026
+
+Restaurant/catering service extends commerce: 36 compiled artifacts, 18 unchanged
+external pins, ten owned ledgers, host 0.11.0, config 0.10.0 and kits 0.5.0.
+Food-service 0.1.0 owns tables, sealed recipes and whole-ticket kitchen/service;
+commerce 0.2.0 owns every shared price/stock write through its private transaction
+SPI. Additive migration 002 marks managed portion products without changing
+commerce migration 001 or its public product contracts. Assembly v6 preserves
+older contracts and four-module defaults.
+
+| Extension                 | Accepted evidence                                                                                                                                                                                                                         | Limit                                                                                      |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Tables/recipes/tickets    | Two cold-installed restaurant/catering consumers; real PostgreSQL table/ingredient races, frozen price/recipe snapshots, duplicate preparation, waste, expiry after lock waits, current grants, SQL integrity, restart/restore; 23 checks | Whole-ticket service; no per-item POS, financial settlement, hardware or public self-order |
+| Shared commerce ownership | Non-empty archived 1.7 migration retains historical quotes/stock/grants/receipts; generic APIs refuse managed portions; preparation commits both domains/audits atomically with rollback after injected failure                           | Trusted server SPI; no machine write grant                                                 |
+| Owner composition         | Actual compiled host and Chromium create tables/menu recipes, queue/prepare/ready/serve/close, cancel cooked food, recover lost responses/denied retry, viewers, toggles and backup restore; 10 checks                                    | In-memory pending browser recovery; larger ingredient catalogs use API                     |
+| Trusted assembly          | Narrow K02 `foodservice_tickets` under v6; existing scopes retained; kits 11 and assembly 2                                                                                                                                               | Full operating-kit acceptance remains zero of 40                                           |
+
+All eight root gates passed: 1,514 tests/109 files. Fresh regression evidence retains
+CRM 38, Act 18, runtime 44, Chromium 3/70, projects 15/11, scheduling 14/9,
+accommodation 17/9, commerce 18/10 and upgrade 4. The security matrix has 41
+controls; root/runtime scans have zero advisories. The separate realtime template
+retains thirteen moderate findings and independent SDK/live gates. Local controls
+and tests do not establish production capacity, certification or full-system support.
+
+The original owner was backed up before/after and upgraded to verified 1.8.0.
+SQL JSON hashes preserve microsecond timestamps and original rows/columns in all
+57 pre-existing tables; only the expected commerce ledger entry is added. Eight
+CRM business tables, settings, identity/fingerprint keys and existing domain grants
+remain unchanged. Nine new food business tables remain empty. Migration and flags
+enroll no account; activation and food/commerce permissions are explicit.
+
+See [food-service contract and activation](FOODSERVICE_MODULE.md),
+[sanitized release evidence](audit/2026-10-11-foodservice-release.json) and
+[the complete programme ledger](STARTER_KIT_IMPLEMENTATION.md). KIT-06 is accepted
+for bounded commerce/food-service scopes. Continue KIT-07 with
+[support cases](SUPPORT_CASES_MODULE_PLAN.md), then remaining general/specialist
+requirements and full-programme handoff. No existing pricebook or provider boundary
+changes; closing a restaurant service is never reported as verified payment.
+
+## Previous extension — profile 1.7.0, 11 October 2026
 
 Shared commerce extends profile 1.6.0: 34 compiled artifacts, 18 unchanged
 external pins, nine owned ledgers, host 0.10.0, config 0.9.0 and kits 0.4.0.

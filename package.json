@@ -67,7 +67,9 @@
     "accommodation:verify": "node tools/library/verify-accommodation.mjs",
     "accommodation:verify-host": "node tools/library/verify-accommodation-host.mjs",
     "commerce:verify": "node tools/library/verify-commerce.mjs",
-    "commerce:verify-host": "node tools/library/verify-commerce-host.mjs"
+    "commerce:verify-host": "node tools/library/verify-commerce-host.mjs",
+    "foodservice:verify": "node tools/library/verify-foodservice.mjs",
+    "foodservice:verify-host": "node tools/library/verify-foodservice-host.mjs"
   },
   "devDependencies": {
     "@eslint/js": "9.37.0",

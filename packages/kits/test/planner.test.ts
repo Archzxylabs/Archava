@@ -39,13 +39,35 @@ const request = (id = 'K01', scope = 'operations') => ({
 })
 
 describe('trusted kit contracts and support boundary', () => {
+  it('composes bounded restaurant tickets with shared commerce and retains all full kit gaps', () => {
+    const supported = release()
+    supported.contracts.assembly = '6.0.0'
+    supported.packages.push(
+      ...['commerce', 'commerce-pg', 'foodservice', 'foodservice-pg'].map((name) => ({
+        name: '@archava/' + name,
+        version: name.startsWith('commerce') ? '0.2.0' : '0.1.0',
+        migrations: [],
+      })),
+    )
+    const planner = new KitPlanner(supported, COMPOSABLE_MODULES),
+      plan = planner.plan(request('K02', 'foodservice_tickets'))
+    expect(plan.readyToAssemble).toBe(true)
+    expect(plan.assembly).toEqual({ ...MINIMAL_MODULES, commerce: true, foodservice: true })
+    expect(plan.requirements.some((x) => x.id === 'inventory_quantities')).toBe(true)
+    for (const kit of listKits()) expect(planner.plan(request(kit.id)).readyToAssemble).toBe(false)
+    expect(planner.plan(request('K03', 'foodservice_tickets')).readyToAssemble).toBe(false)
+    expect(
+      new KitPlanner(supported, FULL_MODULES).plan(request('K02', 'foodservice_tickets'))
+        .readyToAssemble,
+    ).toBe(false)
+  })
   it('accepts bounded shared orders and stock for retail and wholesale while retaining full kit gaps', () => {
     const supported = release()
     supported.contracts.assembly = '5.0.0'
     supported.packages.push(
       ...['commerce', 'commerce-pg'].map((name) => ({
         name: '@archava/' + name,
-        version: '0.1.0',
+        version: '0.2.0',
         migrations: [],
       })),
     )

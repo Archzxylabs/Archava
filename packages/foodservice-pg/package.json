@@ -1,0 +1,28 @@
+{
+  "name": "@archava/foodservice-pg",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Reusable restaurant tables, frozen recipes and deterministic kitchen/service tickets.",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "build": "echo \"@archava/foodservice-pg ships TypeScript source\""
+  },
+  "dependencies": {
+    "zod": "4.1.12",
+    "pg": "8.23.1",
+    "@archava/foodservice": "workspace:*",
+    "@archava/commerce": "workspace:*",
+    "@archava/commerce-pg": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vitest": "4.1.11",
+    "@types/pg": "8.23.1"
+  }
+}
