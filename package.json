@@ -81,7 +81,9 @@
     "capacity:verify": "node tools/library/pack.mjs && node tools/library/verify-capacity.mjs",
     "capacity:verify-host": "pnpm crm:build && node tools/library/verify-capacity-host.mjs",
     "assets:verify": "node tools/library/pack.mjs && node tools/library/verify-assets.mjs",
-    "assets:verify-host": "pnpm crm:build && node tools/library/verify-assets-host.mjs"
+    "assets:verify-host": "pnpm crm:build && node tools/library/verify-assets-host.mjs",
+    "subscriptions:verify": "node tools/library/pack.mjs && node tools/library/verify-subscriptions.mjs",
+    "subscriptions:verify-host": "pnpm crm:build && node tools/library/verify-subscriptions-host.mjs"
   },
   "devDependencies": {
     "@eslint/js": "9.37.0",

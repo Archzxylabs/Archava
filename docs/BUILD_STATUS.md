@@ -1,6 +1,35 @@
 # Build status
 
-## Current checkpoint — profile 1.12.0, 12 October 2026
+## Current checkpoint — profile 1.13.0, 12 October 2026
+
+The accepted bounded extensions add [recurring subscriptions, entitlements and usage tracking](SUBSCRIPTIONS_MODULE.md),
+generalizing SaaS digital subscriptions (`K09`) and gym/club memberships (`K08`), with human-only mutation validation,
+explicit entitlement allocations (`metered`, `seat_count`, `boolean_access`, `pass_bundle`), quota exhaustion refusal,
+idempotent usage consumption audit, backend payment confirmations, optimistic revision control, and hardened S1 receipt recovery state machine.
+CRM, projects, scheduling, accommodation, commerce, food-service, support, purchasing, organizations, proposals, capacity, and assets remain fully supported.
+
+All eight root gates passed: **1,547 tests in 117 files**. Fresh evidence includes
+CRM 38, Act 18, runtime 44, Chromium minimal/full 3/70, projects 15/11, scheduling
+14/9, accommodation 17/9, commerce 18/10, food-service 23/10, support 19/9, purchasing
+19/11, organizations 24/6, proposals 30/6, capacity 29/6, assets 18/5, subscriptions 18/5, kit planning/assembly 13,
+assembly 2 and prior-profile upgrade 4. The security matrix has 62 controls; root/runtime
+scans have zero advisories. The separate realtime template retains 13 moderate findings
+and independent SDK/live gates.
+
+Synthetic upgrade from previous supported 1.10.0 to 1.13.0 passed all 4 checks on an
+isolated PostgreSQL cluster without altering historical records, audit logs, or command UUIDs,
+and invalidates identity while holding native execution with fresh approval epochs. Release
+artifacts for candidate 1.13.0 are archived in `dist/releases/1.13.0/library` and `dist/releases/1.13.0/crm-runtime`
+matching 50 compiled artifacts, 17 database ledgers, host 0.16.0, and assembly v11. See
+[sanitized evidence](audit/2026-10-12-release-1.13.0.json) and
+[current release acceptance](LOCAL_LIBRARY_RELEASE.md).
+
+Full operating kits accepted: **0 of 40 researched candidates**. Narrow domain scopes
+do not accept complete hotel/POS/ERP systems. Payment/provider, customer portal,
+regulatory adapters and broader operational dimensions retain their evidence gates.
+No whole-product percentage is inferred from test counts.
+
+## Previous checkpoint — profile 1.12.0, 12 October 2026
 
 The accepted bounded extensions add [serialized asset register, custody tracking and maintenance logging](ASSETS_MODULE.md),
 generalizing rental dispatch/returns (`K10`) and customer workshop repairs (`K18`), with human-only mutation validation,

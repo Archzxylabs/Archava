@@ -1,16 +1,16 @@
 {
   "schemaVersion": "1.0.0",
   "id": "archava-local-library",
-  "version": "1.12.0",
+  "version": "1.13.0",
   "host": {
     "name": "@archava/crm-host",
-    "version": "0.15.0"
+    "version": "0.16.0"
   },
   "contracts": {
     "clientConfig": "1.0.0",
     "deploymentPlan": "2.0.0",
     "hostSettings": 1,
-    "assembly": "10.0.0",
+    "assembly": "11.0.0",
     "presence": "1.0.0",
     "kitPlan": "1.0.0",
     "kitCatalogue": "1.0.0"
@@ -61,7 +61,7 @@
     },
     {
       "name": "@archava/config",
-      "version": "0.14.0",
+      "version": "0.15.0",
       "migrations": []
     },
     {
@@ -186,7 +186,7 @@
     },
     {
       "name": "@archava/kits",
-      "version": "0.9.0",
+      "version": "0.10.0",
       "migrations": []
     },
     {
@@ -365,6 +365,21 @@
           "checksum": "b77c70bddd01512defad588a04497380aafd923dd52c833ab30fc578c9c6cfec"
         }
       ]
+    },
+    {
+      "name": "@archava/subscriptions",
+      "version": "0.1.0",
+      "migrations": []
+    },
+    {
+      "name": "@archava/subscriptions-pg",
+      "version": "0.1.0",
+      "migrations": [
+        {
+          "file": "001_subscriptions_entitlements_usage.sql",
+          "checksum": "7c830dd1a52c957e3c94a4f47204af9ae7c95d623a67f9beb0184f230068caa4"
+        }
+      ]
     }
   ],
   "databaseLedgers": [
@@ -451,6 +466,11 @@
       "schema": "archava_assets",
       "package": "@archava/assets-pg",
       "migrations": ["001_assets_custody_maintenance"]
+    },
+    {
+      "schema": "archava_subscriptions",
+      "package": "@archava/subscriptions-pg",
+      "migrations": ["001_subscriptions_entitlements_usage"]
     }
   ],
   "requiredAdapters": [
@@ -469,7 +489,8 @@
     "@archava/organizations-pg",
     "@archava/proposals-pg",
     "@archava/capacity-pg",
-    "@archava/assets-pg"
+    "@archava/assets-pg",
+    "@archava/subscriptions-pg"
   ],
   "operatorChecks": [
     "non-owner runtime database role",

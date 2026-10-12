@@ -73,6 +73,7 @@ export const kitRequestSchema = z
               'proposals_scope',
               'delivery_capacity',
               'asset_register',
+              'subscriptions_entitlements',
             ]),
           })
           .strict(),
@@ -135,6 +136,7 @@ export interface KitPlan {
       | 'proposals_scope'
       | 'delivery_capacity'
       | 'asset_register'
+      | 'subscriptions_entitlements'
   }[]
   readonly requirements: readonly KitRequirement[]
   readonly blockers: readonly KitRequirement[]

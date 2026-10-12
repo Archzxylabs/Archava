@@ -206,5 +206,16 @@ custody tracking, custody dispatch/return handovers with condition grading, prev
 corrective maintenance logs with replaced parts audit, optimistic revision locking, forced tenant RLS,
 machine mutation denial, resilient receipt recovery state machine, and restart/restore.
 
+## Twelfth implementation slice
+
+Adds `subscriptions` and `subscriptions-pg` 0.1.0: 50 compiled artifacts, 18 unchanged external pins,
+seventeen owned ledgers (`001_subscriptions_entitlements_usage.sql`), host 0.16.0, config 0.15.0, kits 0.10.0,
+and assembly v11 optional composition. Independent SaaS sales (`K09`) and gym/club (`K08`) consumers
+share identical domain code and browser-safe dashboards.
+Narrow `subscriptions_entitlements` scope proves recurring subscription lifecycles, explicit entitlements
+(`metered`, `seat_count`, `boolean_access`, `pass_bundle`), backend payment confirmation, quota exhaustion refusal,
+idempotent usage consumption audit, optimistic revision locking, forced tenant RLS, machine mutation denial,
+resilient receipt recovery state machine (S1), and restart/restore.
+
 All forty full operating kits continue to retain their declared domain and adapter gaps.
 No complete operating kit is promoted by these narrow scopes.

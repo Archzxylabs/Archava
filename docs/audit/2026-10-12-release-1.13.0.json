@@ -1,0 +1,546 @@
+{
+  "schemaVersion": "1.0.0",
+  "profile": "1.13.0",
+  "checkedAt": "2026-10-12T13:42:19.190Z",
+  "sourceBaseline": "4e2923a",
+  "scope": "bounded recurring subscriptions, entitlements and usage tracking with resilient receipt state machine",
+  "kitCandidates": 40,
+  "operationalKitsAccepted": [],
+  "inventory": {
+    "workspaces": 59,
+    "internalArtifacts": 50,
+    "externalPins": 18,
+    "databaseLedgers": 17,
+    "host": {
+      "name": "@archava/crm-host",
+      "version": "0.16.0"
+    },
+    "contracts": {
+      "clientConfig": "1.0.0",
+      "deploymentPlan": "2.0.0",
+      "hostSettings": 1,
+      "assembly": "11.0.0",
+      "presence": "1.0.0",
+      "kitPlan": "1.0.0",
+      "kitCatalogue": "1.0.0"
+    }
+  },
+  "verification": {
+    "root": {
+      "command": "pnpm verify",
+      "gatesPassed": 8,
+      "unitTests": 1547,
+      "unitFiles": 117
+    },
+    "organizations": {
+      "checksPassed": 24,
+      "report": "dist/organizations-proof/results.json"
+    },
+    "organizationsHost": {
+      "checksPassed": 6,
+      "report": "dist/organizations-host-proof/results.json"
+    },
+    "proposals": {
+      "checksPassed": 30,
+      "report": "dist/proposals-proof/results.json"
+    },
+    "proposalsHost": {
+      "checksPassed": 6,
+      "report": "dist/proposals-host-proof/results.json"
+    },
+    "capacity": {
+      "checksPassed": 29,
+      "report": "dist/delivery-capacity-proof/results.json"
+    },
+    "capacityHost": {
+      "checksPassed": 6,
+      "report": "dist/delivery-capacity-host-proof/results.json"
+    },
+    "purchasing": {
+      "checksPassed": 19,
+      "report": "dist/purchasing-proof/results.json"
+    },
+    "purchasingHost": {
+      "checksPassed": 11,
+      "report": "dist/purchasing-host-proof/results.json"
+    },
+    "support": {
+      "checksPassed": 19,
+      "report": "dist/support-proof/results.json"
+    },
+    "supportHost": {
+      "checksPassed": 9,
+      "report": "dist/support-host-proof/results.json"
+    },
+    "foodservice": {
+      "checksPassed": 23,
+      "report": "dist/foodservice-proof/results.json"
+    },
+    "foodserviceHost": {
+      "checksPassed": 10,
+      "report": "dist/foodservice-host-proof/results.json"
+    },
+    "commerce": {
+      "checksPassed": 18,
+      "report": "dist/commerce-proof/results.json"
+    },
+    "commerceHost": {
+      "checksPassed": 10,
+      "report": "dist/commerce-host-proof/results.json"
+    },
+    "accommodation": {
+      "checksPassed": 17,
+      "report": "dist/accommodation-proof/results.json"
+    },
+    "accommodationHost": {
+      "checksPassed": 9,
+      "report": "dist/accommodation-host-proof/results.json"
+    },
+    "scheduling": {
+      "checksPassed": 14,
+      "report": "dist/scheduling-proof/results.json"
+    },
+    "schedulingHost": {
+      "checksPassed": 9,
+      "report": "dist/scheduling-host-proof/results.json"
+    },
+    "projects": {
+      "checksPassed": 15,
+      "report": "dist/project-proof/results.json"
+    },
+    "projectHost": {
+      "checksPassed": 11,
+      "report": "dist/project-host-proof/results.json"
+    },
+    "kits": {
+      "checksPassed": 13,
+      "report": "dist/kit-proof/results.json"
+    },
+    "assembly": {
+      "checksPassed": 2,
+      "report": "dist/assembly-proof/results.json"
+    },
+    "upgrade": {
+      "checksPassed": 4,
+      "report": "dist/upgrade-proof/results.json"
+    },
+    "runtime": {
+      "checksPassed": 44,
+      "report": "dist/crm-runtime-proof/results.json"
+    },
+    "crm": {
+      "checksPassed": 38,
+      "report": "dist/crm-proof/results.json"
+    },
+    "act": {
+      "checksPassed": 18,
+      "report": "dist/act-proof/results.json"
+    },
+    "browser": {
+      "checksPassed": 70,
+      "report": "dist/browser-proof/results.json"
+    },
+    "minimalBrowser": {
+      "checksPassed": 3,
+      "profile": "1.8.0"
+    },
+    "assets": {
+      "checksPassed": 18,
+      "report": "dist/assets-proof/results.json"
+    },
+    "assetsHost": {
+      "checksPassed": 5,
+      "report": "dist/assets-host-proof/results.json"
+    },
+    "subscriptions": {
+      "checksPassed": 18,
+      "report": "dist/subscriptions-proof/results.json"
+    },
+    "subscriptionsHost": {
+      "checksPassed": 5,
+      "report": "dist/subscriptions-host-proof/results.json"
+    }
+  },
+  "security": {
+    "controlsPassed": 62,
+    "scans": {
+      "platform": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0
+      },
+      "runtime": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      },
+      "template": {
+        "info": 0,
+        "low": 0,
+        "moderate": 13,
+        "high": 0,
+        "critical": 0,
+        "total": 13
+      }
+    },
+    "report": "dist/security-proof/results.json",
+    "certification": false
+  },
+  "artifacts": [
+    {
+      "name": "@archava/subscriptions-pg",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-subscriptions-pg-0.1.0.tgz",
+      "sha256": "bd740beb15f5cc0239fbcb4a407c000dc9c42d03aa556a653452b0b64bf72b0a",
+      "implementationSha256": "db59d0aa00ba5bafb967312ab8529de0fc3ca72cdbfe1ea2f449d0f48876fc56"
+    },
+    {
+      "name": "@archava/subscriptions",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-subscriptions-0.1.0.tgz",
+      "sha256": "c425f9e3cde47c4d4a80a8c085acd535d652cc1b64bbc77d191df8d26306de48",
+      "implementationSha256": "6c20a9c29655c1f3f0c61aea44d2290a4d8746ea6514ea71f57bd5081ee4653c"
+    },
+    {
+      "name": "@archava/assets-pg",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-assets-pg-0.1.0.tgz",
+      "sha256": "f8ae34d3ff16aa2f7fcd2106e04dc82c411e74f636ea637ef1c591848bfe130c",
+      "implementationSha256": "90d6a6796721c62b48790be4004da955b681449964fcad99dd7fbd8d8720f2cd"
+    },
+    {
+      "name": "@archava/assets",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-assets-0.1.0.tgz",
+      "sha256": "0084be20c46394dab4aaa8c047a9b029394427de9696eac399c3a651ccec7299",
+      "implementationSha256": "14b3b0ec709b7da22dcba43da31756425599a40f103fe7e857683bbe2863b755"
+    },
+    {
+      "name": "@archava/capacity-pg",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-capacity-pg-0.1.0.tgz",
+      "sha256": "4404a00381bb705974f9f461e0c7160c19694a0cb05ab882b4d0a9123d193359",
+      "implementationSha256": "c5fd66cb330d2c98bfdd8765874fcd7bdf9d98e91403290499a9e89c8e8648b2"
+    },
+    {
+      "name": "@archava/capacity",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-capacity-0.1.0.tgz",
+      "sha256": "cf05910ad6782a32633b34222e7f3f584b5a788754780f9f917cd48813fb8581",
+      "implementationSha256": "d013ea2d99cbb818400da21f542fb9b9e841349c5f050e477dae7733e84b8a0b"
+    },
+    {
+      "name": "@archava/proposals-pg",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-proposals-pg-0.1.0.tgz",
+      "sha256": "c5232c415efd35f6767dcc21d28c3adcf2588363bb91d3efb60826e8e59c90bc",
+      "implementationSha256": "b55467417e2f73a99d4998992bc79a2898109d542e97af00099eea1bdac40d34"
+    },
+    {
+      "name": "@archava/proposals",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-proposals-0.1.0.tgz",
+      "sha256": "c27b5b2b391acc6e372af12522f9c3f10b71d75be290ff890c7b220bb8d6f779",
+      "implementationSha256": "c00604cad8c19174272e14ab48e8c9c5e7d5373cd96760296896231aa250a47d"
+    },
+    {
+      "name": "@archava/organizations-pg",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-organizations-pg-0.1.0.tgz",
+      "sha256": "db7eecd8ff9d628a48ad4890a7e83b7d6691e7eac371706131ee2b02f0568ce9",
+      "implementationSha256": "dd23f009a9816f79cc1fd01f27f44fcfe5b81335c43b170c279cbcb8ee0e9516"
+    },
+    {
+      "name": "@archava/organizations",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-organizations-0.1.0.tgz",
+      "sha256": "1e2aa5bb31d410d57e30db3af66ee2e7343fbb9d60298c2e33e8c460e4ce667f",
+      "implementationSha256": "0b9b2fcf787e4112912388f99962c957fa2c89e45b2a36bbb6f8112358b91097"
+    },
+    {
+      "name": "@archava/commerce-pg",
+      "version": "0.3.0",
+      "tarball": "tarballs/archava-commerce-pg-0.3.0.tgz",
+      "sha256": "c19fbca4aa5abb26873c4289c49cb15f97952f073b7b5af49458ce2df10c0380",
+      "implementationSha256": "5890d04b7cdf3759204af90c1307cec27e90d8b7c8b104736151bc1b94dec0e0"
+    },
+    {
+      "name": "@archava/commerce",
+      "version": "0.3.0",
+      "tarball": "tarballs/archava-commerce-0.3.0.tgz",
+      "sha256": "51c9ba60684cf8beacdf7cdd67100704dc5533b740fdc67077284f3e3247ce36",
+      "implementationSha256": "655b38e3f4b5e4d8fae19f987baefae84463008632ca45a318610da5bfe426e1"
+    },
+    {
+      "name": "@archava/foodservice-pg",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-foodservice-pg-0.1.0.tgz",
+      "sha256": "0ce9a7a679070ff0a60a1188e30b0e81ce860b1499144b15683026a2c8b23b2f",
+      "implementationSha256": "adf12b8c21c59db40075397502bc7fc46d18535a9d0a1f5b1a7cb90748e9e82c"
+    },
+    {
+      "name": "@archava/foodservice",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-foodservice-0.1.0.tgz",
+      "sha256": "804be087c52ae2f31f8d1f29eb9b5db3a2a891705b5d1af2f8a6da0594b25895",
+      "implementationSha256": "b41b645d99229530718243005d986c51eaeccad1d28ecc819f3a0b92c76f991c"
+    },
+    {
+      "name": "@archava/support-pg",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-support-pg-0.1.0.tgz",
+      "sha256": "109ae49cc55253e6a48ea8f7b8b544c308d691ccdede55d22cd3baffab2a6895",
+      "implementationSha256": "03f8525841b1a668f161e063171641d4902dcab06a61173ab70f5906dabb9e6c"
+    },
+    {
+      "name": "@archava/support",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-support-0.1.0.tgz",
+      "sha256": "153b0e74270525ae0b2cc2fd3df37f07705f88655172a3c1ef966a5dfa10b99a",
+      "implementationSha256": "b78cc9c1cbc63f97044df25ca28d92eb15274b78dc7a0ca4f7725fdc40bcadfb"
+    },
+    {
+      "name": "@archava/purchasing-pg",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-purchasing-pg-0.1.0.tgz",
+      "sha256": "d9cd452faa3583ca4341a7100460d5c15ef25d4d3089b5db2c1cfc58b190d28f",
+      "implementationSha256": "a484dcbff6ef34349fc48d0f1d45b0778bcb6b31414b2ecf3f4255990ceaa29d"
+    },
+    {
+      "name": "@archava/purchasing",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-purchasing-0.1.0.tgz",
+      "sha256": "2fdbbb0ba9410d8da601c68366aadbc6b9ade4035bda82cec35f913b9ad13237",
+      "implementationSha256": "5108b08fe4c9180d21a2038346f342046c652f67a66bed9072fbe80823487b43"
+    },
+    {
+      "name": "@archava/accommodation-pg",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-accommodation-pg-0.1.0.tgz",
+      "sha256": "9f9b6e7b59fff973bd695ce1d1df618c4c1900414bb074aff97a0db33f26674f",
+      "implementationSha256": "38a848bfcb5e437b67cc5487e575193a97f0d6058d65105fbb78baed5ef78776"
+    },
+    {
+      "name": "@archava/accommodation",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-accommodation-0.1.0.tgz",
+      "sha256": "a82f28d6a49274987102f4b83b61c78ffc04fcc1f2b214bbdf0698e84e6032b6",
+      "implementationSha256": "ccf9450844cb3ccc17826a343e333b0ca45055e55f9d1deb59b24d89a38ef97b"
+    },
+    {
+      "name": "@archava/scheduling",
+      "version": "0.2.0",
+      "tarball": "tarballs/archava-scheduling-0.2.0.tgz",
+      "sha256": "62914a26d0bd8b4d1689afaacb9eb89987f27ab890dffabebfa62164ca1eef96",
+      "implementationSha256": "f7d893bdeeae7f02d30e1f5053571a7c5edd54a06a1bafd1ccd8e681efa0321b"
+    },
+    {
+      "name": "@archava/scheduling-pg",
+      "version": "0.2.0",
+      "tarball": "tarballs/archava-scheduling-pg-0.2.0.tgz",
+      "sha256": "eec6c0e1e8a033e91b595bf2fa4b57ad4a0f33bcc3b5f92d9406e64daa374e83",
+      "implementationSha256": "6327ff5f79f7c657de54f3c47a939ee9bd2fb335e5bad7e802dce4b5041c519b"
+    },
+    {
+      "name": "@archava/projects-pg",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-projects-pg-0.1.0.tgz",
+      "sha256": "448c1b136e6abc1b60c87bba168b2f031e8c9b50def6a020fa8ec35ecae2079c",
+      "implementationSha256": "c110da48624e5ed66804e64e009b410aa96ece458d02fcb654678b0be66535de"
+    },
+    {
+      "name": "@archava/projects",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-projects-0.1.0.tgz",
+      "sha256": "c5b9eb80fda29f1fe58c264904045d5f7ff158179f3ab96a5bc590c5276665ee",
+      "implementationSha256": "a3fa96ce259425caaa3138c8e6cd9afe5d8202a4812e3e69b7aa51b2bf395b5f"
+    },
+    {
+      "name": "@archava/kits",
+      "version": "0.10.0",
+      "tarball": "tarballs/archava-kits-0.10.0.tgz",
+      "sha256": "73ee855fd917c980be14e2a02e3870368ce9e489f08670638a1f42a2f6210f3c",
+      "implementationSha256": "642556a5693449ca8796ee028351b679c8cf21f0dfc11de4aa9deea901b8614b"
+    },
+    {
+      "name": "@archava/config",
+      "version": "0.15.0",
+      "tarball": "tarballs/archava-config-0.15.0.tgz",
+      "sha256": "1e987ef4107db066880b24d133e48265bec9cd3f9109b4fa9afc38bf1f7a2192",
+      "implementationSha256": "5d9ac05bf1740252c88a12b422254cbda86148e182145f7fb8cf8eb2b56ff0a3"
+    },
+    {
+      "name": "@archava/crm-act",
+      "version": "0.2.0",
+      "tarball": "tarballs/archava-crm-act-0.2.0.tgz",
+      "sha256": "411b03a47fa99505cfb75b7b3629628d279105910cb3fa73ff2d4b3839d0346b",
+      "implementationSha256": "48d4efd5f83fca829d4876f300522cd38ae44f15735b6fac7a69b07b2a980fb3"
+    },
+    {
+      "name": "@archava/crm",
+      "version": "0.7.0",
+      "tarball": "tarballs/archava-crm-0.7.0.tgz",
+      "sha256": "e94bdd18226a177ebf2d1d3038ad115c7ac8530a4b85ce48e66eb245d1e5b83b",
+      "implementationSha256": "d05c36475e82fbb5f7934a73e0b42a8d751323b8334988dbe761c6d9fcf213f8"
+    },
+    {
+      "name": "@archava/crm-pg",
+      "version": "0.7.0",
+      "tarball": "tarballs/archava-crm-pg-0.7.0.tgz",
+      "sha256": "2e4e9134692bf518490888b7b98c17a942d932a611d27546c47a9f739151a91f",
+      "implementationSha256": "4d1078b2907ce586f11387e9497f4f1ef08767c56d3fe7cd29b8a0ef0e2dff73"
+    },
+    {
+      "name": "@archava/act-host",
+      "version": "0.3.0",
+      "tarball": "tarballs/archava-act-host-0.3.0.tgz",
+      "sha256": "4a74531af0d187f33a7b002f1a830a40ef447ba02c606746f3e6c0578ee4f863",
+      "implementationSha256": "bcdaaad7263cdf04e14d05740db5d617a74773b5d60876546238b2b6461cdea5"
+    },
+    {
+      "name": "@archava/acl",
+      "version": "0.3.0",
+      "tarball": "tarballs/archava-acl-0.3.0.tgz",
+      "sha256": "489109708b0bb14f37ceec8689f7d86b560bf335ce65d5d780d55840da3c4951",
+      "implementationSha256": "6176e621155dfffea1b7a444bbe3df8b354e9f3ab1f82a3089fd6b99824e507c"
+    },
+    {
+      "name": "@archava/core",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-core-0.1.0.tgz",
+      "sha256": "5d8285571305f5309dc43838056269018a7e135871e9c8cdda32cd75fee51cf3",
+      "implementationSha256": "37793cb6929223a276e0984d530ee56045a0faee500e97a560850cd5b514696d"
+    },
+    {
+      "name": "@archava/act-confirmation",
+      "version": "0.3.0",
+      "tarball": "tarballs/archava-act-confirmation-0.3.0.tgz",
+      "sha256": "160ad9d90b835f91349557ad15987efe9481383edd354b7cf09b65007747c43b",
+      "implementationSha256": "37dbe66d6d5094104fc968ed7813aee29591a7132298a25040defa406640dcb4"
+    },
+    {
+      "name": "@archava/adapters",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-adapters-0.1.0.tgz",
+      "sha256": "021e37b57c48698961453bcf425fe26db2669aa5c8c32aef700e54369e09f839",
+      "implementationSha256": "be1cc11534a7887138b7b8c8b4213d6707d38ab751a46eebb9d25adc2207880f"
+    },
+    {
+      "name": "@archava/assistant",
+      "version": "0.5.0",
+      "tarball": "tarballs/archava-assistant-0.5.0.tgz",
+      "sha256": "5044f613b63b27097782a99158dcc665448bd0b9583bdd8aa66214dfac2900f0",
+      "implementationSha256": "351a41248ebca52093aeb01ad124a87d0a3abd3feb9c889d4b528cbb677393c6"
+    },
+    {
+      "name": "@archava/decision",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-decision-0.1.0.tgz",
+      "sha256": "411f7507335051e5b2c1a661821d4d0c69d2ffc7d1987136250ddedd12c9f693",
+      "implementationSha256": "b5648818caa633cf4919a6a3096de753534ecf56f5f1a9bf7a8687b4989aa217"
+    },
+    {
+      "name": "@archava/knowledge",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-knowledge-0.1.0.tgz",
+      "sha256": "8173fb3f529605dc3ecf2cdbea152a413020b88f2681e62cfc1228b308b3def5",
+      "implementationSha256": "086d9c248544f6032f6112647c3ca6193561152b24149b84904bed952f193eff"
+    },
+    {
+      "name": "@archava/act-host-pg",
+      "version": "0.2.0",
+      "tarball": "tarballs/archava-act-host-pg-0.2.0.tgz",
+      "sha256": "965bc8b97210751b5e27b8f80c087725449dc92ecbdc413a8d78cb288959d6a0",
+      "implementationSha256": "5e9769f112258240d53a78c4ff1c087360621e33ed93dc9f5cc55d63fc9a6e44"
+    },
+    {
+      "name": "@archava/act-storage",
+      "version": "0.2.0",
+      "tarball": "tarballs/archava-act-storage-0.2.0.tgz",
+      "sha256": "af011132600505d918bc303fe4b7055ab4cc2dc8fe27670d3ad4349534e233c4",
+      "implementationSha256": "aefbb56d97e6bc7bcb470246acab234b135b5e397659ac38d14ea4f4dbca6276"
+    },
+    {
+      "name": "@archava/act-booking",
+      "version": "0.2.0",
+      "tarball": "tarballs/archava-act-booking-0.2.0.tgz",
+      "sha256": "39ac16186a72e11220c929cd13190bbfca41d2eec2bf5b4787093ed31bcd9bce",
+      "implementationSha256": "6fc4bfd8dcdcee1b9208730b5a91730d58850ed3f2c5f3945945b9114d94201b"
+    },
+    {
+      "name": "@archava/act-email",
+      "version": "0.2.0",
+      "tarball": "tarballs/archava-act-email-0.2.0.tgz",
+      "sha256": "d812b494935d37e21be380c2156ce6940a32d0e5e177af0cccb6c773f490a9f8",
+      "implementationSha256": "b9969471b7a2fb8b7792ce1b6a220570ee6bf4f24fd3423ca550fcf54223565f"
+    },
+    {
+      "name": "@archava/act-confirmation-pg",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-act-confirmation-pg-0.1.0.tgz",
+      "sha256": "21e811ecc4ec811be978a2ee082338f29e8f820b3e555ab2bd737152c507e240",
+      "implementationSha256": "4493325f2c3e25b32fb6f78701bbaf7cb42b7773659fb0e238961f2c10dfc6d9"
+    },
+    {
+      "name": "@archava/presence",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-presence-0.1.0.tgz",
+      "sha256": "e07451e98f16f30bb3919d37374382c117b83cee1c4e0eead77bdb92f9ee8b63",
+      "implementationSha256": "239bc9e0b4a723589ab2a888c24111259d7bdc008c962774413a333e045722bd"
+    },
+    {
+      "name": "@archava/sdk",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-sdk-0.1.0.tgz",
+      "sha256": "4de41bcefbe6bb3ea5a93486587bb2d6daa89dcaac5614f7130fd0bce8b9a328",
+      "implementationSha256": "ecce0c4533159a402957f084b4cd01ed1bad5eb5068236217443330f32112813"
+    },
+    {
+      "name": "@archava/chat",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-chat-0.1.0.tgz",
+      "sha256": "dd6e8b012c941c17cba74ce2569cde35e6a84cb6bf025a103267a57083ca3a0f",
+      "implementationSha256": "0b060009bddd6d83d7d222a89a18b22aa0c1402978dba9dd879f02c5a85a00bc"
+    },
+    {
+      "name": "@archava/identity-pg",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-identity-pg-0.1.0.tgz",
+      "sha256": "9f105b74aaef696c29a8a4cfb543d8068503d4caaee3090f59b1a091468eb4c9",
+      "implementationSha256": "44ceef698ce0fce7116a847ada1298a789b997c5d4b2d57822c7c1f3cfc140a7"
+    },
+    {
+      "name": "@archava/crm-assistant",
+      "version": "0.7.0",
+      "tarball": "tarballs/archava-crm-assistant-0.7.0.tgz",
+      "sha256": "ba4a99d87a3336e414e413b9abda4e05908682010dadfcecbc1b4b5ef6e16df4",
+      "implementationSha256": "197bdf3662b57933687cfce95effbd8ba9865694e6c9def2e04386a44060c4f1"
+    },
+    {
+      "name": "@archava/provider-runtime",
+      "version": "0.1.0",
+      "tarball": "tarballs/archava-provider-runtime-0.1.0.tgz",
+      "sha256": "18dac3e9c824466b16d380c151bce588148a510d2d2853e767bd76cdcb4b21de",
+      "implementationSha256": "f6820f2637d9314d783ac477606e6ddc394d12f77f56a9f68af9462671066c3e"
+    },
+    {
+      "name": "@archava/act",
+      "version": "0.2.0",
+      "tarball": "tarballs/archava-act-0.2.0.tgz",
+      "sha256": "cf878207a1cbf8e6b88116942cfd5491b2db1116e7e8e976d2719fc763a57de1",
+      "implementationSha256": "2a9da68795f119f5eff33bcc0e5026540a6d4390412cd6255b4af4fe68a0c4e3"
+    },
+    {
+      "name": "@archava/act-postmark",
+      "version": "0.2.0",
+      "tarball": "tarballs/archava-act-postmark-0.2.0.tgz",
+      "sha256": "c8480afd2e9bd6f5eedb8cfd5847bae76703747bf8e01d0337641f4d269fef51",
+      "implementationSha256": "59d6cbe65eea6a338f3e787c654d59009b076ae2f8f81b52fb7bb294199d7a0d"
+    }
+  ]
+}

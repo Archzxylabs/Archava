@@ -38,6 +38,7 @@ export const releaseCatalogSchema = z
             '8.0.0',
             '9.0.0',
             '10.0.0',
+            '11.0.0',
           ])
           .optional(),
         presence: z.literal('1.0.0').optional(),
@@ -53,7 +54,7 @@ export const releaseCatalogSchema = z
       .min(1)
       .max(128)
       .optional(),
-    databaseLedgers: z.array(ledger).min(1).max(16),
+    databaseLedgers: z.array(ledger).min(1).max(32),
     requiredAdapters: z.array(packageName).min(1),
     operatorChecks: z.array(z.string().min(1).max(120)).min(1),
   })

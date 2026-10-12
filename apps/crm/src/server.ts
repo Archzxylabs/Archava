@@ -40,6 +40,8 @@ import { CapacityService } from '@archava/capacity'
 import { PostgresCapacityRepository } from '@archava/capacity-pg'
 import { AssetService } from '@archava/assets'
 import { PostgresAssetRepository } from '@archava/assets-pg'
+import { SubscriptionService } from '@archava/subscriptions'
+import { PostgresSubscriptionRepository } from '@archava/subscriptions-pg'
 
 // This local host also runs on desktops without reliable IPv6 routing.
 setDefaultResultOrder('ipv4first')
@@ -170,6 +172,11 @@ try {
       : undefined,
     (settings.modules ?? FULL_MODULES).assets
       ? new AssetService(await PostgresAssetRepository.create(runtimePool, settings.fingerprintKey))
+      : undefined,
+    (settings.modules ?? FULL_MODULES).subscriptions
+      ? new SubscriptionService(
+          await PostgresSubscriptionRepository.create(runtimePool, settings.fingerprintKey),
+        )
       : undefined,
   )
   process.stdout.write(`CRM ready: ${host.origin}\n`)

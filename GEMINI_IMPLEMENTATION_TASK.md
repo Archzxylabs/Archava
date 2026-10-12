@@ -5,12 +5,30 @@ saat owner memintanya. Lanjutkan pekerjaan di repository yang sudah ada, tuntask
 implementasi beserta bukti pengujiannya, dan jaga data lokal owner. Baca file ini
 sampai habis sebelum mengubah kode.
 
-## 0. Tugas aktif — review `bc23ff0`, candidate 1.11.0
+## 0. Status Roadmap & Tugas Aktif
 
-**Review Codex, 12 Oktober 2026: sebagian besar temuan lama teratasi; masih ada
-blocker recovery receipt dan release closure.** Jangan lanjut domain baru atau
-menyebut seluruh N1–N5 accepted sebelum tugas aktif ini selesai. Laporan Gemini
-pada review historis di bawah bukan pengganti hasil acceptance terbaru.
+### Candidate 1.13.0 — Subscriptions, Entitlements & Usage Tracking [ACCEPTED & CLOSED]
+
+- **Contracts & Package**: `@archava/subscriptions` and `@archava/subscriptions-pg` 0.1.0 (50 artifacts, 17 database ledgers).
+- **Core Capabilities**: Recurring subscription lifecycles, explicit entitlements (`metered`, `seat_count`, `boolean_access`, `pass_bundle`), quota exhaustion enforcement, idempotent usage consumption, authoritative backend payment confirmation, and hardened S1 resilient receipt recovery state machine.
+- **Verification Evidence**:
+  - `pnpm verify`: All 8 root gates passed (1,547 tests in 117 files).
+  - `pnpm subscriptions:verify`: 18/18 synthetic PostgreSQL checks passed.
+  - `pnpm subscriptions:verify-host`: 5/5 Chromium CDP failure-mode E2E checks passed.
+  - `pnpm crm:verify-upgrade`: 4/4 upgrade checks passed (1.10.0 -> 1.13.0).
+  - Archives: `dist/releases/1.13.0/library` and `dist/releases/1.13.0/crm-runtime`.
+  - Documentation: `docs/SUBSCRIPTIONS_MODULE.md`, `docs/audit/2026-10-12-release-1.13.0.json`.
+
+---
+
+### Tugas Aktif Berikutnya: Priority 4 — Attendance, Course/Event Capacity/Check-in (Candidate 1.14.0)
+
+- Generalized across two consumers: Training courses (`K16`) and event check-in (`K11`).
+- Domain scope: Sessions/rosters, participant enrollments, check-in validation, attendance audit, capacity limits.
+
+---
+
+### Catatan Historis: Review `bc23ff0`, candidate 1.11.0
 
 ### Hasil uji ulang yang benar-benar dijalankan
 
