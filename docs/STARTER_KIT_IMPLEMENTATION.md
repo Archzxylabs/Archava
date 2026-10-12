@@ -194,5 +194,17 @@ burn-rate calculations, queueing upon concurrency saturation, dynamic finish han
 burned-unit progress updates, slot completion/cancellation release, forced tenant RLS,
 and restart/restore.
 
+## Eleventh implementation slice
+
+Adds `assets` and `assets-pg` 0.1.0: 48 compiled artifacts, 18 unchanged external pins,
+sixteen owned ledgers (`001_assets_custody_maintenance.sql`, reaching 16/16 schema capacity),
+host 0.15.0, config 0.14.0, kits 0.9.0, and assembly v10 optional composition. Independent
+vehicle/equipment rental (`K10`) and repair workshop (`K18`) consumers share identical domain
+code and browser-safe dashboards.
+Narrow `asset_register` scope proves serialized item identity, business-owned vs customer-owned
+custody tracking, custody dispatch/return handovers with condition grading, preventive and
+corrective maintenance logs with replaced parts audit, optimistic revision locking, forced tenant RLS,
+machine mutation denial, resilient receipt recovery state machine, and restart/restore.
+
 All forty full operating kits continue to retain their declared domain and adapter gaps.
 No complete operating kit is promoted by these narrow scopes.

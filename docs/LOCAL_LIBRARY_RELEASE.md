@@ -1,6 +1,37 @@
 # Local reusable library release
 
-## Current extension — profile 1.11.0, 12 October 2026
+## Current extension — profile 1.12.0, 12 October 2026
+
+Shared asset register, custody tracking, and maintenance logging add 48 compiled artifacts, 18 unchanged external pins,
+sixteen owned ledgers (reaching full schema capacity of 16), host 0.15.0, config 0.14.0, and kits 0.9.0. Assets/assets-pg 0.1.0
+run without CRM or an LLM. Assembly v10 adds optional assets composition while preserving previous contracts and four-module defaults.
+State machine receipt recovery sets pending command UUID and uncertain status prior to mutation dispatch across all domains,
+holding UI recovery controls open and blocking new writes on transport errors, body read rejections, truncated JSON payloads (`{`),
+or receipt schema/ID mismatches.
+
+| Extension                                     | Accepted evidence                                                                                                                                                                                                                                                                                                                                                                                                          | Limit                                                                                    |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Serialized asset register & custody tracking  | Two cold-installed rental (`K10`) and repair workshop (`K18`) consumers; real PostgreSQL serialized item identity, business-owned vs customer-owned custody, custody dispatch/return transitions with condition grading, contact linkage, optimistic revision locking, forced tenant RLS, machine write refusal, restart/restore; 18 checks                                                                                | Physical item custody & condition; no GPS telematics or fleet vehicle DMV title registry |
+| Maintenance & service logging                 | Preventive and corrective work logging with replaced parts inventory audit, parts cost ledger, and post-service condition rating updates; forced tenant RLS, immutable audit triggers, restart/restore; 18 checks                                                                                                                                                                                                          | Workshop work evidence; no automated parts ordering or warranty adjudication             |
+| Resilient receipt recovery & host composition | Compiled host and Chromium asset register, custody dispatch/return, and maintenance logging lifecycles; 5 failure mode regressions (truncated JSON `{`, body stream read rejection, invalid receipt schema, mismatched command UUID, grant revocation) asserting zero duplicate business records, uncertain write refusal, recovery UI assertion, same-UUID recovery, disable/re-enable, and backup/restore; 5 host checks | In-memory pending browser recovery; human-only writes                                    |
+| Trusted assembly                              | Narrow K10 `asset_rental` and K18 `repair_workshops` under v10; kits 13 and assembly 2                                                                                                                                                                                                                                                                                                                                     | No full operating kit accepted                                                           |
+
+All eight root gates passed: 1,543 tests/116 files. Fresh regression evidence retains
+CRM 38, Act 18, runtime 44, Chromium 3/70, projects 15/11, scheduling 14/9, accommodation 17/9,
+commerce 18/10, food-service 23/10, support 19/9, purchasing 19/11, organizations 24/6, proposals 30/6,
+capacity 29/6, assets 18/5 and upgrade 4. The security matrix has 62 controls; root/runtime scans have
+zero advisories. The separate realtime template retains thirteen moderate findings and independent
+SDK/live gates. These checks do not establish production load or security certification.
+
+Synthetic upgrade from previous supported 1.10.0 to 1.12.0 passed all 4 checks on an
+isolated PostgreSQL cluster without altering historical records, audit logs, or command UUIDs.
+Release artifacts for candidate 1.12.0 are archived in `dist/releases/1.12.0/library` and `dist/releases/1.12.0/crm-runtime`.
+
+See [assets contract](ASSETS_MODULE.md), [sanitized evidence](audit/2026-10-12-release-1.12.0.json) and
+[the programme ledger](STARTER_KIT_IMPLEMENTATION.md). All forty full operating kits remain unaccepted.
+No company pricebook, external execution or private-data disclosure boundary changes.
+
+## Previous extension — profile 1.11.0, 12 October 2026
 
 Shared organizations, proposals, and delivery capacity add 46 compiled artifacts, 18 unchanged external pins,
 fifteen owned ledgers, host 0.14.0, config 0.13.0 and kits 0.8.0. Organizations/organizations-pg 0.1.0,

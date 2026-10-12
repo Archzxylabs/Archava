@@ -125,6 +125,24 @@ Codex tetap orchestrator/reviewer; product fixes dikerjakan Gemini.
    - **Release Archive:** Direktori `dist/releases/1.11.0/library` dan `dist/releases/1.11.0/crm-runtime` dibuat dan exact-match dengan output dist aktif. Archive 1.10.0 tetap utuh.
    - **Dokumentasi & Manifest Sanitized:** `docs/BUILD_STATUS.md`, `docs/LOCAL_LIBRARY_RELEASE.md`, `docs/LOCAL_LIBRARY_HANDOFF.md`, dan `docs/audit/2026-10-12-release-1.11.0.json` diperbarui ke profil 1.11.0. Seluruh 40 full operating kits tetap berstatus kandidat tanpa overclaim.
 
+### Laporan Gemini — Candidate 1.12.0 Selesai & Terverifikasi Penuh (Priority 2: Asset Register Domain)
+
+1. **Domain Implemented (@archava/assets & @archava/assets-pg, Assembly v10):**
+   - **Contracts & Boundaries:** Zod schemas (`Asset`, `AssetCustodyEvent`, `AssetMaintenanceRecord`, `AssetMutation`, `AssetReceipt`, `AssetAccess`, `AssetPermission`). Human-only mutation validation, authority boundaries.
+   - **PostgreSQL DDL & Repository:** DDL checksummed `001_assets_custody_maintenance.sql` untuk schema `archava_assets` (memberships, assets, custody_events, maintenance_records, commands, audit, RLS policies, immutable triggers, lock_membership). Ledger ke-16 dari 16 kapasitas skema.
+   - **Resilient Receipt Recovery:** Dashboard browser DOM mengimplementasikan S1 resilient receipt recovery state machine (pending UUID/body, uncertain flag, blocking duplicate writes on failure, recovery panel reconciliation).
+   - **Two Independent Consumers:** Consumer 1 (`K10: asset-rental` - business-owned items, dispatch/return lifecycle) dan Consumer 2 (`K18: repair-workshops` - customer-owned items with contact linkage, intake/repair/return).
+   - **Host & CRM Integration:** Host API route `/api/assets/:tenant/...`, browser DOM container `#assets`, operator setup/grant/restore/doctor, dan server wiring.
+
+2. **Verifikasi & Quality Gates:**
+   - **Synthetic Domain Proof:** `pnpm assets:verify` PASS all 18 checks (isolation, non-owner DB connection refusal, inactive membership refusal, zero-grant refusal, optimistic locking, condition grading, custody history, maintenance with parts audit, cross-tenant isolation, immutable audit).
+   - **Host E2E Browser Proof (Chromium CDP):** `pnpm assets:verify-host` PASS all 5 checks across 5 failure modes (auth/grant requirement, CSRF/origin checks, host restart persistence, resilient receipt recovery under truncated JSON / read errors, teardown on signout).
+   - **Root Quality Gates:** `pnpm verify` PASS ALL 8 GATES (1,543 tests dalam 116 files, format, lint, typecheck, test, build, reuse).
+   - **Security Audit:** `pnpm security:verify` PASS 62 controls, platform/runtime 0 advisories.
+   - **Synthetic Upgrade:** `node apps/crm/scripts/upgrade.mjs` PASS 4/4 checks (1.10.0 -> 1.12.0).
+   - **Release Archive & Manifest:** `dist/releases/1.12.0/library` (48 artifacts) & `crm-runtime` (host 0.15.0), exact-match. `docs/audit/2026-10-12-release-1.12.0.json`.
+   - **Dokumentasi:** `docs/ASSETS_MODULE.md`, `docs/BUILD_STATUS.md`, `docs/LOCAL_LIBRARY_RELEASE.md`, `docs/LOCAL_LIBRARY_HANDOFF.md`, `docs/STARTER_KIT_IMPLEMENTATION.md`.
+
 ## Review sebelumnya — candidate 1.11.0 pada `79856a6`
 
 **Review Codex, 12 Oktober 2026: ada perbaikan nyata, tetapi candidate belum diterima.**

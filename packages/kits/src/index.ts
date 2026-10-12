@@ -58,6 +58,11 @@ const LOCAL_IMPLEMENTATIONS = freeze({
     { name: '@archava/capacity-pg', version: '0.1.0' },
     { name: '@archava/identity-pg', version: '0.1.0' },
   ],
+  asset_register: [
+    { name: '@archava/assets', version: '0.1.0' },
+    { name: '@archava/assets-pg', version: '0.1.0' },
+    { name: '@archava/identity-pg', version: '0.1.0' },
+  ],
   support_cases: [
     { name: '@archava/support', version: '0.1.0' },
     { name: '@archava/support-pg', version: '0.1.0' },
@@ -171,6 +176,10 @@ export class KitPlanner {
         if (!['K05', 'K31'].includes(kit.id)) add(`scope.${kit.id}.delivery_capacity`, kit.id)
         add('crm_contacts', kit.id)
         add('delivery_capacity', kit.id)
+      } else if (selected.scope === 'asset_register') {
+        if (!['K10', 'K18'].includes(kit.id)) add(`scope.${kit.id}.asset_register`, kit.id)
+        add('crm_contacts', kit.id)
+        add('asset_register', kit.id)
       } else if (selected.scope === 'support_cases') {
         if (!['K05', 'K06', 'K12', 'K18', 'K21'].includes(kit.id))
           add(`scope.${kit.id}.support_cases`, kit.id)
@@ -249,6 +258,7 @@ export class KitPlanner {
           (id === 'organization_accounts' && !this.modules.organizations) ||
           (id === 'proposals_scope' && !this.modules.proposals) ||
           (id === 'delivery_capacity' && !this.modules.capacity) ||
+          (id === 'asset_register' && !this.modules.assets) ||
           (id === 'support_cases' && !this.modules.support) ||
           (id === 'foodservice_ops' && !this.modules.foodservice) ||
           (id === 'accommodation_stays' && !this.modules.accommodation) ||
@@ -334,6 +344,7 @@ export class KitPlanner {
       ...(required.has('organization_accounts') ? { organizations: true } : {}),
       ...(required.has('proposals_scope') ? { proposals: true } : {}),
       ...(required.has('delivery_capacity') ? { capacity: true } : {}),
+      ...(required.has('asset_register') ? { assets: true } : {}),
       ...(required.has('support_cases') ? { support: true } : {}),
       ...(required.has('foodservice_ops') ? { foodservice: true } : {}),
       pipeline: required.has('crm_sales_pipeline'),
@@ -354,24 +365,26 @@ export class KitPlanner {
       planAssembly(
         {
           version:
-            modules.purchasing !== undefined ||
-            modules.organizations !== undefined ||
-            modules.proposals !== undefined ||
-            modules.capacity !== undefined
-              ? '8.0.0'
-              : modules.support !== undefined
-                ? '7.0.0'
-                : modules.foodservice !== undefined
-                  ? '6.0.0'
-                  : modules.commerce !== undefined
-                    ? '5.0.0'
-                    : modules.accommodation !== undefined
-                      ? '4.0.0'
-                      : modules.scheduling !== undefined
-                        ? '3.0.0'
-                        : modules.projects !== undefined
-                          ? '2.0.0'
-                          : '1.0.0',
+            modules.assets !== undefined
+              ? '10.0.0'
+              : modules.purchasing !== undefined ||
+                  modules.organizations !== undefined ||
+                  modules.proposals !== undefined ||
+                  modules.capacity !== undefined
+                ? '8.0.0'
+                : modules.support !== undefined
+                  ? '7.0.0'
+                  : modules.foodservice !== undefined
+                    ? '6.0.0'
+                    : modules.commerce !== undefined
+                      ? '5.0.0'
+                      : modules.accommodation !== undefined
+                        ? '4.0.0'
+                        : modules.scheduling !== undefined
+                          ? '3.0.0'
+                          : modules.projects !== undefined
+                            ? '2.0.0'
+                            : '1.0.0',
           profile: this.release.version,
           modules,
         },

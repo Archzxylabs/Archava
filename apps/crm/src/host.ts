@@ -31,6 +31,7 @@ import { createCommerceApi, type CommerceService } from '@archava/commerce'
 import { createOrganizationApi, type OrganizationService } from '@archava/organizations'
 import { createProposalApi, type ProposalService } from '@archava/proposals'
 import { createCapacityApi, type CapacityService } from '@archava/capacity'
+import { createAssetApi, type AssetService } from '@archava/assets'
 
 const json = (value: unknown, status = 200, headers: Record<string, string> = {}) =>
   Response.json(value, { status, headers: { 'cache-control': 'no-store', ...headers } })
@@ -68,6 +69,7 @@ export function createHostHandler(
   organizations?: OrganizationService,
   proposals?: ProposalService,
   capacity?: CapacityService,
+  assets?: AssetService,
 ) {
   const modules = settings.modules ?? FULL_MODULES
   if (!modules.pipeline) pipeline = undefined
@@ -206,6 +208,20 @@ export function createHostHandler(
           return json({ error: 'not_found' }, 404)
         await service.access(tenant, { kind: 'human', id: session.principalId })
         return await createCapacityApi(capacity, () =>
+          Promise.resolve({ kind: 'human', id: session.principalId }),
+        )(request)
+      }
+      if (url.pathname.startsWith('/api/assets/')) {
+        const tenant = /^\/api\/assets\/([^/]+)/.exec(url.pathname)?.[1]
+        if (
+          !tenant ||
+          !modules.assets ||
+          !assets ||
+          !settings.tenants.some((item) => item.id === tenant)
+        )
+          return json({ error: 'not_found' }, 404)
+        await service.access(tenant, { kind: 'human', id: session.principalId })
+        return await createAssetApi(assets, () =>
           Promise.resolve({ kind: 'human', id: session.principalId }),
         )(request)
       }
@@ -504,6 +520,7 @@ export async function startCrmHost(
   organizations?: OrganizationService,
   proposals?: ProposalService,
   capacity?: CapacityService,
+  assets?: AssetService,
 ) {
   let handler: ReturnType<typeof createHostHandler> | undefined
   const handle = (request: Request, source: string) => {
@@ -527,6 +544,7 @@ export async function startCrmHost(
       organizations,
       proposals,
       capacity,
+      assets,
     )
     return handler(request, source)
   }

@@ -1,9 +1,10 @@
 # Local library 1.3.0 handoff
 
-This remains the historical finite baseline. Current profile `1.11.0` preserves
+This remains the historical finite baseline. Current profile `1.12.0` preserves
 these four-module defaults and adds optional project tracking, resource reservations,
 accommodation, shared commerce, restaurant service, support cases, purchasing/physical stock receipts,
-organizations & affiliations, proposals & versioned change requests, and pooled delivery capacity estimation.
+organizations & affiliations, proposals & versioned change requests, pooled delivery capacity estimation,
+and serialized asset register/custody/maintenance.
 Use the exact current profile when generating a new assembly. See
 [project activation and API](PROJECT_DELIVERY_MODULE.md),
 [reservation activation and API](RESOURCE_RESERVATIONS_MODULE.md),
@@ -15,6 +16,7 @@ Use the exact current profile when generating a new assembly. See
 [organizations activation and API](ORGANIZATIONS_MODULE.md),
 [proposals activation and API](PROPOSALS_MODULE.md),
 [capacity activation and API](CAPACITY_MODULE.md),
+[assets activation and API](ASSETS_MODULE.md),
 [current acceptance](LOCAL_LIBRARY_RELEASE.md) and
 [kit programme status](STARTER_KIT_IMPLEMENTATION.md). Company website and full
 operating kits remain separate work.
