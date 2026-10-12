@@ -1,6 +1,6 @@
 /* global process, fetch, setTimeout */
 import assert from 'node:assert/strict'
-import { mkdtemp, writeFile, readFile, rm } from 'node:fs/promises'
+import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { spawn, execFileSync } from 'node:child_process'
@@ -436,6 +436,25 @@ try {
   assert.equal(await evaluate('document.querySelector("#subscriptions").textContent === ""'), true)
   check('sign-out tears down subscriptions DOM and detaches listeners')
 
+  const destination = join(root, 'dist/subscriptions-host-proof')
+  await mkdir(destination, { recursive: true })
+  const profile = JSON.parse(await readFile(join(runtime, 'release-profile.json'), 'utf8'))
+  await writeFile(
+    join(destination, 'results.json'),
+    JSON.stringify(
+      {
+        profile: profile.catalog.version,
+        scope:
+          'bounded subscription, entitlement and usage workflow with resilient receipt recovery',
+        checks,
+        browser: 'isolated Chromium',
+        providerCalls: 0,
+        operationalKitsAccepted: [],
+      },
+      null,
+      2,
+    ) + '\n',
+  )
   process.stdout.write(`\nAll ${checks.length} host E2E checks passed successfully.\n`)
 } finally {
   await page?.close()

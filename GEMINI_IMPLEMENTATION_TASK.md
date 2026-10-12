@@ -7,24 +7,27 @@ sampai habis sebelum mengubah kode.
 
 ## 0. Status Roadmap & Tugas Aktif
 
-### Candidate 1.13.0 — Subscriptions, Entitlements & Usage Tracking [ACCEPTED & CLOSED]
+### Candidate 1.14.0 — Attendance, Course/Event Capacity/Check-in [ACCEPTED & CLOSED]
 
-- **Contracts & Package**: `@archava/subscriptions` and `@archava/subscriptions-pg` 0.1.0 (50 artifacts, 17 database ledgers).
-- **Core Capabilities**: Recurring subscription lifecycles, explicit entitlements (`metered`, `seat_count`, `boolean_access`, `pass_bundle`), quota exhaustion enforcement, idempotent usage consumption, authoritative backend payment confirmation, and hardened S1 resilient receipt recovery state machine.
+- **Contracts & Package**: `@archava/attendance` and `@archava/attendance-pg` 0.1.0 (52 artifacts, 18 database ledgers).
+- **Core Capabilities**: Bounded session creation with seat capacity, roster registration, verified check-in events with per-roster idempotency keys, duplicate scan refusal, idempotent replay, optimistic revision locking, session enrollment/attended counters, read-only tool boundaries, forced tenant RLS, immutable audit, and hardened S1 resilient receipt recovery state machine.
+- **Generalized across two consumers**: Training/course delivery (`K13`) and community event/meetup check-in (`K15`).
 - **Verification Evidence**:
-  - `pnpm verify`: All 8 root gates passed (1,547 tests in 117 files).
-  - `pnpm subscriptions:verify`: 18/18 synthetic PostgreSQL checks passed.
-  - `pnpm subscriptions:verify-host`: 5/5 Chromium CDP failure-mode E2E checks passed.
-  - `pnpm crm:verify-upgrade`: 4/4 upgrade checks passed (1.10.0 -> 1.13.0).
-  - Archives: `dist/releases/1.13.0/library` and `dist/releases/1.13.0/crm-runtime`.
-  - Documentation: `docs/SUBSCRIPTIONS_MODULE.md`, `docs/audit/2026-10-12-release-1.13.0.json`.
+  - `pnpm verify`: All 8 root gates passed (1,553 tests in 118 files).
+  - `pnpm attendance:verify`: 18/18 synthetic PostgreSQL checks passed.
+  - `pnpm attendance:verify-host`: 4/4 Chromium CDP checks passed, including the full browser register/check-in workflow and 5 S1 receipt-recovery regressions.
+  - `pnpm crm:verify-upgrade`: 4/4 upgrade checks passed (1.10.0 -> 1.14.0).
+  - Archives: `dist/releases/1.14.0/library` and `dist/releases/1.14.0/crm-runtime`.
+  - Documentation: `docs/ATTENDANCE_MODULE.md`, `docs/audit/2026-10-13-release-1.14.0.json`.
 
 ---
 
-### Tugas Aktif Berikutnya: Priority 4 — Attendance, Course/Event Capacity/Check-in (Candidate 1.14.0)
+### Tugas Aktif Berikutnya: Priority 5 — Fulfillment, Dispatch & Production (Candidate 1.15.0)
 
-- Generalized across two consumers: Training courses (`K16`) and event check-in (`K11`).
-- Domain scope: Sessions/rosters, participant enrollments, check-in validation, attendance audit, capacity limits.
+- Refer to the priority table in §5 (row 5) for the required real outcomes.
+- Domain scope: Custody/pick-pack/delivery findings; bahan/output/scrap/BOM untuk produksi sederhana.
+- Expected consumers to generalize across: warehouse/logistics (`K20`) and simple made-to-order production (`K23`).
+- Follow the same evidence pattern as 1.14.0: `@archava/<domain>` + `@archava/<domain>-pg` 0.1.0, one owned migration ledger, host + config + kits + assembly bumps, an 18-check synthetic PostgreSQL domain proof, a Chromium host proof (including the S1 receipt-recovery regressions), a cold-install consumer proof, an upgrade proof, release archives, and updated docs/audit evidence.
 
 ---
 

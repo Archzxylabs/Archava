@@ -1,6 +1,6 @@
 {
   "name": "@archava/crm-host",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -60,7 +60,9 @@
     "@archava/assets": "workspace:*",
     "@archava/assets-pg": "workspace:*",
     "@archava/subscriptions": "workspace:*",
-    "@archava/subscriptions-pg": "workspace:*"
+    "@archava/subscriptions-pg": "workspace:*",
+    "@archava/attendance": "workspace:*",
+    "@archava/attendance-pg": "workspace:*"
   },
   "devDependencies": {
     "@types/pg": "8.23.1",

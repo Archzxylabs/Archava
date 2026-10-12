@@ -39,6 +39,7 @@ export const releaseCatalogSchema = z
             '9.0.0',
             '10.0.0',
             '11.0.0',
+            '12.0.0',
           ])
           .optional(),
         presence: z.literal('1.0.0').optional(),

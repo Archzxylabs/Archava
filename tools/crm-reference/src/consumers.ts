@@ -16,6 +16,16 @@ import type * as PilotModule from '@archava/crm-assistant/pilot'
 import type * as ProviderModule from '@archava/provider-runtime'
 import type * as ProviderPgModule from '@archava/provider-runtime/postgres'
 
+// pnpm re-exports the invoking user's npm configuration into every script it runs, so a
+// user-level `allow-scripts` policy reaches the child npm install as
+// `npm_config_allow_scripts`. npm treats environment configuration as CLI-level policy and
+// refuses it for project-scoped installs (EALLOWSCRIPTS), failing the consumer before any
+// package resolves. The installs below already pass `--ignore-scripts`, so no lifecycle
+// script runs either way: the inert policy is dropped for this process instead of
+// rewriting the owner's ~/.npmrc. Same rule as tools/library/npm-env.mjs; this package
+// cannot import it because cross-package imports are refused by the structure gate.
+delete process.env['npm_config_allow_scripts']
+
 const root = resolve(import.meta.dirname, '../../..')
 async function hash(directory: string): Promise<string> {
   const digest = createHash('sha256')

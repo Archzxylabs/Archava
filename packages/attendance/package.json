@@ -1,0 +1,25 @@
+{
+  "name": "@archava/attendance",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Session rosters, event capacity, participant registration, and verified check-in attendance tracking.",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./contracts": "./src/contracts.ts",
+    "./dashboard": "./src/dashboard.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "build": "echo \"@archava/attendance ships TypeScript source\""
+  },
+  "dependencies": {
+    "zod": "4.1.12"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vitest": "4.1.11"
+  }
+}

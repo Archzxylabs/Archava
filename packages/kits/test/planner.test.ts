@@ -39,6 +39,30 @@ const request = (id = 'K01', scope = 'operations') => ({
 })
 
 describe('trusted kit contracts and support boundary', () => {
+  it('composes bounded session attendance and event rosters for courses and venues while full kits remain blocked', () => {
+    const supported = release()
+    supported.contracts.assembly = '12.0.0'
+    supported.packages.push(
+      ...['attendance', 'attendance-pg'].map((name) => ({
+        name: '@archava/' + name,
+        version: '0.1.0',
+        migrations: [],
+      })),
+    )
+    const planner = new KitPlanner(supported, COMPOSABLE_MODULES)
+    for (const id of ['K13', 'K15']) {
+      const plan = planner.plan(request(id, 'attendance_roster'))
+      expect(plan.readyToAssemble).toBe(true)
+      expect(plan.assembly).toEqual({ ...MINIMAL_MODULES, attendance: true })
+      expect(plan.operationalKitsAccepted).toEqual([])
+      expect(planner.plan(request(id)).readyToAssemble).toBe(false)
+    }
+    expect(planner.plan(request('K01', 'attendance_roster')).readyToAssemble).toBe(false)
+    expect(
+      new KitPlanner(supported, FULL_MODULES).plan(request('K13', 'attendance_roster'))
+        .readyToAssemble,
+    ).toBe(false)
+  })
   it('composes shared internal support cases across service models without accepting specialized case systems', () => {
     const supported = release()
     supported.contracts.assembly = '7.0.0'

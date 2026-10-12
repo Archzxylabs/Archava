@@ -1,16 +1,16 @@
 {
   "schemaVersion": "1.0.0",
   "id": "archava-local-library",
-  "version": "1.13.0",
+  "version": "1.14.0",
   "host": {
     "name": "@archava/crm-host",
-    "version": "0.16.0"
+    "version": "0.17.0"
   },
   "contracts": {
     "clientConfig": "1.0.0",
     "deploymentPlan": "2.0.0",
     "hostSettings": 1,
-    "assembly": "11.0.0",
+    "assembly": "12.0.0",
     "presence": "1.0.0",
     "kitPlan": "1.0.0",
     "kitCatalogue": "1.0.0"
@@ -61,7 +61,7 @@
     },
     {
       "name": "@archava/config",
-      "version": "0.15.0",
+      "version": "0.16.0",
       "migrations": []
     },
     {
@@ -186,7 +186,7 @@
     },
     {
       "name": "@archava/kits",
-      "version": "0.10.0",
+      "version": "0.11.0",
       "migrations": []
     },
     {
@@ -380,6 +380,21 @@
           "checksum": "7c830dd1a52c957e3c94a4f47204af9ae7c95d623a67f9beb0184f230068caa4"
         }
       ]
+    },
+    {
+      "name": "@archava/attendance",
+      "version": "0.1.0",
+      "migrations": []
+    },
+    {
+      "name": "@archava/attendance-pg",
+      "version": "0.1.0",
+      "migrations": [
+        {
+          "file": "001_attendance_sessions_rosters.sql",
+          "checksum": "f71bab0e95d33c253bac9eae573675e5fe321c33f8d81f7124561351f7484883"
+        }
+      ]
     }
   ],
   "databaseLedgers": [
@@ -471,6 +486,11 @@
       "schema": "archava_subscriptions",
       "package": "@archava/subscriptions-pg",
       "migrations": ["001_subscriptions_entitlements_usage"]
+    },
+    {
+      "schema": "archava_attendance",
+      "package": "@archava/attendance-pg",
+      "migrations": ["001_attendance_sessions_rosters"]
     }
   ],
   "requiredAdapters": [
@@ -490,7 +510,8 @@
     "@archava/proposals-pg",
     "@archava/capacity-pg",
     "@archava/assets-pg",
-    "@archava/subscriptions-pg"
+    "@archava/subscriptions-pg",
+    "@archava/attendance-pg"
   ],
   "operatorChecks": [
     "non-owner runtime database role",
@@ -503,7 +524,8 @@
     "support assignment, resolution cycles, private notes and receipt recovery",
     "supplier quote, purchase receipt, current grants and shared stock recovery",
     "organization accounts, contact affiliations and receipt recovery",
-    "asset serialized identity, custody handover, maintenance logging and receipt recovery"
+    "asset serialized identity, custody handover, maintenance logging and receipt recovery",
+    "session rosters, event capacity, verified check-in events and receipt recovery"
   ],
   "externals": [
     {

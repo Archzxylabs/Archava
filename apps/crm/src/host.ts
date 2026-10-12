@@ -33,6 +33,7 @@ import { createProposalApi, type ProposalService } from '@archava/proposals'
 import { createCapacityApi, type CapacityService } from '@archava/capacity'
 import { createAssetApi, type AssetService } from '@archava/assets'
 import { createSubscriptionApi, type SubscriptionService } from '@archava/subscriptions'
+import { createAttendanceApi, type AttendanceService } from '@archava/attendance'
 
 const json = (value: unknown, status = 200, headers: Record<string, string> = {}) =>
   Response.json(value, { status, headers: { 'cache-control': 'no-store', ...headers } })
@@ -72,6 +73,7 @@ export function createHostHandler(
   capacity?: CapacityService,
   assets?: AssetService,
   subscriptions?: SubscriptionService,
+  attendance?: AttendanceService,
 ) {
   const modules = settings.modules ?? FULL_MODULES
   if (!modules.pipeline) pipeline = undefined
@@ -238,6 +240,20 @@ export function createHostHandler(
           return json({ error: 'not_found' }, 404)
         await service.access(tenant, { kind: 'human', id: session.principalId })
         return await createSubscriptionApi(subscriptions, () =>
+          Promise.resolve({ kind: 'human', id: session.principalId }),
+        )(request)
+      }
+      if (url.pathname.startsWith('/api/attendance/')) {
+        const tenant = /^\/api\/attendance\/([^/]+)/.exec(url.pathname)?.[1]
+        if (
+          !tenant ||
+          !modules.attendance ||
+          !attendance ||
+          !settings.tenants.some((item) => item.id === tenant)
+        )
+          return json({ error: 'not_found' }, 404)
+        await service.access(tenant, { kind: 'human', id: session.principalId })
+        return await createAttendanceApi(attendance, () =>
           Promise.resolve({ kind: 'human', id: session.principalId }),
         )(request)
       }
@@ -538,6 +554,7 @@ export async function startCrmHost(
   capacity?: CapacityService,
   assets?: AssetService,
   subscriptions?: SubscriptionService,
+  attendance?: AttendanceService,
 ) {
   let handler: ReturnType<typeof createHostHandler> | undefined
   const handle = (request: Request, source: string) => {
@@ -563,6 +580,7 @@ export async function startCrmHost(
       capacity,
       assets,
       subscriptions,
+      attendance,
     )
     return handler(request, source)
   }

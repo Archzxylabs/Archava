@@ -10,6 +10,13 @@ import { createHash, randomUUID } from 'node:crypto'
 import { build } from 'esbuild'
 import { verifyNative } from './native-proof.mjs'
 
+// pnpm re-exports the invoking user npm config into every script it runs, so a user-level
+// `allow-scripts` policy reaches npm as `npm_config_allow_scripts`. npm treats environment
+// config as CLI-level policy and refuses it for project-scoped installs (EALLOWSCRIPTS).
+// Installs below already pass `--ignore-scripts`; drop the inert policy for this process
+// instead of rewriting the owner ~/.npmrc. Same rule as tools/library/npm-env.mjs.
+delete process.env.npm_config_allow_scripts
+
 const root = resolve(import.meta.dirname, '../../..')
 const self = join(import.meta.dirname, 'verify.mjs')
 const client = (pool) => ({

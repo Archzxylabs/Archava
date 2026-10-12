@@ -8,6 +8,7 @@ import { createRequire } from 'node:module'
 import { pathToFileURL } from 'node:url'
 import { createHash } from 'node:crypto'
 import { build } from 'esbuild'
+import { installEnv } from './npm-env.mjs'
 
 const root = resolve(import.meta.dirname, '../..')
 const library = join(root, 'dist/library')
@@ -52,7 +53,7 @@ try {
     execFileSync('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund'], {
       cwd: consumer,
       stdio: 'pipe',
-      env: { ...process.env, NODE_PATH: '' },
+      env: { ...installEnv(process.env), NODE_PATH: '' },
     })
     const require = createRequire(join(consumer, 'package.json'))
     const entry = require.resolve('@archava/kits')

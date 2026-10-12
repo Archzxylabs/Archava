@@ -9,6 +9,7 @@ import { pathToFileURL } from 'node:url'
 import { randomBytes, randomUUID, createHash } from 'node:crypto'
 import { build } from 'esbuild'
 import { endProofPool } from './pg-proof.mjs'
+import { installEnv } from './npm-env.mjs'
 
 const root = resolve(import.meta.dirname, '../..')
 const library = join(root, 'dist/library')
@@ -104,7 +105,7 @@ try {
     execFileSync('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund'], {
       cwd: directory,
       stdio: 'pipe',
-      env: { ...env, NODE_PATH: '' },
+      env: { ...installEnv(env), NODE_PATH: '' },
     })
 
     const require = createRequire(join(directory, 'package.json'))
@@ -448,6 +449,23 @@ try {
   check('immutable triggers protect audit log from deletion and tampering')
 
   // Summary output
+  const destination = join(root, 'dist/assets-proof')
+  await mkdir(destination, { recursive: true })
+  await writeFile(
+    join(destination, 'results.json'),
+    JSON.stringify(
+      {
+        profile: profile.catalog.version,
+        scope: 'bounded serialized asset register, custody handover and maintenance logging',
+        consumers: proofs,
+        checks,
+        operationalKitsAccepted: [],
+        providerCalls: 0,
+      },
+      null,
+      2,
+    ) + '\n',
+  )
   process.stdout.write(
     `\nAll ${checks.length} synthetic verification checks passed successfully.\n`,
   )

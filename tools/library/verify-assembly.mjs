@@ -6,6 +6,7 @@ import { join, resolve } from 'node:path'
 import { execFileSync } from 'node:child_process'
 import { createRequire } from 'node:module'
 import { pathToFileURL } from 'node:url'
+import { installEnv } from './npm-env.mjs'
 const root = resolve(import.meta.dirname, '../..')
 const scratch = await mkdtemp(join(tmpdir(), 'archava-assembly-proof-'))
 const profile = JSON.parse(await readFile(join(root, 'dist/library/release-profile.json'), 'utf8'))
@@ -45,6 +46,7 @@ try {
     execFileSync('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund'], {
       cwd: out,
       stdio: 'pipe',
+      env: installEnv(),
     })
     const require = createRequire(join(out, 'package.json'))
     const release = await import(pathToFileURL(require.resolve('@archava/config/release')).href)

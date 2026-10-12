@@ -9,6 +9,7 @@ import { pathToFileURL } from 'node:url'
 import { randomBytes, randomUUID, createHash } from 'node:crypto'
 import { build } from 'esbuild'
 import { endProofPool } from './pg-proof.mjs'
+import { installEnv } from './npm-env.mjs'
 
 const root = resolve(import.meta.dirname, '../..'),
   library = join(root, 'dist/library')
@@ -90,7 +91,7 @@ try {
     execFileSync('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund'], {
       cwd: directory,
       stdio: 'pipe',
-      env: { ...env, NODE_PATH: '' },
+      env: { ...installEnv(env), NODE_PATH: '' },
     })
     const require = createRequire(join(directory, 'package.json')),
       load = async (name) => import(pathToFileURL(require.resolve(name)).href)

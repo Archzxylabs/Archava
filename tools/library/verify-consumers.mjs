@@ -7,6 +7,7 @@ import { createRequire } from 'node:module'
 import { createHash } from 'node:crypto'
 import { spawnSync } from 'node:child_process'
 import { packLibrary } from './pack.mjs'
+import { installEnv } from './npm-env.mjs'
 import { build } from 'esbuild'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
@@ -39,7 +40,7 @@ function run(args, cwd) {
   const result = spawnSync(npm, args, {
     cwd,
     encoding: 'utf8',
-    env: { ...process.env, NODE_PATH: '' },
+    env: { ...installEnv(process.env), NODE_PATH: '' },
   })
   if (result.status !== 0)
     throw new Error(`${args.join(' ')} failed:\n${result.stderr}\n${result.stdout}`)

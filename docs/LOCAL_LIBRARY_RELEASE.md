@@ -1,6 +1,36 @@
 # Local reusable library release
 
-## Current extension — profile 1.13.0, 12 October 2026
+## Current extension — profile 1.14.0, 13 October 2026
+
+Attendance recording for in-person teaching and event admission adds 6 compiled artifacts (`attendance` and
+`attendance-pg` 0.1.0), 18 unchanged external pins, eighteen owned ledgers, host 0.17.0, config 0.16.0, and kits 0.11.0.
+Attendance runs without CRM or an LLM. Assembly v12 adds optional attendance composition alongside subscriptions while
+preserving previous contracts and four-module defaults. State machine receipt recovery assigns a client-generated
+command UUID and marks the outcome uncertain _before_ mutation dispatch, blocks new writes while an earlier outcome
+is unknown, and requires explicit human re-query or retry across transport errors, body read rejections, truncated
+JSON payloads, and receipt schema/command-ID mismatches.
+
+| Extension                                     | Accepted evidence                                                                                                                                                                                                                                                                                                                                                                                                            | Limit                                                                                                                      |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Attendance & event check-in                   | Two cold-installed training/course (`K13`) and event/meetup (`K15`) consumers; real PostgreSQL session, roster and verified check-in lifecycles with immutable audit, duplicate scan refusal, idempotent replay, capacity boundary refusal, cross-tenant RLS isolation, superuser/schema-owner refusal, service-principal and inactive/zero-grant refusal, optimistic revision locking, read-only tool boundaries; 18 checks | Sessions/rosters/check-ins only; no course instances, venues, passes, credential scanning apps, or backup/restore evidence |
+| Resilient receipt recovery & host composition | Compiled host and Chromium attendance dashboard, human-readable failure messages, blocked new writes while an outcome is uncertain, 5 receipt-recovery regressions (truncated JSON `{`, body stream read rejection, invalid receipt schema, mismatched command UUID, successful re-query resolution), full browser register→check-in workflow; 4 host checks                                                                 | In-memory pending browser recovery; human-only writes                                                                      |
+| Trusted assembly                              | Narrow K15 `community_events` and K13 `course_delivery` under v12; kits 13 and assembly 2                                                                                                                                                                                                                                                                                                                                    | No full operating kit accepted                                                                                             |
+
+All eight root gates passed: 1,553 tests/118 files. Fresh regression evidence retains
+CRM 38, Act 18, runtime 44, Chromium 3/70, projects 15/11, scheduling 14/9, accommodation 17/9,
+commerce 18/10, food-service 23/10, support 19/9, purchasing 19/11, organizations 24/6, proposals 30/6,
+capacity 29/6, assets 18/5, subscriptions 18/5, attendance 18/4 and upgrade 4. The security matrix has 62 controls;
+root/runtime scans have zero advisories. The separate realtime template retains thirteen moderate findings and independent
+SDK/live gates. These checks do not establish production load or security certification.
+
+Synthetic upgrade from previous supported 1.10.0 to 1.14.0 passed all 4 checks on an
+isolated PostgreSQL cluster without altering historical records, audit logs, or command UUIDs.
+Release artifacts for candidate 1.14.0 are archived in `dist/releases/1.14.0/library` and `dist/releases/1.14.0/crm-runtime`.
+
+See [attendance contract](ATTENDANCE_MODULE.md), [sanitized evidence](audit/2026-10-13-release-1.14.0.json) and
+[the programme ledger](STARTER_KIT_IMPLEMENTATION.md). All forty full operating kits remain unaccepted.
+
+## Previous extension — profile 1.13.0, 12 October 2026
 
 Shared recurring subscriptions, entitlements, and usage tracking add 50 compiled artifacts, 18 unchanged external pins,
 seventeen owned ledgers, host 0.16.0, config 0.15.0, and kits 0.10.0. Subscriptions/subscriptions-pg 0.1.0
