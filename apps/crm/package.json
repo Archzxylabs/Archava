@@ -1,6 +1,6 @@
 {
   "name": "@archava/crm-host",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -50,7 +50,13 @@
     "@archava/support": "workspace:*",
     "@archava/support-pg": "workspace:*",
     "@archava/purchasing": "workspace:*",
-    "@archava/purchasing-pg": "workspace:*"
+    "@archava/purchasing-pg": "workspace:*",
+    "@archava/organizations": "workspace:*",
+    "@archava/organizations-pg": "workspace:*",
+    "@archava/proposals": "workspace:*",
+    "@archava/proposals-pg": "workspace:*",
+    "@archava/capacity": "workspace:*",
+    "@archava/capacity-pg": "workspace:*"
   },
   "devDependencies": {
     "@types/pg": "8.23.1",

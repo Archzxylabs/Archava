@@ -14,6 +14,9 @@ import { mountPurchasingDashboard } from '@archava/purchasing/dashboard'
 import { mountSupportDashboard } from '@archava/support/dashboard'
 import { mountFoodDashboard } from '@archava/foodservice/dashboard'
 import { mountCommerceDashboard } from '@archava/commerce/dashboard'
+import { mountOrganizationDashboard } from '@archava/organizations/dashboard'
+import { mountProposalsDashboard } from '@archava/proposals/dashboard'
+import { mountCapacityDashboard } from '@archava/capacity/dashboard'
 
 const sessionSchema = z.discriminatedUnion('authenticated', [
   z.object({ authenticated: z.literal(false) }).strict(),
@@ -63,8 +66,17 @@ let purchasing: ReturnType<typeof mountPurchasingDashboard> | null = null
 let support: ReturnType<typeof mountSupportDashboard> | null = null
 let foodservice: ReturnType<typeof mountFoodDashboard> | null = null
 let commerce: ReturnType<typeof mountCommerceDashboard> | null = null
+let organizations: ReturnType<typeof mountOrganizationDashboard> | null = null
+let proposals: ReturnType<typeof mountProposalsDashboard> | null = null
+let capacity: ReturnType<typeof mountCapacityDashboard> | null = null
 let session: z.infer<typeof sessionSchema> = { authenticated: false }
 function signedOut() {
+  organizations?.destroy()
+  organizations = null
+  proposals?.destroy()
+  proposals = null
+  capacity?.destroy()
+  capacity = null
   purchasing?.destroy()
   purchasing = null
   support?.destroy()
@@ -124,6 +136,12 @@ async function send(path: string, body?: unknown) {
 async function mount() {
   if (!session.authenticated) return
   const selected = session.tenants.find((item) => item.id === tenants.value)
+  organizations?.destroy()
+  organizations = null
+  proposals?.destroy()
+  proposals = null
+  capacity?.destroy()
+  capacity = null
   purchasing?.destroy()
   purchasing = null
   support?.destroy()
@@ -163,6 +181,9 @@ async function mount() {
     ['foodservice', modules.foodservice ?? false],
     ['support', modules.support ?? false],
     ['purchasing', modules.purchasing ?? false],
+    ['organizations', modules.organizations ?? false],
+    ['proposals', modules.proposals ?? false],
+    ['capacity', modules.capacity ?? false],
   ] as const) {
     const node = element<HTMLElement>('#' + id)
     node.hidden = !enabled
@@ -198,6 +219,39 @@ async function mount() {
     purchasing = mountPurchasingDashboard(element<HTMLElement>('#purchasing'), {
       apiBase: '/api/purchasing/' + selected.id,
       commerceApiBase: '/api/commerce/' + selected.id,
+      transport: async (input, init) => {
+        const headers = new Headers(init?.headers)
+        if (init?.method === 'POST') headers.set('x-archava-csrf', csrf)
+        const response = await fetch(input, { ...init, headers })
+        if (response.status === 401) signedOut()
+        return response
+      },
+    })
+  if (modules.organizations)
+    organizations = mountOrganizationDashboard(element<HTMLElement>('#organizations'), {
+      apiBase: '/api/organizations/' + selected.id,
+      transport: async (input, init) => {
+        const headers = new Headers(init?.headers)
+        if (init?.method === 'POST') headers.set('x-archava-csrf', csrf)
+        const response = await fetch(input, { ...init, headers })
+        if (response.status === 401) signedOut()
+        return response
+      },
+    })
+  if (modules.proposals)
+    proposals = mountProposalsDashboard(element<HTMLElement>('#proposals'), {
+      apiBase: '/api/proposals/' + selected.id,
+      transport: async (input, init) => {
+        const headers = new Headers(init?.headers)
+        if (init?.method === 'POST') headers.set('x-archava-csrf', csrf)
+        const response = await fetch(input, { ...init, headers })
+        if (response.status === 401) signedOut()
+        return response
+      },
+    })
+  if (modules.capacity)
+    capacity = mountCapacityDashboard(element<HTMLElement>('#capacity'), {
+      apiBase: '/api/capacity/' + selected.id,
       transport: async (input, init) => {
         const headers = new Headers(init?.headers)
         if (init?.method === 'POST') headers.set('x-archava-csrf', csrf)

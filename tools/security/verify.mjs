@@ -56,6 +56,12 @@ if (process.argv.includes('--run')) {
   run('support-host', ['pnpm', 'support:verify-host'])
   run('purchasing', ['pnpm', 'purchasing:verify'])
   run('purchasing-host', ['pnpm', 'purchasing:verify-host'])
+  run('organizations', ['pnpm', 'organizations:verify'])
+  run('organizations-host', ['pnpm', 'organizations:verify-host'])
+  run('proposals', ['pnpm', 'proposals:verify'])
+  run('proposals-host', ['pnpm', 'proposals:verify-host'])
+  run('capacity', ['pnpm', 'capacity:verify'])
+  run('capacity-host', ['pnpm', 'capacity:verify-host'])
 }
 run('platform-audit', ['pnpm', 'audit', '--json'], root, [0, 1])
 run('runtime-audit', ['npm', 'audit', '--json'], join(root, 'dist/crm-runtime'), [0, 1])
@@ -108,6 +114,12 @@ const proofs = {
   supportHost: await json(join(root, 'dist/support-host-proof/results.json')),
   purchasing: await json(join(root, 'dist/purchasing-proof/results.json')),
   purchasingHost: await json(join(root, 'dist/purchasing-host-proof/results.json')),
+  organizations: await json(join(root, 'dist/organizations-proof/results.json')),
+  organizationsHost: await json(join(root, 'dist/organizations-host-proof/results.json')),
+  proposals: await json(join(root, 'dist/proposals-proof/results.json')),
+  proposalsHost: await json(join(root, 'dist/proposals-host-proof/results.json')),
+  capacity: await json(join(root, 'dist/delivery-capacity-proof/results.json')),
+  capacityHost: await json(join(root, 'dist/delivery-capacity-host-proof/results.json')),
 }
 for (const name of [
   'runtime',
@@ -126,6 +138,12 @@ for (const name of [
   'supportHost',
   'purchasing',
   'purchasingHost',
+  'organizations',
+  'organizationsHost',
+  'proposals',
+  'proposalsHost',
+  'capacity',
+  'capacityHost',
 ])
   assert.equal(proofs[name].profile, profile.catalog.version, 'Stale release proof: ' + name)
 assert.equal(proofs.runtime.providerCalls, 0)
@@ -143,6 +161,12 @@ assert.equal(proofs.support.providerCalls, 0)
 assert.equal(proofs.supportHost.providerCalls, 0)
 assert.equal(proofs.purchasing.providerCalls, 0)
 assert.equal(proofs.purchasingHost.providerCalls, 0)
+assert.equal(proofs.organizations.providerCalls, 0)
+assert.equal(proofs.organizationsHost.providerCalls, 0)
+assert.equal(proofs.proposals.providerCalls, 0)
+assert.equal(proofs.proposalsHost.providerCalls, 0)
+assert.equal(proofs.capacity.providerCalls, 0)
+assert.equal(proofs.capacityHost.providerCalls, 0)
 const controls = [
   [
     'identity-session-csrf',

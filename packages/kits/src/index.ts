@@ -160,18 +160,15 @@ export class KitPlanner {
           add(`scope.${kit.id}.purchase_receipts`, kit.id)
         add('purchasing', kit.id)
       } else if (selected.scope === 'organization_accounts') {
-        if (!['K04', 'K21'].includes(kit.id))
-          add(`scope.${kit.id}.organization_accounts`, kit.id)
+        if (!['K04', 'K21'].includes(kit.id)) add(`scope.${kit.id}.organization_accounts`, kit.id)
         add('crm_contacts', kit.id)
         add('organization_accounts', kit.id)
       } else if (selected.scope === 'proposals_scope') {
-        if (!['K05', 'K31'].includes(kit.id))
-          add(`scope.${kit.id}.proposals_scope`, kit.id)
+        if (!['K05', 'K31'].includes(kit.id)) add(`scope.${kit.id}.proposals_scope`, kit.id)
         add('crm_contacts', kit.id)
         add('proposals_scope', kit.id)
       } else if (selected.scope === 'delivery_capacity') {
-        if (!['K05', 'K31'].includes(kit.id))
-          add(`scope.${kit.id}.delivery_capacity`, kit.id)
+        if (!['K05', 'K31'].includes(kit.id)) add(`scope.${kit.id}.delivery_capacity`, kit.id)
         add('crm_contacts', kit.id)
         add('delivery_capacity', kit.id)
       } else if (selected.scope === 'support_cases') {

@@ -30,7 +30,7 @@ const instant = (x: unknown) => {
   return x.toISOString()
 }
 
-const nullable = (x: unknown) => (x === null || x === undefined ? null : String(x))
+const nullable = (x: unknown) => (typeof x === 'string' ? x : null)
 
 const mapOrg = (r: Row): Organization =>
   organizationSchema.parse({
@@ -66,6 +66,19 @@ const mapAffiliation = (r: Row): Affiliation =>
 
 const grant = (a: OrganizationAccess, p: OrganizationPermission) => {
   if (!a.permissions.includes(p)) throw new OrganizationError('forbidden')
+}
+
+const requiredOrgPermission = (type: OrganizationMutation['type']): OrganizationPermission => {
+  switch (type) {
+    case 'create_organization':
+    case 'update_organization':
+    case 'archive_organization':
+      return 'organizations.write'
+    case 'create_affiliation':
+    case 'update_affiliation':
+    case 'remove_affiliation':
+      return 'affiliations.write'
+  }
 }
 
 export class PostgresOrganizationRepository implements OrganizationRepository {
@@ -183,7 +196,7 @@ export class PostgresOrganizationRepository implements OrganizationRepository {
   }
 
   async access(tenantId: string, principal: OrganizationPrincipal): Promise<OrganizationAccess> {
-    return this.transaction(tenantId, principal, async (_client, access) => access)
+    return this.transaction(tenantId, principal, (_client, access) => Promise.resolve(access))
   }
 
   async listOrganizations(
@@ -223,7 +236,7 @@ export class PostgresOrganizationRepository implements OrganizationRepository {
       const rows = (await client.query<Row>(sql, params)).rows
       const hasMore = rows.length > query.limit
       const items = rows.slice(0, query.limit).map(mapOrg)
-      const nextCursor = hasMore ? items[items.length - 1]?.id ?? null : null
+      const nextCursor = hasMore ? (items[items.length - 1]?.id ?? null) : null
 
       return { items, nextCursor }
     })
@@ -267,6 +280,17 @@ export class PostgresOrganizationRepository implements OrganizationRepository {
   ): Promise<{ items: Affiliation[]; nextCursor: string | null }> {
     return this.transaction(tenantId, principal, async (client, access) => {
       grant(access, 'affiliations.read')
+      if (access.scope === 'assigned') {
+        const orgRow = (
+          await client.query<Row>(
+            'SELECT owner_id FROM archava_organizations.organizations WHERE tenant_id = $1 AND id = $2',
+            [tenantId, organizationId],
+          )
+        ).rows[0]
+        if (!orgRow || orgRow.owner_id !== access.ownerId) {
+          throw new OrganizationError('not_found')
+        }
+      }
       const conditions: string[] = ['tenant_id = $1', 'organization_id = $2']
       const params: unknown[] = [tenantId, organizationId]
 
@@ -293,7 +317,7 @@ export class PostgresOrganizationRepository implements OrganizationRepository {
       const rows = (await client.query<Row>(sql, params)).rows
       const hasMore = rows.length > query.limit
       const items = rows.slice(0, query.limit).map(mapAffiliation)
-      const nextCursor = hasMore ? items[items.length - 1]?.id ?? null : null
+      const nextCursor = hasMore ? (items[items.length - 1]?.id ?? null) : null
 
       return { items, nextCursor }
     })
@@ -306,9 +330,18 @@ export class PostgresOrganizationRepository implements OrganizationRepository {
   ): Promise<OrganizationReceipt> {
     return this.transaction(tenantId, principal, async (client, access) => {
       if (principal.kind !== 'human') throw new OrganizationError('forbidden')
+      grant(access, requiredOrgPermission(mutation.type))
 
       const fingerprint = createHmac('sha256', this.key)
-        .update(JSON.stringify(mutation.data))
+        .update(
+          JSON.stringify({
+            domain: 'organizations',
+            tenant: tenantId,
+            actor: principal.id,
+            type: mutation.type,
+            data: mutation.data,
+          }),
+        )
         .digest('hex')
 
       const existing = (
@@ -322,7 +355,19 @@ export class PostgresOrganizationRepository implements OrganizationRepository {
         if (existing.actor_id !== principal.id || existing.fingerprint !== fingerprint)
           throw new OrganizationError('conflict')
         if (existing.receipt) {
-          return organizationReceiptSchema.parse(existing.receipt)
+          const parsed = organizationReceiptSchema.parse(existing.receipt)
+          if (access.scope === 'assigned' && parsed.organizationId) {
+            const orgRow = (
+              await client.query<Row>(
+                'SELECT owner_id FROM archava_organizations.organizations WHERE tenant_id = $1 AND id = $2',
+                [tenantId, parsed.organizationId],
+              )
+            ).rows[0]
+            if (orgRow && orgRow.owner_id !== access.ownerId) {
+              throw new OrganizationError('forbidden')
+            }
+          }
+          return parsed
         }
         throw new OrganizationError('conflict')
       }
@@ -338,7 +383,6 @@ export class PostgresOrganizationRepository implements OrganizationRepository {
       const committedAt = instant(now)
 
       if (mutation.type === 'create_organization') {
-        grant(access, 'organizations.write')
         const orgId = randomUUID()
         const d = mutation.data
         await client.query(
@@ -375,7 +419,6 @@ export class PostgresOrganizationRepository implements OrganizationRepository {
           committedAt,
         }
       } else if (mutation.type === 'update_organization') {
-        grant(access, 'organizations.write')
         const d = mutation.data
         const orgRow = (
           await client.query<Row>(
@@ -384,6 +427,8 @@ export class PostgresOrganizationRepository implements OrganizationRepository {
           )
         ).rows[0]
         if (!orgRow) throw new OrganizationError('not_found')
+        if (access.scope === 'assigned' && orgRow.owner_id !== access.ownerId)
+          throw new OrganizationError('forbidden')
         if (orgRow.state === 'archived') throw new OrganizationError('archived')
         if (Number(orgRow.revision) !== d.revision) throw new OrganizationError('conflict')
 
@@ -429,7 +474,6 @@ export class PostgresOrganizationRepository implements OrganizationRepository {
           committedAt,
         }
       } else if (mutation.type === 'archive_organization') {
-        grant(access, 'organizations.write')
         const d = mutation.data
         const orgRow = (
           await client.query<Row>(
@@ -438,6 +482,8 @@ export class PostgresOrganizationRepository implements OrganizationRepository {
           )
         ).rows[0]
         if (!orgRow) throw new OrganizationError('not_found')
+        if (access.scope === 'assigned' && orgRow.owner_id !== access.ownerId)
+          throw new OrganizationError('forbidden')
         if (orgRow.state === 'archived') throw new OrganizationError('archived')
         if (Number(orgRow.revision) !== d.revision) throw new OrganizationError('conflict')
 
@@ -475,7 +521,6 @@ export class PostgresOrganizationRepository implements OrganizationRepository {
           committedAt,
         }
       } else if (mutation.type === 'create_affiliation') {
-        grant(access, 'affiliations.write')
         const d = mutation.data
         const orgRow = (
           await client.query<Row>(
@@ -484,6 +529,8 @@ export class PostgresOrganizationRepository implements OrganizationRepository {
           )
         ).rows[0]
         if (!orgRow) throw new OrganizationError('not_found')
+        if (access.scope === 'assigned' && orgRow.owner_id !== access.ownerId)
+          throw new OrganizationError('forbidden')
         if (orgRow.state === 'archived') throw new OrganizationError('archived')
 
         if (d.isPrimary) {
@@ -537,7 +584,6 @@ export class PostgresOrganizationRepository implements OrganizationRepository {
           committedAt,
         }
       } else if (mutation.type === 'update_affiliation') {
-        grant(access, 'affiliations.write')
         const d = mutation.data
         const orgRow = (
           await client.query<Row>(
@@ -546,6 +592,8 @@ export class PostgresOrganizationRepository implements OrganizationRepository {
           )
         ).rows[0]
         if (!orgRow) throw new OrganizationError('not_found')
+        if (access.scope === 'assigned' && orgRow.owner_id !== access.ownerId)
+          throw new OrganizationError('forbidden')
         if (orgRow.state === 'archived') throw new OrganizationError('archived')
 
         const affRow = (
@@ -611,7 +659,6 @@ export class PostgresOrganizationRepository implements OrganizationRepository {
         }
       } else {
         // remove_affiliation
-        grant(access, 'affiliations.write')
         const d = mutation.data
         const orgRow = (
           await client.query<Row>(
@@ -620,6 +667,8 @@ export class PostgresOrganizationRepository implements OrganizationRepository {
           )
         ).rows[0]
         if (!orgRow) throw new OrganizationError('not_found')
+        if (access.scope === 'assigned' && orgRow.owner_id !== access.ownerId)
+          throw new OrganizationError('forbidden')
 
         const affRow = (
           await client.query<Row>(
@@ -644,7 +693,16 @@ export class PostgresOrganizationRepository implements OrganizationRepository {
           `INSERT INTO archava_organizations.audit(
             tenant_id, request_id, actor_id, operation, organization_id, affiliation_id, revision, reason, occurred_at
           ) VALUES($1, $2, $3, 'remove_affiliation', $4, $5, $6, $7, $8)`,
-          [tenantId, mutation.requestId, principal.id, d.organizationId, d.id, nextRevision, d.reason, now],
+          [
+            tenantId,
+            mutation.requestId,
+            principal.id,
+            d.organizationId,
+            d.id,
+            nextRevision,
+            d.reason,
+            now,
+          ],
         )
 
         receipt = {
@@ -671,7 +729,8 @@ export class PostgresOrganizationRepository implements OrganizationRepository {
     principal: OrganizationPrincipal,
     requestId: string,
   ): Promise<OrganizationCommandStatus> {
-    return this.transaction(tenantId, principal, async (client, _access) => {
+    return this.transaction(tenantId, principal, async (client, access) => {
+      grant(access, 'organizations.read')
       const row = (
         await client.query<Row>(
           'SELECT * FROM archava_organizations.commands WHERE tenant_id = $1 AND request_id = $2',
@@ -679,9 +738,26 @@ export class PostgresOrganizationRepository implements OrganizationRepository {
         )
       ).rows[0]
       if (!row || !row.receipt) return { status: 'not_committed' }
+      const receipt = organizationReceiptSchema.parse(row.receipt)
+      if (access.scope === 'assigned') {
+        if (row.actor_id !== principal.id) {
+          throw new OrganizationError('forbidden')
+        }
+        if (receipt.organizationId) {
+          const orgRow = (
+            await client.query<Row>(
+              'SELECT owner_id FROM archava_organizations.organizations WHERE tenant_id = $1 AND id = $2',
+              [tenantId, receipt.organizationId],
+            )
+          ).rows[0]
+          if (orgRow && orgRow.owner_id !== access.ownerId) {
+            throw new OrganizationError('forbidden')
+          }
+        }
+      }
       return {
         status: 'committed',
-        receipt: organizationReceiptSchema.parse(row.receipt),
+        receipt,
       }
     })
   }

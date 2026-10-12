@@ -3,7 +3,7 @@ import { OrganizationError, type OrganizationPrincipal } from './contracts.js'
 import type { OrganizationService } from './service.js'
 
 export const ORGANIZATION_READ_TOOLS = Object.freeze(
-  ['list', 'detail', 'affiliations'].map((name) =>
+  ['list', 'detail', 'affiliations', 'search'].map((name) =>
     Object.freeze({ name: 'organizations.' + name, effect: 'read' }),
   ),
 )
@@ -18,6 +18,15 @@ export function createOrganizationTools(
     async invoke(name: string, input: unknown) {
       if (name === 'organizations.list') {
         return service.listOrganizations(tenant, principal, input)
+      }
+      if (name === 'organizations.search') {
+        const { query } = z
+          .object({
+            query: z.string().trim().max(100).optional(),
+          })
+          .strict()
+          .parse(input)
+        return service.listOrganizations(tenant, principal, query ? { search: query } : {})
       }
       if (name === 'organizations.detail') {
         const { id } = z.object({ id: z.uuid() }).strict().parse(input)

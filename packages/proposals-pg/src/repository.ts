@@ -34,7 +34,7 @@ const instant = (x: unknown) => {
   return x.toISOString()
 }
 
-const nullable = (x: unknown) => (x === null || x === undefined ? null : String(x))
+const nullable = (x: unknown) => (typeof x === 'string' ? x : null)
 
 const mapProposal = (r: Row): Proposal =>
   proposalSchema.parse({
@@ -42,7 +42,7 @@ const mapProposal = (r: Row): Proposal =>
     tenantId: r.tenant_id,
     title: r.title,
     summary: r.summary,
-    organizationId: r.organization_id ? String(r.organization_id) : null,
+    organizationId: typeof r.organization_id === 'string' ? r.organization_id : null,
     contactId: nullable(r.contact_id),
     leadId: nullable(r.lead_id),
     currency: r.currency,
@@ -51,7 +51,7 @@ const mapProposal = (r: Row): Proposal =>
     currentScopeVersion: Number(r.current_scope_version),
     acceptedAt: r.accepted_at ? instant(r.accepted_at) : null,
     acceptedBy: nullable(r.accepted_by),
-    linkedProjectId: r.linked_project_id ? String(r.linked_project_id) : null,
+    linkedProjectId: typeof r.linked_project_id === 'string' ? r.linked_project_id : null,
     ownerId: r.owner_id,
     revision: Number(r.revision),
     createdAt: instant(r.created_at),
@@ -65,7 +65,8 @@ const mapScopeItem = (r: Row): ProposalScopeItem =>
     scopeVersion: Number(r.scope_version),
     title: r.title,
     description: r.description,
-    estimatedDays: r.estimated_days !== null && r.estimated_days !== undefined ? Number(r.estimated_days) : null,
+    estimatedDays:
+      r.estimated_days !== null && r.estimated_days !== undefined ? Number(r.estimated_days) : null,
     estimatedValue: Number(r.estimated_value),
     deliverableType: r.deliverable_type,
     createdAt: instant(r.created_at),
@@ -76,13 +77,13 @@ const mapScopeVersion = (r: Row): ProposalScopeVersion =>
     id: r.id,
     proposalId: r.proposal_id,
     scopeVersion: Number(r.scope_version),
-    changeRequestId: r.change_request_id ? String(r.change_request_id) : null,
+    changeRequestId: typeof r.change_request_id === 'string' ? r.change_request_id : null,
     summary: r.summary,
     totalValue: Number(r.total_value),
     totalDays: Number(r.total_days),
     confirmedAt: instant(r.confirmed_at),
     confirmedBy: r.confirmed_by,
-    items: typeof r.items === 'string' ? JSON.parse(r.items) : r.items,
+    items: (typeof r.items === 'string' ? JSON.parse(r.items) : r.items) as unknown[],
   })
 
 const mapChangeRequest = (r: Row): ProposalChangeRequest =>
@@ -109,6 +110,29 @@ const mapChangeRequest = (r: Row): ProposalChangeRequest =>
 
 const grant = (a: ProposalAccess, p: ProposalPermission) => {
   if (!a.permissions.includes(p)) throw new ProposalError('forbidden')
+}
+
+const requiredProposalPermission = (type: ProposalMutation['type']): ProposalPermission => {
+  switch (type) {
+    case 'create_proposal':
+    case 'update_proposal':
+    case 'set_scope_items':
+    case 'submit_proposal':
+    case 'withdraw_proposal':
+    case 'link_project':
+      return 'proposals.write'
+    case 'accept_proposal':
+    case 'reject_proposal':
+      return 'proposals.decide'
+    case 'create_change_request':
+    case 'update_change_request':
+    case 'submit_change_request':
+    case 'withdraw_change_request':
+      return 'changerequests.write'
+    case 'approve_change_request':
+    case 'reject_change_request':
+      return 'changerequests.decide'
+  }
 }
 
 export class PostgresProposalRepository implements ProposalRepository {
@@ -146,7 +170,17 @@ export class PostgresProposalRepository implements ProposalRepository {
     const policies = (
       await pool.query<{ count: number }>(
         "SELECT count(*)::integer AS count FROM pg_class WHERE relnamespace='archava_proposals'::regnamespace AND relname=ANY($1::text[]) AND relrowsecurity AND relforcerowsecurity",
-        [['memberships', 'proposals', 'scope_items', 'scope_versions', 'change_requests', 'commands', 'audit']],
+        [
+          [
+            'memberships',
+            'proposals',
+            'scope_items',
+            'scope_versions',
+            'change_requests',
+            'commands',
+            'audit',
+          ],
+        ],
       )
     ).rows[0]
     if (policies?.count !== 7) throw new Error('Proposals tenant policies must be forced')
@@ -226,7 +260,7 @@ export class PostgresProposalRepository implements ProposalRepository {
   }
 
   async access(tenant: string, principal: ProposalPrincipal): Promise<ProposalAccess> {
-    return await this.transaction(tenant, principal, async (_c, a) => a)
+    return await this.transaction(tenant, principal, (_c, a) => Promise.resolve(a))
   }
 
   async list(
@@ -266,7 +300,8 @@ export class PostgresProposalRepository implements ProposalRepository {
       const hasMore = rows.length > query.limit
       const sliced = hasMore ? rows.slice(0, query.limit) : rows
       const items = sliced.map(mapProposal)
-      const nextCursor = hasMore && sliced.length > 0 ? (sliced[sliced.length - 1]?.id as string) : undefined
+      const nextCursor =
+        hasMore && sliced.length > 0 ? (sliced[sliced.length - 1]?.id as string) : undefined
 
       return { items, nextCursor }
     })
@@ -325,6 +360,17 @@ export class PostgresProposalRepository implements ProposalRepository {
   ): Promise<readonly ProposalScopeVersion[]> {
     return await this.transaction(tenant, principal, async (client, access) => {
       grant(access, 'proposals.read')
+      if (access.scope === 'assigned') {
+        const propRow = (
+          await client.query<Row>(
+            'SELECT owner_id FROM archava_proposals.proposals WHERE tenant_id=$1 AND id=$2',
+            [tenant, proposalId],
+          )
+        ).rows[0]
+        if (!propRow || propRow.owner_id !== access.ownerId) {
+          throw new ProposalError('forbidden')
+        }
+      }
       const rows = (
         await client.query<Row>(
           'SELECT * FROM archava_proposals.scope_versions WHERE tenant_id=$1 AND proposal_id=$2 ORDER BY scope_version ASC',
@@ -342,6 +388,17 @@ export class PostgresProposalRepository implements ProposalRepository {
   ): Promise<readonly ProposalChangeRequest[]> {
     return await this.transaction(tenant, principal, async (client, access) => {
       grant(access, 'changerequests.read')
+      if (access.scope === 'assigned') {
+        const propRow = (
+          await client.query<Row>(
+            'SELECT owner_id FROM archava_proposals.proposals WHERE tenant_id=$1 AND id=$2',
+            [tenant, proposalId],
+          )
+        ).rows[0]
+        if (!propRow || propRow.owner_id !== access.ownerId) {
+          throw new ProposalError('forbidden')
+        }
+      }
       const rows = (
         await client.query<Row>(
           'SELECT * FROM archava_proposals.change_requests WHERE tenant_id=$1 AND proposal_id=$2 ORDER BY change_number ASC',
@@ -358,33 +415,63 @@ export class PostgresProposalRepository implements ProposalRepository {
     mutation: ProposalMutation,
   ): Promise<CommandReceipt> {
     return await this.transaction(tenant, principal, async (client, access) => {
+      if (principal.kind !== 'human') throw new ProposalError('forbidden')
+      grant(access, requiredProposalPermission(mutation.type))
+
       const fingerprint = createHmac('sha256', this.key)
-        .update(JSON.stringify({ tenant, principal: principal.id, mutation }))
+        .update(
+          JSON.stringify({
+            domain: 'proposals',
+            tenant,
+            actor: principal.id,
+            type: mutation.type,
+            mutation,
+          }),
+        )
         .digest('hex')
 
       const existingCmd = (
         await client.query<Row>(
-          'SELECT * FROM archava_proposals.commands WHERE tenant_id=$1 AND command_id=$2',
+          'SELECT * FROM archava_proposals.commands WHERE tenant_id=$1 AND command_id=$2 FOR UPDATE',
           [tenant, mutation.commandId],
         )
       ).rows[0]
 
       if (existingCmd) {
-        if (existingCmd.fingerprint !== fingerprint) throw new ProposalError('conflict')
-        return commandReceiptSchema.parse(existingCmd.receipt)
+        if (existingCmd.actor_id !== principal.id || existingCmd.fingerprint !== fingerprint) {
+          throw new ProposalError('conflict')
+        }
+        if (existingCmd.receipt) {
+          const receipt = commandReceiptSchema.parse(existingCmd.receipt)
+          if (access.scope === 'assigned' && receipt.proposalId) {
+            const propRow = (
+              await client.query<Row>(
+                'SELECT owner_id FROM archava_proposals.proposals WHERE tenant_id=$1 AND id=$2',
+                [tenant, receipt.proposalId],
+              )
+            ).rows[0]
+            if (propRow && propRow.owner_id !== access.ownerId) {
+              throw new ProposalError('forbidden')
+            }
+          }
+          return receipt
+        }
+        throw new ProposalError('conflict')
       }
 
       await client.query(
         'INSERT INTO archava_proposals.commands(tenant_id, command_id, actor_id, fingerprint) VALUES($1,$2,$3,$4)',
-        [tenant, mutation.commandId, access.ownerId, fingerprint],
+        [tenant, mutation.commandId, principal.id, fingerprint],
       )
 
       let receipt: CommandReceipt
 
       if (mutation.type === 'create_proposal') {
-        grant(access, 'proposals.write')
         const proposalId = randomUUID()
-        const totalVal = mutation.scopeItems.reduce((acc: number, it) => acc + (it.estimatedValue ?? 0), 0)
+        const totalVal = mutation.scopeItems.reduce(
+          (acc: number, it) => acc + (it.estimatedValue ?? 0),
+          0,
+        )
 
         const propRow = (
           await client.query<Row>(
@@ -403,10 +490,11 @@ export class PostgresProposalRepository implements ProposalRepository {
               mutation.leadId,
               mutation.currency,
               totalVal,
-              access.ownerId,
+              principal.id,
             ],
           )
-        ).rows[0]!
+        ).rows[0]
+        if (!propRow) throw new ProposalError('conflict')
 
         for (const it of mutation.scopeItems) {
           await client.query(
@@ -438,10 +526,9 @@ export class PostgresProposalRepository implements ProposalRepository {
         await client.query(
           `INSERT INTO archava_proposals.audit(tenant_id, command_id, actor_id, operation, proposal_id, revision, occurred_at)
            VALUES($1,$2,$3,'create_proposal',$4,1,$5)`,
-          [tenant, mutation.commandId, access.ownerId, proposalId, propRow.created_at],
+          [tenant, mutation.commandId, principal.id, proposalId, propRow.created_at],
         )
       } else if (mutation.type === 'update_proposal') {
-        grant(access, 'proposals.write')
         const row = (
           await client.query<Row>(
             'SELECT * FROM archava_proposals.proposals WHERE tenant_id=$1 AND id=$2 FOR UPDATE',
@@ -449,6 +536,8 @@ export class PostgresProposalRepository implements ProposalRepository {
           )
         ).rows[0]
         if (!row) throw new ProposalError('not_found')
+        if (access.scope === 'assigned' && row.owner_id !== access.ownerId)
+          throw new ProposalError('forbidden')
         if (row.state !== 'draft') throw new ProposalError('scope_frozen')
         if (Number(row.revision) !== mutation.expectedRevision) throw new ProposalError('conflict')
 
@@ -470,7 +559,8 @@ export class PostgresProposalRepository implements ProposalRepository {
               mutation.proposalId,
             ],
           )
-        ).rows[0]!
+        ).rows[0]
+        if (!updated) throw new ProposalError('conflict')
 
         receipt = {
           commandId: mutation.commandId,
@@ -483,10 +573,16 @@ export class PostgresProposalRepository implements ProposalRepository {
         await client.query(
           `INSERT INTO archava_proposals.audit(tenant_id, command_id, actor_id, operation, proposal_id, revision, occurred_at)
            VALUES($1,$2,$3,'update_proposal',$4,$5,$6)`,
-          [tenant, mutation.commandId, access.ownerId, mutation.proposalId, nextRev, updated.updated_at],
+          [
+            tenant,
+            mutation.commandId,
+            principal.id,
+            mutation.proposalId,
+            nextRev,
+            updated.updated_at,
+          ],
         )
       } else if (mutation.type === 'set_scope_items') {
-        grant(access, 'proposals.write')
         const row = (
           await client.query<Row>(
             'SELECT * FROM archava_proposals.proposals WHERE tenant_id=$1 AND id=$2 FOR UPDATE',
@@ -494,6 +590,8 @@ export class PostgresProposalRepository implements ProposalRepository {
           )
         ).rows[0]
         if (!row) throw new ProposalError('not_found')
+        if (access.scope === 'assigned' && row.owner_id !== access.ownerId)
+          throw new ProposalError('forbidden')
         if (row.state !== 'draft') throw new ProposalError('scope_frozen')
         if (Number(row.revision) !== mutation.expectedRevision) throw new ProposalError('conflict')
 
@@ -502,7 +600,10 @@ export class PostgresProposalRepository implements ProposalRepository {
           [tenant, mutation.proposalId],
         )
 
-        const totalVal = mutation.scopeItems.reduce((acc: number, it) => acc + (it.estimatedValue ?? 0), 0)
+        const totalVal = mutation.scopeItems.reduce(
+          (acc: number, it) => acc + (it.estimatedValue ?? 0),
+          0,
+        )
         for (const it of mutation.scopeItems) {
           await client.query(
             `INSERT INTO archava_proposals.scope_items(
@@ -530,7 +631,8 @@ export class PostgresProposalRepository implements ProposalRepository {
              RETURNING *`,
             [totalVal, nextRev, tenant, mutation.proposalId],
           )
-        ).rows[0]!
+        ).rows[0]
+        if (!updated) throw new ProposalError('conflict')
 
         receipt = {
           commandId: mutation.commandId,
@@ -544,10 +646,16 @@ export class PostgresProposalRepository implements ProposalRepository {
         await client.query(
           `INSERT INTO archava_proposals.audit(tenant_id, command_id, actor_id, operation, proposal_id, revision, occurred_at)
            VALUES($1,$2,$3,'set_scope_items',$4,$5,$6)`,
-          [tenant, mutation.commandId, access.ownerId, mutation.proposalId, nextRev, updated.updated_at],
+          [
+            tenant,
+            mutation.commandId,
+            principal.id,
+            mutation.proposalId,
+            nextRev,
+            updated.updated_at,
+          ],
         )
       } else if (mutation.type === 'submit_proposal') {
-        grant(access, 'proposals.write')
         const row = (
           await client.query<Row>(
             'SELECT * FROM archava_proposals.proposals WHERE tenant_id=$1 AND id=$2 FOR UPDATE',
@@ -555,6 +663,8 @@ export class PostgresProposalRepository implements ProposalRepository {
           )
         ).rows[0]
         if (!row) throw new ProposalError('not_found')
+        if (access.scope === 'assigned' && row.owner_id !== access.ownerId)
+          throw new ProposalError('forbidden')
         if (row.state !== 'draft') throw new ProposalError('invalid_state')
         if (Number(row.revision) !== mutation.expectedRevision) throw new ProposalError('conflict')
 
@@ -567,7 +677,8 @@ export class PostgresProposalRepository implements ProposalRepository {
              RETURNING *`,
             [nextRev, tenant, mutation.proposalId],
           )
-        ).rows[0]!
+        ).rows[0]
+        if (!updated) throw new ProposalError('conflict')
 
         receipt = {
           commandId: mutation.commandId,
@@ -580,10 +691,16 @@ export class PostgresProposalRepository implements ProposalRepository {
         await client.query(
           `INSERT INTO archava_proposals.audit(tenant_id, command_id, actor_id, operation, proposal_id, revision, occurred_at)
            VALUES($1,$2,$3,'submit_proposal',$4,$5,$6)`,
-          [tenant, mutation.commandId, access.ownerId, mutation.proposalId, nextRev, updated.updated_at],
+          [
+            tenant,
+            mutation.commandId,
+            principal.id,
+            mutation.proposalId,
+            nextRev,
+            updated.updated_at,
+          ],
         )
       } else if (mutation.type === 'accept_proposal') {
-        grant(access, 'proposals.decide')
         const row = (
           await client.query<Row>(
             'SELECT * FROM archava_proposals.proposals WHERE tenant_id=$1 AND id=$2 FOR UPDATE',
@@ -591,6 +708,8 @@ export class PostgresProposalRepository implements ProposalRepository {
           )
         ).rows[0]
         if (!row) throw new ProposalError('not_found')
+        if (access.scope === 'assigned' && row.owner_id !== access.ownerId)
+          throw new ProposalError('forbidden')
         if (row.state !== 'submitted') throw new ProposalError('invalid_state')
         if (Number(row.revision) !== mutation.expectedRevision) throw new ProposalError('conflict')
 
@@ -602,8 +721,14 @@ export class PostgresProposalRepository implements ProposalRepository {
           )
         ).rows.map(mapScopeItem)
 
-        const totalVal = items.reduce((acc: number, it: ProposalScopeItem) => acc + (it.estimatedValue ?? 0), 0)
-        const totalDays = items.reduce((acc: number, it: ProposalScopeItem) => acc + (it.estimatedDays ?? 0), 0)
+        const totalVal = items.reduce(
+          (acc: number, it: ProposalScopeItem) => acc + (it.estimatedValue ?? 0),
+          0,
+        )
+        const totalDays = items.reduce(
+          (acc: number, it: ProposalScopeItem) => acc + (it.estimatedDays ?? 0),
+          0,
+        )
 
         const nextRev = mutation.expectedRevision + 1
         const updated = (
@@ -612,9 +737,10 @@ export class PostgresProposalRepository implements ProposalRepository {
              SET state='accepted', accepted_at=clock_timestamp(), accepted_by=$1, linked_project_id=$2, revision=$3, updated_at=clock_timestamp()
              WHERE tenant_id=$4 AND id=$5
              RETURNING *`,
-            [access.ownerId, mutation.linkedProjectId, nextRev, tenant, mutation.proposalId],
+            [principal.id, mutation.linkedProjectId, nextRev, tenant, mutation.proposalId],
           )
-        ).rows[0]!
+        ).rows[0]
+        if (!updated) throw new ProposalError('conflict')
 
         await client.query(
           `INSERT INTO archava_proposals.scope_versions(
@@ -628,7 +754,7 @@ export class PostgresProposalRepository implements ProposalRepository {
             totalVal,
             totalDays,
             updated.accepted_at,
-            access.ownerId,
+            principal.id,
             JSON.stringify(items),
           ],
         )
@@ -645,10 +771,16 @@ export class PostgresProposalRepository implements ProposalRepository {
         await client.query(
           `INSERT INTO archava_proposals.audit(tenant_id, command_id, actor_id, operation, proposal_id, revision, occurred_at)
            VALUES($1,$2,$3,'accept_proposal',$4,$5,$6)`,
-          [tenant, mutation.commandId, access.ownerId, mutation.proposalId, nextRev, updated.updated_at],
+          [
+            tenant,
+            mutation.commandId,
+            principal.id,
+            mutation.proposalId,
+            nextRev,
+            updated.updated_at,
+          ],
         )
       } else if (mutation.type === 'reject_proposal') {
-        grant(access, 'proposals.decide')
         const row = (
           await client.query<Row>(
             'SELECT * FROM archava_proposals.proposals WHERE tenant_id=$1 AND id=$2 FOR UPDATE',
@@ -656,6 +788,8 @@ export class PostgresProposalRepository implements ProposalRepository {
           )
         ).rows[0]
         if (!row) throw new ProposalError('not_found')
+        if (access.scope === 'assigned' && row.owner_id !== access.ownerId)
+          throw new ProposalError('forbidden')
         if (row.state !== 'submitted') throw new ProposalError('invalid_state')
         if (Number(row.revision) !== mutation.expectedRevision) throw new ProposalError('conflict')
 
@@ -668,7 +802,8 @@ export class PostgresProposalRepository implements ProposalRepository {
              RETURNING *`,
             [nextRev, tenant, mutation.proposalId],
           )
-        ).rows[0]!
+        ).rows[0]
+        if (!updated) throw new ProposalError('conflict')
 
         receipt = {
           commandId: mutation.commandId,
@@ -681,10 +816,17 @@ export class PostgresProposalRepository implements ProposalRepository {
         await client.query(
           `INSERT INTO archava_proposals.audit(tenant_id, command_id, actor_id, operation, proposal_id, revision, reason, occurred_at)
            VALUES($1,$2,$3,'reject_proposal',$4,$5,$6,$7)`,
-          [tenant, mutation.commandId, access.ownerId, mutation.proposalId, nextRev, mutation.reason, updated.updated_at],
+          [
+            tenant,
+            mutation.commandId,
+            principal.id,
+            mutation.proposalId,
+            nextRev,
+            mutation.reason,
+            updated.updated_at,
+          ],
         )
       } else if (mutation.type === 'withdraw_proposal') {
-        grant(access, 'proposals.write')
         const row = (
           await client.query<Row>(
             'SELECT * FROM archava_proposals.proposals WHERE tenant_id=$1 AND id=$2 FOR UPDATE',
@@ -692,7 +834,10 @@ export class PostgresProposalRepository implements ProposalRepository {
           )
         ).rows[0]
         if (!row) throw new ProposalError('not_found')
-        if (!['draft', 'submitted'].includes(row.state as string)) throw new ProposalError('invalid_state')
+        if (access.scope === 'assigned' && row.owner_id !== access.ownerId)
+          throw new ProposalError('forbidden')
+        if (!['draft', 'submitted'].includes(row.state as string))
+          throw new ProposalError('invalid_state')
         if (Number(row.revision) !== mutation.expectedRevision) throw new ProposalError('conflict')
 
         const nextRev = mutation.expectedRevision + 1
@@ -704,7 +849,8 @@ export class PostgresProposalRepository implements ProposalRepository {
              RETURNING *`,
             [nextRev, tenant, mutation.proposalId],
           )
-        ).rows[0]!
+        ).rows[0]
+        if (!updated) throw new ProposalError('conflict')
 
         receipt = {
           commandId: mutation.commandId,
@@ -717,10 +863,17 @@ export class PostgresProposalRepository implements ProposalRepository {
         await client.query(
           `INSERT INTO archava_proposals.audit(tenant_id, command_id, actor_id, operation, proposal_id, revision, reason, occurred_at)
            VALUES($1,$2,$3,'withdraw_proposal',$4,$5,$6,$7)`,
-          [tenant, mutation.commandId, access.ownerId, mutation.proposalId, nextRev, mutation.reason, updated.updated_at],
+          [
+            tenant,
+            mutation.commandId,
+            principal.id,
+            mutation.proposalId,
+            nextRev,
+            mutation.reason,
+            updated.updated_at,
+          ],
         )
       } else if (mutation.type === 'link_project') {
-        grant(access, 'proposals.write')
         const row = (
           await client.query<Row>(
             'SELECT * FROM archava_proposals.proposals WHERE tenant_id=$1 AND id=$2 FOR UPDATE',
@@ -728,6 +881,8 @@ export class PostgresProposalRepository implements ProposalRepository {
           )
         ).rows[0]
         if (!row) throw new ProposalError('not_found')
+        if (access.scope === 'assigned' && row.owner_id !== access.ownerId)
+          throw new ProposalError('forbidden')
         if (row.state !== 'accepted') throw new ProposalError('invalid_state')
         if (Number(row.revision) !== mutation.expectedRevision) throw new ProposalError('conflict')
 
@@ -740,7 +895,8 @@ export class PostgresProposalRepository implements ProposalRepository {
              RETURNING *`,
             [mutation.projectId, nextRev, tenant, mutation.proposalId],
           )
-        ).rows[0]!
+        ).rows[0]
+        if (!updated) throw new ProposalError('conflict')
 
         receipt = {
           commandId: mutation.commandId,
@@ -753,10 +909,16 @@ export class PostgresProposalRepository implements ProposalRepository {
         await client.query(
           `INSERT INTO archava_proposals.audit(tenant_id, command_id, actor_id, operation, proposal_id, revision, occurred_at)
            VALUES($1,$2,$3,'link_project',$4,$5,$6)`,
-          [tenant, mutation.commandId, access.ownerId, mutation.proposalId, nextRev, updated.updated_at],
+          [
+            tenant,
+            mutation.commandId,
+            principal.id,
+            mutation.proposalId,
+            nextRev,
+            updated.updated_at,
+          ],
         )
       } else if (mutation.type === 'create_change_request') {
-        grant(access, 'changerequests.write')
         const propRow = (
           await client.query<Row>(
             'SELECT * FROM archava_proposals.proposals WHERE tenant_id=$1 AND id=$2 FOR UPDATE',
@@ -764,6 +926,8 @@ export class PostgresProposalRepository implements ProposalRepository {
           )
         ).rows[0]
         if (!propRow) throw new ProposalError('not_found')
+        if (access.scope === 'assigned' && propRow.owner_id !== access.ownerId)
+          throw new ProposalError('forbidden')
         if (propRow.state !== 'accepted')
           throw new ProposalError('invalid_state', 'Change request requires an accepted proposal.')
 
@@ -774,7 +938,10 @@ export class PostgresProposalRepository implements ProposalRepository {
           )
         ).rows[0]
         if (activeCr)
-          throw new ProposalError('active_change_request_exists', 'An open change request already exists.')
+          throw new ProposalError(
+            'active_change_request_exists',
+            'An open change request already exists.',
+          )
 
         const countRow = (
           await client.query<Row>(
@@ -802,18 +969,11 @@ export class PostgresProposalRepository implements ProposalRepository {
               mutation.deltaSummary,
               mutation.timeDeltaDays,
               mutation.costDeltaValue,
-              access.ownerId,
+              principal.id,
             ],
           )
-        ).rows[0]!
-
-        // Save new scope items temporarily keyed under negative version or specific table?
-        // Or store draft new scope items directly associated with CR in a json or scope_items table?
-        // Let's store them in scope_items keyed to (scope_version = 0) with a change_request_id column, OR
-        // let's store the proposed items in a column, or scope_version = (10000 + changeNumber).
-        // Better yet: we can store proposed items in change_requests table as json or insert when approved!
-        // Notice: approve_change_request receives new scope items!
-        // We can store proposed items in audit / change_requests delta. Let's add new_items jsonb to change_requests or pass on approval!
+        ).rows[0]
+        if (!crRow) throw new ProposalError('conflict')
 
         receipt = {
           commandId: mutation.commandId,
@@ -827,10 +987,9 @@ export class PostgresProposalRepository implements ProposalRepository {
         await client.query(
           `INSERT INTO archava_proposals.audit(tenant_id, command_id, actor_id, operation, proposal_id, change_request_id, revision, occurred_at)
            VALUES($1,$2,$3,'create_change_request',$4,$5,1,$6)`,
-          [tenant, mutation.commandId, access.ownerId, mutation.proposalId, crId, crRow.created_at],
+          [tenant, mutation.commandId, principal.id, mutation.proposalId, crId, crRow.created_at],
         )
       } else if (mutation.type === 'update_change_request') {
-        grant(access, 'changerequests.write')
         const crRow = (
           await client.query<Row>(
             'SELECT * FROM archava_proposals.change_requests WHERE tenant_id=$1 AND id=$2 FOR UPDATE',
@@ -838,8 +997,20 @@ export class PostgresProposalRepository implements ProposalRepository {
           )
         ).rows[0]
         if (!crRow) throw new ProposalError('not_found')
+        if (access.scope === 'assigned') {
+          const propRow = (
+            await client.query<Row>(
+              'SELECT owner_id FROM archava_proposals.proposals WHERE tenant_id=$1 AND id=$2',
+              [tenant, crRow.proposal_id],
+            )
+          ).rows[0]
+          if (!propRow || propRow.owner_id !== access.ownerId) {
+            throw new ProposalError('forbidden')
+          }
+        }
         if (crRow.state !== 'draft') throw new ProposalError('invalid_state')
-        if (Number(crRow.revision) !== mutation.expectedRevision) throw new ProposalError('conflict')
+        if (Number(crRow.revision) !== mutation.expectedRevision)
+          throw new ProposalError('conflict')
 
         const nextRev = mutation.expectedRevision + 1
         const updated = (
@@ -859,7 +1030,8 @@ export class PostgresProposalRepository implements ProposalRepository {
               mutation.changeRequestId,
             ],
           )
-        ).rows[0]!
+        ).rows[0]
+        if (!updated) throw new ProposalError('conflict')
 
         receipt = {
           commandId: mutation.commandId,
@@ -873,10 +1045,17 @@ export class PostgresProposalRepository implements ProposalRepository {
         await client.query(
           `INSERT INTO archava_proposals.audit(tenant_id, command_id, actor_id, operation, proposal_id, change_request_id, revision, occurred_at)
            VALUES($1,$2,$3,'update_change_request',$4,$5,$6,$7)`,
-          [tenant, mutation.commandId, access.ownerId, updated.proposal_id, mutation.changeRequestId, nextRev, updated.updated_at],
+          [
+            tenant,
+            mutation.commandId,
+            principal.id,
+            updated.proposal_id,
+            mutation.changeRequestId,
+            nextRev,
+            updated.updated_at,
+          ],
         )
       } else if (mutation.type === 'submit_change_request') {
-        grant(access, 'changerequests.write')
         const crRow = (
           await client.query<Row>(
             'SELECT * FROM archava_proposals.change_requests WHERE tenant_id=$1 AND id=$2 FOR UPDATE',
@@ -884,8 +1063,20 @@ export class PostgresProposalRepository implements ProposalRepository {
           )
         ).rows[0]
         if (!crRow) throw new ProposalError('not_found')
+        if (access.scope === 'assigned') {
+          const propRow = (
+            await client.query<Row>(
+              'SELECT owner_id FROM archava_proposals.proposals WHERE tenant_id=$1 AND id=$2',
+              [tenant, crRow.proposal_id],
+            )
+          ).rows[0]
+          if (!propRow || propRow.owner_id !== access.ownerId) {
+            throw new ProposalError('forbidden')
+          }
+        }
         if (crRow.state !== 'draft') throw new ProposalError('invalid_state')
-        if (Number(crRow.revision) !== mutation.expectedRevision) throw new ProposalError('conflict')
+        if (Number(crRow.revision) !== mutation.expectedRevision)
+          throw new ProposalError('conflict')
 
         const nextRev = mutation.expectedRevision + 1
         const updated = (
@@ -896,7 +1087,8 @@ export class PostgresProposalRepository implements ProposalRepository {
              RETURNING *`,
             [nextRev, tenant, mutation.changeRequestId],
           )
-        ).rows[0]!
+        ).rows[0]
+        if (!updated) throw new ProposalError('conflict')
 
         receipt = {
           commandId: mutation.commandId,
@@ -910,10 +1102,17 @@ export class PostgresProposalRepository implements ProposalRepository {
         await client.query(
           `INSERT INTO archava_proposals.audit(tenant_id, command_id, actor_id, operation, proposal_id, change_request_id, revision, occurred_at)
            VALUES($1,$2,$3,'submit_change_request',$4,$5,$6,$7)`,
-          [tenant, mutation.commandId, access.ownerId, updated.proposal_id, mutation.changeRequestId, nextRev, updated.updated_at],
+          [
+            tenant,
+            mutation.commandId,
+            principal.id,
+            updated.proposal_id,
+            mutation.changeRequestId,
+            nextRev,
+            updated.updated_at,
+          ],
         )
       } else if (mutation.type === 'approve_change_request') {
-        grant(access, 'changerequests.decide')
         const crRow = (
           await client.query<Row>(
             'SELECT * FROM archava_proposals.change_requests WHERE tenant_id=$1 AND id=$2 FOR UPDATE',
@@ -922,7 +1121,8 @@ export class PostgresProposalRepository implements ProposalRepository {
         ).rows[0]
         if (!crRow) throw new ProposalError('not_found')
         if (crRow.state !== 'submitted') throw new ProposalError('invalid_state')
-        if (Number(crRow.revision) !== mutation.expectedRevision) throw new ProposalError('conflict')
+        if (Number(crRow.revision) !== mutation.expectedRevision)
+          throw new ProposalError('conflict')
 
         const proposalId = String(crRow.proposal_id)
         const propRow = (
@@ -932,6 +1132,8 @@ export class PostgresProposalRepository implements ProposalRepository {
           )
         ).rows[0]
         if (!propRow) throw new ProposalError('not_found')
+        if (access.scope === 'assigned' && propRow.owner_id !== access.ownerId)
+          throw new ProposalError('forbidden')
         if (propRow.state !== 'accepted') throw new ProposalError('invalid_state')
 
         const nextScopeVersion = Number(propRow.current_scope_version) + 1
@@ -977,7 +1179,7 @@ export class PostgresProposalRepository implements ProposalRepository {
             amendmentItemId,
             proposalId,
             nextScopeVersion,
-            `CR-${crRow.change_number}: ${crRow.title}`,
+            `CR-${String(crRow.change_number)}: ${String(crRow.title)}`,
             crRow.delta_summary,
             Number(crRow.time_delta_days) || 0,
             Number(crRow.cost_delta_value) || 0,
@@ -992,8 +1194,14 @@ export class PostgresProposalRepository implements ProposalRepository {
           )
         ).rows.map(mapScopeItem)
 
-        const totalVal = newItems.reduce((acc: number, it: ProposalScopeItem) => acc + (it.estimatedValue ?? 0), 0)
-        const totalDays = newItems.reduce((acc: number, it: ProposalScopeItem) => acc + (it.estimatedDays ?? 0), 0)
+        const totalVal = newItems.reduce(
+          (acc: number, it: ProposalScopeItem) => acc + (it.estimatedValue ?? 0),
+          0,
+        )
+        const totalDays = newItems.reduce(
+          (acc: number, it: ProposalScopeItem) => acc + (it.estimatedDays ?? 0),
+          0,
+        )
 
         // Update proposal
         await client.query(
@@ -1010,9 +1218,10 @@ export class PostgresProposalRepository implements ProposalRepository {
              SET state='approved', resulting_scope_version=$1, decided_at=clock_timestamp(), decided_by=$2, revision=$3, updated_at=clock_timestamp()
              WHERE tenant_id=$4 AND id=$5
              RETURNING *`,
-            [nextScopeVersion, access.ownerId, nextCrRevision, tenant, mutation.changeRequestId],
+            [nextScopeVersion, principal.id, nextCrRevision, tenant, mutation.changeRequestId],
           )
-        ).rows[0]!
+        ).rows[0]
+        if (!updatedCr) throw new ProposalError('conflict')
 
         // Record scope version snapshot
         await client.query(
@@ -1025,11 +1234,11 @@ export class PostgresProposalRepository implements ProposalRepository {
             proposalId,
             nextScopeVersion,
             mutation.changeRequestId,
-            `Agreed Scope Version ${nextScopeVersion} (Amendment via CR-${crRow.change_number})`,
+            `Agreed Scope Version ${nextScopeVersion} (Amendment via CR-${String(crRow.change_number)})`,
             totalVal,
             totalDays,
             updatedCr.decided_at,
-            access.ownerId,
+            principal.id,
             JSON.stringify(newItems),
           ],
         )
@@ -1047,10 +1256,17 @@ export class PostgresProposalRepository implements ProposalRepository {
         await client.query(
           `INSERT INTO archava_proposals.audit(tenant_id, command_id, actor_id, operation, proposal_id, change_request_id, revision, occurred_at)
            VALUES($1,$2,$3,'approve_change_request',$4,$5,$6,$7)`,
-          [tenant, mutation.commandId, access.ownerId, proposalId, mutation.changeRequestId, nextCrRevision, updatedCr.updated_at],
+          [
+            tenant,
+            mutation.commandId,
+            principal.id,
+            proposalId,
+            mutation.changeRequestId,
+            nextCrRevision,
+            updatedCr.updated_at,
+          ],
         )
       } else if (mutation.type === 'reject_change_request') {
-        grant(access, 'changerequests.decide')
         const crRow = (
           await client.query<Row>(
             'SELECT * FROM archava_proposals.change_requests WHERE tenant_id=$1 AND id=$2 FOR UPDATE',
@@ -1058,8 +1274,20 @@ export class PostgresProposalRepository implements ProposalRepository {
           )
         ).rows[0]
         if (!crRow) throw new ProposalError('not_found')
+        if (access.scope === 'assigned') {
+          const propRow = (
+            await client.query<Row>(
+              'SELECT owner_id FROM archava_proposals.proposals WHERE tenant_id=$1 AND id=$2',
+              [tenant, crRow.proposal_id],
+            )
+          ).rows[0]
+          if (!propRow || propRow.owner_id !== access.ownerId) {
+            throw new ProposalError('forbidden')
+          }
+        }
         if (crRow.state !== 'submitted') throw new ProposalError('invalid_state')
-        if (Number(crRow.revision) !== mutation.expectedRevision) throw new ProposalError('conflict')
+        if (Number(crRow.revision) !== mutation.expectedRevision)
+          throw new ProposalError('conflict')
 
         const nextRev = mutation.expectedRevision + 1
         const updated = (
@@ -1068,9 +1296,10 @@ export class PostgresProposalRepository implements ProposalRepository {
              SET state='rejected', decided_at=clock_timestamp(), decided_by=$1, revision=$2, updated_at=clock_timestamp()
              WHERE tenant_id=$3 AND id=$4
              RETURNING *`,
-            [access.ownerId, nextRev, tenant, mutation.changeRequestId],
+            [principal.id, nextRev, tenant, mutation.changeRequestId],
           )
-        ).rows[0]!
+        ).rows[0]
+        if (!updated) throw new ProposalError('conflict')
 
         receipt = {
           commandId: mutation.commandId,
@@ -1084,10 +1313,18 @@ export class PostgresProposalRepository implements ProposalRepository {
         await client.query(
           `INSERT INTO archava_proposals.audit(tenant_id, command_id, actor_id, operation, proposal_id, change_request_id, revision, reason, occurred_at)
            VALUES($1,$2,$3,'reject_change_request',$4,$5,$6,$7,$8)`,
-          [tenant, mutation.commandId, access.ownerId, updated.proposal_id, mutation.changeRequestId, nextRev, mutation.reason, updated.updated_at],
+          [
+            tenant,
+            mutation.commandId,
+            principal.id,
+            updated.proposal_id,
+            mutation.changeRequestId,
+            nextRev,
+            mutation.reason,
+            updated.updated_at,
+          ],
         )
       } else if (mutation.type === 'withdraw_change_request') {
-        grant(access, 'changerequests.write')
         const crRow = (
           await client.query<Row>(
             'SELECT * FROM archava_proposals.change_requests WHERE tenant_id=$1 AND id=$2 FOR UPDATE',
@@ -1095,8 +1332,21 @@ export class PostgresProposalRepository implements ProposalRepository {
           )
         ).rows[0]
         if (!crRow) throw new ProposalError('not_found')
-        if (!['draft', 'submitted'].includes(crRow.state as string)) throw new ProposalError('invalid_state')
-        if (Number(crRow.revision) !== mutation.expectedRevision) throw new ProposalError('conflict')
+        if (access.scope === 'assigned') {
+          const propRow = (
+            await client.query<Row>(
+              'SELECT owner_id FROM archava_proposals.proposals WHERE tenant_id=$1 AND id=$2',
+              [tenant, crRow.proposal_id],
+            )
+          ).rows[0]
+          if (!propRow || propRow.owner_id !== access.ownerId) {
+            throw new ProposalError('forbidden')
+          }
+        }
+        if (!['draft', 'submitted'].includes(crRow.state as string))
+          throw new ProposalError('invalid_state')
+        if (Number(crRow.revision) !== mutation.expectedRevision)
+          throw new ProposalError('conflict')
 
         const nextRev = mutation.expectedRevision + 1
         const updated = (
@@ -1107,7 +1357,8 @@ export class PostgresProposalRepository implements ProposalRepository {
              RETURNING *`,
             [nextRev, tenant, mutation.changeRequestId],
           )
-        ).rows[0]!
+        ).rows[0]
+        if (!updated) throw new ProposalError('conflict')
 
         receipt = {
           commandId: mutation.commandId,
@@ -1121,7 +1372,16 @@ export class PostgresProposalRepository implements ProposalRepository {
         await client.query(
           `INSERT INTO archava_proposals.audit(tenant_id, command_id, actor_id, operation, proposal_id, change_request_id, revision, reason, occurred_at)
            VALUES($1,$2,$3,'withdraw_change_request',$4,$5,$6,$7,$8)`,
-          [tenant, mutation.commandId, access.ownerId, updated.proposal_id, mutation.changeRequestId, nextRev, mutation.reason, updated.updated_at],
+          [
+            tenant,
+            mutation.commandId,
+            principal.id,
+            updated.proposal_id,
+            mutation.changeRequestId,
+            nextRev,
+            mutation.reason,
+            updated.updated_at,
+          ],
         )
       } else {
         throw new ProposalError('invalid_request')
@@ -1141,17 +1401,35 @@ export class PostgresProposalRepository implements ProposalRepository {
     principal: ProposalPrincipal,
     commandId: string,
   ): Promise<CommandStatusResult> {
-    return await this.transaction(tenant, principal, async (client) => {
+    return await this.transaction(tenant, principal, async (client, access) => {
+      grant(access, 'proposals.read')
       const row = (
         await client.query<Row>(
-          'SELECT receipt FROM archava_proposals.commands WHERE tenant_id=$1 AND command_id=$2',
+          'SELECT receipt, actor_id FROM archava_proposals.commands WHERE tenant_id=$1 AND command_id=$2',
           [tenant, commandId],
         )
       ).rows[0]
       if (!row || !row.receipt) return { status: 'unknown' }
+      const receipt = commandReceiptSchema.parse(row.receipt)
+      if (access.scope === 'assigned') {
+        if (row.actor_id !== principal.id) {
+          throw new ProposalError('forbidden')
+        }
+        if (receipt.proposalId) {
+          const propRow = (
+            await client.query<Row>(
+              'SELECT owner_id FROM archava_proposals.proposals WHERE tenant_id=$1 AND id=$2',
+              [tenant, receipt.proposalId],
+            )
+          ).rows[0]
+          if (propRow && propRow.owner_id !== access.ownerId) {
+            throw new ProposalError('forbidden')
+          }
+        }
+      }
       return {
         status: 'committed',
-        receipt: commandReceiptSchema.parse(row.receipt),
+        receipt,
       }
     })
   }

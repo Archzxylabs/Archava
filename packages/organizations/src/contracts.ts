@@ -184,36 +184,48 @@ export const removeAffiliationDataSchema = z
   .strict()
 
 export const organizationMutationSchema = z.discriminatedUnion('type', [
-  z.object({
-    requestId: z.uuid(),
-    type: z.literal('create_organization'),
-    data: createOrganizationDataSchema,
-  }).strict(),
-  z.object({
-    requestId: z.uuid(),
-    type: z.literal('update_organization'),
-    data: updateOrganizationDataSchema,
-  }).strict(),
-  z.object({
-    requestId: z.uuid(),
-    type: z.literal('archive_organization'),
-    data: archiveOrganizationDataSchema,
-  }).strict(),
-  z.object({
-    requestId: z.uuid(),
-    type: z.literal('create_affiliation'),
-    data: createAffiliationDataSchema,
-  }).strict(),
-  z.object({
-    requestId: z.uuid(),
-    type: z.literal('update_affiliation'),
-    data: updateAffiliationDataSchema,
-  }).strict(),
-  z.object({
-    requestId: z.uuid(),
-    type: z.literal('remove_affiliation'),
-    data: removeAffiliationDataSchema,
-  }).strict(),
+  z
+    .object({
+      requestId: z.uuid(),
+      type: z.literal('create_organization'),
+      data: createOrganizationDataSchema,
+    })
+    .strict(),
+  z
+    .object({
+      requestId: z.uuid(),
+      type: z.literal('update_organization'),
+      data: updateOrganizationDataSchema,
+    })
+    .strict(),
+  z
+    .object({
+      requestId: z.uuid(),
+      type: z.literal('archive_organization'),
+      data: archiveOrganizationDataSchema,
+    })
+    .strict(),
+  z
+    .object({
+      requestId: z.uuid(),
+      type: z.literal('create_affiliation'),
+      data: createAffiliationDataSchema,
+    })
+    .strict(),
+  z
+    .object({
+      requestId: z.uuid(),
+      type: z.literal('update_affiliation'),
+      data: updateAffiliationDataSchema,
+    })
+    .strict(),
+  z
+    .object({
+      requestId: z.uuid(),
+      type: z.literal('remove_affiliation'),
+      data: removeAffiliationDataSchema,
+    })
+    .strict(),
 ])
 export type OrganizationMutation = z.infer<typeof organizationMutationSchema>
 

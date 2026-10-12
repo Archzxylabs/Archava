@@ -70,6 +70,130 @@ const grant = (a: CapacityAccess, p: CapacityPermission) => {
   if (!a.permissions.includes(p)) throw new CapacityError('forbidden')
 }
 
+const requiredCapacityPermission = (type: CapacityMutation['type']): CapacityPermission => {
+  switch (type) {
+    case 'create_pool':
+    case 'update_pool':
+    case 'archive_pool':
+      return 'capacity.write'
+    case 'commit_allocation':
+    case 'update_allocation_progress':
+    case 'complete_allocation':
+    case 'cancel_allocation':
+      return 'capacity.allocate'
+  }
+}
+
+interface ScheduleResult {
+  queuePosition: number
+  scheduledStartAt: string
+  scheduledFinishAt: string
+  burnRatePerDay: number
+  estimatedCalendarDays: number
+}
+
+export function calculateSchedule(
+  pool: { weeklyCapacity: number; maxConcurrentJobs: number },
+  activeAllocations: readonly CapacityAllocation[],
+  requiredUnits: number,
+  desiredStartAt?: string,
+): ScheduleResult {
+  const dailyBurnRate = pool.weeklyCapacity / 5
+  if (dailyBurnRate <= 0) throw new CapacityError('insufficient_capacity')
+
+  const now = new Date()
+  let candidateStart = desiredStartAt ? new Date(desiredStartAt) : now
+
+  while (candidateStart.getUTCDay() === 0 || candidateStart.getUTCDay() === 6) {
+    candidateStart = new Date(candidateStart.getTime() + 24 * 60 * 60 * 1000)
+    candidateStart.setUTCHours(0, 0, 0, 0)
+  }
+
+  const sortedAllocations = [...activeAllocations].sort(
+    (a, b) => new Date(a.scheduledFinishAt).getTime() - new Date(b.scheduledFinishAt).getTime(),
+  )
+
+  let queuePosition = 0
+  if (sortedAllocations.length >= pool.maxConcurrentJobs) {
+    queuePosition = sortedAllocations.length - pool.maxConcurrentJobs + 1
+    const releaseIdx = sortedAllocations.length - pool.maxConcurrentJobs
+    const blocking = sortedAllocations[releaseIdx]
+    if (blocking) {
+      const blockingFinish = new Date(blocking.scheduledFinishAt)
+      if (blockingFinish.getTime() > candidateStart.getTime()) {
+        candidateStart = blockingFinish
+        while (candidateStart.getUTCDay() === 0 || candidateStart.getUTCDay() === 6) {
+          candidateStart = new Date(candidateStart.getTime() + 24 * 60 * 60 * 1000)
+          candidateStart.setUTCHours(0, 0, 0, 0)
+        }
+      }
+    }
+  }
+
+  let loopCount = 0
+  while (loopCount < 365) {
+    loopCount++
+    while (candidateStart.getUTCDay() === 0 || candidateStart.getUTCDay() === 6) {
+      candidateStart = new Date(candidateStart.getTime() + 24 * 60 * 60 * 1000)
+      candidateStart.setUTCHours(0, 0, 0, 0)
+    }
+
+    const dayStart = candidateStart.getTime()
+    const dayEnd = dayStart + 24 * 60 * 60 * 1000
+
+    let usedCapacityToday = 0
+    let concurrentJobsToday = 0
+    let maxOverlappingFinish = candidateStart.getTime()
+
+    for (const alloc of activeAllocations) {
+      const aStart = new Date(alloc.scheduledStartAt).getTime()
+      const aFinish = new Date(alloc.scheduledFinishAt).getTime()
+      if (Math.max(aStart, dayStart) < Math.min(aFinish, dayEnd)) {
+        const totalDurationDays = Math.max(
+          1,
+          Math.round((aFinish - aStart) / (24 * 60 * 60 * 1000)),
+        )
+        const allocDailyUnits = Math.min(dailyBurnRate, alloc.requiredUnits / totalDurationDays)
+        usedCapacityToday += allocDailyUnits
+        concurrentJobsToday++
+        if (aFinish > maxOverlappingFinish) {
+          maxOverlappingFinish = aFinish
+        }
+      }
+    }
+
+    const neededDaily = Math.min(dailyBurnRate, requiredUnits)
+    if (
+      concurrentJobsToday >= pool.maxConcurrentJobs ||
+      usedCapacityToday + neededDaily > dailyBurnRate + 1e-6
+    ) {
+      if (queuePosition === 0) queuePosition = 1
+      const nextTime = Math.max(maxOverlappingFinish, dayEnd)
+      candidateStart = new Date(nextTime)
+    } else {
+      break
+    }
+  }
+
+  const durationDays = Math.max(1, Math.ceil(requiredUnits / dailyBurnRate))
+  let current = new Date(candidateStart.getTime())
+  let daysAdded = 0
+  while (daysAdded < durationDays) {
+    current = new Date(current.getTime() + 24 * 60 * 60 * 1000)
+    if (current.getUTCDay() !== 0 && current.getUTCDay() !== 6) {
+      daysAdded++
+    }
+  }
+
+  return {
+    queuePosition,
+    scheduledStartAt: candidateStart.toISOString(),
+    scheduledFinishAt: current.toISOString(),
+    burnRatePerDay: dailyBurnRate,
+    estimatedCalendarDays: durationDays,
+  }
+}
+
 export class PostgresCapacityRepository implements CapacityRepository {
   private constructor(
     private readonly pool: Pool,
@@ -185,7 +309,7 @@ export class PostgresCapacityRepository implements CapacityRepository {
   }
 
   async access(tenant: string, principal: CapacityPrincipal): Promise<CapacityAccess> {
-    return await this.transaction(tenant, principal, async (_c, a) => a)
+    return await this.transaction(tenant, principal, (_c, a) => Promise.resolve(a))
   }
 
   async listPools(
@@ -199,6 +323,10 @@ export class PostgresCapacityRepository implements CapacityRepository {
       let sql = 'SELECT * FROM archava_capacity.pools WHERE tenant_id=$1'
       let pIdx = 3
 
+      if (access.scope === 'assigned') {
+        sql += ` AND owner_id=$${pIdx++}`
+        params.push(access.ownerId)
+      }
       if (query.state) {
         sql += ` AND state=$${pIdx++}`
         params.push(query.state)
@@ -218,7 +346,8 @@ export class PostgresCapacityRepository implements CapacityRepository {
       const hasMore = rows.length > query.limit
       const sliced = hasMore ? rows.slice(0, query.limit) : rows
       const items = sliced.map(mapPool)
-      const nextCursor = hasMore && sliced.length > 0 ? (sliced[sliced.length - 1]?.id as string) : undefined
+      const nextCursor =
+        hasMore && sliced.length > 0 ? (sliced[sliced.length - 1]?.id as string) : undefined
 
       return { items, nextCursor }
     })
@@ -239,6 +368,8 @@ export class PostgresCapacityRepository implements CapacityRepository {
       ).rows[0]
       if (!poolRow) throw new CapacityError('not_found')
       const pool = mapPool(poolRow)
+      if (access.scope === 'assigned' && pool.ownerId !== access.ownerId)
+        throw new CapacityError('not_found')
 
       const allocRows = (
         await client.query<Row>(
@@ -268,6 +399,8 @@ export class PostgresCapacityRepository implements CapacityRepository {
       ).rows[0]
       if (!poolRow) throw new CapacityError('not_found')
       const pool = mapPool(poolRow)
+      if (access.scope === 'assigned' && pool.ownerId !== access.ownerId)
+        throw new CapacityError('not_found')
       if (pool.state !== 'active') throw new CapacityError('pool_archived')
 
       const activeRows = (
@@ -278,40 +411,22 @@ export class PostgresCapacityRepository implements CapacityRepository {
       ).rows
       const activeAllocations = activeRows.map(mapAllocation)
 
-      const now = new Date()
-      const baseStart = request.desiredStartAt ? new Date(request.desiredStartAt) : now
-      const dailyBurnRate = pool.weeklyCapacity / 5 // 5 business days per week
-      const durationDays = Math.max(1, Math.ceil(request.requiredUnits / dailyBurnRate))
-
-      let queuePosition = 0
-      let estimatedStartAtDate = baseStart
-
-      if (activeAllocations.length >= pool.maxConcurrentJobs) {
-        queuePosition = activeAllocations.length
-        // Wait until slot frees up
-        const releaseIndex = activeAllocations.length - pool.maxConcurrentJobs
-        const blockingAllocation = activeAllocations[releaseIndex]
-        if (blockingAllocation) {
-          const blockingFinish = new Date(blockingAllocation.scheduledFinishAt)
-          if (blockingFinish.getTime() > estimatedStartAtDate.getTime()) {
-            estimatedStartAtDate = blockingFinish
-          }
-        }
-      }
-
-      const estimatedFinishAtDate = new Date(
-        estimatedStartAtDate.getTime() + durationDays * 24 * 60 * 60 * 1000,
+      const schedule = calculateSchedule(
+        pool,
+        activeAllocations,
+        request.requiredUnits,
+        request.desiredStartAt,
       )
 
       return {
         poolId: pool.id,
         unit: pool.unit,
         requiredUnits: request.requiredUnits,
-        queuePosition,
-        estimatedStartAt: estimatedStartAtDate.toISOString(),
-        estimatedFinishAt: estimatedFinishAtDate.toISOString(),
-        burnRatePerDay: dailyBurnRate,
-        estimatedCalendarDays: durationDays,
+        queuePosition: schedule.queuePosition,
+        estimatedStartAt: schedule.scheduledStartAt,
+        estimatedFinishAt: schedule.scheduledFinishAt,
+        burnRatePerDay: schedule.burnRatePerDay,
+        estimatedCalendarDays: schedule.estimatedCalendarDays,
       }
     })
   }
@@ -322,31 +437,57 @@ export class PostgresCapacityRepository implements CapacityRepository {
     mutation: CapacityMutation,
   ): Promise<CommandReceipt> {
     return await this.transaction(tenant, principal, async (client, access) => {
+      if (principal.kind !== 'human') throw new CapacityError('forbidden')
+      grant(access, requiredCapacityPermission(mutation.type))
+
       const fingerprint = createHmac('sha256', this.key)
-        .update(JSON.stringify({ tenant, principal: principal.id, mutation }))
+        .update(
+          JSON.stringify({
+            domain: 'capacity',
+            tenant,
+            actor: principal.id,
+            type: mutation.type,
+            mutation,
+          }),
+        )
         .digest('hex')
 
       const existingCmd = (
         await client.query<Row>(
-          'SELECT * FROM archava_capacity.commands WHERE tenant_id=$1 AND command_id=$2',
+          'SELECT * FROM archava_capacity.commands WHERE tenant_id=$1 AND command_id=$2 FOR UPDATE',
           [tenant, mutation.commandId],
         )
       ).rows[0]
 
       if (existingCmd) {
-        if (existingCmd.fingerprint !== fingerprint) throw new CapacityError('conflict')
-        return commandReceiptSchema.parse(existingCmd.receipt)
+        if (existingCmd.actor_id !== principal.id || existingCmd.fingerprint !== fingerprint)
+          throw new CapacityError('conflict')
+        if (existingCmd.receipt) {
+          const receipt = commandReceiptSchema.parse(existingCmd.receipt)
+          if (access.scope === 'assigned' && receipt.poolId) {
+            const poolRow = (
+              await client.query<Row>(
+                'SELECT owner_id FROM archava_capacity.pools WHERE tenant_id=$1 AND id=$2',
+                [tenant, receipt.poolId],
+              )
+            ).rows[0]
+            if (poolRow && poolRow.owner_id !== access.ownerId) {
+              throw new CapacityError('forbidden')
+            }
+          }
+          return receipt
+        }
+        throw new CapacityError('conflict')
       }
 
       await client.query(
         'INSERT INTO archava_capacity.commands(tenant_id, command_id, actor_id, fingerprint) VALUES($1,$2,$3,$4)',
-        [tenant, mutation.commandId, access.ownerId, fingerprint],
+        [tenant, mutation.commandId, principal.id, fingerprint],
       )
 
       let receipt: CommandReceipt
 
       if (mutation.type === 'create_pool') {
-        grant(access, 'capacity.write')
         const poolId = randomUUID()
 
         const row = (
@@ -363,10 +504,11 @@ export class PostgresCapacityRepository implements CapacityRepository {
               mutation.unit,
               mutation.weeklyCapacity,
               mutation.maxConcurrentJobs,
-              access.ownerId,
+              principal.id,
             ],
           )
-        ).rows[0]!
+        ).rows[0]
+        if (!row) throw new CapacityError('conflict')
 
         receipt = {
           commandId: mutation.commandId,
@@ -379,10 +521,9 @@ export class PostgresCapacityRepository implements CapacityRepository {
         await client.query(
           `INSERT INTO archava_capacity.audit(tenant_id, command_id, actor_id, operation, pool_id, revision, occurred_at)
            VALUES($1,$2,$3,'create_pool',$4,1,$5)`,
-          [tenant, mutation.commandId, access.ownerId, poolId, row.created_at],
+          [tenant, mutation.commandId, principal.id, poolId, row.created_at],
         )
       } else if (mutation.type === 'update_pool') {
-        grant(access, 'capacity.write')
         const row = (
           await client.query<Row>(
             'SELECT * FROM archava_capacity.pools WHERE tenant_id=$1 AND id=$2 FOR UPDATE',
@@ -390,6 +531,8 @@ export class PostgresCapacityRepository implements CapacityRepository {
           )
         ).rows[0]
         if (!row) throw new CapacityError('not_found')
+        if (access.scope === 'assigned' && row.owner_id !== access.ownerId)
+          throw new CapacityError('forbidden')
         if (row.state === 'archived') throw new CapacityError('pool_archived')
         if (Number(row.revision) !== mutation.expectedRevision) throw new CapacityError('conflict')
 
@@ -400,9 +543,17 @@ export class PostgresCapacityRepository implements CapacityRepository {
              SET name=$1, weekly_capacity=$2, max_concurrent_jobs=$3, revision=$4, updated_at=clock_timestamp()
              WHERE tenant_id=$5 AND id=$6
              RETURNING *`,
-            [mutation.name, mutation.weeklyCapacity, mutation.maxConcurrentJobs, nextRev, tenant, mutation.poolId],
+            [
+              mutation.name,
+              mutation.weeklyCapacity,
+              mutation.maxConcurrentJobs,
+              nextRev,
+              tenant,
+              mutation.poolId,
+            ],
           )
-        ).rows[0]!
+        ).rows[0]
+        if (!updated) throw new CapacityError('conflict')
 
         receipt = {
           commandId: mutation.commandId,
@@ -415,10 +566,9 @@ export class PostgresCapacityRepository implements CapacityRepository {
         await client.query(
           `INSERT INTO archava_capacity.audit(tenant_id, command_id, actor_id, operation, pool_id, revision, occurred_at)
            VALUES($1,$2,$3,'update_pool',$4,$5,$6)`,
-          [tenant, mutation.commandId, access.ownerId, mutation.poolId, nextRev, updated.updated_at],
+          [tenant, mutation.commandId, principal.id, mutation.poolId, nextRev, updated.updated_at],
         )
       } else if (mutation.type === 'archive_pool') {
-        grant(access, 'capacity.write')
         const row = (
           await client.query<Row>(
             'SELECT * FROM archava_capacity.pools WHERE tenant_id=$1 AND id=$2 FOR UPDATE',
@@ -426,6 +576,8 @@ export class PostgresCapacityRepository implements CapacityRepository {
           )
         ).rows[0]
         if (!row) throw new CapacityError('not_found')
+        if (access.scope === 'assigned' && row.owner_id !== access.ownerId)
+          throw new CapacityError('forbidden')
         if (row.state === 'archived') throw new CapacityError('pool_archived')
         if (Number(row.revision) !== mutation.expectedRevision) throw new CapacityError('conflict')
 
@@ -438,7 +590,8 @@ export class PostgresCapacityRepository implements CapacityRepository {
              RETURNING *`,
             [nextRev, tenant, mutation.poolId],
           )
-        ).rows[0]!
+        ).rows[0]
+        if (!updated) throw new CapacityError('conflict')
 
         receipt = {
           commandId: mutation.commandId,
@@ -451,10 +604,9 @@ export class PostgresCapacityRepository implements CapacityRepository {
         await client.query(
           `INSERT INTO archava_capacity.audit(tenant_id, command_id, actor_id, operation, pool_id, revision, occurred_at)
            VALUES($1,$2,$3,'archive_pool',$4,$5,$6)`,
-          [tenant, mutation.commandId, access.ownerId, mutation.poolId, nextRev, updated.updated_at],
+          [tenant, mutation.commandId, principal.id, mutation.poolId, nextRev, updated.updated_at],
         )
       } else if (mutation.type === 'commit_allocation') {
-        grant(access, 'capacity.allocate')
         const poolRow = (
           await client.query<Row>(
             'SELECT * FROM archava_capacity.pools WHERE tenant_id=$1 AND id=$2 FOR UPDATE',
@@ -463,30 +615,25 @@ export class PostgresCapacityRepository implements CapacityRepository {
         ).rows[0]
         if (!poolRow) throw new CapacityError('not_found')
         const pool = mapPool(poolRow)
+        if (access.scope === 'assigned' && pool.ownerId !== access.ownerId)
+          throw new CapacityError('forbidden')
         if (pool.state !== 'active') throw new CapacityError('pool_archived')
 
         // Compute schedule based on current active allocations
         const activeRows = (
           await client.query<Row>(
-            "SELECT * FROM archava_capacity.allocations WHERE tenant_id=$1 AND pool_id=$2 AND state IN ('scheduled', 'in_progress') ORDER BY scheduled_finish_at ASC",
+            "SELECT * FROM archava_capacity.allocations WHERE tenant_id=$1 AND pool_id=$2 AND state IN ('scheduled', 'in_progress') ORDER BY scheduled_finish_at ASC FOR UPDATE",
             [tenant, mutation.poolId],
           )
         ).rows
         const activeAllocations = activeRows.map(mapAllocation)
 
-        const now = new Date()
-        let startAt = mutation.desiredStartAt ? new Date(mutation.desiredStartAt) : now
-        if (activeAllocations.length >= pool.maxConcurrentJobs) {
-          const releaseIndex = activeAllocations.length - pool.maxConcurrentJobs
-          const blocking = activeAllocations[releaseIndex]
-          if (blocking && new Date(blocking.scheduledFinishAt).getTime() > startAt.getTime()) {
-            startAt = new Date(blocking.scheduledFinishAt)
-          }
-        }
-
-        const dailyBurnRate = pool.weeklyCapacity / 5
-        const durationDays = Math.max(1, Math.ceil(mutation.requiredUnits / dailyBurnRate))
-        const finishAt = new Date(startAt.getTime() + durationDays * 24 * 60 * 60 * 1000)
+        const schedule = calculateSchedule(
+          pool,
+          activeAllocations,
+          mutation.requiredUnits,
+          mutation.desiredStartAt,
+        )
 
         const allocId = randomUUID()
         const allocRow = (
@@ -504,12 +651,13 @@ export class PostgresCapacityRepository implements CapacityRepository {
               mutation.workloadTitle,
               mutation.requiredUnits,
               mutation.requiredUnits,
-              startAt.toISOString(),
-              finishAt.toISOString(),
-              access.ownerId,
+              schedule.scheduledStartAt,
+              schedule.scheduledFinishAt,
+              principal.id,
             ],
           )
-        ).rows[0]!
+        ).rows[0]
+        if (!allocRow) throw new CapacityError('conflict')
 
         receipt = {
           commandId: mutation.commandId,
@@ -523,10 +671,9 @@ export class PostgresCapacityRepository implements CapacityRepository {
         await client.query(
           `INSERT INTO archava_capacity.audit(tenant_id, command_id, actor_id, operation, pool_id, allocation_id, revision, occurred_at)
            VALUES($1,$2,$3,'commit_allocation',$4,$5,1,$6)`,
-          [tenant, mutation.commandId, access.ownerId, mutation.poolId, allocId, allocRow.created_at],
+          [tenant, mutation.commandId, principal.id, mutation.poolId, allocId, allocRow.created_at],
         )
       } else if (mutation.type === 'update_allocation_progress') {
-        grant(access, 'capacity.allocate')
         const allocRow = (
           await client.query<Row>(
             'SELECT * FROM archava_capacity.allocations WHERE tenant_id=$1 AND id=$2 FOR UPDATE',
@@ -534,13 +681,25 @@ export class PostgresCapacityRepository implements CapacityRepository {
           )
         ).rows[0]
         if (!allocRow) throw new CapacityError('not_found')
+        if (access.scope === 'assigned') {
+          const poolRow = (
+            await client.query<Row>(
+              'SELECT owner_id FROM archava_capacity.pools WHERE tenant_id=$1 AND id=$2',
+              [tenant, allocRow.pool_id],
+            )
+          ).rows[0]
+          if (!poolRow || poolRow.owner_id !== access.ownerId) {
+            throw new CapacityError('forbidden')
+          }
+        }
         if (!['scheduled', 'in_progress'].includes(allocRow.state as string))
           throw new CapacityError('invalid_state')
         if (Number(allocRow.revision) !== mutation.expectedRevision)
           throw new CapacityError('conflict')
 
         const nextRev = mutation.expectedRevision + 1
-        const nextState = mutation.state ?? (mutation.remainingUnits === 0 ? 'completed' : 'in_progress')
+        const nextState =
+          mutation.state ?? (mutation.remainingUnits === 0 ? 'completed' : 'in_progress')
 
         const updated = (
           await client.query<Row>(
@@ -550,7 +709,8 @@ export class PostgresCapacityRepository implements CapacityRepository {
              RETURNING *`,
             [mutation.remainingUnits, nextState, nextRev, tenant, mutation.allocationId],
           )
-        ).rows[0]!
+        ).rows[0]
+        if (!updated) throw new CapacityError('conflict')
 
         receipt = {
           commandId: mutation.commandId,
@@ -564,10 +724,17 @@ export class PostgresCapacityRepository implements CapacityRepository {
         await client.query(
           `INSERT INTO archava_capacity.audit(tenant_id, command_id, actor_id, operation, pool_id, allocation_id, revision, occurred_at)
            VALUES($1,$2,$3,'update_allocation_progress',$4,$5,$6,$7)`,
-          [tenant, mutation.commandId, access.ownerId, updated.pool_id, mutation.allocationId, nextRev, updated.updated_at],
+          [
+            tenant,
+            mutation.commandId,
+            principal.id,
+            updated.pool_id,
+            mutation.allocationId,
+            nextRev,
+            updated.updated_at,
+          ],
         )
       } else if (mutation.type === 'complete_allocation') {
-        grant(access, 'capacity.allocate')
         const allocRow = (
           await client.query<Row>(
             'SELECT * FROM archava_capacity.allocations WHERE tenant_id=$1 AND id=$2 FOR UPDATE',
@@ -575,6 +742,17 @@ export class PostgresCapacityRepository implements CapacityRepository {
           )
         ).rows[0]
         if (!allocRow) throw new CapacityError('not_found')
+        if (access.scope === 'assigned') {
+          const poolRow = (
+            await client.query<Row>(
+              'SELECT owner_id FROM archava_capacity.pools WHERE tenant_id=$1 AND id=$2',
+              [tenant, allocRow.pool_id],
+            )
+          ).rows[0]
+          if (!poolRow || poolRow.owner_id !== access.ownerId) {
+            throw new CapacityError('forbidden')
+          }
+        }
         if (allocRow.state === 'completed' || allocRow.state === 'cancelled')
           throw new CapacityError('invalid_state')
         if (Number(allocRow.revision) !== mutation.expectedRevision)
@@ -589,7 +767,8 @@ export class PostgresCapacityRepository implements CapacityRepository {
              RETURNING *`,
             [nextRev, tenant, mutation.allocationId],
           )
-        ).rows[0]!
+        ).rows[0]
+        if (!updated) throw new CapacityError('conflict')
 
         receipt = {
           commandId: mutation.commandId,
@@ -603,10 +782,17 @@ export class PostgresCapacityRepository implements CapacityRepository {
         await client.query(
           `INSERT INTO archava_capacity.audit(tenant_id, command_id, actor_id, operation, pool_id, allocation_id, revision, occurred_at)
            VALUES($1,$2,$3,'complete_allocation',$4,$5,$6,$7)`,
-          [tenant, mutation.commandId, access.ownerId, updated.pool_id, mutation.allocationId, nextRev, updated.updated_at],
+          [
+            tenant,
+            mutation.commandId,
+            principal.id,
+            updated.pool_id,
+            mutation.allocationId,
+            nextRev,
+            updated.updated_at,
+          ],
         )
       } else if (mutation.type === 'cancel_allocation') {
-        grant(access, 'capacity.allocate')
         const allocRow = (
           await client.query<Row>(
             'SELECT * FROM archava_capacity.allocations WHERE tenant_id=$1 AND id=$2 FOR UPDATE',
@@ -614,6 +800,17 @@ export class PostgresCapacityRepository implements CapacityRepository {
           )
         ).rows[0]
         if (!allocRow) throw new CapacityError('not_found')
+        if (access.scope === 'assigned') {
+          const poolRow = (
+            await client.query<Row>(
+              'SELECT owner_id FROM archava_capacity.pools WHERE tenant_id=$1 AND id=$2',
+              [tenant, allocRow.pool_id],
+            )
+          ).rows[0]
+          if (!poolRow || poolRow.owner_id !== access.ownerId) {
+            throw new CapacityError('forbidden')
+          }
+        }
         if (allocRow.state === 'completed' || allocRow.state === 'cancelled')
           throw new CapacityError('invalid_state')
         if (Number(allocRow.revision) !== mutation.expectedRevision)
@@ -628,7 +825,8 @@ export class PostgresCapacityRepository implements CapacityRepository {
              RETURNING *`,
             [nextRev, tenant, mutation.allocationId],
           )
-        ).rows[0]!
+        ).rows[0]
+        if (!updated) throw new CapacityError('conflict')
 
         receipt = {
           commandId: mutation.commandId,
@@ -642,7 +840,16 @@ export class PostgresCapacityRepository implements CapacityRepository {
         await client.query(
           `INSERT INTO archava_capacity.audit(tenant_id, command_id, actor_id, operation, pool_id, allocation_id, revision, reason, occurred_at)
            VALUES($1,$2,$3,'cancel_allocation',$4,$5,$6,$7,$8)`,
-          [tenant, mutation.commandId, access.ownerId, updated.pool_id, mutation.allocationId, nextRev, mutation.reason, updated.updated_at],
+          [
+            tenant,
+            mutation.commandId,
+            principal.id,
+            updated.pool_id,
+            mutation.allocationId,
+            nextRev,
+            mutation.reason,
+            updated.updated_at,
+          ],
         )
       } else {
         throw new CapacityError('invalid_request')
@@ -662,17 +869,35 @@ export class PostgresCapacityRepository implements CapacityRepository {
     principal: CapacityPrincipal,
     commandId: string,
   ): Promise<CommandStatusResult> {
-    return await this.transaction(tenant, principal, async (client) => {
+    return await this.transaction(tenant, principal, async (client, access) => {
+      grant(access, 'capacity.read')
       const row = (
         await client.query<Row>(
-          'SELECT receipt FROM archava_capacity.commands WHERE tenant_id=$1 AND command_id=$2',
+          'SELECT receipt, actor_id FROM archava_capacity.commands WHERE tenant_id=$1 AND command_id=$2',
           [tenant, commandId],
         )
       ).rows[0]
       if (!row || !row.receipt) return { status: 'unknown' }
+      const receipt = commandReceiptSchema.parse(row.receipt)
+      if (access.scope === 'assigned') {
+        if (row.actor_id !== principal.id) {
+          throw new CapacityError('forbidden')
+        }
+        if (receipt.poolId) {
+          const poolRow = (
+            await client.query<Row>(
+              'SELECT owner_id FROM archava_capacity.pools WHERE tenant_id=$1 AND id=$2',
+              [tenant, receipt.poolId],
+            )
+          ).rows[0]
+          if (poolRow && poolRow.owner_id !== access.ownerId) {
+            throw new CapacityError('forbidden')
+          }
+        }
+      }
       return {
         status: 'committed',
-        receipt: commandReceiptSchema.parse(row.receipt),
+        receipt,
       }
     })
   }

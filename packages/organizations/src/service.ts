@@ -25,11 +25,7 @@ export class OrganizationService {
 
   listOrganizations(tenant: string, principal: OrganizationPrincipal, query: unknown = {}) {
     this.validate(tenant, principal)
-    return this.repository.listOrganizations(
-      tenant,
-      principal,
-      organizationPageSchema.parse(query),
-    )
+    return this.repository.listOrganizations(tenant, principal, organizationPageSchema.parse(query))
   }
 
   detail(tenant: string, principal: OrganizationPrincipal, id: string) {

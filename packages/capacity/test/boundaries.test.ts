@@ -8,33 +8,34 @@ import {
 
 describe('CapacityService boundaries', () => {
   const dummyRepo: CapacityRepository = {
-    access: async () => ({ permissions: ['capacity.read'], ownerId: 'alice', scope: 'all' }),
-    listPools: async () => ({ items: [] }),
-    detailPool: async () => {
-      throw new CapacityError('not_found')
-    },
-    estimate: async () => ({
-      poolId: 'a0000000-0000-4000-8000-000000000001',
-      unit: 'hours',
-      requiredUnits: 40,
-      queuePosition: 0,
-      estimatedStartAt: new Date().toISOString(),
-      estimatedFinishAt: new Date().toISOString(),
-      burnRatePerDay: 8,
-      estimatedCalendarDays: 5,
-    }),
-    mutate: async () => ({
-      commandId: 'a0000000-0000-4000-8000-000000000001',
-      committedAt: new Date().toISOString(),
-      revision: 1,
-      status: 'committed',
-    }),
-    commandStatus: async () => ({ status: 'unknown' }),
+    access: () =>
+      Promise.resolve({ permissions: ['capacity.read'], ownerId: 'alice', scope: 'all' }),
+    listPools: () => Promise.resolve({ items: [] }),
+    detailPool: () => Promise.reject(new CapacityError('not_found')),
+    estimate: () =>
+      Promise.resolve({
+        poolId: 'a0000000-0000-4000-8000-000000000001',
+        unit: 'hours',
+        requiredUnits: 40,
+        queuePosition: 0,
+        estimatedStartAt: new Date().toISOString(),
+        estimatedFinishAt: new Date().toISOString(),
+        burnRatePerDay: 8,
+        estimatedCalendarDays: 5,
+      }),
+    mutate: () =>
+      Promise.resolve({
+        commandId: 'a0000000-0000-4000-8000-000000000001',
+        committedAt: new Date().toISOString(),
+        revision: 1,
+        status: 'committed',
+      }),
+    commandStatus: () => Promise.resolve({ status: 'unknown' }),
   }
 
   const service = new CapacityService(dummyRepo)
 
-  it('rejects machine service mutation synchronously', async () => {
+  it('rejects machine service mutation synchronously', () => {
     const machinePrincipal: CapacityPrincipal = {
       kind: 'service',
       id: 'bot-1',
@@ -52,7 +53,7 @@ describe('CapacityService boundaries', () => {
     ).toThrowError(/Capacity machine writes are not registered/)
   })
 
-  it('rejects machine service on commandStatus', async () => {
+  it('rejects machine service on commandStatus', () => {
     const machinePrincipal: CapacityPrincipal = {
       kind: 'service',
       id: 'bot-1',

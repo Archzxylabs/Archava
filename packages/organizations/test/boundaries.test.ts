@@ -53,22 +53,19 @@ describe('organization contracts and service boundaries', () => {
     expect(affiliationSchema.parse(valid)).toEqual(valid)
   })
 
-  it('denies machine service mutations', async () => {
+  it('denies machine service mutations', () => {
     const mockRepo: OrganizationRepository = {
-      access: async () => ({
-        permissions: ['organizations.read', 'organizations.write'],
-        ownerId: 'owner-1',
-        scope: 'all',
-      }),
-      listOrganizations: async () => ({ items: [], nextCursor: null }),
-      detail: async () => {
-        throw new Error('not implemented')
-      },
-      listAffiliations: async () => ({ items: [], nextCursor: null }),
-      mutate: async () => {
-        throw new Error('should not be called')
-      },
-      commandStatus: async () => ({ status: 'not_committed' }),
+      access: () =>
+        Promise.resolve({
+          permissions: ['organizations.read', 'organizations.write'],
+          ownerId: 'owner-1',
+          scope: 'all',
+        }),
+      listOrganizations: () => Promise.resolve({ items: [], nextCursor: null }),
+      detail: () => Promise.reject(new Error('not implemented')),
+      listAffiliations: () => Promise.resolve({ items: [], nextCursor: null }),
+      mutate: () => Promise.reject(new Error('should not be called')),
+      commandStatus: () => Promise.resolve({ status: 'not_committed' }),
     }
     const service = new OrganizationService(mockRepo)
 

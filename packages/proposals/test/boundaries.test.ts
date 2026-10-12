@@ -8,25 +8,25 @@ import {
 
 describe('ProposalService boundaries', () => {
   const dummyRepo: ProposalRepository = {
-    access: async () => ({ permissions: ['proposals.read'], ownerId: 'alice', scope: 'all' }),
-    list: async () => ({ items: [] }),
-    detail: async () => {
-      throw new ProposalError('not_found')
-    },
-    listVersions: async () => [],
-    listChangeRequests: async () => [],
-    mutate: async () => ({
-      commandId: '00000000-0000-0000-0000-000000000001',
-      committedAt: new Date().toISOString(),
-      revision: 1,
-      status: 'committed',
-    }),
-    commandStatus: async () => ({ status: 'unknown' }),
+    access: () =>
+      Promise.resolve({ permissions: ['proposals.read'], ownerId: 'alice', scope: 'all' }),
+    list: () => Promise.resolve({ items: [] }),
+    detail: () => Promise.reject(new ProposalError('not_found')),
+    listVersions: () => Promise.resolve([]),
+    listChangeRequests: () => Promise.resolve([]),
+    mutate: () =>
+      Promise.resolve({
+        commandId: '00000000-0000-0000-0000-000000000001',
+        committedAt: new Date().toISOString(),
+        revision: 1,
+        status: 'committed',
+      }),
+    commandStatus: () => Promise.resolve({ status: 'unknown' }),
   }
 
   const service = new ProposalService(dummyRepo)
 
-  it('rejects machine service mutation synchronously', async () => {
+  it('rejects machine service mutation synchronously', () => {
     const machinePrincipal: ProposalPrincipal = {
       kind: 'service',
       id: 'bot-1',
@@ -44,7 +44,7 @@ describe('ProposalService boundaries', () => {
     ).toThrowError(/Proposal machine writes are not registered/)
   })
 
-  it('rejects machine service on commandStatus', async () => {
+  it('rejects machine service on commandStatus', () => {
     const machinePrincipal: ProposalPrincipal = {
       kind: 'service',
       id: 'bot-1',

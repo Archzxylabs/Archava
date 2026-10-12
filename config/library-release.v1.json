@@ -1,16 +1,16 @@
 {
   "schemaVersion": "1.0.0",
   "id": "archava-local-library",
-  "version": "1.10.0",
+  "version": "1.11.0",
   "host": {
     "name": "@archava/crm-host",
-    "version": "0.13.0"
+    "version": "0.14.0"
   },
   "contracts": {
     "clientConfig": "1.0.0",
     "deploymentPlan": "2.0.0",
     "hostSettings": 1,
-    "assembly": "8.0.0",
+    "assembly": "9.0.0",
     "presence": "1.0.0",
     "kitPlan": "1.0.0",
     "kitCatalogue": "1.0.0"
@@ -61,7 +61,7 @@
     },
     {
       "name": "@archava/config",
-      "version": "0.12.0",
+      "version": "0.13.0",
       "migrations": []
     },
     {
@@ -186,7 +186,7 @@
     },
     {
       "name": "@archava/kits",
-      "version": "0.7.0",
+      "version": "0.8.0",
       "migrations": []
     },
     {

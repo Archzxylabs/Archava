@@ -168,7 +168,13 @@ try {
   for (const [tenant, id, kind, grants, scope] of [
     ['agency', 'owner', 'human', domain.PROPOSAL_PERMISSIONS, 'all'],
     ['agency', 'lead-pm', 'human', domain.PROPOSAL_PERMISSIONS, 'assigned'],
-    ['agency', 'client-reviewer', 'human', ['proposals.read', 'proposals.decide', 'changerequests.read', 'changerequests.decide'], 'all'],
+    [
+      'agency',
+      'client-reviewer',
+      'human',
+      ['proposals.read', 'proposals.decide', 'changerequests.read', 'changerequests.decide'],
+      'all',
+    ],
     ['agency', 'bot', 'service', ['proposals.read', 'changerequests.read'], 'assigned'],
     ['agency', 'inactive', 'human', domain.PROPOSAL_PERMISSIONS, 'all'],
     ['epc', 'owner', 'human', domain.PROPOSAL_PERMISSIONS, 'all'],
@@ -436,10 +442,7 @@ try {
   check('accepted proposal rejects direct edits and requires versioned change requests')
 
   // Forced tenant RLS isolation
-  await failed(
-    () => service.detail('epc', human('owner'), proposalId),
-    'not_found',
-  )
+  await failed(() => service.detail('epc', human('owner'), proposalId), 'not_found')
   check('forced tenant RLS completely isolates proposals across tenants')
 
   // Change request on non-accepted proposal rejected
@@ -650,7 +653,18 @@ try {
 
   // pg_dump and pg_restore test
   const dumpFile = join(scratch, 'proposals.dump')
-  run('pg_dump', ['-Fc', '-f', dumpFile, '-h', socket, '-p', String(port), '-U', 'postgres', 'postgres'])
+  run('pg_dump', [
+    '-Fc',
+    '-f',
+    dumpFile,
+    '-h',
+    socket,
+    '-p',
+    String(port),
+    '-U',
+    'postgres',
+    'postgres',
+  ])
 
   await owner.query('CREATE DATABASE prop_restored')
   run('pg_restore', [
@@ -677,7 +691,27 @@ try {
   await endProofPool(restoredApp)
   check('pg_dump and pg_restore preserve all proposal records, versions and change requests')
 
-  process.stdout.write(`\nALL ${checks.length} PROPOSALS, AGREED SCOPE & AMENDMENT CHECKS PASSED PERFECTLY!\n`)
+  const destination = join(root, 'dist/proposals-proof')
+  await mkdir(destination, { recursive: true })
+  await writeFile(
+    join(destination, 'results.json'),
+    JSON.stringify(
+      {
+        profile: trusted.version,
+        scope: 'agreed proposals, deliverable scopes and versioned change requests',
+        consumers: proofs,
+        checks,
+        operationalKitsAccepted: [],
+        providerCalls: 0,
+      },
+      null,
+      2,
+    ) + '\n',
+  )
+
+  process.stdout.write(
+    `\nALL ${checks.length} PROPOSALS, AGREED SCOPE & AMENDMENT CHECKS PASSED PERFECTLY!\n`,
+  )
 } finally {
   await endProofPool(app)
   await endProofPool(owner)

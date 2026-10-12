@@ -26,7 +26,11 @@ export const proposalTenantSchema = z
 export const proposalPrincipalSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('human'), id: proposalTenantSchema }).strict(),
   z
-    .object({ kind: z.literal('service'), id: proposalTenantSchema, onBehalfOf: proposalTenantSchema })
+    .object({
+      kind: z.literal('service'),
+      id: proposalTenantSchema,
+      onBehalfOf: proposalTenantSchema,
+    })
     .strict(),
 ])
 export type ProposalPrincipal = z.infer<typeof proposalPrincipalSchema>
@@ -65,19 +69,16 @@ export type ProposalAccess = z.infer<typeof proposalAccessSchema>
 const titleText = z.string().trim().min(1).max(160)
 const summaryText = z.string().trim().min(1).max(2000)
 const optionalText2000 = z.string().trim().min(1).max(2000).nullable()
-const currencyCode = z.string().trim().regex(/^[A-Z]{3}$/)
+const currencyCode = z
+  .string()
+  .trim()
+  .regex(/^[A-Z]{3}$/)
 const revisionNumber = z.number().int().positive().max(2147483647)
 const nonNegativeInt = z.number().int().min(0).max(2147483647)
 const intDelta = z.number().int().min(-2147483647).max(2147483647)
 export const instantSchema = z.iso.datetime({ offset: true })
 
-export const PROPOSAL_STATES = [
-  'draft',
-  'submitted',
-  'accepted',
-  'rejected',
-  'withdrawn',
-] as const
+export const PROPOSAL_STATES = ['draft', 'submitted', 'accepted', 'rejected', 'withdrawn'] as const
 export const proposalStateSchema = z.enum(PROPOSAL_STATES)
 export type ProposalState = z.infer<typeof proposalStateSchema>
 

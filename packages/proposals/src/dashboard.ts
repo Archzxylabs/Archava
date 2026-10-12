@@ -41,11 +41,13 @@ export function mountProposalsDashboard(
   recovery.hidden = true
   createForm.hidden = true
 
-  const button = (text: string, work: () => Promise<void>) => {
+  const button = (text: string, work: () => Promise<void> | void) => {
     const b = node('button', text)
     b.type = 'button'
     b.addEventListener('click', () => {
-      void perform(work)
+      void perform(async () => {
+        await work()
+      })
     })
     return b
   }
@@ -111,7 +113,7 @@ export function mountProposalsDashboard(
     await sendCommand(pending)
   })
 
-  const dismissButton = button('Dismiss Pending Request', async () => {
+  const dismissButton = button('Dismiss Pending Request', () => {
     pending = null
     uncertain = false
     recovery.hidden = true
@@ -215,7 +217,12 @@ export function mountProposalsDashboard(
     if (!selected) return
     const p = selected.proposal
     detail.appendChild(node('h3', p.title))
-    detail.appendChild(node('p', `State: ${p.state} | Current Scope Version: ${p.currentScopeVersion} | Revision: ${p.revision}`))
+    detail.appendChild(
+      node(
+        'p',
+        `State: ${p.state} | Current Scope Version: ${p.currentScopeVersion} | Revision: ${p.revision}`,
+      ),
+    )
     detail.appendChild(node('p', `Summary: ${p.summary}`))
     detail.appendChild(node('p', `Total Value: ${p.totalEstimatedValue} ${p.currency}`))
 
@@ -286,16 +293,19 @@ export function mountProposalsDashboard(
         ),
       )
       if (cr.state === 'submitted' && access?.permissions.includes('changerequests.decide')) {
-        const approveBtn = button(`Approve CR-${cr.changeNumber} (Advance Scope Version)`, async () => {
-          await sendCommand({
-            type: 'approve_change_request',
-            commandId: crypto.randomUUID(),
-            changeRequestId: cr.id,
-            expectedRevision: cr.revision,
-          })
-          await loadDetail(p.id)
-          await loadList()
-        })
+        const approveBtn = button(
+          `Approve CR-${cr.changeNumber} (Advance Scope Version)`,
+          async () => {
+            await sendCommand({
+              type: 'approve_change_request',
+              commandId: crypto.randomUUID(),
+              changeRequestId: cr.id,
+              expectedRevision: cr.revision,
+            })
+            await loadDetail(p.id)
+            await loadList()
+          },
+        )
         crCard.appendChild(approveBtn)
       }
       crSection.appendChild(crCard)
@@ -306,6 +316,7 @@ export function mountProposalsDashboard(
   void perform(async () => {
     await loadAccess()
     await loadList()
+    status.textContent = 'Proposals ready.'
   })
 
   return {

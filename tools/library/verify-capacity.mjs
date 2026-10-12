@@ -301,10 +301,7 @@ try {
   check('capacity pool search and detail query return authoritative attributes')
 
   // Tenant RLS isolation
-  await failed(
-    () => service.detailPool('epc', human('owner'), poolId),
-    'not_found',
-  )
+  await failed(() => service.detailPool('epc', human('owner'), poolId), 'not_found')
   const epcList = await service.listPools('epc', human('owner'), {})
   assert.equal(epcList.items.length, 0)
   check('forced tenant RLS completely isolates capacity pools across tenants')
@@ -345,7 +342,7 @@ try {
   // Capacity estimation on empty pool
   // With 200 hours/week, daily burn rate = 40 hours/day.
   // Workload of 80 hours requires Math.ceil(80 / 40) = 2 calendar days.
-  const now = new Date()
+  const now = new Date('2030-01-07T00:00:00Z')
   const estimate1 = await service.estimate('agency', human('owner'), {
     poolId,
     requiredUnits: 80,
@@ -357,7 +354,9 @@ try {
   const est1Start = new Date(estimate1.estimatedStartAt).getTime()
   const est1Finish = new Date(estimate1.estimatedFinishAt).getTime()
   assert.equal(est1Finish - est1Start, 2 * 24 * 60 * 60 * 1000)
-  check('capacity estimate computes deterministic daily burn rate, duration and immediate start on idle pool')
+  check(
+    'capacity estimate computes deterministic daily burn rate, duration and immediate start on idle pool',
+  )
 
   // Commit first allocation
   const alloc1CmdId = randomUUID()
@@ -397,7 +396,9 @@ try {
   const est2Finish = new Date(estimate2.estimatedFinishAt).getTime()
   const est2Start = new Date(estimate2.estimatedStartAt).getTime()
   assert.equal(est2Finish - est2Start, 1 * 24 * 60 * 60 * 1000)
-  check('concurrency saturation queues second estimate behind active allocation with dynamic finish handover')
+  check(
+    'concurrency saturation queues second estimate behind active allocation with dynamic finish handover',
+  )
 
   // Commit second allocation - scheduled start shifts deterministically to allocation 1 finish date
   const alloc2CmdId = randomUUID()
@@ -564,7 +565,18 @@ try {
 
   // pg_dump and pg_restore test
   const dumpFile = join(scratch, 'capacity.dump')
-  run('pg_dump', ['-Fc', '-f', dumpFile, '-h', socket, '-p', String(port), '-U', 'postgres', 'postgres'])
+  run('pg_dump', [
+    '-Fc',
+    '-f',
+    dumpFile,
+    '-h',
+    socket,
+    '-p',
+    String(port),
+    '-U',
+    'postgres',
+    'postgres',
+  ])
 
   await owner.query('CREATE DATABASE cap_restored')
   run('pg_restore', [
@@ -592,9 +604,31 @@ try {
   assert.equal(restoredStatus.status, 'committed')
   assert.equal(restoredStatus.receipt.poolId, poolId)
   await endProofPool(restoredApp)
-  check('pg_dump and pg_restore preserve all capacity pool records, allocations and command receipts')
+  check(
+    'pg_dump and pg_restore preserve all capacity pool records, allocations and command receipts',
+  )
 
-  process.stdout.write(`\nALL ${checks.length} CAPACITY ESTIMATION & DELIVERY CHECKS PASSED PERFECTLY!\n`)
+  const destination = join(root, 'dist/delivery-capacity-proof')
+  await mkdir(destination, { recursive: true })
+  await writeFile(
+    join(destination, 'results.json'),
+    JSON.stringify(
+      {
+        profile: trusted.version,
+        scope: 'discrete business-day capacity estimation and discrete throughput allocation',
+        consumers: proofs,
+        checks,
+        operationalKitsAccepted: [],
+        providerCalls: 0,
+      },
+      null,
+      2,
+    ) + '\n',
+  )
+
+  process.stdout.write(
+    `\nALL ${checks.length} CAPACITY ESTIMATION & DELIVERY CHECKS PASSED PERFECTLY!\n`,
+  )
 } finally {
   await endProofPool(app)
   await endProofPool(owner)

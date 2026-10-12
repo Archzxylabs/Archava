@@ -71,6 +71,12 @@ importers:
       '@archava/assistant':
         specifier: workspace:*
         version: link:../../packages/assistant
+      '@archava/capacity':
+        specifier: workspace:*
+        version: link:../../packages/capacity
+      '@archava/capacity-pg':
+        specifier: workspace:*
+        version: link:../../packages/capacity-pg
       '@archava/commerce':
         specifier: workspace:*
         version: link:../../packages/commerce
@@ -104,6 +110,12 @@ importers:
       '@archava/identity-pg':
         specifier: workspace:*
         version: link:../../packages/identity-pg
+      '@archava/organizations':
+        specifier: workspace:*
+        version: link:../../packages/organizations
+      '@archava/organizations-pg':
+        specifier: workspace:*
+        version: link:../../packages/organizations-pg
       '@archava/presence':
         specifier: workspace:*
         version: link:../../packages/presence
@@ -113,6 +125,12 @@ importers:
       '@archava/projects-pg':
         specifier: workspace:*
         version: link:../../packages/projects-pg
+      '@archava/proposals':
+        specifier: workspace:*
+        version: link:../../packages/proposals
+      '@archava/proposals-pg':
+        specifier: workspace:*
+        version: link:../../packages/proposals-pg
       '@archava/provider-runtime':
         specifier: workspace:*
         version: link:../../packages/provider-runtime

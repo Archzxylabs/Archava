@@ -42,11 +42,13 @@ export function mountCapacityDashboard(
   recovery.hidden = true
   createForm.hidden = true
 
-  const button = (text: string, work: () => Promise<void>) => {
+  const button = (text: string, work: () => Promise<void> | void) => {
     const b = node('button', text)
     b.type = 'button'
     b.addEventListener('click', () => {
-      void perform(work)
+      void perform(async () => {
+        await work()
+      })
     })
     return b
   }
@@ -70,7 +72,13 @@ export function mountCapacityDashboard(
 
   const codeInput = field(createForm, 'code', 'Pool Code (e.g. DESIGN)', 'text', true)
   const nameInput = field(createForm, 'name', 'Team / Pool Name', 'text', true)
-  const capacityInput = field(createForm, 'weeklyCapacity', 'Weekly Capacity (Hours)', 'number', true)
+  const capacityInput = field(
+    createForm,
+    'weeklyCapacity',
+    'Weekly Capacity (Hours)',
+    'number',
+    true,
+  )
   capacityInput.value = '160'
   const maxConcurrencyInput = field(createForm, 'maxConcurrency', 'Max Concurrency', 'number', true)
   maxConcurrencyInput.value = '3'
@@ -100,7 +108,7 @@ export function mountCapacityDashboard(
     await sendCommand(pending)
   })
 
-  const dismissButton = button('Dismiss Pending Request', async () => {
+  const dismissButton = button('Dismiss Pending Request', () => {
     pending = null
     uncertain = false
     recovery.hidden = true
@@ -182,7 +190,10 @@ export function mountCapacityDashboard(
     for (const item of data.items ?? []) {
       const pool = capacityPoolSchema.parse(item)
       const li = node('li')
-      const link = node('button', `${pool.name} [${pool.code}] (${pool.weeklyCapacity} ${pool.unit}/wk)`)
+      const link = node(
+        'button',
+        `${pool.name} [${pool.code}] (${pool.weeklyCapacity} ${pool.unit}/wk)`,
+      )
       link.type = 'button'
       link.addEventListener('click', () => {
         void perform(() => loadDetail(pool.id))
@@ -204,7 +215,12 @@ export function mountCapacityDashboard(
     if (!selectedPool) return
     const p = selectedPool.pool
     detail.appendChild(node('h3', `${p.name} (${p.code})`))
-    detail.appendChild(node('p', `Weekly Capacity: ${p.weeklyCapacity} ${p.unit} | Max Concurrency: ${p.maxConcurrentJobs} | State: ${p.state}`))
+    detail.appendChild(
+      node(
+        'p',
+        `Weekly Capacity: ${p.weeklyCapacity} ${p.unit} | Max Concurrency: ${p.maxConcurrentJobs} | State: ${p.state}`,
+      ),
+    )
     detail.appendChild(node('p', `Current Queued Load: ${selectedPool.currentLoadHours} ${p.unit}`))
 
     // Estimate calculation form
@@ -243,7 +259,11 @@ export function mountCapacityDashboard(
         'li',
         `${alloc.workloadTitle} - Remaining: ${alloc.remainingUnits}/${alloc.requiredUnits} ${p.unit} [${alloc.state}] (Scheduled: ${alloc.scheduledStartAt} -> ${alloc.scheduledFinishAt})`,
       )
-      if (alloc.state !== 'completed' && alloc.state !== 'cancelled' && access?.permissions.includes('capacity.allocate')) {
+      if (
+        alloc.state !== 'completed' &&
+        alloc.state !== 'cancelled' &&
+        access?.permissions.includes('capacity.allocate')
+      ) {
         const completeBtn = button('Complete Workload', async () => {
           await sendCommand({
             type: 'complete_allocation',
@@ -264,6 +284,7 @@ export function mountCapacityDashboard(
   void perform(async () => {
     await loadAccess()
     await loadPools()
+    status.textContent = 'Capacity ready.'
   })
 
   return {

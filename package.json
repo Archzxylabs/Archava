@@ -73,7 +73,13 @@
     "support:verify": "node tools/library/verify-support.mjs",
     "support:verify-host": "node tools/library/verify-support-host.mjs",
     "purchasing:verify": "node tools/library/pack.mjs && node tools/library/verify-purchasing.mjs",
-    "purchasing:verify-host": "pnpm crm:build && node tools/library/verify-purchasing-host.mjs"
+    "purchasing:verify-host": "pnpm crm:build && node tools/library/verify-purchasing-host.mjs",
+    "organizations:verify": "node tools/library/pack.mjs && node tools/library/verify-organizations.mjs",
+    "organizations:verify-host": "pnpm crm:build && node tools/library/verify-organizations-host.mjs",
+    "proposals:verify": "node tools/library/pack.mjs && node tools/library/verify-proposals.mjs",
+    "proposals:verify-host": "pnpm crm:build && node tools/library/verify-proposals-host.mjs",
+    "capacity:verify": "node tools/library/pack.mjs && node tools/library/verify-capacity.mjs",
+    "capacity:verify-host": "pnpm crm:build && node tools/library/verify-capacity-host.mjs"
   },
   "devDependencies": {
     "@eslint/js": "9.37.0",

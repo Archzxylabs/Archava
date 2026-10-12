@@ -28,6 +28,9 @@ import { createPurchasingApi, type PurchasingService } from '@archava/purchasing
 import { createSupportApi, type SupportService } from '@archava/support'
 import { createFoodApi, type FoodService } from '@archava/foodservice'
 import { createCommerceApi, type CommerceService } from '@archava/commerce'
+import { createOrganizationApi, type OrganizationService } from '@archava/organizations'
+import { createProposalApi, type ProposalService } from '@archava/proposals'
+import { createCapacityApi, type CapacityService } from '@archava/capacity'
 
 const json = (value: unknown, status = 200, headers: Record<string, string> = {}) =>
   Response.json(value, { status, headers: { 'cache-control': 'no-store', ...headers } })
@@ -62,6 +65,9 @@ export function createHostHandler(
   foodservice?: FoodService,
   support?: SupportService,
   purchasing?: PurchasingService,
+  organizations?: OrganizationService,
+  proposals?: ProposalService,
+  capacity?: CapacityService,
 ) {
   const modules = settings.modules ?? FULL_MODULES
   if (!modules.pipeline) pipeline = undefined
@@ -160,6 +166,48 @@ export function createHostHandler(
         return json({ authenticated: false }, 200, {
           'set-cookie': sessionCookie(cookieName, '', secure, true),
         })
+      }
+      if (url.pathname.startsWith('/api/organizations/')) {
+        const tenant = /^\/api\/organizations\/([^/]+)/.exec(url.pathname)?.[1]
+        if (
+          !tenant ||
+          !modules.organizations ||
+          !organizations ||
+          !settings.tenants.some((item) => item.id === tenant)
+        )
+          return json({ error: 'not_found' }, 404)
+        await service.access(tenant, { kind: 'human', id: session.principalId })
+        return await createOrganizationApi(organizations, () =>
+          Promise.resolve({ kind: 'human', id: session.principalId }),
+        )(request)
+      }
+      if (url.pathname.startsWith('/api/proposals/')) {
+        const tenant = /^\/api\/proposals\/([^/]+)/.exec(url.pathname)?.[1]
+        if (
+          !tenant ||
+          !modules.proposals ||
+          !proposals ||
+          !settings.tenants.some((item) => item.id === tenant)
+        )
+          return json({ error: 'not_found' }, 404)
+        await service.access(tenant, { kind: 'human', id: session.principalId })
+        return await createProposalApi(proposals, () =>
+          Promise.resolve({ kind: 'human', id: session.principalId }),
+        )(request)
+      }
+      if (url.pathname.startsWith('/api/capacity/')) {
+        const tenant = /^\/api\/capacity\/([^/]+)/.exec(url.pathname)?.[1]
+        if (
+          !tenant ||
+          !modules.capacity ||
+          !capacity ||
+          !settings.tenants.some((item) => item.id === tenant)
+        )
+          return json({ error: 'not_found' }, 404)
+        await service.access(tenant, { kind: 'human', id: session.principalId })
+        return await createCapacityApi(capacity, () =>
+          Promise.resolve({ kind: 'human', id: session.principalId }),
+        )(request)
       }
       if (url.pathname.startsWith('/api/purchasing/')) {
         const tenant = /^\/api\/purchasing\/([^/]+)/.exec(url.pathname)?.[1]
@@ -453,6 +501,9 @@ export async function startCrmHost(
   foodservice?: FoodService,
   support?: SupportService,
   purchasing?: PurchasingService,
+  organizations?: OrganizationService,
+  proposals?: ProposalService,
+  capacity?: CapacityService,
 ) {
   let handler: ReturnType<typeof createHostHandler> | undefined
   const handle = (request: Request, source: string) => {
@@ -473,6 +524,9 @@ export async function startCrmHost(
       foodservice,
       support,
       purchasing,
+      organizations,
+      proposals,
+      capacity,
     )
     return handler(request, source)
   }

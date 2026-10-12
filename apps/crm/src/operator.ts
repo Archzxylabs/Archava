@@ -71,6 +71,12 @@ import { FOOD_PERMISSIONS } from '@archava/foodservice'
 import { migrateFoodService, grantFoodServiceRuntime } from '@archava/foodservice-pg'
 import { COMMERCE_PERMISSIONS } from '@archava/commerce'
 import { migrateCommerce, grantCommerceRuntime } from '@archava/commerce-pg'
+import { ORGANIZATION_PERMISSIONS } from '@archava/organizations'
+import { migrateOrganizations, grantOrganizationsRuntime } from '@archava/organizations-pg'
+import { PROPOSAL_PERMISSIONS } from '@archava/proposals'
+import { migrateProposals, grantProposalsRuntime } from '@archava/proposals-pg'
+import { CAPACITY_PERMISSIONS } from '@archava/capacity'
+import { migrateCapacity, grantCapacityRuntime } from '@archava/capacity-pg'
 
 const credentialsSchema = z
   .object({
@@ -92,6 +98,9 @@ async function grant(pool: Pool) {
   await grantFoodServiceRuntime(pool, role)
   await grantSupportRuntime(pool, role)
   await grantPurchasingRuntime(pool, role)
+  await grantOrganizationsRuntime(pool, role)
+  await grantProposalsRuntime(pool, role)
+  await grantCapacityRuntime(pool, role)
   await grantNativeCrmAct(pool, role)
   await grantActHostRuntime(nativeSqlClient(pool, 'operator', 'operator'), role)
 }
@@ -196,6 +205,9 @@ async function setup() {
       await migrateFoodService(owner)
       await migrateSupport(owner)
       await migratePurchasing(owner)
+      await migrateOrganizations(owner)
+      await migrateProposals(owner)
+      await migrateCapacity(owner)
       await grant(owner)
       for (const tenant of settings.tenants) {
         await owner.query(
@@ -250,11 +262,14 @@ async function user(args: string[]) {
       'foodservice',
       'support',
       'purchasing',
+      'organizations',
+      'proposals',
+      'capacity',
     ].includes(mode ?? '') ||
     !file
   )
     throw new Error(
-      'Expected user add|reset|recover|pipeline|projects|scheduling|accommodation|commerce|foodservice|support|purchasing private-input.json',
+      'Expected user add|reset|recover|pipeline|projects|scheduling|accommodation|commerce|foodservice|support|purchasing|organizations|proposals|capacity private-input.json',
     )
   const settings = await loadSettings()
   const input = await readPrivateJson(resolve(file))
@@ -269,7 +284,10 @@ async function user(args: string[]) {
         mode === 'commerce' ||
         mode === 'foodservice' ||
         mode === 'support' ||
-        mode === 'purchasing'
+        mode === 'purchasing' ||
+        mode === 'organizations' ||
+        mode === 'proposals' ||
+        mode === 'capacity'
       ) {
         const account = z
           .object({
@@ -307,8 +325,17 @@ async function user(args: string[]) {
                           ? FOOD_PERMISSIONS
                           : mode === 'support'
                             ? SUPPORT_PERMISSIONS
-                            : PURCHASE_PERMISSIONS
-                ).filter((permission) => account.access === 'write' || permission.endsWith('.read'))
+                            : mode === 'purchasing'
+                              ? PURCHASE_PERMISSIONS
+                              : mode === 'organizations'
+                                ? ORGANIZATION_PERMISSIONS
+                                : mode === 'proposals'
+                                  ? PROPOSAL_PERMISSIONS
+                                  : CAPACITY_PERMISSIONS
+                ).filter(
+                  (permission: string) =>
+                    account.access === 'write' || permission.endsWith('.read'),
+                )
           for (const tenant of account.tenants) {
             const member = (
               await client.query<{ kind: string; active: boolean }>(
@@ -318,8 +345,28 @@ async function user(args: string[]) {
             ).rows[0]
             if (member?.kind !== 'human' || !member.active)
               throw new Error('Active workspace membership required')
+            const tableName =
+              mode === 'projects'
+                ? 'archava_projects'
+                : mode === 'scheduling'
+                  ? 'archava_scheduling'
+                  : mode === 'accommodation'
+                    ? 'archava_accommodation'
+                    : mode === 'commerce'
+                      ? 'archava_commerce'
+                      : mode === 'foodservice'
+                        ? 'archava_foodservice'
+                        : mode === 'support'
+                          ? 'archava_support'
+                          : mode === 'purchasing'
+                            ? 'archava_purchasing'
+                            : mode === 'organizations'
+                              ? 'archava_organizations'
+                              : mode === 'proposals'
+                                ? 'archava_proposals'
+                                : 'archava_capacity'
             await client.query(
-              `INSERT INTO ${mode === 'projects' ? 'archava_projects' : mode === 'scheduling' ? 'archava_scheduling' : mode === 'accommodation' ? 'archava_accommodation' : mode === 'commerce' ? 'archava_commerce' : mode === 'foodservice' ? 'archava_foodservice' : mode === 'support' ? 'archava_support' : 'archava_purchasing'}.memberships(tenant_id,principal_id,kind,permissions,scope,active) VALUES($1,$2,'human',$3,$4,$5) ON CONFLICT(tenant_id,principal_id) DO UPDATE SET permissions=excluded.permissions,scope=excluded.scope,active=excluded.active`,
+              `INSERT INTO ${tableName}.memberships(tenant_id,principal_id,kind,permissions,scope,active) VALUES($1,$2,'human',$3,$4,$5) ON CONFLICT(tenant_id,principal_id) DO UPDATE SET permissions=excluded.permissions,scope=excluded.scope,active=excluded.active`,
               [tenant, person.principal_id, permissions, account.scope, account.access !== 'none'],
             )
             if (mode === 'support')
@@ -497,6 +544,9 @@ async function restore(args: string[]) {
       await migrateFoodService(owner)
       await migrateSupport(owner)
       await migratePurchasing(owner)
+      await migrateOrganizations(owner)
+      await migrateProposals(owner)
+      await migrateCapacity(owner)
       await grant(owner)
       // Restoring an older backup must never resurrect a logged-out session.
       await owner.query('DELETE FROM archava_identity.sessions')
@@ -538,6 +588,9 @@ async function resumeActions() {
       await migrateFoodService(owner)
       await migrateSupport(owner)
       await migratePurchasing(owner)
+      await migrateOrganizations(owner)
+      await migrateProposals(owner)
+      await migrateCapacity(owner)
       await grant(owner)
       const active = (
         await owner.query(

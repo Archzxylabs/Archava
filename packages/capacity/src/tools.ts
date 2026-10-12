@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import {
+  CapacityError,
   capacityPageSchema,
   capacityEstimateRequestSchema,
   type CapacityPrincipal,
@@ -13,7 +14,7 @@ export function createCapacityTools(
 ) {
   return {
     async invoke(tool: string, input: unknown) {
-      if (tool === 'capacity.listPools') {
+      if (tool === 'capacity.listPools' || tool === 'capacity.pools') {
         const query = capacityPageSchema.parse(input ?? {})
         return await service.listPools(tenant, principal, query)
       }
@@ -25,7 +26,7 @@ export function createCapacityTools(
         const req = capacityEstimateRequestSchema.parse(input)
         return await service.estimate(tenant, principal, req)
       }
-      throw new Error(`Unknown tool: ${tool}`)
+      throw new CapacityError('not_found')
     },
   }
 }

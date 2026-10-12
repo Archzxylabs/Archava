@@ -50,7 +50,10 @@ export class CapacityService {
     capacityTenantSchema.parse(tenant)
     capacityPrincipalSchema.parse(principal)
     if (principal.kind !== 'human') {
-      throw new CapacityError('forbidden', 'Capacity machine reads on command status are not permitted.')
+      throw new CapacityError(
+        'forbidden',
+        'Capacity machine reads on command status are not permitted.',
+      )
     }
     return this.repository.commandStatus(tenant, principal, z.uuid().parse(commandId))
   }

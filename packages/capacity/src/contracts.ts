@@ -26,7 +26,11 @@ export const capacityTenantSchema = z
 export const capacityPrincipalSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('human'), id: capacityTenantSchema }).strict(),
   z
-    .object({ kind: z.literal('service'), id: capacityTenantSchema, onBehalfOf: capacityTenantSchema })
+    .object({
+      kind: z.literal('service'),
+      id: capacityTenantSchema,
+      onBehalfOf: capacityTenantSchema,
+    })
     .strict(),
 ])
 export type CapacityPrincipal = z.infer<typeof capacityPrincipalSchema>
@@ -59,7 +63,10 @@ export const capacityAccessSchema = z
   .strict()
 export type CapacityAccess = z.infer<typeof capacityAccessSchema>
 
-const codeText = z.string().trim().regex(/^[A-Z0-9_]{2,40}$/)
+const codeText = z
+  .string()
+  .trim()
+  .regex(/^[A-Z0-9_]{2,40}$/)
 const nameText = z.string().trim().min(1).max(160)
 const optionalText2000 = z.string().trim().min(1).max(2000).nullable()
 const revisionNumber = z.number().int().positive().max(2147483647)
@@ -253,7 +260,11 @@ export interface CapacityRepository {
     principal: CapacityPrincipal,
     query: CapacityPageQuery,
   ): Promise<{ items: readonly CapacityPool[]; nextCursor?: string }>
-  detailPool(tenant: string, principal: CapacityPrincipal, poolId: string): Promise<CapacityPoolDetail>
+  detailPool(
+    tenant: string,
+    principal: CapacityPrincipal,
+    poolId: string,
+  ): Promise<CapacityPoolDetail>
   estimate(
     tenant: string,
     principal: CapacityPrincipal,

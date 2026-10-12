@@ -1,8 +1,5 @@
 import { z } from 'zod'
-import {
-  proposalPageSchema,
-  type ProposalPrincipal,
-} from './contracts.js'
+import { ProposalError, proposalPageSchema, type ProposalPrincipal } from './contracts.js'
 import type { ProposalService } from './service.js'
 
 export function createProposalTools(
@@ -28,7 +25,7 @@ export function createProposalTools(
         const { proposalId } = z.object({ proposalId: z.uuid() }).strict().parse(input)
         return await service.listChangeRequests(tenant, principal, proposalId)
       }
-      throw new Error(`Unknown tool: ${tool}`)
+      throw new ProposalError('not_found')
     },
   }
 }

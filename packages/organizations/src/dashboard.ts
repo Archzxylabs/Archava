@@ -108,10 +108,10 @@ export function mountOrganizationDashboard(
 
   const checkPending = button('Check pending result', async () => {
     if (!pending) return
-    const res = await transport(
-      `${options.apiBase}/commands/${pending.requestId}`,
-      { headers: { accept: 'application/json' }, signal: lifetime.signal },
-    )
+    const res = await transport(`${options.apiBase}/commands/${pending.requestId}`, {
+      headers: { accept: 'application/json' },
+      signal: lifetime.signal,
+    })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const parsed = organizationCommandStatusSchema.parse(await res.json())
     if (parsed.status === 'committed') {
@@ -164,7 +164,9 @@ export function mountOrganizationDashboard(
       try {
         const body = (await res.json()) as { error?: string }
         if (body.error) code = body.error
-      } catch {}
+      } catch {
+        void 0
+      }
       throw new Error(`Command failed: ${code}`)
     }
     const receipt = organizationReceiptSchema.parse(await res.json())
@@ -316,6 +318,11 @@ export function mountOrganizationDashboard(
 
   return {
     dispose() {
+      disposed = true
+      lifetime.abort()
+      host.replaceChildren()
+    },
+    destroy() {
       disposed = true
       lifetime.abort()
       host.replaceChildren()

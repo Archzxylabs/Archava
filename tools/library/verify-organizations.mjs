@@ -331,7 +331,7 @@ try {
   })
   assert.equal(affReceipt1.type, 'create_affiliation')
   assert.equal(affReceipt1.revision, 3)
-  const affId1 = affReceipt1.affiliationId
+  assert.ok(affReceipt1.affiliationId)
   check('primary affiliation is created and advances organization revision')
 
   // Add non-primary affiliation
@@ -366,7 +366,9 @@ try {
     }),
     'primary_conflict',
   )
-  check('primary affiliation constraint strictly permits at most one active primary contact per organization')
+  check(
+    'primary affiliation constraint strictly permits at most one active primary contact per organization',
+  )
 
   // Update affiliation
   const updateAffReceipt = await service.mutate('wholesale', human('owner'), {
@@ -492,7 +494,18 @@ try {
 
   // Backup and restore test
   const dumpFile = join(scratch, 'orgs.dump')
-  run('pg_dump', ['-Fc', '-f', dumpFile, '-h', socket, '-p', String(port), '-U', 'postgres', 'postgres'])
+  run('pg_dump', [
+    '-Fc',
+    '-f',
+    dumpFile,
+    '-h',
+    socket,
+    '-p',
+    String(port),
+    '-U',
+    'postgres',
+    'postgres',
+  ])
 
   await owner.query('CREATE DATABASE orgs_restored')
   run('pg_restore', [
@@ -515,7 +528,27 @@ try {
   assert.equal(detailRestored.organization.name, 'PT Mitra Logistik Nusantara')
   assert.equal(detailRestored.organization.revision, 7)
   await endProofPool(restoredApp)
-  check('pg_dump and pg_restore preserve all organization records, affiliations and command receipts')
+  check(
+    'pg_dump and pg_restore preserve all organization records, affiliations and command receipts',
+  )
+
+  const destination = join(root, 'dist/organizations-proof')
+  await mkdir(destination, { recursive: true })
+  await writeFile(
+    join(destination, 'results.json'),
+    JSON.stringify(
+      {
+        profile: trusted.version,
+        scope: 'reusable organizations, accounts and contact affiliations',
+        consumers: proofs,
+        checks,
+        operationalKitsAccepted: [],
+        providerCalls: 0,
+      },
+      null,
+      2,
+    ) + '\n',
+  )
 
   process.stdout.write(
     `\nALL ${checks.length} ORGANIZATIONS & AFFILIATIONS CHECKS PASSED PERFECTLY!\n`,

@@ -55,7 +55,10 @@ export class ProposalService {
     proposalTenantSchema.parse(tenant)
     proposalPrincipalSchema.parse(principal)
     if (principal.kind !== 'human') {
-      throw new ProposalError('forbidden', 'Proposal machine reads on command status are not permitted.')
+      throw new ProposalError(
+        'forbidden',
+        'Proposal machine reads on command status are not permitted.',
+      )
     }
     return this.repository.commandStatus(tenant, principal, z.uuid().parse(commandId))
   }

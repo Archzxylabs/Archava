@@ -5,6 +5,135 @@ saat owner memintanya. Lanjutkan pekerjaan di repository yang sudah ada, tuntask
 implementasi beserta bukti pengujiannya, dan jaga data lokal owner. Baca file ini
 sampai habis sebelum mengubah kode.
 
+## 0. Tugas aktif — perbaiki hasil review `f1c0a89`
+
+**Review Codex, 11 Oktober 2026: tiga domain baru BELUM diterima sebagai release.**
+Baseline purchasing ada pada `faabcc1`, dengan koreksi dokumentasi `345d039`.
+Commit `f1c0a89` menambah organizations, proposals dan capacity. Implementasinya
+sudah ada, tetapi review menemukan blocker yang bisa direproduksi. Jangan lanjut
+modul berikutnya atau mengklaim end-to-end, zero bugs, maupun zero leaking sebelum
+blocker di bawah ditutup.
+
+Bagian ini adalah tugas terbaru dan mengalahkan instruksi snapshot lama di §§2/4.
+Bagian lama dipertahankan sebagai konteks; bukan instruksi mengulang purchasing
+atau mengembalikan owner ke release 1.9.0.
+
+### Temuan yang sudah dibuktikan
+
+Pengujian akses dan kapasitas memakai installed packages dari `dist/crm-runtime`,
+PostgreSQL terisolasi, runtime role non-owner/non-bypass-RLS, dan data sintetis.
+Owner database, credentials dan settings tidak diubah oleh review ini.
+
+| ID                      | Temuan                                                                          | Reproduksi / rujukan                                                                                                                                                                                                                                                                                                                                                                                    |
+| ----------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R1 — P1                 | Staff dengan scope `assigned` dapat mengubah proposal milik owner lain.         | Staff memiliki proposal permissions, tetapi tidak memiliki proposal tersebut. `update_proposal` tetap berhasil dan revision owner berubah 1 → 2. `packages/proposals-pg/src/repository.ts:443` hanya memeriksa permission; lookup record tidak membatasi owner/scope.                                                                                                                                   |
+| R2 — P1                 | Receipt recovery dan replay melewati current authorization pada ketiga domain.  | Viewer aktif, scope `assigned`, permissions kosong, mengetahui UUID command owner: `commandStatus` mengembalikan `committed` beserta receipt untuk organizations, proposals dan capacity. Setelah seluruh operation/read grants actor asli dicabut, replay input identik juga mengembalikan cached receipt. Ini akses hasil tanpa izin; review tidak membuktikan efek bisnis baru dari replay tersebut. |
+| R3 — P1                 | Fresh compiled host tidak dapat menjalankan profile baru.                       | Pada home sintetis baru, `operator.mjs setup` exit 0, lalu `doctor` exit 1 dengan PostgreSQL `42P01`. `apps/crm/src/operator.ts:188` hanya memigrasikan modul sampai purchasing; profile sudah mewajibkan tiga ledger tambahan. Host/routes/UI/operator grants untuk tiga domain belum terintegrasi.                                                                                                    |
+| R4 — P1                 | Capacity mengalokasikan throughput pool berulang untuk tiap job.                | Pool 200 hours/week, pembagi 5 hari, maxConcurrentJobs 2. Dua alokasi masing-masing 40 jam dengan desired start `2030-01-07T00:00:00Z` sama-sama dijadwalkan selesai `2030-01-08T00:00:00Z`: 80 jam pada pool 40 jam/hari. `packages/capacity-pg/src/repository.ts:281` dan cabang `commit_allocation` memakai seluruh burn rate untuk setiap job.                                                      |
+| R5 — P1                 | Release identity berubah tanpa versi baru dan kontrak lama menerima flags baru. | Current library/runtime menyebut 1.10.0 dengan 46 artifacts/15 ledgers; archive accepted `dist/releases/1.10.0/library` menyebut 1.10.0 dengan 40 artifacts/12 ledgers. Host/config/kits/assembly versions belum berubah. Installed `assemblyRequestSchema` menerima flags organizations/proposals/capacity pada contract 2.0.0 dan 7.0.0 ketika baseline fields valid.                                 |
+| R6 — acceptance blocker | Verification belum memenuhi gate release.                                       | ESLint enam package baru gagal: **60 errors**. Domain scripts baru hanya mencetak hasil; tidak menyimpan acceptance `results.json`. Belum ada actual host/Chromium proofs untuk tiga domain. Security runner belum memasukkan ketiga domain. `dist/capacity-proof/results.json` yang lama adalah load benchmark, bukan delivery-capacity domain proof.                                                  |
+
+Reproducer lokal review tersedia sementara di `/tmp/archava-f1c-review.mjs`.
+Pelajari fixture/hasilnya, lalu buat regression tests permanen di repo. Jangan
+menganggap file `/tmp` sebagai release evidence, dan jangan mengubah expectation
+agar perilaku tanpa izin menjadi PASS. Log focused lint:
+`/tmp/archava-f1c-review-lint.log`.
+
+### Perbaikan wajib, dalam urutan ini
+
+1. **Authorization dan command recovery.** Audit setiap read, mutation, version/
+   amendment lookup, pool/allocation lookup, status dan replay di ketiga domain.
+   Terapkan current membership, operation permission, resource scope/assignment
+   dan human boundary pada server/repository. Tenant RLS tetap wajib, tetapi tenant
+   yang sama bukan berarti semua record boleh diakses. Cek scope sesudah mengunci
+   record yang akan diubah; race revocation/reassignment harus memiliki kebijakan
+   transaksi yang jelas. Pertahankan pola authorization existing, jangan membuat
+   bypass atau menaikkan scope menjadi `all` agar proof lulus.
+2. **Receipt bukan bearer token.** Recovery wajib memeriksa actor serta current
+   grants dan resource authority yang relevan. UUID saja tidak memberi hak melihat
+   hasil. Replay cached receipt harus tetap menjalankan current authorization;
+   pencabutan izin tidak boleh membuka receipt melalui jalur retry. Simpan binding
+   command ke tenant, actor, operation dan input tervalidasi, dengan fingerprint
+   deterministik. Organizations sekarang hanya meng-hash `mutation.data`: tambahkan
+   operation binding. Pastikan same UUID/body/actor menghasilkan satu efek saja;
+   different actor/body/operation ditolak. Authorized lost-response recovery tetap
+   bekerja setelah restart, dengan refusal yang tidak membocorkan hasil kepada
+   unauthorized caller.
+3. **Capacity correctness.** Definisikan arti weeklyCapacity sebagai throughput
+   agregat pool, serta arti hours/days/slots dan kalender kerja yang didukung.
+   Concurrent jobs berbagi budget pool; slot limit tidak menambah throughput.
+   Gunakan satu allocator deterministik untuk estimate dan commit, lalu revalidate
+   secara atomik saat commit. Perhitungkan remaining work, alokasi mendatang,
+   batas overlap, completion/cancellation dan queue handover. Jangan menghitung
+   lima business days lalu menambah 24 jam calendar tanpa kebijakan weekend.
+   Kebijakan paling sederhana yang benar boleh dipilih; tulis limitations daripada
+   menambah scheduler enterprise. Test fixed clock, weekday/weekend boundary,
+   > 1 concurrent job, future desired start, progress, release dan competing commits.
+4. **Release/version compatibility.** Buat candidate release baru, misalnya 1.11.0,
+   dengan bump host/config/kits dan kontrak assembly yang berubah. Bump package
+   versions yang artifact accepted-nya berubah; jangan mengganti bytes di bawah
+   identity accepted yang sama. Perbarui pins, lockfile, release contracts, planner
+   dan verifier secara konsisten. Kontrak lama menolak field modul yang belum
+   diperkenalkan pada versi itu, termasuk field bernilai `false`; old valid plans
+   tetap didukung sesuai kebijakan existing. Pertahankan accepted 1.10.0 archive
+   beserta checksum. Jangan overwrite archive untuk menyembunyikan mismatch.
+5. **Actual host integration.** Tuntaskan operator setup/migrate/grant/user/doctor,
+   verified installed ledgers, module flags, server services/routes dan browser
+   panels untuk organizations, proposals dan capacity sesuai pola existing.
+   Feature enabled tidak otomatis memberikan grants. Public/customer tools tidak
+   memperoleh internal access. Browser bundle bebas PG code/secrets. Tunjukkan
+   workflow owner lewat actual compiled host dengan staff/viewer refusal,
+   CSRF/session checks, tenant switch/logout cleanup, reviewed mutation dan
+   idempotent lost-response recovery. Jangan berhenti pada service-level demo.
+6. **Evidence dan root gates.** Perbaiki 60 lint errors tanpa blanket suppressions
+   atau menurunkan lint policy. Tambahkan scripts root yang jelas untuk tiga domain
+   dan host proofs; simpan machine-readable results pada path unik. Gunakan
+   `dist/delivery-capacity-proof/` dan `dist/delivery-capacity-host-proof/` agar tidak
+   bentrok dengan benchmark `dist/capacity-proof/`. Organizations/proposals juga
+   memiliki domain dan host report masing-masing. Reports merekam profile,
+   artifact/catalog hashes, checks aktual, dua consumer, limitations dan
+   providerCalls 0. Security matrix/runner wajib mensyaratkan proofs baru dan
+   menolak report stale; kesamaan string `1.10.0` tidak cukup membuktikan freshness.
+
+### Acceptance sebelum lanjut programme
+
+- Repro R1/R2 sekarang ditolak dengan database/audit/revisions unchanged. Tambahkan
+  negative tests untuk unrelated assigned staff, missing operation/read grant,
+  revoked membership, current assignment change, wrong actor/body/operation,
+  machine principal dan cross-tenant lookup pada seluruh jalur terkait.
+- Genuine two-consumer cold-install proofs per domain tetap lulus memakai artifact
+  identik tanpa source imports. Tambahkan real PostgreSQL concurrency/rollback
+  checks; jangan hanya menambah mocks yang meniru implementation.
+- Fresh home: setup → doctor → compiled host → browser flow lulus. Module disabled
+  dan missing dependencies ditolak dengan benar. Tiga domain memiliki actual
+  host/browser evidence, bukan counting stdout dari cold consumers sebagai UI test.
+- Capacity proof membuktikan aggregate budget dan overlap/slot invariants. Fixture
+  R4 tidak boleh lagi menerima 80 jam di satu hari berkapasitas 40 jam.
+- Jalankan seluruh delapan root gates melalui `pnpm verify`, fresh regression
+  proofs semua domain existing, CRM/Act/runtime/browser/assembly/kits, upgrade dan
+  security setelah source/artifacts final. Serialkan repack/build yang berbagi
+  output; parallel hanya jobs terisolasi yang aman. Catat exit status tiap gate.
+- Upgrade non-empty 1.10.0 dari archive ke candidate baru dan backup/restore
+  dibuktikan di database sintetis terlebih dahulu. Sebelum owner migration ambil
+  baseline dan backup privat. Bandingkan rows dengan timestamp precision asli,
+  memberships/settings/keys dan existing audit/receipts. Modul baru tidak
+  auto-enroll owner atau menciptakan business records. Jangan menganggap laporan
+  purchasing sebelumnya sebagai bukti preservation upgrade baru.
+- README, PRD, architecture, build status, capability matrix, starter-kit ledger,
+  module docs, release/handoff dan sanitized audit manifest menyebut profile dan
+  limitations yang sama. Financial pricing/client signature/project linkage hanya
+  boleh diklaim bila benar-benar terintegrasi dan diuji; internal proposal acceptance
+  tidak otomatis membuktikan signed customer agreement. Semua 40 full kits tetap
+  memiliki domain/adapter gaps sampai acceptance masing-masing terpenuhi.
+- Archive baru dibuat setelah gates lulus dan hash library/runtime cocok; original
+  archive tetap utuh. Commit lokal tanpa private data dan tanpa push. Laporkan
+  actual checks/report paths, remaining limits dan next executable task. Jangan
+  menyebut candidate sebagai accepted hanya karena sudah di-commit.
+
+**Mulai dari R1/R2, lalu R4, kemudian release dan host integration. Tuntaskan
+acceptance ini sebelum mengimplementasikan domain berikutnya.** Codex sedang
+orchestrate/review; perbaikan product code tetap tugas Gemini.
+
 ## 1. Tujuan yang harus lu pegang
 
 **ARCHZXY adalah company. Archava adalah produk unggulan dan library reusable.**
@@ -31,7 +160,10 @@ reversible. Lanjutkan pekerjaan mandiri yang jelas; tanyakan hanya input yang be
 menentukan pekerjaan berikutnya. Paid calls, publikasi, deployment online dan
 pengiriman data privat ke provider tetap membutuhkan otorisasi/input tersendiri.
 
-## 2. Posisi proyek saat handoff — 11 Oktober 2026
+## 2. Snapshot awal handoff — historis, 11 Oktober 2026
+
+Status di bagian ini merekam handoff awal sebelum `faabcc1`/`345d039`/`f1c0a89`.
+Untuk tugas dan acceptance terbaru, ikuti §0.
 
 Workspace: `/home/haikaru/Archverse/Lab/Archava_Platform`.
 Branch saat handoff: `main`. Commit implementasi terakhir yang diterima:
@@ -126,7 +258,7 @@ Status terbaru mengikuti accepted release evidence dan kode yang benar-benar diu
 File handoff ini menyampaikan arahan owner terbaru; Codex tidak sedang meneruskan
 implementasi paralel dengan lu.
 
-## 4. Tugas pertama: tuntaskan purchasing 1.10.0
+## 4. Tugas purchasing pada handoff awal — referensi historis
 
 Review kode existing, perbaiki masalah yang ditemukan, lalu buktikan alur:
 
@@ -392,6 +524,6 @@ produk, universal business coverage atau security tanpa denominator/evidence.
 Codex boleh dipanggil owner untuk audit/review, tetapi jangan menunggu Codex untuk
 setiap keputusan implementasi rutin.
 
-**Mulai sekarang:** baca diff, jalankan ulang purchasing domain proof yang terakhir
-gagal pada test helper, tuntaskan host/browser dan final acceptance 1.10.0, lalu
-lanjut programme dari ledger. Preserve pekerjaan existing dan data owner.
+**Mulai sekarang:** ikuti tugas review terbaru di §0. Perbaiki authorization,
+recovery dan capacity, tuntaskan release/host integration beserta acceptance baru,
+lalu lanjut programme dari ledger. Preserve pekerjaan existing dan data owner.

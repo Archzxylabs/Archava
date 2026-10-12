@@ -32,6 +32,12 @@ import { FoodService } from '@archava/foodservice'
 import { PostgresFoodRepository } from '@archava/foodservice-pg'
 import { CommerceService } from '@archava/commerce'
 import { PostgresCommerceRepository } from '@archava/commerce-pg'
+import { OrganizationService } from '@archava/organizations'
+import { PostgresOrganizationRepository } from '@archava/organizations-pg'
+import { ProposalService } from '@archava/proposals'
+import { PostgresProposalRepository } from '@archava/proposals-pg'
+import { CapacityService } from '@archava/capacity'
+import { PostgresCapacityRepository } from '@archava/capacity-pg'
 
 // This local host also runs on desktops without reliable IPv6 routing.
 setDefaultResultOrder('ipv4first')
@@ -143,6 +149,21 @@ try {
     (settings.modules ?? FULL_MODULES).purchasing
       ? new PurchasingService(
           await PostgresPurchaseRepository.create(runtimePool, settings.fingerprintKey),
+        )
+      : undefined,
+    (settings.modules ?? FULL_MODULES).organizations
+      ? new OrganizationService(
+          await PostgresOrganizationRepository.create(runtimePool, settings.fingerprintKey),
+        )
+      : undefined,
+    (settings.modules ?? FULL_MODULES).proposals
+      ? new ProposalService(
+          await PostgresProposalRepository.create(runtimePool, settings.fingerprintKey),
+        )
+      : undefined,
+    (settings.modules ?? FULL_MODULES).capacity
+      ? new CapacityService(
+          await PostgresCapacityRepository.create(runtimePool, settings.fingerprintKey),
         )
       : undefined,
   )
