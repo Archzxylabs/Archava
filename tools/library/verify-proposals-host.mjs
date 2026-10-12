@@ -270,25 +270,53 @@ try {
   await fill('[data-proposal-create] [name=summary]', 'End-to-end scope delivery with versioned CR')
   await evaluate(`
     window.propFetch = window.fetch;
-    window.propDrop = true;
+    window.propMode = 'truncated_json';
     window.propBlocked = false;
     window.fetch = async (...args) => {
       if (window.propBlocked && String(args[0]).includes('/api/proposals/') && args[1]?.method === 'POST') {
         return new Response(JSON.stringify({ error: 'forbidden' }), { status: 403, headers: { 'content-type': 'application/json' } });
       }
       const response = await window.propFetch(...args);
-      if (window.propDrop && String(args[0]).includes('/api/proposals/') && args[1]?.method === 'POST') {
-        window.propDrop = false;
+      if (window.propMode === 'truncated_json' && String(args[0]).includes('/api/proposals/') && args[1]?.method === 'POST') {
+        window.propMode = 'none';
+        return new Response('{', { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+      if (window.propMode === 'body_stream_error' && String(args[0]).includes('/api/proposals/') && args[1]?.method === 'POST') {
+        window.propMode = 'none';
         throw new TypeError('Lost proposal response');
+      }
+      if (window.propMode === 'invalid_schema' && String(args[0]).includes('/api/proposals/') && args[1]?.method === 'POST') {
+        window.propMode = 'none';
+        return new Response(JSON.stringify({ notA: 'receipt' }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+      if (window.propMode === 'wrong_uuid' && String(args[0]).includes('/api/proposals/') && args[1]?.method === 'POST') {
+        window.propMode = 'none';
+        const data = await response.json();
+        return new Response(JSON.stringify({ ...data, commandId: '00000000-0000-0000-0000-000000000000' }), { status: 200, headers: { 'content-type': 'application/json' } });
       }
       return response;
     };
     Array.from(document.querySelectorAll('#proposals button')).find(x => x.textContent === 'Create Proposal').click();
   `)
 
+  // 1. Truncated JSON response preserves uncertain state and reveals recovery
   await wait(
-    'document.querySelector("[data-proposal-status]").textContent.includes("Network interruption")',
+    'document.querySelector("[data-proposal-status]").textContent.includes("Invalid or truncated command receipt")',
   )
+  await idle()
+  assert.equal(
+    await evaluate(
+      '!document.querySelector("#proposals [role=status]")?.parentElement?.querySelector("div")?.hidden',
+    ),
+    true,
+  )
+  const countCreated = async () => {
+    const r = await send(auth, base + '/records')
+    assert.equal(r.status, 200)
+    const j = await r.json()
+    return j.items.filter((x) => (x.title ?? x.name) === 'Browser Reusable Proposal').length
+  }
+  assert.equal(await countCreated(), 1)
 
   // Blocked new write while outcome is uncertain
   await fill('[data-proposal-create] [name=title]', 'Conflicting Unreconciled Proposal')
@@ -298,8 +326,43 @@ try {
   await wait(
     'document.querySelector("[data-proposal-status]").textContent.includes("Uncertain command outcome")',
   )
+  await idle()
+  assert.equal(await countCreated(), 1)
 
-  // Retry with simulated grant revocation (403)
+  // 2. Retry with body stream error retains uncertain recovery
+  await evaluate("window.propMode = 'body_stream_error'")
+  await evaluate(
+    "Array.from(document.querySelectorAll('#proposals button')).find(x => x.textContent === 'Retry same request').click()",
+  )
+  await wait(
+    'document.querySelector("[data-proposal-status]").textContent.includes("Network interruption")',
+  )
+  await idle()
+  assert.equal(await countCreated(), 1)
+
+  // 3. Retry with invalid receipt schema retains uncertain recovery
+  await evaluate("window.propMode = 'invalid_schema'")
+  await evaluate(
+    "Array.from(document.querySelectorAll('#proposals button')).find(x => x.textContent === 'Retry same request').click()",
+  )
+  await wait(
+    'document.querySelector("[data-proposal-status]").textContent.includes("Invalid or truncated command receipt")',
+  )
+  await idle()
+  assert.equal(await countCreated(), 1)
+
+  // 4. Retry with mismatched command UUID retains uncertain recovery
+  await evaluate("window.propMode = 'wrong_uuid'")
+  await evaluate(
+    "Array.from(document.querySelectorAll('#proposals button')).find(x => x.textContent === 'Retry same request').click()",
+  )
+  await wait(
+    'document.querySelector("[data-proposal-status]").textContent.includes("Invalid or truncated command receipt")',
+  )
+  await idle()
+  assert.equal(await countCreated(), 1)
+
+  // 5. Retry with simulated grant revocation (403)
   await evaluate('window.propBlocked = true')
   await evaluate(
     "Array.from(document.querySelectorAll('#proposals button')).find(x => x.textContent === 'Retry same request').click()",
@@ -307,13 +370,15 @@ try {
   await wait('document.querySelector("[data-proposal-status]").textContent.includes("HTTP 403")')
   await idle()
   await evaluate('window.propBlocked = false')
+  assert.equal(await countCreated(), 1)
 
-  // Check pending result reconciles committed server state
+  // 6. Check pending result reconciles committed server state
   await evaluate(
     "Array.from(document.querySelectorAll('#proposals button')).find(x => x.textContent === 'Check pending result').click()",
   )
   await wait('document.querySelector("[data-proposal-status]").textContent === "Action confirmed."')
   await evaluate('window.fetch = window.propFetch; delete window.propFetch')
+  assert.equal(await countCreated(), 1)
 
   // Proposal now listed in UI
   await wait(

@@ -276,25 +276,53 @@ try {
   await fill('[data-capacity-create] [name=maxConcurrency]', '2')
   await evaluate(`
     window.capFetch = window.fetch;
-    window.capDrop = true;
+    window.capMode = 'truncated_json';
     window.capBlocked = false;
     window.fetch = async (...args) => {
       if (window.capBlocked && String(args[0]).includes('/api/capacity/') && args[1]?.method === 'POST') {
         return new Response(JSON.stringify({ error: 'forbidden' }), { status: 403, headers: { 'content-type': 'application/json' } });
       }
       const response = await window.capFetch(...args);
-      if (window.capDrop && String(args[0]).includes('/api/capacity/') && args[1]?.method === 'POST') {
-        window.capDrop = false;
+      if (window.capMode === 'truncated_json' && String(args[0]).includes('/api/capacity/') && args[1]?.method === 'POST') {
+        window.capMode = 'none';
+        return new Response('{', { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+      if (window.capMode === 'body_stream_error' && String(args[0]).includes('/api/capacity/') && args[1]?.method === 'POST') {
+        window.capMode = 'none';
         throw new TypeError('Lost capacity response');
+      }
+      if (window.capMode === 'invalid_schema' && String(args[0]).includes('/api/capacity/') && args[1]?.method === 'POST') {
+        window.capMode = 'none';
+        return new Response(JSON.stringify({ notA: 'receipt' }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+      if (window.capMode === 'wrong_uuid' && String(args[0]).includes('/api/capacity/') && args[1]?.method === 'POST') {
+        window.capMode = 'none';
+        const data = await response.json();
+        return new Response(JSON.stringify({ ...data, commandId: '00000000-0000-0000-0000-000000000000' }), { status: 200, headers: { 'content-type': 'application/json' } });
       }
       return response;
     };
     Array.from(document.querySelectorAll('#capacity button')).find(x => x.textContent === 'Create Capacity Pool').click();
   `)
 
+  // 1. Truncated JSON response preserves uncertain state and reveals recovery
   await wait(
-    'document.querySelector("[data-capacity-status]").textContent.includes("Network interruption")',
+    'document.querySelector("[data-capacity-status]").textContent.includes("Invalid or truncated command receipt")',
   )
+  await idle()
+  assert.equal(
+    await evaluate(
+      '!document.querySelector("#capacity [role=status]")?.parentElement?.querySelector("div")?.hidden',
+    ),
+    true,
+  )
+  const countCreated = async () => {
+    const r = await send(auth, base + '/pools')
+    assert.equal(r.status, 200)
+    const j = await r.json()
+    return j.items.filter((x) => (x.title ?? x.name) === 'Browser Sprint Pool').length
+  }
+  assert.equal(await countCreated(), 1)
 
   // Blocked new write while outcome is uncertain
   await fill('[data-capacity-create] [name=code]', 'BLOCKED_POOL')
@@ -304,8 +332,43 @@ try {
   await wait(
     'document.querySelector("[data-capacity-status]").textContent.includes("Uncertain command outcome")',
   )
+  await idle()
+  assert.equal(await countCreated(), 1)
 
-  // Retry with simulated grant revocation (403)
+  // 2. Retry with body stream error retains uncertain recovery
+  await evaluate("window.capMode = 'body_stream_error'")
+  await evaluate(
+    "Array.from(document.querySelectorAll('#capacity button')).find(x => x.textContent === 'Retry same request').click()",
+  )
+  await wait(
+    'document.querySelector("[data-capacity-status]").textContent.includes("Network interruption")',
+  )
+  await idle()
+  assert.equal(await countCreated(), 1)
+
+  // 3. Retry with invalid receipt schema retains uncertain recovery
+  await evaluate("window.capMode = 'invalid_schema'")
+  await evaluate(
+    "Array.from(document.querySelectorAll('#capacity button')).find(x => x.textContent === 'Retry same request').click()",
+  )
+  await wait(
+    'document.querySelector("[data-capacity-status]").textContent.includes("Invalid or truncated command receipt")',
+  )
+  await idle()
+  assert.equal(await countCreated(), 1)
+
+  // 4. Retry with mismatched command UUID retains uncertain recovery
+  await evaluate("window.capMode = 'wrong_uuid'")
+  await evaluate(
+    "Array.from(document.querySelectorAll('#capacity button')).find(x => x.textContent === 'Retry same request').click()",
+  )
+  await wait(
+    'document.querySelector("[data-capacity-status]").textContent.includes("Invalid or truncated command receipt")',
+  )
+  await idle()
+  assert.equal(await countCreated(), 1)
+
+  // 5. Retry with simulated grant revocation (403)
   await evaluate('window.capBlocked = true')
   await evaluate(
     "Array.from(document.querySelectorAll('#capacity button')).find(x => x.textContent === 'Retry same request').click()",
@@ -313,13 +376,15 @@ try {
   await wait('document.querySelector("[data-capacity-status]").textContent.includes("HTTP 403")')
   await idle()
   await evaluate('window.capBlocked = false')
+  assert.equal(await countCreated(), 1)
 
-  // Check pending result reconciles committed server state
+  // 6. Check pending result reconciles committed server state
   await evaluate(
     "Array.from(document.querySelectorAll('#capacity button')).find(x => x.textContent === 'Check pending result').click()",
   )
   await wait('document.querySelector("[data-capacity-status]").textContent === "Action confirmed."')
   await evaluate('window.fetch = window.capFetch; delete window.capFetch')
+  assert.equal(await countCreated(), 1)
 
   // Pool now listed in UI
   await wait(

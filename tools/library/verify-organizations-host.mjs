@@ -264,25 +264,53 @@ try {
   await fill('[data-org-create] [name=industry]', 'Enterprise Cloud')
   await evaluate(`
     window.orgFetch = window.fetch;
-    window.orgDrop = true;
+    window.orgMode = 'truncated_json';
     window.orgBlocked = false;
     window.fetch = async (...args) => {
       if (window.orgBlocked && String(args[0]).includes('/api/organizations/') && args[1]?.method === 'POST') {
         return new Response(JSON.stringify({ error: 'forbidden' }), { status: 403, headers: { 'content-type': 'application/json' } });
       }
       const response = await window.orgFetch(...args);
-      if (window.orgDrop && String(args[0]).includes('/api/organizations/') && args[1]?.method === 'POST') {
-        window.orgDrop = false;
+      if (window.orgMode === 'truncated_json' && String(args[0]).includes('/api/organizations/') && args[1]?.method === 'POST') {
+        window.orgMode = 'none';
+        return new Response('{', { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+      if (window.orgMode === 'body_stream_error' && String(args[0]).includes('/api/organizations/') && args[1]?.method === 'POST') {
+        window.orgMode = 'none';
         throw new TypeError('Lost organization response');
+      }
+      if (window.orgMode === 'invalid_schema' && String(args[0]).includes('/api/organizations/') && args[1]?.method === 'POST') {
+        window.orgMode = 'none';
+        return new Response(JSON.stringify({ notA: 'receipt' }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+      if (window.orgMode === 'wrong_uuid' && String(args[0]).includes('/api/organizations/') && args[1]?.method === 'POST') {
+        window.orgMode = 'none';
+        const data = await response.json();
+        return new Response(JSON.stringify({ ...data, requestId: '00000000-0000-0000-0000-000000000000' }), { status: 200, headers: { 'content-type': 'application/json' } });
       }
       return response;
     };
     Array.from(document.querySelectorAll('#organizations button')).find(x => x.textContent === 'Create Organization').click();
   `)
 
+  // 1. Truncated JSON response preserves uncertain state and reveals recovery
   await wait(
-    'document.querySelector("[data-org-status]").textContent.includes("Network interruption")',
+    'document.querySelector("[data-org-status]").textContent.includes("Invalid or truncated command receipt")',
   )
+  await idle()
+  assert.equal(
+    await evaluate(
+      '!document.querySelector("#organizations [role=status]")?.parentElement?.querySelector("div")?.hidden',
+    ),
+    true,
+  )
+  const countCreated = async () => {
+    const r = await send(auth, base + '/records')
+    assert.equal(r.status, 200)
+    const j = await r.json()
+    return j.items.filter((x) => x.name === 'Browser Reusable Org Corp').length
+  }
+  assert.equal(await countCreated(), 1)
 
   // Blocked new write while outcome is uncertain
   await fill('[data-org-create] [name=name]', 'Conflicting Unreconciled Org')
@@ -292,8 +320,43 @@ try {
   await wait(
     'document.querySelector("[data-org-status]").textContent.includes("Uncertain command outcome")',
   )
+  await idle()
+  assert.equal(await countCreated(), 1)
 
-  // Retry with simulated grant revocation (403)
+  // 2. Retry with body stream error retains uncertain recovery
+  await evaluate("window.orgMode = 'body_stream_error'")
+  await evaluate(
+    "Array.from(document.querySelectorAll('#organizations button')).find(x => x.textContent === 'Retry same request').click()",
+  )
+  await wait(
+    'document.querySelector("[data-org-status]").textContent.includes("Network interruption")',
+  )
+  await idle()
+  assert.equal(await countCreated(), 1)
+
+  // 3. Retry with invalid receipt schema retains uncertain recovery
+  await evaluate("window.orgMode = 'invalid_schema'")
+  await evaluate(
+    "Array.from(document.querySelectorAll('#organizations button')).find(x => x.textContent === 'Retry same request').click()",
+  )
+  await wait(
+    'document.querySelector("[data-org-status]").textContent.includes("Invalid or truncated command receipt")',
+  )
+  await idle()
+  assert.equal(await countCreated(), 1)
+
+  // 4. Retry with mismatched request UUID retains uncertain recovery
+  await evaluate("window.orgMode = 'wrong_uuid'")
+  await evaluate(
+    "Array.from(document.querySelectorAll('#organizations button')).find(x => x.textContent === 'Retry same request').click()",
+  )
+  await wait(
+    'document.querySelector("[data-org-status]").textContent.includes("Invalid or truncated command receipt")',
+  )
+  await idle()
+  assert.equal(await countCreated(), 1)
+
+  // 5. Retry with simulated grant revocation (403)
   await evaluate('window.orgBlocked = true')
   await evaluate(
     "Array.from(document.querySelectorAll('#organizations button')).find(x => x.textContent === 'Retry same request').click()",
@@ -303,13 +366,15 @@ try {
   )
   await idle()
   await evaluate('window.orgBlocked = false')
+  assert.equal(await countCreated(), 1)
 
-  // Check pending result reconciles committed server state
+  // 6. Check pending result reconciles committed server state
   await evaluate(
     "Array.from(document.querySelectorAll('#organizations button')).find(x => x.textContent === 'Check pending result').click()",
   )
   await wait('document.querySelector("[data-org-status]").textContent === "Action confirmed."')
   await evaluate('window.fetch = window.orgFetch; delete window.orgFetch')
+  assert.equal(await countCreated(), 1)
 
   // Organization now listed in UI
   await wait(

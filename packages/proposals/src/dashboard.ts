@@ -186,6 +186,8 @@ export function mountProposalsDashboard(
       throw new Error('Uncertain command outcome; reconcile before submitting new requests.')
     }
     pending = mutation
+    uncertain = true
+    recovery.hidden = false
     const url = `${options.apiBase}/commands`
     let response: Response
     try {
@@ -240,11 +242,22 @@ export function mountProposalsDashboard(
       return
     }
 
-    const receipt = commandReceiptSchema.parse(await response.json())
-    pending = null
-    uncertain = false
-    recovery.hidden = true
-    setStatus(`Committed command ${receipt.commandId}. Revision ${receipt.revision}.`)
+    try {
+      const receipt = commandReceiptSchema.parse(await response.json())
+      if (receipt.commandId !== mutation.commandId) {
+        throw new Error('Command receipt ID mismatch')
+      }
+      pending = null
+      uncertain = false
+      recovery.hidden = true
+      setStatus(`Committed command ${receipt.commandId}. Revision ${receipt.revision}.`)
+      return receipt
+    } catch {
+      uncertain = true
+      recovery.hidden = false
+      setStatus('Invalid or truncated command receipt. Reconcile or retry before proceeding.')
+      return
+    }
   }
 
   async function loadAccess() {

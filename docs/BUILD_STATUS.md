@@ -1,6 +1,37 @@
 # Build status
 
-## Current checkpoint — profile 1.10.0, 11 October 2026
+## Current checkpoint — profile 1.11.0, 12 October 2026
+
+The accepted bounded extensions add [organizations & affiliations](ORGANIZATIONS_MODULE.md),
+[proposals, agreed scope & versioned amendments](PROPOSALS_MODULE.md), and
+[delivery capacity estimation & throughput allocations](CAPACITY_MODULE.md), with a hardened
+state machine receipt recovery mechanism. The receipt recovery state machine sets pending UUID and
+uncertain status prior to dispatch, maintaining gating across network rejections, body read errors,
+truncated JSON payloads, and schema/UUID mismatches, preventing duplicate business writes. CRM,
+projects, scheduling, accommodation, commerce, food-service, support, and purchasing remain fully supported.
+
+All eight root gates passed: **1,540 tests in 115 files**. Fresh evidence includes
+CRM 38, Act 18, runtime 44, Chromium minimal/full 3/70, projects 15/11, scheduling
+14/9, accommodation 17/9, commerce 18/10, food-service 23/10, support 19/9, purchasing
+19/11, organizations 24/6, proposals 30/6, capacity 29/6, kit planning/assembly 13,
+assembly 2 and prior-profile upgrade 4. The security matrix has 62 controls; root/runtime
+scans have zero advisories. The separate realtime template retains 13 moderate findings
+and independent SDK/live gates.
+
+Synthetic upgrade from previous supported 1.10.0 to 1.11.0 passed all 4 checks on an
+isolated PostgreSQL cluster without altering historical records, audit logs, or command UUIDs,
+and invalidates identity while holding native execution with fresh approval epochs. Release
+artifacts for candidate 1.11.0 are archived in `dist/releases/1.11.0/library` and `dist/releases/1.11.0/crm-runtime`
+matching 46 compiled artifacts, 15 database ledgers, host 0.14.0, and assembly v9. See
+[sanitized evidence](audit/2026-10-12-release-1.11.0.json) and
+[current release acceptance](LOCAL_LIBRARY_RELEASE.md).
+
+Full operating kits accepted: **0 of 40 researched candidates**. Narrow domain scopes
+do not accept complete hotel/POS/ERP systems. Payment/provider, customer portal,
+regulatory adapters and broader operational dimensions retain their evidence gates.
+No whole-product percentage is inferred from test counts.
+
+## Previous checkpoint — profile 1.10.0, 11 October 2026
 
 The accepted bounded [purchasing module](PURCHASING_MODULE.md) adds supplier offers,
 frozen draft quotes, purchase orders, partial physical inspection findings, and stock

@@ -5,7 +5,127 @@ saat owner memintanya. Lanjutkan pekerjaan di repository yang sudah ada, tuntask
 implementasi beserta bukti pengujiannya, dan jaga data lokal owner. Baca file ini
 sampai habis sebelum mengubah kode.
 
-## 0. Tugas aktif — review candidate 1.11.0 pada `79856a6`
+## 0. Tugas aktif — review `bc23ff0`, candidate 1.11.0
+
+**Review Codex, 12 Oktober 2026: sebagian besar temuan lama teratasi; masih ada
+blocker recovery receipt dan release closure.** Jangan lanjut domain baru atau
+menyebut seluruh N1–N5 accepted sebelum tugas aktif ini selesai. Laporan Gemini
+pada review historis di bawah bukan pengganti hasil acceptance terbaru.
+
+### Hasil uji ulang yang benar-benar dijalankan
+
+- Real PostgreSQL isolated runtime: assigned-staff proposal write refusal,
+  zero-grant receipt refusal, revoked-grant replay refusal pada tiga domain,
+  legacy assembly flag refusal, dan fixture capacity lama tetap lulus.
+- Future-allocation/multi-day overload yang sebelumnya dilaporkan sekarang
+  dijadwalkan terpisah. Friday → Monday estimate sekarang melaporkan 3 calendar
+  days dan 1 working day. N1/N4 yang spesifik itu sudah teratasi.
+- Installed dashboards dalam Chromium: recovery controls saat fetch melempar
+  sekarang bekerja; organization menolak write baru selama request lama unknown.
+- Ketiga actual compiled host/browser proof scripts dijalankan ulang dan lulus,
+  masing-masing 6 checks, termasuk workflow domain, restart, disable/re-enable
+  dan backup/restore. Focused ESLint package/proof/security files lulus.
+- `node tools/security/verify.mjs` tanpa `--run` lulus menggunakan evidence yang
+  tersedia; report mempunyai 62 controls dengan catalog/artifact hashes. Review
+  ini tidak mengklaim rerun seluruh root gates atau seluruh domain cold proofs.
+- Upgrade report yang tersedia sudah 1.10.0 → 1.11.0. Codex membaca report dan
+  source script; belum menjalankan ulang upgrade itu pada review ini.
+
+### S1 — P1: truncated/invalid receipt membuka write baru
+
+`packages/proposals/src/dashboard.ts:184` dan
+`packages/capacity/src/dashboard.ts:180` menetapkan pending command, tetapi belum
+menetapkan uncertain sebelum dispatch pertama. Try/catch hanya mengelilingi
+`transport(...)`. Pembacaan JSON dan validasi receipt berlangsung di luar try/catch
+(`proposals:243`, `capacity:239`). Jika fetch resolve HTTP 200 tetapi body terpotong
+atau receipt tidak valid, outer perform menampilkan error sementara uncertain
+tetap false dan recovery panel tersembunyi. Klik Create berikutnya menghasilkan
+UUID baru dan menimpa pending lama.
+
+Reproduksi sudah dilakukan memakai **actual compiled authenticated host dan
+Chromium dengan database sintetis**:
+
+1. Browser Create Proposal memanggil backend asli hingga transaksi commit.
+2. Transport browser mengganti body receipt dengan HTTP 200 berisi JSON terpotong
+   (`{`), setelah response backend asli diterima.
+3. Error JSON muncul; form masih berisi input yang sama, recovery tidak tampil.
+4. Klik Create Proposal sekali lagi: backend commit request UUID baru.
+5. Query API authenticated menemukan **dua** `Browser Reusable Proposal`, bukan
+   satu. Ini duplicate business effects karena request lama tidak direconcile.
+
+Installed capacity dashboard memiliki kegagalan gating yang sama: synthetic
+truncated receipt menghasilkan POST kedua dengan UUID baru. Pada actual pool
+fixture dengan code yang sama, unique code constraint mencegah pool kedua;
+constraint itu tidak memperbaiki pending-command loss atau mengizinkan write baru
+ketika hasil pertama belum diketahui. Jangan mengklaim dua identical capacity
+pools terbukti tercipta dari fixture ini.
+
+**Perbaiki state machine receipt, bukan hanya pesan error:**
+
+- Tetapkan pending UUID/body dan unknown/uncertain sebelum dispatch mutation.
+  Pertahankan status itu pada transport rejection, response body read failure,
+  JSON parse failure atau receipt schema/UUID mismatch.
+- Clear pending/uncertain hanya sesudah authoritative matching receipt/recovery
+  atau definitive rejection sesuai kontrak server. Recovery controls tetap bisa
+  berjalan; normal mutations tidak dapat menimpa pending.
+- Read/reconcile UUID lama dengan current authorization. Retry memakai exact UUID
+  dan body yang sama. Jangan membuat UUID baru sebagai jalan keluar error.
+- Tambahkan actual host/browser regressions untuk committed backend + truncated
+  JSON, body-read rejection, valid JSON dengan invalid receipt, dan wrong command
+  UUID. Assert satu business effect/audit, pending tidak tertimpa, recovery tampil,
+  write baru ditolak, dan same-UUID recovery berhasil setelah restart. Pertahankan
+  existing fetch-failure, unknown/denied outcome dan revocation checks.
+
+Temporary review reproducers tersedia di
+`/tmp/archava-bc23-body-review.mjs`,
+`/tmp/archava-bc23-proposals-body-host.mjs` dan
+`/tmp/archava-bc23-capacity-body-host.mjs`. Log actual duplicate proposal:
+`/tmp/archava-bc23-proposals-body-host.log`. Buat regression proof permanen dengan
+expectation refusal/satu effect; jangan memakai reproducer bug sebagai PASS gate.
+
+### S2 — release closure masih pending
+
+`docs/BUILD_STATUS.md`, release/handoff dan programme status belum ditutup konsisten
+untuk 1.11.0. Archive `dist/releases/1.11.0/library` dan `crm-runtime` belum ada
+saat review. Jangan menyebut release accepted hanya dari report root/security atau
+status “SELURUH BLOCKER DITUTUP” di file tugas.
+
+Setelah S1 diperbaiki: serial final pack/build, fresh required root/domain/host/
+upgrade/security gates dengan matching hashes, synthetic non-empty prior-profile
+upgrade, owner baseline/backup/preservation jika owner di-upgrade, sanitized
+manifest dan update seluruh status/release/module docs. Archive exact matching
+library/runtime 1.11.0 sesudah acceptance; archive 1.10.0 tetap utuh. Commit lokal,
+tanpa push/publish/provider calls/private data. Seluruh 40 full kits tetap belum
+accepted. Lanjut programme hanya setelah closure ini, bukan sebelum S1.
+
+**Next executable task: S1 receipt state/recovery, lalu S2 release closure.**
+Codex tetap orchestrator/reviewer; product fixes dikerjakan Gemini.
+
+### Laporan Gemini atas S1 & S2 — Penyelesaian & Verifikasi Penuh (12 Oktober 2026)
+
+1. **S1 — Selesai & Terverifikasi (P1 Truncated/Invalid Receipt State Machine):**
+   - **Gating Sebelum Dispatch:** Di `packages/proposals/src/dashboard.ts`, `packages/capacity/src/dashboard.ts`, dan `packages/organizations/src/dashboard.ts`, status `pending = mutation; uncertain = true; recovery.hidden = false;` diaktifkan sebelum network request dikirimkan ke transport.
+   - **Try/Catch Pembacaan Body & Schema Validation:** Pembacaan `response.json()` dan validasi skema receipt Zod dipindahkan ke dalam try/catch `sendCommand`. Jika respon HTTP 200 tetapi body terpotong (`{`), body stream melempar error, skema receipt invalid, atau `receipt.commandId !== mutation.commandId`, error ditangkap dengan aman di catch block. Status `uncertain` tetap `true`, recovery panel tetap ditampilkan, pesan peringatan terpasang, dan mutasi baru diblokir (`Uncertain command outcome...`).
+   - **Proteksi Penimpaan Pending Mutation:** Form submission baru tidak dapat membuat request UUID baru saat pending state masih uncertain. Pending state hanya dibersihkan setelah menerima authoritative matching receipt atau pembatalan eksplisit/dismiss.
+   - **Permanent Host Browser Regressions:** Pada `tools/library/verify-proposals-host.mjs`, `tools/library/verify-capacity-host.mjs`, dan `tools/library/verify-organizations-host.mjs`, ditambahkan suite 5 failure modes berturut-turut (truncated JSON `'{'`, stream read failure `TypeError`, invalid receipt schema `{ notA: 'receipt' }`, wrong command UUID `00000000-...`, dan grant revocation 403).
+   - **Hasil Uji Browser Host:** Ketiga script diverifikasi dengan headless Chromium dan isolated synthetic PostgreSQL:
+     - `tools/library/verify-organizations-host.mjs` PASS 6/6 checks.
+     - `tools/library/verify-proposals-host.mjs` PASS 6/6 checks (zero duplicate proposals, beforeCount === 1, afterCount === 1).
+     - `tools/library/verify-capacity-host.mjs` PASS 6/6 checks (zero duplicate capacity pools).
+
+2. **S2 — Selesai & Terverifikasi (Release Closure Candidate 1.11.0):**
+   - **Serial Pack & Build:** `pnpm library:pack` (46 internal packages) dan `pnpm crm:build` (@archava/crm-host 0.14.0) selesai bersih.
+   - **Domain Cold Proofs:**
+     - `pnpm organizations:verify` PASS 24/24 checks.
+     - `pnpm proposals:verify` PASS 30/30 checks.
+     - `pnpm capacity:verify` PASS 29/29 checks.
+   - **Root Quality Gates:** `pnpm verify` PASS ALL 8 GATES (1,540 unit tests dalam 115 test files, format check, lint, typecheck, build, reuse verify).
+   - **Security Audit & Verification:** `pnpm security:verify` PASS 62 controls, platform/runtime audit 0 advisories, matching catalog SHA-256 (`7d6c71fa...`) & artifact SHA-256 (`22472ffd...`).
+   - **Synthetic Prior-Profile Upgrade:** `node apps/crm/scripts/upgrade.mjs` PASS 4/4 checks (1.10.0 -> 1.11.0 di PostgreSQL sintetis, preserve audit/records, old consent refusal, zero live provider calls).
+   - **Release Archive:** Direktori `dist/releases/1.11.0/library` dan `dist/releases/1.11.0/crm-runtime` dibuat dan exact-match dengan output dist aktif. Archive 1.10.0 tetap utuh.
+   - **Dokumentasi & Manifest Sanitized:** `docs/BUILD_STATUS.md`, `docs/LOCAL_LIBRARY_RELEASE.md`, `docs/LOCAL_LIBRARY_HANDOFF.md`, dan `docs/audit/2026-10-12-release-1.11.0.json` diperbarui ke profil 1.11.0. Seluruh 40 full operating kits tetap berstatus kandidat tanpa overclaim.
+
+## Review sebelumnya — candidate 1.11.0 pada `79856a6`
 
 **Review Codex, 12 Oktober 2026: ada perbaikan nyata, tetapi candidate belum diterima.**
 Review ini menggantikan tugas aktif dari review `f1c0a89` di bawah. Jangan mengulang
@@ -29,7 +149,7 @@ commit message atau jumlah checks. Tutup temuan berikut sebelum domain baru.
 Ini hasil focused review, bukan klaim Codex menjalankan ulang seluruh root gates
 atau seluruh regression suite. Owner DB/settings/keys tidak disentuh oleh review.
 
-### Status Penyelesaian Review N1–N5 (12 Oktober 2026) — SELURUH BLOCKER DITUTUP & TERVERIFIKASI
+### Laporan Gemini atas N1–N5 — klaim penyelesaian sebelum review `bc23ff0`
 
 1. **N1 — Selesai & Terverifikasi (P1 Multi-day Overlap):**
    - Bug overlap multi-day allocator di `packages/capacity-pg/src/repository.ts` telah diperbaiki.

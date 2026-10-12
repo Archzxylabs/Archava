@@ -225,12 +225,23 @@ export function mountOrganizationDashboard(
       status.textContent = `Command failed: ${code}`
       return
     }
-    const receipt = organizationReceiptSchema.parse(await res.json())
-    uncertain = false
-    recovery.hidden = true
-    pending = null
-    status.textContent = `Success (${receipt.type}).`
-    return receipt
+    try {
+      const receipt = organizationReceiptSchema.parse(await res.json())
+      if (receipt.requestId !== mutation.requestId) {
+        throw new Error('Command receipt ID mismatch')
+      }
+      uncertain = false
+      recovery.hidden = true
+      pending = null
+      status.textContent = `Success (${receipt.type}).`
+      return receipt
+    } catch {
+      uncertain = true
+      recovery.hidden = false
+      status.textContent =
+        'Invalid or truncated command receipt. Reconcile or retry before proceeding.'
+      return
+    }
   }
 
   async function loadAccess() {
