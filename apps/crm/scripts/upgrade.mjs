@@ -7,13 +7,13 @@ import { join, resolve } from 'node:path'
 import { createRequire } from 'node:module'
 import { randomUUID, createHash } from 'node:crypto'
 const root = resolve(import.meta.dirname, '../../..'),
-  priorCommit = 'f5cb768'
+  priorCommit = '345d039'
 const scratch = await mkdtemp(join(tmpdir(), 'archava-upgrade-proof-')),
   home = join(scratch, 'state')
 await mkdir(home, { mode: 0o700 })
 let prior = process.argv.includes('--cold-prior')
     ? join(scratch, 'cold-prior-runtime')
-    : join(root, 'dist/releases/1.0.0/runtime'),
+    : join(root, 'dist/releases/1.10.0/crm-runtime'),
   live,
   settings
 const env = {
@@ -148,7 +148,7 @@ try {
     prior = join(archive, 'dist/crm-runtime')
   }
   const old = JSON.parse(await readFile(join(prior, 'release-profile.json'), 'utf8'))
-  assert.equal(old.catalog.version, '1.0.0')
+  assert.equal(old.catalog.version, '1.10.0')
   operator(prior, ['setup'])
   settings = JSON.parse(await readFile(join(home, 'runtime.json'), 'utf8'))
   settings.appPort = 0
@@ -198,7 +198,7 @@ try {
   )
   await stop()
   check(
-    'previous supported 1.0.0 installation creates real data, grants, immutable audit and manual/native UUID receipts in an isolated PostgreSQL cluster',
+    'previous supported 1.10.0 installation creates real data, grants, immutable audit and manual/native UUID receipts in an isolated PostgreSQL cluster',
   )
   operator(current, ['setup'])
   origin = await boot(current)

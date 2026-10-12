@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { spawn, execFileSync } from 'node:child_process'
 import { createServer } from 'node:net'
-import { randomBytes, randomUUID } from 'node:crypto'
+import { randomBytes, randomUUID, createHash } from 'node:crypto'
 
 const root = resolve(import.meta.dirname, '../..'),
   runtime = join(root, 'dist/crm-runtime')
@@ -238,8 +238,9 @@ try {
   const evaluate = (expr) => page.evaluate(expr)
   const wait = (condition) =>
     evaluate(
-      `new Promise((done,fail)=>{let tries=0;const tick=()=>{if(${condition})done(true);else if(++tries>150)fail(new Error('UI timed out'));else setTimeout(tick,100)};tick()})`,
+      `new Promise((done,fail)=>{let tries=0;const tick=()=>{if(${condition})done(true);else if(++tries>150)fail(new Error('UI timed out for [' + ${JSON.stringify(condition)} + '], status: ' + document.querySelector("[data-capacity-status]")?.textContent));else setTimeout(tick,100)};tick()})`,
     )
+  const idle = () => wait('!document.querySelector("#capacity")?.dataset?.busy')
   const fill = (selector, value) =>
     evaluate(`document.querySelector(${JSON.stringify(selector)}).value=${JSON.stringify(value)}`)
   await wait('!!document.querySelector("#login")')
@@ -267,8 +268,135 @@ try {
     ),
     true,
   )
+
+  // Full browser workflow: Create pool with simulated response loss & recovery
+  await fill('[data-capacity-create] [name=code]', 'BROWSER_POOL')
+  await fill('[data-capacity-create] [name=name]', 'Browser Sprint Pool')
+  await fill('[data-capacity-create] [name=weeklyCapacity]', '200')
+  await fill('[data-capacity-create] [name=maxConcurrency]', '2')
+  await evaluate(`
+    window.capFetch = window.fetch;
+    window.capDrop = true;
+    window.capBlocked = false;
+    window.fetch = async (...args) => {
+      if (window.capBlocked && String(args[0]).includes('/api/capacity/') && args[1]?.method === 'POST') {
+        return new Response(JSON.stringify({ error: 'forbidden' }), { status: 403, headers: { 'content-type': 'application/json' } });
+      }
+      const response = await window.capFetch(...args);
+      if (window.capDrop && String(args[0]).includes('/api/capacity/') && args[1]?.method === 'POST') {
+        window.capDrop = false;
+        throw new TypeError('Lost capacity response');
+      }
+      return response;
+    };
+    Array.from(document.querySelectorAll('#capacity button')).find(x => x.textContent === 'Create Capacity Pool').click();
+  `)
+
+  await wait(
+    'document.querySelector("[data-capacity-status]").textContent.includes("Network interruption")',
+  )
+
+  // Blocked new write while outcome is uncertain
+  await fill('[data-capacity-create] [name=code]', 'BLOCKED_POOL')
+  await evaluate(
+    "Array.from(document.querySelectorAll('#capacity button')).find(x => x.textContent === 'Create Capacity Pool').click()",
+  )
+  await wait(
+    'document.querySelector("[data-capacity-status]").textContent.includes("Uncertain command outcome")',
+  )
+
+  // Retry with simulated grant revocation (403)
+  await evaluate('window.capBlocked = true')
+  await evaluate(
+    "Array.from(document.querySelectorAll('#capacity button')).find(x => x.textContent === 'Retry same request').click()",
+  )
+  await wait('document.querySelector("[data-capacity-status]").textContent.includes("HTTP 403")')
+  await idle()
+  await evaluate('window.capBlocked = false')
+
+  // Check pending result reconciles committed server state
+  await evaluate(
+    "Array.from(document.querySelectorAll('#capacity button')).find(x => x.textContent === 'Check pending result').click()",
+  )
+  await wait('document.querySelector("[data-capacity-status]").textContent === "Action confirmed."')
+  await evaluate('window.fetch = window.capFetch; delete window.capFetch')
+
+  // Pool now listed in UI
+  await wait(
+    '(document.querySelector("[data-capacity-pool-list]") || document.querySelector("[data-capacity-pools]")).textContent.includes("Browser Sprint Pool")',
+  )
+
+  // View pool details
+  await evaluate(`
+    const root = document.querySelector("[data-capacity-pool-list]") || document.querySelector("[data-capacity-pools]");
+    const btn = Array.from(root.querySelectorAll('button')).find(x => x.textContent.includes('Browser Sprint Pool'));
+    btn?.click();
+  `)
+  await wait(
+    'document.querySelector("[data-capacity-detail]").textContent.includes("Browser Sprint Pool")',
+  )
+
+  // Calculate deterministic timeline estimate via UI
+  await fill('[name=reqUnits]', '80')
+  await evaluate(
+    "Array.from(document.querySelectorAll('#capacity button')).find(x => x.textContent === 'Calculate Deterministic Timeline').click()",
+  )
+  await wait(
+    'document.querySelector("[data-capacity-detail]").textContent.includes("Queue Pos: #0")',
+  )
+
+  // Commit workload allocation via UI
+  await wait('!!document.querySelector("[data-capacity-commit]")')
+  await fill('[data-capacity-commit] [name=workloadId]', 'TASK-001')
+  await fill('[data-capacity-commit] [name=workloadTitle]', 'Browser Allocation Delivery')
+  await fill('[data-capacity-commit] [name=workUnits]', '40')
+  await evaluate(
+    "Array.from(document.querySelectorAll('[data-capacity-commit] button')).find(x => x.textContent === 'Commit Allocation').click()",
+  )
+  await wait(
+    'document.querySelector("[data-capacity-detail]").textContent.includes("Browser Allocation Delivery")',
+  )
+
+  // Record progress on allocation via UI
+  await evaluate(
+    "Array.from(document.querySelectorAll('[data-capacity-detail] button')).find(x => x.textContent === 'Record Progress').click()",
+  )
+  await wait(
+    'document.querySelector("[data-capacity-detail]").textContent.includes("Remaining: 30/40")',
+  )
+
+  // Complete workload allocation via UI
+  await evaluate(
+    "Array.from(document.querySelectorAll('[data-capacity-detail] button')).find(x => x.textContent === 'Complete Workload').click()",
+  )
+  await wait(
+    '!document.querySelector("[data-capacity-detail] ul").textContent.includes("Remaining: 30/40")',
+  )
+
+  // Logout and verify private data cleared
+  await evaluate('document.querySelector("#logout").click()')
+  await wait('document.querySelector("#capacity").textContent === ""')
+
+  // Sign in as viewer to ensure write forms are hidden
+  await fill('#login [name=username]', viewer.username)
+  await fill('#login [name=password]', viewer.password)
+  await evaluate('document.querySelector("#login").requestSubmit()')
+  await wait(
+    '!document.querySelector("#workspace").hidden && document.querySelector("#status").textContent===""',
+  )
+  await evaluate(
+    'document.querySelector("#tenants").value="studio-demo";document.querySelector("#tenants").dispatchEvent(new Event("change"))',
+  )
+  await wait('document.querySelector("[data-capacity-status]").textContent==="Capacity ready."')
+  assert.equal(await evaluate('document.querySelector("[data-capacity-create]").hidden'), true)
+  assert.equal(page.console_.filter((x) => x.kind === 'exception').length, 0)
+
+  // Logout viewer
+  await evaluate('document.querySelector("#logout").click()')
+  await wait('document.querySelector("#capacity").textContent === ""')
+
   check(
-    'isolated browser signs in, mounts capacity panel and displays authorized management controls',
+    'isolated browser completes pool creation, deterministic timeline estimation, workload allocation, progress tracking and completion lifecycle with response recovery and logout cleanup',
   )
 
   await stop()
@@ -319,6 +447,10 @@ try {
     JSON.stringify(
       {
         profile: profile.catalog.version,
+        catalogSha256: createHash('sha256').update(JSON.stringify(profile.catalog)).digest('hex'),
+        artifactSha256: createHash('sha256')
+          .update(JSON.stringify(profile.artifacts))
+          .digest('hex'),
         scope: 'discrete business-day capacity estimation and discrete throughput allocation',
         checks,
         browser: 'isolated Chromium',

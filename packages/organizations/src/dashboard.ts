@@ -78,6 +78,10 @@ export function mountOrganizationDashboard(
   const createTax = field(createForm, 'taxId', 'Tax ID')
   const createIndustry = field(createForm, 'industry', 'Industry')
   const createSubmit = button('Create Organization', async () => {
+    if (uncertain) {
+      status.textContent = 'Uncertain command outcome; reconcile before submitting new requests.'
+      return
+    }
     if (!createName.value.trim()) return
     const body: OrganizationMutation = {
       requestId: crypto.randomUUID(),
@@ -90,6 +94,7 @@ export function mountOrganizationDashboard(
       },
     }
     await sendCommand(body)
+    if (uncertain) return
     createName.value = ''
     createLegal.value = ''
     createTax.value = ''
@@ -98,6 +103,11 @@ export function mountOrganizationDashboard(
   })
   createForm.appendChild(createSubmit)
 
+  createForm.addEventListener('submit', (e) => {
+    e.preventDefault()
+    createSubmit.click()
+  })
+
   const searchInput = field(searchForm, 'query', 'Search')
   searchForm.appendChild(
     button('Search', async () => {
@@ -105,6 +115,11 @@ export function mountOrganizationDashboard(
       await loadList()
     }),
   )
+  searchForm.addEventListener('submit', (e) => {
+    e.preventDefault()
+    after = undefined
+    void perform(loadList)
+  })
 
   const checkPending = button('Check pending result', async () => {
     if (!pending) return
@@ -127,7 +142,6 @@ export function mountOrganizationDashboard(
 
   const retryPending = button('Retry same request', async () => {
     if (!pending) return
-    uncertain = false
     await sendCommand(pending)
     await loadList()
   })
@@ -139,6 +153,7 @@ export function mountOrganizationDashboard(
   async function perform(work: () => Promise<void>) {
     if (busy || disposed) return
     busy = true
+    host.dataset.busy = 'true'
     status.textContent = 'Working...'
     try {
       await work()
@@ -146,20 +161,52 @@ export function mountOrganizationDashboard(
       status.textContent = error instanceof Error ? error.message : 'Operation failed'
     } finally {
       busy = false
+      delete host.dataset.busy
     }
   }
 
   async function sendCommand(mutation: OrganizationMutation) {
+    if (uncertain && pending?.requestId !== mutation.requestId) {
+      throw new Error('Uncertain command outcome; reconcile before submitting new requests.')
+    }
     pending = mutation
     uncertain = true
     recovery.hidden = false
-    const res = await transport(`${options.apiBase}/commands`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', accept: 'application/json' },
-      body: JSON.stringify(mutation),
-      signal: lifetime.signal,
-    })
+    let res: Response
+    try {
+      res = await transport(`${options.apiBase}/commands`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', accept: 'application/json' },
+        body: JSON.stringify(mutation),
+        signal: lifetime.signal,
+      })
+    } catch {
+      uncertain = true
+      recovery.hidden = false
+      status.textContent = 'Network interruption. Reconcile or retry before proceeding.'
+      return
+    }
     if (!res.ok) {
+      if (res.status === 409) {
+        try {
+          const checkRes = await transport(`${options.apiBase}/commands/${mutation.requestId}`, {
+            headers: { accept: 'application/json' },
+            signal: lifetime.signal,
+          })
+          if (checkRes.ok) {
+            const parsed = organizationCommandStatusSchema.parse(await checkRes.json())
+            if (parsed.status === 'committed') {
+              uncertain = false
+              recovery.hidden = true
+              pending = null
+              status.textContent = 'Action confirmed.'
+              return
+            }
+          }
+        } catch {
+          // ignore
+        }
+      }
       let code = `HTTP ${res.status}`
       try {
         const body = (await res.json()) as { error?: string }
@@ -167,11 +214,20 @@ export function mountOrganizationDashboard(
       } catch {
         void 0
       }
-      throw new Error(`Command failed: ${code}`)
+      if (res.status === 400) {
+        pending = null
+        uncertain = false
+        recovery.hidden = true
+      } else {
+        uncertain = true
+        recovery.hidden = false
+      }
+      status.textContent = `Command failed: ${code}`
+      return
     }
     const receipt = organizationReceiptSchema.parse(await res.json())
     uncertain = false
-    recovery.hidden = !uncertain
+    recovery.hidden = true
     pending = null
     status.textContent = `Success (${receipt.type}).`
     return receipt
@@ -278,25 +334,29 @@ export function mountOrganizationDashboard(
 
     if (canWrite && org.state === 'active') {
       const addAffForm = node('form')
+      addAffForm.dataset.orgAffiliation = ''
       const contactInput = field(addAffForm, 'contactId', 'Contact ID (UUID)', 'text', true)
       const roleInput = field(addAffForm, 'role', 'Role', 'text', true)
       const primaryInput = field(addAffForm, 'primary', 'Is Primary (yes/no)')
-      addAffForm.appendChild(
-        button('Add Affiliation', async () => {
-          if (!contactInput.value.trim() || !roleInput.value.trim()) return
-          await sendCommand({
-            requestId: crypto.randomUUID(),
-            type: 'create_affiliation',
-            data: {
-              organizationId: org.id,
-              contactId: contactInput.value.trim(),
-              role: roleInput.value.trim(),
-              isPrimary: primaryInput.value.trim().toLowerCase() === 'yes',
-            },
-          })
-          await loadDetail(org.id)
-        }),
-      )
+      const addAffSubmit = button('Add Affiliation', async () => {
+        if (!contactInput.value.trim() || !roleInput.value.trim()) return
+        await sendCommand({
+          requestId: crypto.randomUUID(),
+          type: 'create_affiliation',
+          data: {
+            organizationId: org.id,
+            contactId: contactInput.value.trim(),
+            role: roleInput.value.trim(),
+            isPrimary: primaryInput.value.trim().toLowerCase() === 'yes',
+          },
+        })
+        await loadDetail(org.id)
+      })
+      addAffForm.appendChild(addAffSubmit)
+      addAffForm.addEventListener('submit', (e) => {
+        e.preventDefault()
+        addAffSubmit.click()
+      })
       affSection.appendChild(addAffForm)
     }
 

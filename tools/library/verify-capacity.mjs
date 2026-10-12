@@ -168,6 +168,7 @@ try {
   for (const [tenant, id, kind, grants, scope] of [
     ['agency', 'owner', 'human', domain.CAPACITY_PERMISSIONS, 'all'],
     ['agency', 'planner', 'human', ['capacity.read', 'capacity.allocate'], 'assigned'],
+    ['agency', 'zero-viewer', 'human', [], 'assigned'],
     ['agency', 'bot', 'service', ['capacity.read'], 'assigned'],
     ['agency', 'inactive', 'human', domain.CAPACITY_PERMISSIONS, 'all'],
     ['epc', 'owner', 'human', domain.CAPACITY_PERMISSIONS, 'all'],
@@ -284,6 +285,36 @@ try {
   const unknownStatus = await service.commandStatus('agency', human('owner'), randomUUID())
   assert.equal(unknownStatus.status, 'unknown')
   check('command status distinguishes committed from unknown requests')
+
+  // Zero-grant viewer cannot read owner receipt
+  await failed(
+    () => service.commandStatus('agency', human('zero-viewer'), createCmdId),
+    'forbidden',
+  )
+  check('zero-grant viewer is denied owner command receipt access')
+
+  // Replay by original actor after grants removed is denied
+  await owner.query(
+    "UPDATE archava_capacity.memberships SET permissions = '{}' WHERE tenant_id = 'agency' AND principal_id = 'owner'",
+  )
+  await failed(
+    () =>
+      service.mutate('agency', human('owner'), {
+        type: 'create_pool',
+        commandId: randomUUID(),
+        code: 'REVOKED_POOL',
+        name: 'Revoked Pool',
+        unit: 'hours',
+        weeklyCapacity: 100,
+        maxConcurrentJobs: 1,
+      }),
+    'forbidden',
+  )
+  await owner.query(
+    'UPDATE archava_capacity.memberships SET permissions = $1 WHERE tenant_id = $2 AND principal_id = $3',
+    [domain.CAPACITY_PERMISSIONS, 'agency', 'owner'],
+  )
+  check('replay after grants removed is rejected with forbidden')
 
   // Capacity pool search and detail query
   const detail = await service.detailPool('agency', human('owner'), poolId)
@@ -497,6 +528,72 @@ try {
   )
   check('archived capacity pool strictly refuses new demand allocations')
 
+  // Multi-day overlap and weekend boundary tests (N1 & N4)
+  const futurePoolCmdId = randomUUID()
+  const futurePoolReceipt = await service.mutate('agency', human('owner'), {
+    type: 'create_pool',
+    commandId: futurePoolCmdId,
+    code: 'FUTURE_POOL',
+    name: 'Future Saturated Multi-Day Pool',
+    unit: 'hours',
+    weeklyCapacity: 200, // 40h / business day
+    maxConcurrentJobs: 2,
+  })
+  const futurePoolId = futurePoolReceipt.poolId
+  assert.ok(futurePoolId)
+
+  // Commit job 'future-first' 40h starting Tuesday 2030-01-08T00:00:00Z -> finishes Wednesday Jan 9
+  await service.mutate('agency', human('owner'), {
+    type: 'commit_allocation',
+    commandId: randomUUID(),
+    poolId: futurePoolId,
+    workloadId: 'future-first',
+    workloadTitle: 'Future first 40h',
+    requiredUnits: 40,
+    desiredStartAt: '2030-01-08T00:00:00Z',
+  })
+
+  // Commit job 'earlier-long' 80h starting Monday 2030-01-07T00:00:00Z (needs 40h/day for 2 working days)
+  // Since Tuesday Jan 8 has 40h already booked by 'future-first', 'earlier-long' cannot run Tuesday without violating 40h daily budget!
+  // It is scheduled on Wednesday Jan 9 (finishes Friday Jan 11)
+  await service.mutate('agency', human('owner'), {
+    type: 'commit_allocation',
+    commandId: randomUUID(),
+    poolId: futurePoolId,
+    workloadId: 'earlier-long',
+    workloadTitle: 'Earlier long 80h',
+    requiredUnits: 80,
+    desiredStartAt: '2030-01-07T00:00:00Z',
+  })
+
+  const futureDetail = await service.detailPool('agency', human('owner'), futurePoolId)
+  const allocFuture = futureDetail.activeAllocations.find((a) => a.workloadId === 'future-first')
+  const allocLong = futureDetail.activeAllocations.find((a) => a.workloadId === 'earlier-long')
+  assert.ok(allocFuture)
+  assert.ok(allocLong)
+  assert.equal(allocFuture.scheduledStartAt, '2030-01-08T00:00:00.000Z')
+  assert.equal(allocFuture.scheduledFinishAt, '2030-01-09T00:00:00.000Z')
+  assert.equal(allocLong.scheduledStartAt, '2030-01-09T00:00:00.000Z')
+  assert.equal(allocLong.scheduledFinishAt, '2030-01-11T00:00:00.000Z')
+  check(
+    'future allocation saturation prevents multi-day overload and schedules jobs across full working day intervals',
+  )
+
+  // Friday estimate across weekend blackout (N4)
+  // 40h job starting Friday 2030-01-11T00:00:00Z finishes Monday 2030-01-14T00:00:00Z
+  const friEstimate = await service.estimate('agency', human('owner'), {
+    poolId: futurePoolId,
+    requiredUnits: 40,
+    desiredStartAt: '2030-01-11T00:00:00Z',
+  })
+  assert.equal(friEstimate.estimatedStartAt, '2030-01-11T00:00:00.000Z')
+  assert.equal(friEstimate.estimatedFinishAt, '2030-01-14T00:00:00.000Z')
+  assert.equal(friEstimate.estimatedCalendarDays, 3)
+  assert.equal(friEstimate.workingDays, 1)
+  check(
+    'Friday estimate duration distinguishes elapsed calendar days from working days across weekend blackout',
+  )
+
   // Second independent consumer: Construction / EPC (K31)
   const { domain: epcDomain, postgres: epcPostgres } = consumers[1]
   const epcRepo = await epcPostgres.PostgresCapacityRepository.create(app, key)
@@ -537,8 +634,9 @@ try {
   // Service identity read-only via human permission intersection
   const botPrincipal = { kind: 'service', id: 'bot', onBehalfOf: 'owner' }
   const botList = await service.listPools('agency', botPrincipal, {})
-  assert.equal(botList.items.length, 1)
-  assert.equal(botList.items[0]?.code, 'CORE_SPRINT')
+  assert.equal(botList.items.length, 2)
+  assert.ok(botList.items.some((x) => x.code === 'CORE_SPRINT'))
+  assert.ok(botList.items.some((x) => x.code === 'FUTURE_POOL'))
   check('service identity reads capacity pool data through human permission intersection')
 
   // Restart PostgreSQL and verify persistence
@@ -615,6 +713,10 @@ try {
     JSON.stringify(
       {
         profile: trusted.version,
+        catalogSha256: createHash('sha256').update(JSON.stringify(profile.catalog)).digest('hex'),
+        artifactSha256: createHash('sha256')
+          .update(JSON.stringify(profile.artifacts))
+          .digest('hex'),
         scope: 'discrete business-day capacity estimation and discrete throughput allocation',
         consumers: proofs,
         checks,

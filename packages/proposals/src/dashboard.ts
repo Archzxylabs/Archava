@@ -79,6 +79,10 @@ export function mountProposalsDashboard(
   createItemVal.value = '1000000'
 
   const createSubmit = button('Create Proposal', async () => {
+    if (uncertain) {
+      setStatus('Uncertain command outcome; reconcile before submitting new requests.')
+      return
+    }
     if (!createTitle.value.trim() || !createSummary.value.trim()) return
     const body: ProposalMutation = {
       type: 'create_proposal',
@@ -100,27 +104,56 @@ export function mountProposalsDashboard(
       ],
     }
     await sendCommand(body)
+    if (uncertain) return
     createTitle.value = ''
     createSummary.value = ''
     await loadList()
   })
   createForm.appendChild(createSubmit)
+  createForm.addEventListener('submit', (e) => {
+    e.preventDefault()
+    createSubmit.click()
+  })
 
-  const retryButton = button('Retry Unknown Request', async () => {
+  async function checkPendingOutcome() {
     if (!pending) return
-    uncertain = false
-    recovery.hidden = true
-    await sendCommand(pending)
-  })
+    try {
+      const checkRes = await transport(`${options.apiBase}/commands/${pending.commandId}`, {
+        headers: { accept: 'application/json' },
+        signal: lifetime.signal,
+      })
+      if (checkRes.ok) {
+        const st = (await checkRes.json()) as { status: string }
+        if (st.status === 'committed') {
+          pending = null
+          uncertain = false
+          recovery.hidden = true
+          setStatus('Action confirmed.')
+          await loadList()
+          return
+        }
+      }
+      setStatus('Command not yet committed.')
+    } catch {
+      setStatus('Cannot verify command status with server. Retry connection.')
+    }
+  }
 
-  const dismissButton = button('Dismiss Pending Request', () => {
-    pending = null
-    uncertain = false
-    recovery.hidden = true
-    setStatus('Pending request dismissed.')
-  })
+  async function retryPendingAction() {
+    if (!pending) return
+    await sendCommand(pending)
+    await loadList()
+  }
+
+  const retryButton = button('Retry Unknown Request', retryPendingAction)
+  const retrySameButton = button('Retry same request', retryPendingAction)
+  const checkPendingButton = button('Check pending result', checkPendingOutcome)
+  const dismissButton = button('Dismiss Pending Request', checkPendingOutcome)
+
   recovery.appendChild(node('p', 'Connection lost during command. Reconciling server state...'))
+  recovery.appendChild(checkPendingButton)
   recovery.appendChild(retryButton)
+  recovery.appendChild(retrySameButton)
   recovery.appendChild(dismissButton)
 
   host.appendChild(status)
@@ -134,8 +167,9 @@ export function mountProposalsDashboard(
   }
 
   async function perform(work: () => Promise<void>) {
-    if (disposed || busy || uncertain) return
+    if (disposed || busy) return
     busy = true
+    host.dataset.busy = 'true'
     setStatus('Working...')
     try {
       await work()
@@ -143,10 +177,14 @@ export function mountProposalsDashboard(
       setStatus(`Error: ${err instanceof Error ? err.message : 'failed'}`)
     } finally {
       busy = false
+      delete host.dataset.busy
     }
   }
 
   async function sendCommand(mutation: ProposalMutation) {
+    if (uncertain && pending?.commandId !== mutation.commandId) {
+      throw new Error('Uncertain command outcome; reconcile before submitting new requests.')
+    }
     pending = mutation
     const url = `${options.apiBase}/commands`
     let response: Response
@@ -165,18 +203,47 @@ export function mountProposalsDashboard(
     }
 
     if (response.status === 409) {
+      try {
+        const checkRes = await transport(`${options.apiBase}/commands/${mutation.commandId}`, {
+          signal: lifetime.signal,
+        })
+        if (checkRes.ok) {
+          const st = (await checkRes.json()) as { status: string }
+          if (st.status === 'committed') {
+            uncertain = false
+            recovery.hidden = true
+            pending = null
+            setStatus(`Confirmed committed command ${mutation.commandId}.`)
+            return
+          }
+        }
+      } catch {
+        // ignore
+      }
       pending = null
+      uncertain = false
+      recovery.hidden = true
       setStatus('Conflict: revision mismatch or conflicting request.')
       return
     }
     if (!response.ok) {
-      pending = null
+      if (response.status === 400) {
+        pending = null
+        uncertain = false
+        recovery.hidden = true
+        setStatus(`Command rejected: HTTP ${response.status}`)
+        return
+      }
+      uncertain = true
+      recovery.hidden = false
       setStatus(`Command rejected: HTTP ${response.status}`)
       return
     }
 
     const receipt = commandReceiptSchema.parse(await response.json())
     pending = null
+    uncertain = false
+    recovery.hidden = true
     setStatus(`Committed command ${receipt.commandId}. Revision ${receipt.revision}.`)
   }
 
@@ -284,6 +351,48 @@ export function mountProposalsDashboard(
 
     const crSection = node('div')
     crSection.appendChild(node('h4', 'Change Requests / Scope Amendments'))
+
+    if (p.state === 'accepted' && access?.permissions.includes('proposals.write')) {
+      const crForm = node('form')
+      crForm.dataset.proposalCrCreate = ''
+      crForm.appendChild(node('h5', 'Request Scope Change / Amendment'))
+      const crTitle = field(crForm, 'crTitle', 'Amendment Title', 'text', true)
+      const crReason = field(crForm, 'crReason', 'Amendment Reason', 'text', true)
+      const crItemTitle = field(crForm, 'crItemTitle', 'Amendment Deliverable', 'text', true)
+      const crItemVal = field(crForm, 'crItemVal', 'Additional Value', 'number', true)
+      crItemVal.value = '500000'
+      const crSubmit = button('Create Change Request', async () => {
+        if (!crTitle.value.trim() || !crReason.value.trim()) return
+        await sendCommand({
+          type: 'create_change_request',
+          commandId: crypto.randomUUID(),
+          proposalId: p.id,
+          title: crTitle.value.trim(),
+          reason: crReason.value.trim(),
+          deltaSummary: 'Scope amendment for deliverable additions',
+          timeDeltaDays: 7,
+          costDeltaValue: Number(crItemVal.value) || 0,
+          newScopeItems: [
+            {
+              title: crItemTitle.value.trim() || 'Amendment Deliverable',
+              description: 'Deliverable amendment',
+              estimatedDays: 7,
+              estimatedValue: Number(crItemVal.value) || 0,
+              deliverableType: 'milestone',
+            },
+          ],
+        })
+        await loadDetail(p.id)
+        await loadList()
+      })
+      crForm.appendChild(crSubmit)
+      crForm.addEventListener('submit', (e) => {
+        e.preventDefault()
+        crSubmit.click()
+      })
+      crSection.appendChild(crForm)
+    }
+
     for (const cr of selected.changeRequests) {
       const crCard = node('div')
       crCard.appendChild(
@@ -292,6 +401,19 @@ export function mountProposalsDashboard(
           `CR-${cr.changeNumber}: ${cr.title} [${cr.state}] - Reason: ${cr.reason} (Delta: ${cr.costDeltaValue} ${p.currency}, ${cr.timeDeltaDays} days)`,
         ),
       )
+      if (cr.state === 'draft' && access?.permissions.includes('proposals.write')) {
+        const submitCrBtn = button(`Submit CR-${cr.changeNumber} for Approval`, async () => {
+          await sendCommand({
+            type: 'submit_change_request',
+            commandId: crypto.randomUUID(),
+            changeRequestId: cr.id,
+            expectedRevision: cr.revision,
+          })
+          await loadDetail(p.id)
+          await loadList()
+        })
+        crCard.appendChild(submitCrBtn)
+      }
       if (cr.state === 'submitted' && access?.permissions.includes('changerequests.decide')) {
         const approveBtn = button(
           `Approve CR-${cr.changeNumber} (Advance Scope Version)`,

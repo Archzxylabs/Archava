@@ -12,8 +12,10 @@ adds the kit planner and bounded internal project delivery; `1.5.0` adds
 exclusive resource reservations, `1.6.0` adds room-night stays and housekeeping,
 `1.7.0` adds shared catalog/orders/stock, `1.8.0` adds restaurant
 tables, recipes and kitchen tickets, `1.9.0` adds assigned support cases,
-internal findings and resolution cycles, and `1.10.0` adds bounded purchasing,
-supplier offers, purchase orders and physical stock receipts under PRD §46.6;
+internal findings and resolution cycles, `1.10.0` adds bounded purchasing,
+supplier offers, purchase orders and physical stock receipts under PRD §46.6,
+and `1.11.0` adds reusable organizations, proposals with agreed scope baselines,
+and delivery capacity scheduling under PRD §46.7, §46.8, §46.9;
 see [release acceptance](docs/LOCAL_LIBRARY_RELEASE.md) and the
 [cold-install/handoff guide](docs/LOCAL_LIBRARY_HANDOFF.md).
 ARCHZXY is the company; Archava is its flagship product. The target internal module

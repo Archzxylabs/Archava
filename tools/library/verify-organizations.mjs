@@ -163,6 +163,7 @@ try {
     ['wholesale', 'owner', 'human', domain.ORGANIZATION_PERMISSIONS, 'all'],
     ['wholesale', 'staff-a', 'human', domain.ORGANIZATION_PERMISSIONS, 'assigned'],
     ['wholesale', 'viewer', 'human', ['organizations.read', 'affiliations.read'], 'all'],
+    ['wholesale', 'zero-viewer', 'human', [], 'assigned'],
     ['wholesale', 'bot', 'service', ['organizations.read', 'affiliations.read'], 'assigned'],
     ['wholesale', 'inactive', 'human', domain.ORGANIZATION_PERMISSIONS, 'all'],
     ['recruitment', 'owner', 'human', domain.ORGANIZATION_PERMISSIONS, 'all'],
@@ -268,6 +269,32 @@ try {
   const statusUnknown = await service.commandStatus('wholesale', human('owner'), randomUUID())
   assert.equal(statusUnknown.status, 'not_committed')
   check('command status distinguishes committed from unknown requests')
+
+  // Zero-grant viewer cannot read owner receipt
+  await failed(
+    () => service.commandStatus('wholesale', human('zero-viewer'), createCmdId),
+    'forbidden',
+  )
+  check('zero-grant viewer is denied owner command receipt access')
+
+  // Replay by original actor after grants removed is denied
+  await owner.query(
+    "UPDATE archava_organizations.memberships SET permissions = '{}' WHERE tenant_id = 'wholesale' AND principal_id = 'owner'",
+  )
+  await failed(
+    () =>
+      service.mutate('wholesale', human('owner'), {
+        requestId: randomUUID(),
+        type: 'create_organization',
+        data: { name: 'Unauthorized Replay Org' },
+      }),
+    'forbidden',
+  )
+  await owner.query(
+    'UPDATE archava_organizations.memberships SET permissions = $1 WHERE tenant_id = $2 AND principal_id = $3',
+    [domain.ORGANIZATION_PERMISSIONS, 'wholesale', 'owner'],
+  )
+  check('replay after grants removed is rejected with forbidden')
 
   // Detail & search query
   const detail = await service.detail('wholesale', human('owner'), orgId)
@@ -539,6 +566,10 @@ try {
     JSON.stringify(
       {
         profile: trusted.version,
+        catalogSha256: createHash('sha256').update(JSON.stringify(profile.catalog)).digest('hex'),
+        artifactSha256: createHash('sha256')
+          .update(JSON.stringify(profile.artifacts))
+          .digest('hex'),
         scope: 'reusable organizations, accounts and contact affiliations',
         consumers: proofs,
         checks,

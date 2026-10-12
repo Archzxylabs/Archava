@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { spawn, execFileSync } from 'node:child_process'
 import { createServer } from 'node:net'
-import { randomBytes, randomUUID } from 'node:crypto'
+import { randomBytes, randomUUID, createHash } from 'node:crypto'
 
 const root = resolve(import.meta.dirname, '../..'),
   runtime = join(root, 'dist/crm-runtime')
@@ -234,8 +234,9 @@ try {
   const evaluate = (expr) => page.evaluate(expr)
   const wait = (condition) =>
     evaluate(
-      `new Promise((done,fail)=>{let tries=0;const tick=()=>{if(${condition})done(true);else if(++tries>150)fail(new Error('UI timed out'));else setTimeout(tick,100)};tick()})`,
+      `new Promise((done,fail)=>{let tries=0;const tick=()=>{if(${condition})done(true);else if(++tries>150)fail(new Error('UI timed out for [' + ${JSON.stringify(condition)} + '], status: ' + document.querySelector("[data-proposal-status]")?.textContent));else setTimeout(tick,100)};tick()})`,
     )
+  const idle = () => wait('!document.querySelector("#proposals")?.dataset?.busy')
   const fill = (selector, value) =>
     evaluate(`document.querySelector(${JSON.stringify(selector)}).value=${JSON.stringify(value)}`)
   await wait('!!document.querySelector("#login")')
@@ -263,8 +264,143 @@ try {
     ),
     true,
   )
+
+  // Full browser workflow: Create proposal with simulated response loss & recovery
+  await fill('[data-proposal-create] [name=title]', 'Browser Reusable Proposal')
+  await fill('[data-proposal-create] [name=summary]', 'End-to-end scope delivery with versioned CR')
+  await evaluate(`
+    window.propFetch = window.fetch;
+    window.propDrop = true;
+    window.propBlocked = false;
+    window.fetch = async (...args) => {
+      if (window.propBlocked && String(args[0]).includes('/api/proposals/') && args[1]?.method === 'POST') {
+        return new Response(JSON.stringify({ error: 'forbidden' }), { status: 403, headers: { 'content-type': 'application/json' } });
+      }
+      const response = await window.propFetch(...args);
+      if (window.propDrop && String(args[0]).includes('/api/proposals/') && args[1]?.method === 'POST') {
+        window.propDrop = false;
+        throw new TypeError('Lost proposal response');
+      }
+      return response;
+    };
+    Array.from(document.querySelectorAll('#proposals button')).find(x => x.textContent === 'Create Proposal').click();
+  `)
+
+  await wait(
+    'document.querySelector("[data-proposal-status]").textContent.includes("Network interruption")',
+  )
+
+  // Blocked new write while outcome is uncertain
+  await fill('[data-proposal-create] [name=title]', 'Conflicting Unreconciled Proposal')
+  await evaluate(
+    "Array.from(document.querySelectorAll('#proposals button')).find(x => x.textContent === 'Create Proposal').click()",
+  )
+  await wait(
+    'document.querySelector("[data-proposal-status]").textContent.includes("Uncertain command outcome")',
+  )
+
+  // Retry with simulated grant revocation (403)
+  await evaluate('window.propBlocked = true')
+  await evaluate(
+    "Array.from(document.querySelectorAll('#proposals button')).find(x => x.textContent === 'Retry same request').click()",
+  )
+  await wait('document.querySelector("[data-proposal-status]").textContent.includes("HTTP 403")')
+  await idle()
+  await evaluate('window.propBlocked = false')
+
+  // Check pending result reconciles committed server state
+  await evaluate(
+    "Array.from(document.querySelectorAll('#proposals button')).find(x => x.textContent === 'Check pending result').click()",
+  )
+  await wait('document.querySelector("[data-proposal-status]").textContent === "Action confirmed."')
+  await evaluate('window.fetch = window.propFetch; delete window.propFetch')
+
+  // Proposal now listed in UI
+  await wait(
+    'document.querySelector("[data-proposal-list]").textContent.includes("Browser Reusable Proposal")',
+  )
+
+  // View proposal details
+  await evaluate(`
+    const btn = Array.from(document.querySelectorAll('[data-proposal-list] li')).find(x => x.textContent.includes('Browser Reusable Proposal'))?.querySelector('button');
+    btn?.click();
+  `)
+  await wait(
+    'document.querySelector("[data-proposal-detail]").textContent.includes("State: draft")',
+  )
+
+  // Submit proposal for review
+  await evaluate(
+    "Array.from(document.querySelectorAll('[data-proposal-detail] button')).find(x => x.textContent.includes('Submit')).click()",
+  )
+  await wait(
+    'document.querySelector("[data-proposal-detail]").textContent.includes("State: submitted")',
+  )
+
+  // Accept proposal
+  await evaluate(
+    "Array.from(document.querySelectorAll('[data-proposal-detail] button')).find(x => x.textContent.includes('Accept')).click()",
+  )
+  await wait(
+    'document.querySelector("[data-proposal-detail]").textContent.includes("State: accepted")',
+  )
+  await wait('!!document.querySelector("[data-proposal-cr-create]")')
+
+  // Create Change Request (Scope Amendment)
+  await fill('[data-proposal-cr-create] [name=crTitle]', 'Scope Amendment 1')
+  await fill('[data-proposal-cr-create] [name=crReason]', 'Client added security requirement')
+  await fill('[data-proposal-cr-create] [name=crItemTitle]', 'Security Hardening Deliverable')
+  await fill('[data-proposal-cr-create] [name=crItemVal]', '500000')
+  await evaluate(
+    "Array.from(document.querySelectorAll('[data-proposal-cr-create] button')).find(x => x.textContent === 'Create Change Request').click()",
+  )
+  await wait(
+    'document.querySelector("[data-proposal-detail]").textContent.includes("CR-1: Scope Amendment 1 [draft]")',
+  )
+
+  // Submit Change Request for approval
+  await evaluate(
+    "Array.from(document.querySelectorAll('[data-proposal-detail] button')).find(x => x.textContent.includes('Submit CR-1')).click()",
+  )
+  await wait(
+    'document.querySelector("[data-proposal-detail]").textContent.includes("CR-1: Scope Amendment 1 [submitted]")',
+  )
+
+  // Approve Change Request to advance scope version
+  await evaluate(
+    "Array.from(document.querySelectorAll('[data-proposal-detail] button')).find(x => x.textContent.includes('Approve CR-1')).click()",
+  )
+  await wait(
+    'document.querySelector("[data-proposal-detail]").textContent.includes("CR-1: Scope Amendment 1 [approved]")',
+  )
+  await wait(
+    'document.querySelector("[data-proposal-detail]").textContent.includes("Version 2 confirmed")',
+  )
+
+  // Logout and verify private data cleared
+  await evaluate('document.querySelector("#logout").click()')
+  await wait('document.querySelector("#proposals").textContent === ""')
+
+  // Sign in as viewer to ensure write forms are hidden
+  await fill('#login [name=username]', viewer.username)
+  await fill('#login [name=password]', viewer.password)
+  await evaluate('document.querySelector("#login").requestSubmit()')
+  await wait(
+    '!document.querySelector("#workspace").hidden && document.querySelector("#status").textContent===""',
+  )
+  await evaluate(
+    'document.querySelector("#tenants").value="studio-demo";document.querySelector("#tenants").dispatchEvent(new Event("change"))',
+  )
+  await wait('document.querySelector("[data-proposal-status]").textContent==="Proposals ready."')
+  assert.equal(await evaluate('document.querySelector("[data-proposal-create]").hidden'), true)
+  assert.equal(page.console_.filter((x) => x.kind === 'exception').length, 0)
+
+  // Logout viewer
+  await evaluate('document.querySelector("#logout").click()')
+  await wait('document.querySelector("#proposals").textContent === ""')
+
   check(
-    'isolated browser signs in, mounts proposals panel and displays authorized management controls',
+    'isolated browser completes proposal submit, accept, amendment create, submit and approval lifecycle with response recovery and logout cleanup',
   )
 
   await stop()
@@ -315,6 +451,10 @@ try {
     JSON.stringify(
       {
         profile: profile.catalog.version,
+        catalogSha256: createHash('sha256').update(JSON.stringify(profile.catalog)).digest('hex'),
+        artifactSha256: createHash('sha256')
+          .update(JSON.stringify(profile.artifacts))
+          .digest('hex'),
         scope: 'agreed proposals, deliverable scopes and versioned change requests',
         checks,
         browser: 'isolated Chromium',

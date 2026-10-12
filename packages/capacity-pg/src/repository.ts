@@ -90,6 +90,28 @@ interface ScheduleResult {
   scheduledFinishAt: string
   burnRatePerDay: number
   estimatedCalendarDays: number
+  workingDays: number
+}
+
+function countWorkingDays(start: Date, finish: Date): number {
+  let count = 0
+  let cur = new Date(start.getTime())
+  while (cur.getTime() < finish.getTime()) {
+    if (cur.getUTCDay() !== 0 && cur.getUTCDay() !== 6) {
+      count++
+    }
+    cur = new Date(cur.getTime() + 24 * 60 * 60 * 1000)
+  }
+  return Math.max(1, count)
+}
+
+function nextBusinessDay(date: Date): Date {
+  let cur = new Date(date.getTime())
+  while (cur.getUTCDay() === 0 || cur.getUTCDay() === 6) {
+    cur = new Date(cur.getTime() + 24 * 60 * 60 * 1000)
+    cur.setUTCHours(0, 0, 0, 0)
+  }
+  return cur
 }
 
 export function calculateSchedule(
@@ -102,95 +124,109 @@ export function calculateSchedule(
   if (dailyBurnRate <= 0) throw new CapacityError('insufficient_capacity')
 
   const now = new Date()
-  let candidateStart = desiredStartAt ? new Date(desiredStartAt) : now
+  let candidateStart = nextBusinessDay(desiredStartAt ? new Date(desiredStartAt) : now)
+  const initialDesiredTime = candidateStart.getTime()
 
-  while (candidateStart.getUTCDay() === 0 || candidateStart.getUTCDay() === 6) {
-    candidateStart = new Date(candidateStart.getTime() + 24 * 60 * 60 * 1000)
-    candidateStart.setUTCHours(0, 0, 0, 0)
+  const workingDaysNeeded = Math.max(1, Math.ceil(requiredUnits / dailyBurnRate))
+  const neededDailyBurn = Math.min(dailyBurnRate, requiredUnits / workingDaysNeeded)
+
+  const allocDetails = activeAllocations.map((alloc) => {
+    const aStart = new Date(alloc.scheduledStartAt)
+    const aFinish = new Date(alloc.scheduledFinishAt)
+    const wDays = countWorkingDays(aStart, aFinish)
+    const dailyUnits = Math.min(
+      dailyBurnRate,
+      (alloc.remainingUnits > 0 ? alloc.remainingUnits : alloc.requiredUnits) / wDays,
+    )
+    return {
+      id: alloc.id,
+      start: aStart.getTime(),
+      finish: aFinish.getTime(),
+      dailyUnits,
+    }
+  })
+
+  let loopCount = 0
+  let candidateFinish = new Date(candidateStart.getTime())
+  let found = false
+
+  while (loopCount < 1000) {
+    loopCount++
+    candidateStart = nextBusinessDay(candidateStart)
+
+    const proposedWorkingDays: Date[] = []
+    let cursor = new Date(candidateStart.getTime())
+    while (proposedWorkingDays.length < workingDaysNeeded) {
+      if (cursor.getUTCDay() !== 0 && cursor.getUTCDay() !== 6) {
+        proposedWorkingDays.push(new Date(cursor.getTime()))
+      }
+      cursor = new Date(cursor.getTime() + 24 * 60 * 60 * 1000)
+    }
+    candidateFinish = nextBusinessDay(cursor)
+
+    let valid = true
+    let earliestBlockingFinish = Infinity
+
+    for (const day of proposedWorkingDays) {
+      const dayStart = day.getTime()
+      const dayEnd = dayStart + 24 * 60 * 60 * 1000
+
+      let concurrentJobsToday = 0
+      let usedCapacityToday = 0
+
+      for (const a of allocDetails) {
+        if (a.start < dayEnd && a.finish > dayStart) {
+          concurrentJobsToday++
+          usedCapacityToday += a.dailyUnits
+          if (a.finish > dayStart && a.finish < earliestBlockingFinish) {
+            earliestBlockingFinish = a.finish
+          }
+        }
+      }
+
+      if (
+        concurrentJobsToday + 1 > pool.maxConcurrentJobs ||
+        usedCapacityToday + neededDailyBurn > dailyBurnRate + 1e-6
+      ) {
+        valid = false
+        break
+      }
+    }
+
+    if (valid) {
+      found = true
+      break
+    }
+
+    const nextStart =
+      earliestBlockingFinish !== Infinity && earliestBlockingFinish > candidateStart.getTime()
+        ? new Date(earliestBlockingFinish)
+        : new Date(candidateStart.getTime() + 24 * 60 * 60 * 1000)
+    candidateStart = nextBusinessDay(nextStart)
   }
 
-  const sortedAllocations = [...activeAllocations].sort(
-    (a, b) => new Date(a.scheduledFinishAt).getTime() - new Date(b.scheduledFinishAt).getTime(),
+  if (!found) {
+    throw new CapacityError('insufficient_capacity')
+  }
+
+  const elapsedCalendarDays = Math.max(
+    1,
+    Math.round((candidateFinish.getTime() - candidateStart.getTime()) / (24 * 60 * 60 * 1000)),
   )
 
   let queuePosition = 0
-  if (sortedAllocations.length >= pool.maxConcurrentJobs) {
-    queuePosition = sortedAllocations.length - pool.maxConcurrentJobs + 1
-    const releaseIdx = sortedAllocations.length - pool.maxConcurrentJobs
-    const blocking = sortedAllocations[releaseIdx]
-    if (blocking) {
-      const blockingFinish = new Date(blocking.scheduledFinishAt)
-      if (blockingFinish.getTime() > candidateStart.getTime()) {
-        candidateStart = blockingFinish
-        while (candidateStart.getUTCDay() === 0 || candidateStart.getUTCDay() === 6) {
-          candidateStart = new Date(candidateStart.getTime() + 24 * 60 * 60 * 1000)
-          candidateStart.setUTCHours(0, 0, 0, 0)
-        }
-      }
-    }
-  }
-
-  let loopCount = 0
-  while (loopCount < 365) {
-    loopCount++
-    while (candidateStart.getUTCDay() === 0 || candidateStart.getUTCDay() === 6) {
-      candidateStart = new Date(candidateStart.getTime() + 24 * 60 * 60 * 1000)
-      candidateStart.setUTCHours(0, 0, 0, 0)
-    }
-
-    const dayStart = candidateStart.getTime()
-    const dayEnd = dayStart + 24 * 60 * 60 * 1000
-
-    let usedCapacityToday = 0
-    let concurrentJobsToday = 0
-    let maxOverlappingFinish = candidateStart.getTime()
-
-    for (const alloc of activeAllocations) {
-      const aStart = new Date(alloc.scheduledStartAt).getTime()
-      const aFinish = new Date(alloc.scheduledFinishAt).getTime()
-      if (Math.max(aStart, dayStart) < Math.min(aFinish, dayEnd)) {
-        const totalDurationDays = Math.max(
-          1,
-          Math.round((aFinish - aStart) / (24 * 60 * 60 * 1000)),
-        )
-        const allocDailyUnits = Math.min(dailyBurnRate, alloc.requiredUnits / totalDurationDays)
-        usedCapacityToday += allocDailyUnits
-        concurrentJobsToday++
-        if (aFinish > maxOverlappingFinish) {
-          maxOverlappingFinish = aFinish
-        }
-      }
-    }
-
-    const neededDaily = Math.min(dailyBurnRate, requiredUnits)
-    if (
-      concurrentJobsToday >= pool.maxConcurrentJobs ||
-      usedCapacityToday + neededDaily > dailyBurnRate + 1e-6
-    ) {
-      if (queuePosition === 0) queuePosition = 1
-      const nextTime = Math.max(maxOverlappingFinish, dayEnd)
-      candidateStart = new Date(nextTime)
-    } else {
-      break
-    }
-  }
-
-  const durationDays = Math.max(1, Math.ceil(requiredUnits / dailyBurnRate))
-  let current = new Date(candidateStart.getTime())
-  let daysAdded = 0
-  while (daysAdded < durationDays) {
-    current = new Date(current.getTime() + 24 * 60 * 60 * 1000)
-    if (current.getUTCDay() !== 0 && current.getUTCDay() !== 6) {
-      daysAdded++
-    }
+  if (candidateStart.getTime() > initialDesiredTime) {
+    const blockingAllocs = allocDetails.filter((a) => a.finish > initialDesiredTime)
+    queuePosition = Math.max(1, blockingAllocs.length)
   }
 
   return {
     queuePosition,
     scheduledStartAt: candidateStart.toISOString(),
-    scheduledFinishAt: current.toISOString(),
+    scheduledFinishAt: candidateFinish.toISOString(),
     burnRatePerDay: dailyBurnRate,
-    estimatedCalendarDays: durationDays,
+    estimatedCalendarDays: elapsedCalendarDays,
+    workingDays: workingDaysNeeded,
   }
 }
 
@@ -427,6 +463,7 @@ export class PostgresCapacityRepository implements CapacityRepository {
         estimatedFinishAt: schedule.scheduledFinishAt,
         burnRatePerDay: schedule.burnRatePerDay,
         estimatedCalendarDays: schedule.estimatedCalendarDays,
+        workingDays: schedule.workingDays,
       }
     })
   }

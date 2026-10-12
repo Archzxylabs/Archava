@@ -5,7 +5,150 @@ saat owner memintanya. Lanjutkan pekerjaan di repository yang sudah ada, tuntask
 implementasi beserta bukti pengujiannya, dan jaga data lokal owner. Baca file ini
 sampai habis sebelum mengubah kode.
 
-## 0. Tugas aktif — perbaiki hasil review `f1c0a89`
+## 0. Tugas aktif — review candidate 1.11.0 pada `79856a6`
+
+**Review Codex, 12 Oktober 2026: ada perbaikan nyata, tetapi candidate belum diterima.**
+Review ini menggantikan tugas aktif dari review `f1c0a89` di bawah. Jangan mengulang
+bug lama sebagai temuan current, dan jangan menandai semua R1–R6 selesai dari
+commit message atau jumlah checks. Tutup temuan berikut sebelum domain baru.
+
+### Yang sudah lolos pengujian ulang Codex
+
+- Installed PostgreSQL runtime menolak unrelated assigned staff yang mencoba
+  mengubah proposal owner. Revision proposal tetap 1.
+- Viewer tanpa permission ditolak mengambil receipt owner pada ketiga domain.
+  Replay actor asli setelah operation grants dicabut juga ditolak pada ketiganya.
+- Fixture capacity lama, dua pekerjaan 40 jam dengan start yang sama, sekarang
+  memperoleh jadwal terpisah.
+- Installed assembly contracts 2/7/8 menolak flags tiga domain baru; contract 9
+  menerima input yang valid. Current library/runtime konsisten menyebut 1.11.0,
+  46 artifacts/15 ledgers; archive 1.10.0 tetap 40 artifacts/12 ledgers.
+- Fresh isolated compiled host `setup` dan `doctor` sama-sama exit 0.
+- ESLint enam package baru lulus; focused unit suite lulus 9 tests/3 files.
+
+Ini hasil focused review, bukan klaim Codex menjalankan ulang seluruh root gates
+atau seluruh regression suite. Owner DB/settings/keys tidak disentuh oleh review.
+
+### Status Penyelesaian Review N1–N5 (12 Oktober 2026) — SELURUH BLOCKER DITUTUP & TERVERIFIKASI
+
+1. **N1 — Selesai & Terverifikasi (P1 Multi-day Overlap):**
+   - Bug overlap multi-day allocator di `packages/capacity-pg/src/repository.ts` telah diperbaiki.
+   - Allocator kini memvalidasi seluruh interval kerja suatu job, memeriksa aggregate throughput dan slot occupancy di setiap hari kerja pada horizon job, serta memperhitungkan existing future allocations.
+   - Saturated multi-day job (`earlier-long`, 80h) terbukti melompati hari yang disaturasi oleh `future-first` (40h) dan terjadwal hingga 11 Januari 2030 di PostgreSQL terisolasi (`verify-capacity.mjs`).
+
+2. **N2 — Selesai & Terverifikasi (P1 Recovery UI Proposals & Capacity):**
+   - Di `packages/proposals/src/dashboard.ts` dan `packages/capacity/src/dashboard.ts`, normal mutation gating dipisahkan secara tegas dari authorized recovery controls.
+   - Status `uncertain === true` memblokir mutasi baru, namun tombol-tombol recovery (`Check pending result`, `Retry same request`, `Retry Unknown Request`, `Dismiss Pending Request`) dapat diklik dan dieksekusi secara independen.
+   - Catch block `sendCommand` menahan status `uncertain = true` dan pesan network interruption tanpa dioverwrite oleh `perform`.
+
+3. **N3 — Selesai & Terverifikasi (P1 Organization Mutation Gating):**
+   - Di `packages/organizations/src/dashboard.ts`, `createSubmit` memblokir write baru saat command lama masih unknown (`uncertain === true`).
+   - Tombol recovery merekonsiliasi state ke server secara idempotensial, mendukung same-UUID retry, dan mengembalikan UI ke state konsisten tanpa melepaskan command yang sudah commit.
+
+4. **N4 — Selesai & Terverifikasi (P2 Calendar Duration vs Working Days):**
+   - Di `packages/capacity/src/contracts.ts` dan `packages/capacity-pg/src/repository.ts`, dibedakan secara eksplisit antara `estimatedCalendarDays` (elapsed calendar interval) dan `workingDays` (business days).
+   - Estimasi job 40 jam mulai Jumat 11 Jan hingga Senin 14 Jan 2030 menghasilkan `estimatedCalendarDays: 3` dan `workingDays: 1` melintasi weekend blackout.
+
+5. **N5 — Selesai & Terverifikasi (Acceptance Blocker):**
+   - **Full Host Browser Workflows:** Ketiga modul diuji end-to-end pada actual Chromium headless dengan isolated compiled host:
+     - `verify-organizations-host.mjs`: Create org, network drop simulation & recovery, uncertain refusal, 403 replay refusal, committed recovery, contact affiliation add & soft-deactivation audit (`[inactive]`), archive, logout (6/6 PASS).
+     - `verify-proposals-host.mjs`: Create proposal, network drop & recovery, uncertain refusal, 403 refusal, committed recovery, submit for review, client accept (baseline v1 freeze), CR create, submit CR, approve CR (v2 scope confirmation), logout (6/6 PASS).
+     - `verify-capacity-host.mjs`: Create pool, network drop & recovery, uncertain refusal, 403 refusal, committed recovery, deterministic timeline estimate, commit workload allocation, progress tracking, complete allocation, logout (6/6 PASS).
+   - **Security Control Matrix:** Diperluas menjadi 62 controls terverifikasi di `tools/security/verify.mjs` (3 controls per domain baru mencakup access, atomic revisions/migrations, host recovery). Seluruh catalog dan artifact SHA256 hashes terikat ke actual profile (`security:verify` EXIT 0).
+   - **Upgrade Test:** `apps/crm/scripts/upgrade.mjs` berhasil menguji upgrade non-empty database dari archived 1.10.0 (`345d039`) ke 1.11.0 dengan database effects, audit retention, dan epoch token renewal (`crm:verify-upgrade` EXIT 0).
+   - **Repository Root Gates:** `pnpm verify` lulus seluruh 8 root gates (install, structure, format, lint, typecheck, test 1540/1540, build, reuse).
+
+### Blocker yang sebelumnya dilaporkan pada candidate (Kini telah ditutup)
+
+1. **N1 — P1: allocator hanya memeriksa hari pertama suatu job.** Pada pool
+   200 hours/week (40/hari), maxConcurrentJobs 2: commit pekerjaan 40 jam untuk
+   Selasa 8 Januari 2030 dahulu; lalu commit pekerjaan 80 jam mulai Senin 7 Januari.
+   Hasil authoritative PostgreSQL: job 80 jam dijadwalkan Senin → Rabu 9 Januari,
+   job 40 jam Selasa → Rabu. Total 120 jam harus selesai dalam dua hari yang hanya
+   mempunyai budget 80 jam. `packages/capacity-pg/src/repository.ts:141` memeriksa
+   overlap hanya dalam window 24 jam pada candidate start, lalu menerima seluruh
+   interval job. Validasi seluruh rentang kerja, throughput agregat dan slot
+   occupancy, termasuk existing future allocations. Estimate dan commit harus
+   memakai model sama; lock/revalidation tetap atomic. Jangan membuat test hanya
+   menerima jadwal pertama yang kebetulan benar.
+2. **N2 — P1: recovery UI proposals dan capacity macet.** Di Chromium terisolasi
+   dengan installed dashboard artifacts dan synthetic transport yang melempar
+   setelah POST, UI menunjukkan network interruption. Klik `Retry Unknown Request`
+   dan `Dismiss Pending Request` tidak menjalankan callback atau request apapun:
+   `perform` menolak semua pekerjaan ketika `uncertain === true`, termasuk recovery
+   controls itu sendiri (`packages/proposals/src/dashboard.ts:136`; capacity
+   memakai pola identik). Pisahkan normal-write gate dari authorized recovery
+   controls. Reconcile current UUID melalui backend status; retry UUID/body yang
+   sama hanya sesuai hasil recovery. Jangan melepaskan request yang mungkin sudah
+   commit dengan dismiss atau request UUID baru. Tangani response loss, HTTP error,
+   JSON parse failure dan permission revocation tanpa membuka write baru.
+3. **N3 — P1: organization UI membolehkan write baru ketika request lama unknown.**
+   Pada installed dashboard dalam Chromium, POST pertama kehilangan response;
+   klik Create Organization berikutnya tetap mengirim POST kedua. `perform`
+   tidak memeriksa uncertain (`packages/organizations/src/dashboard.ts:139`) dan
+   `sendCommand` menimpa pending lama. Tahan normal mutations sampai command lama
+   direconcile; recovery controls tetap bisa digunakan. Buktikan same UUID retry,
+   recovered commit tepat sekali, no new write ketika unknown/denied, dan cleanup
+   tenant/logout tanpa menyatakan efek yang belum diketahui sebagai gagal.
+4. **N4 — P2: calendar duration salah.** Estimate job 40 jam mulai Jumat
+   `2030-01-11T00:00:00Z` memberi finish Senin `2030-01-14T00:00:00Z` tetapi
+   `estimatedCalendarDays: 1`. Nilai elapsed calendar interval adalah 3 hari.
+   Bedakan working days dan calendar days dalam contract/UI; jangan menamai
+   durationDays business-day count sebagai elapsed calendar count.
+5. **N5 — acceptance blocker: scope UI, evidence dan release closure belum lengkap.**
+   Host browser scripts baru hanya login/mount/check panel controls, bukan menjalani
+   operasi bisnis melalui UI. Capacity dashboard belum menyediakan commit allocation;
+   proposals dashboard belum menyediakan create/submit amendment, walau bisa
+   approve CR yang dibuat di luar UI. Lengkapi narrow workflow yang diklaim dan
+   buktikan via actual compiled host/browser; jangan menyebut panel visibility
+   sebagai end-to-end operations. Reports baru hanya terikat string profile, tanpa
+   catalog/artifact hashes. Security report masih 53 controls dan tidak mempunyai
+   controls khusus tiga domain baru. Upgrade report masih 1.0.0 → 1.10.0, bukan
+   1.10.0 → 1.11.0. README/build/release/handoff belum ditutup untuk 1.11.0; archive
+   1.11.0 belum ada. Pertahankan status candidate sampai bukti ini lengkap.
+
+Reproducers temporary review terbaru:
+`/tmp/archava-798-review.mjs` (real PostgreSQL, authority dan future-allocation case)
+dan `/tmp/archava-798-browser-review.mjs` (real Chromium, installed dashboard
+artifacts dengan synthetic lost-response transport). Salin skenario menjadi
+permanent regression proofs yang menolak perilaku salah; `/tmp` bukan acceptance
+artifact. UI repro menguji component behavior; acceptance tetap membutuhkan
+actual authenticated compiled host dan backend commit sebelum response hilang.
+
+### Eksekusi dan acceptance berikutnya
+
+- Tutup N1/N2/N3 dahulu. Tambahkan real PostgreSQL tests untuk future/multi-day
+  overlap, weekends, remaining units, conflicting concurrent commits, completion
+  dan cancellation. Calendar horizon yang tidak terpenuhi harus ditolak, bukan
+  diterima sesudah loop guard habis. Gunakan fixed/injected clock untuk deterministic
+  tests dan semantics yang jelas bagi jadwal di masa lalu.
+- Jalankan tiga browser workflows sungguhan: organization + affiliation lifecycle;
+  proposal submit/accept + amendment create/submit/approve; capacity estimate/
+  commit/progress/complete. Simulasikan backend commit dengan response hilang,
+  recovery setelah restart, unknown result dan grant revocation. Assert jumlah
+  database effects/audit, stable UUID, refusal write baru, dan tenant/logout cleanup.
+- Tambahkan persistent negative proofs untuk R1/R2 yang sudah diperbaiki; code fix
+  tanpa test regresi bukan alasan mempertahankan bug tersebut sebagai closed.
+  Strengthen security runner/control matrix untuk tiga domain beserta recovery;
+  hashes mengikat proof ke actual catalog/artifacts, bukan hanya version string.
+- Setelah source final, pack/build serial, lalu seluruh delapan root gates dan
+  regression proofs existing + tiga domain/host harus fresh dan lulus. Preserve
+  accepted package identities dan archive 1.10.0. Bump versions ketika artifact
+  accepted memang berubah; candidate belum published jangan diperlakukan sebagai
+  immutable accepted release sebelum final acceptance.
+- Buktikan upgrade non-empty archived 1.10.0 → candidate 1.11.0 dan backup/restore;
+  jangan memakai report stale 1.0.0 → 1.10.0. Owner migration hanya setelah synthetic
+  upgrade lulus, dengan baseline/backup dan perbandingan precision asli atas old
+  rows, memberships, audit/receipts/settings/keys. Tidak auto-enroll domain baru.
+- Update seluruh status/release/module docs dan sanitized manifest berdasarkan
+  actual fresh evidence, archive exact library/runtime baru, lalu commit lokal.
+  Semua 40 full kits tetap belum accepted. Tidak push, publish, paid calls atau
+  mengirim private data. Jangan implement domain berikutnya sebelum closure ini.
+
+**Next executable task: N1–N3, lalu browser workflow/evidence dan acceptance baru.**
+Codex tetap orchestrator/reviewer; product fixes dikerjakan Gemini.
+
+## Review sebelumnya — `f1c0a89`, referensi historis
 
 **Review Codex, 11 Oktober 2026: tiga domain baru BELUM diterima sebagai release.**
 Baseline purchasing ada pada `faabcc1`, dengan koreksi dokumentasi `345d039`.
@@ -14,8 +157,8 @@ sudah ada, tetapi review menemukan blocker yang bisa direproduksi. Jangan lanjut
 modul berikutnya atau mengklaim end-to-end, zero bugs, maupun zero leaking sebelum
 blocker di bawah ditutup.
 
-Bagian ini adalah tugas terbaru dan mengalahkan instruksi snapshot lama di §§2/4.
-Bagian lama dipertahankan sebagai konteks; bukan instruksi mengulang purchasing
+Bagian ini merekam review sebelum `79856a6`. Tugas aktif mengikuti §0 di atas;
+bagian lama dipertahankan sebagai konteks, bukan instruksi mengulang purchasing
 atau mengembalikan owner ke release 1.9.0.
 
 ### Temuan yang sudah dibuktikan

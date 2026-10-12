@@ -143,6 +143,7 @@ export const capacityEstimateSchema = z
     estimatedFinishAt: instantSchema,
     burnRatePerDay: positiveNumber,
     estimatedCalendarDays: z.number().int().positive(),
+    workingDays: z.number().int().positive().optional(),
   })
   .strict()
 export type CapacityEstimate = z.infer<typeof capacityEstimateSchema>

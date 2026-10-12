@@ -1874,13 +1874,12 @@ adds purchase provenance to stock movements. Cumulative accepted plus rejected u
 exceed ordered quantities; rejected goods never enter usable stock; short closure retains
 earlier receipts and prevents future deliveries; multi-SKU failures roll back atomically.
 Assembly v8 adds optional purchasing, preserves older contracts/defaults and supports narrow
-`purchase_receipts` scopes across K02/K04/K18/K23. No full operating kit is accepted by those scopes.
+Profile 1.11.0 adds bounded organizations, versioned proposals, and delivery capacity scheduling:
 
-Bounded organizations (accounts, primary contact uniqueness constraint, secondary affiliations, revision locking, forced tenant RLS) are proven independently across wholesale (K04) and recruitment (K21) consumers.
-
-Versioned proposals and scope amendments (draft deliverables, client acceptance, immutable baseline Scope Version 1 snapshot, versioned change requests advancing scope to v2+, forced tenant RLS) are proven independently across agency (K05) and construction/EPC (K31) consumers.
-
-Delivery capacity estimation (capacity pool windows, deterministic daily burn-rate calculations, queueing upon concurrency saturation, dynamic finish handover, burned-unit progress, slot release upon completion/cancellation, forced tenant RLS) is proven independently across agency (K05) and construction/EPC (K31) consumers.
+- Bounded organizations (accounts, primary contact uniqueness constraint, secondary affiliations, soft-deactivation audit, revision locking, forced tenant RLS) are proven independently across wholesale (K04) and recruitment (K21) consumers.
+- Versioned proposals and scope amendments (draft deliverables, client acceptance, immutable baseline Scope Version 1 snapshot, versioned change requests advancing scope to v2+, forced tenant RLS) are proven independently across agency (K05) and construction/EPC (K31) consumers.
+- Delivery capacity estimation (capacity pool windows, deterministic daily burn-rate calculations, queueing upon concurrency saturation, dynamic finish handover, burned-unit progress, slot release upon completion/cancellation, multi-day interval overlap protection, weekend blackout recognition, forced tenant RLS) is proven independently across agency (K05) and construction/EPC (K31) consumers.
+- Assembly v9 adds optional organizations, proposals, and capacity, preserves older contracts/defaults and supports narrow scopes.
 
 All 40 full operating families remain candidates in the work ledger with declared gaps. Specialist adapters require an explicit authoritative backend and supported domain contract; an unspecified integration cannot be labelled operational.
 

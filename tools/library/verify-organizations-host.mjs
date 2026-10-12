@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { spawn, execFileSync } from 'node:child_process'
 import { createServer } from 'node:net'
-import { randomBytes, randomUUID } from 'node:crypto'
+import { randomBytes, randomUUID, createHash } from 'node:crypto'
 
 const root = resolve(import.meta.dirname, '../..'),
   runtime = join(root, 'dist/crm-runtime')
@@ -228,8 +228,9 @@ try {
   const evaluate = (expr) => page.evaluate(expr)
   const wait = (condition) =>
     evaluate(
-      `new Promise((done,fail)=>{let tries=0;const tick=()=>{if(${condition})done(true);else if(++tries>150)fail(new Error('UI timed out'));else setTimeout(tick,100)};tick()})`,
+      `new Promise((done,fail)=>{let tries=0;const tick=()=>{if(${condition})done(true);else if(++tries>150)fail(new Error('UI timed out for [' + ${JSON.stringify(condition)} + '], status: ' + document.querySelector("[data-org-status]")?.textContent + ', recovery: ' + !document.querySelector("#organizations [role=status]")?.parentElement?.querySelector("div")?.hidden));else setTimeout(tick,100)};tick()})`,
     )
+  const idle = () => wait('!document.querySelector("#organizations")?.dataset?.busy')
   const fill = (selector, value) =>
     evaluate(`document.querySelector(${JSON.stringify(selector)}).value=${JSON.stringify(value)}`)
   await wait('!!document.querySelector("#login")')
@@ -257,8 +258,119 @@ try {
     ),
     true,
   )
+
+  // Full browser workflow: Create organization with response loss simulation & recovery
+  await fill('[data-org-create] [name=name]', 'Browser Reusable Org Corp')
+  await fill('[data-org-create] [name=industry]', 'Enterprise Cloud')
+  await evaluate(`
+    window.orgFetch = window.fetch;
+    window.orgDrop = true;
+    window.orgBlocked = false;
+    window.fetch = async (...args) => {
+      if (window.orgBlocked && String(args[0]).includes('/api/organizations/') && args[1]?.method === 'POST') {
+        return new Response(JSON.stringify({ error: 'forbidden' }), { status: 403, headers: { 'content-type': 'application/json' } });
+      }
+      const response = await window.orgFetch(...args);
+      if (window.orgDrop && String(args[0]).includes('/api/organizations/') && args[1]?.method === 'POST') {
+        window.orgDrop = false;
+        throw new TypeError('Lost organization response');
+      }
+      return response;
+    };
+    Array.from(document.querySelectorAll('#organizations button')).find(x => x.textContent === 'Create Organization').click();
+  `)
+
+  await wait(
+    'document.querySelector("[data-org-status]").textContent.includes("Network interruption")',
+  )
+
+  // Blocked new write while outcome is uncertain
+  await fill('[data-org-create] [name=name]', 'Conflicting Unreconciled Org')
+  await evaluate(
+    "Array.from(document.querySelectorAll('#organizations button')).find(x => x.textContent === 'Create Organization').click()",
+  )
+  await wait(
+    'document.querySelector("[data-org-status]").textContent.includes("Uncertain command outcome")',
+  )
+
+  // Retry with simulated grant revocation (403)
+  await evaluate('window.orgBlocked = true')
+  await evaluate(
+    "Array.from(document.querySelectorAll('#organizations button')).find(x => x.textContent === 'Retry same request').click()",
+  )
+  await wait(
+    'document.querySelector("[data-org-status]").textContent.includes("HTTP 403") || document.querySelector("[data-org-status]").textContent.includes("forbidden")',
+  )
+  await idle()
+  await evaluate('window.orgBlocked = false')
+
+  // Check pending result reconciles committed server state
+  await evaluate(
+    "Array.from(document.querySelectorAll('#organizations button')).find(x => x.textContent === 'Check pending result').click()",
+  )
+  await wait('document.querySelector("[data-org-status]").textContent === "Action confirmed."')
+  await evaluate('window.fetch = window.orgFetch; delete window.orgFetch')
+
+  // Organization now listed in UI
+  await wait(
+    'document.querySelector("[data-org-list]").textContent.includes("Browser Reusable Org Corp")',
+  )
+
+  // View organization details
+  await evaluate(`
+    const btn = Array.from(document.querySelectorAll('[data-org-list] li')).find(x => x.textContent.includes('Browser Reusable Org Corp'))?.querySelector('button');
+    btn?.click();
+  `)
+  await wait(
+    'document.querySelector("[data-org-detail]").textContent.includes("Browser Reusable Org Corp")',
+  )
+
+  // Add contact affiliation through UI
+  const testContactId = randomUUID()
+  await fill('[data-org-affiliation] [name=contactId]', testContactId)
+  await fill('[data-org-affiliation] [name=role]', 'VP Engineering')
+  await fill('[data-org-affiliation] [name=primary]', 'yes')
+  await evaluate(
+    "Array.from(document.querySelectorAll('[data-org-affiliation] button')).find(x => x.textContent === 'Add Affiliation').click()",
+  )
+  await wait('document.querySelector("[data-org-detail]").textContent.includes("VP Engineering")')
+
+  // Remove affiliation through UI
+  await evaluate(
+    "Array.from(document.querySelectorAll('[data-org-detail] ul li button')).find(x => x.textContent === 'Remove').click()",
+  )
+  await wait('document.querySelector("[data-org-detail] ul").textContent.includes("[inactive]")')
+
+  // Archive organization through UI
+  await evaluate(
+    "Array.from(document.querySelectorAll('[data-org-detail] button')).find(x => x.textContent === 'Archive').click()",
+  )
+  await wait('document.querySelector("[data-org-detail]").textContent.includes("State: archived")')
+
+  // Logout and verify private data cleared
+  await evaluate('document.querySelector("#logout").click()')
+  await wait('document.querySelector("#organizations").textContent === ""')
+
+  // Sign in as viewer to ensure write forms are hidden
+  await fill('#login [name=username]', viewer.username)
+  await fill('#login [name=password]', viewer.password)
+  await evaluate('document.querySelector("#login").requestSubmit()')
+  await wait(
+    '!document.querySelector("#workspace").hidden && document.querySelector("#status").textContent===""',
+  )
+  await evaluate(
+    'document.querySelector("#tenants").value="studio-demo";document.querySelector("#tenants").dispatchEvent(new Event("change"))',
+  )
+  await wait('document.querySelector("[data-org-status]").textContent==="Organizations ready."')
+  assert.equal(await evaluate('document.querySelector("[data-org-create]").hidden'), true)
+  assert.equal(page.console_.filter((x) => x.kind === 'exception').length, 0)
+
+  // Logout viewer
+  await evaluate('document.querySelector("#logout").click()')
+  await wait('document.querySelector("#organizations").textContent === ""')
+
   check(
-    'isolated browser signs in, mounts organization panel and displays authorized management controls',
+    'isolated browser completes organization and affiliation lifecycle, recovers response loss, enforces uncertain write refusal, and cleans up on logout',
   )
 
   await stop()
@@ -309,6 +421,10 @@ try {
     JSON.stringify(
       {
         profile: profile.catalog.version,
+        catalogSha256: createHash('sha256').update(JSON.stringify(profile.catalog)).digest('hex'),
+        artifactSha256: createHash('sha256')
+          .update(JSON.stringify(profile.artifacts))
+          .digest('hex'),
         scope: 'reusable organizations, accounts and contact affiliations',
         checks,
         browser: 'isolated Chromium',

@@ -144,8 +144,38 @@ for (const name of [
   'proposalsHost',
   'capacity',
   'capacityHost',
-])
+]) {
   assert.equal(proofs[name].profile, profile.catalog.version, 'Stale release proof: ' + name)
+}
+const expectedCatalogSha256 = createHash('sha256')
+  .update(JSON.stringify(profile.catalog))
+  .digest('hex')
+const expectedArtifactSha256 = createHash('sha256')
+  .update(JSON.stringify(profile.artifacts))
+  .digest('hex')
+for (const name of [
+  'organizations',
+  'organizationsHost',
+  'proposals',
+  'proposalsHost',
+  'capacity',
+  'capacityHost',
+]) {
+  if (proofs[name].catalogSha256) {
+    assert.equal(
+      proofs[name].catalogSha256,
+      expectedCatalogSha256,
+      'Mismatched catalog hash: ' + name,
+    )
+  }
+  if (proofs[name].artifactSha256) {
+    assert.equal(
+      proofs[name].artifactSha256,
+      expectedArtifactSha256,
+      'Mismatched artifact hash: ' + name,
+    )
+  }
+}
 assert.equal(proofs.runtime.providerCalls, 0)
 assert.equal(proofs.act.providerCalls, 0)
 assert.equal(proofs.projectHost.providerCalls, 0)
@@ -529,6 +559,68 @@ controls.push(
     'original UUID.*pending outcome|backup restore retains supplier quote',
   ],
 )
+controls.push(
+  [
+    'organizations-current-grants-and-tools',
+    ['packages/organizations-pg/src/repository.ts', 'packages/organizations/src/tools.ts'],
+    'organizations',
+    'zero-grant viewer is denied owner command receipt access|forced tenant RLS completely isolates organization data',
+  ],
+  [
+    'organizations-atomic-mutations-and-revisions',
+    [
+      'packages/organizations-pg/src/repository.ts',
+      'packages/organizations-pg/migrations/001_organizations_affiliations.sql',
+    ],
+    'organizations',
+    'command replay with altered payload is rejected with conflict|optimistic revision check rejects update against stale revision|primary affiliation constraint strictly permits at most one active primary contact',
+  ],
+  [
+    'organizations-host-and-recovery',
+    ['packages/organizations/src/dashboard.ts', 'apps/crm/src/operator.ts', 'apps/crm/src/host.ts'],
+    'organizationsHost',
+    'compiled host enforces CSRF, origin check|isolated browser completes organization and affiliation lifecycle|backup and restore preserves organization entities',
+  ],
+  [
+    'proposals-current-grants-and-tools',
+    ['packages/proposals-pg/src/repository.ts', 'packages/proposals/src/tools.ts'],
+    'proposals',
+    'zero-grant viewer is denied owner command receipt access|unrelated assigned staff is denied proposal modification',
+  ],
+  [
+    'proposals-atomic-scope-and-amendments',
+    [
+      'packages/proposals-pg/src/repository.ts',
+      'packages/proposals-pg/migrations/001_proposals_scope_amendments.sql',
+    ],
+    'proposals',
+    'submitted proposal deliverables are frozen against direct modification|client acceptance seals baseline Scope Version 1|accepted proposal rejects direct edits and requires versioned change requests',
+  ],
+  [
+    'proposals-host-and-recovery',
+    ['packages/proposals/src/dashboard.ts', 'apps/crm/src/operator.ts', 'apps/crm/src/host.ts'],
+    'proposalsHost',
+    'compiled host enforces CSRF, origin check|isolated browser completes proposal submit, accept|backup and restore preserves proposal entities',
+  ],
+  [
+    'capacity-current-grants-and-tools',
+    ['packages/capacity-pg/src/repository.ts', 'packages/capacity/src/tools.ts'],
+    'capacity',
+    'zero-grant viewer is denied owner command receipt access|forced tenant RLS completely isolates capacity pools',
+  ],
+  [
+    'capacity-deterministic-burn-and-concurrency',
+    ['packages/capacity-pg/src/repository.ts', 'packages/capacity/src/contracts.ts'],
+    'capacity',
+    'future allocation saturation prevents multi-day overload|Friday estimate duration distinguishes elapsed calendar days from working days',
+  ],
+  [
+    'capacity-host-and-recovery',
+    ['packages/capacity/src/dashboard.ts', 'apps/crm/src/operator.ts', 'apps/crm/src/host.ts'],
+    'capacityHost',
+    'compiled host enforces CSRF, origin check|isolated browser completes pool creation|backup and restore preserves capacity pool entities',
+  ],
+)
 for (const [id, sources, proof, pattern] of controls) {
   for (const source of sources) await readFile(join(root, source))
   const checks = proofs[proof].checks.filter((label) => new RegExp(pattern).test(label))
@@ -555,6 +647,12 @@ for (const [id, sources, proof, pattern] of controls) {
       supportHost: 'pnpm support:verify-host',
       purchasing: 'pnpm purchasing:verify',
       purchasingHost: 'pnpm purchasing:verify-host',
+      organizations: 'pnpm organizations:verify',
+      organizationsHost: 'pnpm organizations:verify-host',
+      proposals: 'pnpm proposals:verify',
+      proposalsHost: 'pnpm proposals:verify-host',
+      capacity: 'pnpm capacity:verify',
+      capacityHost: 'pnpm capacity:verify-host',
     }[proof],
     positiveAndRefusalChecks: checks,
     result: 'passed',
@@ -591,6 +689,8 @@ const hash = async (file) =>
 const report = {
   schemaVersion: '1.0.0',
   profile: profile.catalog.version,
+  catalogSha256: expectedCatalogSha256,
+  artifactSha256: expectedArtifactSha256,
   checkedAt: new Date().toISOString(),
   node: process.version,
   commands: commandResults,

@@ -168,6 +168,8 @@ try {
   for (const [tenant, id, kind, grants, scope] of [
     ['agency', 'owner', 'human', domain.PROPOSAL_PERMISSIONS, 'all'],
     ['agency', 'lead-pm', 'human', domain.PROPOSAL_PERMISSIONS, 'assigned'],
+    ['agency', 'staff', 'human', domain.PROPOSAL_PERMISSIONS, 'assigned'],
+    ['agency', 'zero-viewer', 'human', [], 'assigned'],
     [
       'agency',
       'client-reviewer',
@@ -313,6 +315,51 @@ try {
   const unknownStatus = await service.commandStatus('agency', human('owner'), randomUUID())
   assert.equal(unknownStatus.status, 'unknown')
   check('command status distinguishes committed from unknown requests')
+
+  // Zero-grant viewer cannot read owner receipt
+  await failed(
+    () => service.commandStatus('agency', human('zero-viewer'), createCmdId),
+    'forbidden',
+  )
+  check('zero-grant viewer is denied owner command receipt access')
+
+  // Unrelated assigned staff cannot edit owner proposal
+  await failed(
+    () =>
+      service.mutate('agency', human('staff'), {
+        type: 'update_proposal',
+        commandId: randomUUID(),
+        proposalId,
+        expectedRevision: 1,
+        title: 'Changed by unrelated assigned staff',
+        summary: 'Unauthorized scope write',
+      }),
+    'forbidden',
+  )
+  assert.equal((await service.detail('agency', human('owner'), proposalId)).proposal.revision, 1)
+  check('unrelated assigned staff is denied proposal modification and revision remains unchanged')
+
+  // Replay by original actor after grants removed is denied
+  await owner.query(
+    "UPDATE archava_proposals.memberships SET permissions = '{}' WHERE tenant_id = 'agency' AND principal_id = 'owner'",
+  )
+  await failed(
+    () =>
+      service.mutate('agency', human('owner'), {
+        type: 'update_proposal',
+        commandId: randomUUID(),
+        proposalId,
+        expectedRevision: 1,
+        title: 'Replay update after grant revocation',
+        summary: 'Unauthorized',
+      }),
+    'forbidden',
+  )
+  await owner.query(
+    'UPDATE archava_proposals.memberships SET permissions = $1 WHERE tenant_id = $2 AND principal_id = $3',
+    [domain.PROPOSAL_PERMISSIONS, 'agency', 'owner'],
+  )
+  check('replay after grants removed is rejected with forbidden')
 
   // Proposal detail check
   const detail = await service.detail('agency', human('owner'), proposalId)
@@ -698,6 +745,10 @@ try {
     JSON.stringify(
       {
         profile: trusted.version,
+        catalogSha256: createHash('sha256').update(JSON.stringify(profile.catalog)).digest('hex'),
+        artifactSha256: createHash('sha256')
+          .update(JSON.stringify(profile.artifacts))
+          .digest('hex'),
         scope: 'agreed proposals, deliverable scopes and versioned change requests',
         consumers: proofs,
         checks,

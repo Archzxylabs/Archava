@@ -38,6 +38,7 @@ export function mountCapacityDashboard(
   status.setAttribute('role', 'status')
   createForm.dataset.capacityCreate = ''
   poolList.dataset.capacityPoolList = ''
+  poolList.dataset.capacityPools = ''
   detail.dataset.capacityDetail = ''
   recovery.hidden = true
   createForm.hidden = true
@@ -84,6 +85,10 @@ export function mountCapacityDashboard(
   maxConcurrencyInput.value = '3'
 
   const createSubmit = button('Create Capacity Pool', async () => {
+    if (uncertain) {
+      setStatus('Uncertain command outcome; reconcile before submitting new requests.')
+      return
+    }
     if (!codeInput.value.trim() || !nameInput.value.trim()) return
     const body: CapacityMutation = {
       type: 'create_pool',
@@ -95,27 +100,56 @@ export function mountCapacityDashboard(
       maxConcurrentJobs: Number(maxConcurrencyInput.value) || 1,
     }
     await sendCommand(body)
+    if (uncertain) return
     codeInput.value = ''
     nameInput.value = ''
     await loadPools()
   })
   createForm.appendChild(createSubmit)
+  createForm.addEventListener('submit', (e) => {
+    e.preventDefault()
+    createSubmit.click()
+  })
 
-  const retryButton = button('Retry Unknown Request', async () => {
+  async function checkPendingOutcome() {
     if (!pending) return
-    uncertain = false
-    recovery.hidden = true
-    await sendCommand(pending)
-  })
+    try {
+      const checkRes = await transport(`${options.apiBase}/commands/${pending.commandId}`, {
+        headers: { accept: 'application/json' },
+        signal: lifetime.signal,
+      })
+      if (checkRes.ok) {
+        const st = (await checkRes.json()) as { status: string }
+        if (st.status === 'committed') {
+          pending = null
+          uncertain = false
+          recovery.hidden = true
+          setStatus('Action confirmed.')
+          await loadPools()
+          return
+        }
+      }
+      setStatus('Command not yet committed.')
+    } catch {
+      setStatus('Cannot verify command status with server. Retry connection.')
+    }
+  }
 
-  const dismissButton = button('Dismiss Pending Request', () => {
-    pending = null
-    uncertain = false
-    recovery.hidden = true
-    setStatus('Pending request dismissed.')
-  })
+  async function retryPendingAction() {
+    if (!pending) return
+    await sendCommand(pending)
+    await loadPools()
+  }
+
+  const retryButton = button('Retry Unknown Request', retryPendingAction)
+  const retrySameButton = button('Retry same request', retryPendingAction)
+  const checkPendingButton = button('Check pending result', checkPendingOutcome)
+  const dismissButton = button('Dismiss Pending Request', checkPendingOutcome)
+
   recovery.appendChild(node('p', 'Connection lost during command. Reconciling server state...'))
+  recovery.appendChild(checkPendingButton)
   recovery.appendChild(retryButton)
+  recovery.appendChild(retrySameButton)
   recovery.appendChild(dismissButton)
 
   host.appendChild(status)
@@ -129,8 +163,9 @@ export function mountCapacityDashboard(
   }
 
   async function perform(work: () => Promise<void>) {
-    if (disposed || busy || uncertain) return
+    if (disposed || busy) return
     busy = true
+    host.dataset.busy = 'true'
     setStatus('Working...')
     try {
       await work()
@@ -138,10 +173,14 @@ export function mountCapacityDashboard(
       setStatus(`Error: ${err instanceof Error ? err.message : 'failed'}`)
     } finally {
       busy = false
+      delete host.dataset.busy
     }
   }
 
   async function sendCommand(mutation: CapacityMutation) {
+    if (uncertain && pending?.commandId !== mutation.commandId) {
+      throw new Error('Uncertain command outcome; reconcile before submitting new requests.')
+    }
     pending = mutation
     const url = `${options.apiBase}/commands`
     let response: Response
@@ -160,18 +199,47 @@ export function mountCapacityDashboard(
     }
 
     if (response.status === 409) {
+      try {
+        const checkRes = await transport(`${options.apiBase}/commands/${mutation.commandId}`, {
+          signal: lifetime.signal,
+        })
+        if (checkRes.ok) {
+          const st = (await checkRes.json()) as { status: string }
+          if (st.status === 'committed') {
+            uncertain = false
+            recovery.hidden = true
+            pending = null
+            setStatus(`Confirmed committed command ${mutation.commandId}.`)
+            return
+          }
+        }
+      } catch {
+        // ignore
+      }
       pending = null
+      uncertain = false
+      recovery.hidden = true
       setStatus('Conflict: revision mismatch or conflicting request.')
       return
     }
     if (!response.ok) {
-      pending = null
+      if (response.status === 400) {
+        pending = null
+        uncertain = false
+        recovery.hidden = true
+        setStatus(`Command rejected: HTTP ${response.status}`)
+        return
+      }
+      uncertain = true
+      recovery.hidden = false
       setStatus(`Command rejected: HTTP ${response.status}`)
       return
     }
 
     const receipt = commandReceiptSchema.parse(await response.json())
     pending = null
+    uncertain = false
+    recovery.hidden = true
     setStatus(`Committed command ${receipt.commandId}. Revision ${receipt.revision}.`)
   }
 
@@ -250,6 +318,37 @@ export function mountCapacityDashboard(
     estBox.appendChild(estResult)
     detail.appendChild(estBox)
 
+    if (access?.permissions.includes('capacity.allocate') && p.state === 'active') {
+      const commitBox = node('form')
+      commitBox.dataset.capacityCommit = ''
+      commitBox.appendChild(node('h4', 'Commit Workload Allocation'))
+      const workIdInput = field(commitBox, 'workloadId', 'Workload ID', 'text', true)
+      workIdInput.value = 'WORK-' + Math.floor(Math.random() * 1000)
+      const workTitleInput = field(commitBox, 'workloadTitle', 'Workload Title', 'text', true)
+      workTitleInput.value = 'Sprint Task Delivery'
+      const workUnitsInput = field(commitBox, 'workUnits', 'Required Units', 'number', true)
+      workUnitsInput.value = '40'
+      const commitBtn = button('Commit Allocation', async () => {
+        if (!workIdInput.value.trim() || !workTitleInput.value.trim()) return
+        await sendCommand({
+          type: 'commit_allocation',
+          commandId: crypto.randomUUID(),
+          poolId: p.id,
+          workloadId: workIdInput.value.trim(),
+          workloadTitle: workTitleInput.value.trim(),
+          requiredUnits: Number(workUnitsInput.value) || 1,
+        })
+        await loadDetail(p.id)
+        await loadPools()
+      })
+      commitBox.appendChild(commitBtn)
+      commitBox.addEventListener('submit', (e) => {
+        e.preventDefault()
+        commitBtn.click()
+      })
+      detail.appendChild(commitBox)
+    }
+
     // Active allocations
     const allocBox = node('div')
     allocBox.appendChild(node('h4', 'Active Workload Queue'))
@@ -264,6 +363,18 @@ export function mountCapacityDashboard(
         alloc.state !== 'cancelled' &&
         access?.permissions.includes('capacity.allocate')
       ) {
+        const progressBtn = button('Record Progress', async () => {
+          await sendCommand({
+            type: 'update_allocation_progress',
+            commandId: crypto.randomUUID(),
+            allocationId: alloc.id,
+            expectedRevision: alloc.revision,
+            remainingUnits: Math.max(0, alloc.remainingUnits - 10),
+          })
+          await loadDetail(p.id)
+        })
+        li.appendChild(progressBtn)
+
         const completeBtn = button('Complete Workload', async () => {
           await sendCommand({
             type: 'complete_allocation',
