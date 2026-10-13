@@ -85,7 +85,9 @@
     "subscriptions:verify": "node tools/library/pack.mjs && node tools/library/verify-subscriptions.mjs",
     "subscriptions:verify-host": "pnpm crm:build && node tools/library/verify-subscriptions-host.mjs",
     "attendance:verify": "node tools/library/pack.mjs && node tools/library/verify-attendance.mjs",
-    "attendance:verify-host": "pnpm crm:build && node tools/library/verify-attendance-host.mjs"
+    "attendance:verify-host": "pnpm crm:build && node tools/library/verify-attendance-host.mjs",
+    "fulfillment:verify": "node tools/library/pack.mjs && node tools/library/verify-fulfillment.mjs",
+    "fulfillment:verify-host": "pnpm crm:build && node tools/library/verify-fulfillment-host.mjs"
   },
   "devDependencies": {
     "@eslint/js": "9.37.0",

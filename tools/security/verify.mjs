@@ -5,16 +5,17 @@ import { openSync, closeSync } from 'node:fs'
 import { readFile, writeFile, mkdir, readdir } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { createHash } from 'node:crypto'
+import { installEnv } from '../library/npm-env.mjs'
 const root = resolve(import.meta.dirname, '../..'),
   output = join(root, 'dist/security-proof')
 await mkdir(output, { recursive: true })
 const commandResults = []
-function run(name, args, cwd = root, allowed = [0]) {
+function run(name, args, cwd = root, allowed = [0], env = process.env) {
   const file = join(output, name + '.log'),
     fd = openSync(file, 'w', 0o600)
   let status = 0
   try {
-    execFileSync(args[0], args.slice(1), { cwd, stdio: ['ignore', fd, fd] })
+    execFileSync(args[0], args.slice(1), { cwd, stdio: ['ignore', fd, fd], env })
   } catch (error) {
     status = error.status ?? -1
   } finally {
@@ -64,9 +65,29 @@ if (process.argv.includes('--run')) {
   run('capacity-host', ['pnpm', 'capacity:verify-host'])
 }
 run('platform-audit', ['pnpm', 'audit', '--json'], root, [0, 1])
-run('runtime-audit', ['npm', 'audit', '--json'], join(root, 'dist/crm-runtime'), [0, 1])
-run('template-audit', ['npm', 'audit', '--json'], join(root, 'Archava Template'), [0, 1])
-const json = async (file) => JSON.parse(await readFile(file, 'utf8'))
+run(
+  'runtime-audit',
+  ['npm', 'audit', '--json'],
+  join(root, 'dist/crm-runtime'),
+  [0, 1],
+  installEnv(),
+)
+run(
+  'template-audit',
+  ['npm', 'audit', '--json'],
+  join(root, 'Archava Template'),
+  [0, 1],
+  installEnv(),
+)
+const json = async (file) => {
+  const raw = await readFile(file, 'utf8')
+  // npm prints config warnings on stderr, and run() captures both streams into
+  // the same file. Parse the JSON payload itself; completeness is asserted below.
+  const start = raw.indexOf('{'),
+    end = raw.lastIndexOf('}')
+  if (start < 0 || end <= start) throw new Error('Advisory scan produced no JSON payload')
+  return JSON.parse(raw.slice(start, end + 1))
+}
 const audits = {}
 for (const name of ['platform', 'runtime', 'template']) {
   const raw = await json(join(output, name + '-audit.log'))

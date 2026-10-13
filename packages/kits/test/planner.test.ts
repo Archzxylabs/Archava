@@ -63,6 +63,30 @@ describe('trusted kit contracts and support boundary', () => {
         .readyToAssemble,
     ).toBe(false)
   })
+  it('composes bounded warehouse dispatch and made-to-order work orders while full kits remain blocked', () => {
+    const supported = release()
+    supported.contracts.assembly = '13.0.0'
+    supported.packages.push(
+      ...['fulfillment', 'fulfillment-pg'].map((name) => ({
+        name: '@archava/' + name,
+        version: '0.1.0',
+        migrations: [],
+      })),
+    )
+    const planner = new KitPlanner(supported, COMPOSABLE_MODULES)
+    for (const id of ['K20', 'K23']) {
+      const plan = planner.plan(request(id, 'fulfillment_dispatch'))
+      expect(plan.readyToAssemble).toBe(true)
+      expect(plan.assembly).toEqual({ ...MINIMAL_MODULES, fulfillment: true })
+      expect(plan.operationalKitsAccepted).toEqual([])
+      expect(planner.plan(request(id)).readyToAssemble).toBe(false)
+    }
+    expect(planner.plan(request('K01', 'fulfillment_dispatch')).readyToAssemble).toBe(false)
+    expect(
+      new KitPlanner(supported, FULL_MODULES).plan(request('K20', 'fulfillment_dispatch'))
+        .readyToAssemble,
+    ).toBe(false)
+  })
   it('composes shared internal support cases across service models without accepting specialized case systems', () => {
     const supported = release()
     supported.contracts.assembly = '7.0.0'

@@ -1,6 +1,36 @@
 # Local reusable library release
 
-## Current extension — profile 1.14.0, 13 October 2026
+## Current extension — profile 1.15.0, 13 October 2026
+
+Fulfillment dispatch and light production adds 6 compiled artifacts (`fulfillment` and
+`fulfillment-pg` 0.1.0), 18 unchanged external pins, nineteen owned ledgers, host 0.18.0, config 0.17.0, and kits 0.12.0.
+Fulfillment runs without CRM or an LLM. Assembly v13 adds terminal fulfillment composition alongside attendance
+and subscriptions while preserving previous contracts and four-module defaults. State machine receipt recovery assigns a client-generated
+command UUID and marks the outcome uncertain _before_ mutation dispatch, blocks new writes while an earlier outcome
+is unknown, and requires explicit human re-query or retry across transport errors, body read rejections, truncated
+JSON payloads, and receipt schema/command-ID mismatches.
+
+| Extension                                     | Accepted evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | Limit                                                                                                                                                         |
+| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Fulfillment dispatch & light production       | Two cold-installed warehouse/logistics (`K20`) and made-to-order production (`K23`) consumers; real PostgreSQL job, append-only line/finding/custody lifecycles with immutable audit, monotonic receive→deliver custody chain, returns gated on a prior dispatch, delivery findings under a one-clear-per-reconciliation gate that blocks completion, separate material/output/scrap counters, idempotent replay, cross-tenant RLS isolation, superuser/schema-owner refusal, service-principal and inactive/zero-grant refusal, optimistic revision locking, dedicated dispatch and produce grants, read-only tool boundaries; 27 checks | Custody, dispatch evidence and simple work orders only; no carrier APIs, stock ownership, pricing, MRP scheduling, label printing, or backup/restore evidence |
+| Resilient receipt recovery & host composition | Compiled host and Chromium fulfillment dashboard, human-readable failure messages, blocked new writes while an outcome is uncertain, 5 receipt-recovery regressions (network interruption, HTTP 500 on command, non-JSON receipt, mismatched command UUID, recovery-query outage resolving to an authoritative `unknown`), full browser receive→inspect workflow; 6 host checks                                                                                                                                                                                                                                                           | In-memory pending browser recovery; human-only writes                                                                                                         |
+| Trusted assembly                              | Narrow K20 `fulfillment_dispatch` and K23 `fulfillment_dispatch` under v13; kits 13 and assembly 2                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | No full operating kit accepted                                                                                                                                |
+
+All eight root gates passed: 1,587 tests/121 files. Fresh regression evidence retains
+CRM 38, Act 18, runtime 44, Chromium 3/70, projects 15/11, scheduling 14/9, accommodation 17/9,
+commerce 18/10, food-service 23/10, support 19/9, purchasing 19/11, organizations 24/6, proposals 30/6,
+capacity 29/6, assets 18/5, subscriptions 18/5, attendance 18/4, fulfillment 27/6 and upgrade 4. The security matrix has 62 controls;
+root/runtime scans have zero advisories. The separate realtime template retains thirteen moderate findings and independent
+SDK/live gates. These checks do not establish production load or security certification.
+
+Synthetic upgrade from previous supported 1.10.0 to 1.15.0 passed all 4 checks on an
+isolated PostgreSQL cluster without altering historical records, audit logs, or command UUIDs.
+Release artifacts for candidate 1.15.0 are archived in `dist/releases/1.15.0/library` and `dist/releases/1.15.0/crm-runtime`.
+
+See [fulfillment contract](FULFILLMENT_MODULE.md), [sanitized evidence](audit/2026-10-13-release-1.15.0.json) and
+[the programme ledger](STARTER_KIT_IMPLEMENTATION.md). All forty full operating kits remain unaccepted.
+
+## Previous extension — profile 1.14.0, 13 October 2026
 
 Attendance recording for in-person teaching and event admission adds 6 compiled artifacts (`attendance` and
 `attendance-pg` 0.1.0), 18 unchanged external pins, eighteen owned ledgers, host 0.17.0, config 0.16.0, and kits 0.11.0.

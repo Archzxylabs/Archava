@@ -7,27 +7,36 @@ sampai habis sebelum mengubah kode.
 
 ## 0. Status Roadmap & Tugas Aktif
 
-### Candidate 1.14.0 — Attendance, Course/Event Capacity/Check-in [ACCEPTED & CLOSED]
+### Candidate 1.15.0 — Fulfillment, Dispatch & Production [ACCEPTED & CLOSED]
 
-- **Contracts & Package**: `@archava/attendance` and `@archava/attendance-pg` 0.1.0 (52 artifacts, 18 database ledgers).
-- **Core Capabilities**: Bounded session creation with seat capacity, roster registration, verified check-in events with per-roster idempotency keys, duplicate scan refusal, idempotent replay, optimistic revision locking, session enrollment/attended counters, read-only tool boundaries, forced tenant RLS, immutable audit, and hardened S1 resilient receipt recovery state machine.
-- **Generalized across two consumers**: Training/course delivery (`K13`) and community event/meetup check-in (`K15`).
+- **Contracts & Package**: `@archava/fulfillment` and `@archava/fulfillment-pg` 0.1.0 (54 artifacts, 19 database ledgers).
+- **Core Capabilities**: Bounded dispatch and made-to-order work orders, a monotonic receive→store→pick→pack→dispatch→deliver custody chain, returns gated on a prior dispatch, delivery findings with a one-clear-per-reconciliation gate that blocks completion, separate consumed/produced/scrap counters over append-only job lines, dedicated `fulfillment.dispatch` and `fulfillment.produce` grants, idempotent replay, optimistic revision locking, read-only tool boundaries, forced tenant RLS, immutable audit, undeletable jobs, and hardened S1 resilient receipt recovery state machine.
+- **Generalized across two consumers**: warehouse/logistics (`K20`) and simple made-to-order production (`K23`).
 - **Verification Evidence**:
-  - `pnpm verify`: All 8 root gates passed (1,553 tests in 118 files).
-  - `pnpm attendance:verify`: 18/18 synthetic PostgreSQL checks passed.
-  - `pnpm attendance:verify-host`: 4/4 Chromium CDP checks passed, including the full browser register/check-in workflow and 5 S1 receipt-recovery regressions.
-  - `pnpm crm:verify-upgrade`: 4/4 upgrade checks passed (1.10.0 -> 1.14.0).
-  - Archives: `dist/releases/1.14.0/library` and `dist/releases/1.14.0/crm-runtime`.
-  - Documentation: `docs/ATTENDANCE_MODULE.md`, `docs/audit/2026-10-13-release-1.14.0.json`.
+  - `pnpm verify`: All 8 root gates passed (1,587 tests in 121 files).
+  - `pnpm fulfillment:verify`: 27/27 synthetic PostgreSQL checks passed, including two independently cold-installed consumers sharing unchanged fulfillment code with a browser-safe dashboard.
+  - `pnpm fulfillment:verify-host`: 6/6 Chromium CDP checks passed, including the full browser receive→inspect workflow and 5 S1 receipt-recovery regressions.
+  - `pnpm kits:verify` 13/13, `pnpm assembly:verify`, `pnpm crm:verify-upgrade` 4/4 (1.10.0 -> 1.15.0), `pnpm security:verify` PASS.
+  - Archives: `dist/releases/1.15.0/library` and `dist/releases/1.15.0/crm-runtime`.
+  - Documentation: `docs/FULFILLMENT_MODULE.md`, `docs/audit/2026-10-13-release-1.15.0.json`.
 
 ---
 
-### Tugas Aktif Berikutnya: Priority 5 — Fulfillment, Dispatch & Production (Candidate 1.15.0)
+### Tugas Aktif Berikutnya: Priority 6 — Invoice/payment boundaries (Candidate berikutnya)
 
-- Refer to the priority table in §5 (row 5) for the required real outcomes.
-- Domain scope: Custody/pick-pack/delivery findings; bahan/output/scrap/BOM untuk produksi sederhana.
-- Expected consumers to generalize across: warehouse/logistics (`K20`) and simple made-to-order production (`K23`).
-- Follow the same evidence pattern as 1.14.0: `@archava/<domain>` + `@archava/<domain>-pg` 0.1.0, one owned migration ledger, host + config + kits + assembly bumps, an 18-check synthetic PostgreSQL domain proof, a Chromium host proof (including the S1 receipt-recovery regressions), a cold-install consumer proof, an upgrade proof, release archives, and updated docs/audit evidence.
+- Refer to the priority table in §5 (row 6) for the required real outcomes.
+- Domain scope: Immutable invoice intent/snapshot/corrections dan provider adapter.
+- Expected invariant: payment success hanya berasal dari verified authority, bukan dari client callback.
+- Follow the same evidence pattern as 1.15.0: `@archava/<domain>` + `@archava/<domain>-pg` 0.1.0, one owned migration ledger, host + config + kits + assembly bumps, a synthetic PostgreSQL domain proof, a Chromium host proof (including the S1 receipt-recovery regressions), a cold-install consumer proof, an upgrade proof, release archives, and updated docs/audit evidence.
+
+---
+
+### Catatan Historis: Candidate 1.14.0 — Attendance, Course/Event Capacity/Check-in [CLOSED]
+
+- `@archava/attendance` and `@archava/attendance-pg` 0.1.0 (52 artifacts, 18 database ledgers).
+- Bounded session creation with seat capacity, roster registration, verified check-in events with per-roster idempotency keys, duplicate scan refusal, idempotent replay, optimistic revision locking, session enrollment/attended counters, read-only tool boundaries, forced tenant RLS, immutable audit, and hardened S1 resilient receipt recovery state machine.
+- Generalized across two consumers: Training/course delivery (`K13`) and community event/meetup check-in (`K15`).
+- Evidence: `pnpm verify` 8 gates (1,553 tests in 118 files), `pnpm attendance:verify` 18/18, `pnpm attendance:verify-host` 4/4, `pnpm crm:verify-upgrade` 4/4 (1.10.0 -> 1.14.0), archives in `dist/releases/1.14.0/`, and `docs/ATTENDANCE_MODULE.md`.
 
 ---
 

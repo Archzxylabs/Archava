@@ -20,6 +20,7 @@ import { mountCapacityDashboard } from '@archava/capacity/dashboard'
 import { mountAssetDashboard } from '@archava/assets/dashboard'
 import { mountSubscriptionDashboard } from '@archava/subscriptions/dashboard'
 import { mountAttendanceDashboard } from '@archava/attendance/dashboard'
+import { mountFulfillmentDashboard } from '@archava/fulfillment/dashboard'
 
 const sessionSchema = z.discriminatedUnion('authenticated', [
   z.object({ authenticated: z.literal(false) }).strict(),
@@ -75,10 +76,13 @@ let capacity: ReturnType<typeof mountCapacityDashboard> | null = null
 let assets: ReturnType<typeof mountAssetDashboard> | null = null
 let subscriptions: ReturnType<typeof mountSubscriptionDashboard> | null = null
 let attendance: ReturnType<typeof mountAttendanceDashboard> | null = null
+let fulfillment: ReturnType<typeof mountFulfillmentDashboard> | null = null
 let session: z.infer<typeof sessionSchema> = { authenticated: false }
 function signedOut() {
   attendance?.destroy()
   attendance = null
+  fulfillment?.destroy()
+  fulfillment = null
   subscriptions?.destroy()
   subscriptions = null
   assets?.destroy()
@@ -150,6 +154,8 @@ async function mount() {
   const selected = session.tenants.find((item) => item.id === tenants.value)
   attendance?.destroy()
   attendance = null
+  fulfillment?.destroy()
+  fulfillment = null
   subscriptions?.destroy()
   subscriptions = null
   assets?.destroy()
@@ -205,6 +211,7 @@ async function mount() {
     ['assets', modules.assets ?? false],
     ['subscriptions', modules.subscriptions ?? false],
     ['attendance', modules.attendance ?? false],
+    ['fulfillment', modules.fulfillment ?? false],
   ] as const) {
     const node = element<HTMLElement>('#' + id)
     node.hidden = !enabled
@@ -306,6 +313,17 @@ async function mount() {
   if (modules.attendance)
     attendance = mountAttendanceDashboard(element<HTMLElement>('#attendance'), {
       apiBase: '/api/attendance/' + selected.id,
+      transport: async (input, init) => {
+        const headers = new Headers(init?.headers)
+        if (init?.method === 'POST') headers.set('x-archava-csrf', csrf)
+        const response = await fetch(input, { ...init, headers })
+        if (response.status === 401) signedOut()
+        return response
+      },
+    })
+  if (modules.fulfillment)
+    fulfillment = mountFulfillmentDashboard(element<HTMLElement>('#fulfillment'), {
+      apiBase: '/api/fulfillment/' + selected.id,
       transport: async (input, init) => {
         const headers = new Headers(init?.headers)
         if (init?.method === 'POST') headers.set('x-archava-csrf', csrf)
@@ -448,6 +466,7 @@ async function mount() {
     assets?.ready,
     subscriptions?.ready,
     attendance?.ready,
+    fulfillment?.ready,
   ])
 }
 async function refreshSession() {

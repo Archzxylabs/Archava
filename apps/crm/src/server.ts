@@ -44,6 +44,8 @@ import { SubscriptionService } from '@archava/subscriptions'
 import { PostgresSubscriptionRepository } from '@archava/subscriptions-pg'
 import { AttendanceService } from '@archava/attendance'
 import { PostgresAttendanceRepository } from '@archava/attendance-pg'
+import { FulfillmentService } from '@archava/fulfillment'
+import { PostgresFulfillmentRepository } from '@archava/fulfillment-pg'
 
 // This local host also runs on desktops without reliable IPv6 routing.
 setDefaultResultOrder('ipv4first')
@@ -183,6 +185,11 @@ try {
     (settings.modules ?? FULL_MODULES).attendance
       ? new AttendanceService(
           await PostgresAttendanceRepository.create(runtimePool, settings.fingerprintKey),
+        )
+      : undefined,
+    (settings.modules ?? FULL_MODULES).fulfillment
+      ? new FulfillmentService(
+          await PostgresFulfillmentRepository.create(runtimePool, settings.fingerprintKey),
         )
       : undefined,
   )

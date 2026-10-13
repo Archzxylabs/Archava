@@ -1,16 +1,16 @@
 {
   "schemaVersion": "1.0.0",
   "id": "archava-local-library",
-  "version": "1.14.0",
+  "version": "1.15.0",
   "host": {
     "name": "@archava/crm-host",
-    "version": "0.17.0"
+    "version": "0.18.0"
   },
   "contracts": {
     "clientConfig": "1.0.0",
     "deploymentPlan": "2.0.0",
     "hostSettings": 1,
-    "assembly": "12.0.0",
+    "assembly": "13.0.0",
     "presence": "1.0.0",
     "kitPlan": "1.0.0",
     "kitCatalogue": "1.0.0"
@@ -61,7 +61,7 @@
     },
     {
       "name": "@archava/config",
-      "version": "0.16.0",
+      "version": "0.17.0",
       "migrations": []
     },
     {
@@ -186,7 +186,7 @@
     },
     {
       "name": "@archava/kits",
-      "version": "0.11.0",
+      "version": "0.12.0",
       "migrations": []
     },
     {
@@ -395,6 +395,21 @@
           "checksum": "f71bab0e95d33c253bac9eae573675e5fe321c33f8d81f7124561351f7484883"
         }
       ]
+    },
+    {
+      "name": "@archava/fulfillment",
+      "version": "0.1.0",
+      "migrations": []
+    },
+    {
+      "name": "@archava/fulfillment-pg",
+      "version": "0.1.0",
+      "migrations": [
+        {
+          "file": "001_fulfillment_jobs_evidence.sql",
+          "checksum": "901ab569b84baa26008c2128144dff1d0bc0214d6cfd32f7567faeaae9fc9cb6"
+        }
+      ]
     }
   ],
   "databaseLedgers": [
@@ -491,6 +506,11 @@
       "schema": "archava_attendance",
       "package": "@archava/attendance-pg",
       "migrations": ["001_attendance_sessions_rosters"]
+    },
+    {
+      "schema": "archava_fulfillment",
+      "package": "@archava/fulfillment-pg",
+      "migrations": ["001_fulfillment_jobs_evidence"]
     }
   ],
   "requiredAdapters": [
@@ -511,7 +531,8 @@
     "@archava/capacity-pg",
     "@archava/assets-pg",
     "@archava/subscriptions-pg",
-    "@archava/attendance-pg"
+    "@archava/attendance-pg",
+    "@archava/fulfillment-pg"
   ],
   "operatorChecks": [
     "non-owner runtime database role",
@@ -525,7 +546,8 @@
     "supplier quote, purchase receipt, current grants and shared stock recovery",
     "organization accounts, contact affiliations and receipt recovery",
     "asset serialized identity, custody handover, maintenance logging and receipt recovery",
-    "session rosters, event capacity, verified check-in events and receipt recovery"
+    "session rosters, event capacity, verified check-in events and receipt recovery",
+    "custody chain, pick-pack-dispatch evidence, delivery reconciliation and production output/scrap traceability"
   ],
   "externals": [
     {

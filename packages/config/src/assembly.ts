@@ -20,6 +20,7 @@ export const moduleSelectionSchema = z
     assets: z.boolean().optional(),
     subscriptions: z.boolean().optional(),
     attendance: z.boolean().optional(),
+    fulfillment: z.boolean().optional(),
   })
   .strict()
   .superRefine((modules, ctx) => {
@@ -61,6 +62,7 @@ export const COMPOSABLE_MODULES: ModuleSelection = Object.freeze({
   assets: true,
   subscriptions: true,
   attendance: true,
+  fulfillment: true,
 })
 export const MODULE_CONTRACTS = [
   {
@@ -238,6 +240,19 @@ export const MODULE_CONTRACTS = [
     permissions: ['attendance.read', 'attendance.write', 'attendance.checkin'],
     entry: '@archava/attendance',
   },
+  {
+    id: 'fulfillment',
+    version: '1.0.0',
+    requires: ['contacts'],
+    packages: ['@archava/fulfillment', '@archava/fulfillment-pg', '@archava/identity-pg'],
+    permissions: [
+      'fulfillment.read',
+      'fulfillment.write',
+      'fulfillment.dispatch',
+      'fulfillment.produce',
+    ],
+    entry: '@archava/fulfillment',
+  },
 ] as const
 const legacyModules = moduleSelectionSchema.refine(
   (modules) =>
@@ -253,7 +268,8 @@ const legacyModules = moduleSelectionSchema.refine(
     modules.capacity === undefined &&
     modules.assets === undefined &&
     modules.subscriptions === undefined &&
-    modules.attendance === undefined,
+    modules.attendance === undefined &&
+    modules.fulfillment === undefined,
   'Project composition requires assembly contract 2.0.0',
 )
 export const assemblyRequestSchema = z.discriminatedUnion('version', [
@@ -281,7 +297,8 @@ export const assemblyRequestSchema = z.discriminatedUnion('version', [
           modules.capacity === undefined &&
           modules.assets === undefined &&
           modules.subscriptions === undefined &&
-          modules.attendance === undefined,
+          modules.attendance === undefined &&
+          modules.fulfillment === undefined,
         'Scheduling requires assembly contract 3.0.0',
       ),
     })
@@ -302,7 +319,8 @@ export const assemblyRequestSchema = z.discriminatedUnion('version', [
           modules.capacity === undefined &&
           modules.assets === undefined &&
           modules.subscriptions === undefined &&
-          modules.attendance === undefined,
+          modules.attendance === undefined &&
+          modules.fulfillment === undefined,
         'Accommodation requires assembly contract 4.0.0',
       ),
     })
@@ -322,7 +340,8 @@ export const assemblyRequestSchema = z.discriminatedUnion('version', [
           modules.capacity === undefined &&
           modules.assets === undefined &&
           modules.subscriptions === undefined &&
-          modules.attendance === undefined,
+          modules.attendance === undefined &&
+          modules.fulfillment === undefined,
         'Commerce requires assembly contract 5.0.0',
       ),
     })
@@ -341,7 +360,8 @@ export const assemblyRequestSchema = z.discriminatedUnion('version', [
           modules.capacity === undefined &&
           modules.assets === undefined &&
           modules.subscriptions === undefined &&
-          modules.attendance === undefined,
+          modules.attendance === undefined &&
+          modules.fulfillment === undefined,
         'Food service requires assembly contract 6.0.0',
       ),
     })
@@ -359,7 +379,8 @@ export const assemblyRequestSchema = z.discriminatedUnion('version', [
           modules.capacity === undefined &&
           modules.assets === undefined &&
           modules.subscriptions === undefined &&
-          modules.attendance === undefined,
+          modules.attendance === undefined &&
+          modules.fulfillment === undefined,
         'Support cases require assembly contract 7.0.0',
       ),
     })
@@ -376,7 +397,8 @@ export const assemblyRequestSchema = z.discriminatedUnion('version', [
           m.capacity === undefined &&
           m.assets === undefined &&
           m.subscriptions === undefined &&
-          m.attendance === undefined,
+          m.attendance === undefined &&
+          m.fulfillment === undefined,
         'Purchasing requires assembly contract 8.0.0',
       ),
     })
@@ -392,7 +414,8 @@ export const assemblyRequestSchema = z.discriminatedUnion('version', [
           m.capacity === undefined &&
           m.assets === undefined &&
           m.subscriptions === undefined &&
-          m.attendance === undefined,
+          m.attendance === undefined &&
+          m.fulfillment === undefined,
         'Organizations, proposals and capacity require assembly contract 9.0.0',
       ),
     })
@@ -403,7 +426,10 @@ export const assemblyRequestSchema = z.discriminatedUnion('version', [
       profile: z.string().regex(/^\d+\.\d+\.\d+$/),
       modules: moduleSelectionSchema.refine(
         (m) =>
-          m.assets === undefined && m.subscriptions === undefined && m.attendance === undefined,
+          m.assets === undefined &&
+          m.subscriptions === undefined &&
+          m.attendance === undefined &&
+          m.fulfillment === undefined,
         'Asset register requires assembly contract 10.0.0',
       ),
     })
@@ -413,7 +439,10 @@ export const assemblyRequestSchema = z.discriminatedUnion('version', [
       version: z.literal('10.0.0'),
       profile: z.string().regex(/^\d+\.\d+\.\d+$/),
       modules: moduleSelectionSchema.refine(
-        (m) => m.subscriptions === undefined && m.attendance === undefined,
+        (m) =>
+          m.subscriptions === undefined &&
+          m.attendance === undefined &&
+          m.fulfillment === undefined,
         'Subscriptions require assembly contract 11.0.0',
       ),
     })
@@ -423,7 +452,7 @@ export const assemblyRequestSchema = z.discriminatedUnion('version', [
       version: z.literal('11.0.0'),
       profile: z.string().regex(/^\d+\.\d+\.\d+$/),
       modules: moduleSelectionSchema.refine(
-        (m) => m.attendance === undefined,
+        (m) => m.attendance === undefined && m.fulfillment === undefined,
         'Attendance requires assembly contract 12.0.0',
       ),
     })
@@ -431,6 +460,16 @@ export const assemblyRequestSchema = z.discriminatedUnion('version', [
   z
     .object({
       version: z.literal('12.0.0'),
+      profile: z.string().regex(/^\d+\.\d+\.\d+$/),
+      modules: moduleSelectionSchema.refine(
+        (m) => m.fulfillment === undefined,
+        'Fulfillment requires assembly contract 13.0.0',
+      ),
+    })
+    .strict(),
+  z
+    .object({
+      version: z.literal('13.0.0'),
       profile: z.string().regex(/^\d+\.\d+\.\d+$/),
       modules: moduleSelectionSchema,
     })
@@ -452,6 +491,7 @@ export function planAssembly(raw: unknown, trustedCatalog: ReleaseCatalog) {
     '10.0.0',
     '11.0.0',
     '12.0.0',
+    '13.0.0',
   ]
   if (
     (request.version === '2.0.0' &&
@@ -474,7 +514,9 @@ export function planAssembly(raw: unknown, trustedCatalog: ReleaseCatalog) {
       !validVersions.slice(8).includes(catalog.contracts.assembly ?? '')) ||
     (request.version === '11.0.0' &&
       !validVersions.slice(9).includes(catalog.contracts.assembly ?? '')) ||
-    (request.version === '12.0.0' && catalog.contracts.assembly !== '12.0.0')
+    (request.version === '12.0.0' &&
+      !validVersions.slice(10).includes(catalog.contracts.assembly ?? '')) ||
+    (request.version === '13.0.0' && catalog.contracts.assembly !== '13.0.0')
   )
     throw new Error('Unsupported assembly contract')
   const enabled = MODULE_CONTRACTS.filter((module) => request.modules[module.id])

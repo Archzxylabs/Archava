@@ -83,6 +83,8 @@ import { SUBSCRIPTION_PERMISSIONS } from '@archava/subscriptions'
 import { migrateSubscriptions, grantSubscriptionsRuntime } from '@archava/subscriptions-pg'
 import { ATTENDANCE_PERMISSIONS } from '@archava/attendance'
 import { migrateAttendance, grantAttendanceRuntime } from '@archava/attendance-pg'
+import { FULFILLMENT_PERMISSIONS } from '@archava/fulfillment'
+import { migrateFulfillment, grantFulfillmentRuntime } from '@archava/fulfillment-pg'
 
 const credentialsSchema = z
   .object({
@@ -110,6 +112,7 @@ async function grant(pool: Pool) {
   await grantAssetsRuntime(pool, role)
   await grantSubscriptionsRuntime(pool, role)
   await grantAttendanceRuntime(pool, role)
+  await grantFulfillmentRuntime(pool, role)
   await grantNativeCrmAct(pool, role)
   await grantActHostRuntime(nativeSqlClient(pool, 'operator', 'operator'), role)
 }
@@ -220,6 +223,7 @@ async function setup() {
       await migrateAssets(owner)
       await migrateSubscriptions(owner)
       await migrateAttendance(owner)
+      await migrateFulfillment(owner)
       await grant(owner)
       for (const tenant of settings.tenants) {
         await owner.query(
@@ -280,11 +284,12 @@ async function user(args: string[]) {
       'assets',
       'subscriptions',
       'attendance',
+      'fulfillment',
     ].includes(mode ?? '') ||
     !file
   )
     throw new Error(
-      'Expected user add|reset|recover|pipeline|projects|scheduling|accommodation|commerce|foodservice|support|purchasing|organizations|proposals|capacity|assets|subscriptions|attendance private-input.json',
+      'Expected user add|reset|recover|pipeline|projects|scheduling|accommodation|commerce|foodservice|support|purchasing|organizations|proposals|capacity|assets|subscriptions|attendance|fulfillment private-input.json',
     )
   const settings = await loadSettings()
   const input = await readPrivateJson(resolve(file))
@@ -305,7 +310,8 @@ async function user(args: string[]) {
         mode === 'capacity' ||
         mode === 'assets' ||
         mode === 'subscriptions' ||
-        mode === 'attendance'
+        mode === 'attendance' ||
+        mode === 'fulfillment'
       ) {
         const account = z
           .object({
@@ -355,7 +361,9 @@ async function user(args: string[]) {
                                       ? ASSET_PERMISSIONS
                                       : mode === 'subscriptions'
                                         ? SUBSCRIPTION_PERMISSIONS
-                                        : ATTENDANCE_PERMISSIONS
+                                        : mode === 'attendance'
+                                          ? ATTENDANCE_PERMISSIONS
+                                          : FULFILLMENT_PERMISSIONS
                 ).filter(
                   (permission: string) =>
                     account.access === 'write' || permission.endsWith('.read'),
@@ -394,7 +402,9 @@ async function user(args: string[]) {
                                     ? 'archava_assets'
                                     : mode === 'subscriptions'
                                       ? 'archava_subscriptions'
-                                      : 'archava_attendance'
+                                      : mode === 'attendance'
+                                        ? 'archava_attendance'
+                                        : 'archava_fulfillment'
             await client.query(
               `INSERT INTO ${tableName}.memberships(tenant_id,principal_id,kind,permissions,scope,active) VALUES($1,$2,'human',$3,$4,$5) ON CONFLICT(tenant_id,principal_id) DO UPDATE SET permissions=excluded.permissions,scope=excluded.scope,active=excluded.active`,
               [tenant, person.principal_id, permissions, account.scope, account.access !== 'none'],
@@ -580,6 +590,7 @@ async function restore(args: string[]) {
       await migrateAssets(owner)
       await migrateSubscriptions(owner)
       await migrateAttendance(owner)
+      await migrateFulfillment(owner)
       await grant(owner)
       // Restoring an older backup must never resurrect a logged-out session.
       await owner.query('DELETE FROM archava_identity.sessions')
@@ -627,6 +638,7 @@ async function resumeActions() {
       await migrateAssets(owner)
       await migrateSubscriptions(owner)
       await migrateAttendance(owner)
+      await migrateFulfillment(owner)
       await grant(owner)
       const active = (
         await owner.query(

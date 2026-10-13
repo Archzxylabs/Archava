@@ -1,6 +1,40 @@
 # Build status
 
-## Current checkpoint — profile 1.14.0, 13 October 2026
+## Current checkpoint — profile 1.15.0, 13 October 2026
+
+The accepted bounded extension adds [fulfillment dispatch and light production](FULFILLMENT_MODULE.md),
+generalizing warehouse/logistics (`K20`) and simple made-to-order production (`K23`), with human-only
+mutation validation, a monotonic receive→deliver custody chain, returns gated on a prior dispatch,
+delivery findings under a one-clear-per-reconciliation gate that blocks completion, separate
+material/output/scrap counters over append-only job lines, dedicated dispatch and produce grants,
+forced tenant RLS, read-only tool boundaries, optimistic revision control, and a hardened S1
+receipt recovery state machine (client-generated command UUID and uncertain flag set before dispatch, blocked new
+writes while an earlier outcome is unknown, explicit human **Re-query status** and **Retry same request** actions).
+CRM, projects, scheduling, accommodation, commerce, food-service, support, purchasing, organizations,
+proposals, capacity, assets, subscriptions, and attendance remain fully supported.
+
+All eight root gates passed: **1,587 tests in 121 files**. Fresh evidence includes
+CRM 38, Act 18, runtime 44, Chromium minimal/full 3/70, projects 15/11, scheduling
+14/9, accommodation 17/9, commerce 18/10, food-service 23/10, support 19/9, purchasing
+19/11, organizations 24/6, proposals 30/6, capacity 29/6, assets 18/5, subscriptions 18/5,
+attendance 18/4, fulfillment 27/6, kit planning/assembly 13, assembly 2 and prior-profile upgrade 4.
+The security matrix has 62 controls; root/runtime scans have zero advisories. The separate
+realtime template retains 13 moderate findings and independent SDK/live gates.
+
+Synthetic upgrade from previous supported 1.10.0 to 1.15.0 passed all 4 checks on an
+isolated PostgreSQL cluster without altering historical records, audit logs, or command UUIDs,
+and invalidates identity while holding native execution with fresh approval epochs. Release
+artifacts for candidate 1.15.0 are archived in `dist/releases/1.15.0/library` and `dist/releases/1.15.0/crm-runtime`
+matching 54 compiled artifacts, 19 database ledgers, host 0.18.0, and assembly v13. See
+[sanitized evidence](audit/2026-10-13-release-1.15.0.json) and
+[current release acceptance](LOCAL_LIBRARY_RELEASE.md).
+
+Full operating kits accepted: **0 of 40 researched candidates**. Narrow domain scopes
+do not accept complete hotel/POS/ERP systems. Payment/provider, customer portal,
+regulatory adapters and broader operational dimensions retain their evidence gates.
+No whole-product percentage is inferred from test counts.
+
+## Previous checkpoint — profile 1.14.0, 13 October 2026
 
 The accepted bounded extension adds [attendance recording and event check-in](ATTENDANCE_MODULE.md),
 generalizing training/course delivery (`K13`) and in-person event admission (`K15`), with human-only
@@ -26,11 +60,6 @@ artifacts for candidate 1.14.0 are archived in `dist/releases/1.14.0/library` an
 matching 52 compiled artifacts, 18 database ledgers, host 0.17.0, and assembly v12. See
 [sanitized evidence](audit/2026-10-13-release-1.14.0.json) and
 [current release acceptance](LOCAL_LIBRARY_RELEASE.md).
-
-Full operating kits accepted: **0 of 40 researched candidates**. Narrow domain scopes
-do not accept complete hotel/POS/ERP systems. Payment/provider, customer portal,
-regulatory adapters and broader operational dimensions retain their evidence gates.
-No whole-product percentage is inferred from test counts.
 
 ## Previous checkpoint — profile 1.13.0, 12 October 2026
 
