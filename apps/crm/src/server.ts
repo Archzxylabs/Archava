@@ -48,6 +48,8 @@ import { FulfillmentService } from '@archava/fulfillment'
 import { PostgresFulfillmentRepository } from '@archava/fulfillment-pg'
 import { BillingService, type SignatureKeySource } from '@archava/billing'
 import { PostgresBillingRepository } from '@archava/billing-pg'
+import { LaundryService } from '@archava/laundry'
+import { PostgresLaundryRepository } from '@archava/laundry-pg'
 import { hkdfSync } from 'node:crypto'
 
 // This local host also runs on desktops without reliable IPv6 routing.
@@ -224,6 +226,11 @@ try {
       ? new BillingService(
           await PostgresBillingRepository.create(runtimePool, settings.fingerprintKey),
           billingSignatureKeys(settings.fingerprintKey),
+        )
+      : undefined,
+    (settings.modules ?? FULL_MODULES).laundry
+      ? new LaundryService(
+          await PostgresLaundryRepository.create(runtimePool, settings.fingerprintKey),
         )
       : undefined,
   )

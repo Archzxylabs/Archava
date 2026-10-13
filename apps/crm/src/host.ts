@@ -36,6 +36,7 @@ import { createSubscriptionApi, type SubscriptionService } from '@archava/subscr
 import { createAttendanceApi, type AttendanceService } from '@archava/attendance'
 import { createFulfillmentApi, type FulfillmentService } from '@archava/fulfillment'
 import { createBillingApi, type BillingService } from '@archava/billing'
+import { createLaundryApi, type LaundryService } from '@archava/laundry'
 
 const json = (value: unknown, status = 200, headers: Record<string, string> = {}) =>
   Response.json(value, { status, headers: { 'cache-control': 'no-store', ...headers } })
@@ -78,6 +79,7 @@ export function createHostHandler(
   attendance?: AttendanceService,
   fulfillment?: FulfillmentService,
   billing?: BillingService,
+  laundry?: LaundryService,
 ) {
   const modules = settings.modules ?? FULL_MODULES
   if (!modules.pipeline) pipeline = undefined
@@ -286,6 +288,20 @@ export function createHostHandler(
           return json({ error: 'not_found' }, 404)
         await service.access(tenant, { kind: 'human', id: session.principalId })
         return await createBillingApi(billing, () =>
+          Promise.resolve({ kind: 'human', id: session.principalId }),
+        )(request)
+      }
+      if (url.pathname.startsWith('/api/laundry/')) {
+        const tenant = /^\/api\/laundry\/([^/]+)/.exec(url.pathname)?.[1]
+        if (
+          !tenant ||
+          !modules.laundry ||
+          !laundry ||
+          !settings.tenants.some((item) => item.id === tenant)
+        )
+          return json({ error: 'not_found' }, 404)
+        await service.access(tenant, { kind: 'human', id: session.principalId })
+        return await createLaundryApi(laundry, () =>
           Promise.resolve({ kind: 'human', id: session.principalId }),
         )(request)
       }
@@ -589,6 +605,7 @@ export async function startCrmHost(
   attendance?: AttendanceService,
   fulfillment?: FulfillmentService,
   billing?: BillingService,
+  laundry?: LaundryService,
 ) {
   let handler: ReturnType<typeof createHostHandler> | undefined
   const handle = (request: Request, source: string) => {
@@ -617,6 +634,7 @@ export async function startCrmHost(
       attendance,
       fulfillment,
       billing,
+      laundry,
     )
     return handler(request, source)
   }

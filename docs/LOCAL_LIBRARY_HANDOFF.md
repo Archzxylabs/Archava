@@ -1,12 +1,12 @@
 # Local library 1.3.0 handoff
 
-This remains the historical finite baseline. Current profile `1.16.0` preserves
+This remains the historical finite baseline. Current profile `1.17.0` preserves
 these four-module defaults and adds optional project tracking, resource reservations,
 accommodation, shared commerce, restaurant service, support cases, purchasing/physical stock receipts,
 organizations & affiliations, proposals & versioned change requests, pooled delivery capacity estimation,
 serialized asset register/custody/maintenance, recurring subscriptions/entitlements/usage,
-attendance recording/event check-in, fulfillment dispatch/light production, and
-invoicing/payment settlement.
+attendance recording/event check-in, fulfillment dispatch/light production, invoicing/payment
+settlement, and laundry/dry-cleaning processing.
 Use the exact current profile when generating a new assembly. See
 [project activation and API](PROJECT_DELIVERY_MODULE.md),
 [reservation activation and API](RESOURCE_RESERVATIONS_MODULE.md),
@@ -23,6 +23,7 @@ Use the exact current profile when generating a new assembly. See
 [attendance activation and API](ATTENDANCE_MODULE.md),
 [fulfillment activation and API](FULFILLMENT_MODULE.md),
 [billing activation and API](BILLING_MODULE.md),
+[laundry activation and API](LAUNDRY_MODULE.md),
 [current acceptance](LOCAL_LIBRARY_RELEASE.md) and
 [kit programme status](STARTER_KIT_IMPLEMENTATION.md). Company website and full
 operating kits remain separate work.

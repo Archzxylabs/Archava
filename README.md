@@ -14,8 +14,14 @@ exclusive resource reservations, `1.6.0` adds room-night stays and housekeeping,
 tables, recipes and kitchen tickets, `1.9.0` adds assigned support cases,
 internal findings and resolution cycles, `1.10.0` adds bounded purchasing,
 supplier offers, purchase orders and physical stock receipts under PRD §46.6,
-and `1.11.0` adds reusable organizations, proposals with agreed scope baselines,
-and delivery capacity scheduling under PRD §46.7, §46.8, §46.9;
+`1.11.0` adds reusable organizations, proposals with agreed scope baselines,
+and delivery capacity scheduling under PRD §46.7, §46.8, §46.9, `1.12.0` adds
+a serialized asset register with custody tracking and maintenance logging,
+`1.13.0` adds recurring subscriptions, entitlements and usage tracking,
+`1.14.0` adds attendance sessions and event check-in, `1.15.0` adds fulfillment
+dispatch and light production work orders, `1.16.0` adds immutable invoicing
+and provider-signed payment settlement under PRD §46.6.6, and `1.17.0` adds
+laundry and dry cleaning processing with a quality-gated monotonic chain;
 see [release acceptance](docs/LOCAL_LIBRARY_RELEASE.md) and the
 [cold-install/handoff guide](docs/LOCAL_LIBRARY_HANDOFF.md).
 ARCHZXY is the company; Archava is its flagship product. The target internal module
@@ -47,6 +53,12 @@ and wholesale consumers. The [food-service module](docs/FOODSERVICE_MODULE.md) c
 recipes, physical tables and kitchen/service tickets with that shared stock ledger.
 The [support module](docs/SUPPORT_CASES_MODULE.md) shares case assignment, findings and resolution cycles.
 The [purchasing module](docs/PURCHASING_MODULE.md) shares supplier quotes, purchase orders and physical goods receipt findings into the commerce stock ledger.
+The [asset register module](docs/ASSETS_MODULE.md) shares serialized items, custody handovers and maintenance logs across rental and repair consumers.
+The [subscriptions module](docs/SUBSCRIPTIONS_MODULE.md) shares recurring subscription lifecycles, entitlements and usage quotas across SaaS and membership consumers.
+The [attendance module](docs/ATTENDANCE_MODULE.md) shares bounded sessions, rosters and verified check-ins across course and event consumers.
+The [fulfillment module](docs/FULFILLMENT_MODULE.md) shares dispatch custody chains and made-to-order work orders across warehouse and production consumers.
+The [billing module](docs/BILLING_MODULE.md) shares immutable invoicing, customer correction chains and provider-signed payment settlement across rental and clinic consumers.
+The [laundry module](docs/LAUNDRY_MODULE.md) shares counted garment intake, frozen priced order intent and a quality-gated processing chain across kilo laundry and dry cleaning consumers.
 These bounded capabilities do not mark any of the 40 operating kits complete.
 The [10 October repository re-audit](docs/PROJECT_REAUDIT_2026-10-10.md) records
 current folder/runtime boundaries, fresh verification and the next work order.

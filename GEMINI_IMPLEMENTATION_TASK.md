@@ -7,6 +7,42 @@ sampai habis sebelum mengubah kode.
 
 ## 0. Status Roadmap & Tugas Aktif
 
+### Audit & perbaikan 13 Oktober 2026 — security runner dan README [CLOSED]
+
+Temuan audit kerja tree pada 13 Oktober 2026:
+
+1. **Security runner berhenti di profil 1.11.0 (P1, sudah diperbaiki).**
+   `tools/security/verify.mjs` tidak pernah mendaftarkan lima domain terbaru
+   (assets, subscriptions, attendance, fulfillment, billing) — tidak ada di
+   run battery `--run`, tidak dikumpulkan dari `dist/*-proof/results.json`,
+   tidak masuk stale-profile gate, tidak punya kontrol matriks. Artinya
+   `pnpm security:verify` bisa PASS walaupun kelima proof itu tidak pernah
+   dijalankan ulang setelah perubahan kode — persis pola blocker R6/N5 yang
+   pernah ditutup.
+   **Perbaikan:** run battery + 10 proof entries + stale gate + command map +
+   15 kontrol baru (3 per domain: grants/tools, atomic/append-only, host+recovery)
+   mengikuti pola organizations/proposals/capacity. Registrasi lima domain itu menambah
+   15 kontrol; bersama 3 kontrol `laundry` baru, matriks kini **80 controls**
+   (committed 1.16.0 checkpoint: 62).
+2. **README stale (sudah diperbaiki).** Daftar profil/operasi modul README
+   berhenti di 1.11.0; kini mencakup 1.12.0–1.16.0 beserta lima module doc
+   (ASSETS, SUBSCRIPTIONS, ATTENDANCE, FULFILLMENT, BILLING).
+3. **Dokumen status diperbarui:** `docs/BUILD_STATUS.md` (checkpoint 1.16.0),
+   `docs/LOCAL_LIBRARY_RELEASE.md` (bagian current) dan
+   `docs/audit/2026-10-13-release-1.16.0.json` (`controlsPassed: 62`).
+   Angka historis checkpoint 1.11–1.15 tetap 62 controls sesuai bukti zamannya
+   (1.10.0 dan lebih awal punya angkanya sendiri).
+
+Bukti fresh setelah perbaikan:
+
+- `pnpm verify`: all 8 gates passed (1,618 tests / 124 files).
+- `pnpm security:verify` (`--run`): PASS dengan **80/80 controls**, profile 1.17.0
+  (checkpoint 1.16.0: 62),
+  run battery mencakup 10 proof baru (assets 18/5, subscriptions 18/5, attendance 18/4,
+  fulfillment 27/6, billing 30/10) — semua fresh, 0 not-passed.
+
+---
+
 ### Candidate 1.16.0 — Billing, Invoicing & Payment Settlement [ACCEPTED & CLOSED]
 
 - **Contracts & Package**: `@archava/billing` and `@archava/billing-pg` 0.1.0 (56 artifacts, 20 database ledgers).

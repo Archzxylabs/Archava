@@ -267,3 +267,22 @@ state machine (S1), and idempotent restart recovery.
 
 All forty full operating kits continue to retain their declared domain and adapter gaps.
 No complete operating kit is promoted by these narrow scopes.
+
+## Sixteenth implementation slice
+
+Adds `laundry` and `laundry-pg` 0.1.0: 58 compiled artifacts, 18 unchanged external pins,
+twenty-one owned ledgers (`001_laundry_orders_processing.sql`), host 0.20.0, config 0.19.0, kits 0.14.0,
+and assembly v15 terminal composition. Independent kilo laundry (`K19` weight) and dry
+cleaning/steam pressing (`K19` item) consumers share identical domain code and browser-safe dashboards.
+Narrow `laundry_processing` scope proves counted intake lines validated server-side with frozen
+`line_total_minor` and `total_minor` never carried in the client payload, a monotonic
+intake-tag-wash-dry-press-quality_check-ready-handover chain that refuses any step before intake and any
+repeat or backwards step, quality findings under a one-clear-per-reconciliation gate that raises and
+lowers `unreconciled_count` and refuses `ready` while an exception is open and until a quality check
+exists, dedicated `laundry.process` machine grant separate from the counter `laundry.write` grant,
+separate piece and gram accumulation counters, terminal `returned`/`canceled` states refusing further
+evidence, superuser and schema-owner refusal, service-principal and inactive/zero-grant refusal, forced
+tenant RLS isolation, immutable audit, resilient receipt recovery state machine (S1), and idempotent
+restart recovery.
+All forty full operating kits continue to retain their declared domain and adapter gaps.
+No complete operating kit is promoted by these narrow scopes.

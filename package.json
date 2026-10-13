@@ -89,7 +89,9 @@
     "fulfillment:verify": "node tools/library/pack.mjs && node tools/library/verify-fulfillment.mjs",
     "fulfillment:verify-host": "pnpm crm:build && node tools/library/verify-fulfillment-host.mjs",
     "billing:verify": "node tools/library/pack.mjs && node tools/library/verify-billing.mjs",
-    "billing:verify-host": "pnpm crm:build && node tools/library/verify-billing-host.mjs"
+    "billing:verify-host": "pnpm crm:build && node tools/library/verify-billing-host.mjs",
+    "laundry:verify": "node tools/library/pack.mjs && node tools/library/verify-laundry.mjs",
+    "laundry:verify-host": "pnpm crm:build && node tools/library/verify-laundry-host.mjs"
   },
   "devDependencies": {
     "@eslint/js": "9.37.0",

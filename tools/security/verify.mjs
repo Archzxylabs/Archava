@@ -63,6 +63,18 @@ if (process.argv.includes('--run')) {
   run('proposals-host', ['pnpm', 'proposals:verify-host'])
   run('capacity', ['pnpm', 'capacity:verify'])
   run('capacity-host', ['pnpm', 'capacity:verify-host'])
+  run('assets', ['pnpm', 'assets:verify'])
+  run('assets-host', ['pnpm', 'assets:verify-host'])
+  run('subscriptions', ['pnpm', 'subscriptions:verify'])
+  run('subscriptions-host', ['pnpm', 'subscriptions:verify-host'])
+  run('attendance', ['pnpm', 'attendance:verify'])
+  run('attendance-host', ['pnpm', 'attendance:verify-host'])
+  run('fulfillment', ['pnpm', 'fulfillment:verify'])
+  run('fulfillment-host', ['pnpm', 'fulfillment:verify-host'])
+  run('billing', ['pnpm', 'billing:verify'])
+  run('billing-host', ['pnpm', 'billing:verify-host'])
+  run('laundry', ['pnpm', 'laundry:verify'])
+  run('laundry-host', ['pnpm', 'laundry:verify-host'])
 }
 run('platform-audit', ['pnpm', 'audit', '--json'], root, [0, 1])
 run(
@@ -141,6 +153,18 @@ const proofs = {
   proposalsHost: await json(join(root, 'dist/proposals-host-proof/results.json')),
   capacity: await json(join(root, 'dist/delivery-capacity-proof/results.json')),
   capacityHost: await json(join(root, 'dist/delivery-capacity-host-proof/results.json')),
+  assets: await json(join(root, 'dist/assets-proof/results.json')),
+  assetsHost: await json(join(root, 'dist/assets-host-proof/results.json')),
+  subscriptions: await json(join(root, 'dist/subscriptions-proof/results.json')),
+  subscriptionsHost: await json(join(root, 'dist/subscriptions-host-proof/results.json')),
+  attendance: await json(join(root, 'dist/attendance-proof/results.json')),
+  attendanceHost: await json(join(root, 'dist/attendance-host-proof/results.json')),
+  fulfillment: await json(join(root, 'dist/fulfillment-proof/results.json')),
+  fulfillmentHost: await json(join(root, 'dist/fulfillment-host-proof/results.json')),
+  billing: await json(join(root, 'dist/billing-proof/results.json')),
+  billingHost: await json(join(root, 'dist/billing-host-proof/results.json')),
+  laundry: await json(join(root, 'dist/laundry-proof/results.json')),
+  laundryHost: await json(join(root, 'dist/laundry-host-proof/results.json')),
 }
 for (const name of [
   'runtime',
@@ -165,6 +189,18 @@ for (const name of [
   'proposalsHost',
   'capacity',
   'capacityHost',
+  'assets',
+  'assetsHost',
+  'subscriptions',
+  'subscriptionsHost',
+  'attendance',
+  'attendanceHost',
+  'fulfillment',
+  'fulfillmentHost',
+  'billing',
+  'billingHost',
+  'laundry',
+  'laundryHost',
 ]) {
   assert.equal(proofs[name].profile, profile.catalog.version, 'Stale release proof: ' + name)
 }
@@ -642,6 +678,136 @@ controls.push(
     'compiled host enforces CSRF, origin check|isolated browser completes pool creation|backup and restore preserves capacity pool entities',
   ],
 )
+controls.push(
+  [
+    'assets-current-grants-and-tools',
+    ['packages/assets-pg/src/repository.ts', 'packages/assets/src/tools.ts'],
+    'assets',
+    'inactive membership is refused mutation access|zero-permission user is refused asset creation|private read tools return filtered asset, custody and maintenance telemetry',
+  ],
+  [
+    'assets-immutable-custody-and-revisions',
+    [
+      'packages/assets-pg/src/repository.ts',
+      'packages/assets-pg/migrations/001_assets_custody_maintenance.sql',
+    ],
+    'assets',
+    'duplicate asset creation command replays previous committed receipt identically|custody dispatch handover records transfer to client with revision increment|optimistic revision conflict is raised when expected revision is stale',
+  ],
+  [
+    'assets-host-and-recovery',
+    ['packages/assets/src/dashboard.ts', 'apps/crm/src/operator.ts', 'apps/crm/src/host.ts'],
+    'assetsHost',
+    'compiled host enforces CSRF, origin check|host restart retains asset state, memberships and idempotent receipt recovery|blocks duplicate records on failure modes and reconciles pending receipts',
+  ],
+  [
+    'subscriptions-current-grants-and-tools',
+    ['packages/subscriptions-pg/src/repository.ts', 'packages/subscriptions/src/tools.ts'],
+    'subscriptions',
+    'inactive membership is refused mutation access|zero-permission user is refused subscription creation',
+  ],
+  [
+    'subscriptions-entitlements-and-revisions',
+    [
+      'packages/subscriptions-pg/src/repository.ts',
+      'packages/subscriptions-pg/migrations/001_subscriptions_entitlements_usage.sql',
+    ],
+    'subscriptions',
+    'authoritative backend payment confirmation transitions subscription from draft to active|quota exhaustion refusal blocks overconsumption|duplicate payment record command replays previous committed receipt identically',
+  ],
+  [
+    'subscriptions-host-and-recovery',
+    ['packages/subscriptions/src/dashboard.ts', 'apps/crm/src/operator.ts', 'apps/crm/src/host.ts'],
+    'subscriptionsHost',
+    'compiled host enforces CSRF, origin check|host restart retains subscription state, memberships and idempotent receipt recovery|blocks duplicate records on failure modes and reconciles pending receipts',
+  ],
+  [
+    'attendance-current-grants-and-tools',
+    ['packages/attendance-pg/src/repository.ts', 'packages/attendance/src/tools.ts'],
+    'attendance',
+    'service denies automated/service callers for human-operator mutations|access refused for inactive identities and empty permissions|read-only tool interface verifies session detail, rosters, and check-in history',
+  ],
+  [
+    'attendance-atomic-capacity-and-idempotency',
+    [
+      'packages/attendance-pg/src/repository.ts',
+      'packages/attendance-pg/migrations/001_attendance_sessions_rosters.sql',
+    ],
+    'attendance',
+    'capacity boundary strictly rejects registrations beyond session limit|duplicate scan with new idempotency key is rejected as already checked in|idempotent replay returns existing check-in receipt',
+  ],
+  [
+    'attendance-host-and-recovery',
+    ['packages/attendance/src/dashboard.ts', 'apps/crm/src/operator.ts', 'apps/crm/src/host.ts'],
+    'attendanceHost',
+    'compiled host enforces CSRF, origin check|host restart retains attendance state, memberships and idempotent receipt recovery|survives all 5 S1 failure modes through idempotent receipt recovery',
+  ],
+  [
+    'fulfillment-current-grants-and-tools',
+    ['packages/fulfillment-pg/src/repository.ts', 'packages/fulfillment/src/tools.ts'],
+    'fulfillment',
+    'service principals cannot record fulfillment mutations directly|production material lines require the dedicated produce grant|read-only tools verify jobs, lines, findings and custody history without writing',
+  ],
+  [
+    'fulfillment-monotonic-custody-and-findings',
+    [
+      'packages/fulfillment-pg/src/repository.ts',
+      'packages/fulfillment-pg/migrations/001_fulfillment_jobs_evidence.sql',
+    ],
+    'fulfillment',
+    'custody chain is monotonic and refuses repeated or backwards stages|returns are refused until the goods have actually been dispatched|completion is refused while a delivery finding is still unreconciled',
+  ],
+  [
+    'fulfillment-host-and-recovery',
+    ['packages/fulfillment/src/dashboard.ts', 'apps/crm/src/operator.ts', 'apps/crm/src/host.ts'],
+    'fulfillmentHost',
+    'compiled host enforces CSRF, origin check|host restart retains fulfillment state, memberships and idempotent receipt recovery|survives all 5 S1 failure modes through idempotent receipt recovery',
+  ],
+  [
+    'billing-current-grants-and-tools',
+    ['packages/billing-pg/src/repository.ts', 'packages/billing/src/tools.ts'],
+    'billing',
+    'service principals cannot create, issue, correct or void invoices|a correctly signed provider event still requires the dedicated write grant|read-only tools read invoices, lines, corrections, attempts and events without writing',
+  ],
+  [
+    'billing-provider-signed-settlement',
+    [
+      'packages/billing-pg/src/repository.ts',
+      'packages/billing-pg/migrations/001_billing_invoices_settlement.sql',
+    ],
+    'billing',
+    'only a correctly signed provider event settles an issued invoice|a provider event whose amount was altered after signing is refused|issuing, correcting and voiding require the dedicated settle grant',
+  ],
+  [
+    'billing-host-and-recovery',
+    ['packages/billing/src/dashboard.ts', 'apps/crm/src/operator.ts', 'apps/crm/src/host.ts'],
+    'billingHost',
+    'compiled host enforces CSRF, origin check|a forged provider signature is refused, and only a correctly signed notification settles an issued invoice|survives all 5 S1 failure modes through idempotent receipt recovery',
+  ],
+)
+controls.push(
+  [
+    'laundry-current-grants-and-tools',
+    ['packages/laundry-pg/src/repository.ts', 'packages/laundry/src/tools.ts'],
+    'laundry',
+    'wash, dry and press require the dedicated machine process grant|counter-side intake requires the write grant|inactive principals are refused',
+  ],
+  [
+    'laundry-priced-intent-and-processing-chain',
+    [
+      'packages/laundry-pg/src/repository.ts',
+      'packages/laundry-pg/migrations/001_laundry_orders_processing.sql',
+    ],
+    'laundry',
+    'server-computed totals freeze priced order intent|processing chain refuses any step before intake|ready is refused while a quality finding is unreconciled',
+  ],
+  [
+    'laundry-host-and-recovery',
+    ['packages/laundry/src/dashboard.ts', 'apps/crm/src/operator.ts', 'apps/crm/src/host.ts'],
+    'laundryHost',
+    'compiled host enforces CSRF, origin check|host restart retains laundry state, memberships and idempotent receipt recovery|survives all 5 S1 failure modes through idempotent receipt recovery',
+  ],
+)
 for (const [id, sources, proof, pattern] of controls) {
   for (const source of sources) await readFile(join(root, source))
   const checks = proofs[proof].checks.filter((label) => new RegExp(pattern).test(label))
@@ -674,6 +840,18 @@ for (const [id, sources, proof, pattern] of controls) {
       proposalsHost: 'pnpm proposals:verify-host',
       capacity: 'pnpm capacity:verify',
       capacityHost: 'pnpm capacity:verify-host',
+      assets: 'pnpm assets:verify',
+      assetsHost: 'pnpm assets:verify-host',
+      subscriptions: 'pnpm subscriptions:verify',
+      subscriptionsHost: 'pnpm subscriptions:verify-host',
+      attendance: 'pnpm attendance:verify',
+      attendanceHost: 'pnpm attendance:verify-host',
+      fulfillment: 'pnpm fulfillment:verify',
+      fulfillmentHost: 'pnpm fulfillment:verify-host',
+      billing: 'pnpm billing:verify',
+      billingHost: 'pnpm billing:verify-host',
+      laundry: 'pnpm laundry:verify',
+      laundryHost: 'pnpm laundry:verify-host',
     }[proof],
     positiveAndRefusalChecks: checks,
     result: 'passed',

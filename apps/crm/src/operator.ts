@@ -87,6 +87,8 @@ import { FULFILLMENT_PERMISSIONS } from '@archava/fulfillment'
 import { migrateFulfillment, grantFulfillmentRuntime } from '@archava/fulfillment-pg'
 import { BILLING_PERMISSIONS } from '@archava/billing'
 import { migrateBilling, grantBillingRuntime } from '@archava/billing-pg'
+import { LAUNDRY_PERMISSIONS } from '@archava/laundry'
+import { migrateLaundry, grantLaundryRuntime } from '@archava/laundry-pg'
 
 const credentialsSchema = z
   .object({
@@ -116,6 +118,7 @@ async function grant(pool: Pool) {
   await grantAttendanceRuntime(pool, role)
   await grantFulfillmentRuntime(pool, role)
   await grantBillingRuntime(pool, role)
+  await grantLaundryRuntime(pool, role)
   await grantNativeCrmAct(pool, role)
   await grantActHostRuntime(nativeSqlClient(pool, 'operator', 'operator'), role)
 }
@@ -228,6 +231,7 @@ async function setup() {
       await migrateAttendance(owner)
       await migrateFulfillment(owner)
       await migrateBilling(owner)
+      await migrateLaundry(owner)
       await grant(owner)
       for (const tenant of settings.tenants) {
         await owner.query(
@@ -290,11 +294,12 @@ async function user(args: string[]) {
       'attendance',
       'fulfillment',
       'billing',
+      'laundry',
     ].includes(mode ?? '') ||
     !file
   )
     throw new Error(
-      'Expected user add|reset|recover|pipeline|projects|scheduling|accommodation|commerce|foodservice|support|purchasing|organizations|proposals|capacity|assets|subscriptions|attendance|fulfillment|billing private-input.json',
+      'Expected user add|reset|recover|pipeline|projects|scheduling|accommodation|commerce|foodservice|support|purchasing|organizations|proposals|capacity|assets|subscriptions|attendance|fulfillment|billing|laundry private-input.json',
     )
   const settings = await loadSettings()
   const input = await readPrivateJson(resolve(file))
@@ -317,7 +322,8 @@ async function user(args: string[]) {
         mode === 'subscriptions' ||
         mode === 'attendance' ||
         mode === 'fulfillment' ||
-        mode === 'billing'
+        mode === 'billing' ||
+        mode === 'laundry'
       ) {
         const account = z
           .object({
@@ -371,7 +377,9 @@ async function user(args: string[]) {
                                           ? ATTENDANCE_PERMISSIONS
                                           : mode === 'billing'
                                             ? BILLING_PERMISSIONS
-                                            : FULFILLMENT_PERMISSIONS
+                                            : mode === 'laundry'
+                                              ? LAUNDRY_PERMISSIONS
+                                              : FULFILLMENT_PERMISSIONS
                 ).filter(
                   (permission: string) =>
                     account.access === 'write' || permission.endsWith('.read'),
@@ -414,7 +422,9 @@ async function user(args: string[]) {
                                         ? 'archava_attendance'
                                         : mode === 'billing'
                                           ? 'archava_billing'
-                                          : 'archava_fulfillment'
+                                          : mode === 'laundry'
+                                            ? 'archava_laundry'
+                                            : 'archava_fulfillment'
             await client.query(
               `INSERT INTO ${tableName}.memberships(tenant_id,principal_id,kind,permissions,scope,active) VALUES($1,$2,'human',$3,$4,$5) ON CONFLICT(tenant_id,principal_id) DO UPDATE SET permissions=excluded.permissions,scope=excluded.scope,active=excluded.active`,
               [tenant, person.principal_id, permissions, account.scope, account.access !== 'none'],
@@ -602,6 +612,7 @@ async function restore(args: string[]) {
       await migrateAttendance(owner)
       await migrateFulfillment(owner)
       await migrateBilling(owner)
+      await migrateLaundry(owner)
       await grant(owner)
       // Restoring an older backup must never resurrect a logged-out session.
       await owner.query('DELETE FROM archava_identity.sessions')
@@ -651,6 +662,7 @@ async function resumeActions() {
       await migrateAttendance(owner)
       await migrateFulfillment(owner)
       await migrateBilling(owner)
+      await migrateLaundry(owner)
       await grant(owner)
       const active = (
         await owner.query(

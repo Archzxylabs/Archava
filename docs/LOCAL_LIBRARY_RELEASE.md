@@ -1,6 +1,38 @@
 # Local reusable library release
 
-## Current extension — profile 1.16.0, 13 October 2026
+## Current extension — profile 1.17.0, 13 October 2026
+
+Laundry and dry cleaning processing adds 2 compiled artifacts (`laundry` and
+`laundry-pg` 0.1.0), 18 unchanged external pins, twenty-one owned ledgers, host 0.20.0, config 0.19.0, and kits 0.14.0.
+Laundry runs without CRM or an LLM. Assembly v15 adds terminal laundry composition alongside billing,
+fulfillment, attendance and subscriptions while preserving previous contracts and four-module defaults.
+State machine receipt recovery assigns a client-generated command UUID and marks the outcome uncertain
+_before_ mutation dispatch, blocks new writes while an earlier outcome is unknown, and requires explicit human
+re-query or retry across transport errors, body read rejections, truncated JSON payloads, and receipt schema/command-ID mismatches.
+
+| Extension                                 | Accepted evidence                                                                                                                                                                                                                                                                            | Limit                                                                                                             |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Frozen priced laundry order intent        | Two cold-installed kilo (`K19` weight) and dryclean (`K19` item) consumers; server-computed totals from validated integer lines with split piece/gram counters; order code, kind, customer, currency and total immutable at the database boundary; undeletable orders; 30 checks             | Prices are frozen minor-unit integers only; no pricing engine, tax calculation, discounts, or currency conversion |
+| Monotonic processing chain & quality gate | intake→tag→wash→dry→press→quality_check→ready→handover with repeat/backwards refusal; `ready` blocked while a quality finding is unreconciled and until a quality check exists; one-clear-per-reconciliation; dedicated `laundry.process` machine grant versus `laundry.write` counter grant | No barcode/RFID hardware, chemical inventory, route dispatch, or per-garment tracking                             |
+| Quality-gated terminal handover           | returned/canceled terminal states refuse further evidence; optimistic revision locking; idempotent replay with fingerprint-mismatch refusal; forced tenant RLS; superuser/schema-owner/service/inactive refusals; read-only tools; append-only audit                                         | No invoicing or payment behaviour (billing owns settlement); no customer-facing portal                            |
+
+All eight root gates passed: 1,653 tests/127 files. Fresh regression evidence retains
+CRM 38, Act 18, runtime 44, Chromium 3/70, projects 15/11, scheduling 14/9, accommodation 17/9,
+commerce 18/10, food-service 23/10, support 19/9, purchasing 19/11, organizations 24/6, proposals 30/6,
+capacity 29/6, assets 18/5, subscriptions 18/5, attendance 18/4, fulfillment 27/6, billing 30/10,
+laundry 30/6 and upgrade 4.
+The security matrix has 80 controls; root/runtime scans have zero advisories. The separate realtime template
+retains thirteen moderate findings and independent SDK/live gates. These checks do not establish production load
+or security certification.
+
+Synthetic upgrade from previous supported 1.10.0 to 1.17.0 passed all 4 checks on an
+isolated PostgreSQL cluster without altering historical records, audit logs, or command UUIDs.
+Release artifacts for candidate 1.17.0 are archived in `dist/releases/1.17.0/library` and `dist/releases/1.17.0/crm-runtime`.
+
+See [laundry contract](LAUNDRY_MODULE.md), [sanitized evidence](audit/2026-10-13-release-1.17.0.json) and
+[the programme ledger](STARTER_KIT_IMPLEMENTATION.md). All forty full operating kits remain unaccepted.
+
+## Previous extension — profile 1.16.0, 13 October 2026
 
 Invoicing and payment settlement adds 2 compiled artifacts (`billing` and
 `billing-pg` 0.1.0), 18 unchanged external pins, twenty owned ledgers, host 0.19.0, config 0.18.0, and kits 0.13.0.
