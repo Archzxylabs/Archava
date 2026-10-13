@@ -7,7 +7,23 @@ sampai habis sebelum mengubah kode.
 
 ## 0. Status Roadmap & Tugas Aktif
 
-### Candidate 1.15.0 — Fulfillment, Dispatch & Production [ACCEPTED & CLOSED]
+### Candidate 1.16.0 — Billing, Invoicing & Payment Settlement [ACCEPTED & CLOSED]
+
+- **Contracts & Package**: `@archava/billing` and `@archava/billing-pg` 0.1.0 (56 artifacts, 20 database ledgers).
+- **Core Capabilities**: Immutable invoice intent with a priced snapshot frozen at creation, issue-time snapshot freezing, append-only correction chains that adjust what is owed without rewriting a priced total, payment attempts that carry no currency field and no field capable of asserting a result, settlement recorded **only** by a provider-signed notification under the domain-separated `archava/billing/provider-event/v1` digest, tampered-amount/foreign-key/foreign-domain/unconfigured-provider refusals that fail closed, `billing.write` required even for a correctly signed event while issue/correct/void carry the separate `billing.settle` grant, refund reopening `settled → issued` with `void` terminal, `failed` notifications touching no invoice row at all, idempotent replay, optimistic revision locking, read-only tool boundaries, forced tenant RLS, immutable audit, undeletable invoices, and hardened S1 resilient receipt recovery state machine.
+- **Generalized across two consumers**: asset/equipment rental (`K10`) and outpatient clinics (`K25`).
+- **The load-bearing invariant**: there is no mutation, tool or dashboard control anywhere in the stack that marks an invoice paid by client assertion. Host signing keys are derived per tenant+provider via HKDF from the host master key, never stored beside it.
+- **Verification Evidence**:
+  - `pnpm verify`: All 8 root gates passed (1,618 tests in 124 files).
+  - `pnpm billing:verify`: 30/30 synthetic PostgreSQL checks passed, including two independently cold-installed consumers sharing unchanged billing code with a browser-safe dashboard.
+  - `pnpm billing:verify-host`: 10/10 Chromium CDP checks passed, including the full browser create→issue→settle workflow, an explicit assertion that no control settles by client assertion, and 5 S1 receipt-recovery regressions.
+  - `pnpm kits:verify` 13/13, `pnpm assembly:verify`, `pnpm crm:verify-upgrade` 4/4 (1.10.0 -> 1.16.0), `pnpm security:verify` PASS (62 controls).
+  - Archives: `dist/releases/1.16.0/library` and `dist/releases/1.16.0/crm-runtime`.
+  - Documentation: `docs/BILLING_MODULE.md`, `docs/audit/2026-10-13-release-1.16.0.json`.
+
+---
+
+### Catatan Historis: Candidate 1.15.0 — Fulfillment, Dispatch & Production [CLOSED]
 
 - **Contracts & Package**: `@archava/fulfillment` and `@archava/fulfillment-pg` 0.1.0 (54 artifacts, 19 database ledgers).
 - **Core Capabilities**: Bounded dispatch and made-to-order work orders, a monotonic receive→store→pick→pack→dispatch→deliver custody chain, returns gated on a prior dispatch, delivery findings with a one-clear-per-reconciliation gate that blocks completion, separate consumed/produced/scrap counters over append-only job lines, dedicated `fulfillment.dispatch` and `fulfillment.produce` grants, idempotent replay, optimistic revision locking, read-only tool boundaries, forced tenant RLS, immutable audit, undeletable jobs, and hardened S1 resilient receipt recovery state machine.
@@ -22,12 +38,11 @@ sampai habis sebelum mengubah kode.
 
 ---
 
-### Tugas Aktif Berikutnya: Priority 6 — Invoice/payment boundaries (Candidate berikutnya)
+### Tugas Aktif Berikutnya: Priority 7 — Remaining general-domain extensions (Candidate berikutnya)
 
-- Refer to the priority table in §5 (row 6) for the required real outcomes.
-- Domain scope: Immutable invoice intent/snapshot/corrections dan provider adapter.
-- Expected invariant: payment success hanya berasal dari verified authority, bukan dari client callback.
-- Follow the same evidence pattern as 1.15.0: `@archava/<domain>` + `@archava/<domain>-pg` 0.1.0, one owned migration ledger, host + config + kits + assembly bumps, a synthetic PostgreSQL domain proof, a Chromium host proof (including the S1 receipt-recovery regressions), a cold-install consumer proof, an upgrade proof, release archives, and updated docs/audit evidence.
+- Refer to the priority table in §5 (row 7) for the required real outcomes.
+- Domain scope: close the remaining general-domain requirements explicitly — hotel, restaurant, repair, laundry, property, recruitment, nonprofit, content dan keluarga lain.
+- Follow the same evidence pattern as 1.15.0/1.16.0: `@archava/<domain>` + `@archava/<domain>-pg` 0.1.0, one owned migration ledger, host + config + kits + assembly bumps, a synthetic PostgreSQL domain proof, a Chromium host proof (including the S1 receipt-recovery regressions), a cold-install consumer proof, an upgrade proof, release archives, and updated docs/audit evidence.
 
 ---
 

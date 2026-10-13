@@ -21,6 +21,7 @@ import { mountAssetDashboard } from '@archava/assets/dashboard'
 import { mountSubscriptionDashboard } from '@archava/subscriptions/dashboard'
 import { mountAttendanceDashboard } from '@archava/attendance/dashboard'
 import { mountFulfillmentDashboard } from '@archava/fulfillment/dashboard'
+import { mountBillingDashboard } from '@archava/billing/dashboard'
 
 const sessionSchema = z.discriminatedUnion('authenticated', [
   z.object({ authenticated: z.literal(false) }).strict(),
@@ -77,12 +78,15 @@ let assets: ReturnType<typeof mountAssetDashboard> | null = null
 let subscriptions: ReturnType<typeof mountSubscriptionDashboard> | null = null
 let attendance: ReturnType<typeof mountAttendanceDashboard> | null = null
 let fulfillment: ReturnType<typeof mountFulfillmentDashboard> | null = null
+let billing: ReturnType<typeof mountBillingDashboard> | null = null
 let session: z.infer<typeof sessionSchema> = { authenticated: false }
 function signedOut() {
   attendance?.destroy()
   attendance = null
   fulfillment?.destroy()
   fulfillment = null
+  billing?.destroy()
+  billing = null
   subscriptions?.destroy()
   subscriptions = null
   assets?.destroy()
@@ -156,6 +160,8 @@ async function mount() {
   attendance = null
   fulfillment?.destroy()
   fulfillment = null
+  billing?.destroy()
+  billing = null
   subscriptions?.destroy()
   subscriptions = null
   assets?.destroy()
@@ -212,6 +218,7 @@ async function mount() {
     ['subscriptions', modules.subscriptions ?? false],
     ['attendance', modules.attendance ?? false],
     ['fulfillment', modules.fulfillment ?? false],
+    ['billing', modules.billing ?? false],
   ] as const) {
     const node = element<HTMLElement>('#' + id)
     node.hidden = !enabled
@@ -324,6 +331,17 @@ async function mount() {
   if (modules.fulfillment)
     fulfillment = mountFulfillmentDashboard(element<HTMLElement>('#fulfillment'), {
       apiBase: '/api/fulfillment/' + selected.id,
+      transport: async (input, init) => {
+        const headers = new Headers(init?.headers)
+        if (init?.method === 'POST') headers.set('x-archava-csrf', csrf)
+        const response = await fetch(input, { ...init, headers })
+        if (response.status === 401) signedOut()
+        return response
+      },
+    })
+  if (modules.billing)
+    billing = mountBillingDashboard(element<HTMLElement>('#billing'), {
+      apiBase: '/api/billing/' + selected.id,
       transport: async (input, init) => {
         const headers = new Headers(init?.headers)
         if (init?.method === 'POST') headers.set('x-archava-csrf', csrf)
@@ -467,6 +485,7 @@ async function mount() {
     subscriptions?.ready,
     attendance?.ready,
     fulfillment?.ready,
+    billing?.ready,
   ])
 }
 async function refreshSession() {

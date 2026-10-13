@@ -247,3 +247,23 @@ immutable audit, resilient receipt recovery state machine (S1), and idempotent r
 
 All forty full operating kits continue to retain their declared domain and adapter gaps.
 No complete operating kit is promoted by these narrow scopes.
+
+## Fifteenth implementation slice
+
+Adds `billing` and `billing-pg` 0.1.0: 56 compiled artifacts, 18 unchanged external pins,
+twenty owned ledgers (`001_billing_invoices_settlement.sql`), host 0.19.0, config 0.18.0, kits 0.13.0,
+and assembly v14 terminal composition. Independent asset/equipment rental (`K10`) and outpatient
+clinic (`K25`) consumers share identical domain code and browser-safe dashboards.
+Narrow `billing_invoicing` scope proves immutable invoice intent with a priced snapshot frozen at
+creation, issue-time snapshot freezing, append-only correction chains that adjust what is owed without
+rewriting a priced total, payment attempts that carry no field capable of asserting a result, settlement
+recorded only by a correctly signed provider notification under the domain-separated
+`archava/billing/provider-event/v1` digest, tampered-amount/foreign-key/foreign-domain/unconfigured-provider
+refusals, the `billing.write` grant being required even for a correctly signed event, dedicated
+issue/correct/void grants separate from write, refund reopening `settled → issued` while `void` stays terminal,
+failed notifications moving no state at all, superuser and schema-owner refusal, service-principal and
+inactive/zero-grant refusal, forced tenant RLS isolation, immutable audit, resilient receipt recovery
+state machine (S1), and idempotent restart recovery.
+
+All forty full operating kits continue to retain their declared domain and adapter gaps.
+No complete operating kit is promoted by these narrow scopes.

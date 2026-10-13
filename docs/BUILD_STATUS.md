@@ -1,6 +1,43 @@
 # Build status
 
-## Current checkpoint — profile 1.15.0, 13 October 2026
+## Current checkpoint — profile 1.16.0, 13 October 2026
+
+The accepted bounded extension adds [invoicing and payment settlement](BILLING_MODULE.md),
+generalizing asset/equipment rental (`K10`) and outpatient clinics (`K25`), with immutable
+invoice intent and priced snapshots, append-only correction chains that adjust what is owed
+without ever rewriting a priced total, payment attempts that record intent while being
+structurally incapable of asserting a result, and settlement that only a payment provider's
+own correctly signed notification is able to record — there is no control, tool or mutation
+anywhere in the stack that marks an invoice paid by client assertion. A refund reopens
+`settled → issued` rather than erasing the settlement, `void` stays terminal, a `failed`
+provider notification touches nothing at all, and the same S1 receipt-recovery state machine
+hardens the billing dashboard. CRM, projects, scheduling, accommodation, commerce,
+food-service, support, purchasing, organizations, proposals, capacity, assets, subscriptions,
+attendance, and fulfillment remain fully supported.
+
+All eight root gates passed: **1,618 tests in 124 files**. Fresh evidence includes
+CRM 38, Act 18, runtime 44, Chromium minimal/full 3/70, projects 15/11, scheduling
+14/9, accommodation 17/9, commerce 18/10, food-service 23/10, support 19/9, purchasing
+19/11, organizations 24/6, proposals 30/6, capacity 29/6, assets 18/5, subscriptions 18/5,
+attendance 18/4, fulfillment 27/6, billing 30/10, kit planning/assembly 13, assembly 2 and
+prior-profile upgrade 4.
+The security matrix has 62 controls; root/runtime scans have zero advisories. The separate
+realtime template retains 13 moderate findings and independent SDK/live gates.
+
+Synthetic upgrade from previous supported 1.10.0 to 1.16.0 passed all 4 checks on an
+isolated PostgreSQL cluster without altering historical records, audit logs, or command UUIDs,
+and invalidates identity while holding native execution with fresh approval epochs. Release
+artifacts for candidate 1.16.0 are archived in `dist/releases/1.16.0/library` and `dist/releases/1.16.0/crm-runtime`
+matching 56 compiled artifacts, 20 database ledgers, host 0.19.0, and assembly v14. See
+[sanitized evidence](audit/2026-10-13-release-1.16.0.json) and
+[current release acceptance](LOCAL_LIBRARY_RELEASE.md).
+
+Full operating kits accepted: **0 of 40 researched candidates**. Narrow domain scopes
+do not accept complete hotel/POS/ERP systems. Payment/provider, customer portal,
+regulatory adapters and broader operational dimensions retain their evidence gates.
+No whole-product percentage is inferred from test counts.
+
+## Previous checkpoint — profile 1.15.0, 13 October 2026
 
 The accepted bounded extension adds [fulfillment dispatch and light production](FULFILLMENT_MODULE.md),
 generalizing warehouse/logistics (`K20`) and simple made-to-order production (`K23`), with human-only

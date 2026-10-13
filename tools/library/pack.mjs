@@ -13,6 +13,7 @@ const output = join(root, 'dist/library')
 const migrationPackages = new Set([
   'fulfillment-pg',
   'attendance-pg',
+  'billing-pg',
   'subscriptions-pg',
   'assets-pg',
   'capacity-pg',
@@ -58,6 +59,7 @@ export async function packLibrary() {
     }
   }
   for (const name of [
+    '@archava/billing-pg',
     '@archava/fulfillment-pg',
     '@archava/attendance-pg',
     '@archava/subscriptions-pg',

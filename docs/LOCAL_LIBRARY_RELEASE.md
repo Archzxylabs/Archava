@@ -1,6 +1,39 @@
 # Local reusable library release
 
-## Current extension — profile 1.15.0, 13 October 2026
+## Current extension — profile 1.16.0, 13 October 2026
+
+Invoicing and payment settlement adds 2 compiled artifacts (`billing` and
+`billing-pg` 0.1.0), 18 unchanged external pins, twenty owned ledgers, host 0.19.0, config 0.18.0, and kits 0.13.0.
+Billing runs without CRM or an LLM. Assembly v14 adds terminal billing composition alongside fulfillment,
+attendance and subscriptions while preserving previous contracts and four-module defaults.
+State machine receipt recovery assigns a client-generated command UUID and marks the outcome uncertain
+_before_ mutation dispatch, blocks new writes while an earlier outcome is unknown, and requires explicit human
+re-query or retry across transport errors, body read rejections, truncated JSON payloads, and receipt schema/command-ID mismatches.
+
+| Extension                                     | Accepted evidence                                                                                                                                                                                                                                      | Limit                                                                                                  |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| Immutable invoice intent and priced snapshots | Priced draft creation with frozen `gross_minor` equal to the sum of its lines; issue-time snapshot freezing; issued-invoice re-issue refusal; append-only correction chains that change what is owed while the priced total stays intact.              | No line editing after issue, no partial-invoice dispatch, no automated pricing or tax engine           |
+| Payment intent without an outcome field       | `record_payment_attempt` carries no currency field and no field capable of asserting a result; recording one settles nothing and does not even bump the invoice revision.                                                                              | Records intent only; never a settlement, a refund, or a charge                                         |
+| Provider-authoritative settlement             | Only a correctly signed provider notification settles an issued invoice; tampered-amount, foreign-key, foreign-domain and unconfigured-provider refusals all fail closed; a correctly signed event still requires the dedicated `billing.write` grant. | No hosted checkout, no card capture, no stored payment credentials, no provider API client             |
+| Balanced, reopenable lifecycle                | Over-settlement and over-refund refused as unbalanced; refund reopens `settled → issued` without erasing the settlement; a `failed` notification moves no balance, status or revision; `void` is terminal.                                             | No partial refunds below a settled amount already covered; no dunning, collections or ageing schedules |
+| Signature as the single trust boundary        | Domain-separated digest under `archava/billing/provider-event/v1` over length-framed tenant, invoice, provider event id, outcome, amount and currency; verification lives in one code path.                                                            | One shared-secret scheme; no mTLS, no key rotation service, no per-processor key escrow                |
+
+All eight root gates passed: 1,618 tests/124 files. Fresh regression evidence retains
+CRM 38, Act 18, runtime 44, Chromium 3/70, projects 15/11, scheduling 14/9, accommodation 17/9,
+commerce 18/10, food-service 23/10, support 19/9, purchasing 19/11, organizations 24/6, proposals 30/6,
+capacity 29/6, assets 18/5, subscriptions 18/5, attendance 18/4, fulfillment 27/6, billing 30/10 and upgrade 4.
+The security matrix has 62 controls; root/runtime scans have zero advisories. The separate realtime template
+retains thirteen moderate findings and independent SDK/live gates. These checks do not establish production load
+or security certification.
+
+Synthetic upgrade from previous supported 1.10.0 to 1.16.0 passed all 4 checks on an
+isolated PostgreSQL cluster without altering historical records, audit logs, or command UUIDs.
+Release artifacts for candidate 1.16.0 are archived in `dist/releases/1.16.0/library` and `dist/releases/1.16.0/crm-runtime`.
+
+See [billing contract](BILLING_MODULE.md), [sanitized evidence](audit/2026-10-13-release-1.16.0.json) and
+[the programme ledger](STARTER_KIT_IMPLEMENTATION.md). All forty full operating kits remain unaccepted.
+
+## Previous extension — profile 1.15.0, 13 October 2026
 
 Fulfillment dispatch and light production adds 6 compiled artifacts (`fulfillment` and
 `fulfillment-pg` 0.1.0), 18 unchanged external pins, nineteen owned ledgers, host 0.18.0, config 0.17.0, and kits 0.12.0.

@@ -76,6 +76,7 @@ export const kitRequestSchema = z
               'subscriptions_entitlements',
               'attendance_roster',
               'fulfillment_dispatch',
+              'billing_invoicing',
             ]),
           })
           .strict(),
@@ -141,6 +142,7 @@ export interface KitPlan {
       | 'subscriptions_entitlements'
       | 'attendance_roster'
       | 'fulfillment_dispatch'
+      | 'billing_invoicing'
   }[]
   readonly requirements: readonly KitRequirement[]
   readonly blockers: readonly KitRequirement[]

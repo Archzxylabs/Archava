@@ -83,6 +83,11 @@ const LOCAL_IMPLEMENTATIONS = freeze({
     { name: '@archava/fulfillment-pg', version: '0.1.0' },
     { name: '@archava/identity-pg', version: '0.1.0' },
   ],
+  billing_invoicing: [
+    { name: '@archava/billing', version: '0.1.0' },
+    { name: '@archava/billing-pg', version: '0.1.0' },
+    { name: '@archava/identity-pg', version: '0.1.0' },
+  ],
   support_cases: [
     { name: '@archava/support', version: '0.1.0' },
     { name: '@archava/support-pg', version: '0.1.0' },
@@ -213,6 +218,10 @@ export class KitPlanner {
         if (!['K20', 'K23'].includes(kit.id)) add(`scope.${kit.id}.fulfillment_dispatch`, kit.id)
         add('crm_contacts', kit.id)
         add('fulfillment_dispatch', kit.id)
+      } else if (selected.scope === 'billing_invoicing') {
+        if (!['K10', 'K25'].includes(kit.id)) add(`scope.${kit.id}.billing_invoicing`, kit.id)
+        add('crm_contacts', kit.id)
+        add('billing_invoicing', kit.id)
       } else if (selected.scope === 'support_cases') {
         if (!['K05', 'K06', 'K12', 'K18', 'K21'].includes(kit.id))
           add(`scope.${kit.id}.support_cases`, kit.id)
@@ -295,6 +304,7 @@ export class KitPlanner {
           (id === 'subscriptions_entitlements' && !this.modules.subscriptions) ||
           ((id === 'attendance_roster' || id === 'attendance') && !this.modules.attendance) ||
           (id === 'fulfillment_dispatch' && !this.modules.fulfillment) ||
+          (id === 'billing_invoicing' && !this.modules.billing) ||
           (id === 'support_cases' && !this.modules.support) ||
           (id === 'foodservice_ops' && !this.modules.foodservice) ||
           (id === 'accommodation_stays' && !this.modules.accommodation) ||
@@ -386,6 +396,7 @@ export class KitPlanner {
         ? { attendance: true }
         : {}),
       ...(required.has('fulfillment_dispatch') ? { fulfillment: true } : {}),
+      ...(required.has('billing_invoicing') ? { billing: true } : {}),
       ...(required.has('support_cases') ? { support: true } : {}),
       ...(required.has('foodservice_ops') ? { foodservice: true } : {}),
       pipeline: required.has('crm_sales_pipeline'),
@@ -406,32 +417,34 @@ export class KitPlanner {
       planAssembly(
         {
           version:
-            modules.fulfillment !== undefined
-              ? '13.0.0'
-              : modules.attendance !== undefined
-                ? '12.0.0'
-                : modules.subscriptions !== undefined
-                  ? '11.0.0'
-                  : modules.assets !== undefined
-                    ? '10.0.0'
-                    : modules.purchasing !== undefined ||
-                        modules.organizations !== undefined ||
-                        modules.proposals !== undefined ||
-                        modules.capacity !== undefined
-                      ? '8.0.0'
-                      : modules.support !== undefined
-                        ? '7.0.0'
-                        : modules.foodservice !== undefined
-                          ? '6.0.0'
-                          : modules.commerce !== undefined
-                            ? '5.0.0'
-                            : modules.accommodation !== undefined
-                              ? '4.0.0'
-                              : modules.scheduling !== undefined
-                                ? '3.0.0'
-                                : modules.projects !== undefined
-                                  ? '2.0.0'
-                                  : '1.0.0',
+            modules.billing !== undefined
+              ? '14.0.0'
+              : modules.fulfillment !== undefined
+                ? '13.0.0'
+                : modules.attendance !== undefined
+                  ? '12.0.0'
+                  : modules.subscriptions !== undefined
+                    ? '11.0.0'
+                    : modules.assets !== undefined
+                      ? '10.0.0'
+                      : modules.purchasing !== undefined ||
+                          modules.organizations !== undefined ||
+                          modules.proposals !== undefined ||
+                          modules.capacity !== undefined
+                        ? '8.0.0'
+                        : modules.support !== undefined
+                          ? '7.0.0'
+                          : modules.foodservice !== undefined
+                            ? '6.0.0'
+                            : modules.commerce !== undefined
+                              ? '5.0.0'
+                              : modules.accommodation !== undefined
+                                ? '4.0.0'
+                                : modules.scheduling !== undefined
+                                  ? '3.0.0'
+                                  : modules.projects !== undefined
+                                    ? '2.0.0'
+                                    : '1.0.0',
           profile: this.release.version,
           modules,
         },

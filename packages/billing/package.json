@@ -1,0 +1,26 @@
+{
+  "name": "@archava/billing",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Immutable invoice snapshots, append-only correction chains, payment intent and provider-authoritative settlement.",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./contracts": "./src/contracts.ts",
+    "./dashboard": "./src/dashboard.ts",
+    "./signature": "./src/signature.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "build": "echo \"@archava/billing ships TypeScript source\""
+  },
+  "dependencies": {
+    "zod": "4.1.12"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vitest": "4.1.11"
+  }
+}

@@ -35,6 +35,7 @@ import { createAssetApi, type AssetService } from '@archava/assets'
 import { createSubscriptionApi, type SubscriptionService } from '@archava/subscriptions'
 import { createAttendanceApi, type AttendanceService } from '@archava/attendance'
 import { createFulfillmentApi, type FulfillmentService } from '@archava/fulfillment'
+import { createBillingApi, type BillingService } from '@archava/billing'
 
 const json = (value: unknown, status = 200, headers: Record<string, string> = {}) =>
   Response.json(value, { status, headers: { 'cache-control': 'no-store', ...headers } })
@@ -76,6 +77,7 @@ export function createHostHandler(
   subscriptions?: SubscriptionService,
   attendance?: AttendanceService,
   fulfillment?: FulfillmentService,
+  billing?: BillingService,
 ) {
   const modules = settings.modules ?? FULL_MODULES
   if (!modules.pipeline) pipeline = undefined
@@ -270,6 +272,20 @@ export function createHostHandler(
           return json({ error: 'not_found' }, 404)
         await service.access(tenant, { kind: 'human', id: session.principalId })
         return await createFulfillmentApi(fulfillment, () =>
+          Promise.resolve({ kind: 'human', id: session.principalId }),
+        )(request)
+      }
+      if (url.pathname.startsWith('/api/billing/')) {
+        const tenant = /^\/api\/billing\/([^/]+)/.exec(url.pathname)?.[1]
+        if (
+          !tenant ||
+          !modules.billing ||
+          !billing ||
+          !settings.tenants.some((item) => item.id === tenant)
+        )
+          return json({ error: 'not_found' }, 404)
+        await service.access(tenant, { kind: 'human', id: session.principalId })
+        return await createBillingApi(billing, () =>
           Promise.resolve({ kind: 'human', id: session.principalId }),
         )(request)
       }
@@ -572,6 +588,7 @@ export async function startCrmHost(
   subscriptions?: SubscriptionService,
   attendance?: AttendanceService,
   fulfillment?: FulfillmentService,
+  billing?: BillingService,
 ) {
   let handler: ReturnType<typeof createHostHandler> | undefined
   const handle = (request: Request, source: string) => {
@@ -599,6 +616,7 @@ export async function startCrmHost(
       subscriptions,
       attendance,
       fulfillment,
+      billing,
     )
     return handler(request, source)
   }

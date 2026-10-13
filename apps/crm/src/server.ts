@@ -46,9 +46,37 @@ import { AttendanceService } from '@archava/attendance'
 import { PostgresAttendanceRepository } from '@archava/attendance-pg'
 import { FulfillmentService } from '@archava/fulfillment'
 import { PostgresFulfillmentRepository } from '@archava/fulfillment-pg'
+import { BillingService, type SignatureKeySource } from '@archava/billing'
+import { PostgresBillingRepository } from '@archava/billing-pg'
+import { hkdfSync } from 'node:crypto'
 
 // This local host also runs on desktops without reliable IPv6 routing.
 setDefaultResultOrder('ipv4first')
+
+/**
+ * Resolves the secret a payment provider's notification is verified under.
+ *
+ * Derived per tenant and provider from the host's master key rather than
+ * stored beside it: two tenants settling through the same processor never
+ * share a secret (a client that learns one tenant's material cannot mint
+ * events for another), and no new private-settings field has to be introduced
+ * into an existing installation for the module to be switchable on.
+ *
+ * The domain-separation label keeps this key independent of the one that
+ * fingerprints commands — holding one does not yield the other.
+ */
+function billingSignatureKeys(fingerprintKey: string): SignatureKeySource {
+  return (tenantId: string, providerId: string) => {
+    const derived = hkdfSync(
+      'sha256',
+      Buffer.from(fingerprintKey, 'utf8'),
+      Buffer.from(tenantId, 'utf8'),
+      Buffer.from(`archava/billing/provider-event/v1|${providerId}`, 'utf8'),
+      32,
+    )
+    return new Uint8Array(derived)
+  }
+}
 
 let release = () => {}
 const stopped = new Promise<void>((done) => {
@@ -190,6 +218,12 @@ try {
     (settings.modules ?? FULL_MODULES).fulfillment
       ? new FulfillmentService(
           await PostgresFulfillmentRepository.create(runtimePool, settings.fingerprintKey),
+        )
+      : undefined,
+    (settings.modules ?? FULL_MODULES).billing
+      ? new BillingService(
+          await PostgresBillingRepository.create(runtimePool, settings.fingerprintKey),
+          billingSignatureKeys(settings.fingerprintKey),
         )
       : undefined,
   )

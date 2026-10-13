@@ -1,16 +1,16 @@
 {
   "schemaVersion": "1.0.0",
   "id": "archava-local-library",
-  "version": "1.15.0",
+  "version": "1.16.0",
   "host": {
     "name": "@archava/crm-host",
-    "version": "0.18.0"
+    "version": "0.19.0"
   },
   "contracts": {
     "clientConfig": "1.0.0",
     "deploymentPlan": "2.0.0",
     "hostSettings": 1,
-    "assembly": "13.0.0",
+    "assembly": "14.0.0",
     "presence": "1.0.0",
     "kitPlan": "1.0.0",
     "kitCatalogue": "1.0.0"
@@ -61,7 +61,7 @@
     },
     {
       "name": "@archava/config",
-      "version": "0.17.0",
+      "version": "0.18.0",
       "migrations": []
     },
     {
@@ -186,7 +186,7 @@
     },
     {
       "name": "@archava/kits",
-      "version": "0.12.0",
+      "version": "0.13.0",
       "migrations": []
     },
     {
@@ -410,6 +410,21 @@
           "checksum": "901ab569b84baa26008c2128144dff1d0bc0214d6cfd32f7567faeaae9fc9cb6"
         }
       ]
+    },
+    {
+      "name": "@archava/billing",
+      "version": "0.1.0",
+      "migrations": []
+    },
+    {
+      "name": "@archava/billing-pg",
+      "version": "0.1.0",
+      "migrations": [
+        {
+          "file": "001_billing_invoices_settlement.sql",
+          "checksum": "b14f434495c526384a726ddf83eb685b610d229d379d0974b2c38df59f96dfbc"
+        }
+      ]
     }
   ],
   "databaseLedgers": [
@@ -511,6 +526,11 @@
       "schema": "archava_fulfillment",
       "package": "@archava/fulfillment-pg",
       "migrations": ["001_fulfillment_jobs_evidence"]
+    },
+    {
+      "schema": "archava_billing",
+      "package": "@archava/billing-pg",
+      "migrations": ["001_billing_invoices_settlement"]
     }
   ],
   "requiredAdapters": [
@@ -532,7 +552,8 @@
     "@archava/assets-pg",
     "@archava/subscriptions-pg",
     "@archava/attendance-pg",
-    "@archava/fulfillment-pg"
+    "@archava/fulfillment-pg",
+    "@archava/billing-pg"
   ],
   "operatorChecks": [
     "non-owner runtime database role",
@@ -547,7 +568,8 @@
     "organization accounts, contact affiliations and receipt recovery",
     "asset serialized identity, custody handover, maintenance logging and receipt recovery",
     "session rosters, event capacity, verified check-in events and receipt recovery",
-    "custody chain, pick-pack-dispatch evidence, delivery reconciliation and production output/scrap traceability"
+    "custody chain, pick-pack-dispatch evidence, delivery reconciliation and production output/scrap traceability",
+    "immutable invoice snapshot, append-only corrections, payment intent and provider-signed settlement authority"
   ],
   "externals": [
     {
