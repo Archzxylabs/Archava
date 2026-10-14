@@ -89,6 +89,30 @@ import { BILLING_PERMISSIONS } from '@archava/billing'
 import { migrateBilling, grantBillingRuntime } from '@archava/billing-pg'
 import { LAUNDRY_PERMISSIONS } from '@archava/laundry'
 import { migrateLaundry, grantLaundryRuntime } from '@archava/laundry-pg'
+import { FIELD_PERMISSIONS } from '@archava/field-services'
+import { migrateFieldServices, grantFieldServicesRuntime } from '@archava/field-services-pg'
+
+// One declaration per enrollable domain, so a new slice adds a row instead of
+// extending a nested ternary that silently swallows a neighbouring arm.
+const ENROLLMENT_MODES = {
+  projects: { schema: 'archava_projects', permissions: PROJECT_PERMISSIONS },
+  scheduling: { schema: 'archava_scheduling', permissions: SCHEDULING_PERMISSIONS },
+  accommodation: { schema: 'archava_accommodation', permissions: ACCOMMODATION_PERMISSIONS },
+  commerce: { schema: 'archava_commerce', permissions: COMMERCE_PERMISSIONS },
+  foodservice: { schema: 'archava_foodservice', permissions: FOOD_PERMISSIONS },
+  support: { schema: 'archava_support', permissions: SUPPORT_PERMISSIONS },
+  purchasing: { schema: 'archava_purchasing', permissions: PURCHASE_PERMISSIONS },
+  organizations: { schema: 'archava_organizations', permissions: ORGANIZATION_PERMISSIONS },
+  proposals: { schema: 'archava_proposals', permissions: PROPOSAL_PERMISSIONS },
+  capacity: { schema: 'archava_capacity', permissions: CAPACITY_PERMISSIONS },
+  assets: { schema: 'archava_assets', permissions: ASSET_PERMISSIONS },
+  subscriptions: { schema: 'archava_subscriptions', permissions: SUBSCRIPTION_PERMISSIONS },
+  attendance: { schema: 'archava_attendance', permissions: ATTENDANCE_PERMISSIONS },
+  fulfillment: { schema: 'archava_fulfillment', permissions: FULFILLMENT_PERMISSIONS },
+  billing: { schema: 'archava_billing', permissions: BILLING_PERMISSIONS },
+  laundry: { schema: 'archava_laundry', permissions: LAUNDRY_PERMISSIONS },
+  'field-services': { schema: 'archava_field', permissions: FIELD_PERMISSIONS },
+} as const
 
 const credentialsSchema = z
   .object({
@@ -119,6 +143,7 @@ async function grant(pool: Pool) {
   await grantFulfillmentRuntime(pool, role)
   await grantBillingRuntime(pool, role)
   await grantLaundryRuntime(pool, role)
+  await grantFieldServicesRuntime(pool, role)
   await grantNativeCrmAct(pool, role)
   await grantActHostRuntime(nativeSqlClient(pool, 'operator', 'operator'), role)
 }
@@ -232,6 +257,7 @@ async function setup() {
       await migrateFulfillment(owner)
       await migrateBilling(owner)
       await migrateLaundry(owner)
+      await migrateFieldServices(owner)
       await grant(owner)
       for (const tenant of settings.tenants) {
         await owner.query(
@@ -274,32 +300,15 @@ async function setup() {
 async function user(args: string[]) {
   const [mode, file] = args
   if (
-    ![
-      'add',
-      'reset',
-      'recover',
-      'pipeline',
-      'projects',
-      'scheduling',
-      'accommodation',
-      'commerce',
-      'foodservice',
-      'support',
-      'purchasing',
-      'organizations',
-      'proposals',
-      'capacity',
-      'assets',
-      'subscriptions',
-      'attendance',
-      'fulfillment',
-      'billing',
-      'laundry',
-    ].includes(mode ?? '') ||
+    !['add', 'reset', 'recover', 'pipeline', ...Object.keys(ENROLLMENT_MODES)].includes(
+      mode ?? '',
+    ) ||
     !file
   )
     throw new Error(
-      'Expected user add|reset|recover|pipeline|projects|scheduling|accommodation|commerce|foodservice|support|purchasing|organizations|proposals|capacity|assets|subscriptions|attendance|fulfillment|billing|laundry private-input.json',
+      'Expected user add|reset|recover|pipeline|' +
+        Object.keys(ENROLLMENT_MODES).join('|') +
+        ' private-input.json',
     )
   const settings = await loadSettings()
   const input = await readPrivateJson(resolve(file))
@@ -307,24 +316,8 @@ async function user(args: string[]) {
     const owner = createRuntimePool(connection(settings, 'archava_operator'))
     try {
       if (mode === 'add') await enroll(owner, settings, input)
-      else if (
-        mode === 'projects' ||
-        mode === 'scheduling' ||
-        mode === 'accommodation' ||
-        mode === 'commerce' ||
-        mode === 'foodservice' ||
-        mode === 'support' ||
-        mode === 'purchasing' ||
-        mode === 'organizations' ||
-        mode === 'proposals' ||
-        mode === 'capacity' ||
-        mode === 'assets' ||
-        mode === 'subscriptions' ||
-        mode === 'attendance' ||
-        mode === 'fulfillment' ||
-        mode === 'billing' ||
-        mode === 'laundry'
-      ) {
+      else if (mode !== undefined && mode in ENROLLMENT_MODES) {
+        const domain = ENROLLMENT_MODES[mode as keyof typeof ENROLLMENT_MODES]
         const account = z
           .object({
             username: usernameSchema,
@@ -349,40 +342,8 @@ async function user(args: string[]) {
           const permissions =
             account.access === 'none'
               ? []
-              : (mode === 'projects'
-                  ? PROJECT_PERMISSIONS
-                  : mode === 'scheduling'
-                    ? SCHEDULING_PERMISSIONS
-                    : mode === 'accommodation'
-                      ? ACCOMMODATION_PERMISSIONS
-                      : mode === 'commerce'
-                        ? COMMERCE_PERMISSIONS
-                        : mode === 'foodservice'
-                          ? FOOD_PERMISSIONS
-                          : mode === 'support'
-                            ? SUPPORT_PERMISSIONS
-                            : mode === 'purchasing'
-                              ? PURCHASE_PERMISSIONS
-                              : mode === 'organizations'
-                                ? ORGANIZATION_PERMISSIONS
-                                : mode === 'proposals'
-                                  ? PROPOSAL_PERMISSIONS
-                                  : mode === 'capacity'
-                                    ? CAPACITY_PERMISSIONS
-                                    : mode === 'assets'
-                                      ? ASSET_PERMISSIONS
-                                      : mode === 'subscriptions'
-                                        ? SUBSCRIPTION_PERMISSIONS
-                                        : mode === 'attendance'
-                                          ? ATTENDANCE_PERMISSIONS
-                                          : mode === 'billing'
-                                            ? BILLING_PERMISSIONS
-                                            : mode === 'laundry'
-                                              ? LAUNDRY_PERMISSIONS
-                                              : FULFILLMENT_PERMISSIONS
-                ).filter(
-                  (permission: string) =>
-                    account.access === 'write' || permission.endsWith('.read'),
+              : [...domain.permissions].filter(
+                  (permission) => account.access === 'write' || permission.endsWith('.read'),
                 )
           for (const tenant of account.tenants) {
             const member = (
@@ -393,38 +354,8 @@ async function user(args: string[]) {
             ).rows[0]
             if (member?.kind !== 'human' || !member.active)
               throw new Error('Active workspace membership required')
-            const tableName =
-              mode === 'projects'
-                ? 'archava_projects'
-                : mode === 'scheduling'
-                  ? 'archava_scheduling'
-                  : mode === 'accommodation'
-                    ? 'archava_accommodation'
-                    : mode === 'commerce'
-                      ? 'archava_commerce'
-                      : mode === 'foodservice'
-                        ? 'archava_foodservice'
-                        : mode === 'support'
-                          ? 'archava_support'
-                          : mode === 'purchasing'
-                            ? 'archava_purchasing'
-                            : mode === 'organizations'
-                              ? 'archava_organizations'
-                              : mode === 'proposals'
-                                ? 'archava_proposals'
-                                : mode === 'capacity'
-                                  ? 'archava_capacity'
-                                  : mode === 'assets'
-                                    ? 'archava_assets'
-                                    : mode === 'subscriptions'
-                                      ? 'archava_subscriptions'
-                                      : mode === 'attendance'
-                                        ? 'archava_attendance'
-                                        : mode === 'billing'
-                                          ? 'archava_billing'
-                                          : mode === 'laundry'
-                                            ? 'archava_laundry'
-                                            : 'archava_fulfillment'
+            // The domain's own migration owns the memberships table name.
+            const tableName = domain.schema
             await client.query(
               `INSERT INTO ${tableName}.memberships(tenant_id,principal_id,kind,permissions,scope,active) VALUES($1,$2,'human',$3,$4,$5) ON CONFLICT(tenant_id,principal_id) DO UPDATE SET permissions=excluded.permissions,scope=excluded.scope,active=excluded.active`,
               [tenant, person.principal_id, permissions, account.scope, account.access !== 'none'],
@@ -613,6 +544,7 @@ async function restore(args: string[]) {
       await migrateFulfillment(owner)
       await migrateBilling(owner)
       await migrateLaundry(owner)
+      await migrateFieldServices(owner)
       await grant(owner)
       // Restoring an older backup must never resurrect a logged-out session.
       await owner.query('DELETE FROM archava_identity.sessions')
@@ -663,6 +595,7 @@ async function resumeActions() {
       await migrateFulfillment(owner)
       await migrateBilling(owner)
       await migrateLaundry(owner)
+      await migrateFieldServices(owner)
       await grant(owner)
       const active = (
         await owner.query(

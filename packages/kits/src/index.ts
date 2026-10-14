@@ -428,36 +428,38 @@ export class KitPlanner {
       planAssembly(
         {
           version:
-            modules.laundry !== undefined
-              ? '15.0.0'
-              : modules.billing !== undefined
-                ? '14.0.0'
-                : modules.fulfillment !== undefined
-                  ? '13.0.0'
-                  : modules.attendance !== undefined
-                    ? '12.0.0'
-                    : modules.subscriptions !== undefined
-                      ? '11.0.0'
-                      : modules.assets !== undefined
-                        ? '10.0.0'
-                        : modules.purchasing !== undefined ||
-                            modules.organizations !== undefined ||
-                            modules.proposals !== undefined ||
-                            modules.capacity !== undefined
-                          ? '8.0.0'
-                          : modules.support !== undefined
-                            ? '7.0.0'
-                            : modules.foodservice !== undefined
-                              ? '6.0.0'
-                              : modules.commerce !== undefined
-                                ? '5.0.0'
-                                : modules.accommodation !== undefined
-                                  ? '4.0.0'
-                                  : modules.scheduling !== undefined
-                                    ? '3.0.0'
-                                    : modules.projects !== undefined
-                                      ? '2.0.0'
-                                      : '1.0.0',
+            modules.fieldServices !== undefined
+              ? '16.0.0'
+              : modules.laundry !== undefined
+                ? '15.0.0'
+                : modules.billing !== undefined
+                  ? '14.0.0'
+                  : modules.fulfillment !== undefined
+                    ? '13.0.0'
+                    : modules.attendance !== undefined
+                      ? '12.0.0'
+                      : modules.subscriptions !== undefined
+                        ? '11.0.0'
+                        : modules.assets !== undefined
+                          ? '10.0.0'
+                          : modules.purchasing !== undefined ||
+                              modules.organizations !== undefined ||
+                              modules.proposals !== undefined ||
+                              modules.capacity !== undefined
+                            ? '8.0.0'
+                            : modules.support !== undefined
+                              ? '7.0.0'
+                              : modules.foodservice !== undefined
+                                ? '6.0.0'
+                                : modules.commerce !== undefined
+                                  ? '5.0.0'
+                                  : modules.accommodation !== undefined
+                                    ? '4.0.0'
+                                    : modules.scheduling !== undefined
+                                      ? '3.0.0'
+                                      : modules.projects !== undefined
+                                        ? '2.0.0'
+                                        : '1.0.0',
           profile: this.release.version,
           modules,
         },

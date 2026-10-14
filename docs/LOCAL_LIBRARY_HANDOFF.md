@@ -6,7 +6,8 @@ accommodation, shared commerce, restaurant service, support cases, purchasing/ph
 organizations & affiliations, proposals & versioned change requests, pooled delivery capacity estimation,
 serialized asset register/custody/maintenance, recurring subscriptions/entitlements/usage,
 attendance recording/event check-in, fulfillment dispatch/light production, invoicing/payment
-settlement, and laundry/dry-cleaning processing.
+settlement, laundry/dry-cleaning processing, and appointment-bound technician dispatch with
+separated labour/part evidence and customer signoff.
 Use the exact current profile when generating a new assembly. See
 [project activation and API](PROJECT_DELIVERY_MODULE.md),
 [reservation activation and API](RESOURCE_RESERVATIONS_MODULE.md),
@@ -24,6 +25,7 @@ Use the exact current profile when generating a new assembly. See
 [fulfillment activation and API](FULFILLMENT_MODULE.md),
 [billing activation and API](BILLING_MODULE.md),
 [laundry activation and API](LAUNDRY_MODULE.md),
+[technician dispatch activation and API](FIELD_SERVICES_MODULE.md),
 [current acceptance](LOCAL_LIBRARY_RELEASE.md) and
 [kit programme status](STARTER_KIT_IMPLEMENTATION.md). Company website and full
 operating kits remain separate work.

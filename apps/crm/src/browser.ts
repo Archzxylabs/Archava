@@ -23,6 +23,7 @@ import { mountAttendanceDashboard } from '@archava/attendance/dashboard'
 import { mountFulfillmentDashboard } from '@archava/fulfillment/dashboard'
 import { mountBillingDashboard } from '@archava/billing/dashboard'
 import { mountLaundryDashboard } from '@archava/laundry/dashboard'
+import { mountFieldServicesDashboard } from '@archava/field-services/dashboard'
 
 const sessionSchema = z.discriminatedUnion('authenticated', [
   z.object({ authenticated: z.literal(false) }).strict(),
@@ -81,6 +82,7 @@ let attendance: ReturnType<typeof mountAttendanceDashboard> | null = null
 let fulfillment: ReturnType<typeof mountFulfillmentDashboard> | null = null
 let billing: ReturnType<typeof mountBillingDashboard> | null = null
 let laundry: ReturnType<typeof mountLaundryDashboard> | null = null
+let fieldServices: ReturnType<typeof mountFieldServicesDashboard> | null = null
 let session: z.infer<typeof sessionSchema> = { authenticated: false }
 function signedOut() {
   attendance?.destroy()
@@ -91,6 +93,8 @@ function signedOut() {
   billing = null
   laundry?.destroy()
   laundry = null
+  fieldServices?.destroy()
+  fieldServices = null
   subscriptions?.destroy()
   subscriptions = null
   assets?.destroy()
@@ -168,6 +172,8 @@ async function mount() {
   billing = null
   laundry?.destroy()
   laundry = null
+  fieldServices?.destroy()
+  fieldServices = null
   subscriptions?.destroy()
   subscriptions = null
   assets?.destroy()
@@ -226,6 +232,7 @@ async function mount() {
     ['fulfillment', modules.fulfillment ?? false],
     ['billing', modules.billing ?? false],
     ['laundry', modules.laundry ?? false],
+    ['field', modules.fieldServices ?? false],
   ] as const) {
     const node = element<HTMLElement>('#' + id)
     node.hidden = !enabled
@@ -360,6 +367,17 @@ async function mount() {
   if (modules.laundry)
     laundry = mountLaundryDashboard(element<HTMLElement>('#laundry'), {
       apiBase: '/api/laundry/' + selected.id,
+      transport: async (input, init) => {
+        const headers = new Headers(init?.headers)
+        if (init?.method === 'POST') headers.set('x-archava-csrf', csrf)
+        const response = await fetch(input, { ...init, headers })
+        if (response.status === 401) signedOut()
+        return response
+      },
+    })
+  if (modules.fieldServices)
+    fieldServices = mountFieldServicesDashboard(element<HTMLElement>('#field'), {
+      apiBase: '/api/field/' + selected.id,
       transport: async (input, init) => {
         const headers = new Headers(init?.headers)
         if (init?.method === 'POST') headers.set('x-archava-csrf', csrf)
@@ -505,6 +523,7 @@ async function mount() {
     fulfillment?.ready,
     billing?.ready,
     laundry?.ready,
+    fieldServices?.ready,
   ])
 }
 async function refreshSession() {

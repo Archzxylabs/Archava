@@ -75,6 +75,8 @@ if (process.argv.includes('--run')) {
   run('billing-host', ['pnpm', 'billing:verify-host'])
   run('laundry', ['pnpm', 'laundry:verify'])
   run('laundry-host', ['pnpm', 'laundry:verify-host'])
+  run('field-services', ['pnpm', 'field-services:verify'])
+  run('field-services-host', ['pnpm', 'field-services:verify-host'])
 }
 run('platform-audit', ['pnpm', 'audit', '--json'], root, [0, 1])
 run(
@@ -165,6 +167,8 @@ const proofs = {
   billingHost: await json(join(root, 'dist/billing-host-proof/results.json')),
   laundry: await json(join(root, 'dist/laundry-proof/results.json')),
   laundryHost: await json(join(root, 'dist/laundry-host-proof/results.json')),
+  fieldServices: await json(join(root, 'dist/field-proof/results.json')),
+  fieldServicesHost: await json(join(root, 'dist/field-host-proof/results.json')),
 }
 for (const name of [
   'runtime',
@@ -201,6 +205,8 @@ for (const name of [
   'billingHost',
   'laundry',
   'laundryHost',
+  'fieldServices',
+  'fieldServicesHost',
 ]) {
   assert.equal(proofs[name].profile, profile.catalog.version, 'Stale release proof: ' + name)
 }
@@ -808,6 +814,33 @@ controls.push(
     'compiled host enforces CSRF, origin check|host restart retains laundry state, memberships and idempotent receipt recovery|survives all 5 S1 failure modes through idempotent receipt recovery',
   ],
 )
+controls.push(
+  [
+    'field-services-grants-and-tools',
+    ['packages/field-services-pg/src/repository.ts', 'packages/field-services/src/tools.ts'],
+    'fieldServices',
+    'job assignment requires the dedicated dispatch grant|customer signoff requires the dedicated signoff grant|service principals cannot record field mutations directly|grant revocation takes effect',
+  ],
+  [
+    'field-services-appointment-evidence-and-signoff-chain',
+    [
+      'packages/field-services-pg/src/repository.ts',
+      'packages/field-services-pg/migrations/001_field_services_dispatch_visits.sql',
+    ],
+    'fieldServices',
+    'appointment it must not lose|labour hours and part pieces stay on separate counters|work evidence cannot be recorded before a site visit|signoff cannot precede work evidence|approval cannot skip the customer signoff|replayed command returns the original receipt',
+  ],
+  [
+    'field-services-host-and-recovery',
+    [
+      'packages/field-services/src/dashboard.ts',
+      'apps/crm/src/operator.ts',
+      'apps/crm/src/host.ts',
+    ],
+    'fieldServicesHost',
+    'compiled host enforces CSRF, origin check|host restart retains field services state, memberships and idempotent receipt recovery|survives all 5 S1 failure modes through idempotent receipt recovery',
+  ],
+)
 for (const [id, sources, proof, pattern] of controls) {
   for (const source of sources) await readFile(join(root, source))
   const checks = proofs[proof].checks.filter((label) => new RegExp(pattern).test(label))
@@ -852,6 +885,8 @@ for (const [id, sources, proof, pattern] of controls) {
       billingHost: 'pnpm billing:verify-host',
       laundry: 'pnpm laundry:verify',
       laundryHost: 'pnpm laundry:verify-host',
+      fieldServices: 'pnpm field-services:verify',
+      fieldServicesHost: 'pnpm field-services:verify-host',
     }[proof],
     positiveAndRefusalChecks: checks,
     result: 'passed',

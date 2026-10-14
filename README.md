@@ -20,9 +20,10 @@ a serialized asset register with custody tracking and maintenance logging,
 `1.13.0` adds recurring subscriptions, entitlements and usage tracking,
 `1.14.0` adds attendance sessions and event check-in, `1.15.0` adds fulfillment
 dispatch and light production work orders, `1.16.0` adds immutable invoicing
-and provider-signed payment settlement under PRD §46.6.6, and `1.17.0` adds
-laundry and dry cleaning processing with a quality-gated monotonic chain;
-see [release acceptance](docs/LOCAL_LIBRARY_RELEASE.md) and the
+and provider-signed payment settlement under PRD §46.6.6, `1.17.0` adds laundry
+and dry cleaning processing with a quality-gated monotonic chain and
+appointment-bound technician dispatch with separated labour/part evidence and
+customer signoff; see [release acceptance](docs/LOCAL_LIBRARY_RELEASE.md) and the
 [cold-install/handoff guide](docs/LOCAL_LIBRARY_HANDOFF.md).
 ARCHZXY is the company; Archava is its flagship product. The target internal module
 library includes reusable assistant/presence contracts and deterministic CRM/ERP

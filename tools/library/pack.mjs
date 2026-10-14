@@ -1,6 +1,6 @@
 /* global process */
 /** Internal compiled artifacts; no publication and no source-workspace imports. */
-import { readdir, readFile, mkdir, rm, cp, writeFile } from 'node:fs/promises'
+import { readdir, readFile, mkdir, rm, cp, writeFile, rename } from 'node:fs/promises'
 import { resolve, dirname, relative, join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { createHash } from 'node:crypto'
@@ -9,8 +9,9 @@ import ts from 'typescript'
 import { build } from 'esbuild'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
-const output = join(root, 'dist/library')
+const libraryRoot = join(root, 'dist/library')
 const migrationPackages = new Set([
+  'field-services-pg',
   'laundry-pg',
   'fulfillment-pg',
   'attendance-pg',
@@ -48,6 +49,14 @@ async function sourceFiles(directory) {
 
 export async function packLibrary() {
   const catalog = JSON.parse(await readFile(join(root, 'config/library-release.v1.json'), 'utf8'))
+  // Stage into a per-run directory and rename once complete. A plain `rm` of
+  // dist/library here would let concurrent pack runs delete each other's output
+  // mid-scan, which is how a proof can momentarily see a half-written library.
+  const staging = join(root, 'dist', `library.pending-${process.pid}`)
+  let output = staging
+  await rm(staging, { recursive: true, force: true })
+  await mkdir(join(output, 'tarballs'), { recursive: true })
+
   const manifests = new Map()
   async function include(name) {
     if (manifests.has(name)) return
@@ -60,6 +69,7 @@ export async function packLibrary() {
     }
   }
   for (const name of [
+    '@archava/field-services-pg',
     '@archava/laundry-pg',
     '@archava/billing-pg',
     '@archava/fulfillment-pg',
@@ -103,8 +113,6 @@ export async function packLibrary() {
   const host = JSON.parse(await readFile(join(root, 'apps/crm/package.json'), 'utf8'))
   if (host.name !== catalog.host.name || host.version !== catalog.host.version)
     throw new Error('Unsupported release host version')
-  await rm(output, { recursive: true, force: true })
-  await mkdir(join(output, 'tarballs'), { recursive: true })
 
   const base = ts.readConfigFile(join(root, 'tsconfig.base.json'), ts.sys.readFile)
   if (base.error) throw new Error(ts.flattenDiagnosticMessageText(base.error.messageText, '\n'))
@@ -225,6 +233,12 @@ export async function packLibrary() {
     join(output, 'artifacts.json'),
     JSON.stringify({ schema_version: '1.0.0', artifacts }, null, 2) + '\n',
   )
+  // Swap the finished staging tree into place as one rename, so a concurrent
+  // reader sees either the previous complete library or this complete one.
+  // rename() over an existing directory fails, so clear the old last.
+  await rm(libraryRoot, { recursive: true, force: true })
+  await rename(staging, libraryRoot)
+  output = libraryRoot
   process.stdout.write(
     `Packed ${artifacts.length} compiled internal packages in dist/library/tarballs.\n`,
   )

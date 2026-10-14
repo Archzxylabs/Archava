@@ -10,7 +10,7 @@
     "clientConfig": "1.0.0",
     "deploymentPlan": "2.0.0",
     "hostSettings": 1,
-    "assembly": "15.0.0",
+    "assembly": "16.0.0",
     "presence": "1.0.0",
     "kitPlan": "1.0.0",
     "kitCatalogue": "1.0.0"
@@ -440,6 +440,21 @@
           "checksum": "0152962d7fe05b506c757c739657615334acbda62f04eb5c61ba3fc340ba08a6"
         }
       ]
+    },
+    {
+      "name": "@archava/field-services",
+      "version": "0.1.0",
+      "migrations": []
+    },
+    {
+      "name": "@archava/field-services-pg",
+      "version": "0.1.0",
+      "migrations": [
+        {
+          "file": "001_field_services_dispatch_visits.sql",
+          "checksum": "094bf7d79c03ec16654d1adccb07984514d90524311822deaab51fc9683aa8d1"
+        }
+      ]
     }
   ],
   "databaseLedgers": [
@@ -551,6 +566,11 @@
       "schema": "archava_laundry",
       "package": "@archava/laundry-pg",
       "migrations": ["001_laundry_orders_processing"]
+    },
+    {
+      "schema": "archava_field",
+      "package": "@archava/field-services-pg",
+      "migrations": ["001_field_services_dispatch_visits"]
     }
   ],
   "requiredAdapters": [
@@ -589,7 +609,8 @@
     "asset serialized identity, custody handover, maintenance logging and receipt recovery",
     "session rosters, event capacity, verified check-in events and receipt recovery",
     "custody chain, pick-pack-dispatch evidence, delivery reconciliation and production output/scrap traceability",
-    "immutable invoice snapshot, append-only corrections, payment intent and provider-signed settlement authority"
+    "immutable invoice snapshot, append-only corrections, payment intent and provider-signed settlement authority",
+    "appointment-locked dispatch, separated labour/parts evidence, customer signoff and replay-safe commands"
   ],
   "externals": [
     {

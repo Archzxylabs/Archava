@@ -68,7 +68,9 @@
     "@archava/billing": "workspace:*",
     "@archava/billing-pg": "workspace:*",
     "@archava/laundry": "workspace:*",
-    "@archava/laundry-pg": "workspace:*"
+    "@archava/laundry-pg": "workspace:*",
+    "@archava/field-services": "workspace:*",
+    "@archava/field-services-pg": "workspace:*"
   },
   "devDependencies": {
     "@types/pg": "8.23.1",
