@@ -175,6 +175,7 @@ pnpm security:verify
 pnpm crm:benchmark
 pnpm crm:verify-browser
 pnpm crm:verify-upgrade --cold-prior
+pnpm library:manifest
 ```
 
 The dedicated CRM, Act, runtime, reuse and assembly commands remain available.
@@ -183,6 +184,10 @@ root `verify` alone does not cover browser/database/template acceptance. Upgrade
 uses an isolated Git archive when no prior binary exists, installs its frozen
 lock with scripts disabled, and builds/starts both releases against synthetic data.
 Fixtures and owned browsers/database processes are cleaned up after checks.
+`pnpm library:manifest` reads the proof artifacts already on disk and regenerates
+`docs/audit/local-library/acceptance-<profile>.json`; it writes no proof of its own,
+and it fails rather than emitting a manifest whose evidence is missing or whose
+profile disagrees with the trusted catalogue.
 
 The standalone template keeps its own `npm test`, `npm run test:agent` and
 `npm run build` commands. Its seven SDK integration checks need its Python venv;

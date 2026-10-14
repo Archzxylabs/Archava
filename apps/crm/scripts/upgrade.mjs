@@ -8,6 +8,22 @@ import { createRequire } from 'node:module'
 import { randomUUID, createHash } from 'node:crypto'
 const root = resolve(import.meta.dirname, '../../..'),
   priorCommit = '345d039'
+
+// pnpm re-exports the invoking user npm config into every workspace script it runs, so the
+// owner's user-level `allow-scripts` policy reaches npm as `npm_config_allow_scripts`.
+// npm treats environment config as CLI-level policy and refuses it for project-scoped
+// installs (EALLOWSCRIPTS). The archived prior commit predates this guard and is immutable
+// git history, so this caller has to carry it for the archived build.
+// Deleting the variable alone is not enough here: the archived build is reached through
+// `pnpm crm:build`, and pnpm re-injects ~/.npmrc into the script it runs — proven by
+// observing the variable reappear in a deep child after removal from the parent. Invoking
+// the archived build script with `node` directly skips that injection, and pointing npm at
+// an empty user config stops the owner policy being read from ~/.npmrc either. The install
+// in build.mjs already passes --ignore-scripts, so no lifecycle script is lost.
+const archiveEnv = { ...process.env }
+delete archiveEnv.npm_config_allow_scripts
+archiveEnv.npm_config_userconfig = '/dev/null'
+delete process.env.npm_config_allow_scripts
 const scratch = await mkdtemp(join(tmpdir(), 'archava-upgrade-proof-')),
   home = join(scratch, 'state')
 await mkdir(home, { mode: 0o700 })
@@ -143,8 +159,13 @@ try {
     execFileSync('pnpm', ['install', '--frozen-lockfile', '--ignore-scripts'], {
       cwd: archive,
       stdio: 'pipe',
+      env: archiveEnv,
     })
-    execFileSync('pnpm', ['crm:build'], { cwd: archive, stdio: 'pipe' })
+    execFileSync(process.execPath, [join(archive, 'apps/crm/scripts/build.mjs')], {
+      cwd: archive,
+      stdio: 'pipe',
+      env: archiveEnv,
+    })
     prior = join(archive, 'dist/crm-runtime')
   }
   const old = JSON.parse(await readFile(join(prior, 'release-profile.json'), 'utf8'))

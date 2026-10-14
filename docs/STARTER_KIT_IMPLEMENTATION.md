@@ -24,7 +24,7 @@ support are not authorized by this instruction.
 | KIT-06 orders, retail and food service                 | Catalogue/orders/stock and restaurant table/kitchen rules; validated composition and failure semantics                                                                                 | Accepted: bounded commerce and food service                                                                                                                         |
 | KIT-07 remaining general kits                          | Build the 24 general families' explicit scopes from shared services and separate extensions; each needs its own evidence                                                               | In progress: bounded support, purchasing, organizations, proposals/scope, capacity, assets, subscriptions, attendance, and fulfillment, and field services accepted |
 | KIT-08 specialist kits                                 | Domain review plus selected authoritative-system adapters, supported configuration, privacy and live integration evidence; 16 research families are not native full-system commitments | Pending                                                                                                                                                             |
-| KIT-09 operator handoff                                | Reproducible releases, migration/recovery, acceptance manifest and honest support catalogue                                                                                            | Pending                                                                                                                                                             |
+| KIT-09 operator handoff                                | Reproducible releases, migration/recovery, acceptance manifest and honest support catalogue                                                                                            | Accepted: operator handoff scope                                                                                                                                    |
 
 No candidate is promoted to accepted from a file count, generated manifest, UI
 visibility, mocked provider response or a generic CRUD engine. Specialist adapter
@@ -315,3 +315,59 @@ dispatch-to-signoff workflow, then the five S1 recovery modes.
 
 All forty full operating kits continue to retain their declared domain and adapter gaps.
 No complete operating kit is promoted by these narrow scopes.
+
+## Eighteenth implementation slice — KIT-09 operator handoff
+
+The operator handoff requirement was audited against machine evidence rather than
+prose, and three of its four parts were real work.
+
+_Reproducible releases_ were already proven: two `pnpm library:pack` runs produce
+byte-identical `dist/library/artifacts.json`, `release-profile.json` and
+`security-proof/results.json` across 60 tarballs.
+
+_Migration/recovery was broken._ `pnpm crm:verify-upgrade --cold-prior` exited 1 with
+`npm error code EALLOWSCRIPTS`, and `tools/library/verify-accommodation.mjs` carried the
+same latent defect on archived commit `0e396bd`, passing today only because a warm prior
+artifact happened to exist. Root cause: the owner's user-level npm config sets
+`allow-scripts`, pnpm re-injects user config into every workspace script it runs, and npm
+reads environment config as CLI-level policy, refusing it for a project-scoped install.
+The guard that already exists in `apps/crm/scripts/build.mjs` deletes the variable from
+`process.env`, which is sufficient only where npm is invoked directly. Both broken sites
+reach the archived build _through_ pnpm, so the caller now deletes the variable and points
+npm at an empty user config, and invokes the archived build script with `node` directly.
+The archived installs already pass `--ignore-scripts`, so no lifecycle script is lost.
+Both cold-prior proofs now exit 0.
+
+_The acceptance manifest was stale and hand-written._ `docs/audit/local-library/manifest.json`
+is frozen at profile 1.3.0 (1458 tests / 102 files) while the working tree is at 1.17.0
+(1707 tests / 131 files, including the ten added here) — real evidence carrying a wrong
+profile, which is exactly the drift a hand-maintained number invites. `tools/library/manifest.mjs` now generates
+`docs/audit/local-library/acceptance-<profile>.json` from the existing proof artifacts,
+and refuses to produce a manifest at all when a source is missing, when any source declares
+a different profile than the trusted catalogue, or when the upgrade proof did not target the
+current profile. `operationalKitsAccepted` is copied, never derived; `limits` is copied
+verbatim so `certification: false`, `penetrationTest: false` and the 13 moderate template
+generator names each defect rather than silently dropping a section. The manifest is
+reproducible apart from its own `generatedAt` line — key order is stable, so a re-run over
+unchanged evidence differs on that one line only, which is why determinism is tested through
+`buildManifest` with a pinned timestamp instead of through the write path. Two operational
+notes for whoever regenerates it: the file is written with plain `JSON.stringify`, which
+expands arrays that prettier would keep on one line, so `pnpm format` normally rewrites it
+afterwards without touching the evidence; and the generator does not carry a
+`narrowScopesAccepted` figure, because the only source with a field of that name hardcodes an
+empty list — the narrow scopes that exist are recorded in the ledger below, not proven by any
+of these machines. The 1.3.0 file is left untouched: it is the historical baseline that
+`PRD.md` references.
+
+The same audit found two prose claims frozen below live evidence — `docs/LOCAL_LIBRARY_RELEASE.md`
+and `docs/BUILD_STATUS.md` both stated "80 controls" where the security matrix carries 83.
+Both are corrected. The hand-typed number in prose remains hand-typed; the durable change is
+that the manifest derives it.
+
+KIT-09 is accepted for this bounded operator-handoff scope: reproducible releases, a working
+cold-prior migration/recovery path, and a generated acceptance manifest that refuses to be
+produced from incomplete evidence. It does not accept a full operating kit, and the honest
+support catalogue is unchanged — `operationalKitsAccepted` stays `0` and all forty full
+operating kits retain their declared domain and adapter gaps. Browser, upgrade and benchmark
+evidence is still produced by standalone commands rather than by `pnpm security:verify`, so a
+manifest is only as fresh as the last standalone run of those three.

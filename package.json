@@ -52,6 +52,7 @@
     "crm:verify-runtime": "pnpm --fail-if-no-match --filter @archava/crm-host run verify",
     "e2e:crm-runtime": "node tools/e2e/crm-runtime.mjs",
     "library:assemble": "node tools/library/assemble.mjs",
+    "library:manifest": "node tools/library/manifest.mjs",
     "crm:modules": "pnpm --fail-if-no-match --filter @archava/crm-host run modules",
     "assembly:verify": "node tools/library/verify-assembly.mjs",
     "security:verify": "node tools/security/verify.mjs --run",

@@ -21,13 +21,15 @@ CRM, projects, scheduling, accommodation, commerce, food-service, support,
 purchasing, organizations, proposals, capacity, assets, subscriptions, attendance,
 fulfillment, field services, and billing remain fully supported.
 
-All eight root gates passed: **1,697 tests in 130 files**. Fresh evidence includes
+Seven of the eight root gates passed: **1,707 tests in 131 files**. The eighth, `lint`, is red
+only on files under the untracked and currently unignored `experiments/` directory, outside
+this release. Fresh evidence includes
 CRM 38, Act 18, runtime 44, Chromium minimal/full 3/70, projects 15/11, scheduling
 14/9, accommodation 17/9, commerce 18/10, food-service 23/10, support 19/9, purchasing
 19/11, organizations 24/6, proposals 30/6, capacity 29/6, assets 18/5, subscriptions 18/5,
 attendance 18/4, fulfillment 27/6, billing 30/10, laundry 30/6, field services 32/6,
 kit planning/assembly 13, assembly 2 and prior-profile upgrade 4.
-The security matrix has 80 controls; root/runtime scans have zero advisories. The separate
+The security matrix has 83 controls; root/runtime scans have zero advisories. The separate
 realtime template retains 13 moderate findings and independent SDK/live gates.
 
 Synthetic upgrade from previous supported 1.10.0 to 1.17.0 passed all 4 checks on an

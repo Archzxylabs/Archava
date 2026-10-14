@@ -151,11 +151,23 @@ try {
       maxBuffer: 64 * 1024 * 1024,
     })
     execFileSync('tar', ['-xf', '-', '-C', priorSource], { input: bytes })
+    // The archived commit predates the allow-scripts guard, and reaching its build through
+    // `pnpm crm:build` would re-inject the owner ~/.npmrc policy into it. Invoke the build
+    // script directly with an empty npm user config instead; its install already passes
+    // --ignore-scripts. Same rule as tools/library/npm-env.mjs.
+    const archiveEnv = { ...process.env }
+    delete archiveEnv.npm_config_allow_scripts
+    archiveEnv.npm_config_userconfig = '/dev/null'
     execFileSync('pnpm', ['install', '--frozen-lockfile', '--ignore-scripts'], {
       cwd: priorSource,
       stdio: 'pipe',
+      env: archiveEnv,
     })
-    execFileSync('pnpm', ['crm:build'], { cwd: priorSource, stdio: 'pipe' })
+    execFileSync(process.execPath, [join(priorSource, 'apps/crm/scripts/build.mjs')], {
+      cwd: priorSource,
+      stdio: 'pipe',
+      env: archiveEnv,
+    })
     oldRuntime = join(priorSource, 'dist/crm-runtime')
   }
   assert.equal(

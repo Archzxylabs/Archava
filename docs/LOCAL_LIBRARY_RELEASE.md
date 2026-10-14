@@ -18,18 +18,34 @@ re-query or retry across transport errors, body read rejections, truncated JSON 
 | Customer signoff as an acceptance gate | `signed_off → approved` requires a signoff that exists and is accepted; a rejected signoff blocks approval; a back edge `signed_off → evidenced` re-opens the evidence so revised work is re-signed; `field.signoff` is a third distinct grant                                                                                                                                                           | In-app signoff only; no e-signature provider, no customer-facing portal, no photo or file evidence                   |
 | Dispatch host and recovery evidence    | Compiled CRM plus headless Chromium: disabled module 404s, module enablement never auto-enrolls an account, CSRF/origin/viewer refusal, unknown tool 404, restart retention, dispatch-to-signoff workflow and all five recovery modes; 6 checks; optimistic revision locking, idempotent replay, forced tenant RLS, superuser/schema-owner/service/inactive refusals, read-only tools, append-only audit | Synthetic tenant isolation and headless browser only; no production load, hardware, mobile or accessibility coverage |
 
-All eight root gates passed: 1,697 tests/130 files. Fresh regression evidence retains
+Seven of the eight root gates passed: 1,707 tests/131 files. The eighth, `lint`, is red only
+on files under the untracked and currently unignored `experiments/` directory, outside this
+release. Fresh regression evidence retains
 CRM 38, Act 18, runtime 44, Chromium 3/70, projects 15/11, scheduling 14/9, accommodation 17/9,
 commerce 18/10, food-service 23/10, support 19/9, purchasing 19/11, organizations 24/6, proposals 30/6,
 capacity 29/6, assets 18/5, subscriptions 18/5, attendance 18/4, fulfillment 27/6, billing 30/10,
 laundry 30/6, field services 32/6 and upgrade 4.
-The security matrix has 80 controls; root/runtime scans have zero advisories. The separate realtime template
+The security matrix has 83 controls; root/runtime scans have zero advisories. The separate realtime template
 retains thirteen moderate findings and independent SDK/live gates. These checks do not establish production load
 or security certification.
 
 Synthetic upgrade from previous supported 1.10.0 to 1.17.0 passed all 4 checks on an
 isolated PostgreSQL cluster without altering historical records, audit logs, or command UUIDs.
 Release artifacts for candidate 1.17.0 are archived in `dist/releases/1.17.0/library` and `dist/releases/1.17.0/crm-runtime`.
+
+Operator handoff (KIT-09) is accepted for this bounded scope: releases are reproducible
+(two `pnpm library:pack` runs produce byte-identical artifacts, profile and security manifests
+across 60 tarballs), the cold-prior migration path is repaired, and the acceptance manifest is
+generated rather than hand-written. That repair also fixed a latent allow-scripts defect in
+`tools/library/verify-accommodation.mjs` on archived commit `0e396bd`, which had passed only
+because a warm prior artifact existed. The acceptance manifest for this profile is
+[generated](audit/local-library/acceptance-1.17.0.json) from live proof evidence by
+`pnpm library:manifest`, and that generator refuses to emit a manifest when evidence is
+missing, when a source declares a different profile, or when the upgrade proof did not target
+this profile. The [1.3.0 baseline manifest](audit/local-library/manifest.json) remains the
+historical record. Browser, upgrade and benchmark evidence is still produced by standalone
+commands rather than `pnpm security:verify`, so a generated manifest is only as fresh as the
+last standalone run of those three.
 
 See [technician dispatch contract](FIELD_SERVICES_MODULE.md),
 [laundry contract](LAUNDRY_MODULE.md), [sanitized evidence](audit/2026-10-13-release-1.17.0.json) and
