@@ -42,6 +42,14 @@ members = [
   # on it, which the crate's own docs state and the crate graph proves: nothing
   # in `crates/{core,domain,adapters,host}` names it.
   "crates/pg-fixture",
+  # R09's provider slice: the provider attempt ledger — reservation,
+  # authoritative outcome, unknown-outcome reconciliation — plus the
+  # fail-closed orchestration (`runProvider`). A leaf beside the other
+  # leaves: sqlx only, no internal deps, no network client yet (the Gemini/
+  # Postmark HTTP seams are separate R09 slices that run THROUGH this
+  # ledger). It is production-side, not dev-only — the assistant's
+  # provider-driven path proves its budgets through it.
+  "crates/providers",
   # §1.4B's vertical slice: the Leptos SSR/WASM UI (`P-RUST-BROWSER`). A
   # leaf that depends on `archava-host` only for its SERVER build; the wasm
   # build takes the client target's dependency table instead and never sees

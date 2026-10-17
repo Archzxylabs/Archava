@@ -154,6 +154,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "archava-providers"
+version = "0.1.0"
+dependencies = [
+ "archava-pg-fixture",
+ "sha2 0.10.9",
+ "sqlx",
+ "thiserror 2.0.21",
+ "tokio",
+]
+
+[[package]]
 name = "archava-rates"
 version = "0.1.0"
 dependencies = [

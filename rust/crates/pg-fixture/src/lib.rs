@@ -118,6 +118,12 @@ pub const PURCHASING_MIGRATIONS: &[&str] = &["001_suppliers_orders_receipts"];
 /// `archava_foodservice` next to the other cohort schemas.
 pub const FOOD_MIGRATIONS: &[&str] = &["001_tables_recipes_tickets"];
 
+/// The provider attempt ledger's migration, in apply order —
+/// `packages/provider-runtime/migrations/001_provider_attempts.sql` (the R09
+/// provider slice): the budget buckets and the pending→finalized attempt rows
+/// the `archava-providers` crate's store runs through.
+pub const PROVIDER_MIGRATIONS: &[&str] = &["001_provider_attempts"];
+
 /// The namespace and ledger label the commerce schema uses.
 pub const NAMESPACE: &str = "archava_commerce";
 pub const LEDGER: &str = "Commerce";
@@ -192,6 +198,11 @@ pub struct Fixture {
     /// ERP ledger (PACKET-001): tickets, recipes and the menus whose menu
     /// products live IN `archava_commerce`.
     pub foodservice_ledger: Vec<(String, String)>,
+    /// The same ledger for `archava_provider` — the R09 provider attempt
+    /// ledger (buckets, pending→finalized attempts, restore holds), through
+    /// whose forced-RLS scope the provider budget is a real PostgreSQL
+    /// transaction, not a client counter.
+    pub provider_ledger: Vec<(String, String)>,
     dir: PathBuf,
 }
 
@@ -684,6 +695,16 @@ pub async fn provision() -> Fixture {
         "archava_foodservice_migrations",
     )
     .await;
+    // R09's provider slice: the attempt ledger migrates under the same owner
+    // role, one UTC-anchored schema next to the domain ledgers. The runtime
+    // role must stay a NON-owner of `archava_provider` — `create`'s role
+    // check refuses an owner exactly like the domain ledgers' checks.
+    let provider_ledger = migrate_ledger(
+        &owner_pool,
+        "archava_provider",
+        "archava_provider_migrations",
+    )
+    .await;
 
     // 5. Runtime grants — the port of grantCommerceRuntime
     //    (`packages/commerce-pg/src/migrate.ts:59-76`), statement for statement.
@@ -805,6 +826,20 @@ pub async fn provision() -> Fixture {
         format!(
             "GRANT EXECUTE ON FUNCTION archava_foodservice.lock_membership(text,text) TO {RUNTIME_USER}"
         ),
+        // R09 provider slice — the port of grantProviderRuntime
+        // (`packages/provider-runtime/src/postgres.ts`), statement for
+        // statement, mirrored by
+        // `archava_providers::store::grant_provider_runtime`: usage, history
+        // read-only, and draft writing on buckets/attempts. `schema_migrations`
+        // stays SELECT-only so only the migration path records history, and
+        // the forced-RLS scope (`archava.provider_bucket`) makes every write
+        // bucket-local regardless of the grant's breadth.
+        format!("GRANT USAGE ON SCHEMA archava_provider TO {RUNTIME_USER}"),
+        format!("GRANT SELECT ON archava_provider.schema_migrations TO {RUNTIME_USER}"),
+        format!(
+            "GRANT SELECT,INSERT,UPDATE ON archava_provider.buckets,\
+             archava_provider.attempts TO {RUNTIME_USER}"
+        ),
     ];
     for statement in grants {
         sqlx::query(sqlx::AssertSqlSafe(statement.as_str()))
@@ -830,6 +865,7 @@ pub async fn provision() -> Fixture {
         crm_ledger,
         purchasing_ledger,
         foodservice_ledger,
+        provider_ledger,
         dir,
     }
 }
@@ -902,6 +938,8 @@ fn migrations_package(namespace: &str) -> &'static str {
         // frozen in; no other ledger may inherit one of these directories.
         "archava_purchasing" => "purchasing-pg",
         "archava_foodservice" => "foodservice-pg",
+        // R09's provider ledger: the migration file the TS store reads too.
+        "archava_provider" => "provider-runtime",
         _ => "commerce-pg",
     }
 }
@@ -921,6 +959,7 @@ pub fn ledger_expectations(namespace: &str) -> Vec<(String, String)> {
         "archava_crm" => CRM_MIGRATIONS,
         "archava_purchasing" => PURCHASING_MIGRATIONS,
         "archava_foodservice" => FOOD_MIGRATIONS,
+        "archava_provider" => PROVIDER_MIGRATIONS,
         _ => COMMERCE_MIGRATIONS,
     };
     let package = migrations_package(namespace);
@@ -996,6 +1035,7 @@ pub async fn attach(data_dir: &Path, port: u16) -> Fixture {
         crm_ledger: ledger_expectations("archava_crm"),
         purchasing_ledger: ledger_expectations("archava_purchasing"),
         foodservice_ledger: ledger_expectations("archava_foodservice"),
+        provider_ledger: ledger_expectations("archava_provider"),
         dir,
     }
 }
