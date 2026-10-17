@@ -1,0 +1,23 @@
+[package]
+name = "archava-pricing"
+description = "Pricing engine ported from packages/pricing (R02 p1 slice)"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+rust-version.workspace = true
+
+# Promoted from the pilot at ADR-R06's rule: a pilot crate is not carried over by
+# being copied, it is re-verified here. This crate originally lived in
+# `~/Archverse/Lab/Experiments/rust-pilot/crates/pricing` (2,547 lines, 56 tests,
+# 350-fixture parity run with 0 divergences) and was moved here so the parity
+# harness runs against the product tree rather than an experiment.
+#
+# Only `serde` and `serde_json`. That matters beyond tidiness: the R01 wasm gate
+# requires every non-host crate to compile for `wasm32-unknown-unknown`, and any
+# HTTP or database dependency would break it. Pricing is pure arithmetic over
+# deserialized data, so it stays wasm-clean and can run in a browser preview.
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]

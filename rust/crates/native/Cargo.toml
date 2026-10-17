@@ -1,0 +1,46 @@
+[package]
+name = "archava-native"
+description = "napi bridge exposing the R02 Rust engines to Node"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+rust-version.workspace = true
+
+# `cdylib` only: napi loads a shared object, and an rlib is not loadable by Node.
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# Only the two crates the bridge actually calls. The pilot's manifest also
+# declared `archava-planning` and `archava-schedule`, but neither is imported by
+# `lib.rs` — both are one-line `placeholder()` stubs — so they were dead
+# dependencies that would have forced two empty crates into the product tree.
+archava-pricing = { path = "../pricing" }
+archava-rates = { path = "../rates" }
+
+# `napi` for the FFI surface, `napi-build` as a build dependency because
+# `build.rs` must emit the addon metadata or the symbols are not registered for
+# Node even though the build succeeds.
+#
+# Note this crate is deliberately NOT wasm-clean and never will be: napi exists
+# to produce a `.node` addon for a native runtime. It sits outside the portable
+# set in the same way `archava-host` does, and for the same structural reason —
+# the wasm gate is what proves the browser/server split is real.
+napi = "3.14"
+napi-derive = "3.6"
+
+# The bridge declares its own input structs, so it needs serde directly rather
+# than borrowing its neighbours' re-exports. Both crates are already workspace
+# members, so this adds nothing to the lockfile's crate count.
+#
+# Worth recording because it was not obvious from the pilot's manifest, which
+# omitted both: the pilot's `crates/native` resolved them from the *pilot
+# workspace's* `[workspace.dependencies]`, and a crate promoted without its
+# workspace context loses exactly these. The build failed with 11 errors here
+# (`cannot find attribute 'serde'`, `cannot find crate 'serde_json'`) and every
+# one of them traced back to that single omission.
+serde.workspace = true
+serde_json.workspace = true
+
+[build-dependencies]
+napi-build = "2.6"

@@ -1,0 +1,21 @@
+[package]
+name = "archava-core"
+description = "Core contracts, error taxonomy and policy seam for the Archava Rust host"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+rust-version.workspace = true
+
+# `cdylib` is what makes the browser artifact real. A `--lib` build emits an
+# `rlib` of Rust metadata for linking into other Rust crates, which does not
+# exist on wasm; only `cdylib` produces an actual `.wasm` file that a browser
+# can instantiate. Without it the R01 wasm size budget cannot be measured at all.
+[lib]
+crate-type = ["rlib", "cdylib"]
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]

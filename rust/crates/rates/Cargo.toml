@@ -1,0 +1,28 @@
+[package]
+name = "archava-rates"
+description = "Reference rates ported from packages/reference (R02 p2 slice)"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+rust-version.workspace = true
+
+# Promoted from `~/Archverse/Lab/Experiments/rust-pilot/crates/rates` under the
+# same ADR-R06 rule as `archava-pricing`: moved so it can be re-verified in the
+# product tree, not copied forward on the strength of the pilot's green run.
+#
+# The pilot's workspace manifest declared a `chrono` dependency that no crate
+# imported and that never entered the pilot's own `Cargo.lock` — dead
+# configuration. It is not carried over. The port reads dates as strings and
+# derives the weekday arithmetically, which is why it needs no date library and
+# why it stays wasm-clean alongside pricing.
+#
+# `serde` is a real runtime dependency (the response types derive it), but
+# `serde_json` is test-only: `tests/rates.rs` serializes one result to compare
+# its JSON shape against the baseline's. Keeping it in `[dev-dependencies]`
+# rather than the runtime set is what stops a JSON parser from reaching the wasm
+# build of a crate whose whole point is to be browser-safe.
+[dependencies]
+serde.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
