@@ -1,0 +1,7 @@
+deps/
+target/
+vendor/
+.cargo/
+kit.config.json
+
+# The generated consumer config is per-kit; the template ships without it.

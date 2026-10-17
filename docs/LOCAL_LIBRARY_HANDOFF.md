@@ -172,6 +172,7 @@ and execution holds intact.
 ```sh
 pnpm rust:verify
 pnpm rust:verify-release
+node tools/rust/k05-k04-consumers.mjs
 pnpm verify
 pnpm security:verify
 pnpm crm:benchmark
@@ -196,7 +197,9 @@ wired into root `verify` and CI, so it runs on every change rather than by hand.
 `pnpm rust:verify-release` is the full candidate gate: the fast gate, then the
 compiled-consumer benchmark, the 46-command security chain, the Rust browser
 slice proof, the browser
-end-to-end proof, both cold-prior recovery paths and the CRM benchmark. The
+end-to-end proof, both cold-prior recovery paths and the CRM benchmark. The K05
+agency and K04 wholesale consumers (`node tools/rust/k05-k04-consumers.mjs`) run
+right after the fast gate and are also their own operator entry. The
 Rust browser slice proof also has its own operator entry, `pnpm
 rust:browser-slice`, which is the same command the gate runs. Like the
 compiled-consumer benchmark, it sits outside the handoff list below, so the

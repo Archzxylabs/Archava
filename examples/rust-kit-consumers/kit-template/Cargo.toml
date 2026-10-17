@@ -1,0 +1,75 @@
+# The kit-consumer template — one business-model consumer materialized per kit.
+#
+# `tools/rust/k05-k04-consumers.mjs` copies this directory twice (K05 agency and
+# K04 wholesale), writes each consumer's `kit.config.json`, unpacks the shipped
+# artifact bundle into `deps/`, vendors the third-party closure and runs
+# `cargo test --offline --locked` with an empty `CARGO_HOME`. The template
+# itself does not compile standalone: `tests/kit_witness.rs` reads a config the
+# producer materializes, and `deps/` is generated. That is the shape of the
+# claim — two consumers whose only difference is configuration.
+#
+# ## What is consumed, and from where
+#
+# `deps/` holds the two shipped crates — `archava-core` (tenant ids, the
+# role/permission tables, the action registry) and `archava-domain` (the CRM
+# command policy gate). They arrive as `.tar.gz` bundles the producer cut from
+# `rust/crates/core` and `rust/crates/domain`, and their digests are what the
+# "identical core/CRM artifact hashes" check compares. They are `path`
+# dependencies INTO THIS CONSUMER'S OWN `deps/` — never into the product tree:
+# there is no `path =` reaching `rust/crates`, and no product behavior can leak
+# in through one. The bundles resolve their own `workspace = true` inheritance
+# against THIS manifest's tables below, which is why those tables pin the same
+# values the product workspace pins: the closure the consumer builds must be
+# the closure the product builds.
+#
+# ## Why the internal dependency resolves here at all
+#
+# `archava-domain` depends on `archava-core`, and a `.crate`-tarball route
+# would force the packaged manifest's registry-style dependency requirement
+# onto a registry the consumer never contacts. Shipping the crates as source
+# bundles consumed through a `path` + workspace-inheritance resolution keeps
+# the whole build offline and keeps the artifact boundary in one place that a
+# reviewer can inspect. The digest check (tree hashes of `deps/` on both
+# sides) is the anti-fork instrument: any fork between the two consumers'
+# copies moves a hash, and the check fails.
+[package]
+name = "kit-consumer"
+version = "0.0.0"
+edition = "2021"
+publish = false
+rust-version = "1.96"
+
+# The consumer's workspace exists for one reason: the shipped crates use
+# `workspace = true` inheritance for their own fields and dependencies, and
+# resolving that inheritance requires a workspace. These tables ARE the
+# resolution, and they pin the same values the product workspace pins, so the
+# closure the consumer builds is the closure the product builds.
+#
+# The third-party pins are deliberate copies of the product's
+# `[workspace.dependencies]`, not simplified "close enough" values — a consumer
+# building a cheaper closure would be verifying a different program.
+[workspace]
+members = [
+    "deps/archava-core-0.1.0",
+    "deps/archava-domain-0.1.0",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+publish = false
+rust-version = "1.96"
+
+[workspace.dependencies]
+archava-core = { path = "deps/archava-core-0.1.0" }
+archava-domain = { path = "deps/archava-domain-0.1.0" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "2.0"
+tokio = { version = "1.53.3", features = ["macros", "rt-multi-thread", "net", "signal"] }
+
+[dependencies]
+archava-core = { path = "deps/archava-core-0.1.0" }
+archava-domain = { path = "deps/archava-domain-0.1.0" }
+serde = { workspace = true }
+serde_json = { workspace = true }

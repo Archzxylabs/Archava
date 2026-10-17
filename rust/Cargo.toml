@@ -78,7 +78,7 @@ opt-level = 3
 # both, host on all three. `archava-core` must never depend on `archava-host` —
 # a contract that imports its own HTTP surface is a contract that cannot be
 # tested without one.
-archava-core = { path = "crates/core" }
+archava-core = { path = "crates/core", version = "0.1.0" }
 archava-adapters = { path = "crates/adapters" }
 archava-domain = { path = "crates/domain" }
 # R03's assistant layer — contracts, planner and the conversation flow. The
