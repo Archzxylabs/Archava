@@ -1,0 +1,7 @@
+{
+  "tenantId": "hotel-demo",
+  "title": "Hotel served dinner",
+  "purchasingTitle": "Hotel procurement desk",
+  "principal": "hotel-owner",
+  "viewer": "hotel-viewer"
+}

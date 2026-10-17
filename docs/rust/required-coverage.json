@@ -807,6 +807,8 @@
         "cargo test --workspace",
         "pg readiness suites",
         "pg authority suite",
+        "erp purchasing suite",
+        "erp foodservice suite",
         "R03 domain suite",
         "capacity conformance suite",
         "rust unit tests (node --test)",
@@ -1084,6 +1086,76 @@
         "dist/rust-authority-proof.json"
       ]
     },
+    "P-ERP-PURCHASING": {
+      "kind": "evidence",
+      "producedBy": "pnpm rust:verify → erp purchasing suite step (tools/rust/erp/verify-purchasing.mjs) grading named witness tests in rust/crates/host/tests/erp_purchasing.rs against the owned PostgreSQL fixture",
+      "requiredChecks": [
+        "authorized flow changes stock exactly once",
+        "over-acceptance refuses without stock",
+        "rejected-only delivery adds no stock",
+        "non-tracked offer refuses the order",
+        "revoked grant refused on receive and recovery",
+        "same key different command conflicts",
+        "cross-tenant caller refused, keys per tenant",
+        "missing purchasing grant refused",
+        "lost response recovers by replay and status"
+      ],
+      "expect": {
+        "witnessTotal": 9,
+        "namedRegressions": {
+          "RN-ERP-01": "revoked grant refused on receive and recovery",
+          "RN-ERP-02": "same key different command conflicts"
+        }
+      },
+      "sourcePaths": [
+        "rust/crates/host",
+        "rust/crates/adapters",
+        "rust/crates/domain",
+        "rust/crates/core",
+        "tools/rust/erp/verify-purchasing.mjs",
+        "packages/commerce-pg/migrations",
+        "packages/purchasing-pg/migrations"
+      ],
+      "artifacts": [],
+      "referenced": [
+        "dist/rust-erp-purchasing-proof.json"
+      ]
+    },
+    "P-ERP-FOODSERVICE": {
+      "kind": "evidence",
+      "producedBy": "pnpm rust:verify → erp foodservice suite step (tools/rust/erp/verify-foodservice.mjs) grading named witness tests in rust/crates/host/tests/erp_foodservice.rs against the owned PostgreSQL fixture",
+      "requiredChecks": [
+        "authorized food flow consumes the shared pool exactly once",
+        "over-reservation refuses without holding stock",
+        "recipe refuses a non-tracked ingredient",
+        "revoked food grant refused on recovery",
+        "same key different command conflicts",
+        "cross-tenant caller refused before any write",
+        "lost response replays without a second reservation",
+        "cancel releases the reservation untouched",
+        "missing foodservice grant refused"
+      ],
+      "expect": {
+        "witnessTotal": 9,
+        "namedRegressions": {
+          "RN-ERP-01": "revoked food grant refused on recovery",
+          "RN-ERP-02": "same key different command conflicts"
+        }
+      },
+      "sourcePaths": [
+        "rust/crates/host",
+        "rust/crates/adapters",
+        "rust/crates/domain",
+        "rust/crates/core",
+        "tools/rust/erp/verify-foodservice.mjs",
+        "packages/commerce-pg/migrations",
+        "packages/foodservice-pg/migrations"
+      ],
+      "artifacts": [],
+      "referenced": [
+        "dist/rust-erp-foodservice-proof.json"
+      ]
+    },
     "P-READINESS-PG": {
       "kind": "evidence",
       "producedBy": "pnpm rust:verify → pg readiness suites step (tools/rust/pg-readiness.mjs) grading named witness tests in rust/crates/host/tests/readiness.rs and rust/crates/adapters/tests/tenant_context.rs against the owned PostgreSQL fixture",
@@ -1268,16 +1340,23 @@
     },
     "P-MODULE-CONSUMERS": {
       "kind": "evidence",
-      "producedBy": "pnpm rust:verify-release → two independently installed consumers per accepted module",
+      "producedBy": "pnpm erp:verify-consumers (tools/rust/erp/module-consumers.ts installs two product verticals from the compiled library tarballs and grades each consumer's verify battery + installed-module resolution)",
       "requiredChecks": [
         "every accepted module has two independently installed consumers",
         "no workspace/path dependency in either consumer"
       ],
+      "expect": {
+        "witnessTotal": 4
+      },
       "sourcePaths": [
-        "rust"
+        "examples/rust-consumers/erp",
+        "tools/rust/erp/module-consumers.ts",
+        "tools/library/pack.mjs"
       ],
       "artifacts": [],
-      "referenced": []
+      "referenced": [
+        "dist/rust-erp-module-consumers-proof.json"
+      ]
     },
     "P-ASSISTANT-CONTEXT": {
       "kind": "evidence",

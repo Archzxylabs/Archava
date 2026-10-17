@@ -14,6 +14,10 @@ import {
 } from '../verify-release.mjs'
 import { loadManifest, repoRoot, validateCoverage } from '../coverage.mjs'
 import { candidateIdentity, readEvidence, writeEvidence } from '../evidence.mjs'
+import {
+  CONSUMERS,
+  WITNESSES as MODULE_CONSUMER_WITNESSES,
+} from '../erp/module-consumers.witnesses.mjs'
 
 /**
  * The full candidate gate's own tests, run by `node --test`.
@@ -135,6 +139,33 @@ test('the reconciliation reports the commands beyond the handoff list', () => {
     'node tools/rust/browser-slice.mjs',
   ])
   assert.equal(covered.includes('pnpm rust:benchmark'), false)
+})
+
+test('the P-MODULE-CONSUMERS witness map and the frozen manifest cannot drift apart', () => {
+  // The witness map is carried separately from the driver (so `node --test`
+  // can grade it without launching tsx, the pack, or npm) and the three
+  // lists-equal property applies anyway: each manifest check is witnessed by
+  // one stage per consumer, and the frozen `witnessTotal` pins the map size.
+  const manifest = loadManifest(repoRoot)
+  const spec = manifest.proofs['P-MODULE-CONSUMERS']
+  assert.deepEqual(
+    [...Object.keys(MODULE_CONSUMER_WITNESSES)].sort(),
+    [...spec.requiredChecks].sort(),
+  )
+  const witnessTotal = Object.values(MODULE_CONSUMER_WITNESSES).reduce(
+    (sum, list) => sum + list.length,
+    0,
+  )
+  assert.equal(witnessTotal, spec.expect.witnessTotal)
+  for (const [check, witnesses] of Object.entries(MODULE_CONSUMER_WITNESSES)) {
+    assert.ok(witnesses.length > 0, `${check} has no witnesses`)
+    assert.equal(witnesses.length, CONSUMERS.length, `${check} is graded per consumer`)
+    for (const [consumer, stage] of witnesses)
+      assert.ok(
+        CONSUMERS.includes(consumer) && stage.length > 0,
+        `${check}: unknown consumer/stage ${consumer}:${stage}`,
+      )
+  }
 })
 
 // ---------------------------------------------------------------------------

@@ -36,6 +36,11 @@
 pub mod assistant;
 mod authority;
 pub mod crm;
+// The ERP host surface — Archxy 2's bounded cohorts (R06 onward), one module
+// per ledger family, transactions opened through the same TenantTransaction
+// gate as `crm`. PACKED-000 records this lib.rs diff for the integration
+// writer along with the other shared-file patches.
+pub mod erp;
 mod identity;
 pub mod router;
 

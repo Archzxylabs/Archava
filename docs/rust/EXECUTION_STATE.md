@@ -758,3 +758,32 @@ Also outstanding and unrelated to Rust: task #8, nonprofit-associations narrow
 scope (K22). R08 names "Laundry, field services, formal education candidate and
 other R00-inventory extensions" — nonprofit-associations is one of those
 extensions and is not started.
+
+## 2026-10-18 — ERP packet integration (Archxy 2 → main)
+
+PACKET-000 (erp purchasing), PACKET-001 (erp foodservice) and PACKET-002 (R06
+two module consumers) integrated from
+`/home/haikaru/Archverse/Lab/Archava_ERP_Handoff/archxy2/` after
+reconciliation; landed hashes and per-packet dispositions are recorded in that
+handoff's `archxy1/` (this tree never writes to their `archxy2/` side). The
+fixture sections folded semantically onto main's moved-forward design
+(`ledger_expectations`/`attach`/`dir` kept; the packets' snapshot-era
+4-parameter `migrate_ledger` and their router/login reversion lines REJECTED —
+only erp additions folded). Both erp suites green in the fast gate (16 steps,
+exit 0); both erp producers PASS; `pnpm erp:verify-consumers` PASS;
+fast-gate unit tests 23/23; release-gate unit tests 24/24; fmt/clippy clean
+off-line; `Cargo.lock` regenerates to exactly the packets' predicted net
+effect (adapters += archava-domain/serde/serde_json/uuid; domain += serde_json).
+
+Stale-fact corrections vs the packets' owner notes, recorded for the reviewer:
+- The §1.4B router test
+  `the_contact_list_refuses_rather_than_faking_an_empty_result` and the whole
+  host lib suite (41/41) PASS on main at integration time — the failure they
+  observed does not exist on the current tree (re-verified twice).
+- The crate-tarball offline conclusion matches this lane's own P-K05-K04
+  finding (b43598f): packed source bundles are the working offline artifact
+  form for rust crates with internal workspace deps.
+- The locking-race hardening request (two twin witnesses awaiting the
+  holder's confirmation) — main's 8cc7ed4 already addressed the CRM twin; the
+  authority-suite twin stays on the watch list; no failure observed in the
+  main-tree gate runs so far.

@@ -182,6 +182,7 @@ pnpm accommodation:verify --cold-prior
 pnpm kits:verify
 pnpm capacity:verify
 pnpm library:manifest
+pnpm erp:verify-consumers
 ```
 
 The dedicated CRM, Act, runtime, reuse and assembly commands remain available.

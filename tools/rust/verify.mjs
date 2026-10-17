@@ -263,6 +263,30 @@ export function gateSteps() {
       'pg authority suite',
       () => step('pg authority suite', ['node', 'tools/rust/pg-authority.mjs']),
     ],
+    // Same pattern for P-ERP-PURCHASING — the Archxy 2 ERP namespace's
+    // purchasing cohort: the workspace step cannot prove the NINE witnesses
+    // the receipt flow needs (stock exactly once, over-acceptance refusal,
+    // rejected-only, revoked recovery, key/fingerprint collision,
+    // cross-tenant, grant gate, lost-response replay), so this producer
+    // re-runs `--test erp_purchasing` and grades each check against its named
+    // witness in the harness output.
+    [
+      'erp purchasing suite',
+      () => step('erp purchasing suite', ['node', 'tools/rust/erp/verify-purchasing.mjs']),
+    ],
+    // Same pattern for P-ERP-FOODSERVICE — the R06 kitchen slice: menus,
+    // recipes, and dining tickets riding the SAME commerce stock pool as its
+    // second consumer. The workspace step cannot prove the NINE witnesses the
+    // slice needs (shared-pool exactly-once, over-reservation refusal,
+    // non-tracked ingredient rollback, revoked recovery, key/fingerprint
+    // collision, cross-tenant, grant gate, lost-response replay, cancel
+    // release), so this producer re-runs `--test erp_foodservice` and grades
+    // each check against its named witness in the harness output. Added with
+    // the foodservice cohort in PACKET-001 (scope edit for review).
+    [
+      'erp foodservice suite',
+      () => step('erp foodservice suite', ['node', 'tools/rust/erp/verify-foodservice.mjs']),
+    ],
     // Same pattern for P-R03-DOMAIN: the R03 CRM domain lane spans three
     // suites (the command lane repository, the conversation route over HTTP,
     // and the assistant crate's injected-host flow tests). The workspace step
@@ -559,6 +583,60 @@ export function fastGateEvidenceMapping() {
           return JSON.parse(readFileSync(join(root, 'dist/rust-planning-proof.json'), 'utf8'))
         } catch (error) {
           throw new Error(`planning conformance witness proof unreadable: ${error.message}`)
+        }
+      },
+    },
+    {
+      // The Archxy 2 ERP namespace's purchasing cohort proof: same witness
+      // binding as P-AUTHORITY-PG, over the `erp_purchasing` suite's nine
+      // witnesses. Added with the cohort in PACKET-000 (scope edit for review).
+      proof: 'P-ERP-PURCHASING',
+      checks: {
+        'authorized flow changes stock exactly once': { step: 'erp purchasing suite' },
+        'over-acceptance refuses without stock': { step: 'erp purchasing suite' },
+        'rejected-only delivery adds no stock': { step: 'erp purchasing suite' },
+        'non-tracked offer refuses the order': { step: 'erp purchasing suite' },
+        'revoked grant refused on receive and recovery': { step: 'erp purchasing suite' },
+        'same key different command conflicts': { step: 'erp purchasing suite' },
+        'cross-tenant caller refused, keys per tenant': { step: 'erp purchasing suite' },
+        'missing purchasing grant refused': { step: 'erp purchasing suite' },
+        'lost response recovers by replay and status': { step: 'erp purchasing suite' },
+      },
+      details: () => {
+        try {
+          return JSON.parse(
+            readFileSync(join(root, 'dist/rust-erp-purchasing-proof.json'), 'utf8'),
+          )
+        } catch (error) {
+          throw new Error(`erp purchasing witness proof unreadable: ${error.message}`)
+        }
+      },
+    },
+    {
+      // The Archxy 2 ERP namespace's kitchen-slice proof: same witness
+      // binding, over the `erp_foodservice` suite's nine witnesses. Added
+      // with the foodservice cohort in PACKET-001 (scope edit for review).
+      proof: 'P-ERP-FOODSERVICE',
+      checks: {
+        'authorized food flow consumes the shared pool exactly once': {
+          step: 'erp foodservice suite',
+        },
+        'over-reservation refuses without holding stock': { step: 'erp foodservice suite' },
+        'recipe refuses a non-tracked ingredient': { step: 'erp foodservice suite' },
+        'revoked food grant refused on recovery': { step: 'erp foodservice suite' },
+        'same key different command conflicts': { step: 'erp foodservice suite' },
+        'cross-tenant caller refused before any write': { step: 'erp foodservice suite' },
+        'lost response replays without a second reservation': { step: 'erp foodservice suite' },
+        'cancel releases the reservation untouched': { step: 'erp foodservice suite' },
+        'missing foodservice grant refused': { step: 'erp foodservice suite' },
+      },
+      details: () => {
+        try {
+          return JSON.parse(
+            readFileSync(join(root, 'dist/rust-erp-foodservice-proof.json'), 'utf8'),
+          )
+        } catch (error) {
+          throw new Error(`erp foodservice witness proof unreadable: ${error.message}`)
         }
       },
     },

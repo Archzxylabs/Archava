@@ -252,6 +252,40 @@ impl AppState {
         Ok(state)
     }
 
+    /// Serving state for the ERP cohorts — [`AppState::try_new_crm`]'s shape
+    /// continued by the purchasing ledger's own gate. The kernel receipts
+    /// write cross-ledger into `archava_commerce`, so the app still builds on
+    /// the commerce ledger as the primary; the ERP gate is the purchasing
+    /// ledger's checksum-exact readiness (`crate::erp::PURCHASING_LEDGER`).
+    /// The per-transaction non-owner check applies on every ERP request too,
+    /// on top of both gates.
+    pub async fn try_new_erp(
+        pool: PgPool,
+        ledger: Ledger,
+        expected_migrations: &[(String, String)],
+        expected_identity_migrations: &[(String, String)],
+        identity_key: &[u8],
+        expected_purchasing_migrations: &[(String, String)],
+    ) -> Result<Self, AuthorityError> {
+        let state = Self::try_new(
+            pool,
+            ledger,
+            expected_migrations,
+            expected_identity_migrations,
+            identity_key,
+        )
+        .await?;
+        assert_startup_readiness(
+            state.pool(),
+            crate::erp::PURCHASING_LEDGER.namespace,
+            crate::erp::PURCHASING_LEDGER.ledger,
+            crate::erp::PURCHASING_LEDGER.tables,
+            expected_purchasing_migrations,
+        )
+        .await?;
+        Ok(state)
+    }
+
     /// Builds state without checking readiness — test-only, hence
     /// `#[cfg(test)]`: the in-crate tests drive refusals that fire before any
     /// database access (extraction, then the session lookup), so they run on
@@ -295,6 +329,25 @@ pub fn router(state: AppState) -> Router {
         .route(
             "/api/crm/{tenant}/conversation",
             post(crate::assistant::conversation),
+        )
+        // Archxy 2's ERP namespace (PACKET-000/001): the two kernel cohorts
+        // mount into the same session-scoped api scope, mirroring the CRM
+        // gate's decision/receipt documents. CSRF-bearing mutation per gate.
+        .route(
+            "/erp/purchasing/commands",
+            post(crate::erp::purchasing::purchase_command),
+        )
+        .route(
+            "/erp/purchasing/commands/status",
+            get(crate::erp::purchasing::purchase_status),
+        )
+        .route(
+            "/erp/foodservice/commands",
+            post(crate::erp::foodservice::food_service_command),
+        )
+        .route(
+            "/erp/foodservice/commands/status",
+            get(crate::erp::foodservice::food_service_status),
         )
         .with_state(state)
 }

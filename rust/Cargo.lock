@@ -40,11 +40,15 @@ name = "archava-adapters"
 version = "0.1.0"
 dependencies = [
  "archava-core",
+ "archava-domain",
  "archava-pg-fixture",
+ "serde",
+ "serde_json",
  "sha2 0.10.9",
  "sqlx",
  "thiserror 2.0.21",
  "tokio",
+ "uuid",
 ]
 
 [[package]]
@@ -88,6 +92,7 @@ version = "0.1.0"
 dependencies = [
  "archava-core",
  "serde",
+ "serde_json",
  "thiserror 2.0.21",
  "tokio",
 ]

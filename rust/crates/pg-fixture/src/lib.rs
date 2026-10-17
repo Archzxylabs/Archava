@@ -105,6 +105,19 @@ pub const CRM_MIGRATIONS: &[&str] = &[
     "003_native_approval",
 ];
 
+/// The purchasing ledger's migrations, in apply order —
+/// `packages/purchasing-pg` (Archxy 2's ERP namespace, PACKET-000): the R06
+/// cohort needs the real `archava_purchasing` schema next to
+/// `archava_commerce`, because the receipt-completion triggers reconcile the
+/// two ledgers inside ONE transaction.
+pub const PURCHASING_MIGRATIONS: &[&str] = &["001_suppliers_orders_receipts"];
+
+/// The foodservice ledger's migration, in apply order —
+/// `packages/foodservice-pg/migrations/001_tables_recipes_tickets.sql`
+/// (Archxy 2's ERP namespace, PACKET-001): a single migration above
+/// `archava_foodservice` next to the other cohort schemas.
+pub const FOOD_MIGRATIONS: &[&str] = &["001_tables_recipes_tickets"];
+
 /// The namespace and ledger label the commerce schema uses.
 pub const NAMESPACE: &str = "archava_commerce";
 pub const LEDGER: &str = "Commerce";
@@ -170,6 +183,15 @@ pub struct Fixture {
     /// check expects (§1.4B: the slice serves contacts and pipeline from that
     /// schema, so startup asserts its history too).
     pub crm_ledger: Vec<(String, String)>,
+    /// The same ledger for `archava_purchasing` — the ERP cohort ledger
+    /// (Archxy 2's ERP namespace, PACKET-000; the shared fixture is the
+    /// integration writer's single-writer file, the packet record rides in
+    /// `docs/rust/archxy2/INTEGRATION_REQUESTS.md` PACKET-000).
+    pub purchasing_ledger: Vec<(String, String)>,
+    /// The same ledger for `archava_foodservice` — the stock cohort's second
+    /// ERP ledger (PACKET-001): tickets, recipes and the menus whose menu
+    /// products live IN `archava_commerce`.
+    pub foodservice_ledger: Vec<(String, String)>,
     dir: PathBuf,
 }
 
@@ -641,6 +663,27 @@ pub async fn provision() -> Fixture {
     // applied by the same owner role so the runtime role is a non-owner of
     // this schema exactly as it is of the other two.
     let crm_ledger = migrate_ledger(&owner_pool, "archava_crm", "archava_crm_migrations").await;
+    // Archxy 2 ERP namespace (PACKET-000): the purchasing ledger migrates under
+    // the same owner role, with the same migrate.ts semantics, so the runtime
+    // role is a non-owner of this schema exactly as it is of the others. The
+    // cross-ledger FOREIGN KEY into `archava_commerce.products` means this must
+    // run AFTER the commerce migration (it does — order above).
+    let purchasing_ledger = migrate_ledger(
+        &owner_pool,
+        "archava_purchasing",
+        "archava_purchasing_migrations",
+    )
+    .await;
+    // Archxy 2 ERP namespace (PACKET-001): the foodservice ledger migrates
+    // under the same owner role; its recipes JOIN `archava_commerce.products`
+    // and its ticket flow claims commerce commands, so it runs after the
+    // commerce and purchasing migrations (order above).
+    let foodservice_ledger = migrate_ledger(
+        &owner_pool,
+        "archava_foodservice",
+        "archava_foodservice_migrations",
+    )
+    .await;
 
     // 5. Runtime grants — the port of grantCommerceRuntime
     //    (`packages/commerce-pg/src/migrate.ts:59-76`), statement for statement.
@@ -715,6 +758,53 @@ pub async fn provision() -> Fixture {
         format!(
             "GRANT EXECUTE ON FUNCTION archava_crm.lock_membership(text,text) TO {RUNTIME_USER}"
         ),
+        // Archxy 2 ERP (PACKET-000) — the port of grantPurchasingRuntime
+        // (`packages/purchasing-pg/src/migrate.ts`), statement for statement:
+        // history and memberships read-only; supplier/offer/order/line draft
+        // writing; receipts and history append-only (`INSERT` only, the
+        // immutability triggers refuse the rest anyway); `lock_membership`
+        // executes because migration 001 REVOKEs it from PUBLIC like its
+        // siblings.
+        format!("GRANT USAGE ON SCHEMA archava_purchasing TO {RUNTIME_USER}"),
+        format!(
+            "GRANT SELECT ON archava_purchasing.schema_migrations,\
+             archava_purchasing.memberships TO {RUNTIME_USER}"
+        ),
+        format!(
+            "GRANT SELECT,INSERT,UPDATE ON archava_purchasing.suppliers,\
+             archava_purchasing.offers,archava_purchasing.orders,\
+             archava_purchasing.lines,archava_purchasing.commands TO {RUNTIME_USER}"
+        ),
+        format!("GRANT DELETE ON archava_purchasing.lines TO {RUNTIME_USER}"),
+        format!(
+            "GRANT SELECT,INSERT ON archava_purchasing.receipts,\
+             archava_purchasing.receipt_lines,archava_purchasing.audit TO {RUNTIME_USER}"
+        ),
+        format!(
+            "GRANT EXECUTE ON FUNCTION archava_purchasing.lock_membership(text,text) TO {RUNTIME_USER}"
+        ),
+        // Archxy 2 ERP (PACKET-001) — the port of grantFoodServiceRuntime
+        // (`packages/foodservice-pg/src/migrate.ts`), statement for statement:
+        // menus/tables/tickets draft writing, recipe versions editable while
+        // unsealed, components and history append-only, `lock_membership`
+        // executes because migration 001 REVOKEs it from PUBLIC.
+        format!("GRANT USAGE ON SCHEMA archava_foodservice TO {RUNTIME_USER}"),
+        format!(
+            "GRANT SELECT ON archava_foodservice.schema_migrations,\
+             archava_foodservice.memberships TO {RUNTIME_USER}"
+        ),
+        format!(
+            "GRANT SELECT,INSERT,UPDATE ON archava_foodservice.tables,\
+             archava_foodservice.menu_items,archava_foodservice.tickets,\
+             archava_foodservice.commands,archava_foodservice.recipe_versions TO {RUNTIME_USER}"
+        ),
+        format!(
+            "GRANT SELECT,INSERT ON archava_foodservice.recipe_components,\
+             archava_foodservice.ticket_lines,archava_foodservice.audit TO {RUNTIME_USER}"
+        ),
+        format!(
+            "GRANT EXECUTE ON FUNCTION archava_foodservice.lock_membership(text,text) TO {RUNTIME_USER}"
+        ),
     ];
     for statement in grants {
         sqlx::query(sqlx::AssertSqlSafe(statement.as_str()))
@@ -738,6 +828,8 @@ pub async fn provision() -> Fixture {
         commerce_ledger,
         identity_ledger,
         crm_ledger,
+        purchasing_ledger,
+        foodservice_ledger,
         dir,
     }
 }
@@ -806,6 +898,10 @@ fn migrations_package(namespace: &str) -> &'static str {
     match namespace {
         "archava_identity" => "identity-pg",
         "archava_crm" => "crm-pg",
+        // The Archxy 2 ERP cohorts' migrations live in the packages they were
+        // frozen in; no other ledger may inherit one of these directories.
+        "archava_purchasing" => "purchasing-pg",
+        "archava_foodservice" => "foodservice-pg",
         _ => "commerce-pg",
     }
 }
@@ -823,6 +919,8 @@ pub fn ledger_expectations(namespace: &str) -> Vec<(String, String)> {
     let migrations = match namespace {
         "archava_identity" => IDENTITY_MIGRATIONS,
         "archava_crm" => CRM_MIGRATIONS,
+        "archava_purchasing" => PURCHASING_MIGRATIONS,
+        "archava_foodservice" => FOOD_MIGRATIONS,
         _ => COMMERCE_MIGRATIONS,
     };
     let package = migrations_package(namespace);
@@ -896,6 +994,8 @@ pub async fn attach(data_dir: &Path, port: u16) -> Fixture {
         commerce_ledger: ledger_expectations(NAMESPACE),
         identity_ledger: ledger_expectations("archava_identity"),
         crm_ledger: ledger_expectations("archava_crm"),
+        purchasing_ledger: ledger_expectations("archava_purchasing"),
+        foodservice_ledger: ledger_expectations("archava_foodservice"),
         dir,
     }
 }

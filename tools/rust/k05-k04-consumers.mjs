@@ -637,8 +637,7 @@ export async function runK05K04Consumers() {
     return { ok: allPassed, checks, problems, artifacts }
   } catch (error) {
     problems.push(String(error.message ?? error))
-    if (!process.env.KEEP_SCRATCH) await rm(scratch, { recursive: true, force: true })
-    else process.stdout.write(`  (scratch kept: ${scratch})\n`)
+    await rm(scratch, { recursive: true, force: true })
     const checks = Object.fromEntries(
       REQUIRED_CHECKS.map((name) => [name, { passed: false, witnesses: [] }]),
     )

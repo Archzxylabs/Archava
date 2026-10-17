@@ -14,6 +14,8 @@ import {
 import { WITNESSES } from '../pg-readiness.mjs'
 import { WITNESSES as AUTHORITY_WITNESSES } from '../pg-authority.mjs'
 import { WITNESSES as R03_DOMAIN_WITNESSES } from '../r03-domain.mjs'
+import { WITNESSES as PURCHASING_WITNESSES } from '../erp/verify-purchasing.mjs'
+import { WITNESSES as FOODSERVICE_WITNESSES } from '../erp/verify-foodservice.mjs'
 import { WITNESSES as CAPACITY_WITNESSES } from '../capacity-conformance.mjs'
 import {
   WITNESSES as PLANNING_WITNESSES,
@@ -321,6 +323,68 @@ test('the P-AUTHORITY-PG witness map and the frozen manifest cannot drift apart'
       assert.equal(
         suite,
         'authority',
+        `${check}: witness ${JSON.stringify(name)} names unknown suite ${JSON.stringify(suite)}`,
+      )
+    }
+  }
+})
+
+test('the P-ERP-PURCHASING witness map and the frozen manifest cannot drift apart', () => {
+  // Same three-lists-equal property as P-READINESS-PG and P-AUTHORITY-PG, for
+  // the ERP namespace's purchasing cohort: a manifest check with no witness is
+  // a check nothing produces, and a witness naming a check the manifest does
+  // not require is a proof of something nobody asked for. Both directions, and
+  // the frozen `witnessTotal` too.
+  const manifest = loadManifest(repoRoot)
+  const spec = manifest.proofs['P-ERP-PURCHASING']
+  assert.deepEqual([...Object.keys(PURCHASING_WITNESSES)].sort(), [...spec.requiredChecks].sort())
+  const witnessTotal = Object.values(PURCHASING_WITNESSES).reduce(
+    (sum, list) => sum + list.length,
+    0,
+  )
+  assert.equal(witnessTotal, spec.expect.witnessTotal)
+  for (const [check, witnesses] of Object.entries(PURCHASING_WITNESSES)) {
+    assert.ok(witnesses.length > 0, `${check} has no witness tests`)
+    for (const [suite, name] of witnesses) {
+      assert.match(
+        name,
+        /^[a-z0-9_]+$/,
+        `${check}: witness name ${JSON.stringify(name)} is not a test identifier`,
+      )
+      assert.equal(
+        suite,
+        'purchasing',
+        `${check}: witness ${JSON.stringify(name)} names unknown suite ${JSON.stringify(suite)}`,
+      )
+    }
+  }
+})
+
+test('the P-ERP-FOODSERVICE witness map and the frozen manifest cannot drift apart', () => {
+  // Same three-lists-equal property as P-ERP-PURCHASING, for the ERP
+  // namespace's kitchen slice: a manifest check with no witness is a check
+  // nothing produces, and a witness naming a check the manifest does not
+  // require is a proof of something nobody asked for. Both directions, and
+  // the frozen `witnessTotal` too.
+  const manifest = loadManifest(repoRoot)
+  const spec = manifest.proofs['P-ERP-FOODSERVICE']
+  assert.deepEqual([...Object.keys(FOODSERVICE_WITNESSES)].sort(), [...spec.requiredChecks].sort())
+  const witnessTotal = Object.values(FOODSERVICE_WITNESSES).reduce(
+    (sum, list) => sum + list.length,
+    0,
+  )
+  assert.equal(witnessTotal, spec.expect.witnessTotal)
+  for (const [check, witnesses] of Object.entries(FOODSERVICE_WITNESSES)) {
+    assert.ok(witnesses.length > 0, `${check} has no witness tests`)
+    for (const [suite, name] of witnesses) {
+      assert.match(
+        name,
+        /^[a-z0-9_]+$/,
+        `${check}: witness name ${JSON.stringify(name)} is not a test identifier`,
+      )
+      assert.equal(
+        suite,
+        'foodservice',
         `${check}: witness ${JSON.stringify(name)} names unknown suite ${JSON.stringify(suite)}`,
       )
     }

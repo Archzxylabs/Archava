@@ -55,6 +55,7 @@ const root = fileURLToPath(new URL('../../', import.meta.url))
  */
 export const COMMANDS = {
   'rust fast gate': 'pnpm rust:verify',
+  'erp module consumers': 'pnpm erp:verify-consumers',
   'compiled-consumer benchmark': 'pnpm rust:benchmark',
   'rust artifact proofs (vitest)': 'pnpm exec vitest run --config vitest.artifacts.config.ts',
   'security chain (46 commands)': 'pnpm security:verify',
@@ -104,6 +105,20 @@ export function releaseSteps() {
     [
       'K05/K04 two-business-model consumers',
       () => step('K05/K04 two-business-model consumers', ['node', 'tools/rust/k05-k04-consumers.mjs']),
+    ],
+
+    // R06's two independently installed ERP module consumers — the
+    // P-MODULE-CONSUMERS proof: both product verticals install the compiled
+    // library from tarballs, hash identically across the pair, and run their
+    // verify batteries against the installed modules with no workspace path
+    // on any resolved entry. Added by the Archxy 2 ERP namespace in
+    // PACKET-002 (scope edit for review). Their packet pinned this step
+    // directly after the fast gate; main consumed that slot with the K05/K04
+    // step before integration, so it rides first after that — both steps are
+    // fast, fixtureless and independent of each other.
+    [
+      'erp module consumers',
+      () => step('erp module consumers', ['pnpm', 'erp:verify-consumers']),
     ],
 
     // Controlled benchmark. Separate from the fast gate because it measures a
@@ -277,6 +292,14 @@ export function releaseEvidenceMapping() {
     {
       proof: 'P-ARTIFACT-PROOFS',
       step: 'rust artifact proofs (vitest)',
+    },
+    {
+      proof: 'P-MODULE-CONSUMERS',
+      step: 'erp module consumers',
+      details: () =>
+        JSON.parse(
+          readFileSync(join(root, 'dist/rust-erp-module-consumers-proof.json'), 'utf8'),
+        ),
     },
     {
       proof: 'P-BENCHMARK',

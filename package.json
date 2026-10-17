@@ -119,3 +119,4 @@
     "esbuild": "0.25.12"
   }
 }
+    "erp:verify-consumers": "tsx tools/rust/erp/module-consumers.ts",

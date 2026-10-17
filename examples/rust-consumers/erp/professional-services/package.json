@@ -1,0 +1,21 @@
+{
+  "name": "erp-professional-services-consumer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "node build.mjs",
+    "verify": "node verify.mjs"
+  },
+  "dependencies": {
+    "@archava/purchasing": "0.1.0",
+    "@archava/foodservice": "0.1.0",
+    "@archava/purchasing-pg": "0.1.0",
+    "@archava/foodservice-pg": "0.1.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.12",
+    "typescript": "5.9.3"
+  }
+}
