@@ -1,0 +1,862 @@
+{
+  "schemaVersion": 1,
+  "audit": "independent Rust progress reaudit during active implementation",
+  "report": "docs/ARCHXY_RUST_REAUDIT_2026-10-16_LATE.md",
+  "auditedAt": "2026-10-16T16:39:38.795986+00:00",
+  "verdict": "progress verified; incomplete Full Rust candidate; authority/release regressions remain",
+  "scope": "delta since evening audit under R00-R11 plus OWN-V1 mandate; not completed-handoff acceptance",
+  "sourceSnapshot": {
+    "observedAt": "2026-10-16T16:26:20.855123+00:00",
+    "localTime": "2026-10-16T23:26:20.855123+07:00",
+    "root": "/home/haikaru/Archverse/Lab/Archava_Platform",
+    "snapshot": "/home/haikaru/.cache/archava-codex-audits/rust-20261016-2326-3fudwlec/source",
+    "head": "242549cc292cd53bbc66eb9cf119d57443aa2a37",
+    "branch": "feat/laundry-1.17.0",
+    "sourceFileCount": 1227,
+    "fixtureTemp": "/tmp/ar-a2328-_k3ypjrw",
+    "cargoCache": "/home/haikaru/.cache/archava-codex-audits/rust-20261016-1317-a6zf423o/cargo-target"
+  },
+  "sourceTreeSha256": "6a897f4b45fea56501b2179a77c2bfaa31362368d413a0b1576315d580a85e4e",
+  "sourceTreeHashRule": "UTF-8 concatenation of sorted relative path + NUL + SHA256-hex + newline",
+  "criticalSourceSha256": {
+    "config/library-release.v1.json": "acd39ff0252547e9d7ede7af90385ef11f175898a9cc835da06e8034bf80e164",
+    "docs/rust/EXECUTION_STATE.md": "12e28a4406dca988ce17fa10922b3e20dfa8589f7bc6642e6f9e442dac2212d6",
+    "docs/rust/required-coverage.json": "e3d76a6cb717142f454ce2818b47e6c1383888270ef774f7625a5f676b8a9c7a",
+    "examples/rust-consumers/addon/host/verify.mjs": "3102af71dbc877ab39e1308a2f7dace4bbe3628d194d5d34f74c2987d0195b59",
+    "examples/rust-consumers/crate/.gitignore": "937391038123f421cc9d99b3d883449166aac25ec4b4ea581c1bc0ed32afc290",
+    "examples/rust-consumers/crate/Cargo.lock": "2d276f57ef67e97fb2f7e80d1b836f07c07280a7c9186c9119bae50a44d7ffb7",
+    "examples/rust-consumers/crate/Cargo.toml": "be33d77e28a66f1a1aaef7275016c4b011c8fb6d8e58499e5e2f3a78d488a650",
+    "examples/rust-consumers/crate/rust-toolchain.toml": "95f71dd6b398d7a1367a188dcb173ffc157bb3e39000e17904af55776e2d26bf",
+    "examples/rust-consumers/crate/tests/consumer.rs": "1d939a9fecbb25a4d263f8f63250308deae7037c4090bb1202615f267d4b818e",
+    "package.json": "afd25018571d831dcd092e081e07ef11687e757e533d141d27f0a2d9d3b48344",
+    "packages/commerce-pg/migrations/004_bound_approvals.sql": "33870679fb6c3d9a960d6b23dd63e5765814be56b2ea50729911293444e4c9b2",
+    "packages/commerce-pg/src/migrate.ts": "6364d03f31484798b580ca45d6b227b834224c1e19b34c72ae9d9f7b547aceac",
+    "pnpm-lock.yaml": "21297e4a05f29ee849564793cb5019a19eff7eb4ee112147f19ee96d3852839e",
+    "rust/Cargo.lock": "3bea4cc4d24e1d1202cec9e2e2021419fdae7842d842bc2f6a2b8f4226b13d6e",
+    "rust/Cargo.toml": "6f3276c1e168ef7862a182502e80f00a080107320eb051d7c0075a54c75dccf8",
+    "rust/crates/adapters/Cargo.toml": "b8c8a727d14cee26906dbb83cc61dbff807d81866bea49c2a30057a2568e5ede",
+    "rust/crates/adapters/src/lib.rs": "3150c948d613a123c67c23296ce98b419df6560fb6efe3eb77e532e955a92470",
+    "rust/crates/adapters/src/rls.rs": "8f84b9d38eda68143f19ad4d2c0584698c1bbd0cf0cc61d9b58cc7cf8e6cd84c",
+    "rust/crates/adapters/tests/tenant_context.rs": "bd1a05c0a44b6ba1938e489a3be6ae196e08a2a91eb17e42cc650e17b9144951",
+    "rust/crates/assembly/Cargo.toml": "1f7bc264ed91e96b5c540dccd96015b1745690924ad7578014c259edf93e7862",
+    "rust/crates/assembly/src/catalog.rs": "c7a5950a07a793f875c2fe144f4b3aace86d2acf318b80a20c09d909d388d60d",
+    "rust/crates/assembly/src/contracts.rs": "cd2ea8bc8bc36c217cc748c9b7c30471a18b54ff217a607a83a4a7751a260a39",
+    "rust/crates/assembly/src/error.rs": "2f30bc4afafa451395b59edc489ab8638f084e59da34d19270e392f2bdba7142",
+    "rust/crates/assembly/src/lib.rs": "e4e015df822d74bb267362fdce52812692076a89a793444dbd0ea03e12f0f847",
+    "rust/crates/assembly/src/module_contracts.rs": "9491e3d0798207017c3ea3d5b4800ae4b563c65ddc6271b09386cebb2e4a083d",
+    "rust/crates/assembly/src/plan.rs": "4a4583e82bd487ae35a4d3504c27276b881ec86ac1280a38b02e064fc7abd660",
+    "rust/crates/assembly/src/request.rs": "4725a1a8cfb366f7b3464e1fe8242fe246e5a92643aefcb92f05f4ce76e527ad",
+    "rust/crates/assembly/tests/assembly.rs": "f6e9db85691a54aa2a4e10f2eb6f21eb4bfcad785279aea2dcbe57a8774836f7",
+    "rust/crates/capacity/Cargo.toml": "077f0ed4987fce65b267c88c09081622325bf839d2af2c990b954a116f80689f",
+    "rust/crates/capacity/src/calendar.rs": "37a24e7ee9bafacc4003ce7cc0f4f5d85e3c35c03568e389e5d2a33828b6f283",
+    "rust/crates/capacity/src/error.rs": "3d0a0045731336b02d1866baa8f9bb52d39efd1b93489ff49f2677d41e873592",
+    "rust/crates/capacity/src/lib.rs": "f8ab37e77a4f5ee610da5b5e4725913f885d2103df1fc8634e52285901839c53",
+    "rust/crates/capacity/src/schedule.rs": "057f4313852812fad994ba14102c3713a525e8049f15444331ce9f3a13c97134",
+    "rust/crates/capacity/tests/capacity.rs": "376d3b6bf03b1b85fef8098af8cad46f0ba96af08ccc56800cb9316c43bde970",
+    "rust/crates/capacity/tests/reference.json": "edcbc4171552a65deddb004a8beed3b87853b69f4c6e65a0d288267617b76ae3",
+    "rust/crates/core/Cargo.toml": "88eba024d629e6078aaa81c24e5ebd5df7f5987fedaaf701975382f6a429b81e",
+    "rust/crates/core/src/actions.rs": "674a14dad398fa430bf83965c6267d3efcc2f3b23b4d8a8175b347b082fb82ca",
+    "rust/crates/core/src/lib.rs": "f15d155757a5c4c7048e4a2672d35f5c7d974e16adf471191c6a525443bfcf26",
+    "rust/crates/core/src/roles.rs": "3d00877c7d9aa0db04aaea3d15c75e92caa1a1a816d2e8ef0368fbdadc35fe73",
+    "rust/crates/core/src/tenant.rs": "0f7c63971ca93223861c79c5a7bbb607200e77a30fc0166c7abfd4ae417edbce",
+    "rust/crates/domain/Cargo.toml": "3e195d3c9e95fcd3dc23d23227760bdc7e453087763317c46ee90f2a2bdfcefa",
+    "rust/crates/domain/src/authority.rs": "1034491877ab2174133a83614695ef448bdfed02247e84ff3f8443ef3a610c55",
+    "rust/crates/domain/src/lib.rs": "d2032ccf8e99e2c993ac76e35bef67e4800d15f50c52ca41ff3adb1a3aa0801b",
+    "rust/crates/host/Cargo.toml": "5c8ca9474d57f1ee63b1e5c778a0c2b57a2c9c850fbc6350c82ff46c58cb9ac3",
+    "rust/crates/host/src/authority.rs": "8c37be0b6c1b8031206865209097638c4ca7ca5ffc88a5fce3b9580c9bab3c32",
+    "rust/crates/host/src/extractors.rs": "f1db352039a3f3b0c4bf6ffa07831144725223a0c9dd59b7aa20e56ebfce8542",
+    "rust/crates/host/src/identity.rs": "620980bd04d4a7dd8a0026c8cde0f30f08670714248f2a127dafce551741412b",
+    "rust/crates/host/src/lib.rs": "cf1678fde7a129f30d1abf5bd3dc26d49186acb48a1673e660925f3167808ca3",
+    "rust/crates/host/src/router.rs": "2cadff9ddec92c365de58660069c9b88f94dac2afb3f0cf186d84c1dab31e898",
+    "rust/crates/host/tests/authority.rs": "791ca0daefa384f9d5b6fa540dabd888e69a0603d904c694efffc20345f8d209",
+    "rust/crates/host/tests/readiness.rs": "5a8ca70a2df244cca6bb9285b68448c78f75c290c5d29fcf8111ea400ab99139",
+    "rust/crates/native/Cargo.toml": "c4421662f5fe08d1543e14adfe7d337c292b3041ec43074806db7d34a32e888f",
+    "rust/crates/native/build.rs": "896b3808e78cc6ed8047dfc9e1762ab67c904de8b59d4deeedfd2c931f6e3460",
+    "rust/crates/native/src/lib.rs": "cd1128656ffae3425abf1619d186daf1554d947ecca9256896c40e90809145c4",
+    "rust/crates/pg-fixture/Cargo.toml": "1658533f72fc8e4ab97c006447d3e61941ff740db8eed2665e44f1719e8c6504",
+    "rust/crates/pg-fixture/src/lib.rs": "b75fc51b833acb37ea644932fb948cb7e1db08fdb0f544e576b03a9d9130cb33",
+    "rust/crates/pricing/Cargo.toml": "27823e3872ebd3e85c2877573a835416212670516efddddb1d5ac502d81050fd",
+    "rust/crates/pricing/src/classify.rs": "69198d8f71410460e0ecd0ffb103dd0998399fde089ee970addeed9000a13796",
+    "rust/crates/pricing/src/engine.rs": "aae3bac7eb553f0d8f55243f3715dc04b63288bd8232d37e563a7e7128282e20",
+    "rust/crates/pricing/src/error.rs": "7f87eb408d7a0e03e43cd974e59757a38fb113b5d1800a3776332eb4bfcc1b15",
+    "rust/crates/pricing/src/jsmath.rs": "fdacfae92bcf3aab49eb33f80d8bb9588eb3f03947b39365cf06fe7ba76d43cc",
+    "rust/crates/pricing/src/lib.rs": "2da328bd028e4f486cd3b965741e33e37eb4bd5fbb8d9db0ce313b0e75cc0816",
+    "rust/crates/pricing/src/pricebook.rs": "6d970611c13b0f0b676164c2b9e14c5de843da3640eeab5e1ed3bdb5716d8404",
+    "rust/crates/pricing/src/request.rs": "45582dfd0b7628f95cdd6ce7b099eb3a19f607201598c570dce0bb2487a7ac23",
+    "rust/crates/rates/Cargo.toml": "f25d1c16af95f4e832a65bc9291e7b7268da5a57935948dd61ff7c4b47a3d424",
+    "rust/crates/rates/src/lib.rs": "43d3aac1444d4549a993cbfee5d6330d05f3bcfc6479f34732cd9f86e9988ea8",
+    "rust/crates/rates/tests/rates.rs": "a3b2aaa8eb4ff88ce67643d634bc6646f9f18bb45c275fd3a9143d1bd8d4484d",
+    "rust/rust-toolchain.toml": "c33a48657241334db7e6775b96e1724fd14f8d19d14a9f07e365905ca341ca1a",
+    "tools/library/verify-rust-consumers.mjs": "92e92fad4168c36c6b6ca6734bc6ecb8f336cebcc59e62b992fe2dc8af04b624",
+    "tools/rust/benchmark/evidence/benchmark.json": "49ef0b38a98e6e2b40a06c95cbf93a63886de5cb5a68b8f0ea9330c5712e923c",
+    "tools/rust/benchmark/run-benchmark.mjs": "42b9fe0bce190982b4deb49bc8290083bfde2e333a320efec6fe0936d1fc3936",
+    "tools/rust/benchmark/rust/Cargo.lock": "18847d1275b17864b8ade9f19b822617ffd6b97611773770e0424aca8138d3f5",
+    "tools/rust/benchmark/rust/Cargo.toml": "e6d5a74ca3c981663978b40b35adbb545111d490ece9a35cc694816f110bddcc",
+    "tools/rust/benchmark/rust/rust-toolchain.toml": "60c807e26cb623962cff4df24c29d52a6280104e8b484de8e94c33b8673b164b",
+    "tools/rust/benchmark/rust/src/main.rs": "c6b9e3af2c5ecb755c292db973c0185d545a73c4ad39d8173a0514d1a670dc01",
+    "tools/rust/benchmark/stats.d.ts": "b12a329ade61d3b9983e419f6030252879e360257fc412653c0d407c74da23e9",
+    "tools/rust/benchmark/stats.mjs": "80ae0044b7eb74a71c594f6e42f41a93116d199e013596e2f3d23eefbfe85931",
+    "tools/rust/benchmark/test/benchmark.test.ts": "08a1e0e8b4cf4eff5cc841cc6ff5795c66cfb26add314dd9eb33b4274527752f",
+    "tools/rust/benchmark/test/coverage.test.ts": "fd40225ce82d74e902a820afa12e8aa85d7020fe95764ad1ea251574a4a4d777",
+    "tools/rust/benchmark/test/pricing-coverage.artifact.test.ts": "88210aac9548e8e154703dba9239a81b52250afcde72af402d4a7030207b7ce6",
+    "tools/rust/benchmark/test/pricing-coverage.test.ts": "24343157e058d18b128b4d8c5b289e757af7ea5e871a8af60ef5bc3b8bcfbf81",
+    "tools/rust/bootstrap.mjs": "1a52bf16a5b5132896332d0f84ed2645f27da386807effbab0917c37e0390fbe",
+    "tools/rust/build-artifacts.mjs": "b4b5029f3cb29bf0b5cda83f987d100d22d918bbfe2d7896235845029f22da50",
+    "tools/rust/capacity-probe.mjs": "bdcd8595ef09ca86a12322013d19c98c4dc2654ee57ade7d65885456a79aa9cb",
+    "tools/rust/count-lines.mjs": "b049df5509fa9b45bcac3ce0b6fd09b2cfc4e72b221def1ca4dee14dd6d8466f",
+    "tools/rust/coverage.mjs": "c0d8acef82270761b74195a4f5b6eecbaa76fdfeed7a3bbddb0426a0a6ed1a23",
+    "tools/rust/evidence.mjs": "8d22f6e2b88f2f3245c7c9ff62de013703d0e922a176e3db7c8e9dd65b480ab2",
+    "tools/rust/inventory.mjs": "245ddcdcef48b62eb39c32b050f490536c00c021e6b4d44c25ad1c30c157e591",
+    "tools/rust/parity/canonical.mjs": "e01427195b85ef149354bb2e1a75d28065272d5f8fdb8e6092a950e8d10b6fe1",
+    "tools/rust/parity/cases/pricing.json": "e0529d7664f5886d8dc896da5ae1ffb3634b0ac9e7413bf6d6a66edf38f582ab",
+    "tools/rust/parity/cases/rates.json": "e90dbf7a5b0bb1178d3fcbe0f437de5ed14954476176bc24a6fcafd6a90448f6",
+    "tools/rust/parity/compare.mjs": "e0bb9552767df84e700178569644d6911d18583e3e781b5904c9e690e053cada",
+    "tools/rust/parity/compare.test.mjs": "0c4f28a0b0650ca9fa8cd16706e7c8b9537594867df3ebfd7ce4122a83ae4068",
+    "tools/rust/parity/evidence/p1-parity.json": "13ddf548eb1f1a5327575c00a2cfc4ca8bba910b3cd3b24c95a9201e500c6190",
+    "tools/rust/parity/evidence/p2-parity.json": "301a23ab5a634724975c756f0277bdcbbdb86452361942ed3a9a910138df69e0",
+    "tools/rust/parity/gen-cases-rates.mjs": "b486c45e978ce46143078c0dc7c171ea85e76b9ac76b40833e093ba165d4277b",
+    "tools/rust/parity/gen-cases.mjs": "adb014f110860d36aaa8acca2a4e8abb5392dc9384cdbd5e8b3ee3bd4f01ecad",
+    "tools/rust/parity/run-parity-rates.mjs": "b05cbdea2ad4584e2bb1f4c0d3fd7ac173e24a96469330640b279301a1e51103",
+    "tools/rust/parity/run-parity.mjs": "593dda68d9f1332926a453e5ce480a91a90a9de82eab1952e37f32e8acf33ac4",
+    "tools/rust/parity/runtime.mjs": "2cc12784f3f726fab2e0cda8985573761bfbd3c5b0310ba3148cd91a5e1b5324",
+    "tools/rust/pg-readiness.mjs": "df48452aa14344a3d82478767f89301464216004931d864bfcaa4cbeb888a276",
+    "tools/rust/test/bootstrap.test.mjs": "8a7d2247e123195ab06d2747e881191dae30a4e833cd1442101d86b5ceee6de7",
+    "tools/rust/test/error-contract.test.mjs": "24082f109719449b13cdbd384ea3d83a5a6062c8a298f51bbe8a228eccddbd5a",
+    "tools/rust/test/verify-release.test.mjs": "a71111e97b5c40a43f16b0236a3a31568bff320ce5292aef604d39861353d834",
+    "tools/rust/test/verify.test.mjs": "2f39d1f66984d72fa1afaf26635bca34c96b525c781187ea85902b8b04c58547",
+    "tools/rust/verify-release.mjs": "193e31a6f19da3f06972022d207a7f9fef8f5ccb28f58a18511df42152958646",
+    "tools/rust/verify.mjs": "ed2fd3e357be49720119ab98b1f8511d5eb8a4f80158553201bbeb7d841a79e4",
+    "tools/rust/wasm-boundary.mjs": "926a1e09b400287640d2aa2e13c2820033b091c7d8c3895e42508e2430b85aa1"
+  },
+  "deltaSinceEvening": {
+    "changed": [
+      "ARCHXY_FULL_RUST_EXECUTION_TASK.md",
+      "ARCHXY_IMPLEMENTATION_TASK.md",
+      "docs/rust/DECISIONS.md",
+      "docs/rust/EXECUTION_STATE.md",
+      "docs/rust/migration-inventory.json",
+      "examples/rust-consumers/crate/.gitignore",
+      "rust/Cargo.lock",
+      "rust/Cargo.toml",
+      "rust/crates/capacity/src/calendar.rs",
+      "rust/crates/capacity/src/error.rs",
+      "rust/crates/capacity/src/lib.rs",
+      "rust/crates/capacity/src/schedule.rs",
+      "rust/crates/capacity/tests/capacity.rs",
+      "rust/crates/host/Cargo.toml",
+      "rust/crates/host/src/extractors.rs",
+      "rust/crates/host/src/lib.rs",
+      "rust/crates/host/src/router.rs",
+      "rust/crates/host/tests/readiness.rs",
+      "rust/crates/pg-fixture/src/lib.rs",
+      "tools/library/verify-rust-consumers.mjs",
+      "tools/rust/benchmark/test/pricing-coverage.artifact.test.ts",
+      "tools/rust/benchmark/test/pricing-coverage.test.ts",
+      "tools/rust/bootstrap.mjs",
+      "tools/rust/evidence.mjs",
+      "tools/rust/pg-readiness.mjs",
+      "tools/rust/test/verify.test.mjs",
+      "tools/rust/verify.mjs",
+      "vitest.artifacts.config.ts",
+      "Archava Template/.env.example",
+      "vitest.config.ts"
+    ],
+    "added": [
+      "docs/ARCHXY_RUST_AUDIT_2026-10-16_EVENING.md",
+      "docs/audit/2026-10-16-rust-evening-audit.json",
+      "examples/rust-consumers/crate/Cargo.lock",
+      "packages/commerce-pg/migrations/004_bound_approvals.sql",
+      "rust/crates/host/src/authority.rs",
+      "rust/crates/host/src/identity.rs",
+      "rust/crates/host/tests/authority.rs",
+      "tools/rust/test/bootstrap.test.mjs"
+    ]
+  },
+  "sourceDriftAtClose": {
+    "docs/rust/required-coverage.json": {
+      "snapshotSha256": "e3d76a6cb717142f454ce2818b47e6c1383888270ef774f7625a5f676b8a9c7a",
+      "currentSha256": "9a9a39af428e97e1b06f8bb762b2e50431e8729219cd97aeb51278d473d51b4c"
+    },
+    "rust/crates/host/src/authority.rs": {
+      "snapshotSha256": "8c37be0b6c1b8031206865209097638c4ca7ca5ffc88a5fce3b9580c9bab3c32",
+      "currentSha256": "0d9f178670d70924e1b339dfb30db8748bb7e239a44a5215f7f619edbd27ee54"
+    },
+    "rust/crates/host/src/identity.rs": {
+      "snapshotSha256": "620980bd04d4a7dd8a0026c8cde0f30f08670714248f2a127dafce551741412b",
+      "currentSha256": "5bb51ddf689188d08902a75caff83cd11fd62e4e2e91247a77042b4ec8da6700"
+    },
+    "rust/crates/host/src/lib.rs": {
+      "snapshotSha256": "cf1678fde7a129f30d1abf5bd3dc26d49186acb48a1673e660925f3167808ca3",
+      "currentSha256": "445b4a31ec2fc0a395c43207a28cd24c4442c01229961bc59fb4b64477ab3f21"
+    },
+    "rust/crates/host/tests/authority.rs": {
+      "snapshotSha256": "791ca0daefa384f9d5b6fa540dabd888e69a0603d904c694efffc20345f8d209",
+      "currentSha256": "629c40b3f9d78818a1bb4977b6adf1d66dcb01d6929b012a49dab2d987392cb5"
+    },
+    "tools/rust/verify.mjs": {
+      "snapshotSha256": "ed2fd3e357be49720119ab98b1f8511d5eb8a4f80158553201bbeb7d841a79e4",
+      "currentSha256": "72208e316565833fe4e3cd6ef9b456448dc254a44f77b0a41e4225d4a3fc22ec"
+    }
+  },
+  "runs": {
+    "root": [
+      {
+        "label": "install",
+        "command": [
+          "fnm",
+          "exec",
+          "--using",
+          "22.22.3",
+          "pnpm",
+          "install",
+          "--offline",
+          "--frozen-lockfile",
+          "--ignore-scripts"
+        ],
+        "exit": 0,
+        "seconds": 1.73
+      },
+      {
+        "label": "root-verify",
+        "command": ["fnm", "exec", "--using", "22.22.3", "pnpm", "verify"],
+        "exit": 1,
+        "seconds": 174.96
+      }
+    ],
+    "scoped": [
+      {
+        "label": "rust-workspace",
+        "command": [
+          "cargo",
+          "test",
+          "--manifest-path",
+          "rust/Cargo.toml",
+          "--workspace",
+          "--locked",
+          "--offline"
+        ],
+        "exit": 101,
+        "seconds": 110.78
+      },
+      {
+        "label": "rust-clippy",
+        "command": [
+          "cargo",
+          "clippy",
+          "--manifest-path",
+          "rust/Cargo.toml",
+          "--workspace",
+          "--all-targets",
+          "--locked",
+          "--offline",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "exit": 101,
+        "seconds": 6.84
+      },
+      {
+        "label": "bootstrap-tests",
+        "command": [
+          "fnm",
+          "exec",
+          "--using",
+          "22.22.3",
+          "node",
+          "--test",
+          "tools/rust/test/bootstrap.test.mjs"
+        ],
+        "exit": 0,
+        "seconds": 0.12
+      },
+      {
+        "label": "rust-consumers",
+        "command": ["fnm", "exec", "--using", "22.22.3", "pnpm", "rust:verify-consumers"],
+        "exit": 0,
+        "seconds": 7.4
+      }
+    ],
+    "probe": [
+      {
+        "label": "probe-lock",
+        "command": [
+          "cargo",
+          "generate-lockfile",
+          "--manifest-path",
+          "/home/haikaru/.cache/archava-codex-audits/rust-20261016-2326-3fudwlec/probe/Cargo.toml",
+          "--offline"
+        ],
+        "exit": 0,
+        "seconds": 0.51
+      },
+      {
+        "label": "probe-build",
+        "command": [
+          "cargo",
+          "build",
+          "--manifest-path",
+          "/home/haikaru/.cache/archava-codex-audits/rust-20261016-2326-3fudwlec/probe/Cargo.toml",
+          "--locked",
+          "--offline"
+        ],
+        "exit": 0,
+        "seconds": 19.64
+      },
+      {
+        "label": "authority-probe",
+        "command": [
+          "/home/haikaru/.cache/archava-codex-audits/rust-20261016-1317-a6zf423o/cargo-target/debug/codex-archava-progress-probe"
+        ],
+        "exit": 0,
+        "seconds": 0.99
+      }
+    ],
+    "supplemental": [
+      {
+        "label": "fixture-unit",
+        "command": [
+          "cargo",
+          "test",
+          "--manifest-path",
+          "rust/Cargo.toml",
+          "-p",
+          "archava-pg-fixture",
+          "--lib",
+          "--locked",
+          "--offline"
+        ],
+        "exit": 0,
+        "seconds": 9.0
+      },
+      {
+        "label": "coverage",
+        "command": ["fnm", "exec", "--using", "22.22.3", "node", "tools/rust/coverage.mjs"],
+        "exit": 1,
+        "seconds": 0.87
+      }
+    ],
+    "singlePositiveControl": {
+      "command": [
+        "cargo",
+        "test",
+        "--manifest-path",
+        "rust/Cargo.toml",
+        "-p",
+        "archava-host",
+        "--test",
+        "authority",
+        "an_authorized_operation_succeeds_with_a_receipt",
+        "--locked",
+        "--offline",
+        "--",
+        "--exact",
+        "--test-threads=1"
+      ],
+      "exit": 0,
+      "seconds": 32.64
+    }
+  },
+  "results": {
+    "root": {
+      "passed": 7,
+      "total": 9,
+      "exit": 1,
+      "failed": ["reuse", "rust"],
+      "prettier": "pass",
+      "nodeUnitFilesPassed": 137,
+      "nodeUnitTestsPassed": 1821
+    },
+    "rustFastGate": {
+      "stepsPassedBeforeFailure": 1,
+      "total": 10,
+      "failure": "cargo fmt --all --check",
+      "qualification": "stopped early; not full Rust gate result"
+    },
+    "rustfmtFailureFiles": [
+      "rust/crates/host/src/authority.rs",
+      "rust/crates/host/src/extractors.rs",
+      "rust/crates/host/src/identity.rs",
+      "rust/crates/host/src/router.rs",
+      "rust/crates/host/tests/authority.rs",
+      "rust/crates/host/tests/readiness.rs",
+      "rust/crates/pg-fixture/src/lib.rs"
+    ],
+    "clippy": {
+      "exit": 101,
+      "errors": 3,
+      "rules": [
+        "too_many_arguments:load_bound_approval",
+        "too_many_arguments:consume_approval",
+        "manual_is_multiple_of:identity.decode_hex"
+      ],
+      "qualification": "snapshot result; subsequent live edits include two allowances"
+    },
+    "rustWorkspace": {
+      "exit": 101,
+      "scope": "aborted on authority suite; subsequent targets not run",
+      "hostUnitPassed": 37,
+      "calendarUnitPassed": 35,
+      "capacityIntegrationPassed": 13,
+      "authorityIntegrationPassed": 3,
+      "authorityIntegrationFailed": 12,
+      "failurePhase": "401 instead of 200 in login helper before intended authz assertions"
+    },
+    "authorityIsolatedPositive": {
+      "passed": 1,
+      "failed": 0,
+      "test": "an_authorized_operation_succeeds_with_a_receipt",
+      "testThreads": 1,
+      "qualification": "control, not a rerun of all failed tests"
+    },
+    "fixtureUnit": {
+      "passed": 9,
+      "failed": 0
+    },
+    "bootstrapDerivationUnit": {
+      "passed": 10,
+      "failed": 0
+    },
+    "coldConsumers": {
+      "crateTests": 4,
+      "addonChecks": 8,
+      "exit": 0,
+      "evidence": {
+        "consumers": [
+          {
+            "consumer": "crate",
+            "mode": "linked-rust-crates",
+            "tests": 4,
+            "vendoredCrates": 15,
+            "artifacts": [
+              {
+                "crate": "archava-pricing",
+                "tarball": "archava-pricing-0.1.0.crate",
+                "tarballSha256": "adafa0a362d896b4dd8673e74c4b459f78ab4597b68fb30aee87372137697506"
+              },
+              {
+                "crate": "archava-rates",
+                "tarball": "archava-rates-0.1.0.crate",
+                "tarballSha256": "25838932bb54d44cfa06dee02ddc5dbc0fafe20cb37cd0f5deb0b0995214834a"
+              }
+            ],
+            "coldOffline": true,
+            "vendoredSourceOnly": true,
+            "productTreeReached": false
+          },
+          {
+            "consumer": "addon",
+            "mode": "napi-bridge-from-node",
+            "checks": 8,
+            "addonSha256": "025250ddd1e63d892ca0dc6a0e712d288e662597f7750ef58b84421143399f14",
+            "addonCopied": true,
+            "coldOffline": true,
+            "productTreeReached": false
+          }
+        ],
+        "identicalArtifacts": true,
+        "offlineOnly": true,
+        "artifactFreshness": {
+          "everyArtifactNewerThanItsSources": true,
+          "artifactsChecked": 3
+        },
+        "pricebookSha256": "2499bc82220188dad4daff276f73159ddcff9233944169fdf8f0dcc3f14f7831",
+        "node": "v22.22.3",
+        "cargo": "cargo 1.96.0 (30a34c682 2026-05-25)"
+      }
+    },
+    "coverage": {
+      "complete": false,
+      "errorCount": 47,
+      "errors": [
+        "proof P-FAST-GATE: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-P1-PARITY: required check \"p1 parity harness exits 0\" is \"fail: step \\\"p1 pricing parity\\\" did not pass in this invocation (cargo fmt --all --check: cargo fmt --all --check failed with exit 1\\n    ran for 0.3s)\"",
+        "proof P-P1-PARITY: required check \"frozen expectation reconciled\" is \"fail: step \\\"p1 pricing parity\\\" did not pass in this invocation (cargo fmt --all --check: cargo fmt --all --check failed with exit 1\\n    ran for 0.3s)\"",
+        "proof P-P2-PARITY: required check \"p2 parity harness exits 0\" is \"fail: step \\\"p2 rates parity\\\" did not pass in this invocation (cargo fmt --all --check: cargo fmt --all --check failed with exit 1\\n    ran for 0.3s)\"",
+        "proof P-P2-PARITY: required check \"frozen expectation reconciled\" is \"fail: step \\\"p2 rates parity\\\" did not pass in this invocation (cargo fmt --all --check: cargo fmt --all --check failed with exit 1\\n    ran for 0.3s)\"",
+        "proof P-COLD-CONSUMERS: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-WASM-PORTABLE: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-ARTIFACT-PROOFS: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-BENCHMARK: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-SECURITY-CHAIN: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-CRM-BROWSER: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-COLD-PRIOR-UPGRADE: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-COLD-PRIOR-RECOVERY: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-CRM-BENCHMARK: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-AUTHORITY-PG: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-READINESS-PG: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-RUST-BROWSER: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-CAPACITY-CONFORMANCE: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-PLANNING-CONFORMANCE: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-R03-DOMAIN: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-R04-DOMAIN: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-R05-DOMAIN: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-R06-DOMAIN: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-R07-DOMAIN: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-R08-DOMAIN: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-K05-K04: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-MODULE-CONSUMERS: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-ASSISTANT-CONTEXT: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-SDK-WIDGET: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-REALTIME-VOICE: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-PROVIDER-CONTRACTS: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-CLI-OPERATIONS: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-UPGRADE-RESTORE-RUST: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-RELEASE-IDENTITY: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-LEGACY-REPLACEMENT: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-OWN-T01: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-OWN-T02: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-OWN-T03: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-OWN-T04: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-OWN-T05: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-OWN-T06: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-OWN-T07: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-OWN-T08: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-OWN-T09: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof P-OWN-T10: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+        "proof D-COMPLETION-REPORT: contract file missing: docs/rust/FULL_RUST_COMPLETION_REPORT.md",
+        "proof D-AUDIT-PACKET: contract file missing: docs/rust/FULL_RUST_AUDIT_PACKET.md"
+      ],
+      "qualification": "no inherited dist; early gate failure plus required future proofs; not a percentage/bug count"
+    }
+  },
+  "verifiedProgress": {
+    "RF04": "exact extracted helper preserves live creator/live postmaster and removes dead fixture; 9 unit tests pass; teardown guard inspected, not every stop failure fault-injected",
+    "RA07": "old i64::MAX count_working_days hang now returns controlled error; remaining domain-boundary RN05",
+    "RA01": "old no-session acceptance now 401; session/CSRF/membership/approval/durable receipts present; complete authority not closed",
+    "consumerClosure": "lock/derived closure/vendor config and offline consumers pass; no fresh empty-cache fetch rerun in this audit",
+    "rootPrettier": "pass, distinct from Rustfmt"
+  },
+  "findings": [
+    {
+      "id": "RN01",
+      "priority": "P1 before business integration",
+      "source": "rust/crates/host/src/router.rs",
+      "line": 982,
+      "summary": "status recovery ignores role/capability/scope/operation downgrade while membership stays active",
+      "observed": {
+        "statusAfterRoleViewer": 200,
+        "sameCommandReplay": 403,
+        "originalReceiptInputReturned": true
+      }
+    },
+    {
+      "id": "RN02",
+      "priority": "P2",
+      "source": "rust/crates/host/src/router.rs",
+      "line": 939,
+      "summary": "concurrent request-id collision branch omits fingerprint binding",
+      "observed": {
+        "controlledInsertWaiters": 2,
+        "sameActorAndId": true,
+        "differentInputs": ["race-A", "race-B"],
+        "statuses": [200, 200],
+        "requestAReceivedInput": "race-B"
+      },
+      "limit": "one receipt for race key; no duplicate business effect demonstrated"
+    },
+    {
+      "id": "RN03",
+      "priority": "P2",
+      "source": "packages/commerce-pg/src/migrate.ts",
+      "line": 5,
+      "summary": "SQL migration 004 not declared by migrator or release profile; reuse fails migration_set_mismatch"
+    },
+    {
+      "id": "RN04",
+      "priority": "P2 verification blocker",
+      "source": "rust/crates/host/tests/authority.rs",
+      "line": 243,
+      "summary": "12 of 15 default authority tests fail during parallel login; isolated positive passes",
+      "causeAssessment": "consistent with concurrent KDF saturation mapped to invalid credentials; downstream assertions not fully characterized"
+    },
+    {
+      "id": "RN05",
+      "priority": "P2 library boundary",
+      "source": "rust/crates/capacity/src/calendar.rs",
+      "line": 326,
+      "summary": "next_business_day returns Ok outside supported Date domain",
+      "observed": {
+        "maxSupportedMillis": "8640000000000000",
+        "actualResultMillis": "8640000172800000",
+        "inSupportedDomain": false
+      },
+      "limit": "direct library call; no public endpoint exploit shown"
+    },
+    {
+      "id": "RN06",
+      "priority": "P3",
+      "summary": "seven Rustfmt files and three Clippy errors in frozen source"
+    }
+  ],
+  "additionalObservations": [
+    {
+      "area": "granular grants/delegation",
+      "observed": "service with empty permissions and no human delegation receives product.read allowed receipt",
+      "qualification": "coarse authority seam, no actual product query/exfiltration demonstrated"
+    },
+    {
+      "area": "approver revocation",
+      "observed": "approval usable after approver membership deactivated",
+      "qualification": "requires explicit current-approver/delegation revocation policy; not independently labeled a confirmed policy violation"
+    }
+  ],
+  "probes": [
+    {
+      "controlled_error": true,
+      "probe": "calendar_old_hang"
+    },
+    {
+      "probe": "calendar_domain_edge",
+      "result": "Ok(Instant(8640000172800000))",
+      "result_in_domain": false
+    },
+    {
+      "decision": "unauthenticated",
+      "probe": "unauthenticated_command",
+      "reason": "no_valid_session",
+      "receipt": null,
+      "status": 401
+    },
+    {
+      "decision": "allowed",
+      "probe": "active_service_zero_permissions_no_human_grant",
+      "reason": null,
+      "receipt": {
+        "action": "product.read",
+        "approval_id": null,
+        "fingerprint": "36231276d620e3d356a043584a9a6e73010c4c4ff0beac9af12083be8a39d3b9",
+        "input": "audit-record-A",
+        "revision": 1
+      },
+      "status": 200
+    },
+    {
+      "decision": "receipt",
+      "probe": "downgraded_role_status",
+      "reason": null,
+      "receipt": {
+        "action": "product.read",
+        "approval_id": null,
+        "fingerprint": "36231276d620e3d356a043584a9a6e73010c4c4ff0beac9af12083be8a39d3b9",
+        "input": "audit-record-A",
+        "revision": 1
+      },
+      "status": 200
+    },
+    {
+      "decision": "denied",
+      "probe": "downgraded_role_replay_control",
+      "reason": "role_not_allowed",
+      "receipt": null,
+      "status": 403
+    },
+    {
+      "insert_waiters": 2,
+      "probe": "race_barrier"
+    },
+    {
+      "decision": "replayed",
+      "probe": "concurrent_race-A",
+      "reason": null,
+      "receipt": {
+        "action": "product.read",
+        "approval_id": null,
+        "fingerprint": "7343a1414d14dde890f8046efd02cc36ae1fa4428e6517d8ded225c0015dfdce",
+        "input": "race-B",
+        "revision": 1
+      },
+      "status": 200
+    },
+    {
+      "decision": "allowed",
+      "probe": "concurrent_race-B",
+      "reason": null,
+      "receipt": {
+        "action": "product.read",
+        "approval_id": null,
+        "fingerprint": "7343a1414d14dde890f8046efd02cc36ae1fa4428e6517d8ded225c0015dfdce",
+        "input": "race-B",
+        "revision": 1
+      },
+      "status": 200
+    },
+    {
+      "decision": "approval_requested",
+      "probe": "request_approval",
+      "reason": null,
+      "receipt": null,
+      "status": 201
+    },
+    {
+      "decision": "approved",
+      "probe": "grant_approval",
+      "reason": null,
+      "receipt": null,
+      "status": 200
+    },
+    {
+      "decision": "allowed",
+      "probe": "execute_after_approver_membership_revoked",
+      "reason": null,
+      "receipt": {
+        "action": "admin.config.update",
+        "approval_id": "935ccbfb-f53d-4878-a80d-1973dc771913",
+        "fingerprint": "a6a817f190eeb1de0d62a62f8e6f4d74d858afc5637e6dc6273ea5d0afe9e310",
+        "input": "audit-config",
+        "revision": 1
+      },
+      "status": 200
+    },
+    {
+      "command_receipts": 3,
+      "probe": "persisted_state",
+      "products": 0
+    }
+  ],
+  "probeMethods": {
+    "authority": "actual Axum Router.oneshot + public readiness constructor + owned non-owner PostgreSQL; fixture-issued valid HMAC sessions/CSRF; no TCP listener",
+    "login": "upstream suite and isolated positive control exercise actual POST /login",
+    "race": "SHARE lock forces two INSERT waiters, then compare input/returned receipt",
+    "cleanup": "exact extracted helper + owned directories/PIDs, age controlled; no user PG destruction"
+  },
+  "completionDeliverablesPresent": {
+    "docs/rust/FULL_RUST_COMPLETION_REPORT.md": false,
+    "docs/rust/FULL_RUST_AUDIT_PACKET.md": false
+  },
+  "progressAssessment": {
+    "percent": null,
+    "state": "foundations improve; authority actively developing; complete business/UI owner flow absent",
+    "reason": "tests/crates/LOC and proof rows are not behavior-weighted completion"
+  },
+  "notRun": [
+    "full security chain",
+    "full candidate gate",
+    "browser acceptance",
+    "upgrade/restore acceptance",
+    "live providers",
+    "deployment",
+    "fresh pricing/rates parity: related source unchanged"
+  ],
+  "lifecycle": {
+    "ownerStateCopied": false,
+    "ownerDatabaseTouched": false,
+    "productSourceModified": false,
+    "newAuditDocumentsOnly": true,
+    "committed": false,
+    "pushed": false,
+    "reaStarted": false,
+    "browserStarted": false,
+    "containersStarted": false,
+    "ownedPostgresRemaining": [],
+    "ownedFixtureDirsRemaining": [],
+    "userOrImplementatorProcessesStopped": false
+  },
+  "evidenceRoot": "/home/haikaru/.cache/archava-codex-audits/rust-20261016-2326-3fudwlec",
+  "files": {
+    "snapshot.json": {
+      "sha256": "c8827249d61f189d53d813b07e78f203030737497c69399b04486fe0bd551ad2",
+      "bytes": 137732
+    },
+    "delta.json": {
+      "sha256": "a2466425e94567ca8ca8776e551cee69900880823a14815b9fe7d77c772e6f37",
+      "bytes": 1583
+    },
+    "probe/Cargo.toml": {
+      "sha256": "d79150efd4e38da943fd9d42f9a58be46544072ff99438ebc7439b17dbe052eb",
+      "bytes": 801
+    },
+    "probe/Cargo.lock": {
+      "sha256": "056250cac95efbde240ef38ae632ecd9f54d8ef16a415f5837f58cdb33214c93",
+      "bytes": 45642
+    },
+    "probe/src/main.rs": {
+      "sha256": "6a952cb9e44d9433ee6d7c85301dfd2eb7c96c83fd38aebf6df80066ae5079ab",
+      "bytes": 6945
+    },
+    "reaper_probe.rs": {
+      "sha256": "02b9d8704147cca5d9720812a828ae3264483d71dab8821852a3c2e13a4edcd5",
+      "bytes": 6576
+    },
+    "verification-result.json": {
+      "sha256": "c07b8e6a05db0fd2e2cf8afd99dbf478a99008bea0e8a60fe691b8f0b0a76055",
+      "bytes": 446
+    },
+    "scoped-verification-result.json": {
+      "sha256": "6cafaca5e83c52e08d7be4def2f2b22415064990a21e60a500b6e75568db6cc8",
+      "bytes": 980
+    },
+    "probe-result.json": {
+      "sha256": "bed616a5cbbed41c0c126cfd4d4501eb0564c3d3fa70c2fb728480fde4ca54b5",
+      "bytes": 789
+    },
+    "supplemental-result.json": {
+      "sha256": "21ccbc78832f5aefbedb705b84d978ac06aa0ef0ced0edeb82f7453196dda33d",
+      "bytes": 469
+    },
+    "authority-single-control-result.json": {
+      "sha256": "81685b6b6d3755bd578ed99e4a5ac404b296017576ace72b7f48ee7d6f608e0f",
+      "bytes": 324
+    },
+    "source/dist/rust-consumer-proof.json": {
+      "sha256": "d2b0c8f58d640020f8a9bccd2c1dd6361a2e60bedee85eb09847afc7cb57ebba",
+      "bytes": 1267
+    },
+    "logs/authority-probe.log": {
+      "sha256": "13c3a3d0352207f893bf469633afc60c2aede0ca00ad722a4edf34bca8489667",
+      "bytes": 2062
+    },
+    "logs/authority-single-control.log": {
+      "sha256": "d62f3666881997c987879d79b36a01f5587e509a7cf77ec61756a7aef37cf55f",
+      "bytes": 1090
+    },
+    "logs/bootstrap-tests.log": {
+      "sha256": "9bc721337d8f0c6933b315d5a7cfc55ea4f55c2d5f5f53dd6e9f54d9ea43d0cf",
+      "bytes": 2101
+    },
+    "logs/coverage.log": {
+      "sha256": "a56ce8cd5db64ccbf44dfb646732b39d06ac09f2927bf5b205eb1b4e72a1474d",
+      "bytes": 37602
+    },
+    "logs/fixture-unit.log": {
+      "sha256": "41313c7e41ed80a7a5e7e547aba5d265680a4a94da3e0c54ffad57caf6b24ddb",
+      "bytes": 1472
+    },
+    "logs/install.log": {
+      "sha256": "2c68b0f68219db2c0f4f16466bebaf830cc142b6c1ea451789f3a357f25b98fb",
+      "bytes": 596
+    },
+    "logs/probe-build.log": {
+      "sha256": "7aa382edd2d7cbb4765a152d597bbb884adae8e9a76666b3e19e096cf0385f63",
+      "bytes": 1338
+    },
+    "logs/probe-lock.log": {
+      "sha256": "1dbe0ddf5608ab38b8695b250e9c5867733a8c2be81c989075a9dfc4d2ad9dc1",
+      "bytes": 206
+    },
+    "logs/reaper-build.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "logs/reaper-probe.txt": {
+      "sha256": "f93ff4bbca8c39bc98b51e34f064fc94e7aad576f7334c2a9ca6acfe10af2878",
+      "bytes": 101
+    },
+    "logs/root-verify.log": {
+      "sha256": "283323ade481a15a999687457f3f75b9670c701a429f0df006e742b4654bf07e",
+      "bytes": 50746
+    },
+    "logs/rust-clippy.log": {
+      "sha256": "4187d0b260c4cecc99fe4e7722d0b03b747c84d26ff32314379922bb7703a6fa",
+      "bytes": 3759
+    },
+    "logs/rust-consumers.log": {
+      "sha256": "974c47b6a37d484ce96541e3eed02ac34f5337a820bbbc6cc55c7b6770927267",
+      "bytes": 479
+    },
+    "logs/rust-workspace.log": {
+      "sha256": "d48f948f08c053c58c38848f31b2a46c5b5719c83ef779c454c76f57e6f5f928",
+      "bytes": 21480
+    }
+  }
+}

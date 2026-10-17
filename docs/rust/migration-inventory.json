@@ -1,0 +1,220 @@
+{
+  "schemaVersion": "1.0.0",
+  "measuredAt": "2026-10-16T08:27:37.201Z",
+  "baseline": {
+    "head": null,
+    "branch": null,
+    "node": "v26.10.0",
+    "pnpm": null,
+    "rustc": null,
+    "cargo": null
+  },
+  "counts": {
+    "workspaceDirs": 75,
+    "packageRoots": 70,
+    "packages": 64,
+    "apps": 2,
+    "tools": 4,
+    "bareDirectories": 5,
+    "ledgerOwners": 25,
+    "sqlMigrationFiles": 30,
+    "ledgerOwnersByPgSuffix": 22,
+    "domainPackages": 42
+  },
+  "bare": ["tools/e2e", "tools/library", "tools/rust", "tools/scripts", "tools/security"],
+  "ledgers": [
+    {
+      "package": "accommodation-pg",
+      "version": "0.1.0",
+      "migrations": ["001_room_night_stays.sql"]
+    },
+    {
+      "package": "act-confirmation-pg",
+      "version": "0.1.0",
+      "migrations": ["001_confirmation_challenges.sql"]
+    },
+    {
+      "package": "act-host-pg",
+      "version": "0.2.0",
+      "migrations": ["001_host_intents.sql"]
+    },
+    {
+      "package": "act-storage",
+      "version": "0.2.0",
+      "migrations": ["001_act_attempts.sql"]
+    },
+    {
+      "package": "assets-pg",
+      "version": "0.1.0",
+      "migrations": ["001_assets_custody_maintenance.sql"]
+    },
+    {
+      "package": "attendance-pg",
+      "version": "0.1.0",
+      "migrations": ["001_attendance_sessions_rosters.sql"]
+    },
+    {
+      "package": "billing-pg",
+      "version": "0.1.0",
+      "migrations": ["001_billing_invoices_settlement.sql"]
+    },
+    {
+      "package": "capacity-pg",
+      "version": "0.1.0",
+      "migrations": ["001_delivery_capacity_pools.sql"]
+    },
+    {
+      "package": "commerce-pg",
+      "version": "0.3.0",
+      "migrations": [
+        "001_catalog_orders_stock.sql",
+        "002_managed_menu_products.sql",
+        "003_purchase_receipts.sql"
+      ]
+    },
+    {
+      "package": "crm-act",
+      "version": "0.2.0",
+      "migrations": ["001_native_confirmations.sql"]
+    },
+    {
+      "package": "crm-pg",
+      "version": "0.7.0",
+      "migrations": ["001_crm_contacts.sql", "002_sales_pipeline.sql", "003_native_approval.sql"]
+    },
+    {
+      "package": "field-services-pg",
+      "version": "0.1.0",
+      "migrations": ["001_field_services_dispatch_visits.sql"]
+    },
+    {
+      "package": "foodservice-pg",
+      "version": "0.1.0",
+      "migrations": ["001_tables_recipes_tickets.sql"]
+    },
+    {
+      "package": "formal-education-pg",
+      "version": "0.1.0",
+      "migrations": ["001_formal_education_enrollment.sql"]
+    },
+    {
+      "package": "fulfillment-pg",
+      "version": "0.1.0",
+      "migrations": ["001_fulfillment_jobs_evidence.sql"]
+    },
+    {
+      "package": "identity-pg",
+      "version": "0.1.0",
+      "migrations": ["001_identity.sql"]
+    },
+    {
+      "package": "laundry-pg",
+      "version": "0.1.0",
+      "migrations": ["001_laundry_orders_processing.sql"]
+    },
+    {
+      "package": "organizations-pg",
+      "version": "0.1.0",
+      "migrations": ["001_organizations_affiliations.sql"]
+    },
+    {
+      "package": "projects-pg",
+      "version": "0.1.0",
+      "migrations": ["001_project_delivery.sql"]
+    },
+    {
+      "package": "proposals-pg",
+      "version": "0.1.0",
+      "migrations": ["001_proposals_scope_amendments.sql"]
+    },
+    {
+      "package": "provider-runtime",
+      "version": "0.1.0",
+      "migrations": ["001_provider_attempts.sql"]
+    },
+    {
+      "package": "purchasing-pg",
+      "version": "0.1.0",
+      "migrations": ["001_suppliers_orders_receipts.sql"]
+    },
+    {
+      "package": "scheduling-pg",
+      "version": "0.2.0",
+      "migrations": ["001_resource_reservations.sql", "002_shared_occupancy.sql"]
+    },
+    {
+      "package": "subscriptions-pg",
+      "version": "0.1.0",
+      "migrations": ["001_subscriptions_entitlements_usage.sql"]
+    },
+    {
+      "package": "support-pg",
+      "version": "0.1.0",
+      "migrations": ["001_cases_notes_resolution.sql"]
+    }
+  ],
+  "browserSurface": {
+    "package": "@archava/crm",
+    "entrypoints": [
+      "backups.ts",
+      "browser.ts",
+      "host.ts",
+      "local-postgres.ts",
+      "modules.ts",
+      "native-actions.ts",
+      "operator.ts",
+      "planner.ts",
+      "postgres-pool.ts",
+      "presence.ts",
+      "provider-policy.ts",
+      "release.ts",
+      "server.ts",
+      "settings.ts"
+    ],
+    "note": "Panel modules under apps/crm/src; each Rust milestone must reproduce the same declared set."
+  },
+  "providerAdapters": {
+    "gemini": "apps/crm/src/gemini.ts",
+    "note": "First-party adapter to a documented HTTP/SSE protocol; no official Rust SDK exists."
+  },
+  "template": {
+    "path": "Archava Template",
+    "language": "python",
+    "backendEntrypoints": [
+      "agent.py",
+      "config.py",
+      "instructions.py",
+      "integration_tools.py",
+      "integration_worker.py",
+      "knowledge.py",
+      "site_context.py",
+      "test_guardrails.py"
+    ]
+  },
+  "requiredCoverage": {
+    "manifest": "docs/rust/required-coverage.json",
+    "validator": "tools/rust/coverage.mjs",
+    "evidenceDir": "dist/rust-evidence/",
+    "manifestExists": true,
+    "manifestSha256": "93769cda34a1e7f98d11fa5fe0517f3eff825df714ad65572263050c6713d956",
+    "note": "Scope items and their binding proofs are frozen in the manifest; the release gate validates them (never trusts this pointer as evidence)."
+  },
+  "candidateIdentity": {
+    "baseline": {
+      "head": "242549cc292cd53bbc66eb9cf119d57443aa2a37",
+      "branch": "feat/laundry-1.17.0",
+      "toolchain": {
+        "node": "v26.10.0",
+        "pnpm": "10.15.1",
+        "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+        "cargo": "cargo 1.96.0 (30a34c682 2026-05-25)"
+      }
+    },
+    "releaseProfileVersion": "1.17.0",
+    "artifacts": {
+      "pricingTarballSha256": "adafa0a362d896b4dd8673e74c4b459f78ab4597b68fb30aee87372137697506",
+      "ratesTarballSha256": "25838932bb54d44cfa06dee02ddc5dbc0fafe20cb37cd0f5deb0b0995214834a",
+      "addonSha256": "025250ddd1e63d892ca0dc6a0e712d288e662597f7750ef58b84421143399f14"
+    }
+  }
+}
