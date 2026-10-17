@@ -248,7 +248,7 @@ impl Identity {
 
     /// `HMAC-SHA256(key, label + "\0" + value)`, hex — the baseline's
     /// `digest`, used for session hashes, csrf digests and bucket keys alike.
-    fn digest(&self, label: &str, value: &str) -> String {
+    pub(crate) fn digest(&self, label: &str, value: &str) -> String {
         let mut mac =
             Hmac::<Sha256>::new_from_slice(&self.key).expect("HMAC accepts any key length");
         mac.update(label.as_bytes());

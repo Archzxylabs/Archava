@@ -1,0 +1,16 @@
+[package]
+name = "archava-pg-fixture"
+description = "Disposable, owned PostgreSQL instance for the Rust integration suites (dev-only)"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+# The digest function the readiness checker uses is the digest function the
+# fixture's migrator uses — one function, imported from the production crate, so
+# "the migrator and the readiness check hash differently" is not a failure mode
+# that can exist.
+archava-adapters.workspace = true
+sqlx.workspace = true
+tokio = { workspace = true, features = ["sync", "time"] }

@@ -10,6 +10,23 @@ dist/
 build/
 *.tsbuildinfo
 
+# rust build output — ~1.6GB of target/ must never be staged. Cargo.lock is
+# deliberately NOT ignored: R01 pins the host stack (axum 0.8.9, sqlx 0.9.0,
+# tokio 1.53.3) in the lockfile, and an unpinned workspace would resolve
+# different versions on different machines.
+rust/target/
+rust/target/*/
+*.wasm
+
+# The same rule for crates that are deliberately *outside* the workspace. R02's
+# benchmark consumer path-depends on the engine crates from `tools/`, the way a
+# cold consumer would, so its target/ is not under `rust/`. A leading `**/`
+# rather than a bare `target/` because the repo may hold an out-of-workspace
+# crate at any depth, and because a directory named `target/` in source would be
+# a different thing from cargo's output — no such directory exists today.
+**/target/
+**/target/*/
+
 # env
 .env
 .env.*

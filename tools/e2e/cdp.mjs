@@ -59,9 +59,30 @@ export class Session {
   #next = 1
   #pending = new Map()
   #ready
+  #listeners = []
   console_ = []
   network_ = []
   requests_ = new Map()
+
+  /**
+   * Subscribe to raw protocol events, additive to every recorded one.
+   *
+   * The recorded flags cover the traffic the fixed E2E reports. A proof that
+   * must INTERCEPT network traffic (the lost-response scenario suspends a
+   * response after the server has committed and fails it on the wire) needs
+   * the event itself, and a listener is the narrowest surface for that. The
+   * returned function unsubscribes.
+   *
+   * @param {(message: any) => void} listener
+   * @returns {() => void}
+   */
+  on(listener) {
+    this.#listeners.push(listener)
+    return () => {
+      const at = this.#listeners.indexOf(listener)
+      if (at !== -1) this.#listeners.splice(at, 1)
+    }
+  }
 
   /** @param {string} endpoint */
   constructor(endpoint) {
@@ -87,6 +108,7 @@ export class Session {
   }
 
   #record(message) {
+    for (const listener of [...this.#listeners]) listener(message)
     const { method, params } = message
     if (method === 'Runtime.consoleAPICalled') {
       const text = (params.args ?? [])

@@ -1,0 +1,67 @@
+[package]
+name = "archava-host"
+description = "Axum HTTP host for the Archava Rust release candidate"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+archava-core.workspace = true
+archava-adapters.workspace = true
+archava-domain.workspace = true
+
+axum.workspace = true
+tokio.workspace = true
+sqlx.workspace = true
+thiserror.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+
+# RA01's server-side authority (identity port + bound approvals): HMAC
+# session/csrf digests, scrypt password verification at identity-pg's fixed
+# parameters, base64url token encoding, uuid ids, getrandom token bytes, and
+# sha2 for the same hex-encoded digests the identity schema's CHECKs pin at
+# length 64.
+hmac.workspace = true
+sha2.workspace = true
+scrypt.workspace = true
+base64.workspace = true
+uuid.workspace = true
+getrandom.workspace = true
+
+# Serves the embedded static payload the SSR route needs.
+tower-http = { version = "0.6", features = ["fs", "trace"] }
+
+# ---------------------------------------------------------------------------
+# Leptos is NOT wired in here, on purpose.
+#
+# `cargo search leptos` resolves 0.9.0-rc0 — a release candidate. R01 records
+# SSR/hydration for the four R01 screens as `researched` with this blocker
+# named, not as `locally_proven`: a proof built on an RC is a proof the next
+# upstream release can invalidate, and G06 requires real browser SSR, hydration,
+# approval, recovery and accessibility checks rather than a static screenshot.
+# The upgrade path is a dependency swap in this file plus a browser re-run, and
+# it is recorded in docs/rust/KNOWN_DIFFERENCES.md so it is not silently
+# forgotten.
+# ---------------------------------------------------------------------------
+
+[dev-dependencies]
+# P-READINESS-PG: `tests/readiness.rs` provisions a real PostgreSQL through the
+# fixture and proves `AppState::try_new` refuses to build serving state on it
+# when the forced policies, migration checksum or runtime role are wrong.
+archava-pg-fixture = { path = "../pg-fixture" }
+
+# The router's tenant-boundary test deserializes a hostile value and asserts it
+# is refused, which is the one place this crate needs a JSON parser in tests.
+serde_json.workspace = true
+
+# `tower` for `ServiceExt::oneshot`, which is what lets the G03 tests drive a
+# request through the real router rather than calling `CommandAuthorizer`
+# directly. `axum` implements `Service` for `Router` but does not re-export the
+# extension trait that provides `oneshot`, and G03 explicitly requires negative
+# cases at real entrypoints — a test that constructs an `ActionRequest` and
+# evaluates it proves the policy, not the boundary. Dev-only: nothing in the
+# host's runtime path needs it.
+tower = { version = "0.5", features = ["util"] }

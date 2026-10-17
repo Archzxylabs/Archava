@@ -101,8 +101,13 @@ const LOGIN_SOURCE: &str = "host-router";
 /// guess the key.
 const CSRF_HEADER: &str = "x-archava-csrf";
 
-/// The session cookie the SSR slice will set. `Authorization: Bearer` takes
-/// precedence when both are present; both carry the same server-issued secret.
+/// The session cookie the login route sets on success (its mint is ONE step:
+/// the host issues the token, so the host records it in the cookie). Bearer
+/// takes precedence when both are present; both carry the same server-issued
+/// secret. `HttpOnly` keeps the token out of script reach; `SameSite=Strict`
+/// is the same-origin policy the cross-site scenario for CSRF refusals
+/// assumes; no `Secure` flag, because the fixture runs plain HTTP — a TLS
+/// deployment fronts this host with its own cookie policy.
 const SESSION_COOKIE: &str = "archava_session";
 
 /// The ledger this host serves.
@@ -197,6 +202,56 @@ impl AppState {
         })
     }
 
+    /// The pool every ledger transaction opens on. `crm.rs` opens the CRM
+    /// ledger's transactions through it; nothing else in this crate needs the
+    /// field directly.
+    pub(crate) fn pool(&self) -> &PgPool {
+        &self.inner.pool
+    }
+
+    /// The identity store — sessions plus the server secret the CRM
+    /// fingerprints are keyed by.
+    pub(crate) fn identity(&self) -> &Identity {
+        &self.inner.identity
+    }
+
+    /// The identity gate and the serving state, plus a readiness pass for the
+    /// CRM ledger — the constructor the §1.4B slice uses.
+    ///
+    /// Serving CRM is a second ledger's worth of forced row-level security and
+    /// checksum-exact migrations (`archava_crm`), so a host that serves the
+    /// slice refuses to build any state at all unless BOTH ledgers pass: this
+    /// method is [`AppState::try_new`] followed by the same startup assertion
+    /// for [`crate::crm::CRM_LEDGER`]. The per-transaction non-owner check
+    /// (inside [`TenantTransaction::begin`]) still applies on every CRM
+    /// request on top of this gate.
+    pub async fn try_new_crm(
+        pool: PgPool,
+        ledger: Ledger,
+        expected_migrations: &[(String, String)],
+        expected_identity_migrations: &[(String, String)],
+        identity_key: &[u8],
+        expected_crm_migrations: &[(String, String)],
+    ) -> Result<Self, AuthorityError> {
+        let state = Self::try_new(
+            pool,
+            ledger,
+            expected_migrations,
+            expected_identity_migrations,
+            identity_key,
+        )
+        .await?;
+        assert_startup_readiness(
+            state.pool(),
+            crate::crm::CRM_LEDGER.namespace,
+            crate::crm::CRM_LEDGER.ledger,
+            crate::crm::CRM_LEDGER.tables,
+            expected_crm_migrations,
+        )
+        .await?;
+        Ok(state)
+    }
+
     /// Builds state without checking readiness — test-only, hence
     /// `#[cfg(test)]`: the in-crate tests drive refusals that fire before any
     /// database access (extraction, then the session lookup), so they run on
@@ -226,11 +281,15 @@ pub fn router(state: AppState) -> Router {
     Router::new()
         .route("/healthz", get(health))
         .route("/login", post(login))
-        .route("/contacts", get(contacts))
+        // The §1.4B slice: the real, session-scoped contact read (crm.rs)
+        // replaces the pre-slice placeholder denial that lived on this path.
+        .route("/contacts", get(crate::crm::contacts))
         .route("/commands", post(command))
         .route("/commands/status", get(command_status))
         .route("/approvals", post(approval_request))
         .route("/approvals/approve", post(approval_grant))
+        .route("/crm/commands", post(crate::crm::crm_command))
+        .route("/crm/commands/status", get(crate::crm::command_status))
         .with_state(state)
 }
 
@@ -344,7 +403,7 @@ pub struct CommandOutcome {
 impl CommandOutcome {
     /// An outcome with every optional field empty — responses start here and
     /// add only what they mean to return.
-    fn base(decision: &str) -> Self {
+    pub(crate) fn base(decision: &str) -> Self {
         Self {
             decision: decision.to_string(),
             reason: None,
@@ -442,7 +501,7 @@ fn status_for(decision: &PolicyDecision) -> StatusCode {
 // the input travels in the log, not back to the client (D09).
 
 /// The refusal for a caller with no usable session.
-fn unauthenticated() -> (StatusCode, Json<CommandOutcome>) {
+pub(crate) fn unauthenticated() -> (StatusCode, Json<CommandOutcome>) {
     (
         StatusCode::UNAUTHORIZED,
         Json(CommandOutcome {
@@ -463,7 +522,7 @@ fn unauthenticated() -> (StatusCode, Json<CommandOutcome>) {
 /// that has no business echoing anything. Logged, not returned. `%rejection`
 /// carries the field name and the offending value, which is exactly what must
 /// not reach the client.
-fn rejection(rejection: JsonRejection) -> (StatusCode, Json<CommandOutcome>) {
+pub(crate) fn rejection(rejection: JsonRejection) -> (StatusCode, Json<CommandOutcome>) {
     tracing::warn!(error = %rejection, "refused a submission at the boundary");
 
     (
@@ -481,7 +540,7 @@ fn rejection(rejection: JsonRejection) -> (StatusCode, Json<CommandOutcome>) {
 
 /// The same refusal for a rejected `GET` query string — `Query`'s rejection
 /// carries the offending parameter, so it gets the identical treatment.
-fn query_rejection(rejection: QueryRejection) -> (StatusCode, Json<CommandOutcome>) {
+pub(crate) fn query_rejection(rejection: QueryRejection) -> (StatusCode, Json<CommandOutcome>) {
     tracing::warn!(error = %rejection, "refused a status query at the boundary");
 
     (
@@ -495,7 +554,7 @@ fn query_rejection(rejection: QueryRejection) -> (StatusCode, Json<CommandOutcom
 }
 
 /// Map an authority-resolution failure to its response.
-fn authority_refusal(error: &AuthorityError) -> (StatusCode, Json<CommandOutcome>) {
+pub(crate) fn authority_refusal(error: &AuthorityError) -> (StatusCode, Json<CommandOutcome>) {
     match error {
         AuthorityError::MissingMembership => (
             StatusCode::FORBIDDEN,
@@ -543,7 +602,7 @@ fn authority_refusal(error: &AuthorityError) -> (StatusCode, Json<CommandOutcome
 }
 
 /// A server-side failure the caller cannot fix: logged detail, fixed response.
-fn unavailable(reason: &str) -> (StatusCode, Json<CommandOutcome>) {
+pub(crate) fn unavailable(reason: &str) -> (StatusCode, Json<CommandOutcome>) {
     (
         StatusCode::SERVICE_UNAVAILABLE,
         Json(CommandOutcome {
@@ -558,7 +617,7 @@ fn unavailable(reason: &str) -> (StatusCode, Json<CommandOutcome>) {
 }
 
 /// 403 with a reason the caller can act on (csrf, eligibility, key reuse).
-fn forbidden(reason: &str, message: &str) -> (StatusCode, Json<CommandOutcome>) {
+pub(crate) fn forbidden(reason: &str, message: &str) -> (StatusCode, Json<CommandOutcome>) {
     (
         StatusCode::FORBIDDEN,
         Json(CommandOutcome {
@@ -572,7 +631,7 @@ fn forbidden(reason: &str, message: &str) -> (StatusCode, Json<CommandOutcome>) 
 /// 409: the record exists but will not do what the caller asked — consumed,
 /// expired, already approved, or an idempotency key reused for another
 /// command.
-fn conflict(reason: &str, message: &str) -> (StatusCode, Json<CommandOutcome>) {
+pub(crate) fn conflict(reason: &str, message: &str) -> (StatusCode, Json<CommandOutcome>) {
     (
         StatusCode::CONFLICT,
         Json(CommandOutcome {
@@ -585,7 +644,7 @@ fn conflict(reason: &str, message: &str) -> (StatusCode, Json<CommandOutcome>) {
 
 /// 404 for a receipt that does not resolve to the caller — missing, or
 /// belonging to another principal. One answer: existence is not disclosed.
-fn unknown_request() -> (StatusCode, Json<CommandOutcome>) {
+pub(crate) fn unknown_request() -> (StatusCode, Json<CommandOutcome>) {
     (
         StatusCode::NOT_FOUND,
         Json(CommandOutcome {
@@ -599,7 +658,7 @@ fn unknown_request() -> (StatusCode, Json<CommandOutcome>) {
 /// 404 for an approval id that resolves to nothing — distinguished from the
 /// 409 of an approval that exists but is spent, because the caller here is an
 /// already-eligible, already-authenticated approver.
-fn unknown_approval() -> (StatusCode, Json<CommandOutcome>) {
+pub(crate) fn unknown_approval() -> (StatusCode, Json<CommandOutcome>) {
     (
         StatusCode::NOT_FOUND,
         Json(CommandOutcome {
@@ -615,7 +674,7 @@ fn unknown_approval() -> (StatusCode, Json<CommandOutcome>) {
 /// Extract the session token: `Authorization: Bearer` first, then the
 /// `archava_session` cookie. Both carry the same server-issued secret; the
 /// cookie form exists for the SSR slice's browser flows.
-fn session_token(headers: &HeaderMap) -> Option<String> {
+pub(crate) fn session_token(headers: &HeaderMap) -> Option<String> {
     if let Some(value) = headers
         .get(header::AUTHORIZATION)
         .and_then(|value| value.to_str().ok())
@@ -647,7 +706,7 @@ fn session_token(headers: &HeaderMap) -> Option<String> {
 /// window — so a password change (which bumps `version`) and a deactivation
 /// both invalidate live sessions immediately. A token the shape check rejects
 /// never reaches the database at all.
-async fn authenticate(
+pub(crate) async fn authenticate(
     state: &AppState,
     headers: &HeaderMap,
     csrf_required: bool,
@@ -1419,13 +1478,14 @@ async fn grant_approval(
 async fn login(
     State(state): State<AppState>,
     submission: Result<Json<LoginSubmission>, JsonRejection>,
-) -> (StatusCode, Json<LoginOutcome>) {
+) -> (StatusCode, HeaderMap, Json<LoginOutcome>) {
     let Json(submission) = match submission {
         Ok(submission) => submission,
         Err(rejected) => {
             tracing::warn!(error = %rejected, "refused a login submission at the boundary");
             return (
                 rejected.status(),
+                HeaderMap::new(),
                 Json(LoginOutcome {
                     reason: Some("malformed_submission".to_string()),
                     message: Some("The submission could not be processed.".to_string()),
@@ -1442,8 +1502,19 @@ async fn login(
     {
         Ok(token) => {
             let csrf = state.inner.identity.csrf(&token);
+            // The browser path holds the token in an HttpOnly cookie; the CSRF
+            // value stays in the body, where the slice's own script reads and
+            // echoes it as the mutation header. A refusal never sets one.
+            let mut headers = HeaderMap::new();
+            headers.insert(
+                header::SET_COOKIE,
+                format!("{SESSION_COOKIE}={token}; HttpOnly; Path=/; SameSite=Strict")
+                    .parse()
+                    .expect("a well-formed cookie attribute list"),
+            );
             (
                 StatusCode::OK,
+                headers,
                 Json(LoginOutcome {
                     token: Some(token),
                     csrf: Some(csrf),
@@ -1453,7 +1524,7 @@ async fn login(
         }
         Err(error) => {
             let (status, outcome) = refused_login_outcome(&error);
-            (status, Json(outcome))
+            (status, HeaderMap::new(), Json(outcome))
         }
     }
 }
@@ -1507,31 +1578,11 @@ fn refused_login_outcome(error: &IdentityError) -> (StatusCode, LoginOutcome) {
     )
 }
 
-/// The contact-list route.
-///
-/// This route refuses rather than reads, and the refusal is explicit about why.
-/// The baseline's transaction primitives state the rule directly — "Identity,
-/// current domain authorization and command claims belong to the caller"
-/// (`packages/commerce-pg/src/kernel.ts:86`) — so a route that reached for a
-/// tenant from anywhere but a caller-owned submission would be the one thing the
-/// design forbids. Returning an empty list instead would read as "this tenant
-/// has no contacts" when the truth is "this caller has no tenant", which is
-/// precisely the confusion PRD §15 calls a bug. The §1.4B slice replaces this
-/// placeholder with the real, session-scoped contact read.
-async fn contacts(State(state): State<AppState>) -> (StatusCode, Json<CommandOutcome>) {
-    let _ = &state.inner.pool;
-    (
-        StatusCode::FORBIDDEN,
-        Json(CommandOutcome {
-            reason: Some(ActionDenial::RoleNotAllowed.as_str().to_string()),
-            message: Some(
-                "The contact list requires a caller-owned tenant transaction.".to_string(),
-            ),
-            ..CommandOutcome::base("denied")
-        }),
-    )
-}
-
+// The contact-list placeholder was removed when the §1.4B slice landed the
+// real, session-scoped contact read: `crate::crm::contacts` serves `GET
+// /contacts` now. (The refusal it used to carry assumed a caller-less read
+// was possible at all; the real read is session-scoped, so the note that
+// explained the reservation stays here in the router where the route lives.)
 #[cfg(test)]
 mod tests {
     use archava_core::roles::CapabilityTier;

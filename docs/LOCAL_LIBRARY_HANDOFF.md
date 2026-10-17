@@ -170,11 +170,16 @@ and execution holds intact.
 ## Reproduce acceptance
 
 ```sh
+pnpm rust:verify
+pnpm rust:verify-release
 pnpm verify
 pnpm security:verify
 pnpm crm:benchmark
 pnpm crm:verify-browser
 pnpm crm:verify-upgrade --cold-prior
+pnpm accommodation:verify --cold-prior
+pnpm kits:verify
+pnpm capacity:verify
 pnpm library:manifest
 ```
 
@@ -184,10 +189,63 @@ root `verify` alone does not cover browser/database/template acceptance. Upgrade
 uses an isolated Git archive when no prior binary exists, installs its frozen
 lock with scripts disabled, and builds/starts both releases against synthetic data.
 Fixtures and owned browsers/database processes are cleaned up after checks.
+The two Rust gates above the list are the candidate side of the same question.
+`pnpm rust:verify` is the fast gate — format, clippy, `cargo test`, the node-side
+gate tests, both parity harnesses, both cold consumers, about a minute — and it is
+wired into root `verify` and CI, so it runs on every change rather than by hand.
+`pnpm rust:verify-release` is the full candidate gate: the fast gate, then the
+compiled-consumer benchmark, the 46-command security chain, the Rust browser
+slice proof, the browser
+end-to-end proof, both cold-prior recovery paths and the CRM benchmark. The
+Rust browser slice proof also has its own operator entry, `pnpm
+rust:browser-slice`, which is the same command the gate runs. Like the
+compiled-consumer benchmark, it sits outside the handoff list below, so the
+gate's reconciliation lists it under `notInHandoffList` and keeps
+`everyStepInHandoffList` false on that account — recorded, not hidden. It is
+not an extra list bolted on: it parses this list at run time
+(`tools/rust/verify-release.mjs`) and compares itself against it, recording every
+command it omits with a reason, because the first version of it asserted
+`everyStepInHandoffList: true` without computing it and the assertion was false.
+Six of the ten commands below are covered by it directly; the five it does not
+run are its own entry, `pnpm verify` (recursion), `pnpm kits:verify` and
+`pnpm capacity:verify` (already inside the chain) and `pnpm library:manifest` (a
+writer, not a proof). It writes `dist/rust-release-report.json`, whose
+`independent_review` stays `pending` on any local run, and whose `verdict` is
+`incomplete` on this tree until the migration inventory carries per-item proof
+IDs to bind. So it is not a substitute for the list below either — regenerating
+the acceptance manifest is still a step only `pnpm library:manifest` performs.
+The ten commands before the last are not interchangeable proof. `security:verify` runs
+46 commands, and that chain already refreshes six of the nine evidence files the manifest
+reads: `dist/security-proof/results.json` directly, plus `dist/kit-proof/results.json`
+(`kits`), `dist/delivery-capacity-proof/results.json` (`capacity`),
+`dist/delivery-capacity-host-proof/results.json` (`capacity-host`), and the
+`dist/library/` `artifacts.json` + `release-profile.json` that every domain `:verify`
+rebuilds through `pack.mjs`. It does **not** run `crm:verify-browser`,
+`crm:verify-upgrade --cold-prior` or `crm:benchmark`. Of those three, only the first two
+leave files the manifest reads: `dist/browser-proof/results.json` and
+`dist/browser-proof/minimal-results.json` (both from `crm:verify-browser`), and
+`dist/upgrade-proof/results.json` (from `crm:verify-upgrade`). `crm:benchmark` writes
+**`dist/capacity-proof/results.json`**, a differently named path the manifest never reads —
+do not confuse the two. Those three files therefore report whichever run last produced
+them, and a manifest is only as fresh as that run. The manifest's `evidence` list records
+each source's path and the command that produces it, but only
+`dist/security-proof/results.json` carries a timestamp of its own, so six of the seven
+entries have `checkedAt: null` — freshness for those is a filesystem property, and an
+operator regenerating a manifest after a gap should re-run `pnpm crm:verify-browser` and
+`pnpm crm:verify-upgrade --cold-prior` first.
 `pnpm library:manifest` reads the proof artifacts already on disk and regenerates
-`docs/audit/local-library/acceptance-<profile>.json`; it writes no proof of its own,
-and it fails rather than emitting a manifest whose evidence is missing or whose
-profile disagrees with the trusted catalogue.
+`docs/audit/local-library/acceptance-<profile>.json`; it writes no proof of its own. It fails
+rather than emitting a manifest whose evidence is missing, whose source declares a different
+profile, or whose release identity does not bind: the loaded release catalog must equal the
+trusted catalogue field for field, the catalog and artifact digests must be recomputable from
+the loaded release profile with the same convention the security verifier uses, the artifact
+inventory and the release profile must describe the same artifact set, and no required proof
+section may be present but empty. Its `accepted` field is always `null` — a generator cannot
+grant acceptance — and it prints and records the reasons acceptance is not warranted, so the
+file's own name is not mistaken for a verdict. Re-running it is safe and produces the same
+output for the same evidence: the write goes through prettier with this repository's own
+config, so its output is already in the form `pnpm format:check` accepts and running
+`pnpm format` afterwards changes nothing.
 
 The standalone template keeps its own `npm test`, `npm run test:agent` and
 `npm run build` commands. Its seven SDK integration checks need its Python venv;
