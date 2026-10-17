@@ -807,10 +807,12 @@
         "cargo test --workspace",
         "pg readiness suites",
         "pg authority suite",
+        "capacity conformance suite",
         "rust unit tests (node --test)",
         "p1 pricing parity",
         "p2 rates parity",
         "two cold consumers",
+        "planning conformance suite",
         "wasm portable boundary"
       ],
       "sourcePaths": [
@@ -1141,7 +1143,8 @@
       ],
       "sourcePaths": [
         "rust/crates/capacity",
-        "tools/rust/capacity-probe.mjs"
+        "tools/rust/capacity-probe.mjs",
+        "tools/rust/capacity-conformance.mjs"
       ],
       "artifacts": [],
       "referenced": []
@@ -1155,7 +1158,8 @@
         "cold-consumer planning proof passes"
       ],
       "sourcePaths": [
-        "rust/crates/assembly"
+        "rust/crates/assembly",
+        "tools/rust/planning-conformance.mjs"
       ],
       "artifacts": [],
       "referenced": []

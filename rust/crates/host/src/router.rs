@@ -1891,12 +1891,24 @@ mod tests {
     /// The contact list refuses rather than returning an empty list, because an
     /// empty list would read as "this tenant has no contacts" when the truth is
     /// "this caller has no tenant".
+    ///
+    /// The refusal is the identity-first one every other tenant route answers
+    /// to a caller with no session — 401 `unauthenticated`, the same shape the
+    /// status/approval tests above pin. The membership refusals (403
+    /// `role_not_allowed` / `missing_membership`) need a real session to be
+    /// meaningful, and they are pinned where one exists:
+    /// `tests/crm.rs::a_principal_without_a_crm_membership_is_refused` holds a
+    /// session and is refused on list and command alike.
     #[tokio::test]
     async fn the_contact_list_refuses_rather_than_faking_an_empty_result() {
-        let (status, body) = call("/contacts", None).await;
-        assert_eq!(status, StatusCode::FORBIDDEN);
+        // The tenant parameter is part of the route's contract (the same shape
+        // `tests/crm.rs::an_unauthenticated_contact_read_is_refused` sends), so
+        // what this call exercises is the refusal after a well-formed request,
+        // not the 400 a missing tenant earns.
+        let (status, body) = call("/contacts?tenant=acme-retail", None).await;
+        assert_eq!(status, StatusCode::UNAUTHORIZED);
         assert!(
-            body.contains("role_not_allowed"),
+            body.contains("unauthenticated"),
             "expected an explicit refusal, got: {body}"
         );
     }

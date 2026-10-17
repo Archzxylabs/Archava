@@ -1,0 +1,793 @@
+{
+  "slice": "p3",
+  "generatedBy": "node tools/rust/capacity-probe.mjs",
+  "source": "packages/capacity-pg/src/repository.ts:117-231",
+  "count": 37,
+  "cases": [
+    {
+      "name": "idle-pool-80h-desired-monday",
+      "pool": {
+        "weeklyCapacity": 200,
+        "maxConcurrentJobs": 1
+      },
+      "allocs": [],
+      "units": 80,
+      "desired": "2030-01-07T00:00:00.000Z",
+      "ok": {
+        "queuePosition": 0,
+        "scheduledStartAt": "2030-01-07T00:00:00.000Z",
+        "scheduledFinishAt": "2030-01-09T00:00:00.000Z",
+        "burnRatePerDay": 40,
+        "estimatedCalendarDays": 2,
+        "workingDays": 2
+      }
+    },
+    {
+      "name": "idle-pool-40h-desired-monday",
+      "pool": {
+        "weeklyCapacity": 200,
+        "maxConcurrentJobs": 1
+      },
+      "allocs": [],
+      "units": 40,
+      "desired": "2030-01-07T00:00:00.000Z",
+      "ok": {
+        "queuePosition": 0,
+        "scheduledStartAt": "2030-01-07T00:00:00.000Z",
+        "scheduledFinishAt": "2030-01-08T00:00:00.000Z",
+        "burnRatePerDay": 40,
+        "estimatedCalendarDays": 1,
+        "workingDays": 1
+      }
+    },
+    {
+      "name": "desired-saturday",
+      "pool": {
+        "weeklyCapacity": 200,
+        "maxConcurrentJobs": 1
+      },
+      "allocs": [],
+      "units": 40,
+      "desired": "2030-01-12T00:00:00.000Z",
+      "ok": {
+        "queuePosition": 0,
+        "scheduledStartAt": "2030-01-14T00:00:00.000Z",
+        "scheduledFinishAt": "2030-01-15T00:00:00.000Z",
+        "burnRatePerDay": 40,
+        "estimatedCalendarDays": 1,
+        "workingDays": 1
+      }
+    },
+    {
+      "name": "desired-sunday",
+      "pool": {
+        "weeklyCapacity": 200,
+        "maxConcurrentJobs": 1
+      },
+      "allocs": [],
+      "units": 40,
+      "desired": "2030-01-13T00:00:00.000Z",
+      "ok": {
+        "queuePosition": 0,
+        "scheduledStartAt": "2030-01-14T00:00:00.000Z",
+        "scheduledFinishAt": "2030-01-15T00:00:00.000Z",
+        "burnRatePerDay": 40,
+        "estimatedCalendarDays": 1,
+        "workingDays": 1
+      }
+    },
+    {
+      "name": "desired-friday-40h",
+      "pool": {
+        "weeklyCapacity": 200,
+        "maxConcurrentJobs": 1
+      },
+      "allocs": [],
+      "units": 40,
+      "desired": "2030-01-11T00:00:00.000Z",
+      "ok": {
+        "queuePosition": 0,
+        "scheduledStartAt": "2030-01-11T00:00:00.000Z",
+        "scheduledFinishAt": "2030-01-14T00:00:00.000Z",
+        "burnRatePerDay": 40,
+        "estimatedCalendarDays": 3,
+        "workingDays": 1
+      }
+    },
+    {
+      "name": "desired-friday-80h",
+      "pool": {
+        "weeklyCapacity": 200,
+        "maxConcurrentJobs": 1
+      },
+      "allocs": [],
+      "units": 80,
+      "desired": "2030-01-11T00:00:00.000Z",
+      "ok": {
+        "queuePosition": 0,
+        "scheduledStartAt": "2030-01-11T00:00:00.000Z",
+        "scheduledFinishAt": "2030-01-15T00:00:00.000Z",
+        "burnRatePerDay": 40,
+        "estimatedCalendarDays": 4,
+        "workingDays": 2
+      }
+    },
+    {
+      "name": "weekend-spanning-allocation",
+      "pool": {
+        "weeklyCapacity": 200,
+        "maxConcurrentJobs": 1
+      },
+      "allocs": [
+        {
+          "id": "wk",
+          "scheduledStartAt": "2030-01-11T00:00:00.000Z",
+          "scheduledFinishAt": "2030-01-14T00:00:00.000Z",
+          "requiredUnits": 40,
+          "remainingUnits": 40
+        }
+      ],
+      "units": 40,
+      "desired": "2030-01-11T00:00:00.000Z",
+      "ok": {
+        "queuePosition": 1,
+        "scheduledStartAt": "2030-01-14T00:00:00.000Z",
+        "scheduledFinishAt": "2030-01-15T00:00:00.000Z",
+        "burnRatePerDay": 40,
+        "estimatedCalendarDays": 1,
+        "workingDays": 1
+      }
+    },
+    {
+      "name": "allocation-in-the-past",
+      "pool": {
+        "weeklyCapacity": 200,
+        "maxConcurrentJobs": 1
+      },
+      "allocs": [
+        {
+          "id": "old",
+          "scheduledStartAt": "2020-01-06T00:00:00.000Z",
+          "scheduledFinishAt": "2020-01-08T00:00:00.000Z",
+          "requiredUnits": 80,
+          "remainingUnits": 80
+        }
+      ],
+      "units": 40,
+      "desired": "2030-01-07T00:00:00.000Z",
+      "ok": {
+        "queuePosition": 0,
+        "scheduledStartAt": "2030-01-07T00:00:00.000Z",
+        "scheduledFinishAt": "2030-01-08T00:00:00.000Z",
+        "burnRatePerDay": 40,
+        "estimatedCalendarDays": 1,
+        "workingDays": 1
+      }
+    },
+    {
+      "name": "two-sequential-allocations",
+      "pool": {
+        "weeklyCapacity": 200,
+        "maxConcurrentJobs": 1
+      },
+      "allocs": [
+        {
+          "id": "a1",
+          "scheduledStartAt": "2030-01-07T00:00:00.000Z",
+          "scheduledFinishAt": "2030-01-09T00:00:00.000Z",
+          "requiredUnits": 80,
+          "remainingUnits": 80
+        },
+        {
+          "id": "a2",
+          "scheduledStartAt": "2030-01-09T00:00:00.000Z",
+          "scheduledFinishAt": "2030-01-11T00:00:00.000Z",
+          "requiredUnits": 80,
+          "remainingUnits": 80
+        }
+      ],
+      "units": 40,
+      "desired": "2030-01-07T00:00:00.000Z",
+      "ok": {
+        "queuePosition": 2,
+        "scheduledStartAt": "2030-01-11T00:00:00.000Z",
+        "scheduledFinishAt": "2030-01-14T00:00:00.000Z",
+        "burnRatePerDay": 40,
+        "estimatedCalendarDays": 3,
+        "workingDays": 1
+      }
+    },
+    {
+      "name": "offset-tz-desired",
+      "pool": {
+        "weeklyCapacity": 200,
+        "maxConcurrentJobs": 1
+      },
+      "allocs": [],
+      "units": 40,
+      "desired": "2030-01-07T07:00:00+07:00",
+      "ok": {
+        "queuePosition": 0,
+        "scheduledStartAt": "2030-01-07T00:00:00.000Z",
+        "scheduledFinishAt": "2030-01-08T00:00:00.000Z",
+        "burnRatePerDay": 40,
+        "estimatedCalendarDays": 1,
+        "workingDays": 1
+      }
+    },
+    {
+      "name": "offset-tz-desired-no-frac",
+      "pool": {
+        "weeklyCapacity": 200,
+        "maxConcurrentJobs": 1
+      },
+      "allocs": [],
+      "units": 40,
+      "desired": "2030-01-11T07:00:00+07:00",
+      "ok": {
+        "queuePosition": 0,
+        "scheduledStartAt": "2030-01-11T00:00:00.000Z",
+        "scheduledFinishAt": "2030-01-14T00:00:00.000Z",
+        "burnRatePerDay": 40,
+        "estimatedCalendarDays": 3,
+        "workingDays": 1
+      }
+    },
+    {
+      "name": "offset-tz-negative",
+      "pool": {
+        "weeklyCapacity": 200,
+        "maxConcurrentJobs": 1
+      },
+      "allocs": [],
+      "units": 40,
+      "desired": "2030-01-07T00:00:00-05:00",
+      "ok": {
+        "queuePosition": 0,
+        "scheduledStartAt": "2030-01-07T05:00:00.000Z",
+        "scheduledFinishAt": "2030-01-08T05:00:00.000Z",
+        "burnRatePerDay": 40,
+        "estimatedCalendarDays": 1,
+        "workingDays": 1
+      }
+    },
+    {
+      "name": "no-milliseconds",
+      "pool": {
+        "weeklyCapacity": 200,
+        "maxConcurrentJobs": 1
+      },
+      "allocs": [],
+      "units": 40,
+      "desired": "2030-01-07T00:00:00Z",
+      "ok": {
+        "queuePosition": 0,
+        "scheduledStartAt": "2030-01-07T00:00:00.000Z",
+        "scheduledFinishAt": "2030-01-08T00:00:00.000Z",
+        "burnRatePerDay": 40,
+        "estimatedCalendarDays": 1,
+        "workingDays": 1
+      }
+    },
+    {
+      "name": "timestamp-with-time-of-day",
+      "pool": {
+        "weeklyCapacity": 200,
+        "maxConcurrentJobs": 1
+      },
+      "allocs": [],
+      "units": 40,
+      "desired": "2030-01-08T13:45:30.500Z",
+      "ok": {
+        "queuePosition": 0,
+        "scheduledStartAt": "2030-01-08T13:45:30.500Z",
+        "scheduledFinishAt": "2030-01-09T13:45:30.500Z",
+        "burnRatePerDay": 40,
+        "estimatedCalendarDays": 1,
+        "workingDays": 1
+      }
+    },
+    {
+      "name": "empty-pool-1h",
+      "pool": {
+        "weeklyCapacity": 5,
+        "maxConcurrentJobs": 3
+      },
+      "allocs": [],
+      "units": 1,
+      "desired": "2030-01-07T00:00:00.000Z",
+      "ok": {
+        "queuePosition": 0,
+        "scheduledStartAt": "2030-01-07T00:00:00.000Z",
+        "scheduledFinishAt": "2030-01-08T00:00:00.000Z",
+        "burnRatePerDay": 1,
+        "estimatedCalendarDays": 1,
+        "workingDays": 1
+      }
+    },
+    {
+      "name": "fractional-burn-remainder",
+      "pool": {
+        "weeklyCapacity": 200,
+        "maxConcurrentJobs": 1
+      },
+      "allocs": [],
+      "units": 41,
+      "desired": "2030-01-07T00:00:00.000Z",
+      "ok": {
+        "queuePosition": 0,
+        "scheduledStartAt": "2030-01-07T00:00:00.000Z",
+        "scheduledFinishAt": "2030-01-09T00:00:00.000Z",
+        "burnRatePerDay": 40,
+        "estimatedCalendarDays": 2,
+        "workingDays": 2
+      }
+    },
+    {
+      "name": "units-below-one-day",
+      "pool": {
+        "weeklyCapacity": 200,
+        "maxConcurrentJobs": 1
+      },
+      "allocs": [],
+      "units": 39,
+      "desired": "2030-01-07T00:00:00.000Z",
+      "ok": {
+        "queuePosition": 0,
+        "scheduledStartAt": "2030-01-07T00:00:00.000Z",
+        "scheduledFinishAt": "2030-01-08T00:00:00.000Z",
+        "burnRatePerDay": 40,
+        "estimatedCalendarDays": 1,
+        "workingDays": 1
+      }
+    },
+    {
+      "name": "huge-job-800h",
+      "pool": {
+        "weeklyCapacity": 200,
+        "maxConcurrentJobs": 1
+      },
+      "allocs": [],
+      "units": 800,
+      "desired": "2030-01-07T00:00:00.000Z",
+      "ok": {
+        "queuePosition": 0,
+        "scheduledStartAt": "2030-01-07T00:00:00.000Z",
+        "scheduledFinishAt": "2030-02-04T00:00:00.000Z",
+        "burnRatePerDay": 40,
+        "estimatedCalendarDays": 28,
+        "workingDays": 20
+      }
+    },
+    {
+      "name": "longest-horizon-2000h",
+      "pool": {
+        "weeklyCapacity": 200,
+        "maxConcurrentJobs": 1
+      },
+      "allocs": [],
+      "units": 2000,
+      "desired": "2030-01-07T00:00:00.000Z",
+      "ok": {
+        "queuePosition": 0,
+        "scheduledStartAt": "2030-01-07T00:00:00.000Z",
+        "scheduledFinishAt": "2030-03-18T00:00:00.000Z",
+        "burnRatePerDay": 40,
+        "estimatedCalendarDays": 70,
+        "workingDays": 50
+      }
+    },
+    {
+      "name": "tiny-weekly-capacity",
+      "pool": {
+        "weeklyCapacity": 1,
+        "maxConcurrentJobs": 1
+      },
+      "allocs": [],
+      "units": 1,
+      "desired": "2030-01-07T00:00:00.000Z",
+      "ok": {
+        "queuePosition": 0,
+        "scheduledStartAt": "2030-01-07T00:00:00.000Z",
+        "scheduledFinishAt": "2030-01-14T00:00:00.000Z",
+        "burnRatePerDay": 0.2,
+        "estimatedCalendarDays": 7,
+        "workingDays": 5
+      }
+    },
+    {
+      "name": "zero-units",
+      "pool": {
+        "weeklyCapacity": 200,
+        "maxConcurrentJobs": 1
+      },
+      "allocs": [],
+      "units": 0,
+      "desired": "2030-01-07T00:00:00.000Z",
+      "ok": {
+        "queuePosition": 0,
+        "scheduledStartAt": "2030-01-07T00:00:00.000Z",
+        "scheduledFinishAt": "2030-01-08T00:00:00.000Z",
+        "burnRatePerDay": 40,
+        "estimatedCalendarDays": 1,
+        "workingDays": 1
+      }
+    },
+    {
+      "name": "saturated-concurrency-1",
+      "pool": {
+        "weeklyCapacity": 200,
+        "maxConcurrentJobs": 1
+      },
+      "allocs": [
+        {
+          "id": "a1",
+          "scheduledStartAt": "2030-01-07T00:00:00.000Z",
+          "scheduledFinishAt": "2030-01-09T00:00:00.000Z",
+          "requiredUnits": 80,
+          "remainingUnits": 80
+        }
+      ],
+      "units": 40,
+      "desired": "2030-01-07T00:00:00.000Z",
+      "ok": {
+        "queuePosition": 1,
+        "scheduledStartAt": "2030-01-09T00:00:00.000Z",
+        "scheduledFinishAt": "2030-01-10T00:00:00.000Z",
+        "burnRatePerDay": 40,
+        "estimatedCalendarDays": 1,
+        "workingDays": 1
+      }
+    },
+    {
+      "name": "saturated-concurrency-3",
+      "pool": {
+        "weeklyCapacity": 200,
+        "maxConcurrentJobs": 3
+      },
+      "allocs": [
+        {
+          "id": "a1",
+          "scheduledStartAt": "2030-01-07T00:00:00.000Z",
+          "scheduledFinishAt": "2030-01-09T00:00:00.000Z",
+          "requiredUnits": 80,
+          "remainingUnits": 80
+        },
+        {
+          "id": "a2",
+          "scheduledStartAt": "2030-01-07T00:00:00.000Z",
+          "scheduledFinishAt": "2030-01-09T00:00:00.000Z",
+          "requiredUnits": 80,
+          "remainingUnits": 80
+        },
+        {
+          "id": "a3",
+          "scheduledStartAt": "2030-01-07T00:00:00.000Z",
+          "scheduledFinishAt": "2030-01-09T00:00:00.000Z",
+          "requiredUnits": 80,
+          "remainingUnits": 80
+        }
+      ],
+      "units": 40,
+      "desired": "2030-01-07T00:00:00.000Z",
+      "ok": {
+        "queuePosition": 3,
+        "scheduledStartAt": "2030-01-09T00:00:00.000Z",
+        "scheduledFinishAt": "2030-01-10T00:00:00.000Z",
+        "burnRatePerDay": 40,
+        "estimatedCalendarDays": 1,
+        "workingDays": 1
+      }
+    },
+    {
+      "name": "concurrency-3-two-active",
+      "pool": {
+        "weeklyCapacity": 200,
+        "maxConcurrentJobs": 3
+      },
+      "allocs": [
+        {
+          "id": "a1",
+          "scheduledStartAt": "2030-01-07T00:00:00.000Z",
+          "scheduledFinishAt": "2030-01-09T00:00:00.000Z",
+          "requiredUnits": 80,
+          "remainingUnits": 80
+        },
+        {
+          "id": "a2",
+          "scheduledStartAt": "2030-01-07T00:00:00.000Z",
+          "scheduledFinishAt": "2030-01-09T00:00:00.000Z",
+          "requiredUnits": 80,
+          "remainingUnits": 80
+        }
+      ],
+      "units": 40,
+      "desired": "2030-01-07T00:00:00.000Z",
+      "ok": {
+        "queuePosition": 2,
+        "scheduledStartAt": "2030-01-09T00:00:00.000Z",
+        "scheduledFinishAt": "2030-01-10T00:00:00.000Z",
+        "burnRatePerDay": 40,
+        "estimatedCalendarDays": 1,
+        "workingDays": 1
+      }
+    },
+    {
+      "name": "capacity-tight-not-concurrency",
+      "pool": {
+        "weeklyCapacity": 200,
+        "maxConcurrentJobs": 5
+      },
+      "allocs": [
+        {
+          "id": "a1",
+          "scheduledStartAt": "2030-01-07T00:00:00.000Z",
+          "scheduledFinishAt": "2030-01-09T00:00:00.000Z",
+          "requiredUnits": 79,
+          "remainingUnits": 79
+        }
+      ],
+      "units": 40,
+      "desired": "2030-01-07T00:00:00.000Z",
+      "ok": {
+        "queuePosition": 1,
+        "scheduledStartAt": "2030-01-09T00:00:00.000Z",
+        "scheduledFinishAt": "2030-01-10T00:00:00.000Z",
+        "burnRatePerDay": 40,
+        "estimatedCalendarDays": 1,
+        "workingDays": 1
+      }
+    },
+    {
+      "name": "capacity-exactly-fits",
+      "pool": {
+        "weeklyCapacity": 200,
+        "maxConcurrentJobs": 5
+      },
+      "allocs": [
+        {
+          "id": "a1",
+          "scheduledStartAt": "2030-01-07T00:00:00.000Z",
+          "scheduledFinishAt": "2030-01-09T00:00:00.000Z",
+          "requiredUnits": 80,
+          "remainingUnits": 80
+        }
+      ],
+      "units": 40,
+      "desired": "2030-01-07T00:00:00.000Z",
+      "ok": {
+        "queuePosition": 1,
+        "scheduledStartAt": "2030-01-09T00:00:00.000Z",
+        "scheduledFinishAt": "2030-01-10T00:00:00.000Z",
+        "burnRatePerDay": 40,
+        "estimatedCalendarDays": 1,
+        "workingDays": 1
+      }
+    },
+    {
+      "name": "max-concurrent-100",
+      "pool": {
+        "weeklyCapacity": 200,
+        "maxConcurrentJobs": 100
+      },
+      "allocs": [],
+      "units": 40,
+      "desired": "2030-01-07T00:00:00.000Z",
+      "ok": {
+        "queuePosition": 0,
+        "scheduledStartAt": "2030-01-07T00:00:00.000Z",
+        "scheduledFinishAt": "2030-01-08T00:00:00.000Z",
+        "burnRatePerDay": 40,
+        "estimatedCalendarDays": 1,
+        "workingDays": 1
+      }
+    },
+    {
+      "name": "unsatisfiable-concurrency",
+      "pool": {
+        "weeklyCapacity": 200,
+        "maxConcurrentJobs": 0
+      },
+      "allocs": [],
+      "units": 40,
+      "desired": "2030-01-07T00:00:00.000Z",
+      "err": "insufficient_capacity"
+    },
+    {
+      "name": "remaining-zero-falls-back-to-required",
+      "pool": {
+        "weeklyCapacity": 200,
+        "maxConcurrentJobs": 5
+      },
+      "allocs": [
+        {
+          "id": "a1",
+          "scheduledStartAt": "2030-01-07T00:00:00.000Z",
+          "scheduledFinishAt": "2030-01-09T00:00:00.000Z",
+          "requiredUnits": 40,
+          "remainingUnits": 0
+        }
+      ],
+      "units": 40,
+      "desired": "2030-01-07T00:00:00.000Z",
+      "ok": {
+        "queuePosition": 1,
+        "scheduledStartAt": "2030-01-09T00:00:00.000Z",
+        "scheduledFinishAt": "2030-01-10T00:00:00.000Z",
+        "burnRatePerDay": 40,
+        "estimatedCalendarDays": 1,
+        "workingDays": 1
+      }
+    },
+    {
+      "name": "remaining-negative-falls-back",
+      "pool": {
+        "weeklyCapacity": 200,
+        "maxConcurrentJobs": 5
+      },
+      "allocs": [
+        {
+          "id": "a1",
+          "scheduledStartAt": "2030-01-07T00:00:00.000Z",
+          "scheduledFinishAt": "2030-01-09T00:00:00.000Z",
+          "requiredUnits": 40,
+          "remainingUnits": -5
+        }
+      ],
+      "units": 40,
+      "desired": "2030-01-07T00:00:00.000Z",
+      "ok": {
+        "queuePosition": 1,
+        "scheduledStartAt": "2030-01-09T00:00:00.000Z",
+        "scheduledFinishAt": "2030-01-10T00:00:00.000Z",
+        "burnRatePerDay": 40,
+        "estimatedCalendarDays": 1,
+        "workingDays": 1
+      }
+    },
+    {
+      "name": "epsilon-admits-one-ulp-over-capacity",
+      "pool": {
+        "weeklyCapacity": 3,
+        "maxConcurrentJobs": 5
+      },
+      "allocs": [
+        {
+          "id": "ulp",
+          "scheduledStartAt": "2030-01-07T00:00:00.000Z",
+          "scheduledFinishAt": "2030-01-12T00:00:00.000Z",
+          "requiredUnits": 1,
+          "remainingUnits": 1
+        }
+      ],
+      "units": 0.8,
+      "desired": "2030-01-07T00:00:00.000Z",
+      "ok": {
+        "queuePosition": 0,
+        "scheduledStartAt": "2030-01-07T00:00:00.000Z",
+        "scheduledFinishAt": "2030-01-09T00:00:00.000Z",
+        "burnRatePerDay": 0.6,
+        "estimatedCalendarDays": 2,
+        "workingDays": 2
+      }
+    },
+    {
+      "name": "epsilon-does-not-admit-a-real-overrun",
+      "pool": {
+        "weeklyCapacity": 200,
+        "maxConcurrentJobs": 5
+      },
+      "allocs": [
+        {
+          "id": "over",
+          "scheduledStartAt": "2030-01-07T00:00:00.000Z",
+          "scheduledFinishAt": "2030-01-09T00:00:00.000Z",
+          "requiredUnits": 80,
+          "remainingUnits": 80
+        }
+      ],
+      "units": 40,
+      "desired": "2030-01-07T00:00:00.000Z",
+      "ok": {
+        "queuePosition": 1,
+        "scheduledStartAt": "2030-01-09T00:00:00.000Z",
+        "scheduledFinishAt": "2030-01-10T00:00:00.000Z",
+        "burnRatePerDay": 40,
+        "estimatedCalendarDays": 1,
+        "workingDays": 1
+      }
+    },
+    {
+      "name": "permanent-saturation",
+      "pool": {
+        "weeklyCapacity": 200,
+        "maxConcurrentJobs": 1
+      },
+      "allocs": [
+        {
+          "id": "forever",
+          "scheduledStartAt": "2030-01-07T00:00:00.000Z",
+          "scheduledFinishAt": "2040-01-01T00:00:00.000Z",
+          "requiredUnits": 80,
+          "remainingUnits": 80
+        }
+      ],
+      "units": 40,
+      "desired": "2030-01-07T00:00:00.000Z",
+      "ok": {
+        "queuePosition": 1,
+        "scheduledStartAt": "2040-01-02T00:00:00.000Z",
+        "scheduledFinishAt": "2040-01-03T00:00:00.000Z",
+        "burnRatePerDay": 40,
+        "estimatedCalendarDays": 1,
+        "workingDays": 1
+      }
+    },
+    {
+      "name": "burn-rate-zero-refuses",
+      "pool": {
+        "weeklyCapacity": 0,
+        "maxConcurrentJobs": 5
+      },
+      "allocs": [],
+      "units": 40,
+      "desired": "2030-01-07T00:00:00.000Z",
+      "err": "insufficient_capacity"
+    },
+    {
+      "name": "burn-rate-negative-refuses",
+      "pool": {
+        "weeklyCapacity": -50,
+        "maxConcurrentJobs": 5
+      },
+      "allocs": [],
+      "units": 40,
+      "desired": "2030-01-07T00:00:00.000Z",
+      "err": "insufficient_capacity"
+    },
+    {
+      "name": "zero-length-allocation-burns-one-day",
+      "pool": {
+        "weeklyCapacity": 200,
+        "maxConcurrentJobs": 1
+      },
+      "allocs": [
+        {
+          "id": "instant",
+          "scheduledStartAt": "2030-01-07T00:00:00.000Z",
+          "scheduledFinishAt": "2030-01-07T00:00:00.000Z",
+          "requiredUnits": 40,
+          "remainingUnits": 40
+        }
+      ],
+      "units": 40,
+      "desired": "2030-01-07T00:00:00.000Z",
+      "ok": {
+        "queuePosition": 0,
+        "scheduledStartAt": "2030-01-07T00:00:00.000Z",
+        "scheduledFinishAt": "2030-01-08T00:00:00.000Z",
+        "burnRatePerDay": 40,
+        "estimatedCalendarDays": 1,
+        "workingDays": 1
+      }
+    },
+    {
+      "name": "no-desired-start",
+      "pool": {
+        "weeklyCapacity": 200,
+        "maxConcurrentJobs": 1
+      },
+      "allocs": [],
+      "units": 40,
+      "desired": null,
+      "ok": {
+        "queuePosition": 0,
+        "scheduledStartAt": "2026-10-15T14:37:04.752Z",
+        "scheduledFinishAt": "2026-10-16T14:37:04.752Z",
+        "burnRatePerDay": 40,
+        "estimatedCalendarDays": 1,
+        "workingDays": 1
+      }
+    }
+  ]
+}

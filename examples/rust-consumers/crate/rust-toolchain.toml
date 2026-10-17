@@ -1,0 +1,9 @@
+[toolchain]
+# The cold consumer compiles from a scratch copy of this directory (see
+# `tools/library/verify-rust-consumers.mjs`), outside the product workspace, so
+# the pin in `rust/rust-toolchain.toml` does not reach it either. Declaring the
+# channel here is what makes "consumer proof built with the declared toolchain"
+# a checked fact instead of an assumption about the machine's rustup default —
+# RA05's toolchain row. No components: this consumer runs `cargo test`, never
+# `fmt`/`clippy`.
+channel = "1.96.0"

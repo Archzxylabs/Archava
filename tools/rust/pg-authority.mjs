@@ -227,7 +227,25 @@ export function runAuthority() {
   // check still has others is a visible mismatch rather than a silent
   // weakening of the proof.
   const witnessTotal = Object.values(WITNESSES).reduce((sum, list) => sum + list.length, 0)
-  const details = { suites, checks, problems, witnessTotal, allPassed }
+  // `namedRegressions` is the second frozen tally. RN01 and RN02 are the two
+  // regression notes this suite exists to answer — a downgrade granted past
+  // its authority record (RN01), and an idempotency key answered twice —
+  // reused for another input, or reused concurrently (RN02). The strings here
+  // are the check names the run must have graded, so the tally is derived
+  // from `checks` below rather than written blind: a regression name that is
+  // not a graded check is a wiring drift the producer refuses, and a graded
+  // check that failed has already pushed a problem, so a green details blob
+  // whose named regression did not run cannot be produced here.
+  const rn01 = 'downgraded grant refused on recovery'
+  const rn02 = [
+    'reused key for another command conflicts',
+    'concurrent same-key different-input conflicts',
+  ]
+  for (const name of [rn01, ...rn02]) {
+    if (!(name in checks)) problems.push(`named regression check ${name} was not graded`)
+  }
+  const namedRegressions = { RN01: rn01, RN02: rn02 }
+  const details = { suites, checks, namedRegressions, problems, witnessTotal, allPassed }
 
   // Written on every run: the gate reads it as `details` and binds its hash as
   // a referenced producing file, and a failing run must record its own truth

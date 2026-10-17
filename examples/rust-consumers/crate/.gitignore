@@ -1,0 +1,21 @@
+# Consumer A's generated closure. `tools/library/verify-rust-consumers.mjs`
+# materializes all of these inside a scratch tree on every run; none of them is
+# source, and none of them should ever be staged.
+#
+# They are ignored here rather than assumed absent because they used to be
+# written into this directory directly. A `git add examples/` at that point
+# would have added 126 MB of cargo build output and sixteen vendored crates to
+# the index, and nothing in the tree would have objected.
+#
+# `Cargo.lock` is deliberately NOT in this list. It is the closure's pin: the
+# one file both `pnpm rust:bootstrap` (which derives its locked registry fetch
+# from it) and the consumer proof (which asserts `--locked` against it) agree
+# on. Without it committed, every run resolves the third-party closure anew
+# and the two sides have no shared identity to be reproducible *about*. See
+# ADR-R10 in `docs/rust/DECISIONS.md`.
+
+deps/
+target/
+vendor/
+.cargo/
+lib/

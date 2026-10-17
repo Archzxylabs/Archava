@@ -1,0 +1,47 @@
+[package]
+name = "archava-capacity"
+description = "Capacity scheduling math ported from packages/capacity-pg/src/repository.ts (R02 p3 slice)"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+rust-version.workspace = true
+
+# R02's third deliverable: capacity math. PRD_FULL_RUST.md:656 names R02 as
+# "Pricing, deployment/assembly planning dan capacity math" — pricing and the
+# assembly planner are now both in the workspace, and this is the third row.
+#
+# This crate originates in the product tree, not the pilot: `calculateSchedule`
+# has only ever existed as `packages/capacity-pg/src/repository.ts:117`. The
+# pilot's `schedule` crate is a `placeholder()` stub (D04), so there is nothing
+# to promote and ADR-R06 does not apply.
+#
+# Only `serde`, and deliberately no date crate — not `chrono`, not `jiff`, not
+# `time`. That is not laziness; it is the port's central decision, and it has
+# two causes:
+#
+#   1. **The baseline has no date library.** It is `new Date()` plus
+#      `getUTCDay()` plus `+ 24 * 60 * 60 * 1000` arithmetic and nothing else.
+#      Pulling in `chrono` would not make the port more faithful, it would make
+#      it *differently* faithful: chrono models calendar arithmetic, and the
+#      baseline does not use calendar arithmetic — it steps by fixed 86,400,000
+#      ms increments and reads the weekday off the result. A DST-observing
+#      calendar library would compute a different weekday than the baseline's
+#      naive stepping for any local-timezone input.
+#   2. **The wasm gate.** `rust/crates/pricing`, `rates` and `assembly` are all
+#      wasm-clean (R01), which is what lets the same engine run in a browser.
+#      `chrono`/`time` both carry locale and timezone-database surfaces that
+#      expand the wasm payload for a computation that never needs a timezone
+#      name. This crate steps in UTC milliseconds and reads `getUTCDay`, so it
+#      needs nothing a `u64` cannot express.
+#
+# The port therefore models an instant as a signed millisecond count from the
+# Unix epoch — the same representation JavaScript uses — and implements the
+# three calendar primitives the baseline actually needs (weekday lookup, the
+# fixed-day step, the weekend skip) over it. See `calendar.rs` for why each one
+# is written the way it is, including the one place the baseline's arithmetic
+# is not the arithmetic it looks like.
+[dependencies]
+serde.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
