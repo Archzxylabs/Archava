@@ -33,6 +33,7 @@
 //!   contacts/pipeline reads, recovery UX — come with the Leptos slice, and
 //!   `P-RUST-BROWSER` does not exist until they are proven in a real browser.
 
+pub mod assistant;
 mod authority;
 pub mod crm;
 mod identity;

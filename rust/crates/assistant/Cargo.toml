@@ -1,0 +1,49 @@
+[package]
+name = "archava-assistant"
+description = "CRM assistant conversation contracts, planner and server-side validation engine, ported from packages/crm-assistant and packages/assistant (R03 slice)"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+rust-version.workspace = true
+
+# R03's assistant slice.
+#
+# `packages/crm-assistant/src/{contracts,planner,conversation}.ts` are the
+# baseline: a conversation whose PLANNER output is a request — never a
+# capability — and whose server-side flow rechecks the caller's CRM grants on
+# every turn before any tool runs. This crate is that layer without a
+# provider: the `gemini-planner` pilot lane stays out on purpose, exactly as
+# the TS route composes `plannerFor` to fall back to the local deterministic
+# planner.
+#
+# What is deliberately NOT here: HTTP, a database, tenant context and the
+# CRM's repositories. The crate declares `HostCrm` — the seam the TS
+# `createCrmConversation(service, planner, pipeline)` already had — and the
+# host (`crates/host/src/assistant.rs`) implements it over real SQLX
+# transactions. Authorization re-runs per tool invocation, one transaction
+# apiece, the same shape the baseline's `repository.transaction(...)` has.
+#
+# Timestamps. The worklist cursor keeps the baseline's explicit
+# microseconds-`Z` rendering (`to_char ... 'US"Z"'`), which is what lets a
+# `(dueAt,id)` keyset resume on the exact boundary row. The other instants
+# (contact/activity/followup detail) use the same rendering inside this
+# slice's payloads; the TS baseline renders those from JS `Date`, which is
+# millisecond-truncated. The port carries microseconds (a superset of the
+# information) — recorded in docs/rust/KNOWN_DIFFERENCES.md rather than
+# silently assumed.
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+
+# The planner's vocabulary. The TS `LocalCrmPlanner` is an ordered list of
+# anchored (?i) regexes; the vocabulary is transcribed pattern-for-pattern,
+# and the planner parity table in tests pins the classification rows so a
+# re-ordering or a widened pattern trips a named test.
+regex.workspace = true
+
+[dev-dependencies]
+# The planner is async only because the trait seam eases foreign planner
+# injection; the tests need an executor to await it. Dev-only: the production
+# crate stays free of any runtime.
+tokio = { version = "1", features = ["rt", "macros"] }

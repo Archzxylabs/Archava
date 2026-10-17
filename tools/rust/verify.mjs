@@ -263,6 +263,18 @@ export function gateSteps() {
       'pg authority suite',
       () => step('pg authority suite', ['node', 'tools/rust/pg-authority.mjs']),
     ],
+    // Same pattern for P-R03-DOMAIN: the R03 CRM domain lane spans three
+    // suites (the command lane repository, the conversation route over HTTP,
+    // and the assistant crate's injected-host flow tests). The workspace step
+    // runs all three but proves only "all tests passed"; this step re-runs
+    // them and grades the three required checks against witness tests it
+    // looks up BY NAME, so a deleted proving test is a visible gap. It sits
+    // after the authority step because both rebuild disposable PostgreSQL
+    // fixtures one suite at a time.
+    [
+      'R03 domain suite',
+      () => step('R03 domain suite', ['node', 'tools/rust/r03-domain.mjs']),
+    ],
     // P-CAPACITY-CONFORMANCE: same RF01 shape, one Rust suite, no PostgreSQL.
     // The six required checks grade named witnesses in the differential
     // suite — refusals, both bound families, the iteration cap, retained
@@ -492,6 +504,21 @@ export function fastGateEvidenceMapping() {
           return JSON.parse(readFileSync(join(root, 'dist/rust-authority-proof.json'), 'utf8'))
         } catch (error) {
           throw new Error(`authority witness proof unreadable: ${error.message}`)
+        }
+      },
+    },
+    {
+      proof: 'P-R03-DOMAIN',
+      checks: {
+        'contacts/pipeline repository tests pass': { step: 'R03 domain suite' },
+        'command receipt state machine tests pass': { step: 'R03 domain suite' },
+        'assistant planning refusal tests pass': { step: 'R03 domain suite' },
+      },
+      details: () => {
+        try {
+          return JSON.parse(readFileSync(join(root, 'dist/rust-r03-domain-proof.json'), 'utf8'))
+        } catch (error) {
+          throw new Error(`R03 domain witness proof unreadable: ${error.message}`)
         }
       },
     },

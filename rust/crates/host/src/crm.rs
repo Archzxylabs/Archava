@@ -481,7 +481,7 @@ async fn member_of(
 /// Every refusal shape collapses to [`AuthorityError::MissingMembership`]:
 /// absent, inactive, wrong kind, and an unusable initiator are one answer —
 /// the request was not authorized — so none is an existence oracle for another.
-async fn authorize(
+pub(crate) async fn authorize(
     connection: &mut sqlx::PgConnection,
     tenant: &TenantId,
     actor: &CrmActor,
@@ -565,7 +565,7 @@ fn fingerprint(
 /// non-owner runtime first (inside [`TenantTransaction::begin`]), then the
 /// `SET LOCAL` timeouts `packages/crm-pg/src/repository.ts` sets on every
 /// transaction — statement timeout 10s, lock timeout 3s.
-async fn begin(
+pub(crate) async fn begin(
     state: &AppState,
     tenant: TenantId,
 ) -> Result<TenantTransaction<'_>, AuthorityError> {
@@ -1470,6 +1470,6 @@ async fn read_status(
 }
 
 /// The session's principal as a human actor.
-fn human(presented: &AuthenticatedSession) -> CrmActor {
+pub(crate) fn human(presented: &AuthenticatedSession) -> CrmActor {
     CrmActor::Human(presented.principal_id.clone())
 }

@@ -290,6 +290,12 @@ pub fn router(state: AppState) -> Router {
         .route("/approvals/approve", post(approval_grant))
         .route("/crm/commands", post(crate::crm::crm_command))
         .route("/crm/commands/status", get(crate::crm::command_status))
+        // R03's assistant slice: the CRM conversation. Session + CSRF first,
+        // tenant from the path, the flow's own gates after.
+        .route(
+            "/api/crm/{tenant}/conversation",
+            post(crate::assistant::conversation),
+        )
         .with_state(state)
 }
 

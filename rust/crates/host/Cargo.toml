@@ -10,6 +10,7 @@ rust-version.workspace = true
 archava-core.workspace = true
 archava-adapters.workspace = true
 archava-domain.workspace = true
+archava-assistant.workspace = true
 
 axum.workspace = true
 tokio.workspace = true

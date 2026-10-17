@@ -30,6 +30,12 @@ members = [
   # no timezone database. See crates/capacity/Cargo.toml for why there is no date
   # crate.
   "crates/capacity",
+  # R03's assistant slice: the conversation contracts, the deterministic local
+  # planner and the server-side validation engine. A leaf — serde + regex
+  # only, no HTTP, no database — because the flow must be provable against
+  # canned hosts (`HostCrm` implementations) as well as the real one. See
+  # crates/assistant/Cargo.toml for the boundary decisions.
+  "crates/assistant",
   # RF02's fixture: a disposable, owned PostgreSQL instance for the integration
   # suites. A workspace member (so it is versioned, formatted and linted with
   # everything else) but a DEV-ONLY dependency — no production crate may depend
@@ -75,6 +81,10 @@ opt-level = 3
 archava-core = { path = "crates/core" }
 archava-adapters = { path = "crates/adapters" }
 archava-domain = { path = "crates/domain" }
+# R03's assistant layer — contracts, planner and the conversation flow. The
+# host implements the flow's `HostCrm` seam; the dependency stays one-way
+# (the assistant crate must never import the host).
+archava-assistant = { path = "crates/assistant" }
 # The HTTP surface, declared so `crates/slice` (§1.4B) can consume it as
 # `archava-host.workspace = true`. Nothing else depends on it — the host is the
 # top of the internal stack — and the slice takes it ONLY in its server build;
@@ -114,6 +124,11 @@ hmac = "0.12"
 base64 = "0.22"
 uuid = { version = "1", features = ["v4", "serde"] }
 getrandom = "0.4"
+# The assistant planner's anchored vocabulary. Already inside the offline
+# dependency graph (regex 1.13.1 arrives with `tracing-subscriber`'s env
+# filter); declared here so every member that matches text resolves to the
+# same engine.
+regex = "1.13.1"
 
 # --- Host stack ---------------------------------------------------------
 # `sqlx` for the postgres driver alone: raw SQL and explicit transactions, never

@@ -13,6 +13,7 @@ import {
 } from '../verify.mjs'
 import { WITNESSES } from '../pg-readiness.mjs'
 import { WITNESSES as AUTHORITY_WITNESSES } from '../pg-authority.mjs'
+import { WITNESSES as R03_DOMAIN_WITNESSES } from '../r03-domain.mjs'
 import { WITNESSES as CAPACITY_WITNESSES } from '../capacity-conformance.mjs'
 import {
   WITNESSES as PLANNING_WITNESSES,
@@ -320,6 +321,35 @@ test('the P-AUTHORITY-PG witness map and the frozen manifest cannot drift apart'
       assert.equal(
         suite,
         'authority',
+        `${check}: witness ${JSON.stringify(name)} names unknown suite ${JSON.stringify(suite)}`,
+      )
+    }
+  }
+})
+
+test('the P-R03-DOMAIN witness map and the frozen manifest cannot drift apart', () => {
+  // Same three-lists-equal property as P-AUTHORITY-PG, for the proof whose
+  // producers are the three R03 suites' named Rust test functions: a manifest
+  // check with no witness is a check nothing produces, and a witness naming a
+  // check the manifest does not require is a proof of something nobody asked
+  // for. Both directions. Unlike the single-suite proofs, crate-qualified
+  // identifiers (assistantCrate's library tests) carry `::`, so the
+  // identifier shape allows it; and the witness totals are not frozen in the
+  // manifest's `expect` for this proof — the tally rides the details blob the
+  // producer writes, where a removed witness still moves a visible number.
+  const manifest = loadManifest(repoRoot)
+  const spec = manifest.proofs['P-R03-DOMAIN']
+  assert.deepEqual([...Object.keys(R03_DOMAIN_WITNESSES)].sort(), [...spec.requiredChecks].sort())
+  for (const [check, witnesses] of Object.entries(R03_DOMAIN_WITNESSES)) {
+    assert.ok(witnesses.length > 0, `${check} has no witness tests`)
+    for (const [suite, name] of witnesses) {
+      assert.match(
+        name,
+        /^[a-z0-9_:]+$/,
+        `${check}: witness name ${JSON.stringify(name)} is not a test identifier`,
+      )
+      assert.ok(
+        ['crm', 'assistant', 'assistantCrate'].includes(suite),
         `${check}: witness ${JSON.stringify(name)} names unknown suite ${JSON.stringify(suite)}`,
       )
     }
