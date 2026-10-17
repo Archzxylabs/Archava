@@ -1,0 +1,13 @@
+[toolchain]
+# The benchmark crate builds OUTSIDE the product workspace (an empty
+# `[workspace]` table keeps cargo from adopting it), so `rust/rust-toolchain.toml`
+# does not reach this directory — rustup resolves the pin from the invocation
+# directory upward, and this is the first pin it finds here.
+#
+# RA05 requires the benchmark to build with the *declared* toolchain rather
+# than whatever the machine's rustup default happens to be. Before this file
+# the two coincided (1.96.0 default == 1.96.0 pin); a coincidence is not a
+# declaration, and the numbers this crate reports are only comparable across
+# runs if the compiler is one of the held constants.
+channel = "1.96.0"
+components = ["rustfmt", "clippy"]

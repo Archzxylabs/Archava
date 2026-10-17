@@ -1,0 +1,14 @@
+{
+  "slice": "p1",
+  "runtime": "ts+rust",
+  "fixtures": 350,
+  "match": 338,
+  "error-class-only": 12,
+  "error-message-only": 0,
+  "diverge": 0,
+  "passed": 338,
+  "failed": 12,
+  "pricebookSha256": "2499bc82220188dad4daff276f73159ddcff9233944169fdf8f0dcc3f14f7831",
+  "casesSha256": "e0529d7664f5886d8dc896da5ae1ffb3634b0ac9e7413bf6d6a66edf38f582ab",
+  "resultsSha256": "055758681d06a47c776d21732373254c837cf3bf6994027fb6b8091812929f3c"
+}

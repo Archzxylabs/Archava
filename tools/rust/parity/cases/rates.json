@@ -1,0 +1,5693 @@
+{
+  "slice": "p2",
+  "generatedBy": "node/gen-cases-rates.mjs",
+  "note": "Synthetic fixture dates and unit ids only. The window and the units are the reference tenant’s published fixtures; the unknown ids and out-of-window dates are deliberately invented.",
+  "count": 753,
+  "cases": [
+    {
+      "id": "nightly-rate-garden-twin-2026-10-05",
+      "op": "nightlyRate",
+      "note": "unit x night rate",
+      "unitId": "garden-twin",
+      "night": "2026-10-05"
+    },
+    {
+      "id": "nightly-availability-garden-twin-2026-10-05",
+      "op": "nightlyAvailability",
+      "note": "unit x night",
+      "unitId": "garden-twin",
+      "night": "2026-10-05"
+    },
+    {
+      "id": "nightly-rate-garden-twin-2026-10-06",
+      "op": "nightlyRate",
+      "note": "unit x night rate",
+      "unitId": "garden-twin",
+      "night": "2026-10-06"
+    },
+    {
+      "id": "nightly-availability-garden-twin-2026-10-06",
+      "op": "nightlyAvailability",
+      "note": "unit x night",
+      "unitId": "garden-twin",
+      "night": "2026-10-06"
+    },
+    {
+      "id": "nightly-rate-garden-twin-2026-10-07",
+      "op": "nightlyRate",
+      "note": "unit x night rate",
+      "unitId": "garden-twin",
+      "night": "2026-10-07"
+    },
+    {
+      "id": "nightly-availability-garden-twin-2026-10-07",
+      "op": "nightlyAvailability",
+      "note": "unit x night",
+      "unitId": "garden-twin",
+      "night": "2026-10-07"
+    },
+    {
+      "id": "nightly-rate-garden-twin-2026-10-08",
+      "op": "nightlyRate",
+      "note": "unit x night rate",
+      "unitId": "garden-twin",
+      "night": "2026-10-08"
+    },
+    {
+      "id": "nightly-availability-garden-twin-2026-10-08",
+      "op": "nightlyAvailability",
+      "note": "unit x night",
+      "unitId": "garden-twin",
+      "night": "2026-10-08"
+    },
+    {
+      "id": "nightly-rate-garden-twin-2026-10-09",
+      "op": "nightlyRate",
+      "note": "unit x night rate",
+      "unitId": "garden-twin",
+      "night": "2026-10-09"
+    },
+    {
+      "id": "nightly-availability-garden-twin-2026-10-09",
+      "op": "nightlyAvailability",
+      "note": "unit x night",
+      "unitId": "garden-twin",
+      "night": "2026-10-09"
+    },
+    {
+      "id": "nightly-rate-garden-twin-2026-10-10",
+      "op": "nightlyRate",
+      "note": "unit x night rate",
+      "unitId": "garden-twin",
+      "night": "2026-10-10"
+    },
+    {
+      "id": "nightly-availability-garden-twin-2026-10-10",
+      "op": "nightlyAvailability",
+      "note": "unit x night",
+      "unitId": "garden-twin",
+      "night": "2026-10-10"
+    },
+    {
+      "id": "nightly-rate-deluxe-valley-2026-10-05",
+      "op": "nightlyRate",
+      "note": "unit x night rate",
+      "unitId": "deluxe-valley",
+      "night": "2026-10-05"
+    },
+    {
+      "id": "nightly-availability-deluxe-valley-2026-10-05",
+      "op": "nightlyAvailability",
+      "note": "unit x night",
+      "unitId": "deluxe-valley",
+      "night": "2026-10-05"
+    },
+    {
+      "id": "nightly-rate-deluxe-valley-2026-10-06",
+      "op": "nightlyRate",
+      "note": "unit x night rate",
+      "unitId": "deluxe-valley",
+      "night": "2026-10-06"
+    },
+    {
+      "id": "nightly-availability-deluxe-valley-2026-10-06",
+      "op": "nightlyAvailability",
+      "note": "unit x night",
+      "unitId": "deluxe-valley",
+      "night": "2026-10-06"
+    },
+    {
+      "id": "nightly-rate-deluxe-valley-2026-10-07",
+      "op": "nightlyRate",
+      "note": "unit x night rate",
+      "unitId": "deluxe-valley",
+      "night": "2026-10-07"
+    },
+    {
+      "id": "nightly-availability-deluxe-valley-2026-10-07",
+      "op": "nightlyAvailability",
+      "note": "unit x night",
+      "unitId": "deluxe-valley",
+      "night": "2026-10-07"
+    },
+    {
+      "id": "nightly-rate-deluxe-valley-2026-10-08",
+      "op": "nightlyRate",
+      "note": "unit x night rate",
+      "unitId": "deluxe-valley",
+      "night": "2026-10-08"
+    },
+    {
+      "id": "nightly-availability-deluxe-valley-2026-10-08",
+      "op": "nightlyAvailability",
+      "note": "unit x night",
+      "unitId": "deluxe-valley",
+      "night": "2026-10-08"
+    },
+    {
+      "id": "nightly-rate-deluxe-valley-2026-10-09",
+      "op": "nightlyRate",
+      "note": "unit x night rate",
+      "unitId": "deluxe-valley",
+      "night": "2026-10-09"
+    },
+    {
+      "id": "nightly-availability-deluxe-valley-2026-10-09",
+      "op": "nightlyAvailability",
+      "note": "unit x night",
+      "unitId": "deluxe-valley",
+      "night": "2026-10-09"
+    },
+    {
+      "id": "nightly-rate-deluxe-valley-2026-10-10",
+      "op": "nightlyRate",
+      "note": "unit x night rate",
+      "unitId": "deluxe-valley",
+      "night": "2026-10-10"
+    },
+    {
+      "id": "nightly-availability-deluxe-valley-2026-10-10",
+      "op": "nightlyAvailability",
+      "note": "unit x night",
+      "unitId": "deluxe-valley",
+      "night": "2026-10-10"
+    },
+    {
+      "id": "nightly-rate-treetop-suite-2026-10-05",
+      "op": "nightlyRate",
+      "note": "unit x night rate",
+      "unitId": "treetop-suite",
+      "night": "2026-10-05"
+    },
+    {
+      "id": "nightly-availability-treetop-suite-2026-10-05",
+      "op": "nightlyAvailability",
+      "note": "unit x night",
+      "unitId": "treetop-suite",
+      "night": "2026-10-05"
+    },
+    {
+      "id": "nightly-rate-treetop-suite-2026-10-06",
+      "op": "nightlyRate",
+      "note": "unit x night rate",
+      "unitId": "treetop-suite",
+      "night": "2026-10-06"
+    },
+    {
+      "id": "nightly-availability-treetop-suite-2026-10-06",
+      "op": "nightlyAvailability",
+      "note": "unit x night",
+      "unitId": "treetop-suite",
+      "night": "2026-10-06"
+    },
+    {
+      "id": "nightly-rate-treetop-suite-2026-10-07",
+      "op": "nightlyRate",
+      "note": "unit x night rate",
+      "unitId": "treetop-suite",
+      "night": "2026-10-07"
+    },
+    {
+      "id": "nightly-availability-treetop-suite-2026-10-07",
+      "op": "nightlyAvailability",
+      "note": "unit x night",
+      "unitId": "treetop-suite",
+      "night": "2026-10-07"
+    },
+    {
+      "id": "nightly-rate-treetop-suite-2026-10-08",
+      "op": "nightlyRate",
+      "note": "unit x night rate",
+      "unitId": "treetop-suite",
+      "night": "2026-10-08"
+    },
+    {
+      "id": "nightly-availability-treetop-suite-2026-10-08",
+      "op": "nightlyAvailability",
+      "note": "unit x night",
+      "unitId": "treetop-suite",
+      "night": "2026-10-08"
+    },
+    {
+      "id": "nightly-rate-treetop-suite-2026-10-09",
+      "op": "nightlyRate",
+      "note": "unit x night rate",
+      "unitId": "treetop-suite",
+      "night": "2026-10-09"
+    },
+    {
+      "id": "nightly-availability-treetop-suite-2026-10-09",
+      "op": "nightlyAvailability",
+      "note": "unit x night",
+      "unitId": "treetop-suite",
+      "night": "2026-10-09"
+    },
+    {
+      "id": "nightly-rate-treetop-suite-2026-10-10",
+      "op": "nightlyRate",
+      "note": "unit x night rate",
+      "unitId": "treetop-suite",
+      "night": "2026-10-10"
+    },
+    {
+      "id": "nightly-availability-treetop-suite-2026-10-10",
+      "op": "nightlyAvailability",
+      "note": "unit x night",
+      "unitId": "treetop-suite",
+      "night": "2026-10-10"
+    },
+    {
+      "id": "nightly-rate-valley-pool-villa-2026-10-05",
+      "op": "nightlyRate",
+      "note": "unit x night rate",
+      "unitId": "valley-pool-villa",
+      "night": "2026-10-05"
+    },
+    {
+      "id": "nightly-availability-valley-pool-villa-2026-10-05",
+      "op": "nightlyAvailability",
+      "note": "unit x night",
+      "unitId": "valley-pool-villa",
+      "night": "2026-10-05"
+    },
+    {
+      "id": "nightly-rate-valley-pool-villa-2026-10-06",
+      "op": "nightlyRate",
+      "note": "unit x night rate",
+      "unitId": "valley-pool-villa",
+      "night": "2026-10-06"
+    },
+    {
+      "id": "nightly-availability-valley-pool-villa-2026-10-06",
+      "op": "nightlyAvailability",
+      "note": "unit x night",
+      "unitId": "valley-pool-villa",
+      "night": "2026-10-06"
+    },
+    {
+      "id": "nightly-rate-valley-pool-villa-2026-10-07",
+      "op": "nightlyRate",
+      "note": "unit x night rate",
+      "unitId": "valley-pool-villa",
+      "night": "2026-10-07"
+    },
+    {
+      "id": "nightly-availability-valley-pool-villa-2026-10-07",
+      "op": "nightlyAvailability",
+      "note": "unit x night",
+      "unitId": "valley-pool-villa",
+      "night": "2026-10-07"
+    },
+    {
+      "id": "nightly-rate-valley-pool-villa-2026-10-08",
+      "op": "nightlyRate",
+      "note": "unit x night rate",
+      "unitId": "valley-pool-villa",
+      "night": "2026-10-08"
+    },
+    {
+      "id": "nightly-availability-valley-pool-villa-2026-10-08",
+      "op": "nightlyAvailability",
+      "note": "unit x night",
+      "unitId": "valley-pool-villa",
+      "night": "2026-10-08"
+    },
+    {
+      "id": "nightly-rate-valley-pool-villa-2026-10-09",
+      "op": "nightlyRate",
+      "note": "unit x night rate",
+      "unitId": "valley-pool-villa",
+      "night": "2026-10-09"
+    },
+    {
+      "id": "nightly-availability-valley-pool-villa-2026-10-09",
+      "op": "nightlyAvailability",
+      "note": "unit x night",
+      "unitId": "valley-pool-villa",
+      "night": "2026-10-09"
+    },
+    {
+      "id": "nightly-rate-valley-pool-villa-2026-10-10",
+      "op": "nightlyRate",
+      "note": "unit x night rate",
+      "unitId": "valley-pool-villa",
+      "night": "2026-10-10"
+    },
+    {
+      "id": "nightly-availability-valley-pool-villa-2026-10-10",
+      "op": "nightlyAvailability",
+      "note": "unit x night",
+      "unitId": "valley-pool-villa",
+      "night": "2026-10-10"
+    },
+    {
+      "id": "nights-between-2026-10-05_2026-10-05",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-05",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "window-no-unit-2026-10-05_2026-10-05",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-05",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "nights-between-2026-10-05_2026-10-06",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-05",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "window-no-unit-2026-10-05_2026-10-06",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-05",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "nights-between-2026-10-05_2026-10-07",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-05",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "window-no-unit-2026-10-05_2026-10-07",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-05",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "nights-between-2026-10-05_2026-10-08",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-05",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "window-no-unit-2026-10-05_2026-10-08",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-05",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "nights-between-2026-10-05_2026-10-09",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-05",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "window-no-unit-2026-10-05_2026-10-09",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-05",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "nights-between-2026-10-05_2026-10-10",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-05",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "window-no-unit-2026-10-05_2026-10-10",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-05",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "nights-between-2026-10-05_2026-10-11",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-05",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "window-no-unit-2026-10-05_2026-10-11",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-05",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "nights-between-2026-10-06_2026-10-05",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-06",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "window-no-unit-2026-10-06_2026-10-05",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-06",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "nights-between-2026-10-06_2026-10-06",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-06",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "window-no-unit-2026-10-06_2026-10-06",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-06",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "nights-between-2026-10-06_2026-10-07",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-06",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "window-no-unit-2026-10-06_2026-10-07",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-06",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "nights-between-2026-10-06_2026-10-08",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-06",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "window-no-unit-2026-10-06_2026-10-08",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-06",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "nights-between-2026-10-06_2026-10-09",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-06",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "window-no-unit-2026-10-06_2026-10-09",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-06",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "nights-between-2026-10-06_2026-10-10",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-06",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "window-no-unit-2026-10-06_2026-10-10",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-06",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "nights-between-2026-10-06_2026-10-11",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-06",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "window-no-unit-2026-10-06_2026-10-11",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-06",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "nights-between-2026-10-07_2026-10-05",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-07",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "window-no-unit-2026-10-07_2026-10-05",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-07",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "nights-between-2026-10-07_2026-10-06",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-07",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "window-no-unit-2026-10-07_2026-10-06",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-07",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "nights-between-2026-10-07_2026-10-07",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-07",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "window-no-unit-2026-10-07_2026-10-07",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-07",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "nights-between-2026-10-07_2026-10-08",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-07",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "window-no-unit-2026-10-07_2026-10-08",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-07",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "nights-between-2026-10-07_2026-10-09",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-07",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "window-no-unit-2026-10-07_2026-10-09",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-07",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "nights-between-2026-10-07_2026-10-10",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-07",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "window-no-unit-2026-10-07_2026-10-10",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-07",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "nights-between-2026-10-07_2026-10-11",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-07",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "window-no-unit-2026-10-07_2026-10-11",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-07",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "nights-between-2026-10-08_2026-10-05",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-08",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "window-no-unit-2026-10-08_2026-10-05",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-08",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "nights-between-2026-10-08_2026-10-06",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-08",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "window-no-unit-2026-10-08_2026-10-06",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-08",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "nights-between-2026-10-08_2026-10-07",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-08",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "window-no-unit-2026-10-08_2026-10-07",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-08",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "nights-between-2026-10-08_2026-10-08",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-08",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "window-no-unit-2026-10-08_2026-10-08",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-08",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "nights-between-2026-10-08_2026-10-09",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-08",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "window-no-unit-2026-10-08_2026-10-09",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-08",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "nights-between-2026-10-08_2026-10-10",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-08",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "window-no-unit-2026-10-08_2026-10-10",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-08",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "nights-between-2026-10-08_2026-10-11",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-08",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "window-no-unit-2026-10-08_2026-10-11",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-08",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "nights-between-2026-10-09_2026-10-05",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-09",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "window-no-unit-2026-10-09_2026-10-05",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-09",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "nights-between-2026-10-09_2026-10-06",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-09",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "window-no-unit-2026-10-09_2026-10-06",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-09",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "nights-between-2026-10-09_2026-10-07",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-09",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "window-no-unit-2026-10-09_2026-10-07",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-09",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "nights-between-2026-10-09_2026-10-08",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-09",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "window-no-unit-2026-10-09_2026-10-08",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-09",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "nights-between-2026-10-09_2026-10-09",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-09",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "window-no-unit-2026-10-09_2026-10-09",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-09",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "nights-between-2026-10-09_2026-10-10",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-09",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "window-no-unit-2026-10-09_2026-10-10",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-09",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "nights-between-2026-10-09_2026-10-11",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-09",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "window-no-unit-2026-10-09_2026-10-11",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-09",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "nights-between-2026-10-10_2026-10-05",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-10",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "window-no-unit-2026-10-10_2026-10-05",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-10",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "nights-between-2026-10-10_2026-10-06",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-10",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "window-no-unit-2026-10-10_2026-10-06",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-10",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "nights-between-2026-10-10_2026-10-07",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-10",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "window-no-unit-2026-10-10_2026-10-07",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-10",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "nights-between-2026-10-10_2026-10-08",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-10",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "window-no-unit-2026-10-10_2026-10-08",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-10",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "nights-between-2026-10-10_2026-10-09",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-10",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "window-no-unit-2026-10-10_2026-10-09",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-10",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "nights-between-2026-10-10_2026-10-10",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-10",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "window-no-unit-2026-10-10_2026-10-10",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-10",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "nights-between-2026-10-10_2026-10-11",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-10",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "window-no-unit-2026-10-10_2026-10-11",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-10",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "nights-between-2026-10-11_2026-10-05",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-11",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "window-no-unit-2026-10-11_2026-10-05",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-11",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "nights-between-2026-10-11_2026-10-06",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-11",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "window-no-unit-2026-10-11_2026-10-06",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-11",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "nights-between-2026-10-11_2026-10-07",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-11",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "window-no-unit-2026-10-11_2026-10-07",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-11",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "nights-between-2026-10-11_2026-10-08",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-11",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "window-no-unit-2026-10-11_2026-10-08",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-11",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "nights-between-2026-10-11_2026-10-09",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-11",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "window-no-unit-2026-10-11_2026-10-09",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-11",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "nights-between-2026-10-11_2026-10-10",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-11",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "window-no-unit-2026-10-11_2026-10-10",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-11",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "nights-between-2026-10-11_2026-10-11",
+      "op": "nightsBetween",
+      "note": "window to night list",
+      "from": "2026-10-11",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "window-no-unit-2026-10-11_2026-10-11",
+      "op": "stayAvailability",
+      "note": "a window asked about without a sellable unit",
+      "unitId": "penthouse",
+      "from": "2026-10-11",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-05_2026-10-05",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-05",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-05_2026-10-05",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-05",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-05_2026-10-06",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-05",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-05_2026-10-06",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-05",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-05_2026-10-07",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-05",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-05_2026-10-07",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-05",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-05_2026-10-08",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-05",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-05_2026-10-08",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-05",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-05_2026-10-09",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-05",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-05_2026-10-09",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-05",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-05_2026-10-10",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-05",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-05_2026-10-10",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-05",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-05_2026-10-11",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-05",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-05_2026-10-11",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-05",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-06_2026-10-05",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-06",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-06_2026-10-05",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-06",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-06_2026-10-06",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-06",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-06_2026-10-06",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-06",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-06_2026-10-07",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-06",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-06_2026-10-07",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-06",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-06_2026-10-08",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-06",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-06_2026-10-08",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-06",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-06_2026-10-09",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-06",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-06_2026-10-09",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-06",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-06_2026-10-10",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-06",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-06_2026-10-10",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-06",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-06_2026-10-11",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-06",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-06_2026-10-11",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-06",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-07_2026-10-05",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-07",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-07_2026-10-05",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-07",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-07_2026-10-06",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-07",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-07_2026-10-06",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-07",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-07_2026-10-07",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-07",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-07_2026-10-07",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-07",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-07_2026-10-08",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-07",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-07_2026-10-08",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-07",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-07_2026-10-09",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-07",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-07_2026-10-09",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-07",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-07_2026-10-10",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-07",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-07_2026-10-10",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-07",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-07_2026-10-11",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-07",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-07_2026-10-11",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-07",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-08_2026-10-05",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-08",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-08_2026-10-05",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-08",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-08_2026-10-06",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-08",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-08_2026-10-06",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-08",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-08_2026-10-07",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-08",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-08_2026-10-07",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-08",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-08_2026-10-08",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-08",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-08_2026-10-08",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-08",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-08_2026-10-09",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-08",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-08_2026-10-09",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-08",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-08_2026-10-10",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-08",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-08_2026-10-10",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-08",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-08_2026-10-11",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-08",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-08_2026-10-11",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-08",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-09_2026-10-05",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-09",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-09_2026-10-05",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-09",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-09_2026-10-06",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-09",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-09_2026-10-06",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-09",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-09_2026-10-07",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-09",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-09_2026-10-07",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-09",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-09_2026-10-08",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-09",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-09_2026-10-08",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-09",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-09_2026-10-09",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-09",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-09_2026-10-09",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-09",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-09_2026-10-10",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-09",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-09_2026-10-10",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-09",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-09_2026-10-11",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-09",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-09_2026-10-11",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-09",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-10_2026-10-05",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-10",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-10_2026-10-05",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-10",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-10_2026-10-06",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-10",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-10_2026-10-06",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-10",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-10_2026-10-07",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-10",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-10_2026-10-07",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-10",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-10_2026-10-08",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-10",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-10_2026-10-08",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-10",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-10_2026-10-09",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-10",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-10_2026-10-09",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-10",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-10_2026-10-10",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-10",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-10_2026-10-10",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-10",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-10_2026-10-11",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-10",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-10_2026-10-11",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-10",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-11_2026-10-05",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-11",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-11_2026-10-05",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-11",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-11_2026-10-06",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-11",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-11_2026-10-06",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-11",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-11_2026-10-07",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-11",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-11_2026-10-07",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-11",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-11_2026-10-08",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-11",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-11_2026-10-08",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-11",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-11_2026-10-09",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-11",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-11_2026-10-09",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-11",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-11_2026-10-10",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-11",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-11_2026-10-10",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-11",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-quote-garden-twin-2026-10-11_2026-10-11",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "garden-twin",
+      "from": "2026-10-11",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-availability-garden-twin-2026-10-11_2026-10-11",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "garden-twin",
+      "from": "2026-10-11",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-05_2026-10-05",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-05",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-05_2026-10-05",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-05",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-05_2026-10-06",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-05",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-05_2026-10-06",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-05",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-05_2026-10-07",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-05",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-05_2026-10-07",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-05",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-05_2026-10-08",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-05",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-05_2026-10-08",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-05",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-05_2026-10-09",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-05",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-05_2026-10-09",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-05",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-05_2026-10-10",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-05",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-05_2026-10-10",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-05",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-05_2026-10-11",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-05",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-05_2026-10-11",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-05",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-06_2026-10-05",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-06",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-06_2026-10-05",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-06",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-06_2026-10-06",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-06",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-06_2026-10-06",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-06",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-06_2026-10-07",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-06",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-06_2026-10-07",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-06",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-06_2026-10-08",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-06",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-06_2026-10-08",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-06",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-06_2026-10-09",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-06",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-06_2026-10-09",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-06",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-06_2026-10-10",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-06",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-06_2026-10-10",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-06",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-06_2026-10-11",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-06",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-06_2026-10-11",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-06",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-07_2026-10-05",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-07",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-07_2026-10-05",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-07",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-07_2026-10-06",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-07",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-07_2026-10-06",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-07",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-07_2026-10-07",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-07",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-07_2026-10-07",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-07",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-07_2026-10-08",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-07",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-07_2026-10-08",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-07",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-07_2026-10-09",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-07",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-07_2026-10-09",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-07",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-07_2026-10-10",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-07",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-07_2026-10-10",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-07",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-07_2026-10-11",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-07",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-07_2026-10-11",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-07",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-08_2026-10-05",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-08",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-08_2026-10-05",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-08",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-08_2026-10-06",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-08",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-08_2026-10-06",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-08",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-08_2026-10-07",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-08",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-08_2026-10-07",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-08",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-08_2026-10-08",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-08",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-08_2026-10-08",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-08",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-08_2026-10-09",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-08",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-08_2026-10-09",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-08",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-08_2026-10-10",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-08",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-08_2026-10-10",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-08",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-08_2026-10-11",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-08",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-08_2026-10-11",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-08",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-09_2026-10-05",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-09",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-09_2026-10-05",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-09",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-09_2026-10-06",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-09",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-09_2026-10-06",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-09",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-09_2026-10-07",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-09",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-09_2026-10-07",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-09",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-09_2026-10-08",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-09",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-09_2026-10-08",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-09",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-09_2026-10-09",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-09",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-09_2026-10-09",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-09",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-09_2026-10-10",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-09",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-09_2026-10-10",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-09",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-09_2026-10-11",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-09",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-09_2026-10-11",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-09",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-10_2026-10-05",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-10",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-10_2026-10-05",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-10",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-10_2026-10-06",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-10",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-10_2026-10-06",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-10",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-10_2026-10-07",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-10",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-10_2026-10-07",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-10",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-10_2026-10-08",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-10",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-10_2026-10-08",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-10",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-10_2026-10-09",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-10",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-10_2026-10-09",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-10",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-10_2026-10-10",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-10",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-10_2026-10-10",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-10",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-10_2026-10-11",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-10",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-10_2026-10-11",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-10",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-11_2026-10-05",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-11",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-11_2026-10-05",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-11",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-11_2026-10-06",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-11",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-11_2026-10-06",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-11",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-11_2026-10-07",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-11",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-11_2026-10-07",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-11",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-11_2026-10-08",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-11",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-11_2026-10-08",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-11",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-11_2026-10-09",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-11",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-11_2026-10-09",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-11",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-11_2026-10-10",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-11",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-11_2026-10-10",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-11",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-quote-deluxe-valley-2026-10-11_2026-10-11",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-11",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-availability-deluxe-valley-2026-10-11_2026-10-11",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "deluxe-valley",
+      "from": "2026-10-11",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-05_2026-10-05",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-05",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-05_2026-10-05",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-05",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-05_2026-10-06",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-05",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-05_2026-10-06",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-05",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-05_2026-10-07",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-05",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-05_2026-10-07",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-05",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-05_2026-10-08",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-05",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-05_2026-10-08",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-05",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-05_2026-10-09",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-05",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-05_2026-10-09",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-05",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-05_2026-10-10",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-05",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-05_2026-10-10",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-05",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-05_2026-10-11",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-05",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-05_2026-10-11",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-05",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-06_2026-10-05",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-06",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-06_2026-10-05",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-06",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-06_2026-10-06",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-06",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-06_2026-10-06",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-06",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-06_2026-10-07",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-06",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-06_2026-10-07",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-06",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-06_2026-10-08",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-06",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-06_2026-10-08",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-06",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-06_2026-10-09",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-06",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-06_2026-10-09",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-06",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-06_2026-10-10",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-06",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-06_2026-10-10",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-06",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-06_2026-10-11",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-06",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-06_2026-10-11",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-06",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-07_2026-10-05",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-07",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-07_2026-10-05",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-07",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-07_2026-10-06",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-07",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-07_2026-10-06",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-07",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-07_2026-10-07",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-07",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-07_2026-10-07",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-07",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-07_2026-10-08",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-07",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-07_2026-10-08",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-07",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-07_2026-10-09",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-07",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-07_2026-10-09",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-07",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-07_2026-10-10",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-07",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-07_2026-10-10",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-07",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-07_2026-10-11",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-07",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-07_2026-10-11",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-07",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-08_2026-10-05",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-08",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-08_2026-10-05",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-08",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-08_2026-10-06",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-08",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-08_2026-10-06",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-08",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-08_2026-10-07",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-08",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-08_2026-10-07",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-08",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-08_2026-10-08",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-08",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-08_2026-10-08",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-08",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-08_2026-10-09",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-08",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-08_2026-10-09",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-08",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-08_2026-10-10",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-08",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-08_2026-10-10",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-08",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-08_2026-10-11",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-08",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-08_2026-10-11",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-08",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-09_2026-10-05",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-09",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-09_2026-10-05",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-09",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-09_2026-10-06",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-09",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-09_2026-10-06",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-09",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-09_2026-10-07",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-09",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-09_2026-10-07",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-09",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-09_2026-10-08",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-09",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-09_2026-10-08",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-09",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-09_2026-10-09",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-09",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-09_2026-10-09",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-09",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-09_2026-10-10",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-09",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-09_2026-10-10",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-09",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-09_2026-10-11",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-09",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-09_2026-10-11",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-09",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-10_2026-10-05",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-10",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-10_2026-10-05",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-10",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-10_2026-10-06",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-10",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-10_2026-10-06",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-10",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-10_2026-10-07",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-10",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-10_2026-10-07",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-10",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-10_2026-10-08",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-10",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-10_2026-10-08",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-10",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-10_2026-10-09",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-10",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-10_2026-10-09",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-10",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-10_2026-10-10",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-10",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-10_2026-10-10",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-10",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-10_2026-10-11",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-10",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-10_2026-10-11",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-10",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-11_2026-10-05",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-11",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-11_2026-10-05",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-11",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-11_2026-10-06",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-11",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-11_2026-10-06",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-11",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-11_2026-10-07",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-11",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-11_2026-10-07",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-11",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-11_2026-10-08",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-11",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-11_2026-10-08",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-11",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-11_2026-10-09",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-11",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-11_2026-10-09",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-11",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-11_2026-10-10",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-11",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-11_2026-10-10",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-11",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-quote-treetop-suite-2026-10-11_2026-10-11",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "treetop-suite",
+      "from": "2026-10-11",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-availability-treetop-suite-2026-10-11_2026-10-11",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "treetop-suite",
+      "from": "2026-10-11",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-05_2026-10-05",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-05",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-05_2026-10-05",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-05",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-05_2026-10-06",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-05",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-05_2026-10-06",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-05",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-05_2026-10-07",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-05",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-05_2026-10-07",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-05",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-05_2026-10-08",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-05",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-05_2026-10-08",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-05",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-05_2026-10-09",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-05",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-05_2026-10-09",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-05",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-05_2026-10-10",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-05",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-05_2026-10-10",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-05",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-05_2026-10-11",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-05",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-05_2026-10-11",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-05",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-06_2026-10-05",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-06",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-06_2026-10-05",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-06",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-06_2026-10-06",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-06",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-06_2026-10-06",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-06",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-06_2026-10-07",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-06",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-06_2026-10-07",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-06",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-06_2026-10-08",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-06",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-06_2026-10-08",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-06",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-06_2026-10-09",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-06",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-06_2026-10-09",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-06",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-06_2026-10-10",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-06",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-06_2026-10-10",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-06",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-06_2026-10-11",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-06",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-06_2026-10-11",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-06",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-07_2026-10-05",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-07",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-07_2026-10-05",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-07",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-07_2026-10-06",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-07",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-07_2026-10-06",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-07",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-07_2026-10-07",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-07",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-07_2026-10-07",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-07",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-07_2026-10-08",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-07",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-07_2026-10-08",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-07",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-07_2026-10-09",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-07",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-07_2026-10-09",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-07",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-07_2026-10-10",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-07",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-07_2026-10-10",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-07",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-07_2026-10-11",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-07",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-07_2026-10-11",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-07",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-08_2026-10-05",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-08",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-08_2026-10-05",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-08",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-08_2026-10-06",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-08",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-08_2026-10-06",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-08",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-08_2026-10-07",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-08",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-08_2026-10-07",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-08",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-08_2026-10-08",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-08",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-08_2026-10-08",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-08",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-08_2026-10-09",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-08",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-08_2026-10-09",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-08",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-08_2026-10-10",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-08",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-08_2026-10-10",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-08",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-08_2026-10-11",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-08",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-08_2026-10-11",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-08",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-09_2026-10-05",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-09",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-09_2026-10-05",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-09",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-09_2026-10-06",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-09",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-09_2026-10-06",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-09",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-09_2026-10-07",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-09",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-09_2026-10-07",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-09",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-09_2026-10-08",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-09",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-09_2026-10-08",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-09",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-09_2026-10-09",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-09",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-09_2026-10-09",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-09",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-09_2026-10-10",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-09",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-09_2026-10-10",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-09",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-09_2026-10-11",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-09",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-09_2026-10-11",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-09",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-10_2026-10-05",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-10",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-10_2026-10-05",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-10",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-10_2026-10-06",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-10",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-10_2026-10-06",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-10",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-10_2026-10-07",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-10",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-10_2026-10-07",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-10",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-10_2026-10-08",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-10",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-10_2026-10-08",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-10",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-10_2026-10-09",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-10",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-10_2026-10-09",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-10",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-10_2026-10-10",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-10",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-10_2026-10-10",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-10",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-10_2026-10-11",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-10",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-10_2026-10-11",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-10",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-11_2026-10-05",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-11",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-11_2026-10-05",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-11",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-11_2026-10-06",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-11",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-11_2026-10-06",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-11",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-11_2026-10-07",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-11",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-11_2026-10-07",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-11",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-11_2026-10-08",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-11",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-11_2026-10-08",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-11",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-11_2026-10-09",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-11",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-11_2026-10-09",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-11",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-11_2026-10-10",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-11",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-11_2026-10-10",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-11",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "stay-quote-valley-pool-villa-2026-10-11_2026-10-11",
+      "op": "stayQuote",
+      "note": "unit x window money",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-11",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "stay-availability-valley-pool-villa-2026-10-11_2026-10-11",
+      "op": "stayAvailability",
+      "note": "unit x window",
+      "unitId": "valley-pool-villa",
+      "from": "2026-10-11",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "bookable-2026-10-05_2026-10-05",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-05",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "cheapest-2026-10-05_2026-10-05",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-05",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "bookable-2026-10-05_2026-10-06",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-05",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "cheapest-2026-10-05_2026-10-06",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-05",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "bookable-2026-10-05_2026-10-07",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-05",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "cheapest-2026-10-05_2026-10-07",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-05",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "bookable-2026-10-05_2026-10-08",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-05",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "cheapest-2026-10-05_2026-10-08",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-05",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "bookable-2026-10-05_2026-10-09",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-05",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "cheapest-2026-10-05_2026-10-09",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-05",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "bookable-2026-10-05_2026-10-10",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-05",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "cheapest-2026-10-05_2026-10-10",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-05",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "bookable-2026-10-05_2026-10-11",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-05",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "cheapest-2026-10-05_2026-10-11",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-05",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "bookable-2026-10-06_2026-10-05",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-06",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "cheapest-2026-10-06_2026-10-05",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-06",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "bookable-2026-10-06_2026-10-06",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-06",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "cheapest-2026-10-06_2026-10-06",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-06",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "bookable-2026-10-06_2026-10-07",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-06",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "cheapest-2026-10-06_2026-10-07",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-06",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "bookable-2026-10-06_2026-10-08",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-06",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "cheapest-2026-10-06_2026-10-08",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-06",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "bookable-2026-10-06_2026-10-09",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-06",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "cheapest-2026-10-06_2026-10-09",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-06",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "bookable-2026-10-06_2026-10-10",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-06",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "cheapest-2026-10-06_2026-10-10",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-06",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "bookable-2026-10-06_2026-10-11",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-06",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "cheapest-2026-10-06_2026-10-11",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-06",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "bookable-2026-10-07_2026-10-05",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-07",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "cheapest-2026-10-07_2026-10-05",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-07",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "bookable-2026-10-07_2026-10-06",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-07",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "cheapest-2026-10-07_2026-10-06",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-07",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "bookable-2026-10-07_2026-10-07",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-07",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "cheapest-2026-10-07_2026-10-07",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-07",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "bookable-2026-10-07_2026-10-08",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-07",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "cheapest-2026-10-07_2026-10-08",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-07",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "bookable-2026-10-07_2026-10-09",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-07",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "cheapest-2026-10-07_2026-10-09",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-07",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "bookable-2026-10-07_2026-10-10",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-07",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "cheapest-2026-10-07_2026-10-10",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-07",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "bookable-2026-10-07_2026-10-11",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-07",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "cheapest-2026-10-07_2026-10-11",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-07",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "bookable-2026-10-08_2026-10-05",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-08",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "cheapest-2026-10-08_2026-10-05",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-08",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "bookable-2026-10-08_2026-10-06",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-08",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "cheapest-2026-10-08_2026-10-06",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-08",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "bookable-2026-10-08_2026-10-07",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-08",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "cheapest-2026-10-08_2026-10-07",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-08",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "bookable-2026-10-08_2026-10-08",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-08",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "cheapest-2026-10-08_2026-10-08",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-08",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "bookable-2026-10-08_2026-10-09",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-08",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "cheapest-2026-10-08_2026-10-09",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-08",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "bookable-2026-10-08_2026-10-10",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-08",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "cheapest-2026-10-08_2026-10-10",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-08",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "bookable-2026-10-08_2026-10-11",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-08",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "cheapest-2026-10-08_2026-10-11",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-08",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "bookable-2026-10-09_2026-10-05",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-09",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "cheapest-2026-10-09_2026-10-05",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-09",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "bookable-2026-10-09_2026-10-06",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-09",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "cheapest-2026-10-09_2026-10-06",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-09",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "bookable-2026-10-09_2026-10-07",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-09",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "cheapest-2026-10-09_2026-10-07",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-09",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "bookable-2026-10-09_2026-10-08",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-09",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "cheapest-2026-10-09_2026-10-08",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-09",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "bookable-2026-10-09_2026-10-09",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-09",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "cheapest-2026-10-09_2026-10-09",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-09",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "bookable-2026-10-09_2026-10-10",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-09",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "cheapest-2026-10-09_2026-10-10",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-09",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "bookable-2026-10-09_2026-10-11",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-09",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "cheapest-2026-10-09_2026-10-11",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-09",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "bookable-2026-10-10_2026-10-05",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-10",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "cheapest-2026-10-10_2026-10-05",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-10",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "bookable-2026-10-10_2026-10-06",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-10",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "cheapest-2026-10-10_2026-10-06",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-10",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "bookable-2026-10-10_2026-10-07",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-10",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "cheapest-2026-10-10_2026-10-07",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-10",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "bookable-2026-10-10_2026-10-08",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-10",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "cheapest-2026-10-10_2026-10-08",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-10",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "bookable-2026-10-10_2026-10-09",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-10",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "cheapest-2026-10-10_2026-10-09",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-10",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "bookable-2026-10-10_2026-10-10",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-10",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "cheapest-2026-10-10_2026-10-10",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-10",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "bookable-2026-10-10_2026-10-11",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-10",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "cheapest-2026-10-10_2026-10-11",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-10",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "bookable-2026-10-11_2026-10-05",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-11",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "cheapest-2026-10-11_2026-10-05",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-11",
+      "to": "2026-10-05"
+    },
+    {
+      "id": "bookable-2026-10-11_2026-10-06",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-11",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "cheapest-2026-10-11_2026-10-06",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-11",
+      "to": "2026-10-06"
+    },
+    {
+      "id": "bookable-2026-10-11_2026-10-07",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-11",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "cheapest-2026-10-11_2026-10-07",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-11",
+      "to": "2026-10-07"
+    },
+    {
+      "id": "bookable-2026-10-11_2026-10-08",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-11",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "cheapest-2026-10-11_2026-10-08",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-11",
+      "to": "2026-10-08"
+    },
+    {
+      "id": "bookable-2026-10-11_2026-10-09",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-11",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "cheapest-2026-10-11_2026-10-09",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-11",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "bookable-2026-10-11_2026-10-10",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-11",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "cheapest-2026-10-11_2026-10-10",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-11",
+      "to": "2026-10-10"
+    },
+    {
+      "id": "bookable-2026-10-11_2026-10-11",
+      "op": "bookableStays",
+      "note": "sellable units",
+      "from": "2026-10-11",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "cheapest-2026-10-11_2026-10-11",
+      "op": "cheapestBookable",
+      "note": "sellable units, ordered",
+      "from": "2026-10-11",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "seam-nightly-rate-2026-10-04",
+      "op": "nightlyRate",
+      "note": "a date outside the window",
+      "unitId": "garden-twin",
+      "night": "2026-10-04"
+    },
+    {
+      "id": "seam-nights-from-2026-10-04",
+      "op": "nightsBetween",
+      "note": "window starting outside",
+      "from": "2026-10-04",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "seam-nights-to-2026-10-04",
+      "op": "nightsBetween",
+      "note": "window ending outside",
+      "from": "2026-10-05",
+      "to": "2026-10-04"
+    },
+    {
+      "id": "seam-stay-quote-2026-10-04",
+      "op": "stayQuote",
+      "note": "a stay the fixtures do not state",
+      "unitId": "garden-twin",
+      "from": "2026-10-05",
+      "to": "2026-10-04"
+    },
+    {
+      "id": "seam-nightly-rate-2026-10-11",
+      "op": "nightlyRate",
+      "note": "a date outside the window",
+      "unitId": "garden-twin",
+      "night": "2026-10-11"
+    },
+    {
+      "id": "seam-nights-from-2026-10-11",
+      "op": "nightsBetween",
+      "note": "window starting outside",
+      "from": "2026-10-11",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "seam-nights-to-2026-10-11",
+      "op": "nightsBetween",
+      "note": "window ending outside",
+      "from": "2026-10-05",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "seam-stay-quote-2026-10-11",
+      "op": "stayQuote",
+      "note": "a stay the fixtures do not state",
+      "unitId": "garden-twin",
+      "from": "2026-10-05",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "seam-nightly-rate-2026-10-12",
+      "op": "nightlyRate",
+      "note": "a date outside the window",
+      "unitId": "garden-twin",
+      "night": "2026-10-12"
+    },
+    {
+      "id": "seam-nights-from-2026-10-12",
+      "op": "nightsBetween",
+      "note": "window starting outside",
+      "from": "2026-10-12",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "seam-nights-to-2026-10-12",
+      "op": "nightsBetween",
+      "note": "window ending outside",
+      "from": "2026-10-05",
+      "to": "2026-10-12"
+    },
+    {
+      "id": "seam-stay-quote-2026-10-12",
+      "op": "stayQuote",
+      "note": "a stay the fixtures do not state",
+      "unitId": "garden-twin",
+      "from": "2026-10-05",
+      "to": "2026-10-12"
+    },
+    {
+      "id": "seam-nightly-rate-2026-11-01",
+      "op": "nightlyRate",
+      "note": "a date outside the window",
+      "unitId": "garden-twin",
+      "night": "2026-11-01"
+    },
+    {
+      "id": "seam-nights-from-2026-11-01",
+      "op": "nightsBetween",
+      "note": "window starting outside",
+      "from": "2026-11-01",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "seam-nights-to-2026-11-01",
+      "op": "nightsBetween",
+      "note": "window ending outside",
+      "from": "2026-10-05",
+      "to": "2026-11-01"
+    },
+    {
+      "id": "seam-stay-quote-2026-11-01",
+      "op": "stayQuote",
+      "note": "a stay the fixtures do not state",
+      "unitId": "garden-twin",
+      "from": "2026-10-05",
+      "to": "2026-11-01"
+    },
+    {
+      "id": "seam-nightly-rate-empty",
+      "op": "nightlyRate",
+      "note": "a date outside the window",
+      "unitId": "garden-twin",
+      "night": ""
+    },
+    {
+      "id": "seam-nights-from-empty",
+      "op": "nightsBetween",
+      "note": "window starting outside",
+      "from": "",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "seam-nights-to-empty",
+      "op": "nightsBetween",
+      "note": "window ending outside",
+      "from": "2026-10-05",
+      "to": ""
+    },
+    {
+      "id": "seam-stay-quote-empty",
+      "op": "stayQuote",
+      "note": "a stay the fixtures do not state",
+      "unitId": "garden-twin",
+      "from": "2026-10-05",
+      "to": ""
+    },
+    {
+      "id": "seam-nightly-rate-not-a-date",
+      "op": "nightlyRate",
+      "note": "a date outside the window",
+      "unitId": "garden-twin",
+      "night": "not-a-date"
+    },
+    {
+      "id": "seam-nights-from-not-a-date",
+      "op": "nightsBetween",
+      "note": "window starting outside",
+      "from": "not-a-date",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "seam-nights-to-not-a-date",
+      "op": "nightsBetween",
+      "note": "window ending outside",
+      "from": "2026-10-05",
+      "to": "not-a-date"
+    },
+    {
+      "id": "seam-stay-quote-not-a-date",
+      "op": "stayQuote",
+      "note": "a stay the fixtures do not state",
+      "unitId": "garden-twin",
+      "from": "2026-10-05",
+      "to": "not-a-date"
+    },
+    {
+      "id": "notable-night-garden-twin-2026-10-07",
+      "op": "nightlyAvailability",
+      "note": "a night the table turns on",
+      "unitId": "garden-twin",
+      "night": "2026-10-07"
+    },
+    {
+      "id": "notable-rate-garden-twin-2026-10-07",
+      "op": "nightlyRate",
+      "note": "a rate on a notable night",
+      "unitId": "garden-twin",
+      "night": "2026-10-07"
+    },
+    {
+      "id": "notable-night-deluxe-valley-2026-10-07",
+      "op": "nightlyAvailability",
+      "note": "a night the table turns on",
+      "unitId": "deluxe-valley",
+      "night": "2026-10-07"
+    },
+    {
+      "id": "notable-rate-deluxe-valley-2026-10-07",
+      "op": "nightlyRate",
+      "note": "a rate on a notable night",
+      "unitId": "deluxe-valley",
+      "night": "2026-10-07"
+    },
+    {
+      "id": "notable-night-treetop-suite-2026-10-07",
+      "op": "nightlyAvailability",
+      "note": "a night the table turns on",
+      "unitId": "treetop-suite",
+      "night": "2026-10-07"
+    },
+    {
+      "id": "notable-rate-treetop-suite-2026-10-07",
+      "op": "nightlyRate",
+      "note": "a rate on a notable night",
+      "unitId": "treetop-suite",
+      "night": "2026-10-07"
+    },
+    {
+      "id": "notable-night-valley-pool-villa-2026-10-07",
+      "op": "nightlyAvailability",
+      "note": "a night the table turns on",
+      "unitId": "valley-pool-villa",
+      "night": "2026-10-07"
+    },
+    {
+      "id": "notable-rate-valley-pool-villa-2026-10-07",
+      "op": "nightlyRate",
+      "note": "a rate on a notable night",
+      "unitId": "valley-pool-villa",
+      "night": "2026-10-07"
+    },
+    {
+      "id": "notable-night-garden-twin-2026-10-08",
+      "op": "nightlyAvailability",
+      "note": "a night the table turns on",
+      "unitId": "garden-twin",
+      "night": "2026-10-08"
+    },
+    {
+      "id": "notable-rate-garden-twin-2026-10-08",
+      "op": "nightlyRate",
+      "note": "a rate on a notable night",
+      "unitId": "garden-twin",
+      "night": "2026-10-08"
+    },
+    {
+      "id": "notable-night-deluxe-valley-2026-10-08",
+      "op": "nightlyAvailability",
+      "note": "a night the table turns on",
+      "unitId": "deluxe-valley",
+      "night": "2026-10-08"
+    },
+    {
+      "id": "notable-rate-deluxe-valley-2026-10-08",
+      "op": "nightlyRate",
+      "note": "a rate on a notable night",
+      "unitId": "deluxe-valley",
+      "night": "2026-10-08"
+    },
+    {
+      "id": "notable-night-treetop-suite-2026-10-08",
+      "op": "nightlyAvailability",
+      "note": "a night the table turns on",
+      "unitId": "treetop-suite",
+      "night": "2026-10-08"
+    },
+    {
+      "id": "notable-rate-treetop-suite-2026-10-08",
+      "op": "nightlyRate",
+      "note": "a rate on a notable night",
+      "unitId": "treetop-suite",
+      "night": "2026-10-08"
+    },
+    {
+      "id": "notable-night-valley-pool-villa-2026-10-08",
+      "op": "nightlyAvailability",
+      "note": "a night the table turns on",
+      "unitId": "valley-pool-villa",
+      "night": "2026-10-08"
+    },
+    {
+      "id": "notable-rate-valley-pool-villa-2026-10-08",
+      "op": "nightlyRate",
+      "note": "a rate on a notable night",
+      "unitId": "valley-pool-villa",
+      "night": "2026-10-08"
+    },
+    {
+      "id": "notable-night-garden-twin-2026-10-09",
+      "op": "nightlyAvailability",
+      "note": "a night the table turns on",
+      "unitId": "garden-twin",
+      "night": "2026-10-09"
+    },
+    {
+      "id": "notable-rate-garden-twin-2026-10-09",
+      "op": "nightlyRate",
+      "note": "a rate on a notable night",
+      "unitId": "garden-twin",
+      "night": "2026-10-09"
+    },
+    {
+      "id": "notable-night-deluxe-valley-2026-10-09",
+      "op": "nightlyAvailability",
+      "note": "a night the table turns on",
+      "unitId": "deluxe-valley",
+      "night": "2026-10-09"
+    },
+    {
+      "id": "notable-rate-deluxe-valley-2026-10-09",
+      "op": "nightlyRate",
+      "note": "a rate on a notable night",
+      "unitId": "deluxe-valley",
+      "night": "2026-10-09"
+    },
+    {
+      "id": "notable-night-treetop-suite-2026-10-09",
+      "op": "nightlyAvailability",
+      "note": "a night the table turns on",
+      "unitId": "treetop-suite",
+      "night": "2026-10-09"
+    },
+    {
+      "id": "notable-rate-treetop-suite-2026-10-09",
+      "op": "nightlyRate",
+      "note": "a rate on a notable night",
+      "unitId": "treetop-suite",
+      "night": "2026-10-09"
+    },
+    {
+      "id": "notable-night-valley-pool-villa-2026-10-09",
+      "op": "nightlyAvailability",
+      "note": "a night the table turns on",
+      "unitId": "valley-pool-villa",
+      "night": "2026-10-09"
+    },
+    {
+      "id": "notable-rate-valley-pool-villa-2026-10-09",
+      "op": "nightlyRate",
+      "note": "a rate on a notable night",
+      "unitId": "valley-pool-villa",
+      "night": "2026-10-09"
+    },
+    {
+      "id": "notable-night-garden-twin-2026-10-10",
+      "op": "nightlyAvailability",
+      "note": "a night the table turns on",
+      "unitId": "garden-twin",
+      "night": "2026-10-10"
+    },
+    {
+      "id": "notable-rate-garden-twin-2026-10-10",
+      "op": "nightlyRate",
+      "note": "a rate on a notable night",
+      "unitId": "garden-twin",
+      "night": "2026-10-10"
+    },
+    {
+      "id": "notable-night-deluxe-valley-2026-10-10",
+      "op": "nightlyAvailability",
+      "note": "a night the table turns on",
+      "unitId": "deluxe-valley",
+      "night": "2026-10-10"
+    },
+    {
+      "id": "notable-rate-deluxe-valley-2026-10-10",
+      "op": "nightlyRate",
+      "note": "a rate on a notable night",
+      "unitId": "deluxe-valley",
+      "night": "2026-10-10"
+    },
+    {
+      "id": "notable-night-treetop-suite-2026-10-10",
+      "op": "nightlyAvailability",
+      "note": "a night the table turns on",
+      "unitId": "treetop-suite",
+      "night": "2026-10-10"
+    },
+    {
+      "id": "notable-rate-treetop-suite-2026-10-10",
+      "op": "nightlyRate",
+      "note": "a rate on a notable night",
+      "unitId": "treetop-suite",
+      "night": "2026-10-10"
+    },
+    {
+      "id": "notable-night-valley-pool-villa-2026-10-10",
+      "op": "nightlyAvailability",
+      "note": "a night the table turns on",
+      "unitId": "valley-pool-villa",
+      "night": "2026-10-10"
+    },
+    {
+      "id": "notable-rate-valley-pool-villa-2026-10-10",
+      "op": "nightlyRate",
+      "note": "a rate on a notable night",
+      "unitId": "valley-pool-villa",
+      "night": "2026-10-10"
+    },
+    {
+      "id": "unknown-units-built-penthouse",
+      "op": "roomsBuilt",
+      "note": "no such unit",
+      "unitId": "penthouse"
+    },
+    {
+      "id": "unknown-units-rate-penthouse",
+      "op": "baseRate",
+      "note": "no such unit",
+      "unitId": "penthouse"
+    },
+    {
+      "id": "unknown-units-nightly-penthouse",
+      "op": "nightlyRate",
+      "note": "no such unit",
+      "unitId": "penthouse",
+      "night": "2026-10-05"
+    },
+    {
+      "id": "unknown-units-availability-penthouse",
+      "op": "nightlyAvailability",
+      "note": "no such unit",
+      "unitId": "penthouse",
+      "night": "2026-10-05"
+    },
+    {
+      "id": "unknown-units-stay-penthouse",
+      "op": "stayQuote",
+      "note": "no such unit",
+      "unitId": "penthouse",
+      "from": "2026-10-05",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "unknown-units-built-garden-twin-extra",
+      "op": "roomsBuilt",
+      "note": "no such unit",
+      "unitId": "garden-twin-extra"
+    },
+    {
+      "id": "unknown-units-rate-garden-twin-extra",
+      "op": "baseRate",
+      "note": "no such unit",
+      "unitId": "garden-twin-extra"
+    },
+    {
+      "id": "unknown-units-nightly-garden-twin-extra",
+      "op": "nightlyRate",
+      "note": "no such unit",
+      "unitId": "garden-twin-extra",
+      "night": "2026-10-05"
+    },
+    {
+      "id": "unknown-units-availability-garden-twin-extra",
+      "op": "nightlyAvailability",
+      "note": "no such unit",
+      "unitId": "garden-twin-extra",
+      "night": "2026-10-05"
+    },
+    {
+      "id": "unknown-units-stay-garden-twin-extra",
+      "op": "stayQuote",
+      "note": "no such unit",
+      "unitId": "garden-twin-extra",
+      "from": "2026-10-05",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "unknown-units-built-Garden-Twin",
+      "op": "roomsBuilt",
+      "note": "no such unit",
+      "unitId": "Garden-Twin"
+    },
+    {
+      "id": "unknown-units-rate-Garden-Twin",
+      "op": "baseRate",
+      "note": "no such unit",
+      "unitId": "Garden-Twin"
+    },
+    {
+      "id": "unknown-units-nightly-Garden-Twin",
+      "op": "nightlyRate",
+      "note": "no such unit",
+      "unitId": "Garden-Twin",
+      "night": "2026-10-05"
+    },
+    {
+      "id": "unknown-units-availability-Garden-Twin",
+      "op": "nightlyAvailability",
+      "note": "no such unit",
+      "unitId": "Garden-Twin",
+      "night": "2026-10-05"
+    },
+    {
+      "id": "unknown-units-stay-Garden-Twin",
+      "op": "stayQuote",
+      "note": "no such unit",
+      "unitId": "Garden-Twin",
+      "from": "2026-10-05",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "unknown-units-built-GARDEN-TWIN",
+      "op": "roomsBuilt",
+      "note": "no such unit",
+      "unitId": "GARDEN-TWIN"
+    },
+    {
+      "id": "unknown-units-rate-GARDEN-TWIN",
+      "op": "baseRate",
+      "note": "no such unit",
+      "unitId": "GARDEN-TWIN"
+    },
+    {
+      "id": "unknown-units-nightly-GARDEN-TWIN",
+      "op": "nightlyRate",
+      "note": "no such unit",
+      "unitId": "GARDEN-TWIN",
+      "night": "2026-10-05"
+    },
+    {
+      "id": "unknown-units-availability-GARDEN-TWIN",
+      "op": "nightlyAvailability",
+      "note": "no such unit",
+      "unitId": "GARDEN-TWIN",
+      "night": "2026-10-05"
+    },
+    {
+      "id": "unknown-units-stay-GARDEN-TWIN",
+      "op": "stayQuote",
+      "note": "no such unit",
+      "unitId": "GARDEN-TWIN",
+      "from": "2026-10-05",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "unknown-units-built-empty",
+      "op": "roomsBuilt",
+      "note": "no such unit",
+      "unitId": ""
+    },
+    {
+      "id": "unknown-units-rate-empty",
+      "op": "baseRate",
+      "note": "no such unit",
+      "unitId": ""
+    },
+    {
+      "id": "unknown-units-nightly-empty",
+      "op": "nightlyRate",
+      "note": "no such unit",
+      "unitId": "",
+      "night": "2026-10-05"
+    },
+    {
+      "id": "unknown-units-availability-empty",
+      "op": "nightlyAvailability",
+      "note": "no such unit",
+      "unitId": "",
+      "night": "2026-10-05"
+    },
+    {
+      "id": "unknown-units-stay-empty",
+      "op": "stayQuote",
+      "note": "no such unit",
+      "unitId": "",
+      "from": "2026-10-05",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "unknown-units-built-garden twin",
+      "op": "roomsBuilt",
+      "note": "no such unit",
+      "unitId": "garden twin"
+    },
+    {
+      "id": "unknown-units-rate-garden twin",
+      "op": "baseRate",
+      "note": "no such unit",
+      "unitId": "garden twin"
+    },
+    {
+      "id": "unknown-units-nightly-garden twin",
+      "op": "nightlyRate",
+      "note": "no such unit",
+      "unitId": "garden twin",
+      "night": "2026-10-05"
+    },
+    {
+      "id": "unknown-units-availability-garden twin",
+      "op": "nightlyAvailability",
+      "note": "no such unit",
+      "unitId": "garden twin",
+      "night": "2026-10-05"
+    },
+    {
+      "id": "unknown-units-stay-garden twin",
+      "op": "stayQuote",
+      "note": "no such unit",
+      "unitId": "garden twin",
+      "from": "2026-10-05",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "unknown-units-built-proto",
+      "op": "roomsBuilt",
+      "note": "no such unit",
+      "unitId": "__proto__"
+    },
+    {
+      "id": "unknown-units-rate-proto",
+      "op": "baseRate",
+      "note": "no such unit",
+      "unitId": "__proto__"
+    },
+    {
+      "id": "unknown-units-nightly-proto",
+      "op": "nightlyRate",
+      "note": "no such unit",
+      "unitId": "__proto__",
+      "night": "2026-10-05"
+    },
+    {
+      "id": "unknown-units-availability-proto",
+      "op": "nightlyAvailability",
+      "note": "no such unit",
+      "unitId": "__proto__",
+      "night": "2026-10-05"
+    },
+    {
+      "id": "unknown-units-stay-proto",
+      "op": "stayQuote",
+      "note": "no such unit",
+      "unitId": "__proto__",
+      "from": "2026-10-05",
+      "to": "2026-10-11"
+    },
+    {
+      "id": "is-night-2026-10-05",
+      "op": "isReferenceNight",
+      "note": "is this date a night?",
+      "night": "2026-10-05"
+    },
+    {
+      "id": "is-weekend-2026-10-05",
+      "op": "isWeekendNight",
+      "note": "does this date carry the uplift?",
+      "night": "2026-10-05"
+    },
+    {
+      "id": "is-night-2026-10-06",
+      "op": "isReferenceNight",
+      "note": "is this date a night?",
+      "night": "2026-10-06"
+    },
+    {
+      "id": "is-weekend-2026-10-06",
+      "op": "isWeekendNight",
+      "note": "does this date carry the uplift?",
+      "night": "2026-10-06"
+    },
+    {
+      "id": "is-night-2026-10-07",
+      "op": "isReferenceNight",
+      "note": "is this date a night?",
+      "night": "2026-10-07"
+    },
+    {
+      "id": "is-weekend-2026-10-07",
+      "op": "isWeekendNight",
+      "note": "does this date carry the uplift?",
+      "night": "2026-10-07"
+    },
+    {
+      "id": "is-night-2026-10-08",
+      "op": "isReferenceNight",
+      "note": "is this date a night?",
+      "night": "2026-10-08"
+    },
+    {
+      "id": "is-weekend-2026-10-08",
+      "op": "isWeekendNight",
+      "note": "does this date carry the uplift?",
+      "night": "2026-10-08"
+    },
+    {
+      "id": "is-night-2026-10-09",
+      "op": "isReferenceNight",
+      "note": "is this date a night?",
+      "night": "2026-10-09"
+    },
+    {
+      "id": "is-weekend-2026-10-09",
+      "op": "isWeekendNight",
+      "note": "does this date carry the uplift?",
+      "night": "2026-10-09"
+    },
+    {
+      "id": "is-night-2026-10-10",
+      "op": "isReferenceNight",
+      "note": "is this date a night?",
+      "night": "2026-10-10"
+    },
+    {
+      "id": "is-weekend-2026-10-10",
+      "op": "isWeekendNight",
+      "note": "does this date carry the uplift?",
+      "night": "2026-10-10"
+    },
+    {
+      "id": "is-night-2026-10-11",
+      "op": "isReferenceNight",
+      "note": "is this date a night?",
+      "night": "2026-10-11"
+    },
+    {
+      "id": "is-weekend-2026-10-11",
+      "op": "isWeekendNight",
+      "note": "does this date carry the uplift?",
+      "night": "2026-10-11"
+    },
+    {
+      "id": "is-night-2026-10-04",
+      "op": "isReferenceNight",
+      "note": "is this date a night?",
+      "night": "2026-10-04"
+    },
+    {
+      "id": "is-weekend-2026-10-04",
+      "op": "isWeekendNight",
+      "note": "does this date carry the uplift?",
+      "night": "2026-10-04"
+    },
+    {
+      "id": "is-night-2026-10-11",
+      "op": "isReferenceNight",
+      "note": "is this date a night?",
+      "night": "2026-10-11"
+    },
+    {
+      "id": "is-weekend-2026-10-11",
+      "op": "isWeekendNight",
+      "note": "does this date carry the uplift?",
+      "night": "2026-10-11"
+    },
+    {
+      "id": "is-night-2026-10-12",
+      "op": "isReferenceNight",
+      "note": "is this date a night?",
+      "night": "2026-10-12"
+    },
+    {
+      "id": "is-weekend-2026-10-12",
+      "op": "isWeekendNight",
+      "note": "does this date carry the uplift?",
+      "night": "2026-10-12"
+    },
+    {
+      "id": "is-night-2026-11-01",
+      "op": "isReferenceNight",
+      "note": "is this date a night?",
+      "night": "2026-11-01"
+    },
+    {
+      "id": "is-weekend-2026-11-01",
+      "op": "isWeekendNight",
+      "note": "does this date carry the uplift?",
+      "night": "2026-11-01"
+    },
+    {
+      "id": "is-night-empty",
+      "op": "isReferenceNight",
+      "note": "is this date a night?",
+      "night": ""
+    },
+    {
+      "id": "is-weekend-empty",
+      "op": "isWeekendNight",
+      "note": "does this date carry the uplift?",
+      "night": ""
+    },
+    {
+      "id": "is-night-not-a-date",
+      "op": "isReferenceNight",
+      "note": "is this date a night?",
+      "night": "not-a-date"
+    },
+    {
+      "id": "is-weekend-not-a-date",
+      "op": "isWeekendNight",
+      "note": "does this date carry the uplift?",
+      "night": "not-a-date"
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+# The benchmark consumer's cargo manifest.
+#
+# It sits outside the product workspace on purpose, and the empty `[workspace]`
+# table below is what enforces that: without it cargo would walk up from this
+# directory, find `rust/Cargo.toml`, and try to adopt this package as a tenth
+# member. That would put a benchmark target inside the workspace `cargo test
+# --workspace` and the wasm gate both walk, and would also inherit the
+# workspace's `[profile.release]`, so the benchmark's build settings would drift
+# whenever the product's did.
+#
+# The two engine crates are path dependencies, exactly as a cold consumer would
+# take them. That is deliberate twice over: it proves the engines are consumable
+# from outside (the property `verify-rust-consumers.mjs` checks for the packaged
+# artifacts), and it means a change to them that breaks an external consumer
+# breaks this build too.
+#
+# Nothing here depends on the workspace, so `cargo build --offline --release`
+# inside this directory works against a checkout with no network.
+
+[package]
+name = "archava-bench"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+# Detached from `rust/`'s workspace. See the header.
+[workspace]
+
+[dependencies]
+# The two engines this benchmark measures. Paths, so a cold consumer's resolution
+# is the one being exercised.
+archava-pricing = { path = "../../../../rust/crates/pricing" }
+archava-rates = { path = "../../../../rust/crates/rates" }
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# For the input digest only. `hex` is already resolved in the product's lockfile,
+# so this adds no new download to an offline build.
+sha2 = "0.10"
+hex = "0.4"
+
+[profile.release]
+# The numbers a benchmark reports are the numbers the compiler produced. Leaving
+# this crate on the default profile would measure an unoptimized build, which is
+# a claim about a debug binary missing lto and inlining.
+lto = true
+codegen-units = 1
+opt-level = 3

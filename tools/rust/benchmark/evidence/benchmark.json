@@ -1,0 +1,223 @@
+{
+  "schema": "archava-benchmark/1",
+  "conditions": {
+    "recordedAt": "2026-10-17T18:12:22.957Z",
+    "node": "v26.10.0",
+    "nodeExecutable": "/usr/bin/node",
+    "platform": "linux 7.2.8-arch1-2 x64",
+    "cpu": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz @ 3.20 GHz",
+    "logicalCores": 16,
+    "memoryBytes": 16446341120,
+    "warmup": 3,
+    "reps": 9,
+    "measuredRepetitions": 9,
+    "overlapFraction": 0.5,
+    "networkAccess": "none",
+    "pricebookSha256": "2499bc82220188dad4daff276f73159ddcff9233944169fdf8f0dcc3f14f7831",
+    "pricingCasesSha256": "e0529d7664f5886d8dc896da5ae1ffb3634b0ac9e7413bf6d6a66edf38f582ab",
+    "ratesCasesSha256": "e90dbf7a5b0bb1178d3fcbe0f437de5ed14954476176bc24a6fcafd6a90448f6",
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)"
+  },
+  "pricebook": {
+    "path": "config/pricing.v1.json",
+    "sha256": "2499bc82220188dad4daff276f73159ddcff9233944169fdf8f0dcc3f14f7831"
+  },
+  "pricing": {
+    "cases": 350,
+    "casesPriced": 338,
+    "casesRejected": 12,
+    "inputDigest": "9a60fea8de182c4a30c8f274f576285017f876e3c3dfc1cce63e52332a21f105",
+    "peakRssKiB": 3376,
+    "steadyState": {
+      "baseline": {
+        "n": 9,
+        "min": 900.06,
+        "max": 3421.316,
+        "median": 1708.951,
+        "mean": 1786.7626666666665,
+        "stdev": 734.9452163304419,
+        "cv": 0.4113278333162931,
+        "p25": 1683.779,
+        "p75": 1759.983,
+        "p95": 2933.4123999999993
+      },
+      "candidate": {
+        "n": 9,
+        "min": 214.812,
+        "max": 240.729,
+        "median": 222.383,
+        "mean": 223.95188888888887,
+        "stdev": 8.567095474028005,
+        "cv": 0.03825417823681974,
+        "p25": 217.838,
+        "p75": 224.905,
+        "p95": 237.94619999999998
+      },
+      "verdict": {
+        "verdict": "candidate-faster",
+        "reason": "candidate is faster by 7.685x at the median, with non-overlapping ranges (214.81–240.73 vs 900.06–3421.32)",
+        "baseline": {
+          "n": 9,
+          "min": 900.06,
+          "max": 3421.316,
+          "median": 1708.951,
+          "mean": 1786.7626666666665,
+          "stdev": 734.9452163304419,
+          "cv": 0.4113278333162931,
+          "p25": 1683.779,
+          "p75": 1759.983,
+          "p95": 2933.4123999999993
+        },
+        "candidate": {
+          "n": 9,
+          "min": 214.812,
+          "max": 240.729,
+          "median": 222.383,
+          "mean": 223.95188888888887,
+          "stdev": 8.567095474028005,
+          "cv": 0.03825417823681974,
+          "p25": 217.838,
+          "p75": 224.905,
+          "p95": 237.94619999999998
+        },
+        "speedup": 7.684719605365518
+      }
+    },
+    "setupPlusQuote": {
+      "baseline": {
+        "n": 9,
+        "min": 9801.488,
+        "max": 12732.405,
+        "median": 10907.572,
+        "mean": 10956.850444444446,
+        "stdev": 858.8461071637212,
+        "cv": 0.07838439627504361,
+        "p25": 10620.312,
+        "p75": 11075.114,
+        "p95": 12325.121
+      },
+      "candidate": {
+        "n": 9,
+        "min": 5876.701,
+        "max": 7003.076,
+        "median": 6102.701,
+        "mean": 6169.161777777778,
+        "stdev": 344.24173471514814,
+        "cv": 0.05580040645961938,
+        "p25": 5921.238,
+        "p75": 6149.192,
+        "p95": 6738.9884
+      },
+      "verdict": {
+        "verdict": "within-noise",
+        "reason": "the ranges are disjoint but the gap is too small to call: candidate is faster at the median (1.787x), yet 7003.08 against 9801.49 leaves a margin of only 28.55% where this rule requires more than 50%",
+        "baseline": {
+          "n": 9,
+          "min": 9801.488,
+          "max": 12732.405,
+          "median": 10907.572,
+          "mean": 10956.850444444446,
+          "stdev": 858.8461071637212,
+          "cv": 0.07838439627504361,
+          "p25": 10620.312,
+          "p75": 11075.114,
+          "p95": 12325.121
+        },
+        "candidate": {
+          "n": 9,
+          "min": 5876.701,
+          "max": 7003.076,
+          "median": 6102.701,
+          "mean": 6169.161777777778,
+          "stdev": 344.24173471514814,
+          "cv": 0.05580040645961938,
+          "p25": 5921.238,
+          "p75": 6149.192,
+          "p95": 6738.9884
+        },
+        "speedup": 1.7873351488136155
+      }
+    },
+    "rustParseOnly": {
+      "n": 9,
+      "min": 15.084,
+      "max": 17.372,
+      "median": 15.322,
+      "mean": 15.613,
+      "stdev": 0.7203497414450845,
+      "cv": 0.046137817296168865,
+      "p25": 15.216,
+      "p75": 15.687,
+      "p95": 16.8324
+    }
+  },
+  "rates": {
+    "cases": 753,
+    "casesRun": 753,
+    "casesAnswered": 434,
+    "inputDigest": "69e11d607b521ab94bf3e9f126c925d3e95f3f7964f645bf3e5ade9448c66570",
+    "peakRssKiB": 3800,
+    "perPass": {
+      "baseline": {
+        "n": 9,
+        "min": 586.863,
+        "max": 871.803,
+        "median": 618.534,
+        "mean": 662.6744444444444,
+        "stdev": 92.0240411524498,
+        "cv": 0.13886764749106706,
+        "p25": 601.967,
+        "p75": 703.903,
+        "p95": 812.5398
+      },
+      "candidate": {
+        "n": 9,
+        "min": 894.2,
+        "max": 995.56,
+        "median": 950.382,
+        "mean": 945.0732222222222,
+        "stdev": 31.93178273592697,
+        "cv": 0.033787628286455255,
+        "p25": 918.236,
+        "p75": 959.151,
+        "p95": 988.9831999999999
+      },
+      "verdict": {
+        "verdict": "within-noise",
+        "reason": "the ranges are disjoint but the gap is too small to call: baseline is faster at the median (0.651x), yet 871.80 against 894.20 leaves a margin of only 2.50% where this rule requires more than 50%",
+        "baseline": {
+          "n": 9,
+          "min": 586.863,
+          "max": 871.803,
+          "median": 618.534,
+          "mean": 662.6744444444444,
+          "stdev": 92.0240411524498,
+          "cv": 0.13886764749106706,
+          "p25": 601.967,
+          "p75": 703.903,
+          "p95": 812.5398
+        },
+        "candidate": {
+          "n": 9,
+          "min": 894.2,
+          "max": 995.56,
+          "median": 950.382,
+          "mean": 945.0732222222222,
+          "stdev": 31.93178273592697,
+          "cv": 0.033787628286455255,
+          "p25": 918.236,
+          "p75": 959.151,
+          "p95": 988.9831999999999
+        },
+        "speedup": 0.6508267202030342
+      }
+    }
+  },
+  "memory": {
+    "harnessProcessPeakRssKiB": 103892,
+    "scope": "this process only — the TypeScript baseline was measured in-process and has no separate peak",
+    "tsInProcess": true,
+    "rustConsumerOwn": true,
+    "notComparableBecause": "the consumer peak covers one workload in one process; the harness peak covers the entire run including the TypeScript compile, both case files and the Node runtime"
+  }
+}

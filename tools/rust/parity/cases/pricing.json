@@ -1,0 +1,4041 @@
+{
+  "slice": "pricing",
+  "generatedBy": "gen-cases.mjs",
+  "pricebook": "config/pricing.v1.json",
+  "count": 350,
+  "cases": [
+    {
+      "id": "boundary-minimal-existing-site",
+      "note": "the smallest quote: one priced component, no discount, no integrations",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "existing_site"
+      }
+    },
+    {
+      "id": "boundary-existing-site-id",
+      "note": "the same request in the ID region — the two pricebooks must never cross",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "existing_site"
+      }
+    },
+    {
+      "id": "boundary-custom-web-app-global",
+      "note": "custom_web_app classifies as `from`, not `custom`, because zod strips the flag",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "custom_web_app"
+      }
+    },
+    {
+      "id": "boundary-custom-web-app-id",
+      "note": "the same stripped-flag line in ID",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "custom_web_app"
+      }
+    },
+    {
+      "id": "boundary-enterprise-capability",
+      "note": "the `enterprise` capability is `{custom: true}` with no other key",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "enterprise",
+        "environment": "existing_site"
+      }
+    },
+    {
+      "id": "boundary-enterprise-environment",
+      "note": "the `enterprise_system` environment is `{custom: true}`",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "enterprise_system"
+      }
+    },
+    {
+      "id": "boundary-integrations-zero",
+      "note": "a zero count pushes no line at all",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "existing_site",
+        "standardIntegrations": 0
+      }
+    },
+    {
+      "id": "boundary-integrations-fractional",
+      "note": "a fractional count reaches an f64 multiplication",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "existing_site",
+        "standardIntegrations": 0.5
+      }
+    },
+    {
+      "id": "boundary-integrations-negative",
+      "note": "`Math.max(0, -5)` clamps the count to zero before anything reads it",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "existing_site",
+        "standardIntegrations": -5
+      }
+    },
+    {
+      "id": "boundary-allowance-transact-0",
+      "note": "transact includes 2 standard integrations; 0 requested",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "standardIntegrations": 0
+      }
+    },
+    {
+      "id": "boundary-allowance-transact-1",
+      "note": "transact includes 2 standard integrations; 1 requested",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "standardIntegrations": 1
+      }
+    },
+    {
+      "id": "boundary-allowance-transact-2",
+      "note": "transact includes 2 standard integrations; 2 requested",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "standardIntegrations": 2
+      }
+    },
+    {
+      "id": "boundary-allowance-transact-3",
+      "note": "transact includes 2 standard integrations; 3 requested",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "standardIntegrations": 3
+      }
+    },
+    {
+      "id": "boundary-allowance-transact-4",
+      "note": "transact includes 2 standard integrations; 4 requested",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "standardIntegrations": 4
+      }
+    },
+    {
+      "id": "boundary-support-absent",
+      "note": "support omitted — `toRequest` defaults it to 'standard'",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "existing_site"
+      }
+    },
+    {
+      "id": "boundary-support-explicit-standard",
+      "note": "support stated explicitly; must equal the absent case",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "existing_site",
+        "support": "standard"
+      }
+    },
+    {
+      "id": "boundary-prepay-absent",
+      "note": "annualPrepay omitted, so annualPlatformOption is null",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "existing_site"
+      }
+    },
+    {
+      "id": "boundary-prepay-false",
+      "note": "prepay stated false; must equal the absent case",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "existing_site",
+        "annualPrepay": false
+      }
+    },
+    {
+      "id": "boundary-prepay-true",
+      "note": "prepay stated true, so the annual option is a number",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "existing_site",
+        "annualPrepay": true
+      }
+    },
+    {
+      "id": "boundary-forecast-absent",
+      "note": "usageForecast omitted",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "existing_site"
+      }
+    },
+    {
+      "id": "boundary-forecast-zero",
+      "note": "usageForecast stated as zero",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "existing_site",
+        "usageForecast": 0
+      }
+    },
+    {
+      "id": "boundary-forecast-at-allowance",
+      "note": "exactly at the chat allowance of 1000 — overage must be zero, not epsilon",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "existing_site",
+        "usageForecast": 1000
+      }
+    },
+    {
+      "id": "boundary-forecast-just-above",
+      "note": "one active conversation over the allowance",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "existing_site",
+        "usageForecast": 1001
+      }
+    },
+    {
+      "id": "boundary-forecast-fractional",
+      "note": "a fractional forecast, so the overage is a fractional f64",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "existing_site",
+        "usageForecast": 1000.5
+      }
+    },
+    {
+      "id": "boundary-rounding-exact-boundary",
+      "note": "a total landing exactly on a 25 boundary",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "act",
+        "environment": "landing"
+      }
+    },
+    {
+      "id": "boundary-rounding-below-boundary",
+      "note": "a total just under a boundary",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "act",
+        "environment": "business"
+      }
+    },
+    {
+      "id": "boundary-addon-custom_visual_direction",
+      "note": "design add-on custom_visual_direction alone",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "existing_site",
+        "designAddons": ["custom_visual_direction"]
+      }
+    },
+    {
+      "id": "boundary-addon-advanced_motion_3d",
+      "note": "design add-on advanced_motion_3d alone",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "existing_site",
+        "designAddons": ["advanced_motion_3d"]
+      }
+    },
+    {
+      "id": "boundary-addon-premium_avatar_provider",
+      "note": "design add-on premium_avatar_provider alone",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "existing_site",
+        "designAddons": ["premium_avatar_provider"]
+      }
+    },
+    {
+      "id": "boundary-addon-duplicated",
+      "note": "a duplicated custom add-on — the driver dedupes, the add-on list does not",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "existing_site",
+        "designAddons": ["premium_avatar_provider", "premium_avatar_provider"]
+      }
+    },
+    {
+      "id": "boundary-addon-both-priced",
+      "note": "one fixed plus one `from` add-on together",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "existing_site",
+        "designAddons": ["custom_visual_direction", "advanced_motion_3d"]
+      }
+    },
+    {
+      "id": "boundary-addon-unknown",
+      "note": "an add-on the pricebook does not carry — scoped, not rejected",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "existing_site",
+        "designAddons": ["a_hologram"]
+      }
+    },
+    {
+      "id": "boundary-all-integration-kinds",
+      "note": "all four complexities in one request, in the request's field order",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "standardIntegrations": 1,
+        "customIntegrations": 1,
+        "advancedIntegrations": 1,
+        "enterpriseIntegrations": 1
+      }
+    },
+    {
+      "id": "boundary-enterprise-integration-only",
+      "note": "an enterprise integration alone forces a custom quote",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "existing_site",
+        "enterpriseIntegrations": 1
+      }
+    },
+    {
+      "id": "boundary-enterprise-integration-fractional",
+      "note": "a fractional enterprise count reaches the driver message",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "existing_site",
+        "enterpriseIntegrations": 2.5
+      }
+    },
+    {
+      "id": "boundary-many-drivers-at-once",
+      "note": "every driver firing at once, in the order the engine emits them",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "enterprise",
+        "environment": "custom_web_app",
+        "standardIntegrations": 1,
+        "customIntegrations": 1,
+        "advancedIntegrations": 1,
+        "enterpriseIntegrations": 1,
+        "designAddons": ["premium_avatar_provider", "advanced_motion_3d"],
+        "support": "dedicated_sla",
+        "usageForecast": 5000,
+        "annualPrepay": true
+      }
+    },
+    {
+      "id": "cross-GLOBAL-chat-assist-existing_site",
+      "note": "exhaustive: GLOBAL/chat/assist/existing_site",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "existing_site"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-chat-assist-landing",
+      "note": "exhaustive: GLOBAL/chat/assist/landing",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "landing"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-chat-assist-business",
+      "note": "exhaustive: GLOBAL/chat/assist/business",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "business"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-chat-assist-commerce_booking",
+      "note": "exhaustive: GLOBAL/chat/assist/commerce_booking",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "commerce_booking"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-chat-assist-custom_web_app",
+      "note": "exhaustive: GLOBAL/chat/assist/custom_web_app",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "custom_web_app"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-chat-assist-enterprise_system",
+      "note": "exhaustive: GLOBAL/chat/assist/enterprise_system",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "enterprise_system"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-chat-act-existing_site",
+      "note": "exhaustive: GLOBAL/chat/act/existing_site",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "act",
+        "environment": "existing_site"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-chat-act-landing",
+      "note": "exhaustive: GLOBAL/chat/act/landing",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "act",
+        "environment": "landing"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-chat-act-business",
+      "note": "exhaustive: GLOBAL/chat/act/business",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "act",
+        "environment": "business"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-chat-act-commerce_booking",
+      "note": "exhaustive: GLOBAL/chat/act/commerce_booking",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "act",
+        "environment": "commerce_booking"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-chat-act-custom_web_app",
+      "note": "exhaustive: GLOBAL/chat/act/custom_web_app",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "act",
+        "environment": "custom_web_app"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-chat-act-enterprise_system",
+      "note": "exhaustive: GLOBAL/chat/act/enterprise_system",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "act",
+        "environment": "enterprise_system"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-chat-transact-existing_site",
+      "note": "exhaustive: GLOBAL/chat/transact/existing_site",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-chat-transact-landing",
+      "note": "exhaustive: GLOBAL/chat/transact/landing",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "landing"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-chat-transact-business",
+      "note": "exhaustive: GLOBAL/chat/transact/business",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "business"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-chat-transact-commerce_booking",
+      "note": "exhaustive: GLOBAL/chat/transact/commerce_booking",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "commerce_booking"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-chat-transact-custom_web_app",
+      "note": "exhaustive: GLOBAL/chat/transact/custom_web_app",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "custom_web_app"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-chat-transact-enterprise_system",
+      "note": "exhaustive: GLOBAL/chat/transact/enterprise_system",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "enterprise_system"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-chat-enterprise-existing_site",
+      "note": "exhaustive: GLOBAL/chat/enterprise/existing_site",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "enterprise",
+        "environment": "existing_site"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-chat-enterprise-landing",
+      "note": "exhaustive: GLOBAL/chat/enterprise/landing",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "enterprise",
+        "environment": "landing"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-chat-enterprise-business",
+      "note": "exhaustive: GLOBAL/chat/enterprise/business",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "enterprise",
+        "environment": "business"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-chat-enterprise-commerce_booking",
+      "note": "exhaustive: GLOBAL/chat/enterprise/commerce_booking",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "enterprise",
+        "environment": "commerce_booking"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-chat-enterprise-custom_web_app",
+      "note": "exhaustive: GLOBAL/chat/enterprise/custom_web_app",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "enterprise",
+        "environment": "custom_web_app"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-chat-enterprise-enterprise_system",
+      "note": "exhaustive: GLOBAL/chat/enterprise/enterprise_system",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "enterprise",
+        "environment": "enterprise_system"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-voice-assist-existing_site",
+      "note": "exhaustive: GLOBAL/voice/assist/existing_site",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "assist",
+        "environment": "existing_site"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-voice-assist-landing",
+      "note": "exhaustive: GLOBAL/voice/assist/landing",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "assist",
+        "environment": "landing"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-voice-assist-business",
+      "note": "exhaustive: GLOBAL/voice/assist/business",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "assist",
+        "environment": "business"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-voice-assist-commerce_booking",
+      "note": "exhaustive: GLOBAL/voice/assist/commerce_booking",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "assist",
+        "environment": "commerce_booking"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-voice-assist-custom_web_app",
+      "note": "exhaustive: GLOBAL/voice/assist/custom_web_app",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "assist",
+        "environment": "custom_web_app"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-voice-assist-enterprise_system",
+      "note": "exhaustive: GLOBAL/voice/assist/enterprise_system",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "assist",
+        "environment": "enterprise_system"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-voice-act-existing_site",
+      "note": "exhaustive: GLOBAL/voice/act/existing_site",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "act",
+        "environment": "existing_site"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-voice-act-landing",
+      "note": "exhaustive: GLOBAL/voice/act/landing",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "act",
+        "environment": "landing"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-voice-act-business",
+      "note": "exhaustive: GLOBAL/voice/act/business",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "act",
+        "environment": "business"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-voice-act-commerce_booking",
+      "note": "exhaustive: GLOBAL/voice/act/commerce_booking",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "act",
+        "environment": "commerce_booking"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-voice-act-custom_web_app",
+      "note": "exhaustive: GLOBAL/voice/act/custom_web_app",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "act",
+        "environment": "custom_web_app"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-voice-act-enterprise_system",
+      "note": "exhaustive: GLOBAL/voice/act/enterprise_system",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "act",
+        "environment": "enterprise_system"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-voice-transact-existing_site",
+      "note": "exhaustive: GLOBAL/voice/transact/existing_site",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "transact",
+        "environment": "existing_site"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-voice-transact-landing",
+      "note": "exhaustive: GLOBAL/voice/transact/landing",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "transact",
+        "environment": "landing"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-voice-transact-business",
+      "note": "exhaustive: GLOBAL/voice/transact/business",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "transact",
+        "environment": "business"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-voice-transact-commerce_booking",
+      "note": "exhaustive: GLOBAL/voice/transact/commerce_booking",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "transact",
+        "environment": "commerce_booking"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-voice-transact-custom_web_app",
+      "note": "exhaustive: GLOBAL/voice/transact/custom_web_app",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "transact",
+        "environment": "custom_web_app"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-voice-transact-enterprise_system",
+      "note": "exhaustive: GLOBAL/voice/transact/enterprise_system",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "transact",
+        "environment": "enterprise_system"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-voice-enterprise-existing_site",
+      "note": "exhaustive: GLOBAL/voice/enterprise/existing_site",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "enterprise",
+        "environment": "existing_site"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-voice-enterprise-landing",
+      "note": "exhaustive: GLOBAL/voice/enterprise/landing",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "enterprise",
+        "environment": "landing"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-voice-enterprise-business",
+      "note": "exhaustive: GLOBAL/voice/enterprise/business",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "enterprise",
+        "environment": "business"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-voice-enterprise-commerce_booking",
+      "note": "exhaustive: GLOBAL/voice/enterprise/commerce_booking",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "enterprise",
+        "environment": "commerce_booking"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-voice-enterprise-custom_web_app",
+      "note": "exhaustive: GLOBAL/voice/enterprise/custom_web_app",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "enterprise",
+        "environment": "custom_web_app"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-voice-enterprise-enterprise_system",
+      "note": "exhaustive: GLOBAL/voice/enterprise/enterprise_system",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "enterprise",
+        "environment": "enterprise_system"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-human-assist-existing_site",
+      "note": "exhaustive: GLOBAL/human/assist/existing_site",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "assist",
+        "environment": "existing_site"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-human-assist-landing",
+      "note": "exhaustive: GLOBAL/human/assist/landing",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "assist",
+        "environment": "landing"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-human-assist-business",
+      "note": "exhaustive: GLOBAL/human/assist/business",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "assist",
+        "environment": "business"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-human-assist-commerce_booking",
+      "note": "exhaustive: GLOBAL/human/assist/commerce_booking",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "assist",
+        "environment": "commerce_booking"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-human-assist-custom_web_app",
+      "note": "exhaustive: GLOBAL/human/assist/custom_web_app",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "assist",
+        "environment": "custom_web_app"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-human-assist-enterprise_system",
+      "note": "exhaustive: GLOBAL/human/assist/enterprise_system",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "assist",
+        "environment": "enterprise_system"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-human-act-existing_site",
+      "note": "exhaustive: GLOBAL/human/act/existing_site",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "act",
+        "environment": "existing_site"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-human-act-landing",
+      "note": "exhaustive: GLOBAL/human/act/landing",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "act",
+        "environment": "landing"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-human-act-business",
+      "note": "exhaustive: GLOBAL/human/act/business",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "act",
+        "environment": "business"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-human-act-commerce_booking",
+      "note": "exhaustive: GLOBAL/human/act/commerce_booking",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "act",
+        "environment": "commerce_booking"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-human-act-custom_web_app",
+      "note": "exhaustive: GLOBAL/human/act/custom_web_app",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "act",
+        "environment": "custom_web_app"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-human-act-enterprise_system",
+      "note": "exhaustive: GLOBAL/human/act/enterprise_system",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "act",
+        "environment": "enterprise_system"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-human-transact-existing_site",
+      "note": "exhaustive: GLOBAL/human/transact/existing_site",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "transact",
+        "environment": "existing_site"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-human-transact-landing",
+      "note": "exhaustive: GLOBAL/human/transact/landing",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "transact",
+        "environment": "landing"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-human-transact-business",
+      "note": "exhaustive: GLOBAL/human/transact/business",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "transact",
+        "environment": "business"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-human-transact-commerce_booking",
+      "note": "exhaustive: GLOBAL/human/transact/commerce_booking",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "transact",
+        "environment": "commerce_booking"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-human-transact-custom_web_app",
+      "note": "exhaustive: GLOBAL/human/transact/custom_web_app",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "transact",
+        "environment": "custom_web_app"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-human-transact-enterprise_system",
+      "note": "exhaustive: GLOBAL/human/transact/enterprise_system",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "transact",
+        "environment": "enterprise_system"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-human-enterprise-existing_site",
+      "note": "exhaustive: GLOBAL/human/enterprise/existing_site",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "enterprise",
+        "environment": "existing_site"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-human-enterprise-landing",
+      "note": "exhaustive: GLOBAL/human/enterprise/landing",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "enterprise",
+        "environment": "landing"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-human-enterprise-business",
+      "note": "exhaustive: GLOBAL/human/enterprise/business",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "enterprise",
+        "environment": "business"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-human-enterprise-commerce_booking",
+      "note": "exhaustive: GLOBAL/human/enterprise/commerce_booking",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "enterprise",
+        "environment": "commerce_booking"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-human-enterprise-custom_web_app",
+      "note": "exhaustive: GLOBAL/human/enterprise/custom_web_app",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "enterprise",
+        "environment": "custom_web_app"
+      }
+    },
+    {
+      "id": "cross-GLOBAL-human-enterprise-enterprise_system",
+      "note": "exhaustive: GLOBAL/human/enterprise/enterprise_system",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "enterprise",
+        "environment": "enterprise_system"
+      }
+    },
+    {
+      "id": "cross-ID-chat-assist-existing_site",
+      "note": "exhaustive: ID/chat/assist/existing_site",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "existing_site"
+      }
+    },
+    {
+      "id": "cross-ID-chat-assist-landing",
+      "note": "exhaustive: ID/chat/assist/landing",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "landing"
+      }
+    },
+    {
+      "id": "cross-ID-chat-assist-business",
+      "note": "exhaustive: ID/chat/assist/business",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "business"
+      }
+    },
+    {
+      "id": "cross-ID-chat-assist-commerce_booking",
+      "note": "exhaustive: ID/chat/assist/commerce_booking",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "commerce_booking"
+      }
+    },
+    {
+      "id": "cross-ID-chat-assist-custom_web_app",
+      "note": "exhaustive: ID/chat/assist/custom_web_app",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "custom_web_app"
+      }
+    },
+    {
+      "id": "cross-ID-chat-assist-enterprise_system",
+      "note": "exhaustive: ID/chat/assist/enterprise_system",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "enterprise_system"
+      }
+    },
+    {
+      "id": "cross-ID-chat-act-existing_site",
+      "note": "exhaustive: ID/chat/act/existing_site",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "act",
+        "environment": "existing_site"
+      }
+    },
+    {
+      "id": "cross-ID-chat-act-landing",
+      "note": "exhaustive: ID/chat/act/landing",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "act",
+        "environment": "landing"
+      }
+    },
+    {
+      "id": "cross-ID-chat-act-business",
+      "note": "exhaustive: ID/chat/act/business",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "act",
+        "environment": "business"
+      }
+    },
+    {
+      "id": "cross-ID-chat-act-commerce_booking",
+      "note": "exhaustive: ID/chat/act/commerce_booking",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "act",
+        "environment": "commerce_booking"
+      }
+    },
+    {
+      "id": "cross-ID-chat-act-custom_web_app",
+      "note": "exhaustive: ID/chat/act/custom_web_app",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "act",
+        "environment": "custom_web_app"
+      }
+    },
+    {
+      "id": "cross-ID-chat-act-enterprise_system",
+      "note": "exhaustive: ID/chat/act/enterprise_system",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "act",
+        "environment": "enterprise_system"
+      }
+    },
+    {
+      "id": "cross-ID-chat-transact-existing_site",
+      "note": "exhaustive: ID/chat/transact/existing_site",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site"
+      }
+    },
+    {
+      "id": "cross-ID-chat-transact-landing",
+      "note": "exhaustive: ID/chat/transact/landing",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "landing"
+      }
+    },
+    {
+      "id": "cross-ID-chat-transact-business",
+      "note": "exhaustive: ID/chat/transact/business",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "business"
+      }
+    },
+    {
+      "id": "cross-ID-chat-transact-commerce_booking",
+      "note": "exhaustive: ID/chat/transact/commerce_booking",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "commerce_booking"
+      }
+    },
+    {
+      "id": "cross-ID-chat-transact-custom_web_app",
+      "note": "exhaustive: ID/chat/transact/custom_web_app",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "custom_web_app"
+      }
+    },
+    {
+      "id": "cross-ID-chat-transact-enterprise_system",
+      "note": "exhaustive: ID/chat/transact/enterprise_system",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "enterprise_system"
+      }
+    },
+    {
+      "id": "cross-ID-chat-enterprise-existing_site",
+      "note": "exhaustive: ID/chat/enterprise/existing_site",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "enterprise",
+        "environment": "existing_site"
+      }
+    },
+    {
+      "id": "cross-ID-chat-enterprise-landing",
+      "note": "exhaustive: ID/chat/enterprise/landing",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "enterprise",
+        "environment": "landing"
+      }
+    },
+    {
+      "id": "cross-ID-chat-enterprise-business",
+      "note": "exhaustive: ID/chat/enterprise/business",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "enterprise",
+        "environment": "business"
+      }
+    },
+    {
+      "id": "cross-ID-chat-enterprise-commerce_booking",
+      "note": "exhaustive: ID/chat/enterprise/commerce_booking",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "enterprise",
+        "environment": "commerce_booking"
+      }
+    },
+    {
+      "id": "cross-ID-chat-enterprise-custom_web_app",
+      "note": "exhaustive: ID/chat/enterprise/custom_web_app",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "enterprise",
+        "environment": "custom_web_app"
+      }
+    },
+    {
+      "id": "cross-ID-chat-enterprise-enterprise_system",
+      "note": "exhaustive: ID/chat/enterprise/enterprise_system",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "enterprise",
+        "environment": "enterprise_system"
+      }
+    },
+    {
+      "id": "cross-ID-voice-assist-existing_site",
+      "note": "exhaustive: ID/voice/assist/existing_site",
+      "request": {
+        "region": "ID",
+        "presence": "voice",
+        "capability": "assist",
+        "environment": "existing_site"
+      }
+    },
+    {
+      "id": "cross-ID-voice-assist-landing",
+      "note": "exhaustive: ID/voice/assist/landing",
+      "request": {
+        "region": "ID",
+        "presence": "voice",
+        "capability": "assist",
+        "environment": "landing"
+      }
+    },
+    {
+      "id": "cross-ID-voice-assist-business",
+      "note": "exhaustive: ID/voice/assist/business",
+      "request": {
+        "region": "ID",
+        "presence": "voice",
+        "capability": "assist",
+        "environment": "business"
+      }
+    },
+    {
+      "id": "cross-ID-voice-assist-commerce_booking",
+      "note": "exhaustive: ID/voice/assist/commerce_booking",
+      "request": {
+        "region": "ID",
+        "presence": "voice",
+        "capability": "assist",
+        "environment": "commerce_booking"
+      }
+    },
+    {
+      "id": "cross-ID-voice-assist-custom_web_app",
+      "note": "exhaustive: ID/voice/assist/custom_web_app",
+      "request": {
+        "region": "ID",
+        "presence": "voice",
+        "capability": "assist",
+        "environment": "custom_web_app"
+      }
+    },
+    {
+      "id": "cross-ID-voice-assist-enterprise_system",
+      "note": "exhaustive: ID/voice/assist/enterprise_system",
+      "request": {
+        "region": "ID",
+        "presence": "voice",
+        "capability": "assist",
+        "environment": "enterprise_system"
+      }
+    },
+    {
+      "id": "cross-ID-voice-act-existing_site",
+      "note": "exhaustive: ID/voice/act/existing_site",
+      "request": {
+        "region": "ID",
+        "presence": "voice",
+        "capability": "act",
+        "environment": "existing_site"
+      }
+    },
+    {
+      "id": "cross-ID-voice-act-landing",
+      "note": "exhaustive: ID/voice/act/landing",
+      "request": {
+        "region": "ID",
+        "presence": "voice",
+        "capability": "act",
+        "environment": "landing"
+      }
+    },
+    {
+      "id": "cross-ID-voice-act-business",
+      "note": "exhaustive: ID/voice/act/business",
+      "request": {
+        "region": "ID",
+        "presence": "voice",
+        "capability": "act",
+        "environment": "business"
+      }
+    },
+    {
+      "id": "cross-ID-voice-act-commerce_booking",
+      "note": "exhaustive: ID/voice/act/commerce_booking",
+      "request": {
+        "region": "ID",
+        "presence": "voice",
+        "capability": "act",
+        "environment": "commerce_booking"
+      }
+    },
+    {
+      "id": "cross-ID-voice-act-custom_web_app",
+      "note": "exhaustive: ID/voice/act/custom_web_app",
+      "request": {
+        "region": "ID",
+        "presence": "voice",
+        "capability": "act",
+        "environment": "custom_web_app"
+      }
+    },
+    {
+      "id": "cross-ID-voice-act-enterprise_system",
+      "note": "exhaustive: ID/voice/act/enterprise_system",
+      "request": {
+        "region": "ID",
+        "presence": "voice",
+        "capability": "act",
+        "environment": "enterprise_system"
+      }
+    },
+    {
+      "id": "cross-ID-voice-transact-existing_site",
+      "note": "exhaustive: ID/voice/transact/existing_site",
+      "request": {
+        "region": "ID",
+        "presence": "voice",
+        "capability": "transact",
+        "environment": "existing_site"
+      }
+    },
+    {
+      "id": "cross-ID-voice-transact-landing",
+      "note": "exhaustive: ID/voice/transact/landing",
+      "request": {
+        "region": "ID",
+        "presence": "voice",
+        "capability": "transact",
+        "environment": "landing"
+      }
+    },
+    {
+      "id": "cross-ID-voice-transact-business",
+      "note": "exhaustive: ID/voice/transact/business",
+      "request": {
+        "region": "ID",
+        "presence": "voice",
+        "capability": "transact",
+        "environment": "business"
+      }
+    },
+    {
+      "id": "cross-ID-voice-transact-commerce_booking",
+      "note": "exhaustive: ID/voice/transact/commerce_booking",
+      "request": {
+        "region": "ID",
+        "presence": "voice",
+        "capability": "transact",
+        "environment": "commerce_booking"
+      }
+    },
+    {
+      "id": "cross-ID-voice-transact-custom_web_app",
+      "note": "exhaustive: ID/voice/transact/custom_web_app",
+      "request": {
+        "region": "ID",
+        "presence": "voice",
+        "capability": "transact",
+        "environment": "custom_web_app"
+      }
+    },
+    {
+      "id": "cross-ID-voice-transact-enterprise_system",
+      "note": "exhaustive: ID/voice/transact/enterprise_system",
+      "request": {
+        "region": "ID",
+        "presence": "voice",
+        "capability": "transact",
+        "environment": "enterprise_system"
+      }
+    },
+    {
+      "id": "cross-ID-voice-enterprise-existing_site",
+      "note": "exhaustive: ID/voice/enterprise/existing_site",
+      "request": {
+        "region": "ID",
+        "presence": "voice",
+        "capability": "enterprise",
+        "environment": "existing_site"
+      }
+    },
+    {
+      "id": "cross-ID-voice-enterprise-landing",
+      "note": "exhaustive: ID/voice/enterprise/landing",
+      "request": {
+        "region": "ID",
+        "presence": "voice",
+        "capability": "enterprise",
+        "environment": "landing"
+      }
+    },
+    {
+      "id": "cross-ID-voice-enterprise-business",
+      "note": "exhaustive: ID/voice/enterprise/business",
+      "request": {
+        "region": "ID",
+        "presence": "voice",
+        "capability": "enterprise",
+        "environment": "business"
+      }
+    },
+    {
+      "id": "cross-ID-voice-enterprise-commerce_booking",
+      "note": "exhaustive: ID/voice/enterprise/commerce_booking",
+      "request": {
+        "region": "ID",
+        "presence": "voice",
+        "capability": "enterprise",
+        "environment": "commerce_booking"
+      }
+    },
+    {
+      "id": "cross-ID-voice-enterprise-custom_web_app",
+      "note": "exhaustive: ID/voice/enterprise/custom_web_app",
+      "request": {
+        "region": "ID",
+        "presence": "voice",
+        "capability": "enterprise",
+        "environment": "custom_web_app"
+      }
+    },
+    {
+      "id": "cross-ID-voice-enterprise-enterprise_system",
+      "note": "exhaustive: ID/voice/enterprise/enterprise_system",
+      "request": {
+        "region": "ID",
+        "presence": "voice",
+        "capability": "enterprise",
+        "environment": "enterprise_system"
+      }
+    },
+    {
+      "id": "cross-ID-human-assist-existing_site",
+      "note": "exhaustive: ID/human/assist/existing_site",
+      "request": {
+        "region": "ID",
+        "presence": "human",
+        "capability": "assist",
+        "environment": "existing_site"
+      }
+    },
+    {
+      "id": "cross-ID-human-assist-landing",
+      "note": "exhaustive: ID/human/assist/landing",
+      "request": {
+        "region": "ID",
+        "presence": "human",
+        "capability": "assist",
+        "environment": "landing"
+      }
+    },
+    {
+      "id": "cross-ID-human-assist-business",
+      "note": "exhaustive: ID/human/assist/business",
+      "request": {
+        "region": "ID",
+        "presence": "human",
+        "capability": "assist",
+        "environment": "business"
+      }
+    },
+    {
+      "id": "cross-ID-human-assist-commerce_booking",
+      "note": "exhaustive: ID/human/assist/commerce_booking",
+      "request": {
+        "region": "ID",
+        "presence": "human",
+        "capability": "assist",
+        "environment": "commerce_booking"
+      }
+    },
+    {
+      "id": "cross-ID-human-assist-custom_web_app",
+      "note": "exhaustive: ID/human/assist/custom_web_app",
+      "request": {
+        "region": "ID",
+        "presence": "human",
+        "capability": "assist",
+        "environment": "custom_web_app"
+      }
+    },
+    {
+      "id": "cross-ID-human-assist-enterprise_system",
+      "note": "exhaustive: ID/human/assist/enterprise_system",
+      "request": {
+        "region": "ID",
+        "presence": "human",
+        "capability": "assist",
+        "environment": "enterprise_system"
+      }
+    },
+    {
+      "id": "cross-ID-human-act-existing_site",
+      "note": "exhaustive: ID/human/act/existing_site",
+      "request": {
+        "region": "ID",
+        "presence": "human",
+        "capability": "act",
+        "environment": "existing_site"
+      }
+    },
+    {
+      "id": "cross-ID-human-act-landing",
+      "note": "exhaustive: ID/human/act/landing",
+      "request": {
+        "region": "ID",
+        "presence": "human",
+        "capability": "act",
+        "environment": "landing"
+      }
+    },
+    {
+      "id": "cross-ID-human-act-business",
+      "note": "exhaustive: ID/human/act/business",
+      "request": {
+        "region": "ID",
+        "presence": "human",
+        "capability": "act",
+        "environment": "business"
+      }
+    },
+    {
+      "id": "cross-ID-human-act-commerce_booking",
+      "note": "exhaustive: ID/human/act/commerce_booking",
+      "request": {
+        "region": "ID",
+        "presence": "human",
+        "capability": "act",
+        "environment": "commerce_booking"
+      }
+    },
+    {
+      "id": "cross-ID-human-act-custom_web_app",
+      "note": "exhaustive: ID/human/act/custom_web_app",
+      "request": {
+        "region": "ID",
+        "presence": "human",
+        "capability": "act",
+        "environment": "custom_web_app"
+      }
+    },
+    {
+      "id": "cross-ID-human-act-enterprise_system",
+      "note": "exhaustive: ID/human/act/enterprise_system",
+      "request": {
+        "region": "ID",
+        "presence": "human",
+        "capability": "act",
+        "environment": "enterprise_system"
+      }
+    },
+    {
+      "id": "cross-ID-human-transact-existing_site",
+      "note": "exhaustive: ID/human/transact/existing_site",
+      "request": {
+        "region": "ID",
+        "presence": "human",
+        "capability": "transact",
+        "environment": "existing_site"
+      }
+    },
+    {
+      "id": "cross-ID-human-transact-landing",
+      "note": "exhaustive: ID/human/transact/landing",
+      "request": {
+        "region": "ID",
+        "presence": "human",
+        "capability": "transact",
+        "environment": "landing"
+      }
+    },
+    {
+      "id": "cross-ID-human-transact-business",
+      "note": "exhaustive: ID/human/transact/business",
+      "request": {
+        "region": "ID",
+        "presence": "human",
+        "capability": "transact",
+        "environment": "business"
+      }
+    },
+    {
+      "id": "cross-ID-human-transact-commerce_booking",
+      "note": "exhaustive: ID/human/transact/commerce_booking",
+      "request": {
+        "region": "ID",
+        "presence": "human",
+        "capability": "transact",
+        "environment": "commerce_booking"
+      }
+    },
+    {
+      "id": "cross-ID-human-transact-custom_web_app",
+      "note": "exhaustive: ID/human/transact/custom_web_app",
+      "request": {
+        "region": "ID",
+        "presence": "human",
+        "capability": "transact",
+        "environment": "custom_web_app"
+      }
+    },
+    {
+      "id": "cross-ID-human-transact-enterprise_system",
+      "note": "exhaustive: ID/human/transact/enterprise_system",
+      "request": {
+        "region": "ID",
+        "presence": "human",
+        "capability": "transact",
+        "environment": "enterprise_system"
+      }
+    },
+    {
+      "id": "cross-ID-human-enterprise-existing_site",
+      "note": "exhaustive: ID/human/enterprise/existing_site",
+      "request": {
+        "region": "ID",
+        "presence": "human",
+        "capability": "enterprise",
+        "environment": "existing_site"
+      }
+    },
+    {
+      "id": "cross-ID-human-enterprise-landing",
+      "note": "exhaustive: ID/human/enterprise/landing",
+      "request": {
+        "region": "ID",
+        "presence": "human",
+        "capability": "enterprise",
+        "environment": "landing"
+      }
+    },
+    {
+      "id": "cross-ID-human-enterprise-business",
+      "note": "exhaustive: ID/human/enterprise/business",
+      "request": {
+        "region": "ID",
+        "presence": "human",
+        "capability": "enterprise",
+        "environment": "business"
+      }
+    },
+    {
+      "id": "cross-ID-human-enterprise-commerce_booking",
+      "note": "exhaustive: ID/human/enterprise/commerce_booking",
+      "request": {
+        "region": "ID",
+        "presence": "human",
+        "capability": "enterprise",
+        "environment": "commerce_booking"
+      }
+    },
+    {
+      "id": "cross-ID-human-enterprise-custom_web_app",
+      "note": "exhaustive: ID/human/enterprise/custom_web_app",
+      "request": {
+        "region": "ID",
+        "presence": "human",
+        "capability": "enterprise",
+        "environment": "custom_web_app"
+      }
+    },
+    {
+      "id": "cross-ID-human-enterprise-enterprise_system",
+      "note": "exhaustive: ID/human/enterprise/enterprise_system",
+      "request": {
+        "region": "ID",
+        "presence": "human",
+        "capability": "enterprise",
+        "environment": "enterprise_system"
+      }
+    },
+    {
+      "id": "support-GLOBAL-standard",
+      "note": "support tier standard in GLOBAL",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "support": "standard"
+      }
+    },
+    {
+      "id": "support-GLOBAL-priority",
+      "note": "support tier priority in GLOBAL",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "support": "priority"
+      }
+    },
+    {
+      "id": "support-GLOBAL-dedicated_sla",
+      "note": "support tier dedicated_sla in GLOBAL",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "support": "dedicated_sla"
+      }
+    },
+    {
+      "id": "support-ID-standard",
+      "note": "support tier standard in ID",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "support": "standard"
+      }
+    },
+    {
+      "id": "support-ID-priority",
+      "note": "support tier priority in ID",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "support": "priority"
+      }
+    },
+    {
+      "id": "support-ID-dedicated_sla",
+      "note": "support tier dedicated_sla in ID",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "support": "dedicated_sla"
+      }
+    },
+    {
+      "id": "integration-GLOBAL-standard-0",
+      "note": "standard integrations, count 0",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "standardIntegrations": 0
+      }
+    },
+    {
+      "id": "integration-GLOBAL-standard-1",
+      "note": "standard integrations, count 1",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "standardIntegrations": 1
+      }
+    },
+    {
+      "id": "integration-GLOBAL-standard-2",
+      "note": "standard integrations, count 2",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "standardIntegrations": 2
+      }
+    },
+    {
+      "id": "integration-GLOBAL-standard-3",
+      "note": "standard integrations, count 3",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "standardIntegrations": 3
+      }
+    },
+    {
+      "id": "integration-GLOBAL-custom-0",
+      "note": "custom integrations, count 0",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "customIntegrations": 0
+      }
+    },
+    {
+      "id": "integration-GLOBAL-custom-1",
+      "note": "custom integrations, count 1",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "customIntegrations": 1
+      }
+    },
+    {
+      "id": "integration-GLOBAL-custom-2",
+      "note": "custom integrations, count 2",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "customIntegrations": 2
+      }
+    },
+    {
+      "id": "integration-GLOBAL-custom-3",
+      "note": "custom integrations, count 3",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "customIntegrations": 3
+      }
+    },
+    {
+      "id": "integration-GLOBAL-advanced-0",
+      "note": "advanced integrations, count 0",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "advancedIntegrations": 0
+      }
+    },
+    {
+      "id": "integration-GLOBAL-advanced-1",
+      "note": "advanced integrations, count 1",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "advancedIntegrations": 1
+      }
+    },
+    {
+      "id": "integration-GLOBAL-advanced-2",
+      "note": "advanced integrations, count 2",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "advancedIntegrations": 2
+      }
+    },
+    {
+      "id": "integration-GLOBAL-advanced-3",
+      "note": "advanced integrations, count 3",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "advancedIntegrations": 3
+      }
+    },
+    {
+      "id": "integration-GLOBAL-enterprise-0",
+      "note": "enterprise integrations, count 0",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "enterpriseIntegrations": 0
+      }
+    },
+    {
+      "id": "integration-GLOBAL-enterprise-1",
+      "note": "enterprise integrations, count 1",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "enterpriseIntegrations": 1
+      }
+    },
+    {
+      "id": "integration-GLOBAL-enterprise-2",
+      "note": "enterprise integrations, count 2",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "enterpriseIntegrations": 2
+      }
+    },
+    {
+      "id": "integration-GLOBAL-enterprise-3",
+      "note": "enterprise integrations, count 3",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "enterpriseIntegrations": 3
+      }
+    },
+    {
+      "id": "integration-ID-standard-0",
+      "note": "standard integrations, count 0",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "standardIntegrations": 0
+      }
+    },
+    {
+      "id": "integration-ID-standard-1",
+      "note": "standard integrations, count 1",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "standardIntegrations": 1
+      }
+    },
+    {
+      "id": "integration-ID-standard-2",
+      "note": "standard integrations, count 2",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "standardIntegrations": 2
+      }
+    },
+    {
+      "id": "integration-ID-standard-3",
+      "note": "standard integrations, count 3",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "standardIntegrations": 3
+      }
+    },
+    {
+      "id": "integration-ID-custom-0",
+      "note": "custom integrations, count 0",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "customIntegrations": 0
+      }
+    },
+    {
+      "id": "integration-ID-custom-1",
+      "note": "custom integrations, count 1",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "customIntegrations": 1
+      }
+    },
+    {
+      "id": "integration-ID-custom-2",
+      "note": "custom integrations, count 2",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "customIntegrations": 2
+      }
+    },
+    {
+      "id": "integration-ID-custom-3",
+      "note": "custom integrations, count 3",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "customIntegrations": 3
+      }
+    },
+    {
+      "id": "integration-ID-advanced-0",
+      "note": "advanced integrations, count 0",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "advancedIntegrations": 0
+      }
+    },
+    {
+      "id": "integration-ID-advanced-1",
+      "note": "advanced integrations, count 1",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "advancedIntegrations": 1
+      }
+    },
+    {
+      "id": "integration-ID-advanced-2",
+      "note": "advanced integrations, count 2",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "advancedIntegrations": 2
+      }
+    },
+    {
+      "id": "integration-ID-advanced-3",
+      "note": "advanced integrations, count 3",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "advancedIntegrations": 3
+      }
+    },
+    {
+      "id": "integration-ID-enterprise-0",
+      "note": "enterprise integrations, count 0",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "enterpriseIntegrations": 0
+      }
+    },
+    {
+      "id": "integration-ID-enterprise-1",
+      "note": "enterprise integrations, count 1",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "enterpriseIntegrations": 1
+      }
+    },
+    {
+      "id": "integration-ID-enterprise-2",
+      "note": "enterprise integrations, count 2",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "enterpriseIntegrations": 2
+      }
+    },
+    {
+      "id": "integration-ID-enterprise-3",
+      "note": "enterprise integrations, count 3",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "enterpriseIntegrations": 3
+      }
+    },
+    {
+      "id": "seeded-000",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "enterprise",
+        "environment": "existing_site",
+        "standardIntegrations": 7,
+        "support": "dedicated_sla",
+        "usageForecast": 999
+      }
+    },
+    {
+      "id": "seeded-001",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "enterprise_system",
+        "customIntegrations": 1,
+        "support": "standard",
+        "usageForecast": 500
+      }
+    },
+    {
+      "id": "seeded-002",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "assist",
+        "environment": "custom_web_app",
+        "standardIntegrations": 7,
+        "support": "dedicated_sla",
+        "usageForecast": 5000,
+        "annualPrepay": true
+      }
+    },
+    {
+      "id": "seeded-003",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "transact",
+        "environment": "commerce_booking",
+        "standardIntegrations": 7,
+        "advancedIntegrations": 0,
+        "designAddons": ["advanced_motion_3d", "custom_visual_direction"],
+        "support": "dedicated_sla",
+        "usageForecast": 999,
+        "annualPrepay": true
+      }
+    },
+    {
+      "id": "seeded-004",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "voice",
+        "capability": "act",
+        "environment": "enterprise_system",
+        "support": "priority",
+        "usageForecast": 1001
+      }
+    },
+    {
+      "id": "seeded-005",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "enterprise",
+        "environment": "landing",
+        "standardIntegrations": 1,
+        "advancedIntegrations": 4,
+        "designAddons": ["custom_visual_direction", "premium_avatar_provider"],
+        "support": "priority",
+        "usageForecast": 500,
+        "annualPrepay": false
+      }
+    },
+    {
+      "id": "seeded-006",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "act",
+        "environment": "business",
+        "standardIntegrations": 0.5,
+        "usageForecast": 0
+      }
+    },
+    {
+      "id": "seeded-007",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "assist",
+        "environment": "business",
+        "support": "dedicated_sla",
+        "usageForecast": 1001
+      }
+    },
+    {
+      "id": "seeded-008",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "transact",
+        "environment": "landing",
+        "customIntegrations": 1.5,
+        "enterpriseIntegrations": 1.5,
+        "designAddons": ["custom_visual_direction"],
+        "support": "dedicated_sla",
+        "usageForecast": 5000,
+        "annualPrepay": false
+      }
+    },
+    {
+      "id": "seeded-009",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "enterprise",
+        "environment": "enterprise_system",
+        "support": "priority"
+      }
+    },
+    {
+      "id": "seeded-010",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "enterprise",
+        "environment": "custom_web_app",
+        "standardIntegrations": 3,
+        "customIntegrations": 12.25,
+        "support": "dedicated_sla"
+      }
+    },
+    {
+      "id": "seeded-011",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "assist",
+        "environment": "commerce_booking",
+        "standardIntegrations": 4,
+        "advancedIntegrations": 2,
+        "designAddons": ["custom_visual_direction", "premium_avatar_provider"],
+        "support": "priority",
+        "usageForecast": 5000
+      }
+    },
+    {
+      "id": "seeded-012",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "assist",
+        "environment": "business",
+        "standardIntegrations": 1.5,
+        "designAddons": ["custom_visual_direction"],
+        "support": "standard",
+        "usageForecast": 5000
+      }
+    },
+    {
+      "id": "seeded-013",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "act",
+        "environment": "enterprise_system",
+        "standardIntegrations": 1.5,
+        "designAddons": ["premium_avatar_provider", "advanced_motion_3d"],
+        "support": "priority",
+        "usageForecast": 500
+      }
+    },
+    {
+      "id": "seeded-014",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "act",
+        "environment": "enterprise_system",
+        "standardIntegrations": 0,
+        "customIntegrations": 0,
+        "advancedIntegrations": 0,
+        "support": "dedicated_sla",
+        "usageForecast": 5000,
+        "annualPrepay": false
+      }
+    },
+    {
+      "id": "seeded-015",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "voice",
+        "capability": "enterprise",
+        "environment": "commerce_booking",
+        "designAddons": ["custom_visual_direction"],
+        "support": "dedicated_sla",
+        "usageForecast": 0
+      }
+    },
+    {
+      "id": "seeded-016",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "business",
+        "designAddons": ["advanced_motion_3d"],
+        "support": "priority",
+        "usageForecast": 500,
+        "annualPrepay": false
+      }
+    },
+    {
+      "id": "seeded-017",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "transact",
+        "environment": "custom_web_app",
+        "standardIntegrations": 1.5,
+        "advancedIntegrations": 1,
+        "enterpriseIntegrations": 2,
+        "designAddons": ["custom_visual_direction", "premium_avatar_provider"],
+        "support": "priority",
+        "usageForecast": 1001
+      }
+    },
+    {
+      "id": "seeded-018",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "assist",
+        "environment": "enterprise_system",
+        "standardIntegrations": 0.5,
+        "enterpriseIntegrations": 1.5,
+        "designAddons": ["custom_visual_direction"],
+        "usageForecast": 1001,
+        "annualPrepay": true
+      }
+    },
+    {
+      "id": "seeded-019",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "human",
+        "capability": "transact",
+        "environment": "custom_web_app",
+        "support": "dedicated_sla"
+      }
+    },
+    {
+      "id": "seeded-020",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "custom_web_app",
+        "customIntegrations": 1,
+        "designAddons": ["advanced_motion_3d", "premium_avatar_provider"],
+        "support": "priority",
+        "usageForecast": 999
+      }
+    },
+    {
+      "id": "seeded-021",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "enterprise",
+        "environment": "custom_web_app",
+        "customIntegrations": 4,
+        "usageForecast": 0
+      }
+    },
+    {
+      "id": "seeded-022",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "custom_web_app",
+        "enterpriseIntegrations": 0.5,
+        "support": "priority",
+        "usageForecast": 1001
+      }
+    },
+    {
+      "id": "seeded-023",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "enterprise",
+        "environment": "landing",
+        "customIntegrations": 12.25,
+        "advancedIntegrations": 1.5,
+        "designAddons": ["custom_visual_direction", "advanced_motion_3d"],
+        "support": "priority",
+        "usageForecast": 500
+      }
+    },
+    {
+      "id": "seeded-024",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "transact",
+        "environment": "custom_web_app",
+        "standardIntegrations": 1,
+        "customIntegrations": 0.5,
+        "designAddons": ["advanced_motion_3d"],
+        "support": "dedicated_sla",
+        "usageForecast": 0
+      }
+    },
+    {
+      "id": "seeded-025",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "act",
+        "environment": "enterprise_system",
+        "customIntegrations": 1,
+        "enterpriseIntegrations": 7,
+        "designAddons": ["advanced_motion_3d", "premium_avatar_provider"],
+        "support": "dedicated_sla",
+        "usageForecast": 999
+      }
+    },
+    {
+      "id": "seeded-026",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "assist",
+        "environment": "existing_site",
+        "standardIntegrations": 2,
+        "advancedIntegrations": 7,
+        "support": "dedicated_sla",
+        "usageForecast": 250000
+      }
+    },
+    {
+      "id": "seeded-027",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "advancedIntegrations": 4,
+        "designAddons": ["custom_visual_direction", "premium_avatar_provider"],
+        "support": "dedicated_sla",
+        "usageForecast": 999,
+        "annualPrepay": true
+      }
+    },
+    {
+      "id": "seeded-028",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "voice",
+        "capability": "enterprise",
+        "environment": "business",
+        "support": "dedicated_sla",
+        "usageForecast": 5000
+      }
+    },
+    {
+      "id": "seeded-029",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "enterprise",
+        "environment": "custom_web_app",
+        "designAddons": ["premium_avatar_provider"],
+        "usageForecast": 500
+      }
+    },
+    {
+      "id": "seeded-030",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "act",
+        "environment": "custom_web_app",
+        "standardIntegrations": 1.5,
+        "advancedIntegrations": 0,
+        "designAddons": ["custom_visual_direction"],
+        "support": "standard",
+        "usageForecast": 250000
+      }
+    },
+    {
+      "id": "seeded-031",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "enterprise",
+        "environment": "custom_web_app",
+        "standardIntegrations": 4,
+        "advancedIntegrations": 1,
+        "designAddons": ["advanced_motion_3d", "premium_avatar_provider"],
+        "support": "dedicated_sla",
+        "usageForecast": 1001
+      }
+    },
+    {
+      "id": "seeded-032",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "voice",
+        "capability": "assist",
+        "environment": "commerce_booking",
+        "customIntegrations": 1,
+        "enterpriseIntegrations": 3,
+        "support": "standard",
+        "usageForecast": 0,
+        "annualPrepay": true
+      }
+    },
+    {
+      "id": "seeded-033",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "voice",
+        "capability": "transact",
+        "environment": "existing_site",
+        "advancedIntegrations": 0,
+        "designAddons": ["advanced_motion_3d", "premium_avatar_provider"],
+        "usageForecast": 0
+      }
+    },
+    {
+      "id": "seeded-034",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "landing",
+        "standardIntegrations": 12.25,
+        "customIntegrations": 0,
+        "designAddons": ["advanced_motion_3d"],
+        "usageForecast": 250000,
+        "annualPrepay": true
+      }
+    },
+    {
+      "id": "seeded-035",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "act",
+        "environment": "landing",
+        "standardIntegrations": 1,
+        "enterpriseIntegrations": 1.5,
+        "designAddons": ["custom_visual_direction", "advanced_motion_3d"],
+        "support": "priority"
+      }
+    },
+    {
+      "id": "seeded-036",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "business",
+        "customIntegrations": 2,
+        "enterpriseIntegrations": 7,
+        "designAddons": ["premium_avatar_provider", "custom_visual_direction"],
+        "support": "standard",
+        "usageForecast": 250000
+      }
+    },
+    {
+      "id": "seeded-037",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "act",
+        "environment": "custom_web_app",
+        "enterpriseIntegrations": 0,
+        "support": "priority",
+        "usageForecast": 5000,
+        "annualPrepay": false
+      }
+    },
+    {
+      "id": "seeded-038",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "transact",
+        "environment": "commerce_booking",
+        "standardIntegrations": 2,
+        "designAddons": ["premium_avatar_provider"],
+        "usageForecast": 500,
+        "annualPrepay": true
+      }
+    },
+    {
+      "id": "seeded-039",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "enterprise",
+        "environment": "existing_site",
+        "standardIntegrations": 12.25,
+        "customIntegrations": 0,
+        "support": "priority",
+        "usageForecast": 1001
+      }
+    },
+    {
+      "id": "seeded-040",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "act",
+        "environment": "business",
+        "standardIntegrations": 3,
+        "customIntegrations": 1,
+        "advancedIntegrations": 1.5,
+        "enterpriseIntegrations": 1,
+        "support": "dedicated_sla",
+        "usageForecast": 0
+      }
+    },
+    {
+      "id": "seeded-041",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "custom_web_app",
+        "advancedIntegrations": 7,
+        "support": "dedicated_sla",
+        "usageForecast": 500
+      }
+    },
+    {
+      "id": "seeded-042",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "act",
+        "environment": "commerce_booking",
+        "standardIntegrations": 0,
+        "support": "standard",
+        "usageForecast": 1001
+      }
+    },
+    {
+      "id": "seeded-043",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "act",
+        "environment": "existing_site",
+        "advancedIntegrations": 1.5,
+        "support": "priority",
+        "usageForecast": 500
+      }
+    },
+    {
+      "id": "seeded-044",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "enterprise_system",
+        "enterpriseIntegrations": 1,
+        "designAddons": ["premium_avatar_provider"],
+        "usageForecast": 999,
+        "annualPrepay": true
+      }
+    },
+    {
+      "id": "seeded-045",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "human",
+        "capability": "enterprise",
+        "environment": "landing",
+        "standardIntegrations": 0,
+        "designAddons": ["premium_avatar_provider"],
+        "support": "priority",
+        "usageForecast": 500
+      }
+    },
+    {
+      "id": "seeded-046",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "enterprise",
+        "environment": "landing",
+        "standardIntegrations": 0,
+        "customIntegrations": 3,
+        "enterpriseIntegrations": 1,
+        "designAddons": ["advanced_motion_3d"],
+        "usageForecast": 999
+      }
+    },
+    {
+      "id": "seeded-047",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "transact",
+        "environment": "existing_site",
+        "standardIntegrations": 0.5,
+        "support": "dedicated_sla",
+        "usageForecast": 5000
+      }
+    },
+    {
+      "id": "seeded-048",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "transact",
+        "environment": "existing_site",
+        "customIntegrations": 7,
+        "designAddons": ["advanced_motion_3d"],
+        "usageForecast": 500
+      }
+    },
+    {
+      "id": "seeded-049",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "transact",
+        "environment": "business",
+        "standardIntegrations": 0.5,
+        "designAddons": ["advanced_motion_3d", "premium_avatar_provider"],
+        "support": "dedicated_sla",
+        "usageForecast": 1001
+      }
+    },
+    {
+      "id": "seeded-050",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "human",
+        "capability": "transact",
+        "environment": "enterprise_system",
+        "customIntegrations": 1.5,
+        "advancedIntegrations": 4,
+        "support": "dedicated_sla",
+        "usageForecast": 999
+      }
+    },
+    {
+      "id": "seeded-051",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "assist",
+        "environment": "existing_site",
+        "standardIntegrations": 2,
+        "customIntegrations": 1.5,
+        "designAddons": ["premium_avatar_provider", "advanced_motion_3d"],
+        "usageForecast": 250000
+      }
+    },
+    {
+      "id": "seeded-052",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "act",
+        "environment": "enterprise_system",
+        "standardIntegrations": 0.5,
+        "advancedIntegrations": 0,
+        "designAddons": ["advanced_motion_3d"],
+        "support": "dedicated_sla",
+        "usageForecast": 500
+      }
+    },
+    {
+      "id": "seeded-053",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "human",
+        "capability": "assist",
+        "environment": "enterprise_system",
+        "designAddons": ["custom_visual_direction"],
+        "usageForecast": 1001
+      }
+    },
+    {
+      "id": "seeded-054",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "enterprise",
+        "environment": "custom_web_app",
+        "standardIntegrations": 12.25,
+        "enterpriseIntegrations": 12.25,
+        "usageForecast": 5000
+      }
+    },
+    {
+      "id": "seeded-055",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "custom_web_app",
+        "standardIntegrations": 0.5,
+        "support": "priority",
+        "usageForecast": 1000
+      }
+    },
+    {
+      "id": "seeded-056",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "enterprise",
+        "environment": "landing",
+        "customIntegrations": 1,
+        "advancedIntegrations": 1,
+        "support": "dedicated_sla",
+        "usageForecast": 5000
+      }
+    },
+    {
+      "id": "seeded-057",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "business",
+        "customIntegrations": 1,
+        "designAddons": ["premium_avatar_provider"]
+      }
+    },
+    {
+      "id": "seeded-058",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "voice",
+        "capability": "enterprise",
+        "environment": "commerce_booking",
+        "standardIntegrations": 1.5,
+        "designAddons": ["advanced_motion_3d", "custom_visual_direction"],
+        "support": "dedicated_sla",
+        "usageForecast": 250000,
+        "annualPrepay": false
+      }
+    },
+    {
+      "id": "seeded-059",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "assist",
+        "environment": "commerce_booking",
+        "standardIntegrations": 0,
+        "customIntegrations": 0.5,
+        "support": "dedicated_sla",
+        "usageForecast": 0
+      }
+    },
+    {
+      "id": "seeded-060",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "custom_web_app",
+        "customIntegrations": 12.25,
+        "support": "priority",
+        "usageForecast": 250000
+      }
+    },
+    {
+      "id": "seeded-061",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "transact",
+        "environment": "custom_web_app",
+        "designAddons": ["custom_visual_direction", "custom_visual_direction"],
+        "usageForecast": 1000
+      }
+    },
+    {
+      "id": "seeded-062",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "enterprise",
+        "environment": "commerce_booking",
+        "support": "priority",
+        "usageForecast": 250000,
+        "annualPrepay": true
+      }
+    },
+    {
+      "id": "seeded-063",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "transact",
+        "environment": "commerce_booking",
+        "standardIntegrations": 2,
+        "advancedIntegrations": 7,
+        "designAddons": ["advanced_motion_3d", "premium_avatar_provider"],
+        "support": "dedicated_sla",
+        "usageForecast": 250000,
+        "annualPrepay": false
+      }
+    },
+    {
+      "id": "seeded-064",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "voice",
+        "capability": "act",
+        "environment": "custom_web_app",
+        "customIntegrations": 0,
+        "designAddons": ["premium_avatar_provider"],
+        "support": "standard",
+        "usageForecast": 5000
+      }
+    },
+    {
+      "id": "seeded-065",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "enterprise",
+        "environment": "landing",
+        "standardIntegrations": 1,
+        "designAddons": ["advanced_motion_3d"],
+        "support": "standard",
+        "usageForecast": 1000,
+        "annualPrepay": true
+      }
+    },
+    {
+      "id": "seeded-066",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "act",
+        "environment": "existing_site",
+        "enterpriseIntegrations": 4,
+        "usageForecast": 5000
+      }
+    },
+    {
+      "id": "seeded-067",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "transact",
+        "environment": "business",
+        "standardIntegrations": 0,
+        "enterpriseIntegrations": 0.5,
+        "designAddons": ["advanced_motion_3d"],
+        "support": "priority",
+        "usageForecast": 1000,
+        "annualPrepay": true
+      }
+    },
+    {
+      "id": "seeded-068",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "act",
+        "environment": "custom_web_app",
+        "advancedIntegrations": 0.5,
+        "designAddons": ["advanced_motion_3d"],
+        "support": "priority",
+        "usageForecast": 999
+      }
+    },
+    {
+      "id": "seeded-069",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "act",
+        "environment": "landing",
+        "support": "dedicated_sla"
+      }
+    },
+    {
+      "id": "seeded-070",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "assist",
+        "environment": "commerce_booking",
+        "standardIntegrations": 4,
+        "advancedIntegrations": 7,
+        "designAddons": ["advanced_motion_3d", "custom_visual_direction"],
+        "support": "dedicated_sla",
+        "usageForecast": 5000,
+        "annualPrepay": true
+      }
+    },
+    {
+      "id": "seeded-071",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "custom_web_app",
+        "standardIntegrations": 1,
+        "usageForecast": 5000
+      }
+    },
+    {
+      "id": "seeded-072",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "act",
+        "environment": "existing_site",
+        "advancedIntegrations": 1,
+        "designAddons": ["custom_visual_direction"],
+        "usageForecast": 1000
+      }
+    },
+    {
+      "id": "seeded-073",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "standardIntegrations": 12.25,
+        "usageForecast": 1000
+      }
+    },
+    {
+      "id": "seeded-074",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "enterprise",
+        "environment": "custom_web_app",
+        "standardIntegrations": 0,
+        "customIntegrations": 2,
+        "designAddons": ["premium_avatar_provider"],
+        "support": "standard",
+        "usageForecast": 1000,
+        "annualPrepay": false
+      }
+    },
+    {
+      "id": "seeded-075",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "assist",
+        "environment": "custom_web_app",
+        "designAddons": ["premium_avatar_provider"],
+        "usageForecast": 1001
+      }
+    },
+    {
+      "id": "seeded-076",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "enterprise",
+        "environment": "commerce_booking",
+        "customIntegrations": 1,
+        "designAddons": ["custom_visual_direction"],
+        "usageForecast": 5000
+      }
+    },
+    {
+      "id": "seeded-077",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "enterprise",
+        "environment": "business",
+        "standardIntegrations": 3,
+        "designAddons": ["custom_visual_direction"],
+        "support": "priority",
+        "usageForecast": 5000
+      }
+    },
+    {
+      "id": "seeded-078",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "human",
+        "capability": "assist",
+        "environment": "business",
+        "standardIntegrations": 0,
+        "customIntegrations": 3,
+        "annualPrepay": true
+      }
+    },
+    {
+      "id": "seeded-079",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "assist",
+        "environment": "commerce_booking",
+        "advancedIntegrations": 3,
+        "enterpriseIntegrations": 12.25,
+        "support": "priority",
+        "usageForecast": 250000
+      }
+    },
+    {
+      "id": "seeded-080",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "commerce_booking",
+        "advancedIntegrations": 2,
+        "enterpriseIntegrations": 0.5,
+        "usageForecast": 250000,
+        "annualPrepay": true
+      }
+    },
+    {
+      "id": "seeded-081",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "enterprise",
+        "environment": "landing",
+        "standardIntegrations": 1,
+        "customIntegrations": 0,
+        "designAddons": ["advanced_motion_3d", "premium_avatar_provider"],
+        "usageForecast": 1000,
+        "annualPrepay": false
+      }
+    },
+    {
+      "id": "seeded-082",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "enterprise",
+        "environment": "commerce_booking",
+        "standardIntegrations": 1,
+        "advancedIntegrations": 12.25,
+        "usageForecast": 1001,
+        "annualPrepay": true
+      }
+    },
+    {
+      "id": "seeded-083",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "enterprise",
+        "environment": "enterprise_system",
+        "standardIntegrations": 1,
+        "designAddons": ["advanced_motion_3d"],
+        "support": "priority",
+        "usageForecast": 1000,
+        "annualPrepay": true
+      }
+    },
+    {
+      "id": "seeded-084",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "act",
+        "environment": "existing_site",
+        "standardIntegrations": 12.25,
+        "designAddons": ["advanced_motion_3d"],
+        "support": "standard",
+        "usageForecast": 0
+      }
+    },
+    {
+      "id": "seeded-085",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "enterprise",
+        "environment": "existing_site",
+        "enterpriseIntegrations": 12.25,
+        "support": "priority",
+        "usageForecast": 250000
+      }
+    },
+    {
+      "id": "seeded-086",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "commerce_booking",
+        "standardIntegrations": 1,
+        "advancedIntegrations": 1.5,
+        "enterpriseIntegrations": 1.5,
+        "designAddons": ["premium_avatar_provider", "custom_visual_direction"],
+        "support": "priority",
+        "usageForecast": 250000
+      }
+    },
+    {
+      "id": "seeded-087",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "enterprise_system",
+        "customIntegrations": 3,
+        "advancedIntegrations": 4,
+        "designAddons": ["advanced_motion_3d"],
+        "usageForecast": 250000
+      }
+    },
+    {
+      "id": "seeded-088",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "act",
+        "environment": "landing",
+        "standardIntegrations": 1.5,
+        "designAddons": ["custom_visual_direction"],
+        "usageForecast": 999
+      }
+    },
+    {
+      "id": "seeded-089",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "business",
+        "support": "dedicated_sla",
+        "usageForecast": 5000,
+        "annualPrepay": false
+      }
+    },
+    {
+      "id": "seeded-090",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "enterprise",
+        "environment": "landing",
+        "standardIntegrations": 0,
+        "customIntegrations": 1,
+        "advancedIntegrations": 1,
+        "enterpriseIntegrations": 0,
+        "support": "priority",
+        "usageForecast": 500
+      }
+    },
+    {
+      "id": "seeded-091",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "enterprise",
+        "environment": "enterprise_system",
+        "designAddons": ["premium_avatar_provider"],
+        "support": "standard",
+        "usageForecast": 999
+      }
+    },
+    {
+      "id": "seeded-092",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "enterprise",
+        "environment": "custom_web_app",
+        "standardIntegrations": 4,
+        "designAddons": ["advanced_motion_3d", "custom_visual_direction"],
+        "support": "priority",
+        "usageForecast": 500
+      }
+    },
+    {
+      "id": "seeded-093",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "enterprise_system",
+        "advancedIntegrations": 7,
+        "designAddons": ["premium_avatar_provider"],
+        "support": "dedicated_sla",
+        "usageForecast": 250000,
+        "annualPrepay": true
+      }
+    },
+    {
+      "id": "seeded-094",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "act",
+        "environment": "existing_site",
+        "standardIntegrations": 0,
+        "enterpriseIntegrations": 1,
+        "designAddons": ["premium_avatar_provider"],
+        "support": "priority"
+      }
+    },
+    {
+      "id": "seeded-095",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "act",
+        "environment": "business",
+        "support": "dedicated_sla",
+        "usageForecast": 999
+      }
+    },
+    {
+      "id": "seeded-096",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "enterprise",
+        "environment": "existing_site",
+        "customIntegrations": 0.5,
+        "support": "standard",
+        "usageForecast": 999
+      }
+    },
+    {
+      "id": "seeded-097",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "commerce_booking",
+        "standardIntegrations": 0,
+        "customIntegrations": 3,
+        "advancedIntegrations": 12.25,
+        "enterpriseIntegrations": 2,
+        "designAddons": ["custom_visual_direction"],
+        "usageForecast": 250000
+      }
+    },
+    {
+      "id": "seeded-098",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "custom_web_app",
+        "standardIntegrations": 3,
+        "advancedIntegrations": 0,
+        "designAddons": ["premium_avatar_provider", "advanced_motion_3d"],
+        "usageForecast": 5000
+      }
+    },
+    {
+      "id": "seeded-099",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "human",
+        "capability": "assist",
+        "environment": "commerce_booking",
+        "customIntegrations": 0,
+        "advancedIntegrations": 2,
+        "support": "standard",
+        "usageForecast": 500
+      }
+    },
+    {
+      "id": "seeded-100",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "assist",
+        "environment": "existing_site",
+        "standardIntegrations": 0,
+        "designAddons": ["custom_visual_direction"],
+        "support": "dedicated_sla"
+      }
+    },
+    {
+      "id": "seeded-101",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "voice",
+        "capability": "enterprise",
+        "environment": "enterprise_system",
+        "standardIntegrations": 2,
+        "enterpriseIntegrations": 1,
+        "designAddons": ["custom_visual_direction"],
+        "support": "dedicated_sla",
+        "usageForecast": 1001
+      }
+    },
+    {
+      "id": "seeded-102",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "act",
+        "environment": "landing",
+        "support": "dedicated_sla",
+        "usageForecast": 1000
+      }
+    },
+    {
+      "id": "seeded-103",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "human",
+        "capability": "act",
+        "environment": "existing_site",
+        "advancedIntegrations": 0.5,
+        "designAddons": ["custom_visual_direction"],
+        "usageForecast": 500
+      }
+    },
+    {
+      "id": "seeded-104",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "act",
+        "environment": "business",
+        "standardIntegrations": 3,
+        "customIntegrations": 1,
+        "designAddons": ["advanced_motion_3d", "custom_visual_direction"],
+        "support": "priority",
+        "usageForecast": 500
+      }
+    },
+    {
+      "id": "seeded-105",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "commerce_booking",
+        "usageForecast": 1000
+      }
+    },
+    {
+      "id": "seeded-106",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "act",
+        "environment": "existing_site",
+        "standardIntegrations": 1,
+        "designAddons": ["advanced_motion_3d"],
+        "usageForecast": 999,
+        "annualPrepay": false
+      }
+    },
+    {
+      "id": "seeded-107",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "act",
+        "environment": "custom_web_app",
+        "standardIntegrations": 3,
+        "customIntegrations": 3,
+        "usageForecast": 5000
+      }
+    },
+    {
+      "id": "seeded-108",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "human",
+        "capability": "transact",
+        "environment": "business",
+        "standardIntegrations": 3,
+        "support": "priority",
+        "usageForecast": 999,
+        "annualPrepay": false
+      }
+    },
+    {
+      "id": "seeded-109",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "enterprise",
+        "environment": "commerce_booking",
+        "standardIntegrations": 4,
+        "advancedIntegrations": 0.5,
+        "designAddons": ["custom_visual_direction"],
+        "support": "priority"
+      }
+    },
+    {
+      "id": "seeded-110",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "enterprise",
+        "environment": "custom_web_app",
+        "standardIntegrations": 1,
+        "advancedIntegrations": 2,
+        "enterpriseIntegrations": 2,
+        "designAddons": ["custom_visual_direction", "advanced_motion_3d"],
+        "support": "dedicated_sla",
+        "usageForecast": 250000
+      }
+    },
+    {
+      "id": "seeded-111",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "customIntegrations": 7,
+        "designAddons": ["custom_visual_direction"],
+        "usageForecast": 0,
+        "annualPrepay": true
+      }
+    },
+    {
+      "id": "seeded-112",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "enterprise",
+        "environment": "existing_site",
+        "standardIntegrations": 0.5,
+        "customIntegrations": 4,
+        "advancedIntegrations": 12.25,
+        "designAddons": ["premium_avatar_provider"],
+        "support": "dedicated_sla",
+        "usageForecast": 1001
+      }
+    },
+    {
+      "id": "seeded-113",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "enterprise",
+        "environment": "existing_site",
+        "standardIntegrations": 2,
+        "designAddons": ["advanced_motion_3d"],
+        "support": "priority",
+        "usageForecast": 250000
+      }
+    },
+    {
+      "id": "seeded-114",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "human",
+        "capability": "assist",
+        "environment": "custom_web_app",
+        "standardIntegrations": 0,
+        "designAddons": ["advanced_motion_3d"],
+        "support": "priority",
+        "usageForecast": 5000
+      }
+    },
+    {
+      "id": "seeded-115",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "transact",
+        "environment": "existing_site",
+        "usageForecast": 1000
+      }
+    },
+    {
+      "id": "seeded-116",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "human",
+        "capability": "transact",
+        "environment": "business",
+        "advancedIntegrations": 12.25,
+        "enterpriseIntegrations": 1,
+        "designAddons": ["advanced_motion_3d"],
+        "support": "dedicated_sla",
+        "usageForecast": 1000,
+        "annualPrepay": false
+      }
+    },
+    {
+      "id": "seeded-117",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "human",
+        "capability": "transact",
+        "environment": "landing",
+        "standardIntegrations": 1.5,
+        "advancedIntegrations": 0,
+        "designAddons": ["premium_avatar_provider", "advanced_motion_3d"],
+        "support": "dedicated_sla",
+        "usageForecast": 1000,
+        "annualPrepay": true
+      }
+    },
+    {
+      "id": "seeded-118",
+      "note": "seeded combination",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "human",
+        "capability": "transact",
+        "environment": "custom_web_app",
+        "standardIntegrations": 7,
+        "designAddons": ["advanced_motion_3d", "custom_visual_direction"],
+        "support": "standard",
+        "usageForecast": 1001,
+        "annualPrepay": true
+      }
+    },
+    {
+      "id": "seeded-119",
+      "note": "seeded combination",
+      "request": {
+        "region": "ID",
+        "presence": "chat",
+        "capability": "enterprise",
+        "environment": "business",
+        "standardIntegrations": 3,
+        "designAddons": ["premium_avatar_provider"],
+        "support": "priority",
+        "usageForecast": 1000
+      }
+    },
+    {
+      "id": "absent-region",
+      "note": "the regions table is checked before any tier, so this throws the region message",
+      "request": {
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "existing_site"
+      }
+    },
+    {
+      "id": "absent-presence",
+      "note": "a missing presence reaches the lookup as the literal \"undefined\"",
+      "request": {
+        "region": "GLOBAL",
+        "capability": "assist",
+        "environment": "existing_site"
+      }
+    },
+    {
+      "id": "absent-capability",
+      "note": "capability is checked after presence, so presence must be valid here",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "environment": "existing_site"
+      }
+    },
+    {
+      "id": "absent-environment",
+      "note": "the last of the three Step A checks",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "assist"
+      }
+    },
+    {
+      "id": "invalid-presence",
+      "note": "unknown presence",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "telepathy",
+        "capability": "assist",
+        "environment": "existing_site"
+      }
+    },
+    {
+      "id": "invalid-capability",
+      "note": "unknown capability",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "teleport",
+        "environment": "existing_site"
+      }
+    },
+    {
+      "id": "invalid-environment",
+      "note": "unknown environment",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "assist",
+        "environment": "the_moon"
+      }
+    },
+    {
+      "id": "invalid-all-three-check-order",
+      "note": "presence is checked first, so a request bad three ways names it",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "bad",
+        "capability": "bad",
+        "environment": "bad"
+      }
+    },
+    {
+      "id": "invalid-capability-and-environment",
+      "note": "capability is checked before environment",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "chat",
+        "capability": "bad",
+        "environment": "bad"
+      }
+    },
+    {
+      "id": "invalid-presence-empty-string",
+      "note": "the empty string is a name, and it matches nothing",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "",
+        "capability": "assist",
+        "environment": "existing_site"
+      }
+    },
+    {
+      "id": "invalid-presence-in-id-only",
+      "note": "a tier name from the other region is still unknown in this one",
+      "request": {
+        "region": "GLOBAL",
+        "presence": "empat",
+        "capability": "assist",
+        "environment": "existing_site"
+      }
+    },
+    {
+      "id": "invalid-whitespace-presence",
+      "note": "no trimming anywhere in the lookup",
+      "request": {
+        "region": "GLOBAL",
+        "presence": " chat ",
+        "capability": "assist",
+        "environment": "existing_site"
+      }
+    }
+  ]
+}
