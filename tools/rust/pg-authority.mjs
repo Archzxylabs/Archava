@@ -189,10 +189,35 @@ export function runAuthority() {
       `     ${run.exitCode === 0 ? '✓' : '✗'} suite ${key}: ${passed} passed, ${failed} failed` +
         ` (discovered ${run.tests.size}, exit ${run.exitCode}, ${run.seconds}s)\n`,
     )
-    if (run.exitCode !== 0)
+    if (run.exitCode !== 0) {
+      // A named-witness line saying "FAILED" is not enough to act on — whoever
+      // reads the gate log needs the assertion that tripped. The harness
+      // formats each failed test as a `---- <name> stdout ----` block with the
+      // panic inside; print those blocks, bounded, so the log carries the real
+      // failing point for each failed test and no more.
+      const blocks = []
+      let current = null
+      for (const line of run.stdout.split('\n')) {
+        if (line.startsWith('---- ') && line.endsWith(' stdout ----')) {
+          if (current) blocks.push(current)
+          current = [line]
+        } else if (current && line.startsWith('failures:')) {
+          blocks.push(current)
+          current = null
+        } else if (current && current.length < 60) {
+          current.push(line)
+        }
+      }
+      if (current) blocks.push(current)
+      for (const block of blocks) {
+        process.stdout.write(block.map((entry) => `       ${entry}`).join('\n') + '\n')
+      }
+      if (blocks.length === 0)
+        process.stdout.write('       (no per-test failure blocks in the harness output)\n')
       problems.push(
         `suite ${key} exited ${run.exitCode} — a failing authority suite fails every check it backs`,
       )
+    }
   }
 
   const checks = {}

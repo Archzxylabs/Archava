@@ -1507,7 +1507,20 @@ async fn concurrent_same_key_different_input_yields_conflict_not_the_other_recei
     // write instead of one finishing before the other starts. The lock is
     // fixture administration on the superuser pool; the two requests still
     // take the RUNTIME role through the router.
-    let (parked, release) = hold_commands_table(&fixture).await;
+    let (locked, parked, release) = hold_commands_table(&fixture).await;
+
+    // The submissions spawn ONLY after the holder confirms `LOCK TABLE` is
+    // actually held: the holder pays a cold connect for its own fresh pool,
+    // while the submissions ride the app pool `login` already warmed — without
+    // this await the first submission can insert and commit before the lock
+    // exists, and the waiters poll then observes zero forever. That is a
+    // harness race, not host behavior, and sixteen-thread runs (the gate's
+    // shape) made the window wide enough to lose every run: `parked` answered
+    // 0, not 2. Awaiting here makes the observed interleaving a fact before
+    // anything that could overtake it exists.
+    locked
+        .await
+        .expect("the holder must confirm the commands-table lock before the submissions spawn");
 
     // Each task carries its own copy of the credentials, because `Session`
     // is not `Clone` (the suite treats it as a value from `login`) and each
@@ -1616,9 +1629,12 @@ async fn concurrent_same_key_different_input_yields_conflict_not_the_other_recei
 }
 
 /// Holds `LOCK TABLE archava_commerce.commands IN EXCLUSIVE MODE` until a
-/// signal, telling the caller how many requests are parked behind it.
+/// signal, telling the caller when the lock is held and how many requests are
+/// parked behind it.
 ///
-/// Returns `(parked, release)`: `parked` resolves with the number of
+/// Returns `(locked, parked, release)`: `locked` resolves once the holder's
+/// `LOCK TABLE` transaction has actually taken the lock — the guarantee the
+/// caller fans submissions out against; `parked` resolves with the number of
 /// ungranted lock requests on the locked table when both submissions have
 /// arrived; `release` opens the gate. The waiting is POLLED against the
 /// server's own `pg_locks` view — the same server-side evidence the audit
@@ -1627,11 +1643,13 @@ async fn concurrent_same_key_different_input_yields_conflict_not_the_other_recei
 async fn hold_commands_table(
     fixture: &Fixture,
 ) -> (
+    tokio::sync::oneshot::Receiver<()>,
     tokio::sync::oneshot::Receiver<usize>,
     tokio::sync::oneshot::Sender<()>,
 ) {
     let (gate_tx, gate_rx) = tokio::sync::oneshot::channel::<()>();
     let (report_tx, report_rx) = tokio::sync::oneshot::channel::<usize>();
+    let (ready_tx, ready_rx) = tokio::sync::oneshot::channel::<()>();
 
     let admin = fixture.runtime_url();
     // A spawned task on THIS test's runtime, with its own private pool: the
@@ -1660,13 +1678,28 @@ async fn hold_commands_table(
             .await
             .expect("lock the commands table");
 
+        // Confirm the lock BEFORE the poll begins: the caller fans its
+        // submissions out against this signal, so what follows measures only
+        // requests arriving behind a lock that was never absent.
+        let _ = ready_tx.send(());
+
         // Now park until both requests have actually arrived and blocked on
         // this lock. The count comes from `pg_locks`, filtered to the locked
         // table, so nothing else in the process can be mistaken for one of
         // the two submissions. The deadline only bounds the wait; falling
         // short reports the real count and the caller's assert turns it into
         // a failing test rather than a hang.
-        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(30);
+        //
+        // The bound is patience, not expectation — the whole gate runs this
+        // suite sixteen threads wide, and a submission's road to its INSERT
+        // (pool acquire, session verification, transaction begin) takes what
+        // the load gives it. The first deadline tripped on a DIFFERENT race:
+        // the submissions used to spawn before the holder had taken the lock,
+        // so both INSERTs could commit while the lock was still being
+        // acquired and the poll observed zero forever. That ordering is now
+        // the caller's `locked` await above; the deadline since merely bounds
+        // a failed arrival, which the caller's own status assertions name.
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(120);
         let waiting = loop {
             let count: i64 = sqlx::query_scalar(
                 "SELECT count(*) FROM pg_locks WHERE NOT granted \
@@ -1697,5 +1730,5 @@ async fn hold_commands_table(
     // which the holder's commit precedes. A panic inside the holder surfaces
     // as a failed assertion here rather than a hang, because the count it
     // reports would never be 2.
-    (report_rx, gate_tx)
+    (ready_rx, report_rx, gate_tx)
 }
