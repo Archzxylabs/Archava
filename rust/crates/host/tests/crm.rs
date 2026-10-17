@@ -1083,7 +1083,17 @@ async fn the_racing_same_key_yields_conflict_not_the_other_receipt() {
     let app = archava_host::router(state(&fixture).await);
     let session = login(&app, "alice").await;
 
-    let (parked, release) = hold_commands_table(&fixture).await;
+    let (locked, parked, release) = hold_commands_table(&fixture).await;
+
+    // Same ordering discipline as the authority suite's copy: the submissions
+    // spawn only once the holder confirms `LOCK TABLE` is held. The holder
+    // pays a cold pool connect while the racers ride the app pool login
+    // warmed — without this await the first racer can record before the lock
+    // exists, and the waiters poll answers 0 forever (sixteen-thread
+    // width made that race lose every run in the authority variant).
+    locked
+        .await
+        .expect("the holder must confirm the CRM commands-table lock before the racers spawn");
 
     let one = {
         let app = app.clone();
@@ -1558,14 +1568,26 @@ async fn the_service_scope_never_widens_the_human_scope() {
 /// The holder runs its OWN private admin pool on THIS test's runtime, so the
 /// process keeps the one-runtime shape any real serving host has (no pool
 /// socket is ever created or polled under a foreign driver).
+/// Holds `LOCK TABLE archava_crm.commands IN EXCLUSIVE MODE` until a signal.
+///
+/// Returns `(locked, parked, release)`: `locked` resolves once the holder's
+/// `LOCK TABLE` transaction has actually taken the lock — the guarantee the
+/// racing test fans its submissions out against; `parked` resolves with the
+/// number of ungranted lock requests on the locked table when both
+/// submissions have arrived; `release` opens the gate. The parked count is
+/// POLLED against the server's own `pg_locks` view, with a deadline, so a
+/// submission that never reached the lock fails the test instead of hanging
+/// it.
 async fn hold_commands_table(
     fixture: &Fixture,
 ) -> (
+    tokio::sync::oneshot::Receiver<()>,
     tokio::sync::oneshot::Receiver<usize>,
     tokio::sync::oneshot::Sender<()>,
 ) {
     let (gate_tx, gate_rx) = tokio::sync::oneshot::channel::<()>();
     let (report_tx, report_rx) = tokio::sync::oneshot::channel::<usize>();
+    let (ready_tx, ready_rx) = tokio::sync::oneshot::channel::<()>();
 
     let admin = fixture.runtime_url();
     let _holder = tokio::spawn(async move {
@@ -1580,7 +1602,18 @@ async fn hold_commands_table(
             .await
             .expect("lock the CRM commands table");
 
-        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(30);
+        // Confirm the lock BEFORE the poll begins: the racing test fans its
+        // submissions out against this signal, so what follows measures only
+        // requests arriving behind a lock that was never absent.
+        let _ = ready_tx.send(());
+
+        // The deadline bounds a genuinely failed arrival, not the healthy
+        // path: the authority suite's copy of this harness tripped on a
+        // setup race (submissions spawned before the lock was taken, so the
+        // poll observed zero forever under sixteen-thread load), and the
+        // ordering fix lives in the caller. Patience stays generous for the
+        // loaded-gate shape.
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(120);
         let waiting = loop {
             let count: i64 = sqlx::query_scalar(
                 "SELECT count(*) FROM pg_locks WHERE NOT granted \
@@ -1601,7 +1634,7 @@ async fn hold_commands_table(
         transaction.commit().await.expect("release the lock");
     });
 
-    (report_rx, gate_tx)
+    (ready_rx, report_rx, gate_tx)
 }
 
 // --- keys ---------------------------------------------------------------------
