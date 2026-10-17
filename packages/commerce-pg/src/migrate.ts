@@ -6,6 +6,12 @@ export const COMMERCE_MIGRATIONS = [
   '001_catalog_orders_stock',
   '002_managed_menu_products',
   '003_purchase_receipts',
+  // RA01's server-side authority records: explicit grant columns and bound,
+  // single-use human approvals. Added with the Rust candidate, so the
+  // TypeScript migrator and the Rust fixture stay two languages over ONE
+  // migration history — if either side drifted, a database one migrates would
+  // not be one the other is willing to serve.
+  '004_bound_approvals',
 ] as const
 export async function commerceMigrationLedger() {
   return await Promise.all(

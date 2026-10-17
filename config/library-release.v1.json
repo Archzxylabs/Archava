@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "id": "archava-local-library",
-  "version": "1.17.0",
+  "version": "1.18.0",
   "host": {
     "name": "@archava/crm-host",
     "version": "0.20.0"
@@ -10,7 +10,7 @@
     "clientConfig": "1.0.0",
     "deploymentPlan": "2.0.0",
     "hostSettings": 1,
-    "assembly": "16.0.0",
+    "assembly": "17.0.0",
     "presence": "1.0.0",
     "kitPlan": "1.0.0",
     "kitCatalogue": "1.0.0"
@@ -245,7 +245,7 @@
     },
     {
       "name": "@archava/commerce-pg",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "migrations": [
         {
           "file": "001_catalog_orders_stock.sql",
@@ -258,6 +258,10 @@
         {
           "file": "003_purchase_receipts.sql",
           "checksum": "de658b69951dc030dd750a53ef797b1ebfaf2d39619ac0d4c8d33a00f1cbd8d1"
+        },
+        {
+          "file": "004_bound_approvals.sql",
+          "checksum": "33870679fb6c3d9a960d6b23dd63e5765814be56b2ea50729911293444e4c9b2"
         }
       ]
     },
@@ -455,6 +459,21 @@
           "checksum": "094bf7d79c03ec16654d1adccb07984514d90524311822deaab51fc9683aa8d1"
         }
       ]
+    },
+    {
+      "name": "@archava/formal-education",
+      "version": "0.1.0",
+      "migrations": []
+    },
+    {
+      "name": "@archava/formal-education-pg",
+      "version": "0.1.0",
+      "migrations": [
+        {
+          "file": "001_formal_education_enrollment.sql",
+          "checksum": "8cbe38d058d38e461507aca92f211cb5aeedf168b3349f69e91841e95b38b4c5"
+        }
+      ]
     }
   ],
   "databaseLedgers": [
@@ -504,7 +523,8 @@
       "migrations": [
         "001_catalog_orders_stock",
         "002_managed_menu_products",
-        "003_purchase_receipts"
+        "003_purchase_receipts",
+        "004_bound_approvals"
       ]
     },
     {
@@ -571,6 +591,11 @@
       "schema": "archava_field",
       "package": "@archava/field-services-pg",
       "migrations": ["001_field_services_dispatch_visits"]
+    },
+    {
+      "schema": "archava_edu",
+      "package": "@archava/formal-education-pg",
+      "migrations": ["001_formal_education_enrollment"]
     }
   ],
   "requiredAdapters": [
@@ -610,7 +635,8 @@
     "session rosters, event capacity, verified check-in events and receipt recovery",
     "custody chain, pick-pack-dispatch evidence, delivery reconciliation and production output/scrap traceability",
     "immutable invoice snapshot, append-only corrections, payment intent and provider-signed settlement authority",
-    "appointment-locked dispatch, separated labour/parts evidence, customer signoff and replay-safe commands"
+    "appointment-locked dispatch, separated labour/parts evidence, customer signoff and replay-safe commands",
+    "bounded admission, separated enrollment, role-scoped records, append-only results and retention"
   ],
   "externals": [
     {
