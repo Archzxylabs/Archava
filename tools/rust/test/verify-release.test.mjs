@@ -72,6 +72,17 @@ test('the documented list is parsed from the handoff document, not mirrored here
     'pnpm rust:benchmark',
     'pnpm exec vitest run --config vitest.artifacts.config.ts',
     'node tools/rust/browser-slice.mjs',
+    // R10's operational lane and R11's legacy scan: both named-witness
+    // producers with their own operator entries in the release gate's step
+    // comments — deliberate additions beyond the platform fence, like the
+    // benchmark above.
+    'node tools/rust/release-ops.mjs',
+    'node tools/rust/legacy-replacement.mjs',
+    // R09's remaining browser-lane proofs: SDK/widget contract + realtime
+    // lifecycle over the documented vendor bridge (see
+    // tools/rust/{sdk-widget,realtime-voice}.mjs headers for the dispositions).
+    'node tools/rust/sdk-widget.mjs',
+    'node tools/rust/realtime-voice.mjs',
   ]
   const executed = gateCommands()
   for (const command of executed) {
@@ -126,17 +137,24 @@ test('a gate running only documented commands reports them all covered', () => {
 })
 
 test('the reconciliation reports the commands beyond the handoff list', () => {
-  // None of the three is in the documented list: the list documents platform
+  // None of the seven is in the documented list: the list documents platform
   // acceptance and predates the Rust gates. `pnpm rust:benchmark` is the
   // controlled benchmark, the vitest artifact-proofs step is RA03's split of
-  // artifact-bound assertions out of the cold unit suite, and the browser-slice
-  // command is the real-browser proof with its own operator entry. All three
-  // must be reported as additions rather than quietly counted as covered.
+  // artifact-bound assertions out of the cold unit suite, the browser-slice
+  // command is the real-browser proof with its own operator entry, the two
+  // R10/R11 producers are the ops-lane and legacy-scan named witnesses, and
+  // the two R09 producers are the SDK/widget and realtime/voice contract
+  // proofs. All seven must be reported as additions rather than quietly
+  // counted as covered.
   const { notInHandoffList, covered } = reconcileWithHandoffList()
   assert.deepEqual(notInHandoffList, [
     'pnpm rust:benchmark',
     'pnpm exec vitest run --config vitest.artifacts.config.ts',
     'node tools/rust/browser-slice.mjs',
+    'node tools/rust/release-ops.mjs',
+    'node tools/rust/legacy-replacement.mjs',
+    'node tools/rust/sdk-widget.mjs',
+    'node tools/rust/realtime-voice.mjs',
   ])
   assert.equal(covered.includes('pnpm rust:benchmark'), false)
 })

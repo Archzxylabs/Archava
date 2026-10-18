@@ -105,7 +105,10 @@ they remain applicable.
 
 ## ADR-R05 — Cutover safety, required before any cutover
 
-**Status:** `proposed`, due at R10.
+**Status:** decided and implemented at R10; proven by `P-UPGRADE-RESTORE-RUST`
+(five fixture-backed rehearsal witnesses) and `P-CLI-OPERATIONS` (the
+runbook's rows executed through the built binary). See the R10 record at the
+end of this file for the five concrete decisions.
 
 Writer fencing, pending-work ownership, rollback compatibility window,
 supported prior profiles, and an exception inventory. Not relevant until R10,
@@ -419,3 +422,77 @@ database. The in-crate cold tests prove ordering (extraction before session);
 the fixture-backed `tests/authority.rs` proves the authority itself — forged
 bodies, revoked grants, consumed approvals, cross-tenant reads — against real
 HTTP and real PostgreSQL.
+
+## ADR-R12 — Operational cutover safety delivered at R10 (ADR-R05 closed)
+
+**Status:** decided, implemented, and proven by `P-UPGRADE-RESTORE-RUST` +
+`P-CLI-OPERATIONS` + `P-RELEASE-IDENTITY` (the named-witness runners in
+`tools/rust/release-ops.mjs`, the rehearsals in `crates/ops/tests/upgrade_restore.rs`).
+
+**Context.** ADR-R05 named five things a cutover could not do without:
+writer fencing at the persistence boundary, pending-work ownership, a rollback
+compatibility window, the set of supported prior profiles, and an exception
+inventory. None of it existed as code at proposal time — the TS operator side
+had `settings.json` workspace locks and its own `upgrade.mjs` orchestration,
+and the Rust side had nothing: upgrades/provisioning were dev fixtures, backups
+were a TS surface, and the "is this tree one release identity" question was
+answered by Node scripts.
+
+**Decision 1 — the fence lives in the same transaction as the write, not in a
+file.** `archava_control.writer_lease` carries a monotonically advancing
+`epoch`; a writer proves freshness with
+`SELECT epoch … FOR UPDATE` in the transaction that does the write. A stale
+writer is refused where its write lands (`LeaseError::StaleWriter`), no matter
+how long ago it took the seat. The control schema is installed by OPERATOR
+tooling (an explicit ownership statement), never by a product migration — the
+migration set is frozen in the release identity and operational tooling must
+not edit it (the same rule keeps `archava_control` out of every ledger's
+`schema_migrations` history).
+
+**Decision 2 — the prior supported profile is a REAL database, not a flag.**
+`pg_fixture::provision_prior_commerce_profile` provisions every frozen ledger
+with the commerce ledger applied through `003_purchase_receipts` only — the
+recorded history is a strict prefix of the frozen ledger, which is exactly
+what makes the subsequent full apply a LEGAL continuation (the runner's
+checksummed-history assertion consumes the prefix) rather than a rewrite. The
+prior-profile upgrade rehearsal seeds a real membership row, applies the
+pending migrations twice (idempotence), and asserts the 004 addenda
+(`role`/`capability` least-privileged defaults) are the ONLY difference on the
+preserved row.
+
+**Decision 3 — a backup is not valid until its isolated restore was proven,
+and the restore refuses its own source.** `capture` publishes digests and
+counts, never values (`credentialValuesPrinted: false` is a report field with
+nothing a secret could flow into); the restore REFUSES the capture's own
+host:port/database (`RestoreError::ActiveSource`) and an undrained writer
+lease (`RestoreError::UndrainedWriter`) before any data moves, replays
+`pg_dump`-marshal by `pg_restore --clean --if-exists` into a DISPOSABLE
+instance, and the rehearsal asserts the captured and restored rows are
+byte-identical. Ledger contents are FORCE-RLS protected, so capture/replay
+run with the cluster-admin role — administration of the instance, not an
+authority assertion.
+
+**Decision 4 — the operator runbook is a REGISTRY the gate executes.** The
+replacement table (`archava_ops::runbook::table()`) is machine-readable and
+`release-ops.mjs` runs every row — five CLI rows through the built binary,
+the rehearsal row through the cargo suite — so "operator commands replaced
+with Rust equivalents" is a claim about executed rows with recorded exits,
+not about a document that says so.
+
+**Decision 5 — the release identity is verified by recompute, not by copy.**
+`archava-ops verify-release` reads the CONFIG source of truth
+(`config/library-release.v1.json`), recomputes every artifact digest from
+`dist/library/tarballs`, and scans every `dist/releases/<version>/` slot for
+identity consistency — an archive whose version does not match its directory
+name, or whose slot claims the CURRENT identity, is a recorded refusal rather
+than an exception. P-RELEASE-IDENTITY's evidence is the recomputed record.
+
+**Consequences.** The five upgrades/restore/fence witnesses are fixture-backed
+and run per release-gate invocation (~5s); the ops binary ships with the
+workspace; the fence's refusals are typed (stale writer, drained seat,
+undrained restore target, active capture source) and the rehearsals name the
+class they expect. The cutover itself — flipping serving traffic from the
+Node runtime to the Rust host — remains pending Archxy 2's domain lanes
+(§LEGACY); what this ADR closes is the safety machinery that makes the flip
+survivable, which is what R10 was scoped to deliver.
+

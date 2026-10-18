@@ -67,6 +67,23 @@ export const COMMANDS = {
   'kit plan verification': 'pnpm kits:verify',
   'delivery capacity proof': 'pnpm capacity:verify',
   'K05/K04 two-business-model consumers': 'node tools/rust/k05-k04-consumers.mjs',
+  // R10's operational lane: the named-witness producer for the CLI-operations,
+  // upgrade/restore and release-identity proofs (details:
+  // tools/rust/release-ops.mjs header). It builds the ops binary, runs the
+  // five fixture-backed MIG rehearsals, drives the runbook rows and records
+  // the release-identity binding — three proofs, one tree-faithful runner.
+  'Rust operational CLI proof': 'node tools/rust/release-ops.mjs',
+  // R11's legacy scan: the candidate's runtime-path census plus the bridge
+  // and replacement dispositions (tools/rust/legacy-replacement.mjs header).
+  'Rust legacy replacement scan': 'node tools/rust/legacy-replacement.mjs',
+  // R09's remaining browser-lane proofs: the public SDK/widget surface (the
+  // disposition recorded in `crates/core/src/graph.rs` keeps SDK-side hosting
+  // TypeScript-side; this producer holds that surface to its contract —
+  // packed-tarball consumer hosts, the studio host, §24 source census and the
+  // page-awareness witnesses) and the presence realtime lifecycle over the
+  // documented vendor bridge — see tools/rust/{sdk-widget,realtime-voice}.mjs.
+  'Rust SDK/widget proof': 'node tools/rust/sdk-widget.mjs',
+  'Rust realtime/voice proof': 'node tools/rust/realtime-voice.mjs',
 }
 
 /**
@@ -191,6 +208,45 @@ export function releaseSteps() {
       'cold-prior accommodation recovery',
       () =>
         step('cold-prior accommodation recovery', ['pnpm', 'accommodation:verify', '--cold-prior']),
+    ],
+
+    // R10's operational proof: builds `archava-ops`, runs the five
+    // fixture-backed MIG rehearsals (fresh/prior upgrade, backup→isolated
+    // restore with named refusals, fenced single-writer handover, drained
+    // rollback), executes the runbook rows and records the release-identity
+    // binding. Three required proofs (P-CLI-OPERATIONS,
+    // P-UPGRADE-RESTORE-RUST, P-RELEASE-IDENTITY) are graded from this one
+    // run because they share the binary and the identity verifier; place it
+    // after the TS-side cold-prior proofs so the two upgrade stories read
+    // side by side.
+    [
+      'Rust operational CLI proof',
+      () => step('Rust operational CLI proof', ['node', 'tools/rust/release-ops.mjs']),
+    ],
+    // R11's legacy scan: the spawn census over the candidate's runtime source,
+    // the D07 bridge documentation check, and the replacement registry's
+    // verified execution. Depends on `dist/rust-ops-proof.json` (written by
+    // the step above), which is why it runs second and standalone reruns are
+    // expected to follow the same order.
+    [
+      'Rust legacy replacement scan',
+      () => step('Rust legacy replacement scan', ['node', 'tools/rust/legacy-replacement.mjs']),
+    ],
+    // R09's remaining browser-lane proofs. The SDK/widget disposition
+    // (`crates/core/src/graph.rs`) keeps SDK-side hosting TypeScript-side;
+    // these producers hold those surfaces to their contracts: the widget is
+    // embedded, from packed tarballs, in two reference hosts plus the studio
+    // host, its sources carry no owner credentials or internal tools (§24),
+    // and the presence realtime lifecycle runs over the ONLY voice shape this
+    // tree owns — a synthetic transcript — with the vendor bridge recorded
+    // verbatim in four places.
+    [
+      'Rust SDK/widget proof',
+      () => step('Rust SDK/widget proof', ['node', 'tools/rust/sdk-widget.mjs']),
+    ],
+    [
+      'Rust realtime/voice proof',
+      () => step('Rust realtime/voice proof', ['node', 'tools/rust/realtime-voice.mjs']),
     ],
     ['CRM benchmark', () => step('CRM benchmark', ['pnpm', 'crm:benchmark'])],
   ]
@@ -329,6 +385,42 @@ export function releaseEvidenceMapping() {
     { proof: 'P-RUST-BROWSER', step: 'Rust browser slice proof' },
     { proof: 'P-COLD-PRIOR-UPGRADE', step: 'cold-prior upgrade and restore' },
     { proof: 'P-COLD-PRIOR-RECOVERY', step: 'cold-prior accommodation recovery' },
+    {
+      proof: 'P-CLI-OPERATIONS',
+      step: 'Rust operational CLI proof',
+      details: () =>
+        JSON.parse(readFileSync(join(root, 'dist/rust-ops-proof.json'), 'utf8')),
+    },
+    {
+      proof: 'P-UPGRADE-RESTORE-RUST',
+      step: 'Rust operational CLI proof',
+      details: () =>
+        JSON.parse(readFileSync(join(root, 'dist/rust-ops-proof.json'), 'utf8')),
+    },
+    {
+      proof: 'P-RELEASE-IDENTITY',
+      step: 'Rust operational CLI proof',
+      details: () =>
+        JSON.parse(readFileSync(join(root, 'dist/rust-ops-proof.json'), 'utf8')),
+    },
+    {
+      proof: 'P-LEGACY-REPLACEMENT',
+      step: 'Rust legacy replacement scan',
+      details: () =>
+        JSON.parse(readFileSync(join(root, 'dist/rust-legacy-scan.json'), 'utf8')),
+    },
+    {
+      proof: 'P-SDK-WIDGET',
+      step: 'Rust SDK/widget proof',
+      details: () =>
+        JSON.parse(readFileSync(join(root, 'dist/rust-sdk-widget-proof.json'), 'utf8')),
+    },
+    {
+      proof: 'P-REALTIME-VOICE',
+      step: 'Rust realtime/voice proof',
+      details: () =>
+        JSON.parse(readFileSync(join(root, 'dist/rust-realtime-voice-proof.json'), 'utf8')),
+    },
     { proof: 'P-CRM-BENCHMARK', step: 'CRM benchmark' },
   ]
 }
