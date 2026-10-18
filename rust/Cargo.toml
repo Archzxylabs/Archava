@@ -50,6 +50,14 @@ members = [
   # ledger). It is production-side, not dev-only — the assistant's
   # provider-driven path proves its budgets through it.
   "crates/providers",
+  # R09's context slice: the turn context a provider-driven visitor turn
+  # reads — the knowledge store and retrieval split, the consent gate, the
+  # §16 masking boundary, the closed decision catalogue with its
+  # orchestrator, and the projection + boundary mask over the context graph.
+  # It depends on core only (the action registry's sensitive fields and the
+  # context graph types) plus serde — no HTTP, no database, no clock — so it
+  # stays on the portable-crate list the wasm gate checks.
+  "crates/context",
   # §1.4B's vertical slice: the Leptos SSR/WASM UI (`P-RUST-BROWSER`). A
   # leaf that depends on `archava-host` only for its SERVER build; the wasm
   # build takes the client target's dependency table instead and never sees

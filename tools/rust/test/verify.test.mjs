@@ -14,6 +14,7 @@ import {
 import { WITNESSES } from '../pg-readiness.mjs'
 import { WITNESSES as AUTHORITY_WITNESSES } from '../pg-authority.mjs'
 import { WITNESSES as R03_DOMAIN_WITNESSES } from '../r03-domain.mjs'
+import { WITNESSES as ASSISTANT_CONTEXT_WITNESSES } from '../assistant-context.mjs'
 import { WITNESSES as PURCHASING_WITNESSES } from '../erp/verify-purchasing.mjs'
 import { WITNESSES as FOODSERVICE_WITNESSES } from '../erp/verify-foodservice.mjs'
 import { WITNESSES as CAPACITY_WITNESSES } from '../capacity-conformance.mjs'
@@ -414,6 +415,38 @@ test('the P-R03-DOMAIN witness map and the frozen manifest cannot drift apart', 
       )
       assert.ok(
         ['crm', 'assistant', 'assistantCrate'].includes(suite),
+        `${check}: witness ${JSON.stringify(name)} names unknown suite ${JSON.stringify(suite)}`,
+      )
+    }
+  }
+})
+
+test('the P-ASSISTANT-CONTEXT witness map and the frozen manifest cannot drift apart', () => {
+  // The RF01 shape for the R09 context slice: the three manifest checks are
+  // graded by the named witnesses of ONE integration suite
+  // (`archava-context --test context`) plus the crate's library tests, so a
+  // manifest check with no witness, or a witness naming a check the manifest
+  // does not require, is a visible gap in either direction. No frozen
+  // `witnessTotal` on this proof — the tally rides the details blob the
+  // producer writes, exactly like P-R03-DOMAIN: when the provider-contracts
+  // packet lands, appending its witnesses to the budget check moves a visible
+  // number instead of tripping a frozen one.
+  const manifest = loadManifest(repoRoot)
+  const spec = manifest.proofs['P-ASSISTANT-CONTEXT']
+  assert.deepEqual(
+    [...Object.keys(ASSISTANT_CONTEXT_WITNESSES)].sort(),
+    [...spec.requiredChecks].sort(),
+  )
+  for (const [check, witnesses] of Object.entries(ASSISTANT_CONTEXT_WITNESSES)) {
+    assert.ok(witnesses.length > 0, `${check} has no witness tests`)
+    for (const [suite, name] of witnesses) {
+      assert.match(
+        name,
+        /^[a-z0-9_]+$/,
+        `${check}: witness name ${JSON.stringify(name)} is not a test identifier`,
+      )
+      assert.ok(
+        ['context'].includes(suite),
         `${check}: witness ${JSON.stringify(name)} names unknown suite ${JSON.stringify(suite)}`,
       )
     }

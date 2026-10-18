@@ -12,7 +12,7 @@
  * had before `pnpm rust:verify` existed. This step runs both directions on
  * every invocation and fails when either moves:
  *
- * 1. `portable crates compile for wasm32` — `cargo check` over the six
+ * 1. `portable crates compile for wasm32` — `cargo check` over the seven
  *    portable crates for the wasm target. A regression here is the browser
  *    side of the split breaking.
  * 2. `host crate refused by wasm target (structural boundary)` — the same
@@ -51,7 +51,7 @@ const root = fileURLToPath(new URL('../../', import.meta.url))
 const workspace = join(root, 'rust')
 
 /**
- * The portable set, frozen as the six crates the wasm-clean boundary covers.
+ * The portable set, frozen as the seven crates the wasm-clean boundary covers.
  *
  * The workspace members NOT here, each a deliberate absence rather than an
  * omission:
@@ -66,6 +66,11 @@ const workspace = join(root, 'rust')
  *   RF02's DEV-only test fixture. It is the furthest possible from a wasm
  *   surface: it spawns local processes, and no production crate depends on it,
  *   so the crate graph already proves nothing portable can reach it.
+ *
+ * `archava-context` joined with the R09 slice: a portable leaf on
+ * serde/serde_json/archava-core only — the turn-context surfaces a browser
+ * embed builds its visitor turn from, with the store in memory and no host
+ * I/O of any kind.
  */
 const PORTABLE_CRATES = [
   'archava-core',
@@ -74,6 +79,7 @@ const PORTABLE_CRATES = [
   'archava-rates',
   'archava-assembly',
   'archava-capacity',
+  'archava-context',
 ]
 
 const HOST_CRATE = 'archava-host'

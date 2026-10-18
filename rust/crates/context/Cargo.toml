@@ -1,0 +1,45 @@
+[package]
+name = "archava-context"
+description = "Visitor-assistant turn context: knowledge retrieval, consent gate, masking boundary and the bounded decision catalogue (R09 slice)"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+rust-version.workspace = true
+
+# R09's assistant-context slice.
+#
+# Port lineage. Each module names its source; the three checks the R09
+# assistant-context proof grades live across them:
+#
+# - `knowledge/` ← `packages/knowledge/src/{schema,structured-truth,text,store,retrieval}.ts`:
+#   the structured-truth / retrieval split decided before retrieval, tenant-scoped
+#   ingest and search, deterministic chunking and hermetic scoring.
+# - `consent` ← `packages/sdk/src/consent.ts`: the gate every collection path
+#   must ask first; fail-closed, domains not switches.
+# - `mask` ← `packages/acl/src/mask.ts`: the field masker at the provider
+#   boundary — lossy by default, loud when it fires.
+# - `decision/` ← `packages/decision/src/{tasks,policy,vocabulary,rule-provider,
+#   ranking,validate,orchestrator}.ts`: the closed five-task catalogue, per-task
+#   confidence floors and disagreement directions, the deterministic cue
+#   baseline, and the reply validation.
+# - `decision/turn` ← `packages/assistant/src/decision.ts`: the turn seam —
+#   evidence projection and secret redaction before any external evaluation.
+# - `turn_context` ← `packages/assistant/src/turn.ts` (`projectContextGraph`,
+#   `maskAtBoundary`): the graph projection that carries no form values, plus
+#   the second line of defence mask.
+#
+# What is deliberately NOT here: the full `runTurn` pipeline (policy gating,
+# generative-UI validation, handoff, analytics, execution). Those are the
+# turn loop's other proofs; this crate is the context machinery they read.
+# The context graph SHAPE it consumes was ported into `archava-core`
+# (packages/core/src/context-graph.ts), which is why this crate depends on
+# core and nothing else internal.
+#
+# No async and no database: the baseline's knowledge store is in-memory and
+# the decision ports answer synchronously; the provider *attempt* ledger with
+# its PostgreSQL budgets is `archava-providers`, not this crate.
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+archava-core.workspace = true

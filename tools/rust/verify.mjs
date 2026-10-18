@@ -299,6 +299,19 @@ export function gateSteps() {
       'R03 domain suite',
       () => step('R03 domain suite', ['node', 'tools/rust/r03-domain.mjs']),
     ],
+    // Same pattern for P-ASSISTANT-CONTEXT: the R09 context slice's witnesses
+    // live in one integration suite (`archava-context --test context`, 77
+    // witnesses in one file per the port contract) plus the crate's library
+    // tests. The workspace step runs both but proves only "all tests passed";
+    // this step re-runs them and grades the three required checks (parity,
+    // provider budget/recovery, consent/privacy) against witness tests it
+    // looks up BY NAME, so a deleted proving test is a visible gap. No
+    // PostgreSQL behind it: the crate is a portable leaf, the store is in
+    // memory.
+    [
+      'R09 context suite',
+      () => step('R09 context suite', ['node', 'tools/rust/assistant-context.mjs']),
+    ],
     // P-CAPACITY-CONFORMANCE: same RF01 shape, one Rust suite, no PostgreSQL.
     // The six required checks grade named witnesses in the differential
     // suite — refusals, both bound families, the iteration cap, retained
@@ -543,6 +556,23 @@ export function fastGateEvidenceMapping() {
           return JSON.parse(readFileSync(join(root, 'dist/rust-r03-domain-proof.json'), 'utf8'))
         } catch (error) {
           throw new Error(`R03 domain witness proof unreadable: ${error.message}`)
+        }
+      },
+    },
+    {
+      proof: 'P-ASSISTANT-CONTEXT',
+      checks: {
+        'context/knowledge/decision parity tests pass': { step: 'R09 context suite' },
+        'provider budget/recovery tests pass': { step: 'R09 context suite' },
+        'consent/privacy tests pass': { step: 'R09 context suite' },
+      },
+      details: () => {
+        try {
+          return JSON.parse(
+            readFileSync(join(root, 'dist/rust-assistant-context-proof.json'), 'utf8'),
+          )
+        } catch (error) {
+          throw new Error(`assistant context witness proof unreadable: ${error.message}`)
         }
       },
     },

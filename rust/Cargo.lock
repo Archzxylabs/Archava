@@ -78,6 +78,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "archava-context"
+version = "0.1.0"
+dependencies = [
+ "archava-core",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "archava-core"
 version = "0.1.0"
 dependencies = [

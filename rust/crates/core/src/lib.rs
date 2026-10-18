@@ -6,6 +6,7 @@
 //!
 //! | Rust | TypeScript source |
 //! | --- | --- |
+//! | [`graph`] | `packages/core/src/context-graph.ts` |
 //! | [`tenant`] | `packages/core/src/tenant.ts` |
 //! | [`roles`] | `packages/acl/src/roles.ts` |
 //! | [`actions`] | `packages/acl/src/actions.ts` |
@@ -17,9 +18,16 @@
 //! memory safety does not satisfy G03; a denial test at a real entrypoint does.
 
 pub mod actions;
+pub mod graph;
 pub mod roles;
 pub mod tenant;
 
 pub use actions::{ActionDefinition, ActionLevel, ConfirmationMode};
+pub use graph::{
+    fold_context_events, parse_context_graph, reduce_context_graph, seed_context_graph,
+    ContextActionAvailability, ContextCart, ContextCheckout, ContextComparison, ContextEntityRef,
+    ContextError, ContextEvent, ContextForm, ContextGraph, ContextGraphError, ContextPage,
+    ContextSession,
+};
 pub use roles::{AdminPermission, AdminResource, RoleName};
 pub use tenant::{assert_tenant, scoped, TenantId, TenantScope, TenantScopeError};
