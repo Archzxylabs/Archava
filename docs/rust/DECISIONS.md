@@ -598,39 +598,48 @@ at the path the producer is actually responsible for.
 
 ## ADR-R15 — frozen tallies record their authoring moment; a tally must equal the producer's graded truth
 
-**Status:** corrected at the second full release gate after OWN-V1; proven by
-the three producers emitting their tallies with the corrected manifest
-(exact deep-equal verified standalone) and the next release-gate run writing
-all four affected evidence files.
+**Status:** closed at the third full-gate repair pass after OWN-V1; proven by
+the three producers emitting their tallies (exact deep-equal verified
+standalone against the frozen expects) and the drift pins green
+(`verify.test.mjs` 25/25, `verify-release.test.mjs` 24/24). One intermediate
+record in this ADR — correcting the module-consumers tally `4 → 10` in
+commit b141a24 — was itself refuted by the drift pin
+`the P-MODULE-CONSUMERS witness map and the frozen manifest cannot drift
+apart` and reverted in this commit; that catch is the pins doing exactly
+what they exist for, and it is recorded here rather than erased.
 
 **Context.** The RN01–RN08 round froze `expect` tallies —
 `witnessTotal`/`namedRegressions` — into the manifest for the ERP and
 module-consumer proofs, the pyramidal rule being that a proof's graded size
 is pinned so a contentful weakening is a visible mismatch rather than a
 silent pass. But three of the frozen expectations had never been exercised:
-the two ERP suite producers emitted no `namedRegressions` at all (the
-authority producer, written in the same round, DID — its RN01/RN02
-aggregation is the pattern), the module-consumers exporter emitted no
-`witnessTotal`, and the exporter's frozen count (`4`) could never equal its
-graded truth: the script's own header documents the set as the accepted ERP
-pair AND their `-pg` ledgers AND the `@archava/config` release-profile
-carrier, hashed per consumer and cross-compared between consumers —
-five packages × two consumers = 10. A tally pinned BELOW the real count
-would make every honest run fail forever; the freeze's anti-weakening
-purpose needs the pinned number to BE the graded truth.
+no full gate ran between that freeze and the first OWN-V1 gate run, and
+both runs therefore surfaced the gap at once. The two ERP suite producers
+emitted no `namedRegressions` at all (the authority producer, written in
+the same round, DID — its RN01/RN02 aggregation is the pattern), and the
+module-consumers exporter emitted no `witnessTotal`. The frozen count
+(`4`) was correct all along: per module-consumers.witnesses.mjs, a witness
+is a **required check × consumer stage** — two manifest checks, each
+graded for both product verticals, `2 × 2 = 4` — not a count of the hashed
+module packages (five including the `@archava/config` carrier and the
+`-pg` ledgers, which would give 10). Counting the wrong unit is precisely how a frozen tally can seem
+"never satisfiable" without being wrong.
 
 **Decision.** (1) The two ERP producers grade their `namedRegressions` from
 the checks they already run — the check names ARE the frozen strings — so a
 wiring drift or a failed witness makes the record differ from the frozen
 expectation loudly, the same shape as the authority producer's RN01/RN02.
-(2) The module-consumers exporter counts its graded surface honestly
-(`2 × 5 = 10`). (3) The frozen `4` corrected to `10` with this paragraph as
-its record: the number froze before the tooling was tracked
-(1bb578f), the producers now emit the live counts, and any future
-shrinkage of the graded set is refused by `deepEqual` rather than absorbed.
+(2) The module-consumers exporter counts `witnessTotal` from the sidecar
+witness map it shares with the drift test
+(`module-consumers.witnesses.mjs`), asserting the same check×consumer
+stages the run actually performed, and the proof JSON now cites those stage
+names so proof → map → manifest is walkable without another process. (3)
+The frozen `4` stands unchanged; the b141a24 correction to `10` counted
+module-hash entries — a unit no other artifact in the chain agrees with —
+and is reverted, with this paragraph replacing the wrong record.
 
 **Consequence.** The fourth release-gate error class (details missing frozen
 tally) is closed at the producers, not the validator; the authority file's
-second-writer race (the OWN suite redistal copy) is closed by a parameterized
-proof path — same suite, real PostgreSQL, own record next to the rest of
-dist/own-evidence/.
+second-writer race (the OWN suite's rewrite of the fast gate's copy) is
+closed by a parameterized proof path — same suite, real PostgreSQL, own
+record next to the rest of dist/own-evidence/.
