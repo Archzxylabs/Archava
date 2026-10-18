@@ -40,7 +40,7 @@ const LOCAL_IMPLEMENTATIONS = freeze({
     { name: '@archava/purchasing', version: '0.1.0' },
     { name: '@archava/purchasing-pg', version: '0.1.0' },
     { name: '@archava/commerce', version: '0.3.0' },
-    { name: '@archava/commerce-pg', version: '0.3.0' },
+    { name: '@archava/commerce-pg', version: '0.4.0' },
     { name: '@archava/identity-pg', version: '0.1.0' },
   ],
   organization_accounts: [
@@ -102,7 +102,7 @@ const LOCAL_IMPLEMENTATIONS = freeze({
     { name: '@archava/foodservice', version: '0.1.0' },
     { name: '@archava/foodservice-pg', version: '0.1.0' },
     { name: '@archava/commerce', version: '0.3.0' },
-    { name: '@archava/commerce-pg', version: '0.3.0' },
+    { name: '@archava/commerce-pg', version: '0.4.0' },
     { name: '@archava/identity-pg', version: '0.1.0' },
   ],
   crm_contacts: [
@@ -133,17 +133,17 @@ const LOCAL_IMPLEMENTATIONS = freeze({
   ],
   catalog_products: [
     { name: '@archava/commerce', version: '0.3.0' },
-    { name: '@archava/commerce-pg', version: '0.3.0' },
+    { name: '@archava/commerce-pg', version: '0.4.0' },
     { name: '@archava/identity-pg', version: '0.1.0' },
   ],
   commerce_orders: [
     { name: '@archava/commerce', version: '0.3.0' },
-    { name: '@archava/commerce-pg', version: '0.3.0' },
+    { name: '@archava/commerce-pg', version: '0.4.0' },
     { name: '@archava/identity-pg', version: '0.1.0' },
   ],
   inventory_quantities: [
     { name: '@archava/commerce', version: '0.3.0' },
-    { name: '@archava/commerce-pg', version: '0.3.0' },
+    { name: '@archava/commerce-pg', version: '0.4.0' },
     { name: '@archava/identity-pg', version: '0.1.0' },
   ],
 })
