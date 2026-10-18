@@ -115,7 +115,7 @@ describe('trusted kit contracts and support boundary', () => {
     supported.packages.push(
       ...['commerce', 'commerce-pg', 'foodservice', 'foodservice-pg'].map((name) => ({
         name: '@archava/' + name,
-        version: name.startsWith('commerce') ? '0.3.0' : '0.1.0',
+        version: name === 'commerce-pg' ? '0.4.0' : name === 'commerce' ? '0.3.0' : '0.1.0',
         migrations: [],
       })),
     )
@@ -137,7 +137,7 @@ describe('trusted kit contracts and support boundary', () => {
     supported.packages.push(
       ...['commerce', 'commerce-pg', 'purchasing', 'purchasing-pg'].map((name) => ({
         name: '@archava/' + name,
-        version: name.startsWith('commerce') ? '0.3.0' : '0.1.0',
+        version: name === 'commerce-pg' ? '0.4.0' : name === 'commerce' ? '0.3.0' : '0.1.0',
         migrations: [],
       })),
     )
@@ -159,11 +159,12 @@ describe('trusted kit contracts and support boundary', () => {
     const supported = release()
     supported.contracts.assembly = '5.0.0'
     supported.packages.push(
-      ...['commerce', 'commerce-pg'].map((name) => ({
+      ...['commerce'].map((name) => ({
         name: '@archava/' + name,
         version: '0.3.0',
         migrations: [],
       })),
+      { name: '@archava/commerce-pg', version: '0.4.0', migrations: [] },
     )
     const planner = new KitPlanner(supported, COMPOSABLE_MODULES)
     for (const id of ['K03', 'K04']) {
