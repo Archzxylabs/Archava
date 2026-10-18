@@ -154,6 +154,12 @@ export async function runModuleConsumers() {
 
     const proof = {
       claim: 'R06-TWO-CONSUMERS: two independently installed consumers of the accepted ERP modules',
+      // `witnessTotal` is the frozen tally: it pins the SIZE of what this
+      // proof actually graded — one entry per consumer × per accepted
+      // module — so a third consumer installed without the manifest
+      // growing, or one module graded on one side only, is a visible
+      // mismatch rather than a silent weakening of the two-consumers claim.
+      witnessTotal: proofs.reduce((sum, entry) => sum + entry.modules.length, 0),
       consumers: proofs,
       modulesChecked: hashedModules,
       packOutput: 'dist/library',

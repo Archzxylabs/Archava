@@ -252,7 +252,32 @@ export function runFoodservice() {
   // check still has others is a visible mismatch rather than a silent
   // weakening of the proof.
   const witnessTotal = Object.values(WITNESSES).reduce((sum, list) => sum + list.length, 0)
-  const details = { suites, checks, problems, witnessTotal, allPassed }
+
+  // `namedRegressions` is the second frozen tally. RN-ERP-01 and RN-ERP-02
+  // are the two regression notes this suite exists to answer — a revoked
+  // foodservice grant that still replays receipts through recovery, and an
+  // idempotency key answered twice for different commands. The strings are
+  // the check names the run must have graded, so the tally is derived from
+  // `checks` rather than written blind: a regression name that is not a
+  // graded check is a wiring drift the producer refuses, and a check that
+  // failed has already pushed a problem — the record then differs from the
+  // frozen expectation and the coverage validator says so.
+  const regressionChecks = [
+    'revoked food grant refused on recovery',
+    'same key different command conflicts',
+  ]
+  for (const name of regressionChecks)
+    if (!(name in checks)) problems.push(`named regression check ${name} was not graded`)
+  const namedRegressions = Object.fromEntries(
+    regressionChecks.map((name, index) => [
+      `RN-ERP-0${index + 1}`,
+      checks[name]?.passed === true
+        ? name
+        : `not satisfied: the witness for ${name} did not reach pass`,
+    ]),
+  )
+
+  const details = { suites, checks, problems, witnessTotal, namedRegressions, allPassed }
 
   // Written on every run: the gate reads it as `details` and binds its hash as
   // a referenced producing file, and a failing run must record its own truth

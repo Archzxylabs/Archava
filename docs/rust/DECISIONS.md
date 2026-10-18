@@ -595,3 +595,42 @@ source lists are untouched — this is a path realignment, the manifest's
 **Consequence.** The validator's "artifact missing at write time" refusal is
 re-honored: a future run whose nested binary vanishes STILL refuses loudly,
 at the path the producer is actually responsible for.
+
+## ADR-R15 — frozen tallies record their authoring moment; a tally must equal the producer's graded truth
+
+**Status:** corrected at the second full release gate after OWN-V1; proven by
+the three producers emitting their tallies with the corrected manifest
+(exact deep-equal verified standalone) and the next release-gate run writing
+all four affected evidence files.
+
+**Context.** The RN01–RN08 round froze `expect` tallies —
+`witnessTotal`/`namedRegressions` — into the manifest for the ERP and
+module-consumer proofs, the pyramidal rule being that a proof's graded size
+is pinned so a contentful weakening is a visible mismatch rather than a
+silent pass. But three of the frozen expectations had never been exercised:
+the two ERP suite producers emitted no `namedRegressions` at all (the
+authority producer, written in the same round, DID — its RN01/RN02
+aggregation is the pattern), the module-consumers exporter emitted no
+`witnessTotal`, and the exporter's frozen count (`4`) could never equal its
+graded truth: the script's own header documents the set as the accepted ERP
+pair AND their `-pg` ledgers AND the `@archava/config` release-profile
+carrier, hashed per consumer and cross-compared between consumers —
+five packages × two consumers = 10. A tally pinned BELOW the real count
+would make every honest run fail forever; the freeze's anti-weakening
+purpose needs the pinned number to BE the graded truth.
+
+**Decision.** (1) The two ERP producers grade their `namedRegressions` from
+the checks they already run — the check names ARE the frozen strings — so a
+wiring drift or a failed witness makes the record differ from the frozen
+expectation loudly, the same shape as the authority producer's RN01/RN02.
+(2) The module-consumers exporter counts its graded surface honestly
+(`2 × 5 = 10`). (3) The frozen `4` corrected to `10` with this paragraph as
+its record: the number froze before the tooling was tracked
+(1bb578f), the producers now emit the live counts, and any future
+shrinkage of the graded set is refused by `deepEqual` rather than absorbed.
+
+**Consequence.** The fourth release-gate error class (details missing frozen
+tally) is closed at the producers, not the validator; the authority file's
+second-writer race (the OWN suite redistal copy) is closed by a parameterized
+proof path — same suite, real PostgreSQL, own record next to the rest of
+dist/own-evidence/.

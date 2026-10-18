@@ -306,7 +306,15 @@ function runT03() {
 
 /** T04: every authority refusal, at the backend, with real PostgreSQL. */
 function runT04() {
-  const outcome = runAuthority()
+  // The OWN suite records its own authority copy: the fast gate's
+  // P-AUTHORITY-PG evidence binds dist/rust-authority-proof.json's hash, and
+  // rewriting that file later in the same gate run would invalidate the
+  // recorded referenced hash ("the producing file changed after the proof
+  // ran"). Same suite, real PostgreSQL, own record path.
+  mkdirSync(join(root, 'dist/own-evidence'), { recursive: true })
+  const outcome = runAuthority({
+    proofPath: join(root, 'dist/own-evidence/rust-authority-proof.json'),
+  })
   const checks = outcome.checks ?? {}
   const requiredOk = outcome.ok === true
   const grades = {
@@ -594,7 +602,9 @@ function runT09() {
 }
 
 function readAuthorityProof() {
-  const path = join(root, 'dist/rust-authority-proof.json')
+  // T09 grades THE OWN SUITE's T04 record — the copy this lane wrote (the
+  // fast gate's path is the P-AUTHORITY-PG producer's record, not this one's).
+  const path = join(root, 'dist/own-evidence/rust-authority-proof.json')
   try {
     return JSON.parse(readFileSync(path, 'utf8'))
   } catch {

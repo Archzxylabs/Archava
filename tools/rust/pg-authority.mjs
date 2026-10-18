@@ -148,7 +148,14 @@ function runSuite(cargoArgs) {
  *
  * @returns {{ ok: boolean, checks: Record<string, object>, suites: Record<string, object>, problems: string[] }}
  */
-export function runAuthority() {
+export function runAuthority(options = {}) {
+  // The proof record's path is parameterized so second callers can write
+  // their OWN copy: the fast gate's P-AUTHORITY-PG evidence binds the default
+  // path's hash, and a second writer on that file would leave the recorded
+  // hash behind a file that changed after the proof ran — the coverage
+  // validator refuses exactly that shape. Same suite, same PostgreSQL, own
+  // record per caller.
+  const proofPath = options.proofPath ?? join(root, 'dist/rust-authority-proof.json')
   const manifest = loadManifest(root)
   const spec = manifest.proofs['P-AUTHORITY-PG']
   if (!spec || spec.kind !== 'evidence')
@@ -275,7 +282,6 @@ export function runAuthority() {
   // Written on every run: the gate reads it as `details` and binds its hash as
   // a referenced producing file, and a failing run must record its own truth
   // rather than leave the previous green file to be read as still current.
-  const proofPath = join(root, 'dist/rust-authority-proof.json')
   mkdirSync(join(root, 'dist'), { recursive: true })
   writeFileSync(proofPath, `${JSON.stringify(details, null, 2)}\n`)
   process.stdout.write(`  witness proof → dist/rust-authority-proof.json\n`)
