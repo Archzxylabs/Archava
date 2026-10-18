@@ -199,16 +199,50 @@ const OP_ALPHA: &str = "2c3e5a10-1111-4111-8111-0000000000e2";
 const OP_BETA: &str = "2c3e5a10-1111-4111-8111-0000000000e3";
 const OP_GAMMA: &str = "2c3e5a10-1111-4111-8111-0000000000e4";
 
-/// The one real followupAsOf every bucket assertion runs through. The flow
-/// stamps the DB clock for `occurredAt`, but a boundary test cannot depend on
-/// when the machine runs, so the caller pins the instant.
-const PIN: &str = "2026-10-18T08:00:00.000Z";
+/// The seeded due instants, anchored to the FIXTURE'S OWN database clock.
+///
+/// The flow stamps the DB clock for `occurredAt`, and the overview's `asOf`
+/// IS the database clock — no request field pins it — so absolute seed dates
+/// were a time bomb: the constants pinned `DUE_NOW` to 2026-10-18T08:00Z,
+/// which held only while the wall clock sat before that instant, and the
+/// overview's bucket counts detonated once it crossed. `seed` now reads the
+/// clock once per fixture and derives every boundary from it; the worklist
+/// test still gets its EXACT boundary equality by carrying the computed
+/// instant back INTO the request as `followupAsOf` — the pin stays in the
+/// caller's hands, and no assertion depends on when the machine runs.
+struct Seeded {
+    /// F_NOW's due time: one hour ahead of the clock, the boundary instant.
+    pin: String,
+    /// One day behind the clock (F_LATE; also F_DONE's completed due time).
+    due_late: String,
+    /// Three hours deeper into the past (F_C_LATE — keeps the
+    /// [F_LATE, F_C_LATE] due order determinate).
+    due_c_late: String,
+    /// One day ahead of the clock (F_SOON).
+    due_soon: String,
+}
 
-const DUE_LATE: &str = "2026-10-17T09:00:00.000000Z";
-const DUE_NOW: &str = "2026-10-18T08:00:00.000000Z";
-const DUE_SOON: &str = "2026-10-19T09:00:00.000000Z";
-
-async fn seed(fixture: &Fixture) {
+async fn seed(fixture: &Fixture) -> Seeded {
+    let (due_late, due_c_late, pin, due_soon): (String, String, String, String) = sqlx::query_as(
+        "SELECT \
+         to_char((now() - interval '1 day') AT TIME ZONE 'UTC', \
+                 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"'), \
+         to_char((now() - interval '1 day' + interval '3 hours') AT TIME ZONE 'UTC', \
+                 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"'), \
+         to_char((now() + interval '1 hour') AT TIME ZONE 'UTC', \
+                 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"'), \
+         to_char((now() + interval '1 day') AT TIME ZONE 'UTC', \
+                 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"')",
+    )
+    .fetch_one(&fixture.admin_pool)
+    .await
+    .expect("anchor the seeded due instants to the fixture's clock");
+    let seeded = Seeded {
+        pin,
+        due_late,
+        due_c_late,
+        due_soon,
+    };
     for principal in PRINCIPALS {
         sqlx::query(
             "INSERT INTO archava_identity.users (id, username, password_hash, active, version) \
@@ -275,15 +309,36 @@ async fn seed(fixture: &Fixture) {
     .expect("seed the activity");
 
     for (id, contact, summary, due, status, revision) in [
-        (F_LATE, ID_A, "Send the catalog", DUE_LATE, "open", 1),
-        (F_NOW, ID_A, "Boundary task", DUE_NOW, "open", 2),
-        (F_SOON, ID_A, "Book the demo", DUE_SOON, "open", 3),
-        (F_DONE, ID_B, "Archive the note", DUE_LATE, "completed", 1),
+        (
+            F_LATE,
+            ID_A,
+            "Send the catalog",
+            seeded.due_late.clone(),
+            "open",
+            1,
+        ),
+        (F_NOW, ID_A, "Boundary task", seeded.pin.clone(), "open", 2),
+        (
+            F_SOON,
+            ID_A,
+            "Book the demo",
+            seeded.due_soon.clone(),
+            "open",
+            3,
+        ),
+        (
+            F_DONE,
+            ID_B,
+            "Archive the note",
+            seeded.due_late.clone(),
+            "completed",
+            1,
+        ),
         (
             F_C_LATE,
             ID_C,
             "Resend the quote",
-            "2026-10-17T12:00:00.000000Z",
+            seeded.due_c_late.clone(),
             "open",
             2,
         ),
@@ -422,6 +477,8 @@ async fn seed(fixture: &Fixture) {
         .await
         .expect("seed the transition");
     }
+
+    seeded
 }
 
 // --- HTTP helpers ------------------------------------------------------------
@@ -667,11 +724,12 @@ async fn a_member_without_the_contact_read_grant_is_refused_before_any_tool() {
 /// **Witness: the overview counts the records the scope allows.**
 ///
 /// Alice sees the whole workspace: five contacts, four open follow-ups of
-/// which two are behind her pinned instant, three opportunities of which two
-/// are active. Carol, scope `assigned`, sees only her own two contacts and
-/// her own two opportunities. Both snapshots carry the invariant-holding
-/// counts (open == overdue + upcoming) — the numbers are REAL row counts,
-/// not fixtures.
+/// which two are behind the overview's asOf instant — the database clock,
+/// which the request cannot pin, so the seeds are anchored to it (see
+/// `Seeded`) — and three opportunities of which two are active. Carol, scope
+/// `assigned`, sees only her own two contacts and her own two opportunities.
+/// Both snapshots carry the invariant-holding counts (open == overdue +
+/// upcoming) — the numbers are REAL row counts, not fixtures.
 #[tokio::test]
 async fn an_overview_counts_the_records_the_scope_allows() {
     let fixture = provision().await;
@@ -871,18 +929,18 @@ async fn the_summary_walks_exact_choose_and_notfound_over_real_rows() {
 #[tokio::test]
 async fn the_worklist_reads_buckets_boundaries_and_scope() {
     let fixture = provision().await;
-    seed(&fixture).await;
+    let seeded = seed(&fixture).await;
     let app = archava_host::router(state(&fixture).await);
     let alice = login(&app, "alice").await;
     let carol = login(&app, "carol").await;
 
     let mut overdue = serde_json::json!({ "utterance": "tampilkan follow-up terlambat" });
-    overdue["followupAsOf"] = serde_json::json!(PIN);
+    overdue["followupAsOf"] = serde_json::json!(seeded.pin);
     let (status, reply) = ask(&app, &alice, &overdue).await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(reply["data"]["kind"], "followups");
     assert_eq!(reply["data"]["bucket"], "overdue");
-    assert_eq!(reply["data"]["asOf"], PIN);
+    assert_eq!(reply["data"]["asOf"], seeded.pin.as_str());
     let late_tasks: Vec<&str> = reply["data"]["items"]
         .as_array()
         .expect("the bucket")
@@ -901,7 +959,7 @@ async fn the_worklist_reads_buckets_boundaries_and_scope() {
     assert_eq!(reply["data"]["next"], serde_json::Value::Null);
 
     let mut upcoming = serde_json::json!({ "utterance": "tampilkan follow-up mendatang" });
-    upcoming["followupAsOf"] = serde_json::json!(PIN);
+    upcoming["followupAsOf"] = serde_json::json!(seeded.pin);
     let (_, upcoming_reply) = ask(&app, &alice, &upcoming).await;
     let soon_tasks: Vec<&str> = upcoming_reply["data"]["items"]
         .as_array()
@@ -916,7 +974,7 @@ async fn the_worklist_reads_buckets_boundaries_and_scope() {
     );
 
     let mut open = serde_json::json!({ "utterance": "tampilkan follow-ups" });
-    open["followupAsOf"] = serde_json::json!(PIN);
+    open["followupAsOf"] = serde_json::json!(seeded.pin);
     let (_, open_reply) = ask(&app, &alice, &open).await;
     assert_eq!(open_reply["data"]["bucket"], "open", "the unbucketed ask");
     assert_eq!(
@@ -926,8 +984,8 @@ async fn the_worklist_reads_buckets_boundaries_and_scope() {
 
     // Keyset pagination: a cursor excludes everything up to it.
     let mut paged = serde_json::json!({ "utterance": "tampilkan follow-ups" });
-    paged["followupAsOf"] = serde_json::json!(PIN);
-    paged["followupAfter"] = serde_json::json!({ "dueAt": DUE_LATE, "id": F_LATE });
+    paged["followupAsOf"] = serde_json::json!(seeded.pin);
+    paged["followupAfter"] = serde_json::json!({ "dueAt": seeded.due_late, "id": F_LATE });
     let (_, paged_reply) = ask(&app, &alice, &paged).await;
     let remaining: Vec<&str> = paged_reply["data"]["items"]
         .as_array()
@@ -948,7 +1006,7 @@ async fn the_worklist_reads_buckets_boundaries_and_scope() {
 
     // Scope: carol's queue carries only rows reachable through HER contacts.
     let mut carol_overdue = serde_json::json!({ "utterance": "tampilkan follow-up terlambat" });
-    carol_overdue["followupAsOf"] = serde_json::json!(PIN);
+    carol_overdue["followupAsOf"] = serde_json::json!(seeded.pin);
     let (_, carol_reply) = ask(&app, &carol, &carol_overdue).await;
     let carol_tasks: Vec<&str> = carol_reply["data"]["items"]
         .as_array()
