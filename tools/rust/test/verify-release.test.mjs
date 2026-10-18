@@ -83,6 +83,11 @@ test('the documented list is parsed from the handoff document, not mirrored here
     // tools/rust/{sdk-widget,realtime-voice}.mjs headers for the dispositions).
     'node tools/rust/sdk-widget.mjs',
     'node tools/rust/realtime-voice.mjs',
+    // OWN-V1's acceptance family (OWNER_CONFIGURATION_PRD §9): the ten
+    // P-OWN-Txx proofs run by tools/own/verify.mjs — the suite as the
+    // configuration step, the real-browser journey as its own step.
+    'node tools/own/verify.mjs',
+    'node tools/own/verify.mjs --browser-only',
   ]
   const executed = gateCommands()
   for (const command of executed) {
@@ -137,15 +142,16 @@ test('a gate running only documented commands reports them all covered', () => {
 })
 
 test('the reconciliation reports the commands beyond the handoff list', () => {
-  // None of the seven is in the documented list: the list documents platform
+  // None of the nine is in the documented list: the list documents platform
   // acceptance and predates the Rust gates. `pnpm rust:benchmark` is the
   // controlled benchmark, the vitest artifact-proofs step is RA03's split of
   // artifact-bound assertions out of the cold unit suite, the browser-slice
   // command is the real-browser proof with its own operator entry, the two
-  // R10/R11 producers are the ops-lane and legacy-scan named witnesses, and
-  // the two R09 producers are the SDK/widget and realtime/voice contract
-  // proofs. All seven must be reported as additions rather than quietly
-  // counted as covered.
+  // R10/R11 producers are the ops-lane and legacy-scan named witnesses, the
+  // two R09 producers are the SDK/widget and realtime/voice contract
+  // proofs, and the two OWN commands are the owner-configuration acceptance
+  // family (tools/own/verify.mjs, suite + browser journey). All nine must
+  // be reported as additions rather than quietly counted as covered.
   const { notInHandoffList, covered } = reconcileWithHandoffList()
   assert.deepEqual(notInHandoffList, [
     'pnpm rust:benchmark',
@@ -155,6 +161,8 @@ test('the reconciliation reports the commands beyond the handoff list', () => {
     'node tools/rust/legacy-replacement.mjs',
     'node tools/rust/sdk-widget.mjs',
     'node tools/rust/realtime-voice.mjs',
+    'node tools/own/verify.mjs',
+    'node tools/own/verify.mjs --browser-only',
   ])
   assert.equal(covered.includes('pnpm rust:benchmark'), false)
 })

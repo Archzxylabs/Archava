@@ -496,3 +496,67 @@ Node runtime to the Rust host — remains pending Archxy 2's domain lanes
 (§LEGACY); what this ADR closes is the safety machinery that makes the flip
 survivable, which is what R10 was scoped to deliver.
 
+
+## ADR-R13 — OWN-V1 delivered as the acceptance family over released surfaces (T01–T10)
+
+**Status:** decided and implemented at OWN-V1; proven by `P-OWN-T01` …
+`P-OWN-T10` (the `pnpm own:verify` family in `tools/own/verify.mjs`; the
+release gate runs it as the two steps "Owner configuration proofs" and
+"Owner browser journey").
+
+**Context.** `docs/OWNER_CONFIGURATION_PRD.md` §9 freezes the bounded
+first-owner release: a known owner runs inspect → plan → preview → confirm →
+applied → recovery/history/restore, editing only supported configuration. The
+frozen manifest carries the ten proofs (T01–T10) with their required checks.
+The question the lane had to answer: does OWN-V1 mean NEW product code, or the
+acceptance family over what already shipped?
+
+**Decision 1 — OWN-V1 is the acceptance family over released surfaces, not a
+new product surface.** Every T0x grades a REAL run against machinery this
+program already shipped and the gate already exercises: the two
+business-model kit consumers from packed artifacts (T01 via the K05/K04
+runner), the plan-preview contract suites (T03 via `buildDeploymentPlan`'s
+named witnesses), the real-PostgreSQL authority suite (T04 via `pg-authority`),
+the ops binary's executed refusals (T05), the fixture-backed rehearsal suite
+(T06/T08 via `upgrade_restore.rs`), module-gating semantics (T07 via the
+deployment-plan refusals plus the two independently installed ERP module
+consumers), and dual-engine pricing parity (T09). The lane invents no new
+readiness numbers: every grade is a boolean over a recorded, recomputable fact.
+
+**Decision 2 — the chat/dashboard plan equivalence is an in-crate witness.**
+The one genuinely NEW behavior witness is T02's
+`chat_flow_and_direct_planner_resolve_the_same_plan` (in
+`crates/assistant/src/conversation.rs`): a capturing planner records the
+EXACT plan value the chat flow verified and executed, and for every recorded
+utterance that value must equal — byte-for-byte JSON — the dashboard path's
+direct `LocalCrmPlanner` answer, with the reply carrying the contract's own
+planner identity. "Both paths resolve plans through the same contract" is a
+consumed-plan fact, not a naming coincidence.
+
+**Decision 3 — T10 stays a real browser journey and may not be faked.** The
+PRD's own words bind the browser proof to a real driver; the gate step runs
+the CRM host's browser battery (headless Chromium over CDP), whose harness
+itself refuses any runtime home outside `/tmp/archava-crm-runtime-*` — the
+"no owner code/file/terminal steps" check is graded from the harness's own
+scope assertion plus the run's exit.
+
+**Decision 4 — the driver guards the manifest in BOTH directions.**
+`tools/own/verify.mjs` refuses to run if any P-OWN-Txx's `requiredChecks`
+drift from its frozen map — a manifest edit without a producer change (or the
+reverse) is an announced drift, not a silent pass. Evidence is written per
+proof on EVERY run (`dist/own-evidence/`), red or green, so a failing run
+replaces the previous green claim.
+
+**Decision 5 — the kit-template lock pin is realigned, not hand-waved.** The
+foundation-crate tracking commit (5bde51c) changed the shipped-manifest set
+(`serde_json` entered `archava-core`'s dependency list), which left the
+committed kit-template `Cargo.lock` one line behind the pin the K05/K04
+runner asserts (`generate-lockfile --offline --locked`). The lock was
+regenerated from the current manifest set — the exact one-line realignment —
+so the pin asserts a CURRENT construction instead of failing on a stale one.
+
+**Consequences.** The family is executable per release-gate run (suite
+~10–15 min, browser ~5 min); each proof's evidence file names its facts so an
+audit can recompute the claim without re-reading this document. OWN-V2's
+custom-stages/typed-fields scope stays OUT (the PRD's own boundary: strict
+enums do not grow custom stages without an explicit data-model extension).

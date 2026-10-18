@@ -1058,4 +1058,85 @@ mod tests {
             other => panic!("summary branch produced {other:?}"),
         }
     }
+
+    /// OWN-T02: the chat conversation and the dashboard resolve THE SAME plan
+    /// for the same utterance, on the same planner contract. The dashboard
+    /// binds [`LocalCrmPlanner`] directly (`apps/crm`'s `loadCrmPlanner`
+    /// selects it when no premium provider is configured); the chat path is
+    /// [`ask`], whose whole turn CONSUMES a plan produced by the same seam.
+    /// This witness makes "the same contract" a fact: a capturing planner
+    /// delegates to the local planner and records the EXACT plan value the
+    /// flow verified and executed; for every recorded utterance that value
+    /// must equal the dashboard-path planner's direct answer, byte-for-byte
+    /// JSON. The flow's reply also carries the planner identity, so provider,
+    /// model, plan and data all read from one contract in both paths.
+    #[tokio::test]
+    async fn chat_flow_and_direct_planner_resolve_the_same_plan() {
+        use crate::planner::Planner;
+        use crate::PlannerIdentity;
+        use std::sync::{Arc, Mutex};
+
+        struct Capturing {
+            inner: LocalCrmPlanner,
+            consumed: Arc<Mutex<Vec<serde_json::Value>>>,
+        }
+        impl Planner for Capturing {
+            async fn plan(&self, utterance: &str) -> Result<serde_json::Value, AssistantError> {
+                let plan = self.inner.plan(utterance).await?;
+                (*self.consumed).lock().unwrap().push(plan.clone());
+                Ok(plan)
+            }
+            fn identity(&self) -> PlannerIdentity {
+                self.inner.identity()
+            }
+        }
+
+        let host = CannedHost {
+            permissions: vec![
+                "contacts.read",
+                "pipeline.read",
+                "followups.read",
+                "followups.write",
+            ],
+            ..CannedHost::default()
+        };
+        let planner = LocalCrmPlanner::new();
+        let consumed = Arc::new(Mutex::new(Vec::new()));
+        let capturing = Capturing {
+            inner: planner,
+            consumed: Arc::clone(&consumed),
+        };
+
+        // Deterministic utterances lifted from the planner's recorded rows —
+        // the same rows the baseline's planner tests pin.
+        for utterance in [
+            "ringkas kondisi CRM",
+            "tampilkan kontak",
+            "tampilkan semua follow-ups yang terlambat",
+            "tampilkan peluang",
+        ] {
+            let before = consumed.lock().unwrap().len();
+            let reply = ask(&host, &capturing, &context(), &input(utterance))
+                .await
+                .expect("the recorded utterance answers through the flow");
+            let plans = consumed.lock().unwrap();
+            assert_eq!(
+                plans.len(),
+                before + 1,
+                "the flow consumed exactly one plan for {utterance:?}"
+            );
+            let chat_plan = plans.last().expect("the chat path's plan");
+            let dashboard_plan = LocalCrmPlanner::new()
+                .plan(utterance)
+                .await
+                .expect("the dashboard-path planner answers");
+            assert_eq!(
+                chat_plan, &dashboard_plan,
+                "the chat flow's consumed plan must be byte-identical to the dashboard path's plan"
+            );
+            // The identity the chat flow recorded is the contract's own identity.
+            assert_eq!(reply.planner.provider_id, LocalCrmPlanner::PROVIDER_ID);
+            assert_eq!(reply.planner.model, LocalCrmPlanner::MODEL);
+        }
+    }
 }

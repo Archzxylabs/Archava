@@ -787,3 +787,76 @@ Stale-fact corrections vs the packets' owner notes, recorded for the reviewer:
   holder's confirmation) — main's 8cc7ed4 already addressed the CRM twin; the
   authority-suite twin stays on the watch list; no failure observed in the
   main-tree gate runs so far.
+
+## 2026-10-18 — R09 leftovers, R10 cutover machinery, R11 legacy lane, OWN-V1 (this checkpoint)
+
+Where things landed after the kits/lib maintainership commits (696beb9,
+d45641b, e7c3854) and this checkpoint's two commits (d99dbf6, 2b53f0a):
+
+- **R10 — archava-ops crate + pg-fixture prior-profile window (d99dbf6).**
+  `crates/ops` ships `status/doctor/verify-release/plan-assembly/backup/
+  restore/runbook` as one JSON-line CLI (exit 0 ok / 2 refusal / 1 internal).
+  `pg-fixture` gained the prior-window primitives
+  (`provision_prior_commerce_profile` through the frozen ledger minus the
+  newest migration; the 004-bound approvals grant is skipped only inside the
+  prior window). The five fixture-backed rehearsal witnesses
+  (`crates/ops/tests/upgrade_restore.rs`) pass 5/5; fmt/clippy clean offline.
+  ADR-R05 closed with ADR-R12's five decisions.
+
+- **R11 — legacy lane proven (P-LEGACY-REPLACEMENT).**
+  `tools/rust/legacy-replacement.mjs`: spawn census over the candidate's
+  runtime source (only PostgreSQL tools + the process-signal wrapper are
+  allowlisted; no JS engine in any Cargo.toml), the D07 bridge documentation
+  quoted byte-level with dispositions resolving to live paths
+  (`packages/crm-assistant/src/gemini-planner.ts` +
+  `rust/crates/providers/src/gemini.rs`; the inventory's `apps/crm/src/
+  gemini.ts` never existed in git), replacement registry verified as EXECUTED
+  from the ops proof artifact. Census: `{pg_ctl: 1, kill: 1}` only.
+
+- **R09 leftovers — the two browser-lane proofs.** The disposition recorded
+  in `crates/core/src/graph.rs` keeps SDK-side hosting TypeScript-side, so
+  both proofs hold the TS surfaces to their contracts instead of letting
+  them be document-only:
+  - `tools/rust/sdk-widget.mjs` (P-SDK-WIDGET): §24 source census over
+    `packages/sdk` + `packages/chat` (import allowlist, no `node:`, no
+    `process.env`), the two reference hosts built from PACKED TARBALLS via
+    `tools/library/verify-consumers.mjs` (each host's own verify asserts
+    browser-bundle isolation), the studio host (`apps/web`) and the
+    page-awareness witnesses — 208 tests green.
+  - `tools/rust/realtime-voice.mjs` (P-REALTIME-VOICE): the presence
+    gateway's six realtime-lifecycle witnesses, the documented vendor bridge
+    in four quoted places (PRD AI-04, the security gate's `realtimeTemplate`
+    limit, the template's operator README, the migration inventory's Python
+    disposition), and the chat-fallback witnesses — 90 tests green.
+
+- **OWN-V1 — the acceptance family over released surfaces (this
+  checkpoint's third commit).** `tools/own/verify.mjs` runs the ten
+  P-OWN-Txx proofs fresh per invocation, grades each required check from
+  recorded facts, and refuses manifest drift in both directions. T01 = the
+  K05/K04 two-business-model consumers; T02 = the new in-crate witness
+  `chat_flow_and_direct_planner_resolve_the_same_plan` (21/21 lib tests) plus
+  the TS contract suites; T03/T07 = the deployment-plan refusals and the ERP
+  module consumers; T04 = the real-PostgreSQL authority suite; T05 = the ops
+  binary's executed refusal classes (exit 2, canonical texts, and the
+  compatible request still planning); T06/T08 = the fixture-backed rehearsal
+  suite + the fresh-process identity recompute; T09 = presence/adapters
+  witnesses + dual-engine pricing parity reruns; T10 = the real headless
+  Chromium journey via the CRM host battery. Full suite 9/9 green
+  (`OWN_SUITE_EXIT=0`); T10 green standalone. ADR-R13 records the placement.
+
+- **Kit-template lock realignment.** The foundation-crate tracking commit
+  (5bde51c) changed the shipped-manifest set (`serde_json` in
+  `archava-core`'s dependency list), leaving the committed kit-template
+  `Cargo.lock` one line behind the pin `k05-k04-consumers.mjs` asserts.
+  Regenerated (exactly the one-line realignment); T01 green after.
+
+- **Release-gate wiring.** `tools/rust/verify-release.mjs` now runs the four
+  new producers (ops, legacy, SDK/widget, realtime/voice) and the two OWN
+  steps; `verify-release.test.mjs`'s pins grew to NINE deliberate additions
+  beyond the platform handoff fence; 24/24 green. The fast gate
+  (`pnpm rust:verify`) finished green (18 steps, `RUST_VERIFY_EXIT=0`) with
+  the R10 wiring in place.
+
+Still open after this checkpoint: the full `pnpm rust:verify-release` run with
+all ten OWN evidence files fresh, the D-docs (D-COMPLETION-REPORT,
+D-AUDIT-PACKET), the coverage scoreboard refresh, and the completion report.

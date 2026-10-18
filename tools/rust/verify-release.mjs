@@ -84,6 +84,11 @@ export const COMMANDS = {
   // documented vendor bridge — see tools/rust/{sdk-widget,realtime-voice}.mjs.
   'Rust SDK/widget proof': 'node tools/rust/sdk-widget.mjs',
   'Rust realtime/voice proof': 'node tools/rust/realtime-voice.mjs',
+  // OWN-V1's two steps: the ten required proofs of the owner configuration
+  // lane (tools/own/verify.mjs; see its header for the per-proof mapping)
+  // and the real-browser journey the PRD says must not be faked.
+  'Owner configuration proofs': 'node tools/own/verify.mjs',
+  'Owner browser journey': 'node tools/own/verify.mjs --browser-only',
 }
 
 /**
@@ -249,6 +254,23 @@ export function releaseSteps() {
       () => step('Rust realtime/voice proof', ['node', 'tools/rust/realtime-voice.mjs']),
     ],
     ['CRM benchmark', () => step('CRM benchmark', ['pnpm', 'crm:benchmark'])],
+
+    // OWN-V1: the bounded first-owner release proofs (OWNER_CONFIGURATION_PRD
+    // §9). The suite runs T01–T09 fresh — kit consumers from packed
+    // artifacts, the real-PostgreSQL authority suite, the plan-preview
+    // machinery, the ops binary's executed refusals, the fixture-backed
+    // rehearsal suite, module-gating semantics and the replan/parity
+    // witnesses. T10 is the REAL browser journey the PRD forbids faking, so
+    // the gate runs it as its own step. Both come last: they grade the whole
+    // released surface, and nothing they read changes behind them.
+    [
+      'Owner configuration proofs',
+      () => step('Owner configuration proofs', ['node', 'tools/own/verify.mjs']),
+    ],
+    [
+      'Owner browser journey',
+      () => step('Owner browser journey', ['node', 'tools/own/verify.mjs', '--browser-only']),
+    ],
   ]
 }
 
@@ -422,6 +444,18 @@ export function releaseEvidenceMapping() {
         JSON.parse(readFileSync(join(root, 'dist/rust-realtime-voice-proof.json'), 'utf8')),
     },
     { proof: 'P-CRM-BENCHMARK', step: 'CRM benchmark' },
+    // OWN-V1: each proof's details come from the driver's own-evidence file,
+    // so the grades an audit recomputes are the facts the run recorded — the
+    // step verdict decides the check strings, the details decide the facts.
+    // T10 backs the browser journey step; the other nine back the suite.
+    ...['P-OWN-T01', 'P-OWN-T02', 'P-OWN-T03', 'P-OWN-T04', 'P-OWN-T05', 'P-OWN-T06', 'P-OWN-T07', 'P-OWN-T08', 'P-OWN-T09', 'P-OWN-T10'].map((proofId) => ({
+      proof: proofId,
+      step: proofId === 'P-OWN-T10' ? 'Owner browser journey' : 'Owner configuration proofs',
+      details: () =>
+        JSON.parse(
+          readFileSync(join(root, 'dist/own-evidence', `${proofId}.json`), 'utf8'),
+        ),
+    })),
   ]
 }
 
