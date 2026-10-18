@@ -312,6 +312,20 @@ export function gateSteps() {
       'R09 context suite',
       () => step('R09 context suite', ['node', 'tools/rust/assistant-context.mjs']),
     ],
+    // Same pattern for P-PROVIDER-CONTRACTS: the R09 provider-contracts
+    // slice's witnesses live in one integration suite (`archava-providers
+    // --test provider_contracts`, 27 witnesses over the two HTTP seams —
+    // Gemini's plan request/response and Postmark's send/label/status port)
+    // plus the crate's library tests. The workspace step runs both but
+    // proves only "all tests passed"; this step re-runs them and grades the
+    // three required checks (wire shapes, idempotency/reconciliation,
+    // free/local policy) against witness tests it looks up BY NAME, so a
+    // deleted proving test is a visible gap. No PostgreSQL behind it: both
+    // transports are mocked in-process.
+    [
+      'R09 provider contracts',
+      () => step('R09 provider contracts', ['node', 'tools/rust/provider-contracts.mjs']),
+    ],
     // P-CAPACITY-CONFORMANCE: same RF01 shape, one Rust suite, no PostgreSQL.
     // The six required checks grade named witnesses in the differential
     // suite — refusals, both bound families, the iteration cap, retained
@@ -573,6 +587,26 @@ export function fastGateEvidenceMapping() {
           )
         } catch (error) {
           throw new Error(`assistant context witness proof unreadable: ${error.message}`)
+        }
+      },
+    },
+    {
+      // The provider-adapter HTTP-seam proof: same witness binding, over the
+      // `provider_contracts` suite's 27 witnesses (Gemini's plan seam and
+      // Postmark's send/label/status seams, both over in-process mocks).
+      proof: 'P-PROVIDER-CONTRACTS',
+      checks: {
+        'provider contracts preserved': { step: 'R09 provider contracts' },
+        'idempotency/reconciliation tests pass': { step: 'R09 provider contracts' },
+        'free/local policy honored': { step: 'R09 provider contracts' },
+      },
+      details: () => {
+        try {
+          return JSON.parse(
+            readFileSync(join(root, 'dist/rust-provider-contracts-proof.json'), 'utf8'),
+          )
+        } catch (error) {
+          throw new Error(`provider contracts witness proof unreadable: ${error.message}`)
         }
       },
     },

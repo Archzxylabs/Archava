@@ -817,7 +817,8 @@
         "p2 rates parity",
         "two cold consumers",
         "planning conformance suite",
-        "wasm portable boundary"
+        "wasm portable boundary",
+        "R09 provider contracts"
       ],
       "sourcePaths": [
         "rust/crates",

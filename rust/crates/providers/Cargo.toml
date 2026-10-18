@@ -24,6 +24,11 @@ sha2.workspace = true
 # Error surfaces with the fixed messages the boundary carries. No panic
 # paths in a budget ledger.
 thiserror.workspace = true
+# The wire seams (gemini.rs, postmark.rs) read provider replies and build
+# request bodies: the JSON trees of `packages/crm-assistant/src/
+# gemini-planner.ts` and `packages/act-postmark/src/gateway.ts`. `serde_json`
+# is already in the tree (the adapters crate pulls it): no resolution.
+serde_json.workspace = true
 
 [dev-dependencies]
 # The disposable owned instance. Dev-only by the same rule the fixture's own

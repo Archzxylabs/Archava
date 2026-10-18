@@ -28,11 +28,16 @@
 //! mock inspection (`never passes its contents to the ledger`), pinned in
 //! Rust by the same witness over a scripted store.
 //!
-//! No network client yet: the HTTP seams (Gemini request shape, Postmark
-//! send) are separate R09 slices ["provider contracts preserved"]; this
-//! module is the accounting and recovery layer they run through.
+//! No network client in the crate itself: the HTTP seams (Gemini request
+//! shape, Postmark send) are separate R09 slices ["provider contracts
+//! preserved"], ported in [`gemini`] and [`postmark`] over injected mock
+//! transports; this module is the accounting and recovery layer they run
+//! through.
 
 pub mod contracts;
+pub mod gemini;
+pub mod pilot;
+pub mod postmark;
 pub mod runtime;
 pub mod store;
 

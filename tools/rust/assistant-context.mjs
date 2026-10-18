@@ -33,8 +33,11 @@
  *   provider call per turn, none in off mode, none when nothing may be
  *   replaced, the deadline held, a failure context-blind, unready held, a
  *   malformed reply closing the whole reply, a refusal preserving the
- *   baseline. (The R09 provider-contracts packet adds the transport-level
- *   budget witnesses; the map grows then, the checks stay.)
+ *   baseline. The transport-level half rode in with the R09
+ *   provider-contracts packet: the planner's bound over simultaneous
+ *   calls/timeouts/budget and the deadline no late body outlives, graded
+ *   from the `archava-providers` suite (the map grew then; the checks
+ *   stayed).
  * - `consent/privacy tests pass` — only explicit `true` grants, withdrawal on
  *   the very next turn, missing consent reported not thrown; the mask walk's
  *   fragment/whole-name/partial classification, the boundary that masks at
@@ -78,6 +81,13 @@ const workspace = join(root, 'rust')
 export const SUITES = {
   context: ['-p', 'archava-context', '--test', 'context'],
   contextLib: ['-p', 'archava-context', '--lib'],
+  // The R09 provider-contracts suite: the transport-level budget witnesses
+  // below live in `archava-providers --test provider_contracts`, so this
+  // producer must run that suite to look their statuses up. The contract
+  // producer (`provider-contracts.mjs`) grades the same suite for its own
+  // manifest checks; running it twice is deliberate — each proof proves its
+  // own checks from its own named witnesses, and neither is delegated.
+  providerContracts: ['-p', 'archava-providers', '--test', 'provider_contracts'],
 }
 
 /**
@@ -133,6 +143,14 @@ export const WITNESSES = {
     ['context', 'an_unready_provider_holds_the_turn'],
     ['context', 'a_malformed_reply_closes_the_whole_reply'],
     ['context', 'a_refused_task_preserves_the_baseline'],
+    // The transport-level half, proven where the HTTP seam lives: the
+    // planner's own re-entrancy/budget/timeout bound (one transport call
+    // while the outer call holds the single slot; the inner call sees busy
+    // and the outer's late failure is recorded) and the deadline that no
+    // late body can outlive. The map grew here when the provider-contracts
+    // packet landed; the checks stayed.
+    ['providerContracts', 'the_planner_bounds_simultaneous_calls_timeouts_and_budget'],
+    ['providerContracts', 'a_late_body_after_the_deadline_is_never_a_successful_plan'],
   ],
   'context/knowledge/decision parity tests pass': [
     // Classification (packages/knowledge structured-truth §17).
