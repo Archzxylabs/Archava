@@ -214,7 +214,7 @@ try {
     for (const t of tables) {
       const cols = (
         await owner.query(
-          "SELECT column_name FROM information_schema.columns WHERE table_schema='archava_commerce' AND table_name=$1 AND column_name NOT IN ('managed_by','purchase_id') ORDER BY ordinal_position",
+          "SELECT column_name FROM information_schema.columns WHERE table_schema='archava_commerce' AND table_name=$1 AND column_name NOT IN ('managed_by','purchase_id','role','capability') ORDER BY ordinal_position",
           [t.table_name],
         )
       ).rows
@@ -240,7 +240,7 @@ try {
   await commercePg.migrateCommerce(owner)
   const after = await priorSnapshot()
   for (const name of Object.keys(before)) {
-    if (name === 'schema_migrations') assert.equal(after[name].length, before[name].length + 2)
+    if (name === 'schema_migrations') assert.equal(after[name].length, before[name].length + 3)
     else assert.deepEqual(after[name], before[name])
   }
   await postgres.migrateFoodService(owner)
