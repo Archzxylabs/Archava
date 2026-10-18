@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { appendFileSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
+import { appendFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import {
   COMMANDS,
@@ -8,6 +8,7 @@ import {
   gateCommands,
   handoffCommands,
   inventoryBinding,
+  reapOrphanPostmasters,
   releaseEvidenceMapping,
   releaseSteps,
   reconcileWithHandoffList,
@@ -476,4 +477,35 @@ test('evidence the validator grades is exactly what readEvidence returns — no 
   const root = fixtureRoot()
   const written = produceValidEvidence(root)
   assert.deepEqual(readEvidence(root, 'P-ONE'), written)
+})
+
+test('the gate start reaps orphan postmasters whose data dir no longer exists', () => {
+  // An aborted earlier run can leave private postgres processes alive after
+  // their battery's tempdir was removed (twice in one day this left the next
+  // run's security chain failing at a different battery each time: with the
+  // corpses' io workers churning, `pg_ctl -w` missed its start deadline and
+  // the operator surfaced a generic database-state error). The reaper's
+  // contract is narrow: kill only whose `-D` data directory does not exist;
+  // leave live fixtures and children strictly alone.
+  const live = mkdtempSync(join('/tmp', 'reap-live-'))
+  const liveData = join(live, 'data')
+  mkdirSync(liveData, { recursive: true })
+  try {
+    const killed = []
+    const reaped = reapOrphanPostmasters({
+      psLines: [
+        '   11 /usr/bin/postgres -D /tmp/archava-corpse-gone/data -p 44187',
+        `   12 /usr/bin/postgres -D ${liveData}`,
+        '   13 postgres: io worker 0',
+        '   14 pg_ctl -D /tmp/archava-corpse-gone/data status',
+        '   15 /usr/bin/postgres -D',
+        '',
+      ],
+      kill: (pid, signal) => killed.push({ pid, signal }),
+    })
+    assert.equal(reaped, 1, 'only the corpse is reaped')
+    assert.deepEqual(killed, [{ pid: 11, signal: 'SIGTERM' }])
+  } finally {
+    rmSync(live, { recursive: true, force: true })
+  }
 })

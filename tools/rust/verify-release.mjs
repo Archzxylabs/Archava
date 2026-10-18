@@ -36,7 +36,8 @@
  * this tree, and nothing beyond that.
  */
 
-import { readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { execFileSync } from 'node:child_process'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { run, step, writeStepProofs } from './verify.mjs'
@@ -672,7 +673,60 @@ export function writeReport(outcome) {
   return report
 }
 
+/**
+ * Reap orphan postmasters whose data directory no longer exists.
+ *
+ * An aborted earlier run can leave private postgres processes alive after
+ * their battery's tempdir was removed: the run's fail-fast exit kills the
+ * parent chain, the postmaster it booted survives as a detached child, and
+ * every worker it spawns (io workers, walwriter, autovacuum) keeps burning
+ * CPU with no data behind it. These corpses are not just garbage — the
+ * security chain's private-postgres boots run `pg_ctl -w` under a start
+ * deadline, and in gate context (with several io-worker-heavy corpses
+ * churning) that deadline was missed twice in a row, failing the chain at
+ * different batteries with no code difference. An orphan is diagnosable
+ * purely from the process table: its `-D` data directory does not exist.
+ * Anything whose data directory still exists is left strictly alone.
+ *
+ * Runs ONCE at gate start, before any step: the gate is sequential, so no
+ * step's live fixture can be mistaken for a corpse at that moment.
+ */
+export function reapOrphanPostmasters({ psLines, kill = process.kill, out = process.stderr } = {}) {
+  const lines =
+    psLines ??
+    (() => {
+      try {
+        return execFileSync('ps', ['-eo', 'pid,cmd'], { encoding: 'utf8' }).split('\n')
+      } catch {
+        return []
+      }
+    })()
+  let reaped = 0
+  for (const line of lines) {
+    const trimmed = line.trimStart()
+    if (!trimmed) continue
+    const parts = trimmed.split(/\s+/)
+    const pid = Number(parts[0])
+    // The main postmaster is the only process in the group shaped
+    // `postgres -D <datadir>`; children (`postgres: io worker 0`, …) have no
+    // `-D` and die with the parent, so this plainly skips them.
+    const command = parts.slice(1).join(' ')
+    const dataDirectory = /postgres\S*\s-D\s(\S+)/.exec(command)?.[1]
+    if (!Number.isInteger(pid) || pid <= 1 || !dataDirectory || existsSync(dataDirectory)) continue
+    try {
+      kill(pid, 'SIGTERM')
+      reaped += 1
+      if (typeof out?.write === 'function')
+        out.write(`  reaped orphan postmaster ${pid} (data dir gone: ${dataDirectory})\n`)
+    } catch {
+      // Already gone or unowned: nothing to do.
+    }
+  }
+  return reaped
+}
+
 if (import.meta.main) {
+  reapOrphanPostmasters()
   const outcome = run(releaseSteps())
   // Evidence from what actually ran, written BEFORE the report so this run's
   // coverage reflects this run's steps (RF01 producer half for release proofs).
