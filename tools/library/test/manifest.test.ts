@@ -12,7 +12,7 @@ import { buildManifest, loadSource } from '../manifest.mjs'
  * anything at all.
  */
 
-const PROFILE = '1.17.0'
+const PROFILE = '1.18.0'
 
 /**
  * A complete, self-consistent evidence set. Defect cases derive from this by one mutation.
@@ -113,7 +113,7 @@ describe('buildManifest', () => {
 
     await expect(
       buildManifest(sources, { generatedAt: FIXED, generatedBy: 'test' }),
-    ).rejects.toThrow(/kit-proof declares profile 1\.3\.0 but the trusted catalogue is 1\.17\.0/)
+    ).rejects.toThrow(/kit-proof declares profile 1\.3\.0 but the trusted catalogue is 1\.18\.0/)
   })
 
   it('refuses an upgrade proof that did not target this profile', async () => {
@@ -122,7 +122,7 @@ describe('buildManifest', () => {
 
     await expect(
       buildManifest(sources, { generatedAt: FIXED, generatedBy: 'test' }),
-    ).rejects.toThrow(/upgrade-proof targets 1\.16\.0 but the accepted profile is 1\.17\.0/)
+    ).rejects.toThrow(/upgrade-proof targets 1\.16\.0 but the accepted profile is 1\.18\.0/)
   })
 
   it('refuses a non-integer operational kit count rather than deriving one', async () => {
