@@ -146,6 +146,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "archava-ops"
+version = "0.1.0"
+dependencies = [
+ "archava-assembly",
+ "archava-pg-fixture",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "sqlx",
+ "thiserror 2.0.21",
+ "tokio",
+ "uuid",
+]
+
+[[package]]
 name = "archava-pg-fixture"
 version = "0.1.0"
 dependencies = [

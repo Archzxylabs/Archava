@@ -65,6 +65,15 @@ members = [
   # gate's claim ("the host crate cannot compile for wasm32") true while the
   # UI can.
   "crates/slice",
+  # R10's operational crate: the release-identity verifier (config source of
+  # truth → recompute → recorded), the fenced single-writer lease (MIG-05 at
+  # the persistence boundary), the backup/restore rehearsal machinery
+  # (MIG-04/OBS-04) and the operator runbook registry that replaces the
+  # first-party Node/Python operator commands. It sits BESIDE the host on the
+  # internal graph — it may import `archava-assembly` (its verifier reads the
+  # same catalogue the assembly planner plans against) but the HOST must never
+  # depend on it, so no operational tooling can leak into the serving path.
+  "crates/ops",
 ]
 
 [workspace.package]
@@ -107,6 +116,15 @@ archava-assistant = { path = "crates/assistant" }
 # its wasm target resolves this table never, which is what keeps "the host
 # cannot compile for wasm32" true while the UI it serves can.
 archava-host = { path = "crates/host" }
+# R10's operational crate (`release identity / lease / runbook`). Declared so
+# `crates/ops` consumes it as `archava-assembly.workspace = true` — one local
+# path for the catalogue the verifier reads.
+archava-assembly = { path = "crates/assembly", version = "0.1.0" }
+# R10's dev-only rehearsal fixture. `archava-ops` uses it for the
+# upgrade/restore/rollback rehearsals in its test target; the library itself
+# names it only in dev-dependencies, keeping the fixture out of anything a
+# shipped crate could import.
+archava-pg-fixture = { path = "crates/pg-fixture" }
 
 # Versions resolve from the live registry and are frozen in Cargo.lock at R01
 # (ADR-R04). Nothing is carried over from the pilot's pins without a

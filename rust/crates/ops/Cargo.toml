@@ -1,0 +1,50 @@
+[package]
+name = "archava-ops"
+description = "Rust operational tooling: release-identity verification, the fenced single-writer lease, backup/restore rehearsal machinery and the operator runbook (R10)"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+rust-version.workspace = true
+
+# Why this crate exists in its own words (the header doc carries the lien):
+# R10 replaces the first-party Node/Python OPERATOR surface, not the serving
+# host. `archava-host` is the serving path and must never depend on this
+# crate; the host's Cargo.toml proves that in the direction it can. The
+# dependency direction is one-way: ops → assembly (the catalogue both read)
+# and — for the rehearsal tests only — ops → pg-fixture.
+
+[dependencies]
+archava-assembly.workspace = true
+# The verifier serializes its report; the lease records its idempotency JSON.
+serde.workspace = true
+serde_json.workspace = true
+# sha256 for artifact digests and the backup bundle's own hashes.
+sha2.workspace = true
+# `thiserror` for the typed refusals the rehearsal tests name — the same
+# pattern as `archava-adapters` errors.
+thiserror.workspace = true
+# The fenced lease is a persistence-boundary primitive (MIG-05): the fence
+# lives in a PostgreSQL table per ledger install, so the driver is a
+# dependency of the LIBRARY, not just of the rehearsal tests. Feature set
+# matches the workspace rule (postgres only, no macros, no build-time DB).
+sqlx.workspace = true
+tokio = { workspace = true, features = ["sync", "time"] }
+# The fencing token: a `Uuid::new_v4` per lease takeover, matching the id
+# minting the adapters use (`Uuid::new_v4` for command ids — the TS side uses
+# `randomUUID()`); `serde` because the lease state serializes into the
+# rehearsal report.
+uuid = { version = "1", features = ["v4", "serde"] }
+
+[dev-dependencies]
+# The upgrade/restore/rollback rehearsals ARE fixture-backed: a rehearsal
+# that runs against a mocked "database" would be the same dishonesty §1.4
+# forbids for the browser proof. Dev-dep only — no production crate hears of
+# the fixture, and the ops library never names its types outside tests.
+archava-pg-fixture.workspace = true
+tokio = { workspace = true, features = ["macros", "rt-multi-thread", "sync", "time"] }
+
+[[bin]]
+# The operator CLI. Kept in the same package so the shared release-identity
+# verifier cannot drift from the probe that uses it.
+name = "archava-ops"
+path = "src/main.rs"

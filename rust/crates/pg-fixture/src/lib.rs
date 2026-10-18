@@ -229,6 +229,34 @@ impl Fixture {
     pub fn dir(&self) -> &Path {
         &self.dir
     }
+
+    /// A connection URL for the owner role — the role that applies migrations.
+    ///
+    /// The upgrade rehearsal needs a SECOND owner connection distinct from
+    /// [`Fixture::owner_pool`] for the same reason
+    /// [`Fixture::runtime_url`] exists for a restart: the rehearsal treats
+    /// "the process that opened this database" and "the process upgrading it"
+    /// as two separate live resources, and sharing a `PgPool` would share the
+    /// very connection state the rehearsal claims to have handed off.
+    pub fn owner_url(&self) -> String {
+        format!(
+            "postgres://{OWNER_USER}:archava@127.0.0.1:{}/{}",
+            self.port, DATABASE
+        )
+    }
+}
+
+/// Apply the commerce ledger's remaining migrations as the owner role.
+///
+/// R10's upgrade primitive: called on a fixture provisioned by
+/// [`provision_prior_commerce_profile`], it records the exact continuation a
+/// real profile upgrade performs — the prefix history is accepted by
+/// [`migrate_ledger`]'s checksummed-history assertion and only the newest
+/// migration actually runs. A "first call applies 004; a second call is a
+/// no-op" idempotence run is part of the rehearsal callers make, which is why
+/// this is exposed as its own function rather than smuggled into provision.
+pub async fn apply_pending_commerce_migrations(owner_pool: &PgPool) -> Vec<(String, String)> {
+    migrate_commerce(owner_pool).await
 }
 
 /// One provision at a time per process — see [`Fixture`] for the two races
@@ -524,6 +552,28 @@ fn free_port() -> u16 {
 /// `let Ok(x) = ... else { return }` — the silent skip this fixture exists to
 /// make impossible.
 pub async fn provision() -> Fixture {
+    provision_with_commerce_usize(COMMERCE_MIGRATIONS.len()).await
+}
+
+/// The for-rehearsal prior profile: "a database an earlier supported release
+/// created", one migration short of the current ledger.
+///
+/// MIG-03 demands the upgrade story be proven for fresh AND for every
+/// supported prior profile. On the Rust side the prior supported profile is
+/// the current ledger minus its newest migration
+/// (`004_bound_approvals`): every ledger migrates as today, and the commerce
+/// ledger applies only through `003_purchase_receipts`. The fixture stays
+/// otherwise identical — same roles, same frozen lists, same history
+/// semantics — so an upgrade rehearsal against it exercises the REAL
+/// continuation path (history prefix → full ledger), not a mock.
+pub async fn provision_prior_commerce_profile() -> Fixture {
+    provision_with_commerce_usize(COMMERCE_MIGRATIONS.len() - 1).await
+}
+
+/// The provision body, parameterized over how far into the commerce ledger the
+/// "prior profile" window reaches. `provision` and
+/// [`provision_prior_commerce_profile`] are its only callers.
+async fn provision_with_commerce_usize(commerce_through: usize) -> Fixture {
     // Held for the whole provisioning window and released when this future
     // completes or unwinds. `acquire` returns `Result` only because a
     // semaphore can be closed — this one never is, hence `expect` rather than
@@ -663,7 +713,11 @@ pub async fn provision() -> Fixture {
     //    exactly that property being absent.
     let owner_url = url(OWNER_USER, DATABASE, port);
     let owner_pool = connect(&owner_url, 1).await;
-    let commerce_ledger = migrate_commerce(&owner_pool).await;
+    let commerce_ledger = if commerce_through == COMMERCE_MIGRATIONS.len() {
+        migrate_commerce(&owner_pool).await
+    } else {
+        migrate_commerce_upto(&owner_pool, commerce_through).await
+    };
     let identity_ledger = migrate_ledger(
         &owner_pool,
         "archava_identity",
@@ -736,6 +790,13 @@ pub async fn provision() -> Fixture {
         // RA01: the runtime reads approval requests, creates them, stamps the
         // approver onto them and consumes them — but never deletes them, and
         // the trigger in migration 004 refuses every transition back.
+        //
+        // The table only exists once 004 has applied, so the PRIOR-PROFILE
+        // window (R10's rehearsal fixture: the ledger through 003 only) skips
+        // this grant instead of failing on a table its frozen window does not
+        // create yet — the upgrade's continuation run (the FULL window) is
+        // what brings both the table and the grant. The full-window grant
+        // list stays exactly the frozen baseline's list.
         format!("GRANT SELECT,INSERT,UPDATE ON {NAMESPACE}.approvals TO {RUNTIME_USER}"),
         format!(
             "GRANT EXECUTE ON FUNCTION {NAMESPACE}.lock_membership(text,text) TO {RUNTIME_USER}"
@@ -841,6 +902,16 @@ pub async fn provision() -> Fixture {
              archava_provider.attempts TO {RUNTIME_USER}"
         ),
     ];
+    // 004-bound approvals is the upgrade's OWN surface: a prior-profile
+    // window stands in for "before the current identity", so its newest
+    // grant intentionally does not exist there yet. The full window keeps
+    // the statement list byte-identical to the frozen baseline's port.
+    let approvals_grant = format!("{NAMESPACE}.approvals");
+    let full_window = commerce_through == COMMERCE_MIGRATIONS.len();
+    let grants: Vec<String> = grants
+        .into_iter()
+        .filter(|statement| full_window || !statement.contains(approvals_grant.as_str()))
+        .collect();
     for statement in grants {
         sqlx::query(sqlx::AssertSqlSafe(statement.as_str()))
             .execute(&admin_pool)
@@ -913,6 +984,95 @@ async fn wait_ready(admin_url: &str, log: &Path) {
 /// of the file bytes — the same function the readiness check recomputes.
 async fn migrate_commerce(pool: &PgPool) -> Vec<(String, String)> {
     migrate_ledger(pool, NAMESPACE, "archava_commerce_migrations").await
+}
+
+/// The commerce ledger applied only through a prefix of the frozen list.
+///
+/// This is the R10 rehearsal primitive for a PRIOR PROFILE database (MIG-03:
+/// "fresh + every supported prior profile"): the current release identity adds
+/// `004_bound_approvals` on top of the migrated-before history, so a fixture
+/// standing in for "a prior supported profile's install" must hold the ledger
+/// through `003_purchase_receipts` and NOT 004. The window is a count, not an
+/// id, so a caller cannot name an id the frozen list does not contain, and the
+/// recorded history is still a strict prefix of the frozen ledger — which is
+/// exactly what makes the later full apply a legal continuation rather than a
+/// rewrite: [`migrate_ledger`]'s history assertion consumes that prefix.
+///
+/// A `take` beyond the frozen list is refused in one line, the same way a
+/// caller asking for history the package never shipped is refused.
+async fn migrate_commerce_upto(pool: &PgPool, take: usize) -> Vec<(String, String)> {
+    const LABEL: &str = "archava_commerce_migrations";
+    let package = migrations_package(NAMESPACE);
+    let migrations_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join(format!("../../../packages/{package}/migrations"));
+    let ledger = ledger_expectations(NAMESPACE);
+    assert!(
+        take <= ledger.len(),
+        "commerce migration window {take} exceeds the frozen ledger of {len}",
+        len = ledger.len()
+    );
+
+    let mut transaction = pool.begin().await.expect("begin migration transaction");
+    sqlx::query("SELECT pg_advisory_xact_lock(hashtext($1))")
+        .bind(LABEL)
+        .execute(&mut *transaction)
+        .await
+        .expect("advisory migration lock");
+    sqlx::query(sqlx::AssertSqlSafe(format!(
+        "CREATE SCHEMA IF NOT EXISTS {NAMESPACE}"
+    )))
+    .execute(&mut *transaction)
+    .await
+    .expect("create schema");
+    sqlx::query(sqlx::AssertSqlSafe(format!(
+        "CREATE TABLE IF NOT EXISTS {NAMESPACE}.schema_migrations(\
+         id text PRIMARY KEY, checksum text NOT NULL, \
+         applied_at timestamptz NOT NULL DEFAULT now())"
+    )))
+    .execute(&mut *transaction)
+    .await
+    .expect("create schema_migrations");
+
+    let history_query =
+        format!("SELECT id,checksum FROM {NAMESPACE}.schema_migrations ORDER BY id");
+    let existing: Vec<(String, String)> =
+        sqlx::query_as(sqlx::AssertSqlSafe(history_query.as_str()))
+            .fetch_all(&mut *transaction)
+            .await
+            .expect("read existing migration history");
+    assert!(
+        existing.len() <= ledger.len()
+            && existing
+                .iter()
+                .zip(&ledger)
+                .all(|((eid, esum), (id, sum))| eid == id && esum == sum),
+        "Unsupported or modified {NAMESPACE} migration history"
+    );
+    let applied = existing.len();
+    assert!(
+        applied <= take,
+        "commerce history already reached {applied} migrations, past the rehearsal window {take}"
+    );
+
+    for (id, checksum) in ledger.iter().skip(applied).take(take - applied) {
+        let path = migrations_dir.join(format!("{id}.sql"));
+        let sql = std::fs::read_to_string(&path)
+            .unwrap_or_else(|error| panic!("read migration {}: {error}", path.display()));
+        sqlx::raw_sql(sqlx::AssertSqlSafe(sql.as_str()))
+            .execute(&mut *transaction)
+            .await
+            .unwrap_or_else(|error| panic!("apply migration {NAMESPACE}/{id}: {error}"));
+        let record =
+            format!("INSERT INTO {NAMESPACE}.schema_migrations(id,checksum) VALUES($1,$2)");
+        sqlx::query(sqlx::AssertSqlSafe(record.as_str()))
+            .bind(id)
+            .bind(checksum)
+            .execute(&mut *transaction)
+            .await
+            .expect("record migration");
+    }
+    transaction.commit().await.expect("commit migrations");
+    ledger.iter().take(take).cloned().collect()
 }
 
 /// Apply one ledger's migrations with `migrate.ts`'s semantics.
