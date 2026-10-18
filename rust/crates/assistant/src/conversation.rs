@@ -1119,19 +1119,28 @@ mod tests {
             let reply = ask(&host, &capturing, &context(), &input(utterance))
                 .await
                 .expect("the recorded utterance answers through the flow");
-            let plans = consumed.lock().unwrap();
-            assert_eq!(
-                plans.len(),
-                before + 1,
-                "the flow consumed exactly one plan for {utterance:?}"
-            );
-            let chat_plan = plans.last().expect("the chat path's plan");
+            // Copy the consumed plan out of the lock WITHOUT holding the
+            // guard across the dashboard-path await below — clippy's
+            // await_holding_lock is right to refuse that shape even in
+            // tests, and the copy is the whole subject being compared.
+            let chat_plan = {
+                let plans = consumed.lock().unwrap();
+                assert_eq!(
+                    plans.len(),
+                    before + 1,
+                    "the flow consumed exactly one plan for {utterance:?}"
+                );
+                plans
+                    .last()
+                    .cloned()
+                    .expect("the chat path's consumed plan")
+            };
             let dashboard_plan = LocalCrmPlanner::new()
                 .plan(utterance)
                 .await
                 .expect("the dashboard-path planner answers");
             assert_eq!(
-                chat_plan, &dashboard_plan,
+                chat_plan, dashboard_plan,
                 "the chat flow's consumed plan must be byte-identical to the dashboard path's plan"
             );
             // The identity the chat flow recorded is the contract's own identity.
