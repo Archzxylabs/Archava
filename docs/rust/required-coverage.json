@@ -955,7 +955,7 @@
       ],
       "artifacts": [
         "tools/rust/benchmark/build/pricing-engine.mjs",
-        "rust/target/release/archava-bench"
+        "tools/rust/benchmark/rust/target/release/archava-bench"
       ],
       "referenced": []
     },
@@ -976,7 +976,7 @@
         "config/pricing.v1.json"
       ],
       "artifacts": [
-        "rust/target/release/archava-bench"
+        "tools/rust/benchmark/rust/target/release/archava-bench"
       ],
       "referenced": [
         "tools/rust/benchmark/evidence/benchmark.json"

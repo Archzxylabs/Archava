@@ -560,3 +560,38 @@ so the pin asserts a CURRENT construction instead of failing on a stale one.
 audit can recompute the claim without re-reading this document. OWN-V2's
 custom-stages/typed-fields scope stays OUT (the PRD's own boundary: strict
 enums do not grow custom stages without an explicit data-model extension).
+
+## ADR-R14 — the frozen manifest's artifact paths resolve from the ROOT; the benchmark's binary path was authored against the wrong base
+
+**Status:** corrected at the first full release gate after OWN-V1; proven by
+the corrected manifest writing `P-ARTIFACT-PROOFS` and `P-BENCHMARK` evidence
+(the next release-gate run).
+
+**Context.** The RN01–RN08 round froze
+`docs/rust/required-coverage.json`'s two benchmark-proof artifact lists with
+`"rust/target/release/archava-bench"`. Every OTHER proof's artifact list uses
+repo-root-relative paths (`rust/target/release/libarchava_native.node`,
+`rust/target/package/…`), and `writeEvidence` resolves artifact entries with
+`join(root, path)` — root-relative by construction. But the compiled consumer
+lives in the benchmark lane's OWN nested workspace
+(`tools/rust/benchmark/rust/`, built by that lane's `compileRust()` and
+asserted alive by its vitest artifact suite at exactly that directory): no
+root-workspace member declares a bin named `archava-bench`, so the frozen
+path could never exist. The defect was invisible until the first full
+release-gate run since the round: all 17 steps passed, but `writeStepProofs`
+refused both writes ("artifact missing at write time"), the coverage
+validator then counted the two proofs as missing, and 39 scope items went
+"blocked" on a phantom.
+
+**Decision — correct the two frozen strings to the files the producers
+actually produce** (`tools/rust/benchmark/rust/target/release/
+archava-bench`), and record the correction instead of silently rewriting:
+the freeze rule guards against scope growth and quiet check-drops, not
+against a declared path pointing at a file the ecosystem never writes. The
+required checks, producedBy lines, proof kinds, scope bindings and digests'
+source lists are untouched — this is a path realignment, the manifest's
+ analogue of the kit-template lock realignment (ADR-R13 Decision 5).
+
+**Consequence.** The validator's "artifact missing at write time" refusal is
+re-honored: a future run whose nested binary vanishes STILL refuses loudly,
+at the path the producer is actually responsible for.
