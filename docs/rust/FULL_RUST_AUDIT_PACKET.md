@@ -122,3 +122,27 @@ serialized by `PROVISION_SLOTS`.
   login-budget and presence-lane witnesses pin deterministic refusal shapes
   in-crate; HTTP-level floods assert closed outcome sets (RN07's recorded
   diagnosis).
+
+### Watchlist — security-chain environment (recorded against final6/final7/final8)
+
+- **Orphan postmasters from aborted runs.** A full-gate run that aborts
+  mid-chain can leave private postgres processes alive after their battery's
+  tempdir was removed; their io workers keep burning CPU on a deleted data
+  dir. Two consecutive chain failures had no code behind them
+  (`fulfillment-host`: operator "database state" envelope; then `act`:
+  live-but-unready login preceded the real catch) and both batteries
+  reverified green standalone minutes later — the corpses' load made
+  `pg_ctl -w` miss its 60s start deadline. The gate now reaps orphans at
+  start (`reapOrphanPostmasters`, `94307ed`): kill only whose `-D` data
+  directory does not exist, log what was killed. The per-command chain logs
+  (`dist/security-proof/<name>.log`) are where the real inner error lives.
+- **The chain batteries require the default TMPDIR.** The act integration's
+  isolated-worker guard accepts only a fixture host under
+  `/tmp/archava-act-proof-` by name; do not redirect TMPDIR around
+  `pnpm rust:verify-release`. (Recorded because one full run was poisoned by
+  exactly this operator action.)
+- **Private-postgres start deadline.** `apps/crm/src/local-postgres.ts`
+  boots with `pg_ctl -w` (60s default deadline). Under heavy load this can
+  fail transiently; the reaper plus a quiet box is the mitigation recorded
+  here. The deadline change itself lives in owner-dirty CRM source and is
+  not part of this lane's commits.

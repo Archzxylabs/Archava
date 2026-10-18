@@ -124,3 +124,22 @@ Node runtime to the Rust host) — deferred by design until the domain depths
 land; the safety machinery (R10) is complete. Everything the program OWNS is
 proven by executed commands whose exits and artifacts the validator
 recomputes.
+
+**Terminal record (delivered):** the full gate over the corrected tree
+(`pnpm rust:verify-release`, including the fast gate, the security chain,
+both cold-prior paths, kits/ops/legacy/SDK/widget/realtime, the CRM
+benchmark and every OWN producer) finished **17/17 proofs green** with
+`RUST_VERIFY_EXIT=0`-equivalent all-green steps and **5 coverage errors**,
+each one a packet-blocked domain proof (`P-R04…P-R08-DOMAIN` "no evidence
+document"); the verdict's blocked set is exactly the R04–R08 lane items plus
+`G04-DOMAIN-INTEGRITY` (25 items) — all downstream of those five producers.
+`node tools/rust/coverage.mjs` reports the same five and nothing else. Two
+intermediate full runs failed inside the security chain for environmental
+reasons (orphan postmasters after an aborted earlier run — see the audit
+packet's watchlist); both affected batteries reverified green standalone and
+the sixth run passed the chain with the orphans cleared. The program's local
+milestone obligations (§50.3 EXEC-01…EXEC-06, §51.4 OWN-V1 with OWN-T01–T10,
+and the R00–R03/R09–R11 porting lanes) are closed with executed-command
+evidence; the release decision stays external (Archxy 2 packets + Codex
+sign-off), and the cutover FLIP remains deferred by design until the domain
+depths land.

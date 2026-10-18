@@ -857,6 +857,22 @@ d45641b, e7c3854) and this checkpoint's two commits (d99dbf6, 2b53f0a):
   (`pnpm rust:verify`) finished green (18 steps, `RUST_VERIFY_EXIT=0`) with
   the R10 wiring in place.
 
-Still open after this checkpoint: the full `pnpm rust:verify-release` run with
-all ten OWN evidence files fresh, the D-docs (D-COMPLETION-REPORT,
-D-AUDIT-PACKET), the coverage scoreboard refresh, and the completion report.
+Closed after this checkpoint: the terminal full `pnpm rust:verify-release` run
+(`final8`) finished **17/17 proofs green** — `PASS rust:verify-release —
+17/17 proofs green`, zero failed steps — with every owned proof's evidence
+written fresh `pass` and `node tools/rust/coverage.mjs` reporting exactly
+**5 errors**: `P-R04-DOMAIN`…`P-R08-DOMAIN` "no evidence document (missing or
+unparsable)", i.e. precisely the packet-blocked ERP domain set, and the
+verdict's blocked scope set is precisely the R04–R08 lane items plus
+`G04-DOMAIN-INTEGRITY` (25 items, all downstream of those five proofs).
+Two earlier full runs (`final6`/`final7`) failed INSIDE the security chain
+for environmental reasons that had no code behind them — see the orphan
+postmaster watch item in `FULL_RUST_AUDIT_PACKET.md` — both batteries
+reverified green standalone minutes later; the gate now reaps orphan
+postmasters at start (`94307ed`), and chain battery invocations stay
+plain-TMPDIR because the act integration's isolated-worker guard requires
+its fixture host under `/tmp/archava-act-proof-` by name. The D-docs
+(D-COMPLETION-REPORT, D-AUDIT-PACKET), the OWN evidence files (all ten
+fresh `pass`), and the coverage scoreboard refresh are delivered; the
+release decision itself remains external (Archxy 2 packets + Codex
+sign-off), documented in both D-docs.

@@ -502,6 +502,7 @@ test('the gate start reaps orphan postmasters whose data dir no longer exists', 
         '',
       ],
       kill: (pid, signal) => killed.push({ pid, signal }),
+      out: { write: () => {} },
     })
     assert.equal(reaped, 1, 'only the corpse is reaped')
     assert.deepEqual(killed, [{ pid: 11, signal: 'SIGTERM' }])
