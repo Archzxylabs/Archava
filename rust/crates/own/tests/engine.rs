@@ -381,3 +381,33 @@ fn t01_relabelling_changes_the_label_but_not_the_canonical_stage_key() {
     assert_eq!(labels.len(), 2);
     assert_eq!(plan.config.enabled, store.current().enabled);
 }
+
+#[test]
+fn t09_a_request_cannot_invent_readiness_cost_or_authority() {
+    // The request is CLOSED: readiness, cost, price and authority are
+    // catalogue/host facts, never owner-supplied fields. A forged body dies
+    // at deserialization instead of being echoed into a plan.
+    let forged = serde_json::json!({
+        "baseRevision": 1,
+        "enable": ["restaurant"],
+        "readiness": "ready",
+        "cost": "included",
+        "price": 0,
+        "role": "owner"
+    });
+    assert!(serde_json::from_value::<Request>(forged).is_err());
+
+    // Effects are copied from the trusted catalogue spec, not from the
+    // request. Laundry is NeedsSetup/Usage regardless of what a caller wants.
+    let store = store();
+    let plan = store
+        .plan(&request(1, &["laundry", "restaurant"], &[]))
+        .unwrap();
+    let laundry = plan
+        .effects
+        .iter()
+        .find(|effect| effect.module == "laundry")
+        .expect("laundry effect");
+    assert_eq!(laundry.readiness, Readiness::NeedsSetup);
+    assert_eq!(laundry.cost, CostClass::Usage);
+}
