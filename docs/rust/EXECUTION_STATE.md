@@ -957,3 +957,20 @@ sign-off), documented in both D-docs.
   gate at the final HEAD (C07 identity), independent Codex sign-off, and
   PACKET-010/support (Archxy 2 scope, not integrated). The final verdict stays
   **"Archxy 1 locally verified — full candidate incomplete."**
+
+### Fast-gate attempt at the closure HEAD (2026-10-20)
+
+`node tools/rust/verify.mjs` was started at `9b5c997` (the code closure commit)
+with `5d4448a` landing the docs-only follow-up while it ran. The first four
+steps are green: release artifacts, `cargo fmt --all --check`,
+`cargo clippy --all-targets --locked --offline -- -D warnings`, and the
+portable-boundary check (`P-WASM-PORTABLE` written at `9b5c997`). The
+`cargo test --workspace` step passed the authority, CRM (36/36), and the
+accommodation/assets/attendance cohorts, but was stopped during the ERP
+billing cohort: the shared machine was simultaneously running the Archxy 2
+lane's own `cargo test --workspace` and its support battery, making the
+serialized PostgreSQL suites take hours. This is the interference the
+acceptance matrix already documents; it is not a product failure. The
+targeted C03/C04 evidence was produced separately: engine 13/13, host own
+11/11, browser 32/32 with the owner journey, K05/K04 6/6 each. The full
+fast/release gate at a dedicated final HEAD remains open (C07).
