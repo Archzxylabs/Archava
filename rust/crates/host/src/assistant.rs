@@ -25,12 +25,11 @@
 //! Deliberately not in this slice (recorded as known composition
 //! differences, never as claims):
 //!
-//! - **The pipeline/native-actions module gates** (`'Pipeline module is
-//!   disabled.'`, 404) belong to the settings-module surface
-//!   (`modules.pipeline`; P-MODULE-CONSUMERS and the later vertical modules).
-//!   This host has no module configuration yet, so the reads run whenever the
-//!   caller holds both `contacts.read` and `pipeline.read` — the TS behavior
-//!   when the pipeline module is connected.
+//! - The pipeline/native-actions module gate (`'Pipeline module is
+//!   disabled.'`, 404) now reads the persisted C03 owner decision
+//!   (`archava_owner`, module `crm-pipeline`) in the same tool transaction:
+//!   a disabled module removes the pipeline tool and zeroes the overview's
+//!   pipeline counts, while the grants still gate who may ask at all.
 //! - **The Gemini planner lane** — a provider decision (`plannerFor`), not a
 //!   CRM contract. This composition serves the local deterministic planner,
 //!   exactly like the TS fallback.
@@ -518,7 +517,14 @@ impl HostCrm for SqlHost<'_> {
         // label check is belt-and-braces behind its own flow gate, and the
         // read is scope-contained regardless.
         let can_followups = access.allows(Permission::FOLLOWUPS_READ);
-        let can_pipeline = access.allows(Permission::PIPELINE_READ);
+        let can_pipeline = if access.allows(Permission::PIPELINE_READ) {
+            let connection = Self::executor(&mut transaction).await?;
+            crate::own::module_enabled(connection, &self.tenant, "crm-pipeline")
+                .await
+                .unwrap_or(false)
+        } else {
+            false
+        };
         // `now()` is transaction-fixed, so the overview and its `asOf` share
         // one snapshot stamp; the counts CTE reads the same statement.
         let row = {
@@ -935,6 +941,16 @@ impl HostCrm for SqlHost<'_> {
         if !access.allows(Permission::CONTACTS_READ) {
             let _ = transaction.rollback().await;
             return Err(AssistantError::forbidden("Contact access is required."));
+        }
+        let enabled = {
+            let connection = Self::executor(&mut transaction).await?;
+            crate::own::module_enabled(connection, &self.tenant, "crm-pipeline")
+                .await
+                .map_err(|_| AssistantError::unavailable("Service temporarily unavailable."))?
+        };
+        if !enabled {
+            let _ = transaction.rollback().await;
+            return Err(AssistantError::not_found("Pipeline module is disabled."));
         }
         let after_id = match after.as_deref() {
             None => None,

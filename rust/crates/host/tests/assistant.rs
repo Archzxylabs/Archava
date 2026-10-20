@@ -30,8 +30,9 @@
 //! - The Gemini planner lane is a provider decision, not a CRM contract; this
 //!   composition serves the local deterministic planner, the same one the TS
 //!   fallback serves.
-//! - The native-actions module gates belong to the module-configuration slice
-//!   (P-MODULE-CONSUMERS and the vertical modules), not to this route.
+//! - The native-actions module gate is proved here against the persisted C03
+//!   owner ledger (`crm-pipeline`); the assistant crate's flow-level tests
+//!   never see a module decision, because it is a host composition rule.
 
 use archava_host::{AppState, Ledger};
 use archava_pg_fixture::{provision, Fixture};
@@ -73,16 +74,17 @@ fn commerce_ledger() -> Ledger {
     }
 }
 
-/// Serving state that has passed BOTH readiness gates: commerce (`try_new`)
-/// and the CRM ledger (`try_new_crm`'s second pass).
+/// Serving state that has passed the commerce, CRM and owner-ledger readiness
+/// gates (`try_new_owner` composes all three).
 async fn state(fixture: &Fixture) -> AppState {
-    AppState::try_new_crm(
+    AppState::try_new_owner(
         fixture.runtime_pool.clone(),
         commerce_ledger(),
         &fixture.commerce_ledger,
         &fixture.identity_ledger,
         IDENTITY_KEY,
         &fixture.crm_ledger,
+        &fixture.owner_ledger,
     )
     .await
     .expect("a ready fixture must construct serving state")
@@ -1279,4 +1281,111 @@ async fn an_inactive_or_foreign_membership_is_refused_like_a_missing_one() {
     let (foreign_status, foreign_refusal) = ask(&app, &other, &says("tampilkan kontak")).await;
     assert_eq!(foreign_status, StatusCode::FORBIDDEN);
     assert_eq!(foreign_refusal["error"]["message"], "CRM request refused.");
+}
+
+#[tokio::test]
+async fn disabling_the_pipeline_module_removes_the_tool_and_zeroes_the_counts() {
+    let fixture = provision().await;
+    seed(&fixture).await;
+    sqlx::query(
+        "INSERT INTO archava_owner.owner_grants \
+         (tenant_id, principal_id, permissions, active) \
+         VALUES ($1, 'alice', ARRAY['config.read','config.apply'], true)",
+    )
+    .bind(ACME)
+    .execute(&fixture.admin_pool)
+    .await
+    .expect("seed the owner grant");
+    let app = archava_host::router(state(&fixture).await);
+    let alice = login(&app, "alice").await;
+
+    let (status, _) = ask(&app, &alice, &says("tampilkan peluang")).await;
+    assert_eq!(status, StatusCode::OK, "the enabled module serves the tool");
+
+    let disable =
+        serde_json::json!({ "baseRevision": 0, "enable": [], "disable": ["crm-pipeline"] });
+    let (status, planned) = post(
+        &app,
+        "/own/plan",
+        &serde_json::json!({ "tenant": ACME, "request": disable.clone() }).to_string(),
+        Some(&alice),
+        true,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{planned}");
+    let hash = planned["plan"]["planHash"]
+        .as_str()
+        .expect("a plan hash")
+        .to_string();
+    let (status, applied) = post(
+        &app,
+        "/own/apply",
+        &serde_json::json!({
+            "tenant": ACME,
+            "requestId": "00000000-0000-4000-8000-00000000d001",
+            "request": disable,
+            "confirmation": { "planHash": hash, "baseRevision": 0 },
+        })
+        .to_string(),
+        Some(&alice),
+        true,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{applied}");
+    assert_eq!(applied["receipt"]["revision"], 1);
+
+    let (status, _) = ask(&app, &alice, &says("tampilkan peluang")).await;
+    assert_eq!(
+        status,
+        StatusCode::NOT_FOUND,
+        "the disabled module removes the pipeline tool"
+    );
+    let (status, reply) = ask(&app, &alice, &says("ringkas kondisi CRM")).await;
+    assert_eq!(status, StatusCode::OK, "{reply}");
+    assert!(
+        reply["data"]["snapshot"]["pipeline"].is_null(),
+        "the disabled module removes the overview's pipeline section, not fakes zeros"
+    );
+
+    let enable =
+        serde_json::json!({ "baseRevision": 1, "enable": ["crm-pipeline"], "disable": [] });
+    let (status, planned) = post(
+        &app,
+        "/own/plan",
+        &serde_json::json!({ "tenant": ACME, "request": enable.clone() }).to_string(),
+        Some(&alice),
+        true,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{planned}");
+    let hash = planned["plan"]["planHash"]
+        .as_str()
+        .expect("a plan hash")
+        .to_string();
+    let (status, applied) = post(
+        &app,
+        "/own/apply",
+        &serde_json::json!({
+            "tenant": ACME,
+            "requestId": "00000000-0000-4000-8000-00000000d002",
+            "request": enable,
+            "confirmation": { "planHash": hash, "baseRevision": 1 },
+        })
+        .to_string(),
+        Some(&alice),
+        true,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{applied}");
+    assert_eq!(applied["receipt"]["revision"], 2);
+
+    let (status, reply) = ask(&app, &alice, &says("tampilkan peluang")).await;
+    assert_eq!(
+        status,
+        StatusCode::OK,
+        "the re-enabled module serves again: {reply}"
+    );
+    let (status, overview) = ask(&app, &alice, &says("ringkas kondisi CRM")).await;
+    assert_eq!(status, StatusCode::OK, "{overview}");
+    assert_eq!(overview["data"]["snapshot"]["pipeline"]["total"], 3);
 }
