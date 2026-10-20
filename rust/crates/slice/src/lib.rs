@@ -37,6 +37,7 @@ use leptos_router::path;
 
 pub mod contact;
 pub mod contacts;
+pub mod desk;
 pub mod draft;
 /// The browser's entry point. Only the wasm compilation exports it; the SSR
 /// build never renders a script-side `hydrate`.
@@ -49,6 +50,7 @@ pub mod session;
 
 use contact::Contact;
 use contacts::Contacts;
+use desk::Desk;
 use draft::Draft;
 use login::Login;
 use recover::Recover;
@@ -91,6 +93,7 @@ pub fn App() -> impl IntoView {
         <Router>
             <header>
                 <a href="/app" class="home">Archava CRM slice</a>
+                <a href="/app/desk" data-testid="nav-desk">"Assistant desk"</a>
                 <session::SessionMarker />
             </header>
             <main>
@@ -98,6 +101,7 @@ pub fn App() -> impl IntoView {
                     <Route path=path!("app") view=Login />
                     <Route path=path!("app/contacts") view=Contacts />
                     <Route path=path!("app/contact") view=Contact />
+                    <Route path=path!("app/desk") view=Desk />
                     <Route path=path!("app/draft") view=Draft />
                     <Route path=path!("app/recover") view=Recover />
                 </Routes>

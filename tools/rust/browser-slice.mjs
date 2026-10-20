@@ -139,6 +139,7 @@ const REQUIRED_CHECKS = [
   'literal search and cursor pagination',
   'pending recovery identity survives reload and resolution',
   'contact record writes through the product UI',
+  'assistant desk reads and executes through the host',
 ]
 
 /** The check each named witness backs. */
@@ -167,6 +168,10 @@ const WITNESS_CHECKS = {
   record_activity_add: 'contact record writes through the product UI',
   record_pipeline_create_and_move: 'contact record writes through the product UI',
   record_followup_complete: 'contact record writes through the product UI',
+  desk_overview: 'assistant desk reads and executes through the host',
+  desk_prepare_requires_confirmation: 'assistant desk reads and executes through the host',
+  desk_completion_executes: 'assistant desk reads and executes through the host',
+  desk_pipeline: 'assistant desk reads and executes through the host',
   pending_marker_survives_reload: 'pending recovery identity survives reload and resolution',
   pending_marker_cleared_after_resolution: 'pending recovery identity survives reload and resolution',
   storage_refusal_blocks_submission: 'pending recovery identity survives reload and resolution',
@@ -1395,6 +1400,128 @@ async function main() {
       'followup.complete closed the drafted follow-up (psql: completed:2)',
     )
     await shot(page, '18-record-screen')
+
+    // --- C01: the assistant desk — prepare, confirm, execute ---------------
+    // The audit said the assistant could only PREPARE: execution did not
+    // exist. The desk asks the real conversation route, shows the typed
+    // completion draft with `requiresApproval`, and writes only after an
+    // explicit human confirmation — asserted against PostgreSQL on both sides
+    // of the confirmation.
+    await openPage(page, `${APP}/contacts`)
+    await waitText(page, 'contacts-count', (text) => text.includes('contact(s)'))
+    await fill(page, 'contacts-search', 'Ada Lovelace')
+    await click(page, 'contacts-refresh')
+    await waitRowCount(page, 1)
+    await draftContactNamed(page, 'Ada Lovelace')
+    await fillDraft(page, 'Browser proof — desk followup', '2027-09-01T09:00:00Z')
+    await click(page, 'draft-submit')
+    await waitText(page, 'draft-status', (text) => text.includes('Recorded. Receipt:'))
+
+    await openPage(page, `${APP}/desk`)
+    await waitText(page, 'desk-overview', (text) => text.length > 0)
+    const overviewContacts = (await textOf(page, 'desk-overview-contacts')).trim()
+    const storedContacts = psql(
+      "SELECT count(*) FROM archava_crm.contacts WHERE tenant_id='bulk-demo'",
+      port,
+    )
+    if (overviewContacts !== storedContacts) {
+      throw new Error(
+        `the desk overview said ${overviewContacts} contacts, PostgreSQL holds ${storedContacts}`,
+      )
+    }
+    const deskSource = await textOf(page, 'desk-source')
+    if (deskSource.trim() !== 'crm') {
+      throw new Error(`the overview was not served from the CRM: ${deskSource}`)
+    }
+    witness(
+      'desk_overview',
+      `the desk read ${overviewContacts} contacts from the CRM (source crm, matches psql)`,
+    )
+
+    await click(page, 'desk-ask-worklist')
+    await waitText(page, 'desk-worklist', (text) => text.includes('desk followup'))
+    const preparedId = await page.evaluate(
+      `document.querySelector('[data-testid="desk-prepare-complete"]').getAttribute('data-followup')`,
+    )
+    const preparedRow = psql(
+      `SELECT status || ':' || revision FROM archava_crm.followups WHERE id='${preparedId}'`,
+      port,
+    )
+    if (preparedRow !== 'open:1') {
+      throw new Error(`the worklist offered a follow-up that is not open:1 — ${preparedRow}`)
+    }
+    await click(page, 'desk-prepare-complete')
+    let prepared = null
+    for (let waited = 0; waited < 80; waited += 1) {
+      prepared = await textOf(page, 'desk-completion')
+      if (typeof prepared === 'string') break
+      await new Promise((resolve) => setTimeout(resolve, 250))
+    }
+    if (typeof prepared !== 'string') {
+      // The panel's own words, not a bare timeout: a refusal, a different
+      // data kind, or a request that never resolved are three different
+      // bugs and must not look alike.
+      const status = await textOf(page, 'desk-status')
+      const reply = await textOf(page, 'desk-reply')
+      const kind = await textOf(page, 'desk-data-kind')
+      throw new Error(
+        `the desk rendered no completion draft for ${preparedId} (db ${preparedRow}); ` +
+          `status=${JSON.stringify(status)} kind=${JSON.stringify(kind)} reply=${JSON.stringify(reply)}`,
+      )
+    }
+    if (!prepared.includes('requiresApproval')) {
+      throw new Error(`the prepared completion did not ask for confirmation: ${prepared}`)
+    }
+    const deskFollowupId = await page.evaluate(
+      `document.querySelector('[data-testid="desk-confirm-complete"]').getAttribute('data-followup')`,
+    )
+    const beforeConfirm = psql(
+      `SELECT status || ':' || revision FROM archava_crm.followups WHERE id='${deskFollowupId}'`,
+      port,
+    )
+    if (beforeConfirm !== 'open:1') {
+      throw new Error(`preparing the completion already wrote: ${beforeConfirm}`)
+    }
+    witness(
+      'desk_prepare_requires_confirmation',
+      'the prepared completion carried requiresApproval and the follow-up stayed open:1',
+    )
+
+    await click(page, 'desk-confirm-complete')
+    await waitText(page, 'desk-action', (text) => text.includes('Recorded. Receipt:'))
+    await waitText(page, 'desk-worklist', (text) => !text.includes('desk followup'))
+    const afterConfirm = psql(
+      `SELECT status || ':' || revision FROM archava_crm.followups WHERE id='${deskFollowupId}'`,
+      port,
+    )
+    if (afterConfirm !== 'completed:2') {
+      throw new Error(`the confirmed completion did not commit: ${afterConfirm}`)
+    }
+    // One follow-up carries its CREATE and COMPLETE audit rows; the completion
+    // is the row this step is about.
+    const deskAudit = psql(
+      `SELECT actor_id || ':' || operation FROM archava_crm.audit WHERE resource_id='${deskFollowupId}' AND operation='followup.complete'`,
+      port,
+    )
+    if (deskAudit !== 'alice:followup.complete') {
+      throw new Error(`the confirmed completion's audit row is ${deskAudit}`)
+    }
+    witness(
+      'desk_completion_executes',
+      'the human confirmation executed followup.complete (psql: completed:2, audit alice:followup.complete)',
+    )
+
+    await click(page, 'desk-ask-pipeline')
+    await waitText(page, 'desk-pipeline', (text) => text.includes('Browser proof — deal'))
+    const pipelineText = await textOf(page, 'desk-pipeline')
+    if (!pipelineText.includes('qualified')) {
+      throw new Error(`the pipeline reply did not carry the moved stage: ${pipelineText}`)
+    }
+    witness(
+      'desk_pipeline',
+      'the desk listed the pipeline with the opportunity moved to qualified',
+    )
+    await shot(page, '19-assistant-desk')
 
     // Graceful stop of the attached server: its fixture owns the surviving
     // instance now; its Drop stops PostgreSQL and removes the directory.

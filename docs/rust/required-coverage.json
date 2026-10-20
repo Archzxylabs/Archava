@@ -1201,7 +1201,8 @@
         "session logout revokes server authority",
         "literal search and cursor pagination",
         "pending recovery identity survives reload and resolution",
-        "contact record writes through the product UI"
+        "contact record writes through the product UI",
+        "assistant desk reads and executes through the host"
       ],
       "sourcePaths": [
         "rust"

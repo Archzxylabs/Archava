@@ -861,9 +861,11 @@ impl ConversationData {
         )
     }
 
-    /// The bounded-collection ceiling the data schema piles onto every list
-    /// kind (`max(20)`): a tool that handed back more than this page size
-    /// could not have produced a verifiable reply.
+    /// The data schema's own refusals (`conversationDataSchema`): the bounded
+    /// collection ceiling (`max(20)`) applies to ARRAYS only, and a prepared
+    /// completion must be an OPEN task with `requiresApproval: true`. A tool
+    /// that handed back a longer page, a completed task or an unapproved
+    /// envelope could not have produced a verifiable reply.
     pub fn verified(self) -> Result<Self, AssistantError> {
         let over = |n: usize| n > 20;
         let refused = match &self {
@@ -882,8 +884,16 @@ impl ConversationData {
                 over(contact.activities.len()) || over(contact.followups.len())
             }
             ConversationData::Opportunity { opportunity } => over(opportunity.transitions.len()),
-            ConversationData::CompletionDraft { task, .. } => over(task.contact.full_name.len()),
-            ConversationData::Draft { draft, .. } => over(draft.summary.len()),
+            // `followupDetailSchema.refine(status === 'open')` plus the
+            // literal `requiresApproval: true` — NOT a length ceiling: a
+            // contact's name may legitimately exceed twenty characters, and
+            // refusing the reply over it made every completion for such a
+            // contact an unexplained 503.
+            ConversationData::CompletionDraft {
+                task,
+                requires_approval,
+            } => task.followup.status != FollowUpStatus::Open || !*requires_approval,
+            ConversationData::Draft { .. } => false,
             _ => false,
         };
         if refused {
@@ -1010,4 +1020,94 @@ pub trait HostCrm {
         stage: Option<PipelineStage>,
     ) -> Result<OpportunityPage, AssistantError>;
     async fn opportunity_summary(&self, id: String) -> Result<OpportunityDetail, AssistantError>;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn task(name: &str, status: FollowUpStatus) -> FollowupDetail {
+        FollowupDetail {
+            followup: FollowUp {
+                id: "11111111-1111-4111-8111-111111111111".to_string(),
+                tenant_id: "acme".to_string(),
+                contact_id: "22222222-2222-4222-8222-222222222222".to_string(),
+                summary: "Send the catalog".to_string(),
+                due_at: "2027-01-01T00:00:00Z".to_string(),
+                status,
+                revision: 1,
+                created_at: "2026-10-20T00:00:00Z".to_string(),
+                updated_at: "2026-10-20T00:00:00Z".to_string(),
+            },
+            contact: ContactRef {
+                id: "22222222-2222-4222-8222-222222222222".to_string(),
+                full_name: name.to_string(),
+                revision: 2,
+            },
+        }
+    }
+
+    /// The regression the assistant desk exposed: the `max(20)` ceiling
+    /// belongs to ARRAYS, not to a contact's name. A completion for a
+    /// 21-character name was refused as an unverifiable reply (503).
+    #[test]
+    fn a_long_contact_name_does_not_refuse_a_prepared_completion() {
+        let data = ConversationData::CompletionDraft {
+            task: task("Ada Lovelace (edited)", FollowUpStatus::Open),
+            requires_approval: true,
+        };
+        assert!(
+            data.verified().is_ok(),
+            "a 21-character name is a valid contact name, not a page overflow"
+        );
+    }
+
+    /// The schema's real completion conditions: an open task and a literal
+    /// `requiresApproval: true`.
+    #[test]
+    fn a_completed_task_or_an_unapproved_envelope_refuses() {
+        let completed = ConversationData::CompletionDraft {
+            task: task("Ada Lovelace", FollowUpStatus::Completed),
+            requires_approval: true,
+        };
+        assert!(completed.verified().is_err());
+        let unapproved = ConversationData::CompletionDraft {
+            task: task("Ada Lovelace", FollowUpStatus::Open),
+            requires_approval: false,
+        };
+        assert!(unapproved.verified().is_err());
+    }
+
+    /// A draft's summary is a string bounded by its own schema (`max(2000)`),
+    /// not a page: a 200-character summary is a normal draft.
+    #[test]
+    fn a_long_draft_summary_is_not_a_page_overflow() {
+        let data = ConversationData::Draft {
+            full_name: "Ada Lovelace".to_string(),
+            draft: PreparedDraft {
+                contact_id: "22222222-2222-4222-8222-222222222222".to_string(),
+                summary: "x".repeat(200),
+                due_at: "2027-01-01T00:00:00Z".to_string(),
+                tenant_id: "acme".to_string(),
+                contact_revision: 2,
+                status: DraftStatus::Draft,
+                requires_approval: true,
+            },
+        };
+        assert!(data.verified().is_ok());
+    }
+
+    /// The ceiling still refuses a page the tool could not have produced.
+    #[test]
+    fn a_page_over_twenty_items_still_refuses() {
+        let items = (0..21)
+            .map(|n| Item {
+                id: format!("item-{n}"),
+                full_name: "Ada Lovelace".to_string(),
+                revision: 1,
+            })
+            .collect();
+        let data = ConversationData::Contacts { items, next: None };
+        assert!(data.verified().is_err());
+    }
 }
