@@ -81,6 +81,19 @@ tables). The dispositions this program recorded:
 
 ## OWN-V1
 
+> **DISPUTED / NOT DELIVERED (superseded in part by the 19 Oktober 2026 CRM
+> audit, finding C03).** The 19-10 audit reproduced that the ten `P-OWN-Txx`
+> proofs are satisfied by evidence that does not exercise an owner
+> configuration lifecycle: T01 from a policy-consumer `outcome.ok`, T06 from
+> writer-fence/rollback rehearsals, T07 from deployment-plan unit tests, T10
+> from the TypeScript CRM browser battery. The active mandate
+> (`ARCHXY_1_FULL_IMPLEMENTATION_TASK.md` §4/A1-OWN-03) asks for the real
+> inspect → plan → preview → confirm → apply → recovery → history/restore
+> product behaviour with each proof bound to the operation it names. The
+> paragraph below is kept as the history of what this lane believed on
+> 19-10; it is **not** a claim that OWN-V1 is delivered. Current status:
+> incomplete — see `docs/rust/ARCHXY1_ACCEPTANCE_MATRIX.md` row C03.
+
 The bounded first-owner release is delivered as the acceptance family over
 released surfaces (ADR-R13): `pnpm own:verify` (the `tools/own/verify.mjs`
 driver) runs the ten `P-OWN-Txx` proofs fresh per invocation and the release
@@ -114,7 +127,7 @@ boundary.
 | R09 UI/assistant lanes | **delivered** | assistant context + provider contracts, SDK/widget/page-awareness, realtime/voice, browser slice. |
 | R10 cutover safety | **delivered** | archava-ops CLI family, prior-window rehearsals, release-identity verify, ADR-R05/R12. |
 | R11 legacy + kits + gates | **delivered** (documents bind here) | legacy replacement census + bridge dispositions; kit readiness carried by the 46-command security chain; this report + the audit packet close R11-ALL-GATES. |
-| OWN-V1 | **delivered** | ten proofs, driver + gate steps (above). |
+| OWN-V1 | **not delivered (disputed — audit C03)** | the ten checks pass, but the behaviour each names (owner config inspect→plan→preview→confirm→apply→recovery→history/restore in the product) is not yet exercised; ADR-R13's acceptance-family interpretation is superseded in part. Tracking: `docs/rust/ARCHXY1_ACCEPTANCE_MATRIX.md`. |
 | G01–G10 gate items | **delivered except G04** | G04's five domain proofs are the packet-blocked set. |
 
 **Still open after this report:** (1) the four packet-blocked domain proofs

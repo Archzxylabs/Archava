@@ -4,6 +4,51 @@ Checkpoint file. Read this first when resuming. Every status below uses the PRD
 §23 vocabulary; nothing is marked `accepted` or `release_candidate`, because
 nothing here has earned it.
 
+## CURRENT SUMMARY — 2026-10-20, Archxy 1 mandate active
+
+**Active mandate:** [`ARCHXY_1_FULL_IMPLEMENTATION_TASK.md`](../../ARCHXY_1_FULL_IMPLEMENTATION_TASK.md)
+(20 Oktober 2026) — implement the whole Archxy 1 scope to a working local
+candidate, self-reviewed and verified, closing the seven CRM audit findings
+C01–C07 for real, then close with the final audit handoff. Codex audits the
+FINISHED candidate; it is not a gate between milestones.
+
+**Audit baseline:** [`ARCHXY_1_CRM_AUDIT_2026-10-19.md`](../ARCHXY_1_CRM_AUDIT_2026-10-19.md)
+— "belum selesai seluruhnya; belum diterima sebagai CRM Rust lengkap". The
+audit's snapshot HEAD is this tree's HEAD, so all seven findings are OPEN
+against the current code, not stale history.
+
+**Live worklist (single index):** [`ARCHXY1_ACCEPTANCE_MATRIX.md`](ARCHXY1_ACCEPTANCE_MATRIX.md)
+— per task/finding: required closure, the real current evidence, status and
+next action. This file is the index; the frozen denominator stays
+`docs/rust/required-coverage.json` (93 items / 53 proofs) and is never
+shrunk.
+
+**Corrections made to earlier claims (A1-00):** ADR-R13's "OWN-V1 delivered as
+the acceptance family over released surfaces" is now marked DISPUTED/superseded
+in part (the audit showed the ten checks do not exercise an owner
+configuration lifecycle); the same correction is carried in
+`FULL_RUST_COMPLETION_REPORT.md` (OWN-V1 section banner + milestone table row:
+"not delivered (disputed — audit C03)"). History is preserved, not rewritten.
+
+**Baseline HEAD at this checkpoint:** `409eab9` (`feat/laundry-1.17.0`),
+profile `1.18.0`, rustc/cargo 1.96.0, node 26.10.0, pnpm 10.15.1; the A1-00
+matrix and claim corrections sit on top of it. Dirty owner paths are listed in
+the matrix's discipline section and are never swept into a commit.
+
+**Archxy 2 handoff on hand:** 8 packets (`archxy2/packets/PACKET-000…007`,
+last 19-10 05:46) — a shared-file patch sequence cut against `c96abf0`, to be
+integrated semantically (not a blind `patch -p1`) onto today's main.
+
+**What the last completed round proved (history, superseded by the audit
+where noted):** the full release gate over the corrected tree was 17/17 steps
+green with coverage reporting exactly the five packet-blocked ERP domain
+proofs; the audit's C07 finding shows that report's evidence identity had
+already drifted from HEAD, so it is not a current-candidate claim.
+
+---
+
+## Historical checkpoint (2026-10-17 and earlier) — kept for reference
+
 **Updated:** 2026-10-17 (RN01–RN08 correction round closed — see below; §1.4B vertical slice next)
 **Baseline HEAD:** `242549cc292cd53bbc66eb9cf119d57443aa2a37` (work uncommitted on top)
 **Branch:** `feat/laundry-1.17.0`

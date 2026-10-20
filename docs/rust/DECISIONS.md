@@ -499,10 +499,21 @@ survivable, which is what R10 was scoped to deliver.
 
 ## ADR-R13 — OWN-V1 delivered as the acceptance family over released surfaces (T01–T10)
 
-**Status:** decided and implemented at OWN-V1; proven by `P-OWN-T01` …
-`P-OWN-T10` (the `pnpm own:verify` family in `tools/own/verify.mjs`; the
-release gate runs it as the two steps "Owner configuration proofs" and
-"Owner browser journey").
+**Status:** **DISPUTED (superseded in part) by the 19 Oktober 2026 CRM audit
+(`docs/ARCHXY_1_CRM_AUDIT_2026-10-19.md`, finding C03) and by the active
+mandate `ARCHXY_1_FULL_IMPLEMENTATION_TASK.md` §4/A1-OWN-03.** The decision
+below is preserved as history; its interpretation — that the OWN-V1 product
+behaviour is satisfied by an acceptance family over existing surfaces — is NOT
+accepted by the active mandate. The audit's counterexample stands: `T01` is
+derived from a policy-consumer `outcome.ok`, `T06` from writer-fence/rollback
+rehearsals, `T07` from deployment-plan unit tests and `T10` from the
+TypeScript CRM browser battery — none of which exercise an owner
+configuration apply/restore in the product. An implementator ADR cannot lower
+an owner requirement, and this one did not get to decide that. OWN-V1 is
+therefore **not delivered** until the actual configuration lifecycle exists
+and each `OWN-Txx` proof is bound to the operation it names (see
+`docs/rust/ARCHXY1_ACCEPTANCE_MATRIX.md`, row C03). The existing producer and
+its ten checks remain as component evidence under their true scope.
 
 **Context.** `docs/OWNER_CONFIGURATION_PRD.md` §9 freezes the bounded
 first-owner release: a known owner runs inspect → plan → preview → confirm →
