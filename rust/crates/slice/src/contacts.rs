@@ -16,7 +16,7 @@ use crate::session::{self, Answer, FetchError};
 /// a contact named "A&B iter%" survives the URL round-trip its draft link
 /// makes: a raw `%` or `&` in a name would otherwise rewrite the query string
 /// the draft page parses.
-fn query_encode(value: &str) -> String {
+pub(crate) fn query_encode(value: &str) -> String {
     let mut out = String::with_capacity(value.len());
     for byte in value.as_bytes() {
         match byte {
@@ -254,9 +254,11 @@ pub fn Contacts() -> impl IntoView {
                                     .into_iter()
                                     .map(|row| {
                                         let navigate = navigate.clone();
+                                        let navigate_open = navigate.clone();
                                         let row_id = row.id.clone();
                                         let row_revision = row.revision;
                                         let row_name = query_encode(&row.full_name);
+                                        let open_id = row_id.clone();
                                         view! {
                                             <tr data-testid="contact-row">
                                                 <td>{row.full_name}</td>
@@ -264,6 +266,15 @@ pub fn Contacts() -> impl IntoView {
                                                 <td>{row.owner_id}</td>
                                                 <td>{row.revision.to_string()}</td>
                                                 <td>
+                                                    <button
+                                                        data-testid="contact-open"
+                                                        on:click=move |_event| {
+                                                            let target = format!("/app/contact?id={open_id}");
+                                                            navigate_open(&target, Default::default());
+                                                        }
+                                                    >
+                                                        "Open"
+                                                    </button>
                                                     <button
                                                         data-testid="contact-draft"
                                                         on:click=move |_event| {

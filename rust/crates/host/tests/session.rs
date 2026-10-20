@@ -223,13 +223,12 @@ async fn live_session_rows(fixture: &Fixture, token: &str) -> i64 {
     // The token is stored hashed; the digest is computed the same way the
     // identity port computes it, so this asks the table the same question.
     let digest = identity_digest(token);
-    let row: (i64,) = sqlx::query_as(
-        "SELECT count(*) FROM archava_identity.sessions WHERE token_hash = $1",
-    )
-    .bind(digest)
-    .fetch_one(&fixture.admin_pool)
-    .await
-    .expect("count the session rows");
+    let row: (i64,) =
+        sqlx::query_as("SELECT count(*) FROM archava_identity.sessions WHERE token_hash = $1")
+            .bind(digest)
+            .fetch_one(&fixture.admin_pool)
+            .await
+            .expect("count the session rows");
     row.0
 }
 
@@ -292,7 +291,10 @@ async fn signing_out_revokes_the_session_so_the_old_credential_cannot_read_mutat
     assert_eq!(
         get(
             &app,
-            &format!("/crm/commands/status?tenant={ACME}&requestId={}", uuid::Uuid::new_v4()),
+            &format!(
+                "/crm/commands/status?tenant={ACME}&requestId={}",
+                uuid::Uuid::new_v4()
+            ),
             Some(&session)
         )
         .await,
@@ -418,7 +420,12 @@ async fn a_restart_does_not_resurrect_a_revoked_session() {
     // A fresh serving state over the same database — the restart.
     let restarted = archava_host::router(state(&fixture).await);
     assert_eq!(
-        get(&restarted, &format!("/contacts?tenant={ACME}"), Some(&session)).await,
+        get(
+            &restarted,
+            &format!("/contacts?tenant={ACME}"),
+            Some(&session)
+        )
+        .await,
         StatusCode::UNAUTHORIZED,
         "the revoked credential stays revoked across a restart"
     );

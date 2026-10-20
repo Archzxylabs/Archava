@@ -2,51 +2,57 @@
 //!
 //! ## What this module is
 //!
-//! One real CRM operation — `followup.create`, from `packages/crm/src/contracts.ts`
-//! — served by this host against the real `archava_crm` schema, with the
-//! caller-owned rules carried over from the commerce side: the tenant comes
-//! from the caller's own submission, the authority comes from the row the
-//! database holds (never from the body), and the effect is one transaction
-//! that commits exactly once and records the receipt the caller can later
-//! recover through [`command_status`].
+//! The CRM baseline's SEVEN business writes — `contact.create`,
+//! `contact.update`, `activity.add`, `followup.create`, `followup.complete`,
+//! `opportunity.create`, `opportunity.move` (`packages/crm/src/contracts.ts`,
+//! `packages/crm/src/pipeline-contracts.ts`) — served by this host against the
+//! real `archava_crm` schema, with the caller-owned rules carried over from the
+//! commerce side: the tenant comes from the caller's own submission, the
+//! authority comes from the row the database holds (never from the body), and
+//! each effect is one transaction that commits exactly once and records the
+//! receipt the caller can later recover through [`command_status`].
 //!
-//! ## Why `followup.create`
+//! ## One vocabulary, the baseline's
 //!
-//! The TS baseline's own command vocabulary for CRM is `contact.create` /
-//! `contact.update` / `activity.add` / `followup.create` / `followup.complete`
-//! (plus pipeline moves), and `followup.create` is the one operation the
-//! baseline runs through BOTH the human path and the
-//! service-on-behalf-of path (`packages/crm-pg/src/repository.ts:592-606` —
-//! service principals may submit only follow-ups). It carries every required
-//! property of the slice flow at once:
+//! The command enum is the TS contract's own seven operations, field names and
+//! all: `submit_command` normalizes and validates at the boundary, gates on the
+//! operation family's write grant (plus `contacts.read` for the pipeline lane),
+//! claims the idempotency key, resolves resource containment under the caller's
+//! scope, applies the effect, writes the audit row and records the receipt —
+//! in that order. A replay is decided from the stored row, not re-executed.
 //!
-//! - the draft binds to a REAL contact (`contactId` + `contactRevision`), so
-//!   the stale-revision refusal is a property of the database row rather than
-//!   of a form field;
-//! - the effect touches four records (`followups` insert, `contacts` revision
-//!   bump, `commands` claim, `audit` entry) — a persisted business fact, not
-//!   an input blob;
-//! - the receipt `{kind:"followup", id, revision:1}` is durable and
-//!   recoverable through `GET /crm/commands/status`, whose permission gate and
-//!   containment check are ports of `readCommandStatus`;
-//! - the service path exercises the actor×initiator grant intersection that
-//!   TS records in `initiator_id`; every audit row carries both ids.
+//! Three properties every operation keeps:
+//!
+//! - the draft binds to a REAL resource and revision (`contactRevision` /
+//!   `expectedRevision`), so the stale-revision refusal is a property of the
+//!   database row rather than of a form field;
+//! - the effect touches the business tables plus `commands` (claim) and `audit`
+//!   (actor + initiator + resource revision) — a persisted fact, not an input
+//!   blob;
+//! - the receipt `{kind, id, revision}` is durable and recoverable through
+//!   `GET /crm/commands/status`, whose permission gate and containment check
+//!   are ports of `readCommandStatus`.
+//!
+//! The pipeline keeps its OWN state machine: `PIPELINE_TRANSITIONS` is carried
+//! over verbatim, an illegal edge is a 409 `transition_not_allowed`, and every
+//! move appends an `opportunity_transitions` row with the edge and its reason.
 //!
 //! What this module deliberately does NOT do: invent a second command
 //! vocabulary aliasing the TS contracts, or place a service principal's HTTP
 //! route before a signed native runner exists. Service submissions are
-//! exercised by the suite through [`submit_followup`] — the same core the
-//! human route calls — which is where the intersection is provable; a browser
-//! route for it would be new surface, and the baseline serves the native path
-//! through the operator's daemon over an epoch control file, not open HTTP.
+//! exercised by the suite through [`submit_command`] — the same core the human
+//! route calls — which is where the intersection is provable; a browser route
+//! for it would be new surface, and the baseline serves the native path through
+//! the operator's daemon over an epoch control file, not open HTTP.
 //!
 //! ## How the pieces map (`packages/crm-pg/src/repository.ts` → here)
 //!
 //! | baseline                           | here                                            |
 //! | ---                                | ---                                             |
 //! | `authorize` (locked `lock_membership`) | [`member_of`] + [`authorize`]               |
-//! | `runMutation` claim INSERT + replay/other-actor branches | [`submit_followup`] step 2 plus [`replay_or_conflict`] |
-//! | `ownedContact` (`FOR UPDATE` on write) | [`own_contact`]                             |
+//! | `runMutation` claim INSERT + replay/other-actor branches | [`submit_command`] step 2 plus [`replay_or_conflict`] |
+//! | `ownedContact` (`FOR UPDATE` on write) | [`own_contact`] / [`own_contact_row`] |
+//! | `ownedOpportunity` (scope on the opportunity, then its contact) | the `OpportunityMove` arm |
 //! | `readCommandStatus` + `receiptResource` | [`read_status`]                             |
 //! | `transaction()`'s `SET LOCAL` timeouts  | [`begin`]                                   |
 //!
@@ -130,14 +136,148 @@ const PERMISSION_VOCABULARY: [&str; 9] = [
 
 // --- Typed submissions ---------------------------------------------------------
 
-/// The one command the slice serves: a reviewed new follow-up bound to a
-/// specific contact revision (`packages/crm/src/contracts.ts`'s
-/// `followup.create`, field names carried over exactly). `deny_unknown_fields`
-/// plus the `operation` tag make any other operation or a stray key a boundary
-/// refusal — a body cannot claim an operation this host does not implement.
-#[derive(Debug, Deserialize, Serialize)]
-#[serde(tag = "operation", rename_all = "kebab-case", deny_unknown_fields)]
+/// One activity kind, the schema's own CHECK (`packages/crm/src/contracts.ts`).
+#[derive(Debug, Clone, Copy, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum ActivityKind {
+    Note,
+    Call,
+    Meeting,
+}
+
+impl ActivityKind {
+    fn as_str(self) -> &'static str {
+        match self {
+            ActivityKind::Note => "note",
+            ActivityKind::Call => "call",
+            ActivityKind::Meeting => "meeting",
+        }
+    }
+}
+
+/// One pipeline stage, the schema's CHECK and `pipeline-contracts.ts`'s enum.
+#[derive(Debug, Clone, Copy, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum PipelineStage {
+    New,
+    Qualified,
+    Proposal,
+    Won,
+    Lost,
+}
+
+impl PipelineStage {
+    fn as_str(self) -> &'static str {
+        match self {
+            PipelineStage::New => "new",
+            PipelineStage::Qualified => "qualified",
+            PipelineStage::Proposal => "proposal",
+            PipelineStage::Won => "won",
+            PipelineStage::Lost => "lost",
+        }
+    }
+
+    fn parse(raw: &str) -> Option<Self> {
+        match raw {
+            "new" => Some(PipelineStage::New),
+            "qualified" => Some(PipelineStage::Qualified),
+            "proposal" => Some(PipelineStage::Proposal),
+            "won" => Some(PipelineStage::Won),
+            "lost" => Some(PipelineStage::Lost),
+            _ => None,
+        }
+    }
+}
+
+/// The pipeline's legal moves — the port of `PIPELINE_TRANSITIONS`
+/// (`packages/crm/src/pipeline-contracts.ts`). A move not listed here is a
+/// conflict the caller can act on (re-read the pipeline), never a silent
+/// stage jump.
+fn transition_allowed(from: PipelineStage, to: PipelineStage) -> bool {
+    use PipelineStage::{Lost, New, Proposal, Qualified, Won};
+    matches!(
+        (from, to),
+        (New, Qualified | Lost)
+            | (Qualified, New | Proposal | Lost)
+            | (Proposal, Qualified | Won | Lost)
+    )
+}
+
+/// `contact.create`'s data: the TS `contactFields`
+/// (`packages/crm/src/contracts.ts`), trimmed and bounded by the caller side
+/// and re-checked here before any database work.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ContactFields {
+    pub full_name: String,
+    #[serde(default)]
+    pub email: Option<String>,
+    #[serde(default)]
+    pub organization: Option<String>,
+}
+
+/// `contact.update`'s data: every field optional, and `email`/`organization`
+/// are TRI-STATE — absent (keep), `null` (clear), a value (set). A plain
+/// `Option<Option<T>>` cannot tell absent from null through serde, so the
+/// deserializer wraps every present value in `Some`.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ContactPatch {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub full_name: Option<String>,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "double_option"
+    )]
+    pub email: Option<Option<String>>,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "double_option"
+    )]
+    pub organization: Option<Option<String>>,
+}
+
+impl ContactPatch {
+    fn is_empty(&self) -> bool {
+        self.full_name.is_none() && self.email.is_none() && self.organization.is_none()
+    }
+}
+
+fn double_option<'de, D>(deserializer: D) -> Result<Option<Option<String>>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    Option::<String>::deserialize(deserializer).map(Some)
+}
+
+/// The seven commands `packages/crm/src/contracts.ts` and
+/// `pipeline-contracts.ts` define, field names carried over exactly.
+/// `deny_unknown_fields` plus the `operation` tag make any other operation or a
+/// stray key a boundary refusal — a body cannot claim an operation this host
+/// does not implement.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(tag = "operation", deny_unknown_fields)]
 pub enum CrmCommand {
+    #[serde(rename = "contact.create")]
+    ContactCreate { data: ContactFields },
+    #[serde(rename = "contact.update")]
+    ContactUpdate {
+        id: Uuid,
+        #[serde(rename = "expectedRevision")]
+        expected_revision: i64,
+        data: ContactPatch,
+    },
+    #[serde(rename = "activity.add")]
+    ActivityAdd {
+        #[serde(rename = "contactId")]
+        contact_id: Uuid,
+        #[serde(rename = "contactRevision")]
+        contact_revision: i64,
+        kind: ActivityKind,
+        summary: String,
+    },
     #[serde(rename = "followup.create")]
     FollowupCreate {
         /// The contact the follow-up is bound to; its CURRENT revision must
@@ -155,34 +295,199 @@ pub enum CrmCommand {
         #[serde(rename = "dueAt")]
         due_at: String,
     },
+    #[serde(rename = "followup.complete")]
+    FollowupComplete {
+        id: Uuid,
+        #[serde(rename = "expectedRevision")]
+        expected_revision: i64,
+    },
+    #[serde(rename = "opportunity.create")]
+    OpportunityCreate {
+        #[serde(rename = "contactId")]
+        contact_id: Uuid,
+        #[serde(rename = "contactRevision")]
+        contact_revision: i64,
+        title: String,
+    },
+    #[serde(rename = "opportunity.move")]
+    OpportunityMove {
+        id: Uuid,
+        #[serde(rename = "expectedRevision")]
+        expected_revision: i64,
+        stage: PipelineStage,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        reason: Option<String>,
+    },
 }
 
 impl CrmCommand {
-    fn summary(&self) -> &str {
+    /// The operation name the audit row carries — the contract's own string.
+    fn operation(&self) -> &'static str {
         match self {
-            CrmCommand::FollowupCreate { summary, .. } => summary,
+            CrmCommand::ContactCreate { .. } => "contact.create",
+            CrmCommand::ContactUpdate { .. } => "contact.update",
+            CrmCommand::ActivityAdd { .. } => "activity.add",
+            CrmCommand::FollowupCreate { .. } => "followup.create",
+            CrmCommand::FollowupComplete { .. } => "followup.complete",
+            CrmCommand::OpportunityCreate { .. } => "opportunity.create",
+            CrmCommand::OpportunityMove { .. } => "opportunity.move",
         }
     }
 
-    fn contact_revision(&self) -> i64 {
+    /// The write grant the operation needs — the port of `runMutation`'s
+    /// `permission` (`packages/crm-pg/src/repository.ts`).
+    fn permission(&self) -> &'static str {
         match self {
+            CrmCommand::ContactCreate { .. } | CrmCommand::ContactUpdate { .. } => {
+                Permission::CONTACTS_WRITE
+            }
+            CrmCommand::ActivityAdd { .. } => Permission::ACTIVITIES_WRITE,
+            CrmCommand::FollowupCreate { .. } | CrmCommand::FollowupComplete { .. } => {
+                Permission::FOLLOWUPS_WRITE
+            }
+            CrmCommand::OpportunityCreate { .. } | CrmCommand::OpportunityMove { .. } => {
+                Permission::PIPELINE_WRITE
+            }
+        }
+    }
+
+    /// Whether the command also needs `contacts.read` — the pipeline commands
+    /// resolve their resource through the contact the caller must be able to
+    /// see (TS `ownedOpportunity` / `opportunity.create`).
+    fn needs_contacts_read(&self) -> bool {
+        matches!(
+            self,
+            CrmCommand::OpportunityCreate { .. } | CrmCommand::OpportunityMove { .. }
+        )
+    }
+
+    /// Trim every caller string the way the TS schema's `.trim()` does, in
+    /// place, BEFORE the fingerprint is computed — so two submissions that
+    /// differ only by surrounding whitespace are one command.
+    fn normalize(&mut self) {
+        match self {
+            CrmCommand::ContactCreate { data } => {
+                data.full_name = data.full_name.trim().to_string();
+                data.email = data.email.as_ref().map(|email| email.trim().to_string());
+                data.organization = data
+                    .organization
+                    .as_ref()
+                    .map(|organization| organization.trim().to_string());
+            }
+            CrmCommand::ContactUpdate { data, .. } => {
+                data.full_name = data.full_name.as_ref().map(|name| name.trim().to_string());
+                if let Some(email) = data.email.as_mut() {
+                    *email = email.as_ref().map(|value| value.trim().to_string());
+                }
+                if let Some(organization) = data.organization.as_mut() {
+                    *organization = organization.as_ref().map(|value| value.trim().to_string());
+                }
+            }
+            CrmCommand::ActivityAdd { summary, .. }
+            | CrmCommand::FollowupCreate { summary, .. } => {
+                *summary = summary.trim().to_string();
+            }
+            CrmCommand::FollowupComplete { .. } => {}
+            CrmCommand::OpportunityCreate { title, .. } => {
+                *title = title.trim().to_string();
+            }
+            CrmCommand::OpportunityMove { reason, .. } => {
+                if let Some(reason) = reason.as_mut() {
+                    *reason = reason.trim().to_string();
+                }
+            }
+        }
+    }
+
+    /// The TS zod refinements, re-checked at the host boundary: lengths,
+    /// revision bounds, the email shape, a non-empty patch, a loss reason.
+    fn valid(&self) -> bool {
+        match self {
+            CrmCommand::ContactCreate { data } => {
+                text_len(&data.full_name, 1, 160)
+                    && data.email.as_deref().is_none_or(valid_email)
+                    && data
+                        .organization
+                        .as_deref()
+                        .is_none_or(|value| value.chars().count() <= 160)
+            }
+            CrmCommand::ContactUpdate {
+                expected_revision,
+                data,
+                ..
+            } => {
+                *expected_revision >= 1
+                    && !data.is_empty()
+                    && data
+                        .full_name
+                        .as_deref()
+                        .is_none_or(|name| text_len(name, 1, 160))
+                    && data
+                        .email
+                        .as_ref()
+                        .is_none_or(|email| email.as_deref().is_none_or(valid_email))
+                    && data.organization.as_ref().is_none_or(|organization| {
+                        organization
+                            .as_deref()
+                            .is_none_or(|value| value.chars().count() <= 160)
+                    })
+            }
+            CrmCommand::ActivityAdd {
+                contact_revision,
+                summary,
+                ..
+            } => *contact_revision >= 1 && text_len(summary, 1, 2000),
             CrmCommand::FollowupCreate {
-                contact_revision, ..
-            } => *contact_revision,
+                contact_revision,
+                summary,
+                ..
+            } => *contact_revision >= 1 && text_len(summary, 1, 2000),
+            CrmCommand::FollowupComplete {
+                expected_revision, ..
+            } => *expected_revision >= 1,
+            CrmCommand::OpportunityCreate {
+                contact_revision,
+                title,
+                ..
+            } => *contact_revision >= 1 && text_len(title, 1, 160),
+            CrmCommand::OpportunityMove {
+                expected_revision,
+                stage,
+                reason,
+                ..
+            } => {
+                *expected_revision >= 1
+                    && match stage {
+                        PipelineStage::Lost => reason
+                            .as_deref()
+                            .is_some_and(|reason| text_len(reason, 1, 1000)),
+                        _ => reason
+                            .as_deref()
+                            .is_none_or(|reason| reason.chars().count() <= 1000),
+                    }
+            }
         }
     }
+}
 
-    fn due_at(&self) -> &str {
-        match self {
-            CrmCommand::FollowupCreate { due_at, .. } => due_at,
-        }
-    }
+/// A trimmed text field's bounds, in characters.
+fn text_len(value: &str, minimum: usize, maximum: usize) -> bool {
+    let length = value.chars().count();
+    (minimum..=maximum).contains(&length)
+}
 
-    fn contact_id(&self) -> Uuid {
-        match self {
-            CrmCommand::FollowupCreate { contact_id, .. } => *contact_id,
-        }
-    }
+/// The TS `z.email()` a Rust host can honestly check without a mail RFC in
+/// the dependency tree: one `@`, a non-empty local part and domain, no
+/// whitespace, at most 254 characters. The database keeps its own bound.
+fn valid_email(value: &str) -> bool {
+    let mut parts = value.split('@');
+    let local = parts.next().unwrap_or_default();
+    let domain = parts.next().unwrap_or_default();
+    parts.next().is_none()
+        && !local.is_empty()
+        && !domain.is_empty()
+        && !value.chars().any(char::is_whitespace)
+        && value.chars().count() <= 254
 }
 
 /// The route's caller-owned envelope: which tenant, the caller's own
@@ -265,6 +570,7 @@ pub enum CrmBody {
     Outcome(CommandOutcome),
     Page(CrmPageValue),
     Status(CrmStatusValue),
+    Record(CrmRecordValue),
 }
 
 impl IntoResponse for CrmBody {
@@ -273,6 +579,7 @@ impl IntoResponse for CrmBody {
             CrmBody::Outcome(value) => Json(value).into_response(),
             CrmBody::Page(value) => Json(value).into_response(),
             CrmBody::Status(value) => Json(value).into_response(),
+            CrmBody::Record(value) => Json(value).into_response(),
         }
     }
 }
@@ -660,103 +967,6 @@ pub(crate) enum ApplyFailure {
     LedgerMismatch,
 }
 
-/// The follow-up effect, statement for statement the TS branch:
-/// insert the followup, bump the contact's revision, append the audit row
-/// (actor + initiator), record the receipt onto the claim. Runs on the
-/// connection the caller opened — every statement is part of the caller's one
-/// transaction, and the receipt lands before the transaction commits.
-///
-/// The `due_at` cast is the calendar authority: a value no database accepts
-/// surfaces as SQLSTATE 22007/22008, which [`timeline_rejection`] maps to a
-/// submission refusal.
-/// The one new follow-up the command applies — everything gathered at the
-/// call so the SQL reads as a document rather than ten positional parameters.
-struct FollowupEffect<'a> {
-    tenant: &'a TenantId,
-    request_id: Uuid,
-    actor_id: &'a str,
-    initiator_id: Option<&'a str>,
-    operation: &'a str,
-    contact_id: Uuid,
-    summary: &'a str,
-    due_at: &'a str,
-    followup_id: Uuid,
-}
-
-async fn apply_followup_create(
-    connection: &mut sqlx::PgConnection,
-    effect: FollowupEffect<'_>,
-) -> Result<(), ApplyFailure> {
-    let FollowupEffect {
-        tenant,
-        request_id,
-        actor_id,
-        initiator_id,
-        operation,
-        contact_id,
-        summary,
-        due_at,
-        followup_id,
-    } = effect;
-    sqlx::query(
-        "INSERT INTO archava_crm.followups(tenant_id,id,contact_id,summary,due_at) \
-         VALUES($1,$2,$3,$4,$5::timestamptz)",
-    )
-    .bind(tenant.as_str())
-    .bind(followup_id)
-    .bind(contact_id)
-    .bind(summary)
-    .bind(due_at)
-    .execute(&mut *connection)
-    .await
-    .map_err(ApplyFailure::Timeline)?;
-    sqlx::query(
-        "UPDATE archava_crm.contacts SET revision=revision+1, updated_at=now() \
-         WHERE tenant_id=$1 AND id=$2",
-    )
-    .bind(tenant.as_str())
-    .bind(contact_id)
-    .execute(&mut *connection)
-    .await
-    .map_err(ApplyFailure::Timeline)?;
-    sqlx::query(
-        "INSERT INTO archava_crm.audit(tenant_id,request_id,actor_id,operation,resource_id,revision,initiator_id) \
-         VALUES($1,$2,$3,$4,$5,1,$6)",
-    )
-    .bind(tenant.as_str())
-    .bind(request_id)
-    .bind(actor_id)
-    .bind(operation)
-    .bind(followup_id)
-    .bind(initiator_id)
-    .execute(&mut *connection)
-    .await
-    .map_err(ApplyFailure::Timeline)?;
-    let receipt = serde_json::json!({
-        "kind": "followup",
-        "id": followup_id.to_string(),
-        "revision": 1,
-    });
-    let recorded = sqlx::query(
-        "UPDATE archava_crm.commands SET receipt=$3 WHERE tenant_id=$1 AND request_id=$2",
-    )
-    .bind(tenant.as_str())
-    .bind(request_id)
-    .bind(receipt)
-    .execute(&mut *connection)
-    .await
-    .map_err(ApplyFailure::Timeline)?;
-    // hit exactly it. Anything else is a ledger the caller can reason about.
-    if recorded.rows_affected() != 1 {
-        tracing::error!(
-            updated = recorded.rows_affected(),
-            "refusing: the claim row did not hold for its receipt"
-        );
-        return Err(ApplyFailure::LedgerMismatch);
-    }
-    Ok(())
-}
-
 /// True when a database error is a caller-side calendar mistake (the
 /// timestamptz cast of the due time), which maps to a submission refusal —
 /// an outage would misinform an operator and a 500 would invite a retry of a
@@ -835,9 +1045,21 @@ async fn receipt_visible(
             };
             contact_id
         }
-        "followup" | "activity" => {
+        "followup" => {
             let Some(contact_id) =
                 resource_contact(connection, tenant, "followups", resource_id).await?
+            else {
+                return Ok(false);
+            };
+            contact_id
+        }
+        "activity" => {
+            // An activity receipt resolves through the ACTIVITIES table — the
+            // wrong table here would make every activity replay answer
+            // `unknown_resource`, and the containment witness would pass for
+            // the wrong reason.
+            let Some(contact_id) =
+                resource_contact(connection, tenant, "activities", resource_id).await?
             else {
                 return Ok(false);
             };
@@ -995,6 +1217,230 @@ async fn list_contacts(
     Ok((StatusCode::OK, CrmBody::Page(CrmPageValue { items, next })))
 }
 
+// --- The record read -----------------------------------------------------------
+
+/// `GET /crm/records` — one contact and the records bound to it, in one
+/// document, for the product's record screen. Same authority rules as every
+/// other CRM read: session first, the caller's membership grants the read,
+/// the contact must be inside the caller's scope, and the bound lists join on
+/// that same contact.
+#[derive(Debug, Deserialize)]
+pub(crate) struct RecordQuery {
+    pub(crate) tenant: TenantId,
+    pub(crate) contact: Uuid,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CrmActivity {
+    pub(crate) id: String,
+    pub(crate) contact_id: String,
+    pub(crate) kind: String,
+    pub(crate) summary: String,
+    pub(crate) actor_id: String,
+    pub(crate) created_at: String,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CrmFollowup {
+    pub(crate) id: String,
+    pub(crate) contact_id: String,
+    pub(crate) summary: String,
+    pub(crate) due_at: String,
+    pub(crate) status: String,
+    pub(crate) revision: i64,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CrmOpportunity {
+    pub(crate) id: String,
+    pub(crate) contact_id: String,
+    pub(crate) title: String,
+    pub(crate) stage: String,
+    pub(crate) revision: i64,
+    pub(crate) loss_reason: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CrmRecordValue {
+    pub(crate) contact: CrmContact,
+    pub(crate) activities: Vec<CrmActivity>,
+    pub(crate) followups: Vec<CrmFollowup>,
+    pub(crate) opportunities: Vec<CrmOpportunity>,
+}
+
+pub(crate) async fn record(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    query: Result<Query<RecordQuery>, QueryRejection>,
+) -> (StatusCode, CrmBody) {
+    let query = match query {
+        Ok(query) => query,
+        Err(rejected) => return outcome(query_rejection(rejected)),
+    };
+    let presented = match authenticate(&state, &headers, false).await {
+        Ok(presented) => presented,
+        Err(refusal) => return outcome(refusal),
+    };
+    match read_record(&state, &presented, &query).await {
+        Ok(answer) => answer,
+        Err(error) => outcome(authority_refusal(&error)),
+    }
+}
+
+async fn read_record(
+    state: &AppState,
+    presented: &AuthenticatedSession,
+    query: &RecordQuery,
+) -> Result<(StatusCode, CrmBody), AuthorityError> {
+    let mut transaction = begin(state, query.tenant.clone()).await?;
+    let access = {
+        let connection = transaction.checked_executor().await?;
+        match authorize(connection, &query.tenant, &human(presented)).await {
+            Ok(access) => access,
+            Err(error) => {
+                let _ = transaction.rollback().await;
+                return Err(error);
+            }
+        }
+    };
+    if !access.allows(Permission::CONTACTS_READ) {
+        let _ = transaction.rollback().await;
+        return Ok(refused(
+            "role_not_allowed",
+            "The record requires a contact read grant.",
+        ));
+    }
+    // The containment predicate is the list's own: an out-of-scope contact is
+    // unknown, not a forbidden record that would disclose its existence.
+    let contact: Option<ContactRecordRow> = {
+        let connection = transaction.checked_executor().await?;
+        sqlx::query_as(
+            "SELECT id, full_name, email, organization, owner_id, revision, \
+                    to_jsonb(created_at) #>> '{}', to_jsonb(updated_at) #>> '{}' \
+             FROM archava_crm.contacts \
+             WHERE tenant_id=$1 AND id=$2 AND ($3::boolean OR owner_id=$4)",
+        )
+        .bind(query.tenant.as_str())
+        .bind(query.contact)
+        .bind(access.scope == CrmScope::All)
+        .bind(&access.owner_id)
+        .fetch_optional(connection)
+        .await
+        .map_err(|source| AuthorityError::database(CRM_LEDGER.ledger, source))?
+    };
+    let Some((id, full_name, email, organization, owner_id, revision, created_at, updated_at)) =
+        contact
+    else {
+        let _ = transaction.rollback().await;
+        return Ok(unknown_resource());
+    };
+
+    let activities: Vec<(Uuid, Uuid, String, String, String, String)> = {
+        let connection = transaction.checked_executor().await?;
+        sqlx::query_as(
+            "SELECT id, contact_id, kind, summary, actor_id, to_jsonb(created_at) #>> '{}' \
+             FROM archava_crm.activities \
+             WHERE tenant_id=$1 AND contact_id=$2 \
+             ORDER BY created_at DESC, id DESC",
+        )
+        .bind(query.tenant.as_str())
+        .bind(query.contact)
+        .fetch_all(connection)
+        .await
+        .map_err(|source| AuthorityError::database(CRM_LEDGER.ledger, source))?
+    };
+    let followups: Vec<(Uuid, Uuid, String, String, String, i32)> = {
+        let connection = transaction.checked_executor().await?;
+        sqlx::query_as(
+            "SELECT id, contact_id, summary, to_jsonb(due_at) #>> '{}', status, revision \
+             FROM archava_crm.followups \
+             WHERE tenant_id=$1 AND contact_id=$2 \
+             ORDER BY due_at, id",
+        )
+        .bind(query.tenant.as_str())
+        .bind(query.contact)
+        .fetch_all(connection)
+        .await
+        .map_err(|source| AuthorityError::database(CRM_LEDGER.ledger, source))?
+    };
+    let opportunities: Vec<(Uuid, Uuid, String, String, i32, Option<String>)> = {
+        let connection = transaction.checked_executor().await?;
+        sqlx::query_as(
+            "SELECT id, contact_id, title, stage, revision, loss_reason \
+             FROM archava_crm.opportunities \
+             WHERE tenant_id=$1 AND contact_id=$2 AND ($3::boolean OR owner_id=$4) \
+             ORDER BY created_at DESC, id DESC",
+        )
+        .bind(query.tenant.as_str())
+        .bind(query.contact)
+        .bind(access.scope == CrmScope::All)
+        .bind(&access.owner_id)
+        .fetch_all(connection)
+        .await
+        .map_err(|source| AuthorityError::database(CRM_LEDGER.ledger, source))?
+    };
+    let _ = transaction.rollback().await;
+    Ok((
+        StatusCode::OK,
+        CrmBody::Record(CrmRecordValue {
+            contact: CrmContact {
+                id: id.to_string(),
+                tenant_id: query.tenant.as_str().to_string(),
+                full_name,
+                email,
+                organization,
+                owner_id,
+                revision: i64::from(revision),
+                created_at,
+                updated_at,
+            },
+            activities: activities
+                .into_iter()
+                .map(
+                    |(id, contact_id, kind, summary, actor_id, created_at)| CrmActivity {
+                        id: id.to_string(),
+                        contact_id: contact_id.to_string(),
+                        kind,
+                        summary,
+                        actor_id,
+                        created_at,
+                    },
+                )
+                .collect(),
+            followups: followups
+                .into_iter()
+                .map(
+                    |(id, contact_id, summary, due_at, status, revision)| CrmFollowup {
+                        id: id.to_string(),
+                        contact_id: contact_id.to_string(),
+                        summary,
+                        due_at,
+                        status,
+                        revision: i64::from(revision),
+                    },
+                )
+                .collect(),
+            opportunities: opportunities
+                .into_iter()
+                .map(
+                    |(id, contact_id, title, stage, revision, loss_reason)| CrmOpportunity {
+                        id: id.to_string(),
+                        contact_id: contact_id.to_string(),
+                        title,
+                        stage,
+                        revision: i64::from(revision),
+                        loss_reason,
+                    },
+                )
+                .collect(),
+        }),
+    ))
+}
+
 // --- Command submit ------------------------------------------------------------
 
 /// `POST /crm/commands` — submit (or replay) a reviewed follow-up. CSRF-bound
@@ -1019,40 +1465,37 @@ pub(crate) async fn crm_command(
     }
 }
 
-/// The follow-up creation — the slice's one real business command. Order and
-/// shapes port `runMutation`'s `followup.create` branch
-/// (`packages/crm-pg/src/repository.ts:636-768`).
+/// One CRM command — the port of `runMutation`
+/// (`packages/crm-pg/src/repository.ts`), generalized to all seven
+/// operations the contracts define.
 ///
-/// One transaction for the whole request: authority, grant gate, idempotency
-/// claim, resource containment, effect, audit, receipt. It commits in exactly
-/// one place; every refusal rolls back explicitly, so no path can commit a
-/// half-applied command.
-pub async fn submit_followup(
+/// One transaction for the whole request: boundary validation, authority,
+/// grant gate, idempotency claim, resource containment, effect, audit,
+/// receipt. It commits in exactly one place; every refusal rolls back
+/// explicitly, so no path can commit a half-applied command.
+pub async fn submit_command(
     state: &AppState,
     actor: CrmActor,
-    submission: CrmSubmission,
+    mut submission: CrmSubmission,
 ) -> Result<(StatusCode, CrmBody), AuthorityError> {
-    // Boundary validation the TS zod layer does at parse time: lengths and
-    // revision bounds refuse before any database work; the calendar stays the
-    // database's authority (a mis-formed instant is refused as a submission
-    // by the code that sees SQLSTATE, not surfaced as an outage).
-    let summary_length = submission.command.summary().chars().count();
-    if !(1..=2000).contains(&summary_length) {
-        return Ok(invalid_submission());
-    }
-    if submission.command.contact_revision() < 1 {
+    // The TS schema trims before it parses; the host does the same before it
+    // fingerprints, so whitespace-only differences are one command.
+    submission.command.normalize();
+    // Boundary validation the TS zod layer does at parse time: lengths,
+    // revision bounds, the patch's non-emptiness, the loss reason. The
+    // calendar stays the database's authority (a mis-formed instant is
+    // refused as a submission by the code that sees SQLSTATE).
+    if !submission.command.valid() {
         return Ok(invalid_submission());
     }
     let fingerprint = fingerprint(state, &submission.tenant, &actor, &submission.command);
-    let operation = "followup.create";
-    let contact_id = submission.command.contact_id();
-    let contact_revision = submission.command.contact_revision();
+    let permission = submission.command.permission();
+    let needs_contacts_read = submission.command.needs_contacts_read();
 
     let mut transaction = begin(state, submission.tenant.clone()).await?;
 
     // 1. The grant — from the membership row, never the body. `runMutation`
-    //    computes the same gate from the operation prefix (`followups.write`
-    //    for every followup operation).
+    //    computes the same gate from the operation family.
     let access = {
         let connection = transaction.checked_executor().await?;
         match authorize(connection, &submission.tenant, &actor).await {
@@ -1063,12 +1506,18 @@ pub async fn submit_followup(
             }
         }
     };
-    if !access.allows(Permission::FOLLOWUPS_WRITE) {
+    if !access.allows(permission) {
         let _ = transaction.rollback().await;
         return Ok(refused(
             "role_not_allowed",
-            "The follow-up requires a followup write grant.",
+            "The command requires its write grant.",
         ));
+    }
+    // The pipeline commands resolve their resource through a contact the
+    // caller must be able to read — `ownedOpportunity`'s own gate.
+    if needs_contacts_read && !access.allows(Permission::CONTACTS_READ) {
+        let _ = transaction.rollback().await;
+        return Ok(refused("role_not_allowed", "Contact access is required."));
     }
 
     // 2. The idempotency claim. `ON CONFLICT DO NOTHING` loses the claim to
@@ -1109,77 +1558,20 @@ pub async fn submit_followup(
         return Ok(answer);
     }
 
-    // 3. The resource: read FOR UPDATE under the caller's scope. A contact
-    //    outside `assigned` and a contact that does not exist are one answer
-    //    (`unknown_resource`), because to an assigned caller they are
-    //    indistinguishable — exactly TS's `ownedContact` property.
-    let contact = {
-        let connection = transaction.checked_executor().await?;
-        own_contact(connection, &submission.tenant, &access, contact_id, true).await
-    };
-    let contact = match contact {
-        Err(error) => {
+    // 3. The resource and the effect, statement for statement the TS branch.
+    //    Every query runs inside this transaction; the receipt lands before
+    //    the single commit below.
+    let receipt = match apply_command(&mut transaction, &submission, &actor, &access).await {
+        Ok(receipt) => receipt,
+        Err(StageRefusal::Answer(status, body)) => {
+            let _ = transaction.rollback().await;
+            return Ok((status, *body));
+        }
+        Err(StageRefusal::Authority(error)) => {
             let _ = transaction.rollback().await;
             return Err(error);
         }
-        Ok(None) => {
-            let _ = transaction.rollback().await;
-            return Ok(unknown_resource());
-        }
-        Ok(Some(revision)) => revision,
     };
-    if i64::from(contact) != contact_revision {
-        let _ = transaction.rollback().await;
-        return Ok((
-            StatusCode::CONFLICT,
-            CrmBody::Outcome(CommandOutcome {
-                reason: Some("revision_changed".to_string()),
-                message: Some(
-                    "A concurrent edit changed the resource; re-read and try again.".to_string(),
-                ),
-                ..CommandOutcome::base("refused")
-            }),
-        ));
-    }
-
-    // 4. The effect: followup row, contact revision bump, audit entry
-    //    (actor + initiator), receipt on the claim — then the single commit.
-    let followup_id = Uuid::new_v4();
-    {
-        let connection = transaction.checked_executor().await?;
-        let applied = apply_followup_create(
-            connection,
-            FollowupEffect {
-                tenant: &submission.tenant,
-                request_id: submission.request_id,
-                actor_id: actor.principal_id(),
-                initiator_id: actor.initiator_id(),
-                operation,
-                contact_id,
-                summary: submission.command.summary(),
-                due_at: submission.command.due_at(),
-                followup_id,
-            },
-        )
-        .await;
-        if let Err(error) = applied {
-            let _ = transaction.rollback().await;
-            match error {
-                ApplyFailure::Timeline(timeline) => {
-                    if timeline_rejection(&timeline) {
-                        tracing::info!(
-                            "refused: the due time is not an instant this calendar holds"
-                        );
-                        return Ok(invalid_submission());
-                    }
-                    return Err(AuthorityError::database(CRM_LEDGER.ledger, timeline));
-                }
-                // Nothing reachable produces this; the refusal it earns is
-                // operator-facing (the log already named the row count).
-                ApplyFailure::LedgerMismatch => return Err(AuthorityError::UnusableGrant),
-            }
-        }
-    }
     transaction.commit().await.map_err(AuthorityError::from)?;
 
     Ok((
@@ -1187,14 +1579,656 @@ pub async fn submit_followup(
         CrmBody::Outcome(CommandOutcome {
             tenant: Some(submission.tenant.as_str().to_string()),
             request_id: Some(submission.request_id),
-            receipt: Some(serde_json::json!({
-                "kind": "followup",
-                "id": followup_id.to_string(),
-                "revision": 1,
-            })),
+            receipt: Some(receipt),
             ..CommandOutcome::base("receipt")
         }),
     ))
+}
+
+/// Kept for the suite's direct calls: a command submission is a command
+/// submission, whatever its operation tag says.
+pub async fn submit_followup(
+    state: &AppState,
+    actor: CrmActor,
+    submission: CrmSubmission,
+) -> Result<(StatusCode, CrmBody), AuthorityError> {
+    submit_command(state, actor, submission).await
+}
+
+/// Why an effect stage stopped: a caller-facing answer (the transaction rolls
+/// back) or an authority failure (the transaction rolls back and the route's
+/// refusal machinery classifies it).
+enum StageRefusal {
+    Answer(StatusCode, Box<CrmBody>),
+    Authority(AuthorityError),
+}
+
+fn stage_answer(answer: (StatusCode, CrmBody)) -> StageRefusal {
+    StageRefusal::Answer(answer.0, Box::new(answer.1))
+}
+
+fn db_failure(source: sqlx::Error) -> StageRefusal {
+    StageRefusal::Authority(AuthorityError::database(CRM_LEDGER.ledger, source))
+}
+
+fn apply_failure(failure: ApplyFailure) -> StageRefusal {
+    match failure {
+        ApplyFailure::Timeline(timeline) if timeline_rejection(&timeline) => {
+            stage_answer(invalid_submission())
+        }
+        ApplyFailure::Timeline(timeline) => {
+            StageRefusal::Authority(AuthorityError::database(CRM_LEDGER.ledger, timeline))
+        }
+        ApplyFailure::LedgerMismatch => StageRefusal::Authority(AuthorityError::UnusableGrant),
+    }
+}
+
+/// 409 for a bind that moved: the caller re-reads and tries again.
+fn revision_changed() -> (StatusCode, CrmBody) {
+    (
+        StatusCode::CONFLICT,
+        CrmBody::Outcome(CommandOutcome {
+            reason: Some("revision_changed".to_string()),
+            message: Some(
+                "A concurrent edit changed the resource; re-read and try again.".to_string(),
+            ),
+            ..CommandOutcome::base("refused")
+        }),
+    )
+}
+
+/// 409 for a pipeline move the state machine does not allow.
+fn transition_refused() -> (StatusCode, CrmBody) {
+    (
+        StatusCode::CONFLICT,
+        CrmBody::Outcome(CommandOutcome {
+            reason: Some("transition_not_allowed".to_string()),
+            message: Some("The pipeline does not allow that stage change.".to_string()),
+            ..CommandOutcome::base("refused")
+        }),
+    )
+}
+
+/// The receipt document every successful command records and answers with —
+/// the TS `MutationReceipt`.
+fn receipt(kind: &str, id: Uuid, revision: i64) -> Value {
+    serde_json::json!({
+        "kind": kind,
+        "id": id.to_string(),
+        "revision": revision,
+    })
+}
+
+/// The audit row (actor + initiator, the effect's own revision) and the
+/// receipt written onto this transaction's claim — the port of `runMutation`'s
+/// tail. Both statements are part of the caller's transaction; the receipt
+/// update must hit exactly the claim this same transaction inserted.
+async fn finish_effect(
+    connection: &mut sqlx::PgConnection,
+    tenant: &TenantId,
+    request_id: Uuid,
+    actor: &CrmActor,
+    operation: &str,
+    receipt: &Value,
+) -> Result<(), ApplyFailure> {
+    let resource_id = receipt
+        .get("id")
+        .and_then(Value::as_str)
+        .and_then(|id| Uuid::parse_str(id).ok())
+        .ok_or(ApplyFailure::LedgerMismatch)?;
+    let revision = receipt
+        .get("revision")
+        .and_then(Value::as_i64)
+        .and_then(|revision| i32::try_from(revision).ok())
+        .ok_or(ApplyFailure::LedgerMismatch)?;
+    sqlx::query(
+        "INSERT INTO archava_crm.audit(tenant_id,request_id,actor_id,operation,resource_id,revision,initiator_id) \
+         VALUES($1,$2,$3,$4,$5,$6,$7)",
+    )
+    .bind(tenant.as_str())
+    .bind(request_id)
+    .bind(actor.principal_id())
+    .bind(operation)
+    .bind(resource_id)
+    .bind(revision)
+    .bind(actor.initiator_id())
+    .execute(&mut *connection)
+    .await
+    .map_err(ApplyFailure::Timeline)?;
+    let recorded = sqlx::query(
+        "UPDATE archava_crm.commands SET receipt=$3 WHERE tenant_id=$1 AND request_id=$2",
+    )
+    .bind(tenant.as_str())
+    .bind(request_id)
+    .bind(receipt)
+    .execute(&mut *connection)
+    .await
+    .map_err(ApplyFailure::Timeline)?;
+    if recorded.rows_affected() != 1 {
+        tracing::error!(
+            updated = recorded.rows_affected(),
+            "refusing: the claim row did not hold for its receipt"
+        );
+        return Err(ApplyFailure::LedgerMismatch);
+    }
+    Ok(())
+}
+
+/// The tuple `own_contact_row` reads: revision, name, email, organization,
+/// owner.
+type LockedContactRow = (i32, String, Option<String>, Option<String>, String);
+
+/// The tuple the record read selects from a contact row: the TS `Contact`
+/// shape's columns, timestamps rendered by the database.
+type ContactRecordRow = (
+    Uuid,
+    String,
+    Option<String>,
+    Option<String>,
+    String,
+    i32,
+    String,
+    String,
+);
+
+/// One contact's write-relevant columns, locked under the caller's scope.
+struct LockedContact {
+    revision: i32,
+    full_name: String,
+    email: Option<String>,
+    organization: Option<String>,
+    owner_id: String,
+}
+
+async fn own_contact_row(
+    connection: &mut sqlx::PgConnection,
+    tenant: &TenantId,
+    access: &CrmAccess,
+    contact_id: Uuid,
+    lock: bool,
+) -> Result<Option<LockedContact>, AuthorityError> {
+    let sql = "SELECT revision, full_name, email, organization, owner_id \
+               FROM archava_crm.contacts \
+               WHERE tenant_id=$1 AND id=$2 AND ($3::boolean OR owner_id=$4)";
+    let locked_sql = if lock {
+        format!("{sql} FOR UPDATE")
+    } else {
+        sql.to_string()
+    };
+    let row: Option<LockedContactRow> = sqlx::query_as(sqlx::AssertSqlSafe(locked_sql.as_str()))
+        .bind(tenant.as_str())
+        .bind(contact_id)
+        .bind(access.scope == CrmScope::All)
+        .bind(&access.owner_id)
+        .fetch_optional(connection)
+        .await
+        .map_err(|source| AuthorityError::database(CRM_LEDGER.ledger, source))?;
+    Ok(row.map(
+        |(revision, full_name, email, organization, owner_id)| LockedContact {
+            revision,
+            full_name,
+            email,
+            organization,
+            owner_id,
+        },
+    ))
+}
+
+/// The commands that bind a contact, and the revision that must match it.
+impl CrmCommand {
+    fn bound_contact(&self) -> Option<Uuid> {
+        match self {
+            CrmCommand::ContactCreate { .. } | CrmCommand::FollowupComplete { .. } => None,
+            CrmCommand::ContactUpdate { id, .. } => Some(*id),
+            CrmCommand::ActivityAdd { contact_id, .. } => Some(*contact_id),
+            CrmCommand::FollowupCreate { contact_id, .. } => Some(*contact_id),
+            CrmCommand::OpportunityCreate { contact_id, .. } => Some(*contact_id),
+            CrmCommand::OpportunityMove { .. } => None,
+        }
+    }
+
+    fn bound_revision(&self) -> Option<i64> {
+        match self {
+            CrmCommand::ContactCreate { .. } | CrmCommand::FollowupComplete { .. } => None,
+            CrmCommand::ContactUpdate {
+                expected_revision, ..
+            } => Some(*expected_revision),
+            CrmCommand::ActivityAdd {
+                contact_revision, ..
+            }
+            | CrmCommand::FollowupCreate {
+                contact_revision, ..
+            }
+            | CrmCommand::OpportunityCreate {
+                contact_revision, ..
+            } => Some(*contact_revision),
+            CrmCommand::OpportunityMove {
+                expected_revision, ..
+            } => Some(*expected_revision),
+        }
+    }
+}
+
+/// The resource containment and the effect for one command, inside the
+/// caller's transaction. Returns the receipt; the audit row and the receipt
+/// column are written by [`finish_effect`] before this returns.
+async fn apply_command(
+    transaction: &mut TenantTransaction<'_>,
+    submission: &CrmSubmission,
+    actor: &CrmActor,
+    access: &CrmAccess,
+) -> Result<Value, StageRefusal> {
+    let tenant = &submission.tenant;
+    let request_id = submission.request_id;
+    let command = &submission.command;
+
+    // The contact the command binds to, read FOR UPDATE under the caller's
+    // scope: a contact outside `assigned` and a contact that does not exist
+    // are one answer (`unknown_resource`).
+    let bound = match command.bound_contact() {
+        None => None,
+        Some(contact_id) => {
+            let found = {
+                let connection = transaction
+                    .checked_executor()
+                    .await
+                    .map_err(|error| StageRefusal::Authority(AuthorityError::from(error)))?;
+                own_contact_row(connection, tenant, access, contact_id, true)
+                    .await
+                    .map_err(StageRefusal::Authority)?
+            };
+            match found {
+                None => return Err(stage_answer(unknown_resource())),
+                Some(row) => Some(row),
+            }
+        }
+    };
+    if let (Some(expected), Some(row)) = (command.bound_revision(), bound.as_ref()) {
+        if i64::from(row.revision) != expected {
+            return Err(stage_answer(revision_changed()));
+        }
+    }
+
+    match command {
+        CrmCommand::ContactCreate { data } => {
+            let id = Uuid::new_v4();
+            let receipt = receipt("contact", id, 1);
+            let connection = transaction
+                .checked_executor()
+                .await
+                .map_err(|error| StageRefusal::Authority(AuthorityError::from(error)))?;
+            sqlx::query(
+                "INSERT INTO archava_crm.contacts(tenant_id,id,full_name,email,organization,owner_id) \
+                 VALUES($1,$2,$3,$4,$5,$6)",
+            )
+            .bind(tenant.as_str())
+            .bind(id)
+            .bind(&data.full_name)
+            .bind(&data.email)
+            .bind(&data.organization)
+            .bind(&access.owner_id)
+            .execute(&mut *connection)
+            .await
+            .map_err(db_failure)?;
+            finish_effect(
+                connection,
+                tenant,
+                request_id,
+                actor,
+                command.operation(),
+                &receipt,
+            )
+            .await
+            .map_err(apply_failure)?;
+            Ok(receipt)
+        }
+        CrmCommand::ContactUpdate { id, data, .. } => {
+            let row = bound.as_ref().expect("the bound contact was loaded");
+            let full_name = data
+                .full_name
+                .clone()
+                .unwrap_or_else(|| row.full_name.clone());
+            let email = match &data.email {
+                None => row.email.clone(),
+                Some(value) => value.clone(),
+            };
+            let organization = match &data.organization {
+                None => row.organization.clone(),
+                Some(value) => value.clone(),
+            };
+            let receipt = receipt("contact", *id, i64::from(row.revision) + 1);
+            let connection = transaction
+                .checked_executor()
+                .await
+                .map_err(|error| StageRefusal::Authority(AuthorityError::from(error)))?;
+            sqlx::query(
+                "UPDATE archava_crm.contacts \
+                 SET full_name=$3,email=$4,organization=$5,revision=revision+1,updated_at=now() \
+                 WHERE tenant_id=$1 AND id=$2",
+            )
+            .bind(tenant.as_str())
+            .bind(id)
+            .bind(&full_name)
+            .bind(&email)
+            .bind(&organization)
+            .execute(&mut *connection)
+            .await
+            .map_err(db_failure)?;
+            finish_effect(
+                connection,
+                tenant,
+                request_id,
+                actor,
+                command.operation(),
+                &receipt,
+            )
+            .await
+            .map_err(apply_failure)?;
+            Ok(receipt)
+        }
+        CrmCommand::ActivityAdd {
+            contact_id,
+            kind,
+            summary,
+            ..
+        } => {
+            let id = Uuid::new_v4();
+            let receipt = receipt("activity", id, 1);
+            let connection = transaction
+                .checked_executor()
+                .await
+                .map_err(|error| StageRefusal::Authority(AuthorityError::from(error)))?;
+            sqlx::query(
+                "INSERT INTO archava_crm.activities(tenant_id,id,contact_id,kind,summary,actor_id) \
+                 VALUES($1,$2,$3,$4,$5,$6)",
+            )
+            .bind(tenant.as_str())
+            .bind(id)
+            .bind(contact_id)
+            .bind(kind.as_str())
+            .bind(summary)
+            .bind(actor.principal_id())
+            .execute(&mut *connection)
+            .await
+            .map_err(db_failure)?;
+            sqlx::query(
+                "UPDATE archava_crm.contacts SET revision=revision+1, updated_at=now() \
+                 WHERE tenant_id=$1 AND id=$2",
+            )
+            .bind(tenant.as_str())
+            .bind(contact_id)
+            .execute(&mut *connection)
+            .await
+            .map_err(db_failure)?;
+            finish_effect(
+                connection,
+                tenant,
+                request_id,
+                actor,
+                command.operation(),
+                &receipt,
+            )
+            .await
+            .map_err(apply_failure)?;
+            Ok(receipt)
+        }
+        CrmCommand::FollowupCreate {
+            contact_id,
+            summary,
+            due_at,
+            ..
+        } => {
+            let id = Uuid::new_v4();
+            let receipt = receipt("followup", id, 1);
+            let connection = transaction
+                .checked_executor()
+                .await
+                .map_err(|error| StageRefusal::Authority(AuthorityError::from(error)))?;
+            sqlx::query(
+                "INSERT INTO archava_crm.followups(tenant_id,id,contact_id,summary,due_at) \
+                 VALUES($1,$2,$3,$4,$5::timestamptz)",
+            )
+            .bind(tenant.as_str())
+            .bind(id)
+            .bind(contact_id)
+            .bind(summary)
+            .bind(due_at)
+            .execute(&mut *connection)
+            .await
+            .map_err(|source| apply_failure(ApplyFailure::Timeline(source)))?;
+            sqlx::query(
+                "UPDATE archava_crm.contacts SET revision=revision+1, updated_at=now() \
+                 WHERE tenant_id=$1 AND id=$2",
+            )
+            .bind(tenant.as_str())
+            .bind(contact_id)
+            .execute(&mut *connection)
+            .await
+            .map_err(db_failure)?;
+            finish_effect(
+                connection,
+                tenant,
+                request_id,
+                actor,
+                command.operation(),
+                &receipt,
+            )
+            .await
+            .map_err(apply_failure)?;
+            Ok(receipt)
+        }
+        CrmCommand::FollowupComplete {
+            id,
+            expected_revision,
+        } => {
+            // The follow-up row first (its existence is the resource); the
+            // contact containment is the SAME predicate the list uses. A
+            // completed or moved row is one conflict: re-read and try again.
+            let locked = {
+                let connection = transaction
+                    .checked_executor()
+                    .await
+                    .map_err(|error| StageRefusal::Authority(AuthorityError::from(error)))?;
+                sqlx::query_as::<_, (Uuid, i32, String)>(
+                    "SELECT contact_id, revision, status FROM archava_crm.followups \
+                     WHERE tenant_id=$1 AND id=$2 FOR UPDATE",
+                )
+                .bind(tenant.as_str())
+                .bind(id)
+                .fetch_optional(connection)
+                .await
+                .map_err(|source| AuthorityError::database(CRM_LEDGER.ledger, source))
+                .map_err(StageRefusal::Authority)?
+            };
+            let Some((contact_id, revision, status)) = locked else {
+                return Err(stage_answer(unknown_resource()));
+            };
+            let visible = {
+                let connection = transaction
+                    .checked_executor()
+                    .await
+                    .map_err(|error| StageRefusal::Authority(AuthorityError::from(error)))?;
+                own_contact(connection, tenant, access, contact_id, true)
+                    .await
+                    .map_err(StageRefusal::Authority)?
+            };
+            if visible.is_none() {
+                return Err(stage_answer(unknown_resource()));
+            }
+            if i64::from(revision) != *expected_revision || status != "open" {
+                return Err(stage_answer(revision_changed()));
+            }
+            let receipt = receipt("followup", *id, *expected_revision + 1);
+            let connection = transaction
+                .checked_executor()
+                .await
+                .map_err(|error| StageRefusal::Authority(AuthorityError::from(error)))?;
+            sqlx::query(
+                "UPDATE archava_crm.followups SET status='completed',revision=revision+1,updated_at=now() \
+                 WHERE tenant_id=$1 AND id=$2",
+            )
+            .bind(tenant.as_str())
+            .bind(id)
+            .execute(&mut *connection)
+            .await
+            .map_err(db_failure)?;
+            finish_effect(
+                connection,
+                tenant,
+                request_id,
+                actor,
+                command.operation(),
+                &receipt,
+            )
+            .await
+            .map_err(apply_failure)?;
+            Ok(receipt)
+        }
+        CrmCommand::OpportunityCreate {
+            contact_id, title, ..
+        } => {
+            let contact = bound.as_ref().expect("the bound contact was loaded");
+            let id = Uuid::new_v4();
+            let receipt = receipt("opportunity", id, 1);
+            let connection = transaction
+                .checked_executor()
+                .await
+                .map_err(|error| StageRefusal::Authority(AuthorityError::from(error)))?;
+            sqlx::query(
+                "INSERT INTO archava_crm.opportunities(tenant_id,id,contact_id,owner_id,title) \
+                 VALUES($1,$2,$3,$4,$5)",
+            )
+            .bind(tenant.as_str())
+            .bind(id)
+            .bind(contact_id)
+            .bind(&contact.owner_id)
+            .bind(title)
+            .execute(&mut *connection)
+            .await
+            .map_err(db_failure)?;
+            sqlx::query(
+                "INSERT INTO archava_crm.opportunity_transitions \
+                 (tenant_id,request_id,opportunity_id,to_stage,actor_id,revision) \
+                 VALUES($1,$2,$3,'new',$4,1)",
+            )
+            .bind(tenant.as_str())
+            .bind(request_id)
+            .bind(id)
+            .bind(actor.principal_id())
+            .execute(&mut *connection)
+            .await
+            .map_err(db_failure)?;
+            finish_effect(
+                connection,
+                tenant,
+                request_id,
+                actor,
+                command.operation(),
+                &receipt,
+            )
+            .await
+            .map_err(apply_failure)?;
+            Ok(receipt)
+        }
+        CrmCommand::OpportunityMove {
+            id,
+            expected_revision,
+            stage,
+            reason,
+        } => {
+            let locked = {
+                let connection = transaction
+                    .checked_executor()
+                    .await
+                    .map_err(|error| StageRefusal::Authority(AuthorityError::from(error)))?;
+                sqlx::query_as::<_, (i32, String, Uuid)>(
+                    "SELECT revision, stage, contact_id FROM archava_crm.opportunities \
+                     WHERE tenant_id=$1 AND id=$2 AND ($3::boolean OR owner_id=$4) FOR UPDATE",
+                )
+                .bind(tenant.as_str())
+                .bind(id)
+                .bind(access.scope == CrmScope::All)
+                .bind(&access.owner_id)
+                .fetch_optional(connection)
+                .await
+                .map_err(|source| AuthorityError::database(CRM_LEDGER.ledger, source))
+                .map_err(StageRefusal::Authority)?
+            };
+            let Some((revision, from_stage, contact_id)) = locked else {
+                return Err(stage_answer(unknown_resource()));
+            };
+            let visible = {
+                let connection = transaction
+                    .checked_executor()
+                    .await
+                    .map_err(|error| StageRefusal::Authority(AuthorityError::from(error)))?;
+                own_contact(connection, tenant, access, contact_id, false)
+                    .await
+                    .map_err(StageRefusal::Authority)?
+            };
+            if visible.is_none() {
+                return Err(stage_answer(unknown_resource()));
+            }
+            if i64::from(revision) != *expected_revision {
+                return Err(stage_answer(revision_changed()));
+            }
+            let from = PipelineStage::parse(&from_stage)
+                .ok_or(StageRefusal::Authority(AuthorityError::UnusableGrant))?;
+            if !transition_allowed(from, *stage) {
+                return Err(stage_answer(transition_refused()));
+            }
+            let loss_reason = if *stage == PipelineStage::Lost {
+                reason.clone()
+            } else {
+                None
+            };
+            let next_revision = i64::from(revision) + 1;
+            let receipt = receipt("opportunity", *id, next_revision);
+            let connection = transaction
+                .checked_executor()
+                .await
+                .map_err(|error| StageRefusal::Authority(AuthorityError::from(error)))?;
+            sqlx::query(
+                "UPDATE archava_crm.opportunities \
+                 SET stage=$3,loss_reason=$4,revision=revision+1,updated_at=now() \
+                 WHERE tenant_id=$1 AND id=$2",
+            )
+            .bind(tenant.as_str())
+            .bind(id)
+            .bind(stage.as_str())
+            .bind(&loss_reason)
+            .execute(&mut *connection)
+            .await
+            .map_err(db_failure)?;
+            sqlx::query(
+                "INSERT INTO archava_crm.opportunity_transitions \
+                 (tenant_id,request_id,opportunity_id,from_stage,to_stage,reason,actor_id,revision) \
+                 VALUES($1,$2,$3,$4,$5,$6,$7,$8)",
+            )
+            .bind(tenant.as_str())
+            .bind(request_id)
+            .bind(id)
+            .bind(from.as_str())
+            .bind(stage.as_str())
+            .bind(&loss_reason)
+            .bind(actor.principal_id())
+            .bind(i32::try_from(next_revision).unwrap_or(i32::MAX))
+            .execute(&mut *connection)
+            .await
+            .map_err(db_failure)?;
+            finish_effect(
+                connection,
+                tenant,
+                request_id,
+                actor,
+                command.operation(),
+                &receipt,
+            )
+            .await
+            .map_err(apply_failure)?;
+            Ok(receipt)
+        }
+    }
 }
 
 /// The claim that already belonged to a row, decided from the stored row

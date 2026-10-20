@@ -40,7 +40,9 @@
 //! the browser half then proves the same flow through the visible UI.
 
 use archava_core::tenant::TenantId;
-use archava_host::crm::{CrmActor, CrmCommand, CrmSubmission};
+use archava_host::crm::{
+    ActivityKind, ContactFields, ContactPatch, CrmActor, CrmCommand, CrmSubmission, PipelineStage,
+};
 use archava_host::{AppState, Ledger};
 use archava_pg_fixture::{provision, Fixture};
 use axum::body::{to_bytes, Body};
@@ -136,8 +138,12 @@ const PRINCIPALS: &[Principal] = &[
         permissions: &[
             "contacts.read",
             "contacts.write",
+            "activities.read",
+            "activities.write",
             "followups.read",
             "followups.write",
+            "pipeline.read",
+            "pipeline.write",
         ],
         scope: "all",
         active: true,
@@ -146,7 +152,12 @@ const PRINCIPALS: &[Principal] = &[
     Principal {
         id: "bob",
         kind: "human",
-        permissions: &["contacts.read", "followups.read"],
+        permissions: &[
+            "contacts.read",
+            "activities.read",
+            "followups.read",
+            "pipeline.read",
+        ],
         scope: "all",
         active: true,
         tenants: &[ACME],
@@ -154,7 +165,16 @@ const PRINCIPALS: &[Principal] = &[
     Principal {
         id: "carol",
         kind: "human",
-        permissions: &["contacts.read", "followups.read", "followups.write"],
+        permissions: &[
+            "contacts.read",
+            "contacts.write",
+            "activities.read",
+            "activities.write",
+            "followups.read",
+            "followups.write",
+            "pipeline.read",
+            "pipeline.write",
+        ],
         scope: "assigned",
         active: true,
         tenants: &[ACME],
@@ -1402,8 +1422,8 @@ async fn an_unimplemented_operation_is_refused_at_the_boundary() {
         "tenant": ACME,
         "requestId": KEY_NO_MEMBER,
         "command": {
-            "operation": "contact.create",
-            "data": {"fullName": "Unimplemented Op"},
+            "operation": "contact.delete",
+            "id": "2c3e5a10-1111-4111-8111-0000000000a1",
         },
     })
     .to_string();
@@ -1697,4 +1717,767 @@ async fn the_login_route_records_the_session_in_an_httponly_cookie() {
     );
     assert!(cookie.contains("SameSite=Strict"), "{cookie}");
     assert!(cookie.contains("Path=/"), "{cookie}");
+}
+
+// --- The seven writes (C01) ----------------------------------------------------
+//
+// `packages/crm/src/contracts.ts` and `pipeline-contracts.ts` define seven
+// operations. Each witness below drives the REAL submission path and then asks
+// PostgreSQL what happened: the effect row, its revision, the audit row bound
+// to the same request id, and the containment refusal for a caller who cannot
+// see the resource. A receipt alone is never the proof.
+
+/// A generic core-driven submission for any typed command — the same function
+/// the HTTP route calls, with the suite's chosen actor.
+async fn core_send(
+    fixture: &Fixture,
+    actor: CrmActor,
+    request_id: &str,
+    command: CrmCommand,
+) -> Result<(StatusCode, serde_json::Value), archava_host::AuthorityError> {
+    let app_state = state(fixture).await;
+    let submission = CrmSubmission {
+        tenant: tenant(ACME).await,
+        request_id: Uuid::parse_str(request_id).expect("a test uuid"),
+        command,
+    };
+    let (status, body) = archava_host::crm::submit_command(&app_state, actor, submission).await?;
+    let body = match body {
+        archava_host::crm::CrmBody::Outcome(value) => {
+            serde_json::to_value(value).expect("the command outcome serializes")
+        }
+        _ => panic!("submit_command answers with the command outcome"),
+    };
+    Ok((status, body))
+}
+
+fn human(id: &str) -> CrmActor {
+    CrmActor::Human(id.to_string())
+}
+
+/// The audit row a command left behind: `(operation, resource id, revision)`.
+async fn audit_of(fixture: &Fixture, request_id: &str) -> (String, Uuid, i32) {
+    sqlx::query_as(
+        "SELECT operation, resource_id, revision FROM archava_crm.audit \
+         WHERE tenant_id=$1 AND request_id=$2",
+    )
+    .bind(ACME)
+    .bind(Uuid::parse_str(request_id).expect("a test uuid"))
+    .fetch_one(&fixture.admin_pool)
+    .await
+    .expect("the command left exactly one audit row")
+}
+
+/// A contact's revision and owner, straight from the table.
+async fn contact_facts(fixture: &Fixture, id: &str) -> (i32, String) {
+    sqlx::query_as(
+        "SELECT revision, owner_id FROM archava_crm.contacts WHERE tenant_id=$1 AND id=$2",
+    )
+    .bind(ACME)
+    .bind(Uuid::parse_str(id).expect("a test uuid"))
+    .fetch_one(&fixture.admin_pool)
+    .await
+    .expect("the contact exists")
+}
+
+/// **Witness: `contact.create` decodes the typed wire contract over HTTP,
+/// trims it, stamps the caller as owner, and leaves the audit row.**
+#[tokio::test]
+async fn a_contact_create_over_http_persists_the_row_and_its_audit() {
+    let fixture = provision().await;
+    seed(&fixture).await;
+    let app = archava_host::router(state(&fixture).await);
+    let session = login(&app, "alice").await;
+    let request_id = "00000000-0000-4000-8000-000000000101";
+
+    let body = serde_json::json!({
+        "tenant": ACME,
+        "requestId": request_id,
+        "command": {
+            "operation": "contact.create",
+            "data": {
+                "fullName": "  Ada Byron  ",
+                "email": "ada@byron.test",
+                "organization": "  Engines  ",
+            },
+        },
+    })
+    .to_string();
+    let (status, outcome) = post(&app, "/crm/commands", &body, Some(&session), true).await;
+
+    assert_eq!(
+        status,
+        StatusCode::OK,
+        "a granted writer creates: {outcome}"
+    );
+    assert_eq!(outcome["decision"], "receipt");
+    assert_eq!(outcome["receipt"]["kind"], "contact");
+    assert_eq!(outcome["receipt"]["revision"], 1);
+    let id = outcome["receipt"]["id"].as_str().expect("a receipt id");
+
+    let row: (String, Option<String>, Option<String>, String, i32) = sqlx::query_as(
+        "SELECT full_name, email, organization, owner_id, revision \
+         FROM archava_crm.contacts WHERE tenant_id=$1 AND id=$2",
+    )
+    .bind(ACME)
+    .bind(Uuid::parse_str(id).expect("a receipt uuid"))
+    .fetch_one(&fixture.admin_pool)
+    .await
+    .expect("the contact row exists");
+    assert_eq!(row.0, "Ada Byron", "the contract trims before it stores");
+    assert_eq!(row.1.as_deref(), Some("ada@byron.test"));
+    assert_eq!(row.2.as_deref(), Some("Engines"));
+    assert_eq!(row.3, "alice", "the caller owns what it creates");
+    assert_eq!(row.4, 1);
+
+    let (operation, resource_id, revision) = audit_of(&fixture, request_id).await;
+    assert_eq!(operation, "contact.create");
+    assert_eq!(resource_id.to_string(), id);
+    assert_eq!(revision, 1);
+}
+
+/// **Witness: `contact.update` is partial, revision-bound, and null clears a
+/// nullable field.**
+#[tokio::test]
+async fn a_contact_update_is_partial_and_null_clears_the_field() {
+    let fixture = provision().await;
+    seed(&fixture).await;
+
+    // Only the name moves: email and organization stay as they were.
+    let (status, outcome) = core_send(
+        &fixture,
+        human("alice"),
+        "00000000-0000-4000-8000-000000000102",
+        CrmCommand::ContactUpdate {
+            id: Uuid::parse_str(ID_ALICE_A).expect("a test uuid"),
+            expected_revision: 1,
+            data: ContactPatch {
+                full_name: Some("Ada King".to_string()),
+                email: None,
+                organization: None,
+            },
+        },
+    )
+    .await
+    .expect("the store answers");
+    assert_eq!(status, StatusCode::OK, "{outcome}");
+    assert_eq!(outcome["receipt"]["revision"], 2);
+
+    let row: (String, Option<String>) = sqlx::query_as(
+        "SELECT full_name, email FROM archava_crm.contacts WHERE tenant_id=$1 AND id=$2",
+    )
+    .bind(ACME)
+    .bind(Uuid::parse_str(ID_ALICE_A).expect("a test uuid"))
+    .fetch_one(&fixture.admin_pool)
+    .await
+    .expect("the contact exists");
+    assert_eq!(row.0, "Ada King");
+    assert_eq!(row.1.as_deref(), Some("ada@lovelace.test"), "untouched");
+
+    // `email: null` clears it; the organization stays untouched.
+    let (status, outcome) = core_send(
+        &fixture,
+        human("alice"),
+        "00000000-0000-4000-8000-000000000103",
+        CrmCommand::ContactUpdate {
+            id: Uuid::parse_str(ID_ALICE_A).expect("a test uuid"),
+            expected_revision: 2,
+            data: ContactPatch {
+                full_name: None,
+                email: Some(None),
+                organization: None,
+            },
+        },
+    )
+    .await
+    .expect("the store answers");
+    assert_eq!(status, StatusCode::OK, "{outcome}");
+    let email: Option<String> =
+        sqlx::query_scalar("SELECT email FROM archava_crm.contacts WHERE tenant_id=$1 AND id=$2")
+            .bind(ACME)
+            .bind(Uuid::parse_str(ID_ALICE_A).expect("a test uuid"))
+            .fetch_one(&fixture.admin_pool)
+            .await
+            .expect("the contact exists");
+    assert_eq!(email, None, "a present null clears the field");
+
+    // A moved revision is one conflict, and the contact did not change.
+    let (status, outcome) = core_send(
+        &fixture,
+        human("alice"),
+        "00000000-0000-4000-8000-000000000104",
+        CrmCommand::ContactUpdate {
+            id: Uuid::parse_str(ID_ALICE_A).expect("a test uuid"),
+            expected_revision: 1,
+            data: ContactPatch {
+                full_name: Some("Stale".to_string()),
+                email: None,
+                organization: None,
+            },
+        },
+    )
+    .await
+    .expect("the store answers");
+    assert_eq!(status, StatusCode::CONFLICT);
+    assert_eq!(outcome["reason"], "revision_changed");
+    let name: String = sqlx::query_scalar(
+        "SELECT full_name FROM archava_crm.contacts WHERE tenant_id=$1 AND id=$2",
+    )
+    .bind(ACME)
+    .bind(Uuid::parse_str(ID_ALICE_A).expect("a test uuid"))
+    .fetch_one(&fixture.admin_pool)
+    .await
+    .expect("the contact exists");
+    assert_eq!(name, "Ada King", "the stale attempt changed nothing");
+}
+
+/// **Witness: `activity.add` writes the activity, bumps the contact and
+/// records both facts.**
+#[tokio::test]
+async fn an_activity_add_persists_the_activity_and_bumps_the_contact() {
+    let fixture = provision().await;
+    seed(&fixture).await;
+    let request_id = "00000000-0000-4000-8000-000000000105";
+
+    let (status, outcome) = core_send(
+        &fixture,
+        human("alice"),
+        request_id,
+        CrmCommand::ActivityAdd {
+            contact_id: Uuid::parse_str(ID_ALICE_A).expect("a test uuid"),
+            contact_revision: 1,
+            kind: ActivityKind::Call,
+            summary: "  Discussed the renewal  ".to_string(),
+        },
+    )
+    .await
+    .expect("the store answers");
+    assert_eq!(status, StatusCode::OK, "{outcome}");
+    assert_eq!(outcome["receipt"]["kind"], "activity");
+    assert_eq!(outcome["receipt"]["revision"], 1);
+    let id = outcome["receipt"]["id"].as_str().expect("a receipt id");
+
+    let row: (String, String, String) = sqlx::query_as(
+        "SELECT contact_id::text, kind, summary FROM archava_crm.activities \
+         WHERE tenant_id=$1 AND id=$2",
+    )
+    .bind(ACME)
+    .bind(Uuid::parse_str(id).expect("a receipt uuid"))
+    .fetch_one(&fixture.admin_pool)
+    .await
+    .expect("the activity row exists");
+    assert_eq!(row.0, ID_ALICE_A);
+    assert_eq!(row.1, "call");
+    assert_eq!(row.2, "Discussed the renewal");
+
+    let (revision, _) = contact_facts(&fixture, ID_ALICE_A).await;
+    assert_eq!(revision, 2, "the contact moved with the activity");
+
+    let (operation, resource_id, revision) = audit_of(&fixture, request_id).await;
+    assert_eq!(operation, "activity.add");
+    assert_eq!(resource_id.to_string(), id);
+    assert_eq!(revision, 1);
+}
+
+/// **Witness: `followup.complete` closes an open follow-up exactly once — a
+/// second completion and a stale bind are both one conflict.**
+#[tokio::test]
+async fn a_followup_complete_closes_the_open_followup_exactly_once() {
+    let fixture = provision().await;
+    seed(&fixture).await;
+
+    let (status, created) = core_send(
+        &fixture,
+        human("alice"),
+        "00000000-0000-4000-8000-000000000106",
+        CrmCommand::FollowupCreate {
+            contact_id: Uuid::parse_str(ID_ALICE_A).expect("a test uuid"),
+            contact_revision: 1,
+            summary: "Close me".to_string(),
+            due_at: "2027-05-01T09:00:00Z".to_string(),
+        },
+    )
+    .await
+    .expect("the store answers");
+    assert_eq!(status, StatusCode::OK, "{created}");
+    let followup_id = created["receipt"]["id"]
+        .as_str()
+        .expect("a receipt id")
+        .to_string();
+    let contact_after_create = contact_facts(&fixture, ID_ALICE_A).await.0;
+
+    let (status, completed) = core_send(
+        &fixture,
+        human("alice"),
+        "00000000-0000-4000-8000-000000000107",
+        CrmCommand::FollowupComplete {
+            id: Uuid::parse_str(&followup_id).expect("a receipt uuid"),
+            expected_revision: 1,
+        },
+    )
+    .await
+    .expect("the store answers");
+    assert_eq!(status, StatusCode::OK, "{completed}");
+    assert_eq!(completed["receipt"]["revision"], 2);
+
+    let row: (String, i32) = sqlx::query_as(
+        "SELECT status, revision FROM archava_crm.followups WHERE tenant_id=$1 AND id=$2",
+    )
+    .bind(ACME)
+    .bind(Uuid::parse_str(&followup_id).expect("a receipt uuid"))
+    .fetch_one(&fixture.admin_pool)
+    .await
+    .expect("the followup exists");
+    assert_eq!(row.0, "completed");
+    assert_eq!(row.1, 2);
+    let contact_after_complete = contact_facts(&fixture, ID_ALICE_A).await.0;
+    assert_eq!(
+        contact_after_complete, contact_after_create,
+        "completing a follow-up does not bump the contact"
+    );
+
+    // The same completion again — with the revision it now holds — is still a
+    // conflict: a completed follow-up is not open work.
+    let (status, outcome) = core_send(
+        &fixture,
+        human("alice"),
+        "00000000-0000-4000-8000-000000000108",
+        CrmCommand::FollowupComplete {
+            id: Uuid::parse_str(&followup_id).expect("a receipt uuid"),
+            expected_revision: 2,
+        },
+    )
+    .await
+    .expect("the store answers");
+    assert_eq!(status, StatusCode::CONFLICT);
+    assert_eq!(outcome["reason"], "revision_changed");
+
+    // And a stale bind is the same answer.
+    let (status, outcome) = core_send(
+        &fixture,
+        human("alice"),
+        "00000000-0000-4000-8000-000000000109",
+        CrmCommand::FollowupComplete {
+            id: Uuid::parse_str(&followup_id).expect("a receipt uuid"),
+            expected_revision: 1,
+        },
+    )
+    .await
+    .expect("the store answers");
+    assert_eq!(status, StatusCode::CONFLICT);
+    assert_eq!(outcome["reason"], "revision_changed");
+}
+
+/// **Witness: `opportunity.create` opens the pipeline row and its first
+/// transition, owned by the contact's owner.**
+#[tokio::test]
+async fn an_opportunity_create_opens_the_row_and_its_first_transition() {
+    let fixture = provision().await;
+    seed(&fixture).await;
+    let request_id = "00000000-0000-4000-8000-000000000110";
+
+    let (status, outcome) = core_send(
+        &fixture,
+        human("alice"),
+        request_id,
+        CrmCommand::OpportunityCreate {
+            contact_id: Uuid::parse_str(ID_ALICE_A).expect("a test uuid"),
+            contact_revision: 1,
+            title: "  Renewal 2027  ".to_string(),
+        },
+    )
+    .await
+    .expect("the store answers");
+    assert_eq!(status, StatusCode::OK, "{outcome}");
+    assert_eq!(outcome["receipt"]["kind"], "opportunity");
+    assert_eq!(outcome["receipt"]["revision"], 1);
+    let id = outcome["receipt"]["id"].as_str().expect("a receipt id");
+
+    let row: (String, String, String, i32) = sqlx::query_as(
+        "SELECT contact_id::text, owner_id, stage, revision \
+         FROM archava_crm.opportunities WHERE tenant_id=$1 AND id=$2",
+    )
+    .bind(ACME)
+    .bind(Uuid::parse_str(id).expect("a receipt uuid"))
+    .fetch_one(&fixture.admin_pool)
+    .await
+    .expect("the opportunity row exists");
+    assert_eq!(row.0, ID_ALICE_A);
+    assert_eq!(row.1, "alice", "the contact's owner holds the opportunity");
+    assert_eq!(row.2, "new");
+    assert_eq!(row.3, 1);
+
+    let history: (Option<String>, String, i32) = sqlx::query_as(
+        "SELECT from_stage, to_stage, revision FROM archava_crm.opportunity_transitions \
+         WHERE tenant_id=$1 AND request_id=$2",
+    )
+    .bind(ACME)
+    .bind(Uuid::parse_str(request_id).expect("a test uuid"))
+    .fetch_one(&fixture.admin_pool)
+    .await
+    .expect("the first transition exists");
+    assert_eq!(history.0, None, "a new opportunity has no previous stage");
+    assert_eq!(history.1, "new");
+    assert_eq!(history.2, 1);
+
+    let (operation, resource_id, revision) = audit_of(&fixture, request_id).await;
+    assert_eq!(operation, "opportunity.create");
+    assert_eq!(resource_id.to_string(), id);
+    assert_eq!(revision, 1);
+}
+
+/// **Witness: `opportunity.move` follows the state machine, records history,
+/// refuses illegal jumps, and requires a loss reason.**
+#[tokio::test]
+async fn an_opportunity_move_follows_the_state_machine_and_records_history() {
+    let fixture = provision().await;
+    seed(&fixture).await;
+
+    let (status, created) = core_send(
+        &fixture,
+        human("alice"),
+        "00000000-0000-4000-8000-000000000111",
+        CrmCommand::OpportunityCreate {
+            contact_id: Uuid::parse_str(ID_ALICE_A).expect("a test uuid"),
+            contact_revision: 1,
+            title: "Move me".to_string(),
+        },
+    )
+    .await
+    .expect("the store answers");
+    assert_eq!(status, StatusCode::OK, "{created}");
+    let id = created["receipt"]["id"]
+        .as_str()
+        .expect("a receipt id")
+        .to_string();
+
+    // new → qualified: allowed, history records the edge.
+    let (status, moved) = core_send(
+        &fixture,
+        human("alice"),
+        "00000000-0000-4000-8000-000000000112",
+        CrmCommand::OpportunityMove {
+            id: Uuid::parse_str(&id).expect("a receipt uuid"),
+            expected_revision: 1,
+            stage: PipelineStage::Qualified,
+            reason: None,
+        },
+    )
+    .await
+    .expect("the store answers");
+    assert_eq!(status, StatusCode::OK, "{moved}");
+    assert_eq!(moved["receipt"]["revision"], 2);
+    let history: (String, String, i32) = sqlx::query_as(
+        "SELECT from_stage, to_stage, revision FROM archava_crm.opportunity_transitions \
+         WHERE tenant_id=$1 AND request_id=$2",
+    )
+    .bind(ACME)
+    .bind(Uuid::parse_str("00000000-0000-4000-8000-000000000112").expect("a test uuid"))
+    .fetch_one(&fixture.admin_pool)
+    .await
+    .expect("the transition exists");
+    assert_eq!(history.0, "new");
+    assert_eq!(history.1, "qualified");
+    assert_eq!(history.2, 2);
+
+    // qualified → won is NOT a legal edge (proposal → won is).
+    let (status, outcome) = core_send(
+        &fixture,
+        human("alice"),
+        "00000000-0000-4000-8000-000000000113",
+        CrmCommand::OpportunityMove {
+            id: Uuid::parse_str(&id).expect("a receipt uuid"),
+            expected_revision: 2,
+            stage: PipelineStage::Won,
+            reason: None,
+        },
+    )
+    .await
+    .expect("the store answers");
+    assert_eq!(status, StatusCode::CONFLICT);
+    assert_eq!(outcome["reason"], "transition_not_allowed");
+    let stage: String = sqlx::query_scalar(
+        "SELECT stage FROM archava_crm.opportunities WHERE tenant_id=$1 AND id=$2",
+    )
+    .bind(ACME)
+    .bind(Uuid::parse_str(&id).expect("a receipt uuid"))
+    .fetch_one(&fixture.admin_pool)
+    .await
+    .expect("the opportunity exists");
+    assert_eq!(stage, "qualified", "the refused move changed nothing");
+
+    // A loss without a reason is a submission the contract refuses.
+    let (status, outcome) = core_send(
+        &fixture,
+        human("alice"),
+        "00000000-0000-4000-8000-000000000114",
+        CrmCommand::OpportunityMove {
+            id: Uuid::parse_str(&id).expect("a receipt uuid"),
+            expected_revision: 2,
+            stage: PipelineStage::Lost,
+            reason: None,
+        },
+    )
+    .await
+    .expect("the store answers");
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+    assert_eq!(outcome["reason"], "invalid_submission");
+
+    // qualified → lost with a reason: the stage and the loss reason land.
+    let (status, lost) = core_send(
+        &fixture,
+        human("alice"),
+        "00000000-0000-4000-8000-000000000115",
+        CrmCommand::OpportunityMove {
+            id: Uuid::parse_str(&id).expect("a receipt uuid"),
+            expected_revision: 2,
+            stage: PipelineStage::Lost,
+            reason: Some("  Budget cut  ".to_string()),
+        },
+    )
+    .await
+    .expect("the store answers");
+    assert_eq!(status, StatusCode::OK, "{lost}");
+    assert_eq!(lost["receipt"]["revision"], 3);
+    let row: (String, Option<String>) = sqlx::query_as(
+        "SELECT stage, loss_reason FROM archava_crm.opportunities WHERE tenant_id=$1 AND id=$2",
+    )
+    .bind(ACME)
+    .bind(Uuid::parse_str(&id).expect("a receipt uuid"))
+    .fetch_one(&fixture.admin_pool)
+    .await
+    .expect("the opportunity exists");
+    assert_eq!(row.0, "lost");
+    assert_eq!(row.1.as_deref(), Some("Budget cut"));
+}
+
+/// **Witness: replay returns the SAME receipt, and a different command under
+/// the same key is a conflict — across the new operations too.**
+#[tokio::test]
+async fn a_new_operation_replays_its_receipt_and_rejects_key_reuse() {
+    let fixture = provision().await;
+    seed(&fixture).await;
+    let key = "00000000-0000-4000-8000-000000000116";
+
+    let command = CrmCommand::ContactCreate {
+        data: ContactFields {
+            full_name: "Replay Target".to_string(),
+            email: None,
+            organization: None,
+        },
+    };
+    let (status, first) = core_send(&fixture, human("alice"), key, command.clone())
+        .await
+        .expect("the store answers");
+    assert_eq!(status, StatusCode::OK, "{first}");
+    let receipt = first["receipt"].clone();
+
+    let (status, replayed) = core_send(&fixture, human("alice"), key, command)
+        .await
+        .expect("the store answers");
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(
+        replayed["receipt"], receipt,
+        "the same key, the same receipt"
+    );
+    assert_eq!(replayed["decision"], "receipt");
+
+    let (status, reused) = core_send(
+        &fixture,
+        human("alice"),
+        key,
+        CrmCommand::ContactCreate {
+            data: ContactFields {
+                full_name: "A Different Command".to_string(),
+                email: None,
+                organization: None,
+            },
+        },
+    )
+    .await
+    .expect("the store answers");
+    assert_eq!(status, StatusCode::CONFLICT);
+    assert_eq!(reused["reason"], "request_id_reused");
+    let rows: i64 = sqlx::query_scalar(
+        "SELECT count(*) FROM archava_crm.contacts WHERE tenant_id=$1 AND full_name='A Different Command'",
+    )
+    .bind(ACME)
+    .fetch_one(&fixture.admin_pool)
+    .await
+    .expect("count the contacts");
+    assert_eq!(rows, 0, "the reused key wrote nothing");
+}
+
+/// **Witness: the write grants gate each operation family, and an assigned
+/// caller cannot reach a contact it does not own.**
+#[tokio::test]
+async fn the_new_writes_are_gated_by_grants_and_scope() {
+    let fixture = provision().await;
+    seed(&fixture).await;
+
+    // bob reads contacts and follow-ups but holds no write grant.
+    let (status, outcome) = core_send(
+        &fixture,
+        human("bob"),
+        "00000000-0000-4000-8000-000000000117",
+        CrmCommand::ContactUpdate {
+            id: Uuid::parse_str(ID_ALICE_A).expect("a test uuid"),
+            expected_revision: 1,
+            data: ContactPatch {
+                full_name: Some("Not Yours".to_string()),
+                email: None,
+                organization: None,
+            },
+        },
+    )
+    .await
+    .expect("the store answers");
+    assert_eq!(status, StatusCode::FORBIDDEN);
+    assert_eq!(outcome["reason"], "role_not_allowed");
+
+    // carol holds every write grant but only for her own contacts.
+    let (status, outcome) = core_send(
+        &fixture,
+        human("carol"),
+        "00000000-0000-4000-8000-000000000118",
+        CrmCommand::ContactUpdate {
+            id: Uuid::parse_str(ID_ALICE_A).expect("a test uuid"),
+            expected_revision: 1,
+            data: ContactPatch {
+                full_name: Some("Out Of Scope".to_string()),
+                email: None,
+                organization: None,
+            },
+        },
+    )
+    .await
+    .expect("the store answers");
+    assert_eq!(status, StatusCode::NOT_FOUND);
+    assert_eq!(outcome["reason"], "unknown_resource");
+
+    // The same containment holds for a pipeline create bound to a foreign
+    // contact, and for an activity on it.
+    let (status, outcome) = core_send(
+        &fixture,
+        human("carol"),
+        "00000000-0000-4000-8000-000000000119",
+        CrmCommand::OpportunityCreate {
+            contact_id: Uuid::parse_str(ID_ALICE_A).expect("a test uuid"),
+            contact_revision: 1,
+            title: "Not Yours".to_string(),
+        },
+    )
+    .await
+    .expect("the store answers");
+    assert_eq!(status, StatusCode::NOT_FOUND);
+    assert_eq!(outcome["reason"], "unknown_resource");
+
+    let (status, outcome) = core_send(
+        &fixture,
+        human("carol"),
+        "00000000-0000-4000-8000-00000000011a",
+        CrmCommand::ActivityAdd {
+            contact_id: Uuid::parse_str(ID_ALICE_A).expect("a test uuid"),
+            contact_revision: 1,
+            kind: ActivityKind::Note,
+            summary: "Not Yours".to_string(),
+        },
+    )
+    .await
+    .expect("the store answers");
+    assert_eq!(status, StatusCode::NOT_FOUND);
+    assert_eq!(outcome["reason"], "unknown_resource");
+
+    // carol CAN create a contact: it is stamped with her as owner.
+    let (status, created) = core_send(
+        &fixture,
+        human("carol"),
+        "00000000-0000-4000-8000-00000000011b",
+        CrmCommand::ContactCreate {
+            data: ContactFields {
+                full_name: "Carol's New Lead".to_string(),
+                email: None,
+                organization: None,
+            },
+        },
+    )
+    .await
+    .expect("the store answers");
+    assert_eq!(status, StatusCode::OK, "{created}");
+    let id = created["receipt"]["id"].as_str().expect("a receipt id");
+    let (_, owner) = contact_facts(&fixture, id).await;
+    assert_eq!(owner, "carol");
+}
+
+/// **Witness: the assistant's prepared completion is EXECUTABLE — a service
+/// principal on behalf of the human closes the follow-up through the same
+/// command lane, and the audit row records both ids.**
+///
+/// The conversation flow prepares a completion; the audited gap was that no
+/// execution existed behind that preparation. The typed command lane is that
+/// execution: `followup.complete` under the actor×initiator intersection.
+#[tokio::test]
+async fn a_service_completion_executes_the_prepared_followup_and_records_the_initiator() {
+    let fixture = provision().await;
+    seed(&fixture).await;
+
+    let (status, created) = core_send(
+        &fixture,
+        human("alice"),
+        "00000000-0000-4000-8000-00000000011c",
+        CrmCommand::FollowupCreate {
+            contact_id: Uuid::parse_str(ID_ALICE_A).expect("a test uuid"),
+            contact_revision: 1,
+            summary: "Prepared, then confirmed".to_string(),
+            due_at: "2027-06-01T09:00:00Z".to_string(),
+        },
+    )
+    .await
+    .expect("the store answers");
+    assert_eq!(status, StatusCode::OK, "{created}");
+    let followup_id = created["receipt"]["id"]
+        .as_str()
+        .expect("a receipt id")
+        .to_string();
+    let request_id = "00000000-0000-4000-8000-00000000011d";
+
+    let (status, completed) = core_send(
+        &fixture,
+        CrmActor::Service {
+            id: "svc".to_string(),
+            on_behalf_of: "alice".to_string(),
+        },
+        request_id,
+        CrmCommand::FollowupComplete {
+            id: Uuid::parse_str(&followup_id).expect("a receipt uuid"),
+            expected_revision: 1,
+        },
+    )
+    .await
+    .expect("the store answers");
+    assert_eq!(status, StatusCode::OK, "{completed}");
+    assert_eq!(completed["receipt"]["revision"], 2);
+
+    let row: (String, i32) = sqlx::query_as(
+        "SELECT status, revision FROM archava_crm.followups WHERE tenant_id=$1 AND id=$2",
+    )
+    .bind(ACME)
+    .bind(Uuid::parse_str(&followup_id).expect("a receipt uuid"))
+    .fetch_one(&fixture.admin_pool)
+    .await
+    .expect("the followup exists");
+    assert_eq!(row.0, "completed");
+    assert_eq!(row.1, 2);
+
+    let ids: (String, Option<String>) = sqlx::query_as(
+        "SELECT actor_id, initiator_id FROM archava_crm.audit \
+         WHERE tenant_id=$1 AND request_id=$2 AND operation='followup.complete'",
+    )
+    .bind(ACME)
+    .bind(Uuid::parse_str(request_id).expect("a test uuid"))
+    .fetch_one(&fixture.admin_pool)
+    .await
+    .expect("the completion left an audit row");
+    assert_eq!(ids.0, "svc");
+    assert_eq!(ids.1.as_deref(), Some("alice"));
 }

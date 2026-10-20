@@ -35,6 +35,7 @@ use leptos::prelude::*;
 use leptos_router::components::{Route, Router, Routes};
 use leptos_router::path;
 
+pub mod contact;
 pub mod contacts;
 pub mod draft;
 /// The browser's entry point. Only the wasm compilation exports it; the SSR
@@ -46,6 +47,7 @@ pub mod pending;
 pub mod recover;
 pub mod session;
 
+use contact::Contact;
 use contacts::Contacts;
 use draft::Draft;
 use login::Login;
@@ -95,6 +97,7 @@ pub fn App() -> impl IntoView {
                 <Routes fallback=|| view! { <NotFound /> }>
                     <Route path=path!("app") view=Login />
                     <Route path=path!("app/contacts") view=Contacts />
+                    <Route path=path!("app/contact") view=Contact />
                     <Route path=path!("app/draft") view=Draft />
                     <Route path=path!("app/recover") view=Recover />
                 </Routes>

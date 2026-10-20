@@ -138,6 +138,7 @@ const REQUIRED_CHECKS = [
   'session logout revokes server authority',
   'literal search and cursor pagination',
   'pending recovery identity survives reload and resolution',
+  'contact record writes through the product UI',
 ]
 
 /** The check each named witness backs. */
@@ -160,6 +161,12 @@ const WITNESS_CHECKS = {
   logout_blocks_old_credential: 'session logout revokes server authority',
   literal_search_is_encoded: 'literal search and cursor pagination',
   cursor_pagination_loads_later_rows: 'literal search and cursor pagination',
+  record_page_reads_the_record: 'contact record writes through the product UI',
+  record_refusal_rendered: 'contact record writes through the product UI',
+  record_contact_update: 'contact record writes through the product UI',
+  record_activity_add: 'contact record writes through the product UI',
+  record_pipeline_create_and_move: 'contact record writes through the product UI',
+  record_followup_complete: 'contact record writes through the product UI',
   pending_marker_survives_reload: 'pending recovery identity survives reload and resolution',
   pending_marker_cleared_after_resolution: 'pending recovery identity survives reload and resolution',
   storage_refusal_blocks_submission: 'pending recovery identity survives reload and resolution',
@@ -391,6 +398,18 @@ function fill(page, testid, value) {
   )
 }
 
+/** Set a `<select>`'s value and fire the events Leptos listens for. */
+function selectOption(page, testid, value) {
+  return page.evaluate(
+    `(() => { const el = document.querySelector('[data-testid="${testid}"]');\n` +
+      ` if (!el) throw new Error('missing [data-testid=${testid}]');\n` +
+      ` el.value = ${JSON.stringify(value)};\n` +
+      ` el.dispatchEvent(new Event('input', { bubbles: true }));\n` +
+      ` el.dispatchEvent(new Event('change', { bubbles: true }));\n` +
+      ` return el.value; })()`,
+  )
+}
+
 function click(page, testid) {
   return page.evaluate(
     `(() => { const el = document.querySelector('[data-testid="${testid}"]');\n` +
@@ -543,6 +562,19 @@ async function waitContactsSettled(page, timeoutMs = 30_000) {
  * minted request id (`key`) and the revision the row is currently bound to
  * (`bound` — a colleague's write may have bumped it; the caller reads the
  * fact, it does not assume). */
+/** Open a named contact's record screen through the row's own button. */
+async function openNamedRecord(page, fullName) {
+  const probe =
+    `(() => { const rows = [...document.querySelectorAll('[data-testid="contact-row"]')];\n` +
+    ` const row = rows.find((r) => r.textContent.includes(${JSON.stringify(fullName)}));\n` +
+    ` if (!row) throw new Error('no contact row named '+${JSON.stringify(fullName)});\n` +
+    ` const button = row.querySelector('[data-testid="contact-open"]');\n` +
+    ` if (!button) throw new Error('the row carries no open button');\n` +
+    ` button.click(); })()`
+  await page.evaluate(probe)
+  await waitText(page, 'record-name', (text) => text.includes(fullName))
+}
+
 async function draftContactNamed(page, fullName) {
   await clickNamedRow(page, fullName)
   const key = await waitText(page, 'review-request-id', (text) => text.trim().length > 0)
@@ -1223,6 +1255,146 @@ async function main() {
       'page 1 (20 rows) → next page (6 rows) → back to page 1, same first row',
     )
     await shot(page, '17-paginated')
+
+    // --- C01: the record screen's real writes ------------------------------
+    // The audit's C01: six of the seven baseline writes had no command AND no
+    // product screen. The commands now exist; this journey drives the
+    // product's own record page and asks PostgreSQL what each click did —
+    // a rendered "Recorded" is not the proof.
+    // "Ada Lovelace" is the 22nd bulk row — the SECOND page, which is
+    // exactly why the filter (not the page position) opens it.
+    const ADA_BULK_ID = '2c3e5a10-3333-4333-8333-000000000016'
+    await fill(page, 'contacts-search', 'Ada Lovelace')
+    await click(page, 'contacts-refresh')
+    await waitRowCount(page, 1)
+    await openNamedRecord(page, 'Ada Lovelace')
+    const recordName = await textOf(page, 'record-name')
+    const recordId = (await textOf(page, 'record-id')).trim()
+    if (!recordName.includes('Ada Lovelace') || recordId !== ADA_BULK_ID) {
+      throw new Error(`the record page opened the wrong record: ${recordName} / ${recordId}`)
+    }
+    const openingRevision = Number(await textOf(page, 'record-revision'))
+    if (openingRevision !== 1) {
+      throw new Error(`the fresh record started at revision ${openingRevision}, not 1`)
+    }
+    witness(
+      'record_page_reads_the_record',
+      `the record screen read ${ADA_BULK_ID} from the host (revision 1)`,
+    )
+
+    // A refused write renders the HOST's reason, not a generic error.
+    await fill(page, 'record-activity-summary', '   ')
+    await click(page, 'record-activity-add')
+    const refusal = await waitText(page, 'record-action', (text) => text.includes('Refused:'))
+    if (!refusal.includes('invalid_submission')) {
+      throw new Error(`the refused write did not carry the host reason: ${refusal}`)
+    }
+    witness(
+      'record_refusal_rendered',
+      'the empty activity was refused with the host’s invalid_submission reason',
+    )
+
+    // contact.update — the name and the revision move together.
+    await fill(page, 'record-edit-name', 'Ada Lovelace (edited)')
+    await click(page, 'record-save')
+    await waitText(page, 'record-revision', (text) => text.trim() === '2')
+    const editedName = await textOf(page, 'record-name')
+    if (!editedName.includes('(edited)')) {
+      throw new Error(`the record did not show the edited name: ${editedName}`)
+    }
+    const storedName = psql(
+      `SELECT full_name FROM archava_crm.contacts WHERE tenant_id='bulk-demo' AND id='${ADA_BULK_ID}'`,
+      port,
+    )
+    if (storedName !== 'Ada Lovelace (edited)') {
+      throw new Error(`contact.update did not persist the name: ${storedName}`)
+    }
+    witness(
+      'record_contact_update',
+      `contact.update persisted the edited name and moved the revision to 2 (psql: ${storedName})`,
+    )
+
+    // activity.add — the row AND the contact's revision bump.
+    await fill(page, 'record-activity-summary', 'Browser proof — record call')
+    await selectOption(page, 'record-activity-kind', 'call')
+    await click(page, 'record-activity-add')
+    await waitText(page, 'record-activities', (text) => text.includes('record call'))
+    await waitText(page, 'record-revision', (text) => text.trim() === '3')
+    const activityRows = psql(
+      `SELECT count(*) FROM archava_crm.activities WHERE tenant_id='bulk-demo' AND contact_id='${ADA_BULK_ID}' AND summary='Browser proof — record call'`,
+      port,
+    )
+    if (activityRows !== '1') {
+      throw new Error(`activity.add did not persist exactly one activity: ${activityRows}`)
+    }
+    witness(
+      'record_activity_add',
+      'activity.add persisted the call and bumped the contact to revision 3',
+    )
+
+    // opportunity.create — the pipeline row exists at `new`, revision 1.
+    await fill(page, 'record-opportunity-title', 'Browser proof — deal')
+    await click(page, 'record-opportunity-create')
+    await waitText(page, 'record-opportunities', (text) => text.includes('Browser proof — deal'))
+    const createdStage = psql(
+      `SELECT stage || ':' || revision FROM archava_crm.opportunities WHERE tenant_id='bulk-demo' AND contact_id='${ADA_BULK_ID}' AND title='Browser proof — deal'`,
+      port,
+    )
+    if (createdStage !== 'new:1') {
+      throw new Error(`opportunity.create answered ${createdStage}, not new:1`)
+    }
+
+    // opportunity.move — qualified is a legal edge from new; the page shows
+    // the new stage and the history table carries the edge.
+    await selectOption(page, 'record-move-stage', 'qualified')
+    await click(page, 'record-move')
+    await waitText(page, 'record-opportunities', (text) => text.includes('stage qualified'))
+    const movedStage = psql(
+      `SELECT stage || ':' || revision FROM archava_crm.opportunities WHERE tenant_id='bulk-demo' AND title='Browser proof — deal'`,
+      port,
+    )
+    if (movedStage !== 'qualified:2') {
+      throw new Error(`opportunity.move answered ${movedStage}, not qualified:2`)
+    }
+    const edge = psql(
+      `SELECT from_stage || '>' || to_stage || ':' || revision FROM archava_crm.opportunity_transitions WHERE tenant_id='bulk-demo' AND to_stage='qualified'`,
+      port,
+    )
+    if (edge !== 'new>qualified:2') {
+      throw new Error(`the pipeline history did not record the edge: ${edge}`)
+    }
+    witness(
+      'record_pipeline_create_and_move',
+      'opportunity.create opened new:1 and opportunity.move recorded new>qualified:2',
+    )
+
+    // followup.complete — a follow-up created through the draft screen is
+    // closed from the record screen.
+    await openPage(page, `${APP}/contacts`)
+    await waitText(page, 'contacts-count', (text) => text.includes('contact(s)'))
+    await fill(page, 'contacts-search', 'Ada Lovelace')
+    await click(page, 'contacts-refresh')
+    await waitRowCount(page, 1)
+    await draftContactNamed(page, 'Ada Lovelace')
+    await fillDraft(page, 'Browser proof — record followup', '2027-08-01T09:00:00Z')
+    await click(page, 'draft-submit')
+    await waitText(page, 'draft-status', (text) => text.includes('Recorded. Receipt:'))
+    await openPage(page, `${APP}/contact?id=${ADA_BULK_ID}`)
+    await waitText(page, 'record-followup-complete', (text) => text.length >= 0)
+    await click(page, 'record-followup-complete')
+    await waitText(page, 'record-followups', (text) => text.includes('completed'))
+    const completed = psql(
+      `SELECT status || ':' || revision FROM archava_crm.followups WHERE tenant_id='bulk-demo' AND contact_id='${ADA_BULK_ID}' AND summary='Browser proof — record followup'`,
+      port,
+    )
+    if (completed !== 'completed:2') {
+      throw new Error(`followup.complete answered ${completed}, not completed:2`)
+    }
+    witness(
+      'record_followup_complete',
+      'followup.complete closed the drafted follow-up (psql: completed:2)',
+    )
+    await shot(page, '18-record-screen')
 
     // Graceful stop of the attached server: its fixture owns the surviving
     // instance now; its Drop stops PostgreSQL and removes the directory.

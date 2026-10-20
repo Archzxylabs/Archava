@@ -97,8 +97,12 @@ const CAST: &[CrmCastRow] = &[
         &[
             "contacts.read",
             "contacts.write",
+            "activities.read",
+            "activities.write",
             "followups.read",
             "followups.write",
+            "pipeline.read",
+            "pipeline.write",
         ],
         "all",
         true,

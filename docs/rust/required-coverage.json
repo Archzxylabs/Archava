@@ -1200,7 +1200,8 @@
         "unauthenticated/forged negative",
         "session logout revokes server authority",
         "literal search and cursor pagination",
-        "pending recovery identity survives reload and resolution"
+        "pending recovery identity survives reload and resolution",
+        "contact record writes through the product UI"
       ],
       "sourcePaths": [
         "rust"

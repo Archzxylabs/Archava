@@ -20,7 +20,7 @@ of behaviour.
 
 | ID | Task | Required closure | Current evidence (real, not a marker) | Status | Next action |
 | --- | --- | --- | --- | --- | --- |
-| C01 | A1-CRM | All seven baseline writes, existing reads and usable CRM screens/action flow — not `followup.create` plus a read-only assistant | `rust/crates/host/src/crm.rs` `CrmCommand` has ONE variant (`followup.create`); slice route table has login/contacts/draft/recover only; `tests/crm.rs` even asserts `contact.create` is refused (422) | **open** — implemented for 1/7 writes | Implement `contact.create`, `contact.update`, `activity.add`, `followup.complete`, `opportunity.create`, `opportunity.move` with the TS wire contracts, current authority, atomic audit/receipt; then the product UI and assistant execution |
+| C01 | A1-CRM | All seven baseline writes, existing reads and usable CRM screens/action flow — not `followup.create` plus a read-only assistant | **7/7 commands closed locally (2026-10-20); product UI partially.** `CrmCommand` now carries every contract operation (`contact.create/update`, `activity.add`, `followup.create/complete`, `opportunity.create/move`) with the TS field names, tri-state patch semantics, boundary validation, the operation-family write grant (+`contacts.read` for the pipeline lane), scope containment, the `PIPELINE_TRANSITIONS` state machine, history rows, audit and receipt in one transaction. New read route `GET /crm/records` serves the record screen. The slice's `/app/contact` screen performs contact.update, activity.add, followup.complete and opportunity.create/move against the host, renders the host's refusal reason verbatim, and reuses one request id for a retry after an unknown outcome. Proof: `cargo test -p archava-host --test crm --offline` — 31 passed + the 4 environmental retries green alone (see matrix note), including `a_contact_create_over_http_persists_the_row_and_its_audit`, `a_contact_update_is_partial_and_null_clears_the_field`, `an_activity_add_persists_the_activity_and_bumps_the_contact`, `a_followup_complete_closes_the_open_followup_exactly_once`, `an_opportunity_create_opens_the_row_and_its_first_transition`, `an_opportunity_move_follows_the_state_machine_and_records_history`, `a_new_operation_replays_its_receipt_and_rejects_key_reuse`, `the_new_writes_are_gated_by_grants_and_scope`, `a_service_completion_executes_the_prepared_followup_and_records_the_initiator` (audit records actor `svc` + initiator `alice`). `pnpm rust:browser-slice` drives the record screen and asserts each effect in PostgreSQL. | **partially closed** — 7/7 commands; record screen witnessed; **still open**: a visible assistant panel and a standalone pipeline board | Add the assistant panel (conversation route rendering + execute-prepared-completion) and the pipeline board, then re-run the gate |
 | C02 | A1-AUTH | UI logout revokes the server session and closes cookie/bearer/reconnect authority | **Closed locally (2026-10-20).** `Identity::revoke` (`rust/crates/host/src/identity.rs`) deletes the session row and appends the `logout` identity event in one transaction; `POST /logout` (`rust/crates/host/src/router.rs`) runs the CSRF gate BEFORE revocation, deletes the row, then expires the cookie (`Max-Age=0`); the slice's `close_server_session` closes the server session first and clears local facts only after the server says so (a 401 "no session" also clears, a 403/503 keeps state and reports the refusal). Proof: `cargo test -p archava-host --test session --offline` → 6 passed, 0 failed (read/mutate/recover refused after logout, missing/forged CSRF with a LIVE session refused without revoking, other sessions untouched, restart does not resurrect, no-session logout = 401); `pnpm rust:browser-slice` → 20/20 witnesses, EXIT=0, including `logout_revokes_server_session` (psql: the presented row is gone) and `logout_blocks_old_credential` (same browser reads /contacts → 401). | **locally verified** | Re-run the full gate after C01 lands |
 | C03 | A1-OWN | Actual owner configuration lifecycle and semantic OWN-T01–T10 proofs | `tools/own/verify.mjs` derives T01 from a policy-consumer `outcome.ok`, T06 from writer-fence/rollback rehearsals, T07 from deployment-plan unit tests, T10 from the TypeScript CRM browser battery — none exercise an owner config apply/restore | **open** (audit says OWN-V1 "delivered" is not supported) | Build the real config lifecycle (inspect→plan→preview→confirm→apply→recovery→history→restore) as one serving engine for chat+dashboard, then re-bind each OWN-Txx to the operation it names |
 | C04 | A1-REUSE | Two packaged independent consumers execute real CRM business behaviour on isolated persisted data | `tools/rust/k05-k04-consumers.mjs` bundles `archava-core`/`archava-domain`; consumer witnesses cover tenant IDs, role table, action registry, `CommandAuthorizer` — no CRM repository/operation runs | **open** | Extend both consumers to run contact/activity/follow-up/opportunity read-write-recovery against their own persisted store, from identical released CRM artifacts |
@@ -79,3 +79,26 @@ Owner-dirty paths are not swept into any commit: `.github/workflows/ci.yml`,
 `tools/library/verify-formal-education*.mjs`. This lane commits only exact
 owned paths: `rust/**`, `tools/rust/**`, `tools/own/**`, `docs/rust/**` and new
 `docs/rust/ARCHXY1_*` files.
+
+## Evidence notes (2026-10-20)
+
+- **Fixture destruction by a concurrent lane, not a product failure.** A
+  35-test serial CRM run reported 4 failures
+  (`a_contact_create_over_http_persists_the_row_and_its_audit`,
+  `a_principal_without_a_crm_membership_is_refused`,
+  `a_reviewed_followup_create_persists_the_real_effect`,
+  `a_search_is_escaped_so_the_caller_percent_stays_a_literal`), each a
+  `login … 503`/vanished fixture directory; all four pass alone and the other
+  31 passed. The cause is now named exactly: the Archxy 2 lane runs
+  `pkill -x postgres; sleep 3; pkill -9 -x postgres; rm -rf
+  /tmp/archava-pg-fixture-* /home/haikaru/Archverse/tmp-fixture/archava-pg-fixture-*`
+  before its own ERP battery (observed in its shell command line), which kills
+  every PostgreSQL and deletes every fixture on the machine — including a
+  browser proof in flight (`Refused: identity` mid-journey at step 11 with the
+  fixture's data directory gone). A gate run must not share the machine with
+  that lane; a failed run under it proves nothing about this code.
+- **C01 command coverage is 7/7, the product surface is not finished.** The
+  audit's sentence "angka 1/7 adalah command coverage" still applies in
+  reverse: 7/7 commands is command coverage, not C01 closure. The record
+  screen covers the write lifecycle end to end; the visible assistant panel
+  and a standalone pipeline board remain open and are named in the row.

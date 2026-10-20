@@ -83,9 +83,7 @@ fn now_rfc3339() -> String {
         let (hours, rest) = (rest / 3_600, rest % 3_600);
         let (minutes, secs) = (rest / 60, rest % 60);
         let (year, month, day) = civil_from_days(days);
-        format!(
-            "{year:04}-{month:02}-{day:02}T{hours:02}:{minutes:02}:{secs:02}.000Z"
-        )
+        format!("{year:04}-{month:02}-{day:02}T{hours:02}:{minutes:02}:{secs:02}.000Z")
     }
     #[cfg(not(target_arch = "wasm32"))]
     {
@@ -151,10 +149,7 @@ pub(crate) fn write(marker: &PendingMarker) -> Result<(), String> {
         "createdAt": marker.created_at,
     });
     storage
-        .set_item(
-            &key_for(&marker.tenant),
-            &payload.to_string(),
-        )
+        .set_item(&key_for(&marker.tenant), &payload.to_string())
         .map_err(|error| format!("the browser refused the pending marker: {error:?}"))
 }
 
@@ -168,7 +163,8 @@ pub(crate) fn write(_marker: &PendingMarker) -> Result<(), String> {
 /// moved on.
 #[cfg(target_arch = "wasm32")]
 pub(crate) fn clear(tenant: &str) {
-    if let Some(storage) = web_sys::window().and_then(|window| window.local_storage().ok().flatten())
+    if let Some(storage) =
+        web_sys::window().and_then(|window| window.local_storage().ok().flatten())
     {
         let _ = storage.remove_item(&key_for(tenant));
     }

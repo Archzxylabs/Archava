@@ -397,7 +397,7 @@ pub fn Draft() -> impl IntoView {
 /// A uuid for the idempotency key, from the browser's own randomness; the
 /// page invents ids no other way.
 #[cfg(target_arch = "wasm32")]
-fn uuid_string() -> String {
+pub(crate) fn uuid_string() -> String {
     let window = web_sys::window().expect("a browser window");
     let crypto = window.crypto().expect("crypto on the browser");
     crypto.random_uuid()
@@ -408,6 +408,6 @@ fn uuid_string() -> String {
 /// effect would not compile on the SSR target — the browser is the only
 /// place a key is actually minted.
 #[cfg(not(target_arch = "wasm32"))]
-fn uuid_string() -> String {
+pub(crate) fn uuid_string() -> String {
     String::new()
 }

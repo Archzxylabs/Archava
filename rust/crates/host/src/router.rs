@@ -322,6 +322,7 @@ pub fn router(state: AppState) -> Router {
         // The §1.4B slice: the real, session-scoped contact read (crm.rs)
         // replaces the pre-slice placeholder denial that lived on this path.
         .route("/contacts", get(crate::crm::contacts))
+        .route("/crm/records", get(crate::crm::record))
         .route("/commands", post(command))
         .route("/commands/status", get(command_status))
         .route("/approvals", post(approval_request))
