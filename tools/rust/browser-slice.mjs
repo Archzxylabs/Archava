@@ -1645,7 +1645,7 @@ async function main() {
       port,
     )
     await page.evaluate(
-      `localStorage.setItem('archava.pending.bulk-demo', JSON.stringify({requestId:'00000000-0000-4000-8000-00000000c105', tenant:'bulk-demo', principal:'alice', createdAt:new Date().toISOString()}))`,
+      `localStorage.setItem('archava.pending.bulk-demo', JSON.stringify({requestId:'00000000-0000-4000-8000-00000000c105', tenant:'bulk-demo', principal:'alice@archava.test', createdAt:new Date().toISOString()}))`,
     )
     await openPage(page, `${APP}/contact?id=${ADA_BULK_ID}`)
     await waitText(page, 'record-name', (text) => text.includes('Ada Lovelace'))
