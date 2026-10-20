@@ -138,8 +138,9 @@ owned paths: `rust/**`, `tools/rust/**`, `tools/own/**`, `docs/rust/**` and new
   unavailable / missing dependency), confirmation bound to plan hash + base
   revision, idempotent apply under a request id, append-only history and
   restore that is revalidated against the CURRENT catalogue and lands as a
-  NEW revision. Eleven integration witnesses map to T01/T02/T03/T05/T06/
-  T07/T08 (`cargo test -p archava-own`, 11/11).
+  NEW revision. Twelve integration witnesses map to T01/T02/T03/T05/T06/
+  T07/T08/T09 (`cargo test -p archava-own`, 12/12), including a closed
+  request that cannot invent readiness, cost or authority.
   Explicitly NOT delivered, and the reason C03 stays **open**: persistence
   (the `Store` is in memory), grants/HTTP routes, inspect/preview/confirm
   UI, unknown-outcome recovery for an OWN apply, and the browser journey.
