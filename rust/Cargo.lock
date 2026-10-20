@@ -161,6 +161,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "archava-own"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "archava-pg-fixture"
 version = "0.1.0"
 dependencies = [

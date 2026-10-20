@@ -36,6 +36,12 @@ members = [
   # canned hosts (`HostCrm` implementations) as well as the real one. See
   # crates/assistant/Cargo.toml for the boundary decisions.
   "crates/assistant",
+  # C03's owner-configuration engine: catalogue resolution, immutable plans,
+  # confirmation binding, idempotent apply, history and safe restore. A leaf —
+  # serde only, no HTTP, no database — because the dashboard and the assistant
+  # must drive the SAME contract, and the deterministic parts must be provable
+  # without either of them. See crates/own/src/lib.rs for the semantics.
+  "crates/own",
   # RF02's fixture: a disposable, owned PostgreSQL instance for the integration
   # suites. A workspace member (so it is versioned, formatted and linted with
   # everything else) but a DEV-ONLY dependency — no production crate may depend

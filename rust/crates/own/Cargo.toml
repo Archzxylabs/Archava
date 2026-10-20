@@ -1,0 +1,11 @@
+[package]
+name = "archava-own"
+description = "Deterministic owner-configuration engine core (OWN-V1): catalogue resolution, immutable plans, confirmation/apply, history and safe restore. A leaf crate — serde only, no HTTP/database — so both the dashboard and the assistant can drive the SAME contract."
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }

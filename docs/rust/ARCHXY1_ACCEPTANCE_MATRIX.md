@@ -129,3 +129,19 @@ owned paths: `rust/**`, `tools/rust/**`, `tools/own/**`, `docs/rust/**` and new
   pending because the Archxy 2 lane is executing `pkill -x postgres` and
   workspace tests on the same machine. Not claimed as verified until that
   run is green.
+
+- **C03 foundation landed (2026-10-20; lifecycle NOT delivered).** New leaf
+  crate `archava-own` (serde only) is the shared deterministic engine the
+  owner PRD requires for both the dashboard and the assistant: typed
+  catalogue/config/request, immutable plans with a stable plan identity,
+  explicit `blocked` results (unknown / not entitled / not installed /
+  unavailable / missing dependency), confirmation bound to plan hash + base
+  revision, idempotent apply under a request id, append-only history and
+  restore that is revalidated against the CURRENT catalogue and lands as a
+  NEW revision. Eleven integration witnesses map to T01/T02/T03/T05/T06/
+  T07/T08 (`cargo test -p archava-own`, 11/11).
+  Explicitly NOT delivered, and the reason C03 stays **open**: persistence
+  (the `Store` is in memory), grants/HTTP routes, inspect/preview/confirm
+  UI, unknown-outcome recovery for an OWN apply, and the browser journey.
+  T04 (backend authority refusals against real PostgreSQL), T09 and T10
+  remain unproven; nothing in the host uses the crate yet.
