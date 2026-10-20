@@ -2,7 +2,7 @@
 
 **Status:** live index, updated as work lands. This is a TRACEABILITY index,
 not a substitute denominator: the frozen denominator stays
-`docs/rust/required-coverage.json` (93 items / 53 proofs), and this file never
+`docs/rust/required-coverage.json` (93 items / 56 proofs), and this file never
 shrinks it. Independent (Codex) review is a separate fact from local
 verification and is marked `pending` everywhere below.
 
