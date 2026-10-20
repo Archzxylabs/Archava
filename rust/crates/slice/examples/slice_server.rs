@@ -102,7 +102,7 @@ const CAST: &[CrmCastRow] = &[
         ],
         "all",
         true,
-        &["acme-retail"],
+        &["acme-retail", "bulk-demo"],
     ),
     (
         "bob",
@@ -471,7 +471,64 @@ async fn seed(fixture: &Fixture) {
         .await
         .expect("seed the contact");
     }
+
+    // The pagination and literal-search fixture: one tenant with MORE rows
+    // than a page holds, so the browser proof can move between pages for
+    // real, and names whose characters a raw query string would eat (`&`,
+    // `%`, `+`, `#`). The 19 Oktober audit's C06 repro was a search for
+    // `Ada&limit=1`: unencoded, it became a different query and the page
+    // showed a row the literal search never returns. These rows make that
+    // difference observable on screen.
+    for (index, name) in BULK_CONTACT_NAMES.iter().enumerate() {
+        let id = format!("2c3e5a10-3333-4333-8333-{:012x}", index + 1);
+        sqlx::query(
+            "INSERT INTO archava_crm.contacts \
+             (tenant_id, id, full_name, email, organization, owner_id) \
+             VALUES ($1, $2, $3, $4, $5, $6)",
+        )
+        .bind("bulk-demo")
+        .bind(sqlx::types::Uuid::parse_str(&id).expect("a fixture uuid"))
+        .bind(*name)
+        .bind(None::<String>)
+        .bind(None::<String>)
+        .bind("alice")
+        .execute(&fixture.admin_pool)
+        .await
+        .expect("seed the bulk contact");
+    }
 }
+
+/// The bulk tenant's contact names, in a fixed order so the ids the browser
+/// proof reads are stable: 26 rows — more than one page of 20 — with the
+/// four names whose characters a query string would otherwise eat.
+const BULK_CONTACT_NAMES: &[&str] = &[
+    "Bulk Client 01",
+    "Bulk Client 02",
+    "Bulk Client 03",
+    "Bulk Client 04",
+    "Bulk Client 05",
+    "Bulk Client 06",
+    "Bulk Client 07",
+    "Bulk Client 08",
+    "Bulk Client 09",
+    "Bulk Client 10",
+    "Bulk Client 11",
+    "Bulk Client 12",
+    "Bulk Client 13",
+    "Bulk Client 14",
+    "Bulk Client 15",
+    "Bulk Client 16",
+    "Bulk Client 17",
+    "Bulk Client 18",
+    "Bulk Client 19",
+    "Bulk Client 20",
+    "Bulk Client 21",
+    "Ada Lovelace",
+    "Ada & Lovelace Ltd",
+    "Percent % Name",
+    "Plus + Name",
+    "Hash # Name",
+];
 
 /// What `run` prints and `ARCHAVA_SLICE_ATTACH` carries — the two ends of a
 /// restart agree on this shape, serde-checked at both ends, not on a

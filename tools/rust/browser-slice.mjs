@@ -135,6 +135,9 @@ const REQUIRED_CHECKS = [
   'CSRF negative',
   'stale revision negative',
   'unauthenticated/forged negative',
+  'session logout revokes server authority',
+  'literal search and cursor pagination',
+  'pending recovery identity survives reload and resolution',
 ]
 
 /** The check each named witness backs. */
@@ -153,6 +156,13 @@ const WITNESS_CHECKS = {
   forged_scope: 'unauthenticated/forged negative',
   forged_tenant: 'unauthenticated/forged negative',
   duplicate_submission: 'reviewed business command executed',
+  logout_revokes_server_session: 'session logout revokes server authority',
+  logout_blocks_old_credential: 'session logout revokes server authority',
+  literal_search_is_encoded: 'literal search and cursor pagination',
+  cursor_pagination_loads_later_rows: 'literal search and cursor pagination',
+  pending_marker_survives_reload: 'pending recovery identity survives reload and resolution',
+  pending_marker_cleared_after_resolution: 'pending recovery identity survives reload and resolution',
+  storage_refusal_blocks_submission: 'pending recovery identity survives reload and resolution',
 }
 
 const steps = []
@@ -789,19 +799,75 @@ async function main() {
     witness('recover_refresh', 'session and receipt both survive a full page reload')
     await shot(page, '06-refresh-recovered')
 
-    // 7. CSRF negative — sign out keeps the cookie valid while the CSRF record
-    //    dies; the next UI submit hits the host's gate. ──────────────────────
-    await openPage(page, `${APP}/draft?contact=${adaId}&revision=1&name=Ada%20Lovelace`)
-    await waitValue(page, 'draft-revision', (text) => text.trim() === '1')
-    await click(page, 'session-sign-out')
-    await waitText(page, 'session-marker', (text) => text.includes('signed out'))
-    if ((await page.evaluate(`localStorage.getItem('archava_csrf')`)) !== null) {
-      throw new Error('sign-out left a CSRF record behind')
+    // 7. CSRF negative — a VALID session that submits without the header (and
+    //    with a forged one) is refused by the host's gate, and the session
+    //    SURVIVES both refusals.
+    //
+    //    The old witness signed out to drop the CSRF header and relied on
+    //    the cookie staying valid. Signing out now really ends the session
+    //    (C02: the server revokes it), so that shape is gone — and it was
+    //    the shape the audit called out. The negative is now taken against a
+    //    LIVE session with a missing or forged header, which is what the
+    //    mandate asks for, and the session's survival is asserted.
+    const csrfOutcomeRaw = await page.evaluate(
+      `(async () => {
+         const body = JSON.stringify({
+           tenant: 'acme-retail',
+           requestId: crypto.randomUUID(),
+           command: {
+             operation: 'followup.create',
+             contactId: '${adaId}',
+             contactRevision: 1,
+             summary: 'Browser proof — csrf skip',
+             dueAt: '2027-06-02T09:00:00Z',
+           },
+         });
+         const without = await fetch('/crm/commands', {
+           method: 'POST',
+           credentials: 'include',
+           headers: { 'content-type': 'application/json' },
+           body,
+         });
+         const withoutBody = await without.json();
+         const forged = await fetch('/crm/commands', {
+           method: 'POST',
+           credentials: 'include',
+           headers: { 'content-type': 'application/json', 'x-archava-csrf': 'forged-csrf-value' },
+           body,
+         });
+         const forgedBody = await forged.json();
+         return JSON.stringify({
+           without: without.status,
+           withoutReason: withoutBody.reason ?? null,
+           forged: forged.status,
+           forgedReason: forgedBody.reason ?? null,
+         });
+       })()`,
+    )
+    const csrfOutcome = JSON.parse(csrfOutcomeRaw)
+    if (csrfOutcome.without !== 403 || csrfOutcome.withoutReason !== 'csrf_required') {
+      throw new Error(
+        `the header-less submit was not refused by the CSRF gate: ${JSON.stringify(csrfOutcome)}`,
+      )
     }
-    await fillDraft(page, 'Browser proof — csrf skip', '2027-06-02T09:00:00Z')
-    await click(page, 'draft-submit')
-    const csrfRefusal = await waitText(page, 'draft-status', (text) => text.includes('csrf_required'))
-    witness('csrf_negative', `the header-less submit was refused: ${firstLine(csrfRefusal)}`)
+    if (csrfOutcome.forged !== 403 || csrfOutcome.forgedReason !== 'csrf_required') {
+      throw new Error(
+        `the forged-CSRF submit was not refused by the CSRF gate: ${JSON.stringify(csrfOutcome)}`,
+      )
+    }
+    // The session is still a session: a refused mutation did not end it.
+    const sessionSurvived = await page.evaluate(
+      `(async () => { const response = await fetch('/contacts?tenant=acme-retail', { credentials: 'include' }); return String(response.status); })()`,
+    )
+    if (sessionSurvived !== '200') {
+      throw new Error(
+        `the session did not survive the refused submissions: HTTP ${sessionSurvived}`,
+      )
+    }
+    witness(
+      'csrf_negative',
+      `the header-less and forged-header submits were both refused (csrf_required) and the session survived`,
+    )
     await shot(page, '07-csrf-refusal')
 
     // 8. Stale revision negative — bind a revision the contact never had. ─────
@@ -920,6 +986,38 @@ async function main() {
     }
     witness('recover_lost_response', 'the committed answer died on the wire — the panel names the recovery key')
     await shot(page, '13-lost-response')
+
+    // 11b. The pending marker SURVIVES a reload (C05). ────────────────────
+    //      The audit reloaded the draft right here and watched the request
+    //      id change to a fresh one, with the original nowhere in the tab,
+    //      the URL or storage. The application now keeps an
+    //      account/workspace-bound marker: the reload comes back with the
+    //      ORIGINAL key, and a fresh key is refused while the outcome is
+    //      unknown.
+    const draftHref = await page.evaluate('location.href')
+    await openPage(page, draftHref)
+    const restoredKey = (
+      await waitText(page, 'review-request-id', (text) => text.trim().length > 0)
+    ).trim()
+    if (restoredKey !== lostKey) {
+      throw new Error(`the reload minted a new key: ${restoredKey} != ${lostKey}`)
+    }
+    const pendingBanner = await textOf(page, 'draft-pending-id')
+    if (typeof pendingBanner !== 'string' || pendingBanner.trim() !== lostKey) {
+      throw new Error(`the page did not show the pending marker: ${pendingBanner}`)
+    }
+    await click(page, 'draft-new-key')
+    await waitText(page, 'draft-status', (text) => text.includes('unresolved'))
+    const stillLost = (await textOf(page, 'review-request-id')).trim()
+    if (stillLost !== lostKey) {
+      throw new Error(`a fresh key was minted while the outcome was unknown: ${stillLost}`)
+    }
+    witness(
+      'pending_marker_survives_reload',
+      `the reload restored ${lostKey}; a fresh key was refused while the outcome was unknown`,
+    )
+    await shot(page, '13b-pending-restored')
+
     const lostRecover = await recoverVisible(page, lostKey)
     const lostReceiptId = lostRecover.receiptId
     receipts.push({ requestId: lostKey, receiptId: lostReceiptId, note: 'lost response' })
@@ -931,6 +1029,49 @@ async function main() {
     ) {
       throw new Error('the lost-response commit never persisted its followup')
     }
+
+    // 11c. Resolution clears the marker, so the workspace can move on. ─────
+    await openPage(page, draftHref)
+    const freshKey = (
+      await waitText(page, 'review-request-id', (text) => text.trim().length > 0)
+    ).trim()
+    if (freshKey === lostKey || freshKey.length === 0) {
+      throw new Error(`the resolved marker still owns the draft: ${freshKey}`)
+    }
+    const pendingGone = await page.evaluate(
+      `document.querySelector('[data-testid="draft-pending"]') === null`,
+    )
+    if (!pendingGone) {
+      throw new Error('the resolved marker still blocks the workspace')
+    }
+    witness(
+      'pending_marker_cleared_after_resolution',
+      `the committed receipt cleared the marker; the next draft minted ${freshKey.slice(0, 8)}…`,
+    )
+
+    // 11d. A browser that cannot record the marker refuses the send. ────────
+    await page.evaluate(
+      `(() => { window.__archavaSetItem = Storage.prototype.setItem;
+                Storage.prototype.setItem = function () { throw new Error('storage refused'); }; })()`,
+    )
+    await fillDraft(page, 'Browser proof — storage refused', '2027-06-07T09:00:00Z')
+    await click(page, 'draft-submit')
+    await waitText(page, 'draft-status', (text) => text.includes('submission was not made'))
+    await page.evaluate(
+      `(() => { Storage.prototype.setItem = window.__archavaSetItem; })()`,
+    )
+    if (
+      psql(
+        `SELECT count(*) FROM archava_crm.followups WHERE tenant_id='acme-retail' AND summary='Browser proof — storage refused'`,
+        port,
+      ) !== '0'
+    ) {
+      throw new Error('a submission the browser could not record still reached the server')
+    }
+    witness(
+      'storage_refusal_blocks_submission',
+      'the refused storage write blocked the send: the host never saw the command',
+    )
 
     // 12. Restart — SIGKILL the server (its Drop never runs; the data dir and
     //     the postmaster both survive), attach a new one, recover BOTH.
@@ -967,6 +1108,121 @@ async function main() {
       'receipts recorded before the SIGKILL answer identically after the attach',
     )
     await shot(page, '14-restart-recovered')
+
+    // --- C02: the UI sign-out closes the SERVER session --------------------
+    // The 19 Oktober audit reproduced the opposite of what a sign-out must
+    // do: the marker said "signed out" while the same browser still read
+    // twenty authorized contact rows. This journey asserts the real thing,
+    // in the browser and against PostgreSQL:
+    //   - the session ROW is gone — the server revoked it, which a page that
+    //     only forgets its own state could never prove;
+    //   - the same browser can no longer read the contacts.
+    await signIn(page, 'alice', 'acme-retail')
+    // The count, not a fixed number: every sign-in of this journey added a
+    // row (only the sign-out removes one), so what matters is that the
+    // presented session's row is GONE — exactly one fewer, not "none".
+    const sessionsBefore = psql(
+      "SELECT count(*) FROM archava_identity.sessions WHERE user_id = 'alice'",
+      port,
+    )
+    if (Number(sessionsBefore) < 1) {
+      throw new Error('the signed-in browser holds no session row at all')
+    }
+    await click(page, 'session-sign-out')
+    const marker = await waitText(page, 'session-marker', (text) => text.includes('signed out'))
+    const sessionsAfter = psql(
+      "SELECT count(*) FROM archava_identity.sessions WHERE user_id = 'alice'",
+      port,
+    )
+    if (Number(sessionsAfter) !== Number(sessionsBefore) - 1) {
+      throw new Error(
+        `the UI sign-out removed ${Number(sessionsBefore) - Number(sessionsAfter)} session row(s) instead of the presented one`,
+      )
+    }
+    witness(
+      'logout_revokes_server_session',
+      `the UI sign-out deleted the presented session row (${sessionsBefore} → ${sessionsAfter}; marker: ${marker.trim()})`,
+    )
+    await shot(page, '15-signed-out')
+
+
+    const afterSignOut = await page.evaluate(
+      `(async () => { const response = await fetch('/contacts?tenant=acme-retail', ` +
+        `{ credentials: 'include' }); return String(response.status); })()`,
+    )
+    if (afterSignOut !== '401') {
+      throw new Error(
+        `the signed-out browser still reached the contacts: HTTP ${afterSignOut} — the credential was not revoked`,
+      )
+    }
+    witness(
+      'logout_blocks_old_credential',
+      `the signed-out browser's contact read was refused (HTTP ${afterSignOut})`,
+    )
+
+    // --- C06: literal search and real cursor pagination --------------------
+    // The 19 Oktober audit typed `Ada&limit=1` into the filter: the page
+    // concatenated it raw, so it became a different query and the screen
+    // showed a row the literal search never returns. And with 26 rows in
+    // the tenant the page could not move: it named a cursor in a sentence.
+    // Both are asserted here, on screen.
+    await signIn(page, 'alice', 'bulk-demo')
+
+    // The audit's exact repro: a literal that is not a name matches nothing.
+    await fill(page, 'contacts-search', 'Ada&limit=1')
+    await click(page, 'contacts-refresh')
+    await waitText(page, 'contacts-count', (text) => text.includes('0 contact(s)'))
+    const literalRows = await count(page, 'contact-row')
+    if (literalRows !== 0) {
+      throw new Error(
+        `the literal search "Ada&limit=1" returned ${literalRows} row(s) — the query string was not encoded`,
+      )
+    }
+
+    // The positive case: the row whose name really contains `&` is found by
+    // its literal name, and the plain "Ada Lovelace" row is not.
+    await fill(page, 'contacts-search', 'Ada &')
+    await click(page, 'contacts-refresh')
+    await waitRowCount(page, 1)
+    const literalName = await textOf(page, 'contact-row')
+    if (!literalName.includes('Ada & Lovelace Ltd')) {
+      throw new Error(`the literal search found the wrong row: ${literalName}`)
+    }
+    witness(
+      'literal_search_is_encoded',
+      'the literal "Ada &" search returned only "Ada & Lovelace Ltd"; "Ada&limit=1" returned nothing',
+    )
+    await shot(page, '16-literal-search')
+
+    // The pages move: 26 rows, a page of 20, and a next page that is
+    // really the next rows.
+    await fill(page, 'contacts-search', '')
+    await click(page, 'contacts-refresh')
+    await waitRowCount(page, 20)
+    const firstRow = await textOf(page, 'contact-row')
+    const pageNote = await textOf(page, 'contacts-page-note')
+    if (typeof pageNote !== 'string' || !pageNote.includes('a further page exists')) {
+      throw new Error(`the page did not name a further page: ${pageNote}`)
+    }
+    await click(page, 'contacts-next-page')
+    await waitRowCount(page, 6)
+    const secondRow = await textOf(page, 'contact-row')
+    if (secondRow === firstRow) {
+      throw new Error('the next page showed the same first row — the cursor did not move')
+    }
+    await click(page, 'contacts-first-page')
+    await waitRowCount(page, 20)
+    const backToFirst = await textOf(page, 'contact-row')
+    if (backToFirst !== firstRow) {
+      throw new Error(
+        `the first-page action did not return to the first page: ${backToFirst} != ${firstRow}`,
+      )
+    }
+    witness(
+      'cursor_pagination_loads_later_rows',
+      'page 1 (20 rows) → next page (6 rows) → back to page 1, same first row',
+    )
+    await shot(page, '17-paginated')
 
     // Graceful stop of the attached server: its fixture owns the surviving
     // instance now; its Drop stops PostgreSQL and removes the directory.

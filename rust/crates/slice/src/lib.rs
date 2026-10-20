@@ -42,6 +42,7 @@ pub mod draft;
 #[cfg(target_arch = "wasm32")]
 pub mod hydrate;
 pub mod login;
+pub mod pending;
 pub mod recover;
 pub mod session;
 
@@ -78,20 +79,27 @@ pub fn App() -> impl IntoView {
     Effect::new(move |_| session::restore_session());
 
     view! {
-        <header>
-            <a href="/app" class="home">Archava CRM slice</a>
-            <session::SessionMarker />
-        </header>
-        <main>
-            <Router>
+        // The router wraps the WHOLE body, header included: the session
+        // marker owns a sign-out action that navigates when the server has
+        // closed the session, and a hook that needs the router context
+        // panics outside it ("You cannot call `use_navigate` outside a
+        // <Router>"). The DOM is unchanged — `Router` renders its children
+        // without adding an element — so the document the browser hydrates
+        // stays the document the server rendered.
+        <Router>
+            <header>
+                <a href="/app" class="home">Archava CRM slice</a>
+                <session::SessionMarker />
+            </header>
+            <main>
                 <Routes fallback=|| view! { <NotFound /> }>
                     <Route path=path!("app") view=Login />
                     <Route path=path!("app/contacts") view=Contacts />
                     <Route path=path!("app/draft") view=Draft />
                     <Route path=path!("app/recover") view=Recover />
                 </Routes>
-            </Router>
-        </main>
+            </main>
+        </Router>
     }
 }
 

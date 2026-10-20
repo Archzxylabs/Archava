@@ -50,6 +50,18 @@ pub fn Recover() -> impl IntoView {
             let target = format!("/crm/commands/status?tenant={tenant}&requestId={request_id}");
             match session::api_fetch("GET", &target, None).await {
                 Ok(Answer { status: 200, body }) if body["status"] == "committed" => {
+                    // The outcome this browser could not see is now KNOWN,
+                    // and it is the pending operation's own key: the marker
+                    // has served its purpose and must not keep blocking the
+                    // workspace's next attempt (C05). A receipt for a
+                    // DIFFERENT request id leaves the marker alone.
+                    if let Some(held) = session::held() {
+                        if let Some(marker) = crate::pending::read(&held.tenant, &held.principal) {
+                            if marker.request_id == request_id {
+                                crate::pending::clear(&held.tenant);
+                            }
+                        }
+                    }
                     set_state.set(RecoverState::Committed(Answer { status: 200, body }));
                 }
                 Ok(Answer { status: 200, body }) if body["status"] == "unconfirmed" => {

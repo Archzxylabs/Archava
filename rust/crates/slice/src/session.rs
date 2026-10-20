@@ -26,6 +26,71 @@
 use std::sync::OnceLock;
 
 use leptos::prelude::*;
+use leptos::task::spawn_local;
+use leptos_router::hooks::use_navigate;
+
+/// The outcome of a sign-out attempt, as the marker renders it.
+#[derive(Clone, Debug)]
+#[cfg_attr(not(target_arch = "wasm32"), allow(dead_code))]
+pub(crate) enum SignOut {
+    /// The server closed the session; this browser's private state may be
+    /// cleared.
+    Closed,
+    /// The server refused (no session, a CSRF refusal, or the identity store
+    /// was unavailable): the local state is KEPT. A UI that claims to be
+    /// signed out while the credential still answers is the very defect this
+    /// milestone removes, wearing a different hat.
+    Refused { reason: String, message: String },
+}
+
+/// Ask the server to close this session.
+///
+/// The server does the revoking: the session row is the authority, and until
+/// it is gone the credential still reads and writes. The browser's own state
+/// clearing is the LAST step, after the server says so — the same order the
+/// host's logout route uses, so the two halves cannot disagree about who
+/// closed the session.
+#[cfg(target_arch = "wasm32")]
+pub(crate) async fn close_server_session() -> SignOut {
+    match api_fetch("POST", "/logout", None).await {
+        Ok(answer) if answer.status == 200 => SignOut::Closed,
+        // "There is no session to close" is ALSO a clean state: the server
+        // does not know this credential, so there is nothing left to
+        // protect, and a browser that keeps showing a session the server has
+        // forgotten is a phantom. A REFUSED logout (403 — a CSRF failure, or
+        // 503 — the identity store is unavailable) is different: a session
+        // may well still be live, and only the server can say so.
+        Ok(answer) if answer.status == 401 => SignOut::Closed,
+        Ok(answer) => {
+            let reason = answer
+                .body
+                .get("reason")
+                .and_then(|value| value.as_str())
+                .unwrap_or("refused")
+                .to_string();
+            let message = answer
+                .body
+                .get("message")
+                .and_then(|value| value.as_str())
+                .unwrap_or("The session could not be closed.")
+                .to_string();
+            SignOut::Refused { reason, message }
+        }
+        Err(error) => SignOut::Refused {
+            reason: "no_answer".to_string(),
+            message: format!("The session could not be closed: {error}"),
+        },
+    }
+}
+
+/// The SSR build never signs out: it has no session and no browser to clear.
+#[cfg(not(target_arch = "wasm32"))]
+pub(crate) async fn close_server_session() -> SignOut {
+    SignOut::Refused {
+        reason: "not_a_browser".to_string(),
+        message: "Signing out needs the browser.".to_string(),
+    }
+}
 
 /// The exact header name the host's CSRF gate reads.
 ///
@@ -176,6 +241,10 @@ pub(crate) fn clear_session_facts() {
         let _ = storage.remove_item("archava_tenant");
         let _ = storage.remove_item("archava_principal");
     }
+    // The pending markers are this ACCOUNT's private recovery state: the
+    // account just left, so they leave with it. A signed-out browser must
+    // not keep another account's operation reachable (C05).
+    crate::pending::clear_all();
 }
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -304,6 +373,14 @@ fn js_string(value: &wasm_bindgen::JsValue) -> String {
 #[component]
 pub(crate) fn SessionMarker() -> impl IntoView {
     let session = expect_context::<SessionSignal>();
+    // Why the last sign-out did not close the session, if it did not. Empty
+    // means "nothing to report" — the marker must not grow a permanent
+    // element for it, or the SSR/hydration node shape would drift. The
+    // reason travels as a machine-readable attribute so the browser proof
+    // can assert WHICH refusal happened, not merely that text appeared.
+    let refusal = RwSignal::new(String::new());
+    let refusal_reason = RwSignal::new(String::new());
+    let navigate = use_navigate();
     // Shape-stable across the SSR/hydrate boundary: the SSR pass cannot see
     // the session facts (they live in the browser's cookie and storage), so
     // its render — but this reload would render — the marker with the facts
@@ -326,12 +403,41 @@ pub(crate) fn SessionMarker() -> impl IntoView {
                 class="sign-out"
                 data-testid="session-sign-out"
                 on:click=move |_event| {
-                    crate::session::forget_session();
-                    crate::session::clear_session_facts();
+                    // The router's `navigate` is moved into the async block
+                    // below, so the click handler hands it over by clone —
+                    // the same shape the other views use.
+                    let navigate = navigate.clone();
+                    spawn_local(async move {
+                        // The server closes the session; only then does this
+                        // browser forget what it held. A refusal leaves the
+                        // session in place and says why — pretending to be
+                        // signed out while the credential still works is the
+                        // defect the audit reproduced (C02).
+                        match crate::session::close_server_session().await {
+                            crate::session::SignOut::Closed => {
+                                crate::session::forget_session();
+                                crate::session::clear_session_facts();
+                                refusal.set(String::new());
+                                refusal_reason.set(String::new());
+                                navigate("/app", Default::default());
+                            }
+                            crate::session::SignOut::Refused { reason, message } => {
+                                refusal.set(message);
+                                refusal_reason.set(reason);
+                            }
+                        }
+                    });
                 }
             >
                 "sign out"
             </button>
+            <span
+                class="sign-out-refusal"
+                data-testid="sign-out-refusal"
+                data-reason=move || refusal_reason.get()
+            >
+                {move || refusal.get()}
+            </span>
         </span>
     }
 }

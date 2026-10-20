@@ -61,7 +61,6 @@ enum ContactsState {
     Loading,
     Loaded {
         rows: Vec<ContactRow>,
-        next: Option<String>,
     },
     Refused {
         reason: String,
@@ -82,50 +81,70 @@ pub fn Contacts() -> impl IntoView {
     let navigate = use_navigate();
     let search = RwSignal::new(String::new());
     let (state, set_state) = signal(ContactsState::Waiting);
+    // The cursor that opens the NEXT page, exactly as the server returned it,
+    // and the cursor that opened THIS page. Two values, because "where am I"
+    // and "where can I go" are different facts: the next-page action needs
+    // the first, the first-page action needs the second.
+    let next_cursor = RwSignal::new(None::<String>);
+    let page_cursor = RwSignal::new(None::<String>);
 
-    // One loader, shared by hydration and the Refresh button. The filter is a
-    // VALUE the list query carries verbatim — the server escapes it, and this
-    // page never widens it.
-    let load = move |search_term: String, set_hiatus: bool| {
+    // One loader, shared by hydration, the Refresh button and the page
+    // actions. The filter is a VALUE the list query carries verbatim — the
+    // server escapes it, and this page never widens it. The URL is built with
+    // percent-encoding: a literal `Ada&limit=1` used to become two query
+    // parameters, so the UI showed a contact the encoded API search never
+    // returned (the audit's C06 repro).
+    let load = move |search_term: String, after: Option<String>, set_hiatus: bool| {
         if set_hiatus {
             set_state.set(ContactsState::Loading);
         }
         let tenant = session::held().map(|held| held.tenant).unwrap_or_default();
-        let target = if search_term.is_empty() {
-            format!("/contacts?tenant={tenant}")
-        } else {
-            format!("/contacts?tenant={tenant}&search={search_term}")
-        };
+        let mut target = format!("/contacts?tenant={}", query_encode(&tenant));
+        if !search_term.is_empty() {
+            target.push_str(&format!("&search={}", query_encode(&search_term)));
+        }
+        if let Some(cursor) = after.as_ref() {
+            target.push_str(&format!("&after={}", query_encode(cursor)));
+        }
         spawn_local(async move {
             match session::api_fetch("GET", &target, None).await {
                 Ok(Answer { status: 200, body }) => {
                     let Some(items) = body["items"].as_array() else {
+                        next_cursor.set(None);
+                        page_cursor.set(None);
                         set_state.set(ContactsState::Broken);
                         return;
                     };
                     let rows: Vec<ContactRow> =
                         items.iter().filter_map(ContactRow::parse).collect();
                     let complete = rows.len() == items.len();
+                    next_cursor.set(body["next"].as_str().map(str::to_owned));
+                    page_cursor.set(after);
                     set_state.set(if complete {
-                        ContactsState::Loaded {
-                            rows,
-                            next: body["next"].as_str().map(str::to_owned),
-                        }
+                        ContactsState::Loaded { rows }
                     } else {
                         ContactsState::Broken
                     });
                 }
-                Ok(Answer { status, body }) => set_state.set(ContactsState::Refused {
-                    reason: body["reason"]
-                        .as_str()
-                        .unwrap_or(&format!("http {status}"))
-                        .to_string(),
-                    message: body["message"]
-                        .as_str()
-                        .unwrap_or("The contact list was refused.")
-                        .to_string(),
-                }),
-                Err(FetchError::NoAnswer(why)) => set_state.set(ContactsState::Unreachable(why)),
+                Ok(Answer { status, body }) => {
+                    next_cursor.set(None);
+                    page_cursor.set(None);
+                    set_state.set(ContactsState::Refused {
+                        reason: body["reason"]
+                            .as_str()
+                            .unwrap_or(&format!("http {status}"))
+                            .to_string(),
+                        message: body["message"]
+                            .as_str()
+                            .unwrap_or("The contact list was refused.")
+                            .to_string(),
+                    })
+                }
+                Err(FetchError::NoAnswer(why)) => {
+                    next_cursor.set(None);
+                    page_cursor.set(None);
+                    set_state.set(ContactsState::Unreachable(why));
+                }
             }
         })
     };
@@ -134,13 +153,32 @@ pub fn Contacts() -> impl IntoView {
     // a signed-in state loads its page once — never on every keystroke.
     Effect::new(move || {
         if session.get().is_none() {
+            next_cursor.set(None);
+            page_cursor.set(None);
             set_state.set(ContactsState::SignedOut);
             return;
         }
-        load(String::new(), true);
+        load(String::new(), None, true);
     });
 
-    let refresh = move |_event: leptos::ev::MouseEvent| load(search.get_untracked(), true);
+    let refresh = move |_event: leptos::ev::MouseEvent| {
+        // Refresh restarts at the first page: the filter in the box is the
+        // query, and a cursor belongs to the query it came from.
+        load(search.get_untracked(), None, true);
+    };
+
+    // The next page: the server's own cursor, carried verbatim.
+    let next_page = move |_event: leptos::ev::MouseEvent| {
+        let Some(cursor) = next_cursor.get_untracked() else {
+            return;
+        };
+        load(search.get_untracked(), Some(cursor), true);
+    };
+
+    // Back to the first page.
+    let first_page = move |_event: leptos::ev::MouseEvent| {
+        load(search.get_untracked(), None, true);
+    };
 
     view! {
         <section class="contacts">
@@ -151,7 +189,18 @@ pub fn Contacts() -> impl IntoView {
                     <input
                         data-testid="contacts-search"
                         value=search
-                        on:input=move |ev| search.set(event_target_value(&ev))
+                        on:input=move |ev| {
+                            let value = event_target_value(&ev);
+                            search.set(value);
+                            // A new filter invalidates the page position: the
+                            // cursor belonged to the previous query, and
+                            // carrying it into another one would page through
+                            // rows the new filter does not match. The list
+                            // stays on screen; the next-page action goes away
+                            // until the new filter is applied.
+                            next_cursor.set(None);
+                            page_cursor.set(None);
+                        }
                     />
                 </label>
                 <button data-testid="contacts-refresh" on:click=refresh>"Refresh"</button>
@@ -184,7 +233,7 @@ pub fn Contacts() -> impl IntoView {
                     </p>
                 }
                 .into_any(),
-                ContactsState::Loaded { rows, next } => {
+                ContactsState::Loaded { rows } => {
                     let count = rows.len();
                     view! {
                         <p class="status" data-testid="contacts-count">
@@ -233,11 +282,35 @@ pub fn Contacts() -> impl IntoView {
                                     .collect::<Vec<_>>()}
                             </tbody>
                         </table>
-                        <p class="hint" data-testid="contacts-page-note">
-                            {next
-                                .map(|cursor| format!("a further page exists after {cursor}"))
-                                .unwrap_or_else(|| "this page is the last".to_string())}
-                        </p>
+                        <div class="paging">
+                            // The page actions are real: the cursor the
+                            // server returned opens the next page, and the
+                            // first-page action goes back. Before the audit
+                            // (C06) the cursor was only NAMED in a sentence —
+                            // the page could not move.
+                            <button
+                                data-testid="contacts-next-page"
+                                disabled=move || next_cursor.get().is_none()
+                                on:click=next_page
+                            >
+                                "Next page"
+                            </button>
+                            <button
+                                data-testid="contacts-first-page"
+                                disabled=move || page_cursor.get().is_none()
+                                on:click=first_page
+                            >
+                                "First page"
+                            </button>
+                            <p class="hint" data-testid="contacts-page-note">
+                                {move || match next_cursor.get() {
+                                    Some(cursor) => {
+                                        format!("a further page exists after {cursor}")
+                                    }
+                                    None => "this page is the last".to_string(),
+                                }}
+                            </p>
+                        </div>
                     }
                 }
                 .into_any(),

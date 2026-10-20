@@ -315,6 +315,10 @@ pub fn router(state: AppState) -> Router {
     Router::new()
         .route("/healthz", get(health))
         .route("/login", post(login))
+        // The logout route: the server-side end of a session (C02). Without
+        // it, "sign out" only cleared browser state and the credential kept
+        // reading rows — the audit's reproduced defect.
+        .route("/logout", post(logout))
         // The §1.4B slice: the real, session-scoped contact read (crm.rs)
         // replaces the pre-slice placeholder denial that lived on this path.
         .route("/contacts", get(crate::crm::contacts))
@@ -1586,6 +1590,122 @@ async fn login(
             (status, HeaderMap::new(), Json(outcome))
         }
     }
+}
+
+/// The logout route's body. A separate contract from `CommandOutcome`: the
+/// decision vocabulary there enumerates command outcomes, and "signed out" is
+/// not one of them. The refusal shape is identical (decision/reason/message),
+/// so a caller reads one contract either way.
+#[derive(Debug, Serialize)]
+pub struct LogoutOutcome {
+    /// `signed_out` on success; the refusal vocabulary otherwise
+    /// (`unauthenticated`, `refused`).
+    pub decision: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reason: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub message: Option<String>,
+}
+
+/// The logout route (C02): revoke the server session, THEN close the cookie.
+///
+/// The order is the whole point. The session row is deleted first — the
+/// server's authority — and the cookie expiry is only sent afterwards. The
+/// reverse order would let a failed revocation look like a signed-out
+/// browser while the credential kept working, which is exactly the defect
+/// the 19 Oktober audit reproduced: "sign out" cleared UI state and the old
+/// cookie still read twenty authorized contact rows.
+///
+/// A CSRF failure refuses BEFORE anything is revoked, so a forged cross-site
+/// request cannot close somebody else's session, and a session that is
+/// already gone is `401 unauthenticated` rather than a success that closed
+/// nothing. Other live sessions of the same user are untouched: this revokes
+/// the presented token, nothing else.
+async fn logout(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> (StatusCode, HeaderMap, Json<LogoutOutcome>) {
+    let session = match authenticate(&state, &headers, true).await {
+        Ok(session) => session,
+        Err((status, Json(outcome))) => {
+            return (
+                status,
+                HeaderMap::new(),
+                Json(LogoutOutcome {
+                    decision: outcome.decision,
+                    reason: outcome.reason,
+                    message: outcome.message,
+                }),
+            )
+        }
+    };
+    // The authenticated session is what proves the caller may close THIS
+    // token; the token itself is what gets revoked.
+    let _ = session;
+    let Some(token) = session_token(&headers) else {
+        // `authenticate` only succeeds for a presented token, so this is
+        // unreachable in practice; answer honestly rather than assume.
+        return (
+            StatusCode::UNAUTHORIZED,
+            HeaderMap::new(),
+            Json(LogoutOutcome {
+                decision: "unauthenticated".to_string(),
+                reason: Some("unauthenticated".to_string()),
+                message: Some("There is no session to close.".to_string()),
+            }),
+        );
+    };
+    match state.inner.identity.revoke(&token).await {
+        Ok(true) => (
+            StatusCode::OK,
+            expire_session_cookie(),
+            Json(LogoutOutcome {
+                decision: "signed_out".to_string(),
+                reason: None,
+                message: Some("The session is closed.".to_string()),
+            }),
+        ),
+        Ok(false) => (
+            // The session disappeared between the authentication and the
+            // revocation (another tab signed out first). The caller's goal is
+            // still met — no session answers for that token any more — so
+            // this closes the cookie too rather than pretending otherwise.
+            StatusCode::OK,
+            expire_session_cookie(),
+            Json(LogoutOutcome {
+                decision: "signed_out".to_string(),
+                reason: None,
+                message: Some("The session is closed.".to_string()),
+            }),
+        ),
+        Err(error) => {
+            tracing::error!(error = %error, "identity store unavailable while revoking a session");
+            (
+                StatusCode::SERVICE_UNAVAILABLE,
+                HeaderMap::new(),
+                Json(LogoutOutcome {
+                    decision: "refused".to_string(),
+                    reason: Some("identity_unavailable".to_string()),
+                    message: Some("The session could not be closed right now.".to_string()),
+                }),
+            )
+        }
+    }
+}
+
+/// The expired-cookie header the logout route sends.
+fn expire_session_cookie() -> HeaderMap {
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        header::SET_COOKIE,
+        format!(
+            "{SESSION_COOKIE}=; HttpOnly; Path=/; SameSite=Strict; Max-Age=0; \
+             Expires=Thu, 01 Jan 1970 00:00:00 GMT"
+        )
+        .parse()
+        .expect("a well-formed cookie attribute list"),
+    );
+    headers
 }
 
 /// The login route's refusal mapping, as a pure function so it has in-crate

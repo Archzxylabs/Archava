@@ -1197,7 +1197,10 @@
         "authorized recovery after restart",
         "CSRF negative",
         "stale revision negative",
-        "unauthenticated/forged negative"
+        "unauthenticated/forged negative",
+        "session logout revokes server authority",
+        "literal search and cursor pagination",
+        "pending recovery identity survives reload and resolution"
       ],
       "sourcePaths": [
         "rust"

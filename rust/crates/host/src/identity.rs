@@ -374,6 +374,49 @@ impl Identity {
         }))
     }
 
+    /// Revoke exactly this session token — the logout operation.
+    ///
+    /// The session row IS the server's authority: a token that authenticates
+    /// only because its row is still there. Deleting the row therefore ends
+    /// the session for EVERY presentation of that token — the browser
+    /// cookie, a bearer header, a reconnect — which is the property the
+    /// 19 Oktober audit found missing (C02: signing out cleared browser
+    /// state while the credential kept reading rows).
+    ///
+    /// Returns whether a live session was actually revoked. Logging out
+    /// twice, or presenting a token that never existed, is not an error but
+    /// must not be reported as "a session was closed" either — the caller
+    /// distinguishes "no session to close" from "session closed".
+    ///
+    /// The identity event is appended in the same transaction as the delete:
+    /// a logout that revoked the session but lost its audit trail would be
+    /// exactly the kind of half-recorded mutation this programme refuses.
+    pub(crate) async fn revoke(&self, token: &str) -> Result<bool, IdentityError> {
+        if !token_shape(token) {
+            return Ok(false);
+        }
+        let digest = self.digest("session", token);
+        let mut transaction = self.transaction().await?;
+        let row = sqlx::query(
+            "DELETE FROM archava_identity.sessions WHERE token_hash=$1 RETURNING user_id",
+        )
+        .bind(&digest)
+        .fetch_optional(&mut *transaction)
+        .await?;
+        let Some(row) = row else {
+            transaction.rollback().await.ok();
+            return Ok(false);
+        };
+        let user_id: String = row.get("user_id");
+        sqlx::query("INSERT INTO archava_identity.events(id,user_id,kind) VALUES($1,$2,'logout')")
+            .bind(uuid::Uuid::new_v4())
+            .bind(&user_id)
+            .execute(&mut *transaction)
+            .await?;
+        transaction.commit().await?;
+        Ok(true)
+    }
+
     /// The port of `PostgresIdentity.rate`: two buckets, source-first lock
     /// order, every attempt consuming budget whether or not it succeeds.
     async fn rate(&self, username: &str, source: &str) -> Result<(), IdentityError> {

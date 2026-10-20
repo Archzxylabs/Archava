@@ -15,6 +15,7 @@ use leptos::prelude::*;
 use leptos::task::spawn_local;
 use leptos_router::hooks::use_query_map;
 
+use crate::pending::{self, PendingMarker};
 use crate::session::{Answer, FetchError};
 
 /// The page's possible states, rendered by the one status block below.
@@ -32,6 +33,14 @@ enum DraftState {
     /// The transport died mid-flight: the recording may have happened — the
     /// recovery screen answers, this page does not guess.
     Unreachable(String),
+    /// The browser could not record the pending marker, so the submission
+    /// was NOT made. A send the application could not recover is the defect
+    /// the marker exists to remove; refusing to send is the honest answer.
+    Unmarkable(String),
+    /// A previous submission's outcome is still unknown, so a FRESH
+    /// idempotency key is refused: it would run the operation a second time
+    /// under another key, which the server would treat as new work.
+    Unresolved,
     /// Some other refusal, verbatim from the host.
     Refused {
         reason: String,
@@ -60,9 +69,40 @@ pub fn Draft() -> impl IntoView {
     // and the id is minted after the first render lands, when the browser
     // side owns the screen.
     let request_id = RwSignal::new(String::new());
+    // The pending marker this workspace holds, if any — the application's own
+    // memory of a submission whose outcome it does not know. It is restored
+    // BEFORE any id is minted: a reload of a draft whose outcome is unknown
+    // must come back with the ORIGINAL key. The 19 Oktober audit reloaded
+    // exactly that page and watched the request id change, with the original
+    // nowhere in the tab, the URL or storage.
+    let pending_marker = RwSignal::new(None::<PendingMarker>);
+    // Which (workspace, account) the marker was restored for, so a workspace
+    // or account change restores THAT one's marker instead of keeping the
+    // previous one.
+    let restored_for = RwSignal::new(None::<(String, String)>);
+    let session = expect_context::<crate::session::SessionSignal>();
     Effect::new(move |_| {
-        if request_id.get_untracked().is_empty() {
-            request_id.set(uuid_string());
+        // The effect depends on the session: the marker is account/workspace
+        // bound, so it can only be restored once the session's facts are
+        // known — before that, "no marker" would be a guess.
+        let Some(held) = session.get() else {
+            return;
+        };
+        if restored_for.get_untracked().as_ref()
+            == Some(&(held.tenant.clone(), held.principal.clone()))
+        {
+            return;
+        }
+        restored_for.set(Some((held.tenant.clone(), held.principal.clone())));
+        match pending::read(&held.tenant, &held.principal) {
+            Some(marker) => {
+                pending_marker.set(Some(marker.clone()));
+                request_id.set(marker.request_id);
+            }
+            None => {
+                pending_marker.set(None);
+                request_id.set(uuid_string());
+            }
         }
     });
     // The tenant the draft was authored under — the page's own copy,
@@ -108,7 +148,21 @@ pub fn Draft() -> impl IntoView {
             DraftState::Recorded(_) | DraftState::Replayed(_)
         );
         set_state.set(DraftState::Busy);
+        let tenant = draft_tenant.get_untracked();
+        let principal = crate::session::held()
+            .map(|held| held.principal)
+            .unwrap_or_default();
         spawn_local(async move {
+            // The pending marker goes FIRST. If the browser cannot record it,
+            // the submission does not happen: a send whose key the
+            // application could not keep is a send it could never recover,
+            // which is the defect this marker exists to remove.
+            let marker = PendingMarker::new(minted.clone(), tenant.clone(), principal.clone());
+            if let Err(why) = pending::write(&marker) {
+                set_state.set(DraftState::Unmarkable(why));
+                return;
+            }
+            pending_marker.set(Some(marker));
             let body = serde_json::json!({
                 "tenant": draft_tenant.get_untracked(),
                 "requestId": minted,
@@ -122,27 +176,45 @@ pub fn Draft() -> impl IntoView {
             });
             match crate::session::api_fetch("POST", "/crm/commands", Some(body.to_string())).await {
                 Ok(Answer { status: 200, body }) if was_recorded => {
+                    // The outcome is KNOWN (the server replayed the stored
+                    // receipt), so the pending marker has served its purpose.
+                    pending::clear(&tenant);
+                    pending_marker.set(None);
                     set_state.set(DraftState::Replayed(Answer { status: 200, body }));
                 }
                 Ok(answer @ Answer { status: 200, .. }) => {
+                    pending::clear(&tenant);
+                    pending_marker.set(None);
                     set_state.set(DraftState::Recorded(answer));
                 }
                 Ok(answer @ Answer { status: 409, .. })
                     if answer.reason() == Some("revision_changed") =>
                 {
+                    pending::clear(&tenant);
+                    pending_marker.set(None);
                     set_state.set(DraftState::Stale(answer));
                 }
-                Ok(Answer { status, body }) => set_state.set(DraftState::Refused {
-                    reason: body["reason"]
-                        .as_str()
-                        .unwrap_or(&format!("http {status}"))
-                        .to_string(),
-                    message: body["message"]
-                        .as_str()
-                        .unwrap_or("The submission was refused.")
-                        .to_string(),
-                }),
+                Ok(Answer { status, body }) => {
+                    // A refusal is a KNOWN outcome: nothing was committed,
+                    // so the marker can go.
+                    pending::clear(&tenant);
+                    pending_marker.set(None);
+                    set_state.set(DraftState::Refused {
+                        reason: body["reason"]
+                            .as_str()
+                            .unwrap_or(&format!("http {status}"))
+                            .to_string(),
+                        message: body["message"]
+                            .as_str()
+                            .unwrap_or("The submission was refused.")
+                            .to_string(),
+                    })
+                }
                 Err(FetchError::NoAnswer(why)) => {
+                    // The outcome is UNKNOWN: the marker stays, and the
+                    // recovery link carries the original key. This is the
+                    // state the marker exists for — a reload must come back
+                    // to THIS key, not to a fresh one.
                     set_state.set(DraftState::Unreachable(format!(
                         "{why} — recover with request id {minted}"
                     )));
@@ -203,11 +275,37 @@ pub fn Draft() -> impl IntoView {
                     <code data-testid="review-tenant">{draft_tenant}</code>
                     "."
                 </p>
+                // The pending marker, named: a submission whose outcome this
+                // application does not know, with the key that reaches it.
+                {move || {
+                    pending_marker.get().map(|marker| {
+                        let recover_href = format!("/app/recover?id={}", marker.request_id);
+                        view! {
+                            <p class="pending" data-testid="draft-pending">
+                                "A submission from this workspace has an unknown outcome: request id "
+                                <code data-testid="draft-pending-id">{marker.request_id.clone()}</code>
+                                " — resolve it before starting another one: "
+                                <a data-testid="draft-pending-recover" href=recover_href>
+                                    "open recovery with this request id"
+                                </a>
+                            </p>
+                        }
+                    })
+                }}
                 <button type="submit" data-testid="draft-submit">"Apply"</button>
                 <button
                     type="button"
                     data-testid="draft-new-key"
                     on:click=move |_event| {
+                        // A FRESH key while an operation's outcome is unknown
+                        // would run that operation a second time under
+                        // another key — and the server would treat it as new
+                        // work. The pending operation has to be resolved
+                        // first, with its own key.
+                        if pending_marker.get_untracked().is_some() {
+                            set_state.set(DraftState::Unresolved);
+                            return;
+                        }
                         // A fresh key starts a fresh attempt: the state the
                         // previous response produced belongs to the PREVIOUS
                         // idempotency key, and keeping it on screen would
@@ -226,6 +324,23 @@ pub fn Draft() -> impl IntoView {
                 .into_any(),
                 DraftState::Busy => view! {
                     <p class="status" data-testid="draft-status">"Submitting…"</p>
+                }
+                .into_any(),
+                DraftState::Unmarkable(why) => view! {
+                    <p class="refusal" data-testid="draft-status">
+                        <strong>"The submission was not made. "</strong>
+                        {why}
+                        " — a send this browser could not record is a send
+                         the application could never recover."
+                    </p>
+                }
+                .into_any(),
+                DraftState::Unresolved => view! {
+                    <p class="refusal" data-testid="draft-status">
+                        <strong>"A previous submission is unresolved. "</strong>
+                        "Resolve it with its recovery link first — a fresh key
+                         would run the operation again."
+                    </p>
                 }
                 .into_any(),
                 DraftState::Unreachable(why) => {
