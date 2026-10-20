@@ -603,7 +603,9 @@ The audit's counterexamples are closed by product code and named witnesses:
   from the bundled manifests and freezes it with `cargo vendor --locked` /
   `cargo test --locked`.
 
-This is LOCAL verification at candidate `3754217` + the C03/C04 worktree.
+This is LOCAL verification at the C03/C04 worktree (candidate `3754217`;
+the code closure commit is `9b5c997`; the evidence files record their own
+`identity.head`).
 Independent Codex sign-off and the full release gate at the eventual HEAD
 remain pending; the honest status is `locally verified`, not
 `integrated verified`.
