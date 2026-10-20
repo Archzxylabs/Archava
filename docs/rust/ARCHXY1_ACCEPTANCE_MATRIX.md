@@ -148,18 +148,21 @@ owned paths: `rust/**`, `tools/rust/**`, `tools/own/**`, `docs/rust/**` and new
 
 - **C07 reevaluated honestly (2026-10-20; still open).** The frozen
   manifest is untouched (93 items / 53 proofs). A read-only
-  `validateCoverage` run against live HEAD `91341cd` reports **97 errors**
-  (`VALIDATOR_EXIT=3`):
+  `validateCoverage` run against live HEAD `91341cd` reports **94 errors**
+  (`VALIDATOR_EXIT=3`; 97 before the wasm producer re-ran — see below):
   - **5 missing evidence documents** — `P-R04-DOMAIN` … `P-R08-DOMAIN`,
     exactly the Archxy 2 packet-blocked domain proofs, not a coverage gap
     this lane can fill without the ERP packets;
-  - **40 stale identity errors** across three earlier local heads
+  - **39 stale identity errors** across three earlier local heads
     (14 at `409eab9`, 25 at `94307ed`, 1 at `6610236`), i.e. evidence from
     progressive milestones — legal history, but not the final identity;
-  - **26 proofs with source drift**, including every `P-OWN-Txx`: the new
+  - **25 proofs with source drift**, including every `P-OWN-Txx`: the new
     `archava-own` crate now falls inside the frozen `sourcePaths` glob, so
     the recorded digests no longer match. That is the validator working as
     designed; the answer is a regenerated gate at the final HEAD, never a
     hand-edited head/hash.
+  Running the DB-free producer `node tools/rust/wasm-boundary.mjs` after
+  that first measurement regenerated `P-WASM-PORTABLE` at the current HEAD
+  (its three errors disappeared: 97 → 94) — the correct direction of repair.
   C07 cannot close until the full release gate runs at the final HEAD and
   the five ERP domain proofs are produced.
