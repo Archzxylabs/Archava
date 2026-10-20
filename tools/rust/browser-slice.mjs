@@ -140,6 +140,7 @@ const REQUIRED_CHECKS = [
   'pending recovery identity survives reload and resolution',
   'contact record writes through the product UI',
   'assistant desk reads and executes through the host',
+  'contact create through the product UI',
 ]
 
 /** The check each named witness backs. */
@@ -172,6 +173,7 @@ const WITNESS_CHECKS = {
   desk_prepare_requires_confirmation: 'assistant desk reads and executes through the host',
   desk_completion_executes: 'assistant desk reads and executes through the host',
   desk_pipeline: 'assistant desk reads and executes through the host',
+  contact_create_ui: 'contact create through the product UI',
   pending_marker_survives_reload: 'pending recovery identity survives reload and resolution',
   pending_marker_cleared_after_resolution: 'pending recovery identity survives reload and resolution',
   storage_refusal_blocks_submission: 'pending recovery identity survives reload and resolution',
@@ -1368,9 +1370,20 @@ async function main() {
     if (edge !== 'new>qualified:2') {
       throw new Error(`the pipeline history did not record the edge: ${edge}`)
     }
+    // The record screen itself shows that history, read from the host — the
+    // initial `new` row and the move, oldest first.
+    const shownHistory = await textOf(page, 'record-opportunity-history')
+    if (
+      typeof shownHistory !== 'string' ||
+      !shownHistory.includes('new') ||
+      !shownHistory.includes('qualified') ||
+      !shownHistory.includes('alice')
+    ) {
+      throw new Error(`the record screen did not render the stage history: ${shownHistory}`)
+    }
     witness(
       'record_pipeline_create_and_move',
-      'opportunity.create opened new:1 and opportunity.move recorded new>qualified:2',
+      'opportunity.create opened new:1, opportunity.move recorded new>qualified:2, and the screen rendered both history rows',
     )
 
     // followup.complete — a follow-up created through the draft screen is
@@ -1432,6 +1445,10 @@ async function main() {
     const deskSource = await textOf(page, 'desk-source')
     if (deskSource.trim() !== 'crm') {
       throw new Error(`the overview was not served from the CRM: ${deskSource}`)
+    }
+    const deskPlanner = (await textOf(page, 'desk-planner')).trim()
+    if (deskPlanner !== 'deterministic-commands-v1 / archava-crm-local') {
+      throw new Error(`the desk did not show the planner identity: ${deskPlanner}`)
     }
     witness(
       'desk_overview',
@@ -1522,6 +1539,43 @@ async function main() {
       'the desk listed the pipeline with the opportunity moved to qualified',
     )
     await shot(page, '19-assistant-desk')
+
+    // --- C01: contact.create through the visible form ----------------------
+    // The command was already proven over HTTP; the audit's gap was the
+    // PRODUCT surface. The form writes the same typed command, renders the
+    // host's refusal for an invalid one, persists the row, and opens the new
+    // record.
+    await openPage(page, `${APP}/contacts`)
+    await waitText(page, 'contacts-count', (text) => text.includes('contact(s)'))
+    await fill(page, 'contact-new-email', 'new-contact@proof.test')
+    await fill(page, 'contact-new-org', 'Proof Org')
+    await click(page, 'contact-create')
+    const createRefusal = await waitText(page, 'contact-create-status', (text) =>
+      text.includes('Refused:'),
+    )
+    if (!createRefusal.includes('invalid_submission')) {
+      throw new Error(`the empty contact was refused with the wrong reason: ${createRefusal}`)
+    }
+    await fill(page, 'contact-new-name', 'Browser proof — new contact')
+    await click(page, 'contact-create')
+    await waitText(page, 'contact-create-status', (text) =>
+      text.includes('Recorded. Receipt:'),
+    )
+    const createdRow = psql(
+      "SELECT full_name || ':' || revision || ':' || owner_id FROM archava_crm.contacts WHERE tenant_id='bulk-demo' AND full_name='Browser proof — new contact'",
+      port,
+    )
+    if (createdRow !== 'Browser proof — new contact:1:alice') {
+      throw new Error(`contact.create did not persist the row as alice's revision 1: ${createdRow}`)
+    }
+    await click(page, 'contact-create-open')
+    await waitText(page, 'record-name', (text) => text.includes('Browser proof — new contact'))
+    await waitText(page, 'record-revision', (text) => text.trim() === '1')
+    witness(
+      'contact_create_ui',
+      'the visible form refused an invalid contact, then created "Browser proof — new contact" (psql: revision 1, owner alice) and the record screen read it',
+    )
+    await shot(page, '20-contact-create')
 
     // Graceful stop of the attached server: its fixture owns the surviving
     // instance now; its Drop stops PostgreSQL and removes the directory.

@@ -1202,7 +1202,8 @@
         "literal search and cursor pagination",
         "pending recovery identity survives reload and resolution",
         "contact record writes through the product UI",
-        "assistant desk reads and executes through the host"
+        "assistant desk reads and executes through the host",
+        "contact create through the product UI"
       ],
       "sourcePaths": [
         "rust"

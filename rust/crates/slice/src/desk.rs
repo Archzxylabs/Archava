@@ -90,6 +90,9 @@ enum Payload {
 struct Reply {
     text: String,
     source: String,
+    /// The planner identity the reply reports (`model` / `providerId`) —
+    /// the panel shows it so an answer is never anonymous.
+    planner: String,
     data: Payload,
 }
 
@@ -142,9 +145,15 @@ pub fn Desk() -> impl IntoView {
                     let text = body["text"].as_str().unwrap_or_default().to_string();
                     let source = body["source"].as_str().unwrap_or("none").to_string();
                     let payload = parse_payload(&body["data"]);
+                    let planner = format!(
+                        "{} / {}",
+                        body["planner"]["model"].as_str().unwrap_or("—"),
+                        body["planner"]["providerId"].as_str().unwrap_or("—"),
+                    );
                     set_state.set(DeskState::Answered(Reply {
                         text,
                         source,
+                        planner,
                         data: payload,
                     }));
                 }
@@ -283,7 +292,10 @@ pub fn Desk() -> impl IntoView {
                 .into_any(),
                 DeskState::Answered(reply) => view! {
                     <p class="reply" data-testid="desk-reply">{reply.text.clone()}</p>
-                    <p class="hint">"source: "<code data-testid="desk-source">{reply.source.clone()}</code></p>
+                    <p class="hint">
+                        "source: "<code data-testid="desk-source">{reply.source.clone()}</code>
+                        " · planner: "<code data-testid="desk-planner">{reply.planner.clone()}</code>
+                    </p>
                     {match reply.data.clone() {
                         Payload::Overview { contacts, open, overdue, upcoming, completed, pipeline, active } => view! {
                             <dl data-testid="desk-overview">

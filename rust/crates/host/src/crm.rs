@@ -78,6 +78,7 @@ use axum::response::{IntoResponse, Response};
 use axum::Json;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::collections::HashMap;
 use uuid::Uuid;
 
 /// The CRM ledger — every tenant-scoped table migrations 001 + 002 force RLS
@@ -1261,6 +1262,20 @@ pub struct CrmOpportunity {
     pub(crate) stage: String,
     pub(crate) revision: i64,
     pub(crate) loss_reason: Option<String>,
+    /// The immutable stage history, oldest first — the record screen shows it
+    /// beside the move form. Read from the same table the assistant's
+    /// opportunity detail uses.
+    pub(crate) transitions: Vec<CrmTransition>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CrmTransition {
+    pub(crate) from: Option<String>,
+    pub(crate) to: String,
+    pub(crate) actor_id: String,
+    pub(crate) revision: i64,
+    pub(crate) occurred_at: String,
 }
 
 #[derive(Debug, Serialize)]
@@ -1383,7 +1398,37 @@ async fn read_record(
         .await
         .map_err(|source| AuthorityError::database(CRM_LEDGER.ledger, source))?
     };
+    // One query for every opportunity on the record: the stage history is a
+    // bounded, immutable projection of the rows this caller may already read.
+    let transitions: Vec<(Uuid, Option<String>, String, String, i32, String)> = {
+        let connection = transaction.checked_executor().await?;
+        let ids: Vec<Uuid> = opportunities.iter().map(|row| row.0).collect();
+        sqlx::query_as(
+            "SELECT opportunity_id, from_stage, to_stage, actor_id, revision, occurred_at::text \
+             FROM archava_crm.opportunity_transitions \
+             WHERE tenant_id=$1 AND opportunity_id = ANY($2) \
+             ORDER BY revision",
+        )
+        .bind(query.tenant.as_str())
+        .bind(&ids)
+        .fetch_all(connection)
+        .await
+        .map_err(|source| AuthorityError::database(CRM_LEDGER.ledger, source))?
+    };
     let _ = transaction.rollback().await;
+    let mut history: HashMap<Uuid, Vec<CrmTransition>> = HashMap::new();
+    for (opportunity_id, from, to, actor_id, revision, occurred_at) in transitions {
+        history
+            .entry(opportunity_id)
+            .or_default()
+            .push(CrmTransition {
+                from,
+                to,
+                actor_id,
+                revision: i64::from(revision),
+                occurred_at,
+            });
+    }
     Ok((
         StatusCode::OK,
         CrmBody::Record(CrmRecordValue {
@@ -1428,6 +1473,7 @@ async fn read_record(
                 .into_iter()
                 .map(
                     |(id, contact_id, title, stage, revision, loss_reason)| CrmOpportunity {
+                        transitions: history.remove(&id).unwrap_or_default(),
                         id: id.to_string(),
                         contact_id: contact_id.to_string(),
                         title,

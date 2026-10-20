@@ -10,6 +10,8 @@ use leptos::prelude::*;
 use leptos::task::spawn_local;
 use leptos_router::hooks::use_navigate;
 
+use crate::draft::uuid_string;
+use crate::pending::{self, PendingMarker};
 use crate::session::{self, Answer, FetchError};
 
 /// Percent-encode a query value (RFC 3986 unreserved bytes pass through) so
@@ -72,6 +74,19 @@ enum ContactsState {
     SignedOut,
     /// The answer did not carry the contract's array shape.
     Broken,
+}
+
+/// The new-contact form's outcome. `Blocked` is an UNRESOLVED earlier
+/// submission: the marker survived, so a fresh intent would be a second
+/// command under a new key.
+#[derive(Clone)]
+enum CreateState {
+    Idle,
+    Busy,
+    Recorded { id: String },
+    Refused { reason: String, message: String },
+    Unknown(String),
+    Blocked { request_id: String },
 }
 
 /// The `/contacts` route.
@@ -161,6 +176,115 @@ pub fn Contacts() -> impl IntoView {
         load(String::new(), None, true);
     });
 
+    // The new-contact form: a real `contact.create` over `/crm/commands`.
+    // A submission that can commit persists the app-owned marker FIRST (the
+    // C05 discipline): a storage refusal blocks the send, an unknown outcome
+    // keeps both the key and the marker, and an unresolved marker on mount
+    // blocks a fresh attempt with a link to the recovery page.
+    let new_name = RwSignal::new(String::new());
+    let new_email = RwSignal::new(String::new());
+    let new_organization = RwSignal::new(String::new());
+    let (create_state, set_create_state) = signal(CreateState::Idle);
+    let create_key = RwSignal::new(None::<String>);
+
+    Effect::new(move |_| {
+        if session.get().is_none() {
+            return;
+        }
+        let Some(held) = session::held() else {
+            return;
+        };
+        if let Some(marker) = pending::read(&held.tenant, &held.principal) {
+            set_create_state.set(CreateState::Blocked {
+                request_id: marker.request_id,
+            });
+        }
+    });
+
+    let create = move |event: leptos::ev::SubmitEvent| {
+        event.prevent_default();
+        if matches!(create_state.get_untracked(), CreateState::Blocked { .. }) {
+            return;
+        }
+        let Some(held) = session::held() else {
+            return;
+        };
+        let key = match create_key.get_untracked() {
+            Some(key) => key,
+            None => {
+                let key = uuid_string();
+                create_key.set(Some(key.clone()));
+                key
+            }
+        };
+        let marker = PendingMarker::new(key.clone(), held.tenant.clone(), held.principal.clone());
+        if let Err(why) = pending::write(&marker) {
+            set_create_state.set(CreateState::Refused {
+                reason: "pending_unavailable".to_string(),
+                message: format!("The pending marker could not be stored: {why}"),
+            });
+            return;
+        }
+        let name = new_name.get_untracked();
+        let email = new_email.get_untracked();
+        let organization = new_organization.get_untracked();
+        let optional = |value: String| {
+            if value.trim().is_empty() {
+                serde_json::Value::Null
+            } else {
+                serde_json::Value::String(value)
+            }
+        };
+        let body = serde_json::json!({
+            "tenant": held.tenant,
+            "requestId": key,
+            "command": {
+                "operation": "contact.create",
+                "data": {
+                    "fullName": name,
+                    "email": optional(email),
+                    "organization": optional(organization),
+                },
+            },
+        })
+        .to_string();
+        set_create_state.set(CreateState::Busy);
+        let tenant = held.tenant.clone();
+        spawn_local(async move {
+            match session::api_fetch("POST", "/crm/commands", Some(body)).await {
+                Ok(Answer { status: 200, body }) if body["decision"] == "receipt" => {
+                    pending::clear(&tenant);
+                    create_key.set(None);
+                    let id = body["receipt"]["id"]
+                        .as_str()
+                        .unwrap_or_default()
+                        .to_string();
+                    set_create_state.set(CreateState::Recorded { id });
+                    load(String::new(), None, false);
+                }
+                Ok(Answer { status, body }) => {
+                    pending::clear(&tenant);
+                    create_key.set(None);
+                    set_create_state.set(CreateState::Refused {
+                        reason: body["reason"]
+                            .as_str()
+                            .unwrap_or(&format!("http {status}"))
+                            .to_string(),
+                        message: body["message"]
+                            .as_str()
+                            .unwrap_or("The contact was refused.")
+                            .to_string(),
+                    });
+                }
+                Err(FetchError::NoAnswer(why)) => {
+                    // The command may have committed. Keep the key AND the
+                    // marker: a retry must be the SAME command.
+                    set_create_state.set(CreateState::Unknown(why));
+                }
+            }
+        });
+    };
+
     let refresh = move |_event: leptos::ev::MouseEvent| {
         // Refresh restarts at the first page: the filter in the box is the
         // query, and a cursor belongs to the query it came from.
@@ -205,6 +329,74 @@ pub fn Contacts() -> impl IntoView {
                 </label>
                 <button data-testid="contacts-refresh" on:click=refresh>"Refresh"</button>
             </div>
+
+            <form class="create" data-testid="contact-create-form" on:submit=create>
+                <h2>"New contact"</h2>
+                <label>
+                    "Name "
+                    <input data-testid="contact-new-name" value=new_name
+                        on:input=move |ev| new_name.set(event_target_value(&ev)) />
+                </label>
+                <label>
+                    "Email "
+                    <input data-testid="contact-new-email" value=new_email
+                        on:input=move |ev| new_email.set(event_target_value(&ev)) />
+                </label>
+                <label>
+                    "Organization "
+                    <input data-testid="contact-new-org" value=new_organization
+                        on:input=move |ev| new_organization.set(event_target_value(&ev)) />
+                </label>
+                <button data-testid="contact-create"
+                    disabled=move || matches!(create_state.get(), CreateState::Blocked { .. })>
+                    "Create"
+                </button>
+                {let create_navigate = navigate.clone();
+                move || match create_state.get() {
+                    CreateState::Idle => view! { <p></p> }.into_any(),
+                    CreateState::Busy => view! {
+                        <p class="status" data-testid="contact-create-status">"Creating…"</p>
+                    }
+                    .into_any(),
+                    CreateState::Recorded { id } => {
+                        let target = format!("/app/contact?id={id}");
+                        let navigate = create_navigate.clone();
+                        view! {
+                            <p class="status" data-testid="contact-create-status">
+                                "Recorded. Receipt: " <code>{id.clone()}</code>
+                            </p>
+                            <button data-testid="contact-create-open"
+                                on:click=move |_| navigate(&target, Default::default())>
+                                "Open the new record"
+                            </button>
+                        }
+                        .into_any()
+                    }
+                    CreateState::Refused { reason, message } => view! {
+                        <p class="refusal" data-testid="contact-create-status">
+                            <strong>"Refused: "</strong><code>{reason}</code>" — "{message}
+                        </p>
+                    }
+                    .into_any(),
+                    CreateState::Unknown(why) => view! {
+                        <p class="refusal" data-testid="contact-create-status">
+                            {why}" — retry sends the same request id, never a second command"
+                        </p>
+                    }
+                    .into_any(),
+                    CreateState::Blocked { request_id } => {
+                        let href = format!("/app/recover?id={request_id}");
+                        view! {
+                            <p class="refusal" data-testid="contact-create-status">
+                                "An earlier submission is unresolved (request " <code>{request_id}</code>
+                                "). Resolve it before creating another contact: "
+                                <a data-testid="contact-create-recover" href=href>"the recovery page"</a>
+                            </p>
+                        }
+                        .into_any()
+                    }
+                }}
+            </form>
             {move || match state.get() {
                 ContactsState::Waiting | ContactsState::Loading => view! {
                     <p class="status" data-testid="contacts-status">"Loading…"</p>

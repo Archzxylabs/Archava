@@ -63,6 +63,17 @@ struct Opportunity {
     stage: String,
     revision: i64,
     loss_reason: Option<String>,
+    transitions: Vec<Transition>,
+}
+
+/// One immutable stage-history row (`from` is absent on the initial `new`).
+#[derive(Clone, Debug, PartialEq)]
+struct Transition {
+    from: Option<String>,
+    to: String,
+    actor_id: String,
+    revision: i64,
+    occurred_at: String,
 }
 
 #[derive(Clone)]
@@ -186,6 +197,24 @@ pub fn Contact() -> impl IntoView {
                                 stage: row["stage"].as_str()?.to_string(),
                                 revision: row["revision"].as_i64()?,
                                 loss_reason: row["lossReason"].as_str().map(str::to_owned),
+                                transitions: row["transitions"]
+                                    .as_array()
+                                    .map(|rows| {
+                                        rows.iter()
+                                            .filter_map(|row| {
+                                                Some(Transition {
+                                                    from: row["from"].as_str().map(str::to_owned),
+                                                    to: row["to"].as_str()?.to_string(),
+                                                    actor_id: row["actorId"].as_str()?.to_string(),
+                                                    revision: row["revision"].as_i64()?,
+                                                    occurred_at: row["occurredAt"]
+                                                        .as_str()?
+                                                        .to_string(),
+                                                })
+                                            })
+                                            .collect()
+                                    })
+                                    .unwrap_or_default(),
                             })
                         })
                         .collect();
@@ -484,6 +513,20 @@ pub fn Contact() -> impl IntoView {
                                             {opportunity.loss_reason.clone().map(|reason| view! {
                                                 <span> " (lost: "{reason}")"</span>
                                             })}
+                                            <ul class="history" data-testid="record-opportunity-history">
+                                                {opportunity
+                                                    .transitions
+                                                    .iter()
+                                                    .map(|step| view! {
+                                                        <li data-testid="record-history-step">
+                                                            "rev "{step.revision.to_string()}
+                                                            " — "{step.from.clone().unwrap_or_else(|| "·".to_string())}
+                                                            " → "{step.to.clone()}
+                                                            " by "{step.actor_id.clone()}
+                                                        </li>
+                                                    })
+                                                    .collect::<Vec<_>>()}
+                                            </ul>
                                             <div class="move">
                                                 <select data-testid="record-move-stage"
                                                     on:change=move |ev| move_stage.set(event_target_value(&ev))>
