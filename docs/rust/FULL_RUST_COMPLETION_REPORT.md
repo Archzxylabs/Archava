@@ -94,9 +94,28 @@ tables). The dispositions this program recorded:
 > 19-10; it is **not** a claim that OWN-V1 is delivered. Current status:
 > incomplete — see `docs/rust/ARCHXY1_ACCEPTANCE_MATRIX.md` row C03.
 
-The bounded first-owner release is delivered as the acceptance family over
+**20-10 update — the semantic lifecycle now exists.** The 20 Oktober C03
+closure supplies the behaviour the audit found missing: `rust/crates/own` +
+`rust/crates/host/src/own.rs` + `/app/owner` implement inspect → plan →
+preview → confirm → applied → recovery/history/restore over the persisted
+`archava_owner` ledger; `/own/chat` parses into the SAME typed `Request` and
+resolves through the same `catalogue().plan` as `/own/plan`
+(`the_chat_plan_equals_the_dashboard_plan_and_applies`); `cargo test -p
+archava-host --test own -- --test-threads=1` → 11/11; the browser owner
+journey records revisions 1–4, refresh recovery, history, restore r1 as r3
+and re-enable r4 with four `config_audit` rows by `alice`. The K05/K04
+consumers now run the real CRM flow (6/6 witnesses each, identical
+artifact/code/migration digests). `tools/own/verify.mjs` is re-bound to these
+Rust/browser witnesses. This is **local** verification; independent Codex
+sign-off and the final release gate remain pending.
+
+The paragraph below is the 19-10 historical account. Its mapping (T01 from a
+policy `outcome.ok`, T02 from the CRM assistant planner, T10 from the TS CRM
+battery) is superseded by the 20-10 evidence above.
+
+The bounded first-owner release was described as the acceptance family over
 released surfaces (ADR-R13): `pnpm own:verify` (the `tools/own/verify.mjs`
-driver) runs the ten `P-OWN-Txx` proofs fresh per invocation and the release
+driver) ran the ten `P-OWN-Txx` proofs fresh per invocation and the release
 gate binds them as two steps. T01 = the K05/K04 two-business-model consumers
 from one artifact bundle (config-only difference); T02 = the in-crate
 witness proving the chat flow's consumed plan equals the dashboard path's
@@ -127,7 +146,7 @@ boundary.
 | R09 UI/assistant lanes | **delivered** | assistant context + provider contracts, SDK/widget/page-awareness, realtime/voice, browser slice. |
 | R10 cutover safety | **delivered** | archava-ops CLI family, prior-window rehearsals, release-identity verify, ADR-R05/R12. |
 | R11 legacy + kits + gates | **delivered** (documents bind here) | legacy replacement census + bridge dispositions; kit readiness carried by the 46-command security chain; this report + the audit packet close R11-ALL-GATES. |
-| OWN-V1 | **not delivered (disputed — audit C03)** | the ten checks pass, but the behaviour each names (owner config inspect→plan→preview→confirm→apply→recovery→history/restore in the product) is not yet exercised; ADR-R13's acceptance-family interpretation is superseded in part. Tracking: `docs/rust/ARCHXY1_ACCEPTANCE_MATRIX.md`. |
+| OWN-V1 | **locally re-delivered (2026-10-20); independent sign-off pending** | Rust owner engine/host/UI lifecycle + `/own/chat` parity (host 11/11, engine 13/13) + real browser owner journey (revisions 1–4, refresh/history/restore, four `alice` audit rows) + K05/K04 6/6 witnesses each. The old acceptance-family mapping is retired. Tracking: `docs/rust/ARCHXY1_ACCEPTANCE_MATRIX.md`. |
 | G01–G10 gate items | **delivered except G04** | G04's five domain proofs are the packet-blocked set. |
 
 **Still open after this report:** (1) the four packet-blocked domain proofs

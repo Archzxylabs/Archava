@@ -184,7 +184,10 @@ async fn post(
         .expect("route answers");
     let status = response.status();
     let bytes = to_bytes(response.into_body(), usize::MAX).await.unwrap();
-    let outcome: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+    // Extraction rejections (422) answer a text body; a test asserting the
+    // refusal must not panic before it can read the status.
+    let outcome: serde_json::Value =
+        serde_json::from_slice(&bytes).unwrap_or(serde_json::Value::Null);
     (status, outcome)
 }
 
@@ -207,11 +210,48 @@ async fn get(app: &Router, uri: &str, session: &Session) -> (StatusCode, serde_j
     (status, outcome)
 }
 
+/// A request with an optional (possibly forged) bearer and no CSRF header.
+/// The session gate runs before the CSRF gate, which is exactly the order the
+/// unauthenticated surface needs to be proven in.
+async fn raw(
+    app: &Router,
+    method: &str,
+    uri: &str,
+    body: Option<&serde_json::Value>,
+    bearer: Option<&str>,
+) -> (StatusCode, serde_json::Value) {
+    let mut builder = Request::builder().method(method).uri(uri);
+    if let Some(token) = bearer {
+        builder = builder.header("authorization", format!("Bearer {token}"));
+    }
+    if body.is_some() {
+        builder = builder.header("content-type", "application/json");
+    }
+    let response = app
+        .clone()
+        .oneshot(
+            builder
+                .body(body.map_or_else(Body::empty, |value| Body::from(value.to_string())))
+                .expect("build request"),
+        )
+        .await
+        .expect("route answers");
+    let status = response.status();
+    let bytes = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    let outcome: serde_json::Value =
+        serde_json::from_slice(&bytes).unwrap_or(serde_json::Value::Null);
+    (status, outcome)
+}
+
 fn plan_body(base: i64, enable: &[&str], disable: &[&str]) -> serde_json::Value {
     serde_json::json!({
         "tenant": ACME,
         "request": {"baseRevision": base, "enable": enable, "disable": disable}
     })
+}
+
+fn chat_body(message: &str) -> serde_json::Value {
+    serde_json::json!({"tenant": ACME, "message": message})
 }
 
 fn apply_body(
@@ -461,6 +501,44 @@ async fn a_missing_or_revoked_grant_refuses_the_operation() {
     assert_eq!(status, StatusCode::FORBIDDEN, "{revoked}");
     assert_eq!(revoked["reason"], "missing_grant");
     assert_eq!(count(&fixture, "config_revisions").await, 1);
+
+    // Revocation is checked BEFORE the receipt lookup: a replay under the
+    // original request id is refused too, not answered from the stored
+    // receipt. The same grant gate covers the inspect, plan and history
+    // reads, so a revoked principal cannot discover or replay anything.
+    let (status, replay) = post(
+        &app,
+        "/own/apply",
+        &apply_body(
+            "own-request-before-revoke",
+            0,
+            &[],
+            &["crm-pipeline"],
+            &hash,
+        ),
+        &alice,
+    )
+    .await;
+    assert_eq!(status, StatusCode::FORBIDDEN, "{replay}");
+    assert_eq!(replay["reason"], "missing_grant");
+    for uri in [
+        format!("/own/config?tenant={ACME}"),
+        format!("/own/history?tenant={ACME}"),
+    ] {
+        let (status, refused) = get(&app, &uri, &alice).await;
+        assert_eq!(status, StatusCode::FORBIDDEN, "{uri}: {refused}");
+        assert_eq!(refused["reason"], "missing_grant");
+    }
+    let (status, planned) = post(
+        &app,
+        "/own/plan",
+        &plan_body(1, &["crm-pipeline"], &[]),
+        &alice,
+    )
+    .await;
+    assert_eq!(status, StatusCode::FORBIDDEN, "{planned}");
+    assert_eq!(planned["reason"], "missing_grant");
+    assert_eq!(count(&fixture, "config_revisions").await, 1);
 }
 
 #[tokio::test]
@@ -651,4 +729,208 @@ async fn a_rebuilt_host_recovers_the_same_receipt_and_history_from_postgres() {
     assert_eq!(history["revisions"].as_array().unwrap().len(), 1);
     assert_eq!(count(&fixture, "config_revisions").await, 1);
     assert_eq!(count(&fixture, "apply_receipts").await, 1);
+}
+
+/// **Witness: the chat and the dashboard resolve ONE plan identity.**
+///
+/// The chat parses `disable crm-pipeline` into the same typed request the
+/// dashboard posts, reads the base revision from the persisted config, and
+/// calls the same `catalogue().plan`. The plan hash, base config, catalogue
+/// version and pricing version agree, and the chat's plan is actionable through
+/// the normal apply endpoint. A relabel instruction agrees the same way.
+#[tokio::test]
+async fn the_chat_plan_equals_the_dashboard_plan_and_applies() {
+    let fixture = provision().await;
+    seed(&fixture).await;
+    let app = archava_host::router(state(&fixture).await);
+    let alice = login(&app, "alice").await;
+
+    let (status, dashboard) = post(
+        &app,
+        "/own/plan",
+        &plan_body(0, &[], &["crm-pipeline"]),
+        &alice,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{dashboard}");
+    // The preview document is closed: the plan plus the authoritative base,
+    // catalogue and pricing identity, and nothing that could be read as a
+    // hidden activation, payment or provider effect.
+    let mut keys: Vec<&str> = dashboard
+        .as_object()
+        .expect("the preview is an object")
+        .keys()
+        .map(String::as_str)
+        .collect();
+    keys.sort_unstable();
+    assert_eq!(
+        keys,
+        ["baseConfig", "catalogueVersion", "plan", "pricingVersion"]
+    );
+    assert_eq!(dashboard["plan"]["changes"][0]["kind"], "disable");
+    assert!(dashboard.get("payment").is_none());
+    assert!(dashboard.get("provider").is_none());
+    assert!(dashboard.get("activation").is_none());
+    let (status, chat) = post(
+        &app,
+        "/own/chat",
+        &chat_body("disable crm-pipeline"),
+        &alice,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{chat}");
+    assert_eq!(chat["plan"], dashboard["plan"]);
+    assert_eq!(chat["plan"]["planHash"], dashboard["plan"]["planHash"]);
+    assert_eq!(chat["plan"]["baseRevision"], 0);
+    assert_eq!(chat["baseConfig"], dashboard["baseConfig"]);
+    assert_eq!(chat["catalogueVersion"], dashboard["catalogueVersion"]);
+    assert_eq!(chat["pricingVersion"], dashboard["pricingVersion"]);
+
+    let hash = chat["plan"]["planHash"]
+        .as_str()
+        .expect("the chat plan hash");
+    let (status, applied) = post(
+        &app,
+        "/own/apply",
+        &apply_body("own-chat-parity-1", 0, &[], &["crm-pipeline"], hash),
+        &alice,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{applied}");
+    assert_eq!(applied["receipt"]["revision"], 1);
+
+    let (status, dashboard_label) = post(
+        &app,
+        "/own/plan",
+        &serde_json::json!({
+            "tenant": ACME,
+            "request": {
+                "baseRevision": 1,
+                "terminology": {"pipelineLabels": {"qualified": "Bid"}}
+            }
+        }),
+        &alice,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{dashboard_label}");
+    let (status, chat_label) = post(
+        &app,
+        "/own/chat",
+        &chat_body("rename qualified to Bid"),
+        &alice,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{chat_label}");
+    assert_eq!(chat_label["plan"], dashboard_label["plan"]);
+    assert_eq!(chat_label["plan"]["baseRevision"], 1);
+    assert_eq!(
+        chat_label["plan"]["config"]["terminology"]["pipelineLabels"]["qualified"],
+        "Bid"
+    );
+
+    // The chat does not silently accept instructions it cannot type: an
+    // unknown verb, an invented stage and a missing module are explicit 400s,
+    // not empty plans.
+    for message in ["paint the sky", "rename invented to Bid", "disable"] {
+        let (status, refused) = post(&app, "/own/chat", &chat_body(message), &alice).await;
+        assert_eq!(status, StatusCode::BAD_REQUEST, "{message}: {refused}");
+        assert_eq!(refused["reason"], "unrecognized_request");
+    }
+    assert_eq!(count(&fixture, "config_revisions").await, 1);
+}
+
+/// **Witness: the owner surface has no unauthenticated door.**
+///
+/// A missing session and a forged bearer are both refused before the owner
+/// ledger is consulted, on the inspect, plan and chat routes. No revision is
+/// written by any of them.
+#[tokio::test]
+async fn the_public_owner_surface_rejects_missing_and_forged_credentials() {
+    let fixture = provision().await;
+    seed(&fixture).await;
+    let app = archava_host::router(state(&fixture).await);
+
+    let (status, refused) = raw(
+        &app,
+        "GET",
+        &format!("/own/config?tenant={ACME}"),
+        None,
+        None,
+    )
+    .await;
+    assert_eq!(status, StatusCode::UNAUTHORIZED, "{refused}");
+    let (status, refused) = raw(
+        &app,
+        "GET",
+        &format!("/own/config?tenant={ACME}"),
+        None,
+        Some("forged-token"),
+    )
+    .await;
+    assert_eq!(status, StatusCode::UNAUTHORIZED, "{refused}");
+    let (status, refused) = raw(
+        &app,
+        "POST",
+        "/own/plan",
+        Some(&plan_body(0, &[], &["crm-pipeline"])),
+        Some("forged-token"),
+    )
+    .await;
+    assert_eq!(status, StatusCode::UNAUTHORIZED, "{refused}");
+    let (status, refused) = raw(
+        &app,
+        "POST",
+        "/own/chat",
+        Some(&chat_body("disable crm-pipeline")),
+        None,
+    )
+    .await;
+    assert_eq!(status, StatusCode::UNAUTHORIZED, "{refused}");
+    assert_eq!(count(&fixture, "config_revisions").await, 0);
+}
+
+/// **Witness: a foreign tenant, an injected role and an injected approval are
+/// refused before any write.**
+#[tokio::test]
+async fn a_foreign_tenant_role_or_approval_is_refused_without_writing() {
+    let fixture = provision().await;
+    seed(&fixture).await;
+    let app = archava_host::router(state(&fixture).await);
+    let alice = login(&app, "alice").await;
+
+    // Alice has no owner grant in globex-corp: the tenant is the body's, the
+    // authority is the ledger's.
+    let (status, refused) = post(
+        &app,
+        "/own/plan",
+        &serde_json::json!({
+            "tenant": "globex-corp",
+            "request": {"baseRevision": 0, "disable": ["crm-pipeline"]}
+        }),
+        &alice,
+    )
+    .await;
+    assert_eq!(status, StatusCode::FORBIDDEN, "{refused}");
+    assert_eq!(refused["reason"], "missing_grant");
+
+    // Role and approval are not fields of the typed request. The extractor
+    // refuses them before the handler, so a caller cannot claim either.
+    let mut role = plan_body(0, &[], &["crm-pipeline"]);
+    role["role"] = serde_json::json!("owner");
+    let (status, refused) = post(&app, "/own/plan", &role, &alice).await;
+    assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY, "{refused}");
+
+    let (_, planned) = post(
+        &app,
+        "/own/plan",
+        &plan_body(0, &[], &["crm-pipeline"]),
+        &alice,
+    )
+    .await;
+    let hash = planned["plan"]["planHash"].as_str().unwrap();
+    let mut approval = apply_body("own-foreign-role-1", 0, &[], &["crm-pipeline"], hash);
+    approval["approval"] = serde_json::json!({"approved": true, "principal": "owner"});
+    let (status, refused) = post(&app, "/own/apply", &approval, &alice).await;
+    assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY, "{refused}");
+    assert_eq!(count(&fixture, "config_revisions").await, 0);
 }

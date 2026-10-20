@@ -679,6 +679,9 @@ function composeEvidenceSpec(error, facts) {
       instanceDirectory: facts.instanceDir,
       witnesses,
       receipts: facts.receipts,
+      // C03's T10 evidence. The journey is graded by tools/own/verify.mjs;
+      // the frozen P-RUST-BROWSER checks remain the list above.
+      owner: facts.owner ?? null,
       screenshotDir: `${SCRATCH}/screenshots`,
       startedAt: facts.startedAt,
       failure: error === undefined ? null : error.message,
@@ -713,6 +716,27 @@ async function main() {
   let attached = null
   let page = null
   const receipts = []
+  // The owner-configuration journey facts. A failure before the journey still
+  // writes a partial object; the failure message is in the proof either way.
+  const owner = {
+    stages: [],
+    appliedRevisions: [],
+    inspectedRevision: null,
+    refreshRecovery: false,
+    historyRevision1: false,
+    restoredRevision: null,
+    finalRevision: null,
+    pipelineDisabledRefused: false,
+    pipelineEnabledRestored: false,
+    uiOnly: true,
+  }
+  const ownerStage = (stage) => {
+    if (!owner.stages.includes(stage)) owner.stages.push(stage)
+  }
+  const ownerRevision = (text) => {
+    const match = /Configuration revision (\d+)/.exec(text ?? '')
+    return match === null ? null : Number(match[1])
+  }
   try {
     // The child's own ready line first (its claim on the port), then the
     // listener — so a slow provision can never be mistaken for an up server
@@ -1416,41 +1440,60 @@ async function main() {
     await shot(page, '18-record-screen')
 
     // --- C03: the shipped owner-configuration journey ----------------------
-    // These steps are NOT a coverage witness (the frozen P-RUST-BROWSER
-    // checks do not include owner configuration); they are a real UI smoke
-    // that aborts this proof if the shipped owner surface regresses. The
-    // lifecycle's semantic evidence lives in `cargo test -p archava-host
-    // --test own`.
-    process.stdout.write('  · owner: disable crm-pipeline through /app/owner\n')
+    // Graded as P-OWN-T10 by tools/own/verify.mjs. The engine and persistence
+    // semantics live in `cargo test -p archava-host --test own`; this is the
+    // real browser proof that the SAME lifecycle is reachable through the
+    // shipped UI: inspect → plan/preview → confirm → apply → refresh recovery
+    // → history → restore → re-enable.
+    process.stdout.write('  · owner: inspect /app/owner\n')
     await openPage(page, `${APP}/owner`)
     await waitText(page, 'owner-state', (value) => value.includes('Configuration revision'))
+    owner.inspectedRevision = ownerRevision(await textOf(page, 'owner-state'))
+    ownerStage('inspect')
+
+    process.stdout.write('  · owner: plan and preview disable crm-pipeline\n')
     await click(page, 'owner-toggle-crm-pipeline')
+    ownerStage('plan')
     await click(page, 'owner-preview')
     await waitText(page, 'owner-plan', (value) => value.includes('Disable crm-pipeline'))
+    ownerStage('preview')
     await click(page, 'owner-confirm')
+    ownerStage('confirm')
     await waitText(page, 'owner-status', (value) => value.includes('apply committed revision 1'))
+    owner.appliedRevisions.push(1)
+    ownerStage('applied')
     await openPage(page, `${APP}/contact?id=${ADA_BULK_ID}`)
     await waitText(page, 'record-pipeline-disabled', (value) => value.length > 0)
+    owner.pipelineDisabledRefused = true
     process.stdout.write('  · owner: disabled module hides the record pipeline\n')
 
-    process.stdout.write('  · owner: re-enable and restore r1, then leave it enabled\n')
+    process.stdout.write('  · owner: refresh recovers the committed revision, then re-enable\n')
     await openPage(page, `${APP}/owner`)
     await waitText(page, 'owner-state', (value) => value.includes('Configuration revision 1'))
+    owner.refreshRecovery = true
+    ownerStage('refresh-recovery')
     await click(page, 'owner-toggle-crm-pipeline')
     await click(page, 'owner-preview')
     await waitText(page, 'owner-plan', (value) => value.includes('Enable crm-pipeline'))
     await click(page, 'owner-confirm')
     await waitText(page, 'owner-status', (value) => value.includes('apply committed revision 2'))
+    owner.appliedRevisions.push(2)
     await openPage(page, `${APP}/contact?id=${ADA_BULK_ID}`)
     await waitText(page, 'record-opportunities', (value) => value.includes('Browser proof — deal'))
+    owner.pipelineEnabledRestored = true
 
     await openPage(page, `${APP}/owner`)
     await waitText(page, 'owner-state', (value) => value.includes('Configuration revision 2'))
     await waitText(page, 'owner-revision-1', () => true)
+    owner.historyRevision1 = true
+    ownerStage('history')
     await click(page, 'owner-restore-1')
     await waitText(page, 'owner-plan', (value) => value.includes('Restore revision 1'))
     await click(page, 'owner-confirm')
     await waitText(page, 'owner-status', (value) => value.includes('restore committed revision 3'))
+    owner.appliedRevisions.push(3)
+    owner.restoredRevision = 3
+    ownerStage('restore')
     await openPage(page, `${APP}/contact?id=${ADA_BULK_ID}`)
     await waitText(page, 'record-pipeline-disabled', (value) => value.length > 0)
 
@@ -1461,12 +1504,49 @@ async function main() {
     await waitText(page, 'owner-plan', (value) => value.includes('Enable crm-pipeline'))
     await click(page, 'owner-confirm')
     await waitText(page, 'owner-status', (value) => value.includes('apply committed revision 4'))
+    owner.appliedRevisions.push(4)
+    owner.finalRevision = 4
     const ownerRevisions = psql(
       "SELECT count(*) FROM archava_owner.config_revisions WHERE tenant_id='bulk-demo'",
       port,
     )
     if (ownerRevisions !== '4') {
       throw new Error(`the owner journey wrote ${ownerRevisions} revisions, not 4`)
+    }
+    // Every apply must have been made by the browser's authenticated owner.
+    // A config file or terminal edit would not produce these audit actors (and
+    // the journey's stages above are the UI clicks that did).
+    const ownerAudits = psql(
+      "SELECT count(*) FROM archava_owner.config_audit WHERE tenant_id='bulk-demo' AND actor='alice'",
+      port,
+    )
+    if (ownerAudits !== '4') {
+      throw new Error(`the owner journey recorded ${ownerAudits} alice applies, not 4`)
+    }
+    owner.auditActor = 'alice'
+    owner.auditCount = 4
+    owner.uiOnly = true
+    const requiredOwnerStages = [
+      'inspect',
+      'plan',
+      'preview',
+      'confirm',
+      'applied',
+      'refresh-recovery',
+      'history',
+      'restore',
+    ]
+    const missingOwnerStages = requiredOwnerStages.filter(
+      (stage) => !owner.stages.includes(stage),
+    )
+    if (missingOwnerStages.length > 0) {
+      throw new Error(`the owner journey did not reach: ${missingOwnerStages.join(', ')}`)
+    }
+    if (owner.inspectedRevision !== 0) {
+      throw new Error(`the owner journey started at revision ${owner.inspectedRevision}, not 0`)
+    }
+    if (owner.appliedRevisions.join(',') !== '1,2,3,4') {
+      throw new Error(`the owner journey applied ${owner.appliedRevisions.join(',')}, not 1,2,3,4`)
     }
     process.stdout.write('  · owner: four persisted revisions, pipeline enabled again\n')
     await shot(page, '18b-owner-configuration')
@@ -1693,6 +1773,7 @@ async function main() {
         instancePort: attachFacts.port,
         instanceDir: attachFacts.data,
         receipts,
+        owner,
         startedAt,
       }),
     )
@@ -1706,6 +1787,7 @@ async function main() {
         instancePort: attachFacts?.port ?? null,
         instanceDir: attachFacts?.data ?? null,
         receipts,
+        owner,
         startedAt,
       }),
     )

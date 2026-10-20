@@ -4,34 +4,45 @@
 # K04 wholesale), writes each consumer's `kit.config.json`, unpacks the shipped
 # artifact bundle into `deps/`, vendors the third-party closure and runs
 # `cargo test --offline --locked` with an empty `CARGO_HOME`. The template
-# itself does not compile standalone: `tests/kit_witness.rs` reads a config the
-# producer materializes, and `deps/` is generated. That is the shape of the
-# claim — two consumers whose only difference is configuration.
+# itself does not compile standalone: `tests/kit_witness.rs` and
+# `tests/crm_witness.rs` read a config the producer materializes, and `deps/`
+# is generated. That is the shape of the claim — two consumers whose only
+# difference is configuration.
 #
 # ## What is consumed, and from where
 #
-# `deps/` holds the two shipped crates — `archava-core` (tenant ids, the
-# role/permission tables, the action registry) and `archava-domain` (the CRM
-# command policy gate). They arrive as `.tar.gz` bundles the producer cut from
-# `rust/crates/core` and `rust/crates/domain`, and their digests are what the
-# "identical core/CRM artifact hashes" check compares. They are `path`
-# dependencies INTO THIS CONSUMER'S OWN `deps/` — never into the product tree:
-# there is no `path =` reaching `rust/crates`, and no product behavior can leak
-# in through one. The bundles resolve their own `workspace = true` inheritance
-# against THIS manifest's tables below, which is why those tables pin the same
-# values the product workspace pins: the closure the consumer builds must be
-# the closure the product builds.
+# `deps/` holds the shipped runtime the business models consume: `archava-core`
+# (tenant ids, the role/permission tables, the action registry),
+# `archava-domain` (the CRM command policy gate), `archava-adapters` (the
+# tenant-scoped PostgreSQL seam), `archava-assistant` and `archava-own` (the
+# assistant and owner-configuration leaves the host composes), `archava-host`
+# (the real CRM HTTP/authority surface), and `archava-pg-fixture` (the
+# disposable PostgreSQL fixture the consumer's own test provisions). They
+# arrive as `.tar.gz` bundles the producer cut from the product's crates, and
+# their digests are what the "identical core/CRM artifact hashes" check
+# compares. They are `path` dependencies INTO THIS CONSUMER'S OWN `deps/` —
+# never into the product tree: there is no `path =` reaching `rust/crates`,
+# and no product behavior can leak in through one. The bundles resolve their
+# own `workspace = true` inheritance against THIS manifest's tables below,
+# which is why those tables pin the same values the product workspace pins:
+# the closure the consumer builds must be the closure the product builds.
+#
+# `archava-pg-fixture` is unpacked at `deps/pg-fixture` rather than a versioned
+# directory because `archava-host` and `archava-adapters` name it with the
+# relative path `../pg-fixture` in their dev-dependency tables. Those tables
+# are part of the shipped manifests; keeping the path resolvable is what lets
+# the consumer workspace resolve every member without rewriting the artifact.
 #
 # ## Why the internal dependency resolves here at all
 #
-# `archava-domain` depends on `archava-core`, and a `.crate`-tarball route
-# would force the packaged manifest's registry-style dependency requirement
-# onto a registry the consumer never contacts. Shipping the crates as source
-# bundles consumed through a `path` + workspace-inheritance resolution keeps
-# the whole build offline and keeps the artifact boundary in one place that a
-# reviewer can inspect. The digest check (tree hashes of `deps/` on both
-# sides) is the anti-fork instrument: any fork between the two consumers'
-# copies moves a hash, and the check fails.
+# The shipped crates depend on each other, and a `.crate`-tarball route would
+# force the packaged manifest's registry-style dependency requirement onto a
+# registry the consumer never contacts. Shipping the crates as source bundles
+# consumed through `path` + workspace-inheritance resolution keeps the whole
+# build offline and keeps the artifact boundary in one place a reviewer can
+# inspect. The digest check (tree hashes of `deps/` on both sides) is the
+# anti-fork instrument: any fork between the two consumers' copies moves a
+# hash, and the check fails.
 [package]
 name = "kit-consumer"
 version = "0.0.0"
@@ -45,13 +56,20 @@ rust-version = "1.96"
 # resolution, and they pin the same values the product workspace pins, so the
 # closure the consumer builds is the closure the product builds.
 #
-# The third-party pins are deliberate copies of the product's
-# `[workspace.dependencies]`, not simplified "close enough" values — a consumer
-# building a cheaper closure would be verifying a different program.
+# `default-members` is the root package alone. The shipped crates are members
+# (path dependencies are workspace members), but their own test batteries are
+# not this consumer's acceptance run; `cargo test` must execute the template's
+# witnesses, not the product's suites through a second door.
 [workspace]
+default-members = ["."]
 members = [
     "deps/archava-core-0.1.0",
     "deps/archava-domain-0.1.0",
+    "deps/archava-adapters-0.1.0",
+    "deps/archava-assistant-0.1.0",
+    "deps/archava-own-0.1.0",
+    "deps/archava-host-0.1.0",
+    "deps/pg-fixture",
 ]
 
 [workspace.package]
@@ -60,16 +78,52 @@ edition = "2021"
 publish = false
 rust-version = "1.96"
 
+# The third-party pins are deliberate copies of the product's
+# `[workspace.dependencies]`, not simplified "close enough" values — a consumer
+# building a cheaper closure would be verifying a different program. A shipped
+# crate that names a dependency with `workspace = true` resolves it here.
 [workspace.dependencies]
 archava-core = { path = "deps/archava-core-0.1.0" }
 archava-domain = { path = "deps/archava-domain-0.1.0" }
+archava-adapters = { path = "deps/archava-adapters-0.1.0" }
+archava-assistant = { path = "deps/archava-assistant-0.1.0" }
+archava-own = { path = "deps/archava-own-0.1.0" }
+archava-host = { path = "deps/archava-host-0.1.0" }
+archava-pg-fixture = { path = "deps/pg-fixture" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 thiserror = "2.0"
+tracing = "0.1"
+sha2 = "0.10"
+scrypt = { version = "0.11", default-features = false }
+hmac = "0.12"
+base64 = "0.22"
+uuid = { version = "1", features = ["v4", "serde"] }
+getrandom = "0.4"
+regex = "1.13.1"
+sqlx = { version = "0.9.0", default-features = false, features = [
+  "runtime-tokio",
+  "postgres",
+  "uuid",
+  "json",
+] }
 tokio = { version = "1.53.3", features = ["macros", "rt-multi-thread", "net", "signal"] }
+axum = { version = "0.8.9", features = ["macros"] }
 
 [dependencies]
 archava-core = { path = "deps/archava-core-0.1.0" }
 archava-domain = { path = "deps/archava-domain-0.1.0" }
+archava-host = { path = "deps/archava-host-0.1.0" }
+archava-pg-fixture = { path = "deps/pg-fixture" }
 serde = { workspace = true }
 serde_json = { workspace = true }
+axum = { workspace = true }
+sqlx = { workspace = true }
+tokio = { workspace = true }
+uuid = { workspace = true }
+
+[dev-dependencies]
+# `tower` for `ServiceExt::oneshot`, which drives the real host router — the
+# same extension the host's own integration suites use. Dev-only: the
+# consumer's runtime path is the artifact, not the test harness.
+tower = { version = "0.5", features = ["util"] }

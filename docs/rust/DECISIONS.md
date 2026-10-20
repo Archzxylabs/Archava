@@ -509,11 +509,11 @@ derived from a policy-consumer `outcome.ok`, `T06` from writer-fence/rollback
 rehearsals, `T07` from deployment-plan unit tests and `T10` from the
 TypeScript CRM browser battery — none of which exercise an owner
 configuration apply/restore in the product. An implementator ADR cannot lower
-an owner requirement, and this one did not get to decide that. OWN-V1 is
-therefore **not delivered** until the actual configuration lifecycle exists
-and each `OWN-Txx` proof is bound to the operation it names (see
-`docs/rust/ARCHXY1_ACCEPTANCE_MATRIX.md`, row C03). The existing producer and
-its ten checks remain as component evidence under their true scope.
+an owner requirement, and this one did not get to decide that. As of that
+audit OWN-V1 was **not delivered**; the 20 Oktober 2026 addendum below records
+the actual lifecycle and the local re-delivery (see
+`docs/rust/ARCHXY1_ACCEPTANCE_MATRIX.md`, row C03). The old producer and its
+ten checks remain as history under their true scope.
 
 **Context.** `docs/OWNER_CONFIGURATION_PRD.md` §9 freezes the bounded
 first-owner release: a known owner runs inspect → plan → preview → confirm →
@@ -571,6 +571,42 @@ so the pin asserts a CURRENT construction instead of failing on a stale one.
 audit can recompute the claim without re-reading this document. OWN-V2's
 custom-stages/typed-fields scope stays OUT (the PRD's own boundary: strict
 enums do not grow custom stages without an explicit data-model extension).
+
+**Addendum — 20 Oktober 2026: the lifecycle exists; OWN-V1 locally re-delivered.**
+The audit's counterexamples are closed by product code and named witnesses:
+
+- The engine, persistence, routes and UI are `rust/crates/own` +
+  `rust/crates/host/src/own.rs` + `/app/owner`; `archava_owner` carries its own
+  grants, forced RLS, revisions, apply receipts and audit.
+- T02's chat is the owner-configuration chat at `POST /own/chat`, not the CRM
+  assistant planner named in Decision 2. It parses the utterance into the SAME
+  typed `Request` and calls the SAME `preview_at`/`catalogue().plan` path as
+  `/own/plan`, deriving the base revision from the persisted config. The host
+  witness `the_chat_plan_equals_the_dashboard_plan_and_applies` proves plan
+  hash/baseConfig/catalogue/pricing identity, applies the chat's plan, and
+  proves relabel parity.
+- T10's browser journey is the owner journey in `tools/rust/browser-slice.mjs`:
+  inspect → plan/preview → confirm → applied revisions 1–4 → refresh recovery
+  → history → restore r1 as r3 → re-enable r4, with four
+  `archava_owner.config_audit` rows by `alice` and the record pipeline hidden
+  while disabled. It is NOT the TS CRM battery Decision 3 described.
+- `cargo test -p archava-own` → 13/13; `cargo test -p archava-host --test own
+  -- --test-threads=1` → 11/11 (the 8 earlier witnesses plus T02, public-session
+  rejection and foreign tenant/role/approval refusal).
+- The K05/K04 consumers now run the real CRM flow: seven source bundles, two
+  isolated PostgreSQL fixtures, 6/6 witnesses each (five policy + the C04 CRM
+  read/write/recovery witness), identical deps/code/migration digests.
+- `tools/own/verify.mjs` is re-bound to these Rust/browser witnesses; the old
+  TS/vitest grades are retired.
+- Decision 5's template lock is superseded: the six-crate template cannot ship
+  a usable lock before `deps/` is materialized. The producer resolves the lock
+  from the bundled manifests and freezes it with `cargo vendor --locked` /
+  `cargo test --locked`.
+
+This is LOCAL verification at candidate `3754217` + the C03/C04 worktree.
+Independent Codex sign-off and the full release gate at the eventual HEAD
+remain pending; the honest status is `locally verified`, not
+`integrated verified`.
 
 ## ADR-R14 — the frozen manifest's artifact paths resolve from the ROOT; the benchmark's binary path was authored against the wrong base
 

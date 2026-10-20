@@ -11,6 +11,9 @@ verification and is marked `pending` everywhere below.
 ([machine evidence](audit/2026-10-19-archxy1-crm-audit.json)).
 **Candidate at matrix creation:** HEAD `409eab9` (`feat/laundry-1.17.0`),
 profile `1.18.0`, rustc/cargo 1.96.0, node 26.10.0, pnpm 10.15.1.
+**Current candidate for the 20-10 C03/C04 closure:** HEAD `3754217` plus the
+C03/C04 worktree; the new per-proof evidence is bound to `3754217` until the
+final release gate rebinds it at the eventual commit.
 
 Status vocabulary: `implemented` → `locally verified` → `integrated verified`.
 Marker headings, file/LOC counts, check names and a JSON `pass` are NOT proof
@@ -21,31 +24,31 @@ of behaviour.
 | ID | Task | Required closure | Current evidence (real, not a marker) | Status | Next action |
 | --- | --- | --- | --- | --- | --- |
 | C01 | A1-CRM | All seven baseline writes, existing reads and usable CRM screens/action flow — not `followup.create` plus a read-only assistant | **Locally verified (2026-10-20).** Commands: all seven contract operations (`contact.create/update`, `activity.add`, `followup.create/complete`, `opportunity.create/move`) with the TS wire names, tri-state patch, boundary validation before database work, the operation-family write grant (+`contacts.read` for the pipeline lane), scope containment, `PIPELINE_TRANSITIONS` as its own state machine with immutable history, and one transaction per command carrying effect + audit + receipt. Reads: contacts list (literal search, stable cursor pages), record with contact/activities/follow-ups/opportunities AND each opportunity's transition history (one scoped query). Product UI: contacts search/next-page/selection/detail + a real `contact.create` form (C05 marker written before the send, storage refusal blocks, unresolved marker blocks a fresh attempt with a recovery link, host refusal renders its reason); `/app/contact` edit/activity/follow-up complete/opportunity create/move/history; `/app/desk` visible assistant panel over the real conversation route (overview, worklist, pipeline, contacts, summary, planner identity) where a prepared completion carries `requiresApproval`, the task stays `open:1` until the human confirms, and the confirmation executes the typed `followup.complete`; plus draft/recover and login/logout. Proof: `cargo test -p archava-host --test crm -- --test-threads=1` → 36/36; assistant suite 13/13, assistant lib 25/25; `pnpm rust:browser-slice` → 32/32 witnesses, exit 0 (record effects asserted in PostgreSQL, desk `open:1` before / `completed:2` + `alice:followup.complete` after, create form psql row at revision 1 owned by alice, pipeline history rendered, planner identity shown). Scope note: the TS panel's optional `approvalBase` native-approval SERVICE is not part of this slice; the consent surface here is prepare → explicit human confirmation → typed command (A1-CRM-03's separate intent/consent contracts), and the service-on-behalf lane is proven at the core level with both actors recorded. | **locally verified** | Final Codex audit; `integrated verified` only after it |
-| C02 | A1-AUTH | UI logout revokes the server session and closes cookie/bearer/reconnect authority | **Closed locally (2026-10-20).** `Identity::revoke` (`rust/crates/host/src/identity.rs`) deletes the session row and appends the `logout` identity event in one transaction; `POST /logout` (`rust/crates/host/src/router.rs`) runs the CSRF gate BEFORE revocation, deletes the row, then expires the cookie (`Max-Age=0`); the slice's `close_server_session` closes the server session first and clears local facts only after the server says so (a 401 "no session" also clears, a 403/503 keeps state and reports the refusal). Proof: `cargo test -p archava-host --test session --offline` → 6 passed, 0 failed (read/mutate/recover refused after logout, missing/forged CSRF with a LIVE session refused without revoking, other sessions untouched, restart does not resurrect, no-session logout = 401); `pnpm rust:browser-slice` → 20/20 witnesses, EXIT=0, including `logout_revokes_server_session` (psql: the presented row is gone) and `logout_blocks_old_credential` (same browser reads /contacts → 401). | **locally verified** | Re-run the full gate after C01 lands |
-| C03 | A1-OWN | Actual owner configuration lifecycle and semantic OWN-T01–T10 proofs | **Partially verified (2026-10-20).** Engine 13/13; persisted `archava_owner` lifecycle + routes + `/app/owner` UI + CRM `crm-pipeline` gate proven by `cargo test -p archava-host --test own -- --test-threads=1` → 8/8 (disable→`module_disabled`→enable, replay, stale/foreign confirmation, missing/revoked grant, restore-as-new-revision with intact history, racing applies = one revision, rebuilt host replays, mandatory blocked, assistant tool gate). Still open: T01 two packaged consumers, T02 chat=dashboard parity, T10 browser journey, OWN evidence producer re-binding, final gate | **open** (partially verified) | Bind T01/T02/T10 and the OWN evidence producer; run the browser owner journey and the final gate |
-| C04 | A1-REUSE | Two packaged independent consumers execute real CRM business behaviour on isolated persisted data | `tools/rust/k05-k04-consumers.mjs` bundles `archava-core`/`archava-domain`; consumer witnesses cover tenant IDs, role table, action registry, `CommandAuthorizer` — no CRM repository/operation runs | **open** | Extend both consumers to run contact/activity/follow-up/opportunity read-write-recovery against their own persisted store, from identical released CRM artifacts |
-| C05 | A1-RECOVERY | App-owned pending identity survives reload/unknown outcome and blocks accidental new intent | **Closed locally (2026-10-20).** New `rust/crates/slice/src/pending.rs` stores an account/workspace-bound marker (`requestId` + `tenant` + `principal` + `createdAt` only — no business payload, no secret) BEFORE the send; a storage refusal blocks the submission instead of sending unrecoverably; `draft.rs` restores the ORIGINAL key on mount (session-bound effect), re-submits under it, refuses a fresh key while unresolved, and clears the marker on any known outcome (200/409/refusal) and on committed recovery; logout clears every marker. Proof: `node tools/rust/browser-slice.mjs` → **32/32 witnesses, EXIT=0** at HEAD `902fb9d`, including `pending_marker_survives_reload` (reload returns the original key; fresh key refused), `pending_marker_cleared_after_resolution` (committed receipt clears it), `storage_refusal_blocks_submission` (host never saw the command — psql count 0) and `record_pending_marker_blocks_new_intent` (the exact stored marker shape, including principal `alice@archava.test`, made a new activity write refuse `pending_unresolved` with the psql count unchanged; clearing it unblocked the record). | **locally verified** | Re-run the full gate after C01 lands |
-| C06 | A1-UI | Literal query encoding, functional cursor pagination and reset/error/race semantics in the browser | **Closed locally (2026-10-20).** `contacts.rs` now percent-encodes tenant, search and cursor (`query_encode`); the page renders real `Next page`/`First page` actions driven by the server's cursor, resets the cursor when the filter changes, and names "this page is the last" when the server returns none. Host keyset (`ORDER BY id`, `id > after`) was already correct. Proof: `pnpm rust:browser-slice` → 20/20, EXIT=0, including `literal_search_is_encoded` (`Ada &` finds only "Ada & Lovelace Ltd"; the audit's `Ada&limit=1` returns 0 rows) and `cursor_pagination_loads_later_rows` (26 rows: page 1 = 20 → next = 6 → first page returns the same first row). | **locally verified** | Re-run the full gate after C01 lands |
-| C07 | A1-EVIDENCE | Final source/artifact/proof identity consistent; coverage reevaluated; no hand-editing old proof HEAD/hash | Audit measured 32 diagnostics (26 proof-identity mismatches, 1 source digest mismatch, 5 missing domain proofs) | **open** (bookkeeping + identity policy) | Regenerate affected evidence by producing runs after the code lands; never edit a stored proof's HEAD/hash/timestamps |
+| C02 | A1-AUTH | UI logout revokes the server session and closes cookie/bearer/reconnect authority | **Closed locally (2026-10-20).** `Identity::revoke` (`rust/crates/host/src/identity.rs`) deletes the session row and appends the `logout` identity event in one transaction; `POST /logout` (`rust/crates/host/src/router.rs`) runs the CSRF gate BEFORE revocation, deletes the row, then expires the cookie (`Max-Age=0`); the slice's `close_server_session` closes the server session first and clears local facts only after the server says so (a 401 "no session" also clears, a 403/503 keeps state and reports the refusal). Proof: `cargo test -p archava-host --test session --offline` → 6 passed, 0 failed (read/mutate/recover refused after logout, missing/forged CSRF with a LIVE session refused without revoking, other sessions untouched, restart does not resurrect, no-session logout = 401); `pnpm rust:browser-slice` → 32/32 witnesses, EXIT=0, including `logout_revokes_server_session` (psql: the presented row is gone) and `logout_blocks_old_credential` (same browser reads /contacts → 401). | **locally verified** | Re-run the full gate after C01 lands |
+| C03 | A1-OWN | Actual owner configuration lifecycle and semantic OWN-T01–T10 proofs | **Locally verified (2026-10-20).** Engine `cargo test -p archava-own` → 13/13 (T01 relabel keeps the canonical stage, T02 typed-request plan identity, T03 readiness/cost, T05 dependency/entitlement blocks, T06 stale/foreign/replay, T07 dependency+mandatory disable blocks, T08 restore-as-new-revision+revalidation, T09 no invented readiness/cost/authority). Persisted lifecycle `cargo test -p archava-host --test own -- --test-threads=1` → 11/11: disable→`module_disabled`→enable, replay, stale/foreign confirmation, missing/revoked grant (including revoked replay/status/history), restore-as-new-revision with intact history, racing applies = one revision, rebuilt host replays, mandatory blocked, assistant tool gate, `the_chat_plan_equals_the_dashboard_plan_and_applies` (same plan hash/baseConfig/catalogue/pricing; chat plan applied; relabel parity), public-session rejection, and foreign-tenant/role/approval refusal. Browser `node tools/rust/browser-slice.mjs` → pass at candidate `3754217` with `details.owner` = inspect→plan→preview→confirm→applied revisions 1,2,3,4→refresh recovery→history r1→restore r1 as r3→re-enable r4; four `archava_owner.config_audit` rows by `alice`; the record pipeline is hidden while disabled and restored when enabled. `tools/own/verify.mjs` is re-bound to these Rust/browser witnesses (T01 reuses fresh K05/K04 evidence; T10 runs the browser journey). Still open: final Codex sign-off and the full release gate at the eventual HEAD. | **locally verified** | Final Codex audit; full release-gate rerun at the final HEAD |
+| C04 | A1-REUSE | Two packaged independent consumers execute real CRM business behaviour on isolated persisted data | **Locally verified (2026-10-20).** `tools/rust/k05-k04-consumers.mjs` cuts seven source bundles (core, domain, adapters, assistant, own, host, pg-fixture), unpacks them into two scratch consumers outside the product workspace, copies the frozen migration ledgers + owner migration, and runs each consumer offline with an empty `CARGO_HOME`. Each consumer runs **6/6** witnesses: the five shipped policy witnesses plus `a_packaged_consumer_runs_the_real_crm_read_write_recovery_flow` — real host router, its own disposable PostgreSQL (ports 35171/40913), contact create/update, activity, follow-up create/complete, opportunity create/move, list/record reads incl. transition history, replayed request + status-route recovery with exactly one effect, one audit per command (7), and a foreign-tenant command refused with `missing_membership` and no row change. Both consumers' `deps/` digests and witness-code digests are identical; migrations identical. | **locally verified** | Final Codex audit; final gate |
+| C05 | A1-RECOVERY | App-owned pending identity survives reload/unknown outcome and blocks accidental new intent | **Closed locally (2026-10-20).** New `rust/crates/slice/src/pending.rs` stores an account/workspace-bound marker (`requestId` + `tenant` + `principal` + `createdAt` only — no business payload, no secret) BEFORE the send; a storage refusal blocks the submission instead of sending unrecoverably; `draft.rs` restores the ORIGINAL key on mount (session-bound effect), re-submits under it, refuses a fresh key while unresolved, and clears the marker on any known outcome (200/409/refusal) and on committed recovery; logout clears every marker. Proof: `node tools/rust/browser-slice.mjs` → **32/32 witnesses, EXIT=0** at candidate `3754217` (2026-10-20 re-run), including `pending_marker_survives_reload` (reload returns the original key; fresh key refused), `pending_marker_cleared_after_resolution` (committed receipt clears it), `storage_refusal_blocks_submission` (host never saw the command — psql count 0) and `record_pending_marker_blocks_new_intent` (the exact stored marker shape, including principal `alice@archava.test`, made a new activity write refuse `pending_unresolved` with the psql count unchanged; clearing it unblocked the record). | **locally verified** | Re-run the full gate after C01 lands |
+| C06 | A1-UI | Literal query encoding, functional cursor pagination and reset/error/race semantics in the browser | **Closed locally (2026-10-20).** `contacts.rs` now percent-encodes tenant, search and cursor (`query_encode`); the page renders real `Next page`/`First page` actions driven by the server's cursor, resets the cursor when the filter changes, and names "this page is the last" when the server returns none. Host keyset (`ORDER BY id`, `id > after`) was already correct. Proof: `pnpm rust:browser-slice` → 32/32, EXIT=0, including `literal_search_is_encoded` (`Ada &` finds only "Ada & Lovelace Ltd"; the audit's `Ada&limit=1` returns 0 rows) and `cursor_pagination_loads_later_rows` (26 rows: page 1 = 20 → next = 6 → first page returns the same first row). | **locally verified** | Re-run the full gate after C01 lands |
+| C07 | A1-EVIDENCE | Final source/artifact/proof identity consistent; coverage reevaluated; no hand-editing old proof HEAD/hash | Audit measured 32 diagnostics (26 proof-identity mismatches, 1 source digest mismatch, 5 missing domain proofs). **Partially verified (2026-10-20):** the owned producers were re-bound and rerun at candidate `3754217` (C04 proof, browser owner proof, OWN T01–T09; T10 pending); the manifest remains 93 items / 56 proofs; no stored proof HEAD/hash was hand-edited. The earlier-head proofs remain in the archive until the final gate regenerates them. | **open** (final identity at final HEAD) | Run the final release gate at the final HEAD; let the producers write fresh evidence |
 
 ## Task families (mandate sections)
 
 | Task | Frozen IDs | Scope | Status | Next action |
 | --- | --- | --- | --- | --- |
-| A1-00 | R00-FREEZE-INVENTORY, R00-FINDINGS-RECHECK | Candidate snapshot + authoritative worklist + this matrix; correct superseded claims | **in progress** | Finish this file + supersede the OWN-V1 "delivered" claims in the D-docs/ADRs |
+| A1-00 | R00-FREEZE-INVENTORY, R00-FINDINGS-RECHECK | Candidate snapshot + authoritative worklist + this matrix; correct superseded claims | **locally complete (2026-10-20)** — the matrix records C01–C06 closure and the C03/C04 evidence; ADR-R13 and the completion report carry the superseding 20-10 record | Final Codex audit |
 | A1-AUTH-01 | R01-AUTHORITY-POLICY-SEAM | Real operator identity, logout revocation, cookie flags, CSRF | **locally verified** (C02 closed) | Re-run the full gate after C01 lands |
 | A1-AUTH-02 | R01-NONOWNER-RLS-COHORT, R01-AXUM-HOST | Authorization on every real entry point; service-human intersection; read-grant receipt reads | locally verified (host) | Re-verify after C01/C02 land |
 | A1-AUTH-03 | R01-AUTHORITY-POLICY-SEAM | Confirmed, typed, durable business execution; approval consumed once | partially (followup.create) | Extend with the six new commands |
-| A1-CRM-01/02/03 | R03-CONTACTS-PIPELINE, R03-IDENTITY-SESSIONS-CSRF, R03-CONFIRMATION-RECEIPTS, R03-NEGATIVE-EVIDENCE | Seven writes, projections/list usability, operational UI + assistant | **open** (1/7 writes; read-only UI) | C01 closure |
+| A1-CRM-01/02/03 | R03-CONTACTS-PIPELINE, R03-IDENTITY-SESSIONS-CSRF, R03-CONFIRMATION-RECEIPTS, R03-NEGATIVE-EVIDENCE | Seven writes, projections/list usability, operational UI + assistant | **locally verified** (C01 closed: 36/36 host CRM, 32/32 browser witnesses, real DB effects) | Final Codex audit |
 | A1-RECOVERY | R03-CONFIRMATION-RECEIPTS | Unknown outcomes, app-owned pending marker, UI state safety | **locally verified** (C05 closed) | Re-run the full gate after C01 lands |
 | A1-UI | R01-LEPTOS-UI, R09-SDK-WIDGET-PAGE-AWARENESS | Query encoding, pagination, states, a11y, SSR/hydration, asset release | **locally verified** for encoding/pagination (C06); a11y/asset release ride the existing proofs | Re-run the full gate after C01 lands |
-| A1-OWN-01/02/03 | OWN-T01…OWN-T10 | Owner configuration lifecycle, module availability puzzle, exact OWN-T semantics | **open** | C03 closure |
-| A1-REUSE | R02-PARITY-BOUNDARY, R05-TWO-CONSUMERS, R06-TWO-CONSUMERS | Module contract, two-consumer CRM proof, assembly refusal | implemented (core reuse) / **open** (CRM behaviour) | C04 closure |
+| A1-OWN-01/02/03 | OWN-T01…OWN-T10 | Owner configuration lifecycle, module availability puzzle, exact OWN-T semantics | **locally verified** (C03 closed: engine 13/13, host 11/11, real browser owner journey) | Final Codex audit |
+| A1-REUSE | R02-PARITY-BOUNDARY, R05-TWO-CONSUMERS, R06-TWO-CONSUMERS | Module contract, two-consumer CRM proof, assembly refusal | **locally verified** (C04 closed: 6/6 witnesses per consumer, identical artifact/code digests) | Final Codex audit |
 | A1-ENGINES | R02-PRICING-PORTED, R02-RATES-PORTED, R02-PARITY-BOUNDARY | Pricing/rates/planning/capacity as separate measured surfaces | locally verified | Re-verify only if C01 touches them |
 | A1-INTERFACE-01/02/03 | R09-CONTEXT-KNOWLEDGE-DECISION, R09-PROVIDER-CONTRACTS, R09-SDK-WIDGET-PAGE-AWARENESS | Context/knowledge/decision, provider wiring, SDK/widget/media | implemented (contracts, widget, synthetic voice) | Re-verify after UI changes; keep vendor-bridge limits explicit |
-| A1-ERP-INTEGRATION | R04…R08 items, G04-DOMAIN-INTEGRITY | Integrate Archxy 2 packets onto real shared files; no duplicate domain work | **in progress — PACKET-003…009 locally verified (R04 27/27, R05 29/29, R07 40/40); C04/T01 and OWN evidence open** (PACKET-010/support not integrated) | C04/T01, C03 T02/T10 + OWN producer, final gate |
+| A1-ERP-INTEGRATION | R04…R08 items, G04-DOMAIN-INTEGRITY | Integrate Archxy 2 packets onto real shared files; no duplicate domain work | **PACKET-003…009, C04/T01 and OWN evidence locally verified** (R04 27/27, R05 29/29, R07 40/40; C04 6/6 per consumer; OWN 10/10) — **PACKET-010/support not integrated (Archxy 2)** | Integrate PACKET-010 when delivered; final gate |
 | A1-OPS-01/02/03/04 | R10-* , R11-* | Operator tooling, migration compatibility, writer fencing/cutover rehearsal, observability | implemented (CLI, upgrade/restore rehearsal) | Re-verify after changes |
-| A1-EVIDENCE-01/02/03 | G01…G10 | Traceability, required verification families, gate order + identity seal | **open** | C07 closure after code lands |
+| A1-EVIDENCE-01/02/03 | G01…G10 | Traceability, required verification families, gate order + identity seal | **partially verified** — every owned producer is re-bound to Rust and fresh evidence was written at the current candidate; C07 final source/artifact/proof identity still requires the final gate at the final HEAD | Run the final release gate; never hand-edit a stored proof HEAD/hash |
 
 ## Ownership boundary in force
 
@@ -77,7 +80,8 @@ Owner-dirty paths are not swept into any commit: `.github/workflows/ci.yml`,
 `ARCHXY_*` task files, `docs/ARCHXY_1_CRM_AUDIT_2026-10-19.md`,
 `docs/audit/2026-10-19-archxy1-crm-audit.json`, `packages/formal-education*`,
 `tools/library/verify-formal-education*.mjs`. This lane commits only exact
-owned paths: `rust/**`, `tools/rust/**`, `tools/own/**`, `docs/rust/**` and new
+owned paths: `rust/**`, `tools/rust/**`, `tools/own/**`, `docs/rust/**`,
+`examples/rust-kit-consumers/**` (the packaged-consumer template) and new
 `docs/rust/ARCHXY1_*` files.
 
 ## Evidence notes (2026-10-20)
@@ -224,38 +228,30 @@ owned paths: `rust/**`, `tools/rust/**`, `tools/own/**`, `docs/rust/**` and new
   one real fixture + owner apply): enabled → the pipeline tool answers; the
   persisted disable → the tool answers 404 and the overview has no pipeline
   section; the persisted enable → both return. It passes alone (18.99s).
-  The same browser proof executed the shipped `/app/owner` journey as a real
-  smoke (not a frozen P-OWN witness): disable `crm-pipeline` → the record
-  hides the pipeline → re-enable → restore revision 1 → final enable, with
-  PostgreSQL holding exactly four revisions and the pipeline enabled at the
-  end. This is UI evidence, not a claim on the P-OWN-T01/T02/T10 checks.
-  Explicitly still open, and why C03 is not claimed closed: T01 (two
-  packaged business-model consumers, shared CRM behaviour) and T02 (chat
-  plan equals dashboard plan) are C04/assistant work not delivered here;
-  T06's host-level restart/replay leg is now proven and the owner page's
-  journey has been exercised in the browser proof, but the owner page has no
-  lost-response UI witness and the frozen OWN evidence producer
-  (`tools/own/verify.mjs`) has NOT been re-bound to this engine, so no
-  P-OWN-Txx evidence is claimed. The final gate has not been run at this
-  HEAD.
+  The 20-10 closure extends this to the full semantic family:
+  `cargo test -p archava-host --test own -- --test-threads=1` → **11/11**
+  (adds `the_chat_plan_equals_the_dashboard_plan_and_applies`,
+  `the_public_owner_surface_rejects_missing_and_forged_credentials` and
+  `a_foreign_tenant_role_or_approval_is_refused_without_writing`, and extends
+  the revoked-grant witness to replay/status/history). The browser proof
+  (`node tools/rust/browser-slice.mjs` → pass at candidate `3754217`) records
+  `details.owner`: inspect → plan → preview → confirm → revisions 1,2,3,4 →
+  refresh recovery → history → restore r1 as r3 → re-enable r4, four
+  `archava_owner.config_audit` rows by `alice`, and the record pipeline
+  hidden/restored. `tools/own/verify.mjs` is re-bound to the Rust engine/host
+  suites, fresh K05/K04 evidence, T02 parity and the browser journey; T10's
+  `--browser-only` runs the browser itself. C03 is **locally verified**;
+  final Codex sign-off and the final release gate remain pending.
 
-- **C07 reevaluated honestly (2026-10-20; still open).** The frozen
-  manifest is untouched (93 items / 53 proofs). A read-only
-  `validateCoverage` run against live HEAD `91341cd` reports **94 errors**
-  (`VALIDATOR_EXIT=3`; 97 before the wasm producer re-ran — see below):
-  - **5 missing evidence documents** — `P-R04-DOMAIN` … `P-R08-DOMAIN`,
-    exactly the Archxy 2 packet-blocked domain proofs, not a coverage gap
-    this lane can fill without the ERP packets;
-  - **39 stale identity errors** across three earlier local heads
-    (14 at `409eab9`, 25 at `94307ed`, 1 at `6610236`), i.e. evidence from
-    progressive milestones — legal history, but not the final identity;
-  - **25 proofs with source drift**, including every `P-OWN-Txx`: the new
-    `archava-own` crate now falls inside the frozen `sourcePaths` glob, so
-    the recorded digests no longer match. That is the validator working as
-    designed; the answer is a regenerated gate at the final HEAD, never a
-    hand-edited head/hash.
-  Running the DB-free producer `node tools/rust/wasm-boundary.mjs` after
-  that first measurement regenerated `P-WASM-PORTABLE` at the current HEAD
-  (its three errors disappeared: 97 → 94) — the correct direction of repair.
-  C07 cannot close until the full release gate runs at the final HEAD and
-  the five ERP domain proofs are produced.
+- **C07 reevaluated honestly (2026-10-20; still open at the final HEAD).**
+  The frozen manifest is untouched (93 items / 56 proofs; the earlier
+  `53 proofs` note was a stale count corrected in `3754217`). The C03/C04
+  producers have fresh evidence at candidate `3754217`: the browser proof
+  (`P-RUST-BROWSER` owner details), the K05/K04 proof (6/6 witnesses each,
+  identical deps/code/migration digests) and the OWN T01–T09 proof files
+  (T10 is rerun by the browser-only step). The validator still reports the
+  expected final-identity gap: earlier-head proofs remain in the archive
+  (legal history), and the five `P-R04-DOMAIN`…`P-R08-DOMAIN` documents
+  remain Archxy 2 packet-blocked. C07 cannot close until the full release
+  gate runs at the final HEAD and the five ERP domain proofs are produced;
+  no stored proof HEAD/hash was hand-edited.

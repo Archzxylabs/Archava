@@ -366,6 +366,10 @@ pub fn router(state: AppState) -> Router {
         // first; the archava_owner grant and RLS tenant are checked inside.
         .route("/own/config", get(crate::own::config))
         .route("/own/plan", post(crate::own::plan))
+        // The configuration chat's entrypoint. It parses into the SAME typed
+        // Request /own/plan takes and resolves through the same plan function,
+        // so a chat plan and a dashboard plan cannot drift apart.
+        .route("/own/chat", post(crate::own::chat))
         .route("/own/apply", post(crate::own::apply))
         .route("/own/restore/plan", post(crate::own::restore_plan))
         .route("/own/restore", post(crate::own::restore))

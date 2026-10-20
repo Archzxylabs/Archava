@@ -497,17 +497,49 @@ pub async fn plan(
         .map_err(OwnRefusal::response)
 }
 
+/// `POST /own/chat` — the configuration chat's planning entrypoint.
+///
+/// The message is parsed into the SAME typed `Request` the dashboard posts to
+/// `/own/plan`, and the base revision is read from the persisted configuration
+/// rather than taken from the caller. Both entrypoints then resolve through
+/// [`preview_at`], so the plan identity, catalogue and pricing identity cannot
+/// drift between a chat instruction and the dashboard's typed request.
+pub async fn chat(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Json(body): Json<ChatBody>,
+) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    let request = parse_chat(&body.message).map_err(OwnRefusal::response)?;
+    preview_at(&state, &headers, body.tenant, request, true)
+        .await
+        .map(Json)
+        .map_err(OwnRefusal::response)
+}
+
 async fn preview(
     state: &AppState,
     headers: &HeaderMap,
     tenant: TenantId,
     request: Request,
 ) -> Result<Value, OwnRefusal> {
+    preview_at(state, headers, tenant, request, false).await
+}
+
+async fn preview_at(
+    state: &AppState,
+    headers: &HeaderMap,
+    tenant: TenantId,
+    mut request: Request,
+    derive_base: bool,
+) -> Result<Value, OwnRefusal> {
     let principal = session(state, headers, true).await?.principal_id;
     let mut transaction = begin(state, &tenant).await?;
     let connection = transaction.checked_executor().await?;
     require_grant(connection, &tenant, &principal, "config.read").await?;
     let current = current_config(connection, &tenant).await?;
+    if derive_base {
+        request.base_revision = current.revision;
+    }
     let plan = catalogue().plan(&current, &request)?;
     transaction.commit().await?;
     Ok(json!({
@@ -516,6 +548,113 @@ async fn preview(
         "catalogueVersion": CATALOGUE_VERSION,
         "pricingVersion": PRICING_VERSION,
     }))
+}
+
+/// The canonical pipeline stage ids the chat may relabel. Only the LABEL is
+/// configurable; the stage vocabulary is the product's, so a chat instruction
+/// cannot invent a stage the CRM does not store.
+const PIPELINE_STAGES: &[&str] = &["new", "qualified", "proposal", "won", "lost"];
+
+/// Parse one owner-configuration chat utterance into the dashboard's typed
+/// request. The grammar is deliberately small and deterministic:
+///
+/// - `enable <module>[, <module>…]`
+/// - `disable <module>[, <module>…]`
+/// - `rename <stage> to <label>`
+///
+/// The module ids are not validated here; the shared catalogue plan answers an
+/// unknown module with its `unknown_module` blocked result, which is the same
+/// answer the dashboard gets. A stage outside [`PIPELINE_STAGES`] is refused at
+/// the parser because it is not a request the product stores.
+fn parse_chat(message: &str) -> Result<Request, OwnRefusal> {
+    let trimmed = message.trim();
+    if trimmed.is_empty() || trimmed.len() > 512 {
+        return Err(OwnRefusal::new(
+            StatusCode::BAD_REQUEST,
+            "unrecognized_request",
+            "The message must be between 1 and 512 characters.",
+        ));
+    }
+    let mut parts = trimmed.splitn(2, char::is_whitespace);
+    let verb = parts.next().unwrap_or("").to_ascii_lowercase();
+    let rest = parts.next().unwrap_or("").trim();
+    let mut request = Request::default();
+    match verb.as_str() {
+        "enable" | "disable" => {
+            let modules = chat_modules(rest);
+            if modules.is_empty() {
+                return Err(unrecognized(
+                    "Name at least one module to enable or disable.",
+                ));
+            }
+            if verb == "enable" {
+                request.enable = modules;
+            } else {
+                request.disable = modules;
+            }
+        }
+        "rename" | "label" => {
+            let (stage, label) = split_relabel(rest).ok_or_else(|| {
+                unrecognized("Say `rename <stage> to <label>` with a quoted or plain label.")
+            })?;
+            let stage = stage.trim().to_ascii_lowercase();
+            if !PIPELINE_STAGES.contains(&stage.as_str()) {
+                return Err(unrecognized(
+                    "The stage must be new, qualified, proposal, won or lost.",
+                ));
+            }
+            let label = label.trim().trim_matches('"').trim();
+            if label.is_empty() || label.len() > 80 {
+                return Err(unrecognized(
+                    "The label must be between 1 and 80 characters.",
+                ));
+            }
+            let mut terminology = Terminology::default();
+            terminology.pipeline_labels.insert(stage, label.to_string());
+            request.terminology = Some(terminology);
+        }
+        _ => {
+            return Err(unrecognized(
+                "I can enable or disable a module, or rename a pipeline stage.",
+            ))
+        }
+    }
+    Ok(request)
+}
+
+fn unrecognized(message: &str) -> OwnRefusal {
+    OwnRefusal::new(StatusCode::BAD_REQUEST, "unrecognized_request", message)
+}
+
+/// Split a module list on commas/semicolons or the word `and`, then strip the
+/// optional article/suffix the chat grammar allows (`the crm-pipeline module`).
+fn chat_modules(rest: &str) -> Vec<String> {
+    rest.split([',', ';'])
+        .flat_map(|part| part.split(" and "))
+        .map(|token| token.trim().trim_end_matches('.').trim())
+        .map(|token| token.strip_prefix("the ").unwrap_or(token))
+        .map(|token| token.strip_suffix(" module").unwrap_or(token))
+        .map(|token| token.trim().to_ascii_lowercase())
+        .filter(|token| !token.is_empty())
+        .filter(|token| !token.contains(char::is_whitespace))
+        .collect()
+}
+
+/// `stage to label` / `stage as label`, with the label kept in its original
+/// case. The delimiter is matched case-insensitively without lowercasing the
+/// label itself.
+fn split_relabel(rest: &str) -> Option<(&str, &str)> {
+    let lower = rest.to_ascii_lowercase();
+    for delimiter in [" to ", " as "] {
+        if let Some(index) = lower.find(delimiter) {
+            let stage = &rest[..index];
+            let label = &rest[index + delimiter.len()..];
+            if !stage.trim().is_empty() && !label.trim().is_empty() {
+                return Some((stage, label));
+            }
+        }
+    }
+    None
 }
 
 /// `POST /own/apply` — confirm and apply exactly one plan.
@@ -821,6 +960,17 @@ pub struct TenantQuery {
 pub struct PlanBody {
     pub tenant: TenantId,
     pub request: Request,
+}
+
+/// The owner-configuration chat's request. Deliberately carries no
+/// `baseRevision`, enable/disable list or terminology: the server parses the
+/// message and reads the current revision, so the caller cannot smuggle a
+/// second, divergent plan into the chat path.
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ChatBody {
+    pub tenant: TenantId,
+    pub message: String,
 }
 
 #[derive(Deserialize)]

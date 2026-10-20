@@ -921,3 +921,39 @@ its fixture host under `/tmp/archava-act-proof-` by name. The D-docs
 fresh `pass`), and the coverage scoreboard refresh are delivered; the
 release decision itself remains external (Archxy 2 packets + Codex
 sign-off), documented in both D-docs.
+
+## 2026-10-20 — C03 (OWN-V1) and C04 (two-consumer CRM) closure
+
+- **C03 / OWN-V1 — locally re-delivered.** `rust/crates/own` (engine),
+  `rust/crates/host/src/own.rs` (persisted lifecycle, `/own/*`, chat) and
+  `/app/owner` now implement inspect → plan → preview → confirm → applied →
+  recovery/history/restore. Engine `cargo test -p archava-own` → **13/13**;
+  host `cargo test -p archava-host --test own -- --test-threads=1` → **11/11**
+  (adds `the_chat_plan_equals_the_dashboard_plan_and_applies`,
+  `the_public_owner_surface_rejects_missing_and_forged_credentials`,
+  `a_foreign_tenant_role_or_approval_is_refused_without_writing`, and extends
+  the revoked-grant witness to replay/status/history). The browser proof
+  (`node tools/rust/browser-slice.mjs`, pass at candidate `3754217`) records
+  `details.owner`: inspect → plan → preview → confirm → revisions 1,2,3,4 →
+  refresh recovery → history → restore r1 as r3 → re-enable r4, with four
+  `archava_owner.config_audit` rows by `alice`. `tools/own/verify.mjs` is
+  re-bound to the Rust engine/host suites, fresh K05/K04 evidence, T02 parity
+  and the browser journey; `--browser-only` runs T10 itself.
+- **C04 / two-consumer CRM — locally verified.**
+  `tools/rust/k05-k04-consumers.mjs` now cuts seven source bundles (core,
+  domain, adapters, assistant, own, host, pg-fixture), copies the frozen
+  migration ledgers + owner migration, and runs K05/K04 offline with an empty
+  `CARGO_HOME`. Each consumer runs **6/6** witnesses: the five shipped policy
+  witnesses plus the real CRM read/write/recovery witness on its own
+  PostgreSQL fixture (ports 35171 / 40913), including contact/activity/
+  follow-up/opportunity writes and reads, replayed request + status-route
+  recovery with one effect, seven audit rows, and a foreign-tenant refusal
+  with no row change. Both `deps/` and witness-code digests are identical.
+- **Docs.** ADR-R13 carries the 20-10 addendum; the completion report's
+  OWN-V1 row is locally re-delivered (independent sign-off pending); the
+  acceptance matrix records C03/C04 locally verified. The template lock is
+  generated per consumer and frozen with `--locked` (no stale committed lock).
+- **Still open:** T10's own re-run at the eventual commit, the final release
+  gate at the final HEAD (C07 identity), independent Codex sign-off, and
+  PACKET-010/support (Archxy 2 scope, not integrated). The final verdict stays
+  **"Archxy 1 locally verified — full candidate incomplete."**
