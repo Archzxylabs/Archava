@@ -810,6 +810,8 @@
         "erp purchasing suite",
         "erp foodservice suite",
         "erp R04 suites",
+        "erp R05 suites",
+        "erp R07 suites",
         "R03 domain suite",
         "R09 context suite",
         "capacity conformance suite",
@@ -1207,6 +1209,130 @@
       "artifacts": [],
       "referenced": [
         "dist/rust-erp-r04-proof.json"
+      ]
+    },
+    "P-ERP-R05": {
+      "kind": "evidence",
+      "producedBy": "pnpm rust:verify → erp R05 suites step (tools/rust/erp/verify-r05.mjs) grading named witness tests in rust/crates/host/tests/erp_scheduling.rs, rust/crates/host/tests/erp_accommodation.rs and rust/crates/host/tests/erp_assets.rs against the owned PostgreSQL fixture — the R05 ledgers' runtime half, opened by the scheduling cohort with PACKET-004, grown by the accommodation cohort with PACKET-005 and completed by the assets cohort with PACKET-006 (the R05 area's last cohort; the proof never forks per cohort, so this same evidence json answers for all three ledgers; the pure domain half is the frozen P-R05-DOMAIN)",
+      "requiredChecks": [
+        "authorized scheduling flow documents its life",
+        "overlapping hold refuses and holds nothing",
+        "terminal reservation refuses further updates",
+        "revoked scheduling grant refused on recovery",
+        "same key different command conflicts",
+        "cross-tenant caller refused before any write",
+        "lost response replays without a second resource",
+        "insufficient grants refuse before any statement",
+        "malformed instant is a boundary 400",
+        "authorized accommodation flow documents its life",
+        "wall-clock gap or repeat is a conflict",
+        "overlapping stay refuses and holds nothing",
+        "housekeeping vocabulary and occupancy refuse the room",
+        "revoked accommodation grant refused on recovery",
+        "same accommodation key different command conflicts",
+        "lost response replays without a second stay",
+        "cross-tenant accommodation caller refused before any write",
+        "narrow accommodation grants refuse the arms they lack",
+        "stay window capacity and boundary gates refuse",
+        "authorized assets life documents its custody",
+        "customer-owned intake records the service intake",
+        "custody vocabulary and state boundaries refuse the movement",
+        "revoked assets grant refused on recovery",
+        "same assets key different command conflicts",
+        "lost response replays without a second asset",
+        "cross-tenant assets caller refused before any write",
+        "narrow assets grants refuse the arms they lack",
+        "stale revision terminal state and wire boundaries refuse",
+        "status read answers the assets command status document"
+      ],
+      "expect": {
+        "witnessTotal": 29,
+        "namedRegressions": {
+          "RN-ERP-01": "revoked scheduling grant refused on recovery",
+          "RN-ERP-02": "same key different command conflicts"
+        }
+      },
+      "sourcePaths": [
+        "rust/crates/host",
+        "rust/crates/adapters/src/erp",
+        "rust/crates/domain/src/erp",
+        "rust/crates/core",
+        "tools/rust/erp/verify-r05.mjs",
+        "packages/scheduling-pg/migrations",
+        "packages/accommodation-pg/migrations",
+        "packages/assets-pg/migrations"
+      ],
+      "artifacts": [],
+      "referenced": [
+        "dist/rust-erp-r05-proof.json"
+      ]
+    },
+    "P-ERP-R07": {
+      "kind": "evidence",
+      "producedBy": "pnpm rust:verify → erp R07 suites step (tools/rust/erp/verify-r07.mjs) grading named witness tests in rust/crates/host/tests/erp_billing.rs (billing cohort, PACKET-007) and rust/crates/host/tests/erp_subscriptions.rs (subscriptions cohort, PACKET-008) and rust/crates/host/tests/erp_attendance.rs (attendance cohort, PACKET-009) against the owned PostgreSQL fixture — the R07 ledgers' runtime halves, opened whole by the billing cohort (the R05 surface is closed at 29 checks and never grows again, so the R07 migration area opens its OWN growing evidence surface that later cohorts extend additively; the pure domain half is the frozen P-R07-DOMAIN). The subscriptions cohort carries the corrected paid-activation rule (audit A05 / RN-ERP-03) and the R07 read projections the TS api serves. The attendance cohort (PACKET-009) carries the corrected roster binding (audit A04 / RN-ERP-04), the seat/check-in concurrency witnesses and the attendance read projections the TS api serves (access, session list/detail, roster, check-in ledger)",
+      "requiredChecks": [
+        "authorized billing life documents its settlement",
+        "a forged claim settles nothing",
+        "correction reversal respects its invoice",
+        "voiding holds on recorded settlement",
+        "settlement beyond the balance holds nothing",
+        "a failed outcome moves no money and no revision",
+        "the attempt arm asserts no result",
+        "revoked billing grant refused on recovery",
+        "cross-tenant billing caller refused before any write",
+        "same billing key different command conflicts",
+        "lost response replays without a second row",
+        "narrow billing grants refuse the arms they lack",
+        "transition state and wire boundaries refuse the movement",
+        "authorized subscription life documents its entitlements",
+        "an unpaid draft grants no consumption right",
+        "the quota boundary refuses and records nothing",
+        "a duplicate usage key conflicts and records nothing",
+        "a past due subscription refuses usage",
+        "activation without a payment record refuses",
+        "a revoked entitlement refuses usage",
+        "the stale revision conflicts and records nothing",
+        "the same subscription key a different command conflicts",
+        "lost response replays the recorded subscription receipt",
+        "cross-tenant subscription callers refuse before any write",
+        "narrow subscription grants refuse exactly the arms they lack",
+        "the subscription wire boundary and read projections hold",
+        "authorized attendance life documents its sessions and check-ins",
+        "a roster from another session cannot check in",
+        "the seat boundary refuses and holds nothing",
+        "a duplicate registration conflicts and records nothing",
+        "the same check in key a different command conflicts",
+        "concurrent check ins record exactly one attendance",
+        "a closed session refuses registration and check in",
+        "the stale attendance revision conflicts and records nothing",
+        "lost response replays the recorded attendance receipt",
+        "the same attendance key a different command conflicts",
+        "cross tenant attendance callers refuse before any write",
+        "revoked attendance grant refused on recovery",
+        "narrow attendance grants refuse exactly the arms they lack",
+        "the attendance wire boundary and read projections hold"
+      ],
+      "expect": {
+        "witnessTotal": 40,
+        "namedRegressions": {
+          "RN-ERP-01": "revoked billing grant refused on recovery",
+          "RN-ERP-02": "same billing key different command conflicts",
+          "RN-ERP-03": "an unpaid draft grants no consumption right",
+          "RN-ERP-04": "a roster from another session cannot check in"
+        }
+      },
+      "sourcePaths": [
+        "rust/crates/host",
+        "rust/crates/adapters/src/erp",
+        "rust/crates/domain/src/erp",
+        "rust/crates/core",
+        "tools/rust/erp/verify-r07.mjs",
+        "packages/billing-pg/migrations",
+        "packages/attendance-pg/migrations"
+      ],
+      "artifacts": [],
+      "referenced": [
+        "dist/rust-erp-r07-proof.json"
       ]
     },
     "P-READINESS-PG": {

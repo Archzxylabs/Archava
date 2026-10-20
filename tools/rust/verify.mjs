@@ -301,6 +301,29 @@ export function gateSteps() {
       'erp R04 suites',
       () => step('erp R04 suites', ['node', 'tools/rust/erp/verify-r04.mjs']),
     ],
+    // Same pattern for P-ERP-R05: the R05 cohorts — scheduling
+    // (PACKET-004), accommodation (PACKET-005) and assets (PACKET-006). The
+    // workspace step cannot prove the named witnesses each cohort's checks
+    // need, so this producer re-runs the three `erp_*` suites and grades
+    // each check against its named witness.
+    [
+      'erp R05 suites',
+      () => step('erp R05 suites', ['node', 'tools/rust/erp/verify-r05.mjs']),
+    ],
+    // Same pattern for P-ERP-R07: the R07 migration area's FIRST cohort —
+    // the billing ledger (PACKET-007). The workspace step cannot prove the
+    // named witnesses the cohort's checks need, so this producer re-runs
+    // `--test erp_billing` and grades each check against its named
+    // witness. R07 opens its OWN proof instead of growing P-ERP-R05: the
+    // R05 surface closed with the assets cohort at 29 checks and billing
+    // is a separate migration area, so the billing ledger starts a new
+    // growing evidence surface that later R07 cohorts extend additively.
+    // It sits with the kernel-ERP steps because it rebuilds a disposable
+    // PostgreSQL fixture.
+    [
+      'erp R07 suites',
+      () => step('erp R07 suites', ['node', 'tools/rust/erp/verify-r07.mjs']),
+    ],
     // Same pattern for P-R03-DOMAIN: the R03 CRM domain lane spans three
     // suites (the command lane repository, the conversation route over HTTP,
     // and the assistant crate's injected-host flow tests). The workspace step
@@ -753,6 +776,110 @@ export function fastGateEvidenceMapping() {
           return JSON.parse(readFileSync(join(root, 'dist/rust-erp-r04-proof.json'), 'utf8'))
         } catch (error) {
           throw new Error(`erp R04 witness proof unreadable: ${error.message}`)
+        }
+      },
+    },
+    {
+      // The Archxy 2 ERP namespace's R05 proof (PACKET-004 + PACKET-005 +
+      // PACKET-006): the scheduling cohort's nine witnesses, the
+      // accommodation cohort's ten and the assets cohort's ten.
+      proof: 'P-ERP-R05',
+      checks: {
+        'authorized scheduling flow documents its life': { step: 'erp R05 suites' },
+        'overlapping hold refuses and holds nothing': { step: 'erp R05 suites' },
+        'terminal reservation refuses further updates': { step: 'erp R05 suites' },
+        'revoked scheduling grant refused on recovery': { step: 'erp R05 suites' },
+        'same key different command conflicts': { step: 'erp R05 suites' },
+        'cross-tenant caller refused before any write': { step: 'erp R05 suites' },
+        'lost response replays without a second resource': { step: 'erp R05 suites' },
+        'insufficient grants refuse before any statement': { step: 'erp R05 suites' },
+        'malformed instant is a boundary 400': { step: 'erp R05 suites' },
+        'authorized accommodation flow documents its life': { step: 'erp R05 suites' },
+        'wall-clock gap or repeat is a conflict': { step: 'erp R05 suites' },
+        'overlapping stay refuses and holds nothing': { step: 'erp R05 suites' },
+        'housekeeping vocabulary and occupancy refuse the room': { step: 'erp R05 suites' },
+        'revoked accommodation grant refused on recovery': { step: 'erp R05 suites' },
+        'same accommodation key different command conflicts': { step: 'erp R05 suites' },
+        'lost response replays without a second stay': { step: 'erp R05 suites' },
+        'cross-tenant accommodation caller refused before any write': { step: 'erp R05 suites' },
+        'narrow accommodation grants refuse the arms they lack': { step: 'erp R05 suites' },
+        'stay window capacity and boundary gates refuse': { step: 'erp R05 suites' },
+        'authorized assets life documents its custody': { step: 'erp R05 suites' },
+        'customer-owned intake records the service intake': { step: 'erp R05 suites' },
+        'custody vocabulary and state boundaries refuse the movement': { step: 'erp R05 suites' },
+        'revoked assets grant refused on recovery': { step: 'erp R05 suites' },
+        'same assets key different command conflicts': { step: 'erp R05 suites' },
+        'lost response replays without a second asset': { step: 'erp R05 suites' },
+        'cross-tenant assets caller refused before any write': { step: 'erp R05 suites' },
+        'narrow assets grants refuse the arms they lack': { step: 'erp R05 suites' },
+        'stale revision terminal state and wire boundaries refuse': { step: 'erp R05 suites' },
+        'status read answers the assets command status document': { step: 'erp R05 suites' },
+      },
+      details: () => {
+        try {
+          return JSON.parse(readFileSync(join(root, 'dist/rust-erp-r05-proof.json'), 'utf8'))
+        } catch (error) {
+          throw new Error(`erp R05 witness proof unreadable: ${error.message}`)
+        }
+      },
+    },
+    {
+      // The Archxy 2 ERP namespace's R07 proof (PACKET-007, grown by
+      // PACKET-008 and PACKET-009): the billing cohort's thirteen
+      // witnesses, the subscriptions cohort's thirteen and the attendance
+      // cohort's fourteen — the R07 surface's first three cohorts, any
+      // later cohort growing this same block additively (the R05 surface
+      // is closed and stays untouched; the proof never forks per cohort).
+      proof: 'P-ERP-R07',
+      checks: {
+        'authorized billing life documents its settlement': { step: 'erp R07 suites' },
+        'a forged claim settles nothing': { step: 'erp R07 suites' },
+        'correction reversal respects its invoice': { step: 'erp R07 suites' },
+        'voiding holds on recorded settlement': { step: 'erp R07 suites' },
+        'settlement beyond the balance holds nothing': { step: 'erp R07 suites' },
+        'a failed outcome moves no money and no revision': { step: 'erp R07 suites' },
+        'the attempt arm asserts no result': { step: 'erp R07 suites' },
+        'revoked billing grant refused on recovery': { step: 'erp R07 suites' },
+        'cross-tenant billing caller refused before any write': { step: 'erp R07 suites' },
+        'same billing key different command conflicts': { step: 'erp R07 suites' },
+        'lost response replays without a second row': { step: 'erp R07 suites' },
+        'narrow billing grants refuse the arms they lack': { step: 'erp R07 suites' },
+        'transition state and wire boundaries refuse the movement': { step: 'erp R07 suites' },
+        // The subscriptions cohort (PACKET-008) grows the same proof.
+        'authorized subscription life documents its entitlements': { step: 'erp R07 suites' },
+        'an unpaid draft grants no consumption right': { step: 'erp R07 suites' },
+        'the quota boundary refuses and records nothing': { step: 'erp R07 suites' },
+        'a duplicate usage key conflicts and records nothing': { step: 'erp R07 suites' },
+        'a past due subscription refuses usage': { step: 'erp R07 suites' },
+        'activation without a payment record refuses': { step: 'erp R07 suites' },
+        'a revoked entitlement refuses usage': { step: 'erp R07 suites' },
+        'the stale revision conflicts and records nothing': { step: 'erp R07 suites' },
+        'the same subscription key a different command conflicts': { step: 'erp R07 suites' },
+        'lost response replays the recorded subscription receipt': { step: 'erp R07 suites' },
+        'cross-tenant subscription callers refuse before any write': { step: 'erp R07 suites' },
+        'narrow subscription grants refuse exactly the arms they lack': { step: 'erp R07 suites' },
+        'the subscription wire boundary and read projections hold': { step: 'erp R07 suites' },
+        // The attendance cohort (PACKET-009) grows the same proof.
+        'authorized attendance life documents its sessions and check-ins': { step: 'erp R07 suites' },
+        'a roster from another session cannot check in': { step: 'erp R07 suites' },
+        'the seat boundary refuses and holds nothing': { step: 'erp R07 suites' },
+        'a duplicate registration conflicts and records nothing': { step: 'erp R07 suites' },
+        'the same check in key a different command conflicts': { step: 'erp R07 suites' },
+        'concurrent check ins record exactly one attendance': { step: 'erp R07 suites' },
+        'a closed session refuses registration and check in': { step: 'erp R07 suites' },
+        'the stale attendance revision conflicts and records nothing': { step: 'erp R07 suites' },
+        'lost response replays the recorded attendance receipt': { step: 'erp R07 suites' },
+        'the same attendance key a different command conflicts': { step: 'erp R07 suites' },
+        'cross tenant attendance callers refuse before any write': { step: 'erp R07 suites' },
+        'revoked attendance grant refused on recovery': { step: 'erp R07 suites' },
+        'narrow attendance grants refuse exactly the arms they lack': { step: 'erp R07 suites' },
+        'the attendance wire boundary and read projections hold': { step: 'erp R07 suites' },
+      },
+      details: () => {
+        try {
+          return JSON.parse(readFileSync(join(root, 'dist/rust-erp-r07-proof.json'), 'utf8'))
+        } catch (error) {
+          throw new Error(`erp R07 witness proof unreadable: ${error.message}`)
         }
       },
     },

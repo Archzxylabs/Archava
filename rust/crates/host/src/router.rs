@@ -422,6 +422,110 @@ pub fn router(state: AppState) -> Router {
             "/erp/projects/commands/status",
             get(crate::erp::projects::project_status),
         )
+        // Archxy 2's R05 scheduling ledger (PACKET-004): reservations mounted
+        // beside the R04 cohorts, same session+CSRF and tenant-body shape.
+        .route(
+            "/erp/scheduling/commands",
+            post(crate::erp::scheduling::scheduling_command),
+        )
+        .route(
+            "/erp/scheduling/commands/status",
+            get(crate::erp::scheduling::scheduling_status),
+        )
+        // Archxy 2's R05 accommodation ledger (PACKET-005): room-night stays
+        // compose the same occupancy kernel the scheduling ledger owns.
+        .route(
+            "/erp/accommodation/commands",
+            post(crate::erp::accommodation::accommodation_command),
+        )
+        .route(
+            "/erp/accommodation/commands/status",
+            get(crate::erp::accommodation::accommodation_status),
+        )
+        // Archxy 2's R05 assets ledger (PACKET-006): custody and maintenance,
+        // its own ledger with no shared kernel.
+        .route(
+            "/erp/assets/commands",
+            post(crate::erp::assets::asset_command),
+        )
+        .route(
+            "/erp/assets/commands/status",
+            get(crate::erp::assets::asset_status),
+        )
+        // Archxy 2's R07 billing ledger (PACKET-007): the settlement
+        // cohort, the R07 area's first subject — its own ledger; the
+        // provider-event arm is authorised by a signature the gate
+        // verifies BEFORE the transaction, so an under-signed claim
+        // claims nothing.
+        .route(
+            "/erp/billing/commands",
+            post(crate::erp::billing::billing_command),
+        )
+        .route(
+            "/erp/billing/commands/status",
+            get(crate::erp::billing::billing_status),
+        )
+        // Archxy 2's R07 subscriptions ledger (PACKET-008): the
+        // entitlements/usage cohort — the READ surfaces come with it
+        // (list, detail, entitlements, usage history), because a ledger
+        // whose rows can only be written is not a usable domain.
+        .route(
+            "/erp/subscriptions/commands",
+            post(crate::erp::subscriptions::subscription_command),
+        )
+        .route(
+            "/erp/subscriptions/commands/status",
+            get(crate::erp::subscriptions::subscription_status),
+        )
+        .route(
+            "/erp/subscriptions/subscriptions",
+            get(crate::erp::subscriptions::subscription_list),
+        )
+        .route(
+            "/erp/subscriptions/subscriptions/detail",
+            get(crate::erp::subscriptions::subscription_detail),
+        )
+        .route(
+            "/erp/subscriptions/entitlements",
+            get(crate::erp::subscriptions::subscription_entitlements),
+        )
+        .route(
+            "/erp/subscriptions/usage-events",
+            get(crate::erp::subscriptions::subscription_usage),
+        )
+        // Archxy 2's R07 attendance ledger (PACKET-009): the
+        // session/roster/check-in cohort — the corrected roster binding
+        // (audit A04) is a row-SELECT property, and the read surfaces
+        // (list, detail, roster, check-ins, access) ride the same
+        // transaction opener.
+        .route(
+            "/erp/attendance/commands",
+            post(crate::erp::attendance::attendance_command),
+        )
+        .route(
+            "/erp/attendance/commands/status",
+            get(crate::erp::attendance::attendance_status),
+        )
+        .route(
+            "/erp/attendance/access",
+            get(crate::erp::attendance::attendance_access),
+        )
+        .route(
+            "/erp/attendance/sessions",
+            get(crate::erp::attendance::attendance_list),
+        )
+        .route(
+            "/erp/attendance/sessions/detail",
+            get(crate::erp::attendance::attendance_detail),
+        )
+        .route(
+            "/erp/attendance/roster",
+            get(crate::erp::attendance::attendance_roster),
+        )
+        .route(
+            "/erp/attendance/check-ins",
+            get(crate::erp::attendance::attendance_check_ins),
+        )
         .with_state(state)
 }
 

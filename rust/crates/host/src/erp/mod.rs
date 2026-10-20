@@ -17,7 +17,16 @@ pub mod foodservice;
 pub mod organizations;
 pub mod projects;
 pub mod proposals;
+// R05 cohorts (PACKET-004..006).
+pub mod accommodation;
+pub mod assets;
 pub mod purchasing;
+pub mod scheduling;
+
+// R07 cohorts (PACKET-007..009).
+pub mod attendance;
+pub mod billing;
+pub mod subscriptions;
 
 use archava_adapters::rls::{TenantContextError, TenantTransaction};
 
@@ -225,3 +234,127 @@ macro_rules! r04_opener {
 r04_opener!(begin_organizations, ORGANIZATIONS_LEDGER);
 r04_opener!(begin_proposals, PROPOSALS_LEDGER);
 r04_opener!(begin_projects, PROJECTS_LEDGER);
+
+// ===========================================================================
+// R05 cohorts (PACKET-004..006): scheduling, accommodation and assets. All
+// three use the same opener shape; the scheduling ledger carries the shared
+// occupancy kernel the accommodation cohort reserves through.
+// ===========================================================================
+
+/// The scheduling ledger descriptor — `001_resource_reservations` creates the
+/// five data tables plus `schema_migrations`, and `002_shared_occupancy`
+/// adds the `occupancy` kernel table the accommodation cohort reserves
+/// through (PACKET-004).
+pub(crate) const SCHEDULING_LEDGER: Ledger = Ledger {
+    namespace: "archava_scheduling",
+    ledger: "scheduling",
+    tables: &[
+        "memberships",
+        "resources",
+        "reservations",
+        "commands",
+        "audit",
+    ],
+};
+
+/// The accommodation ledger descriptor — `001_room_night_stays` creates the
+/// seven data tables plus `schema_migrations`; the rooms live inside the
+/// scheduling kernel's resources (PACKET-005).
+pub(crate) const ACCOMMODATION_LEDGER: Ledger = Ledger {
+    namespace: "archava_accommodation",
+    ledger: "accommodation",
+    tables: &[
+        "memberships",
+        "properties",
+        "room_types",
+        "rooms",
+        "stays",
+        "stay_nights",
+        "commands",
+        "audit",
+    ],
+};
+
+/// The assets ledger descriptor — `001_assets_custody_maintenance` creates
+/// the six data tables plus `schema_migrations` (PACKET-006).
+pub(crate) const ASSETS_LEDGER: Ledger = Ledger {
+    namespace: "archava_assets",
+    ledger: "assets",
+    tables: &[
+        "memberships",
+        "assets",
+        "custody_events",
+        "maintenance_records",
+        "commands",
+        "audit",
+    ],
+};
+
+r04_opener!(begin_scheduling, SCHEDULING_LEDGER);
+r04_opener!(begin_accommodation, ACCOMMODATION_LEDGER);
+r04_opener!(begin_assets, ASSETS_LEDGER);
+/// The R07 first cohort (PACKET-007): the billing ledger — the eight
+/// data tables migration `001_billing_invoices_settlement` creates
+/// (memberships, invoices, invoice_lines, invoice_corrections,
+/// payment_attempts, payment_events, commands, audit) plus
+/// `schema_migrations`. The settlement ledger is its own kernel: the
+/// balance CHECK and the guard triggers are the tables' own defenses,
+/// no sibling ledger composes in.
+pub(crate) const BILLING_LEDGER: Ledger = Ledger {
+    namespace: "archava_billing",
+    ledger: "billing",
+    tables: &[
+        "memberships",
+        "invoices",
+        "invoice_lines",
+        "invoice_corrections",
+        "payment_attempts",
+        "payment_events",
+        "commands",
+        "audit",
+    ],
+};
+
+r04_opener!(begin_billing, BILLING_LEDGER);
+
+/// The R07 second cohort (PACKET-008): the subscriptions ledger — the six
+/// data tables migration `001_subscriptions_entitlements_usage` creates
+/// (memberships, subscriptions, entitlements, usage_events, commands,
+/// audit) plus `schema_migrations`. The entitlement ledger is its own
+/// kernel: the quota CHECK and the usage-idempotency UNIQUE constraint are
+/// the tables' own defenses, no sibling ledger composes in.
+pub(crate) const SUBSCRIPTIONS_LEDGER: Ledger = Ledger {
+    namespace: "archava_subscriptions",
+    ledger: "subscriptions",
+    tables: &[
+        "memberships",
+        "subscriptions",
+        "entitlements",
+        "usage_events",
+        "commands",
+        "audit",
+    ],
+};
+
+r04_opener!(begin_subscriptions, SUBSCRIPTIONS_LEDGER);
+
+/// The R07 third cohort (PACKET-009): the attendance ledger — the six
+/// data tables migration `001_attendance_sessions_rosters` creates
+/// (memberships, sessions, rosters, check_in_events, commands, audit)
+/// plus `schema_migrations`. The roster binding audit A04 names is a
+/// SQL property here (the check-in row SELECT carries the session) and a
+/// domain property (`check_in_refusal`).
+pub(crate) const ATTENDANCE_LEDGER: Ledger = Ledger {
+    namespace: "archava_attendance",
+    ledger: "attendance",
+    tables: &[
+        "memberships",
+        "sessions",
+        "rosters",
+        "check_in_events",
+        "commands",
+        "audit",
+    ],
+};
+
+r04_opener!(begin_attendance, ATTENDANCE_LEDGER);

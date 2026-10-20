@@ -43,7 +43,7 @@ of behaviour.
 | A1-REUSE | R02-PARITY-BOUNDARY, R05-TWO-CONSUMERS, R06-TWO-CONSUMERS | Module contract, two-consumer CRM proof, assembly refusal | implemented (core reuse) / **open** (CRM behaviour) | C04 closure |
 | A1-ENGINES | R02-PRICING-PORTED, R02-RATES-PORTED, R02-PARITY-BOUNDARY | Pricing/rates/planning/capacity as separate measured surfaces | locally verified | Re-verify only if C01 touches them |
 | A1-INTERFACE-01/02/03 | R09-CONTEXT-KNOWLEDGE-DECISION, R09-PROVIDER-CONTRACTS, R09-SDK-WIDGET-PAGE-AWARENESS | Context/knowledge/decision, provider wiring, SDK/widget/media | implemented (contracts, widget, synthetic voice) | Re-verify after UI changes; keep vendor-bridge limits explicit |
-| A1-ERP-INTEGRATION | R04…R08 items, G04-DOMAIN-INTEGRITY | Integrate Archxy 2 packets onto real shared files; no duplicate domain work | **in progress — PACKET-003 locally verified (27/27 host witnesses, P-ERP-R04 producer green); 004–009 open** (9 packets on hand) | Fold PACKET-004→009 in order, then C04/T01, OWN evidence and the final gate |
+| A1-ERP-INTEGRATION | R04…R08 items, G04-DOMAIN-INTEGRITY | Integrate Archxy 2 packets onto real shared files; no duplicate domain work | **in progress — PACKET-003…009 locally verified (R04 27/27, R05 29/29, R07 40/40); C04/T01 and OWN evidence open** (PACKET-010/support not integrated) | C04/T01, C03 T02/T10 + OWN producer, final gate |
 | A1-OPS-01/02/03/04 | R10-* , R11-* | Operator tooling, migration compatibility, writer fencing/cutover rehearsal, observability | implemented (CLI, upgrade/restore rehearsal) | Re-verify after changes |
 | A1-EVIDENCE-01/02/03 | G01…G10 | Traceability, required verification families, gate order + identity seal | **open** | C07 closure after code lands |
 
@@ -113,6 +113,41 @@ owned paths: `rust/**`, `tools/rust/**`, `tools/own/**`, `docs/rust/**` and new
   `dist/rust-erp-r04-proof.json` `allPassed: true`. The earlier failures were
   the ERP lane's `pkill -x postgres` (the failed projects witness passes
   alone 1/1, 26.98s), not the suite.
+
+- **PACKET-004…006 runtime half folded locally (2026-10-20).** The R05
+  cohorts (scheduling, accommodation, assets) are copied from the ERP
+  handoff with their host suites; the shared router/fixture/proof files are
+  folded semantically: six routes, three migration/ledger descriptors +
+  grants, three host suites. Recorded runs: `cargo test -p archava-domain
+  --offline` → 66 passed; `cargo test -p archava-adapters --offline` → 13
+  unit + 11 integration passed; `erp_scheduling` 9/9 (148.76s),
+  `erp_accommodation` 10/10 (176.56s), `erp_assets` 10/10 (185.24s);
+  `node --test tools/rust/test/verify.test.mjs` → 27/27; `cargo fmt --all
+  --check` → 0. `P-ERP-R05` is wired (producer + 29 checks + P-FAST-GATE
+  step) and the producer passed at 18:56:53: scheduling 9/9 (98s),
+  accommodation 10/10 (126s), assets 10/10 (132.5s), 29/29 witnesses,
+  29/29 checks, `dist/rust-erp-r05-proof.json` `allPassed: true`. The
+  first producer run lost the assets suite to the ERP lane's `pkill -x
+  postgres` (2/10; no assertion failed, the fixture was killed); the manual
+  rerun passed end to end.
+
+- **PACKET-007…009 runtime half folded locally (2026-10-20).** The R07
+  cohorts (billing, subscriptions, attendance) are copied from the ERP
+  handoff with their host suites; the shared router/fixture/proof files are
+  folded semantically: fifteen routes, three migration/ledger descriptors +
+  grants, three host suites, and `hmac`/`sha2` on `archava-domain` for the
+  provider-event digest. PACKET-010/support is **not** integrated
+  (unpublished). Recorded runs: `cargo test -p archava-domain --offline` →
+  89 passed; `cargo test -p archava-adapters --offline` → 13 unit + 11
+  integration passed; `erp_billing` 13/13 (539.3s), `erp_subscriptions`
+  13/13 (453s), `erp_attendance` 14/14 (602.3s); `node --test
+  tools/rust/test/verify.test.mjs` → 28/28; `cargo fmt --all --check` → 0.
+  `P-ERP-R07` is wired (producer + 40 checks + P-FAST-GATE step) and the
+  producer passed: 40/40 witnesses, 40/40 checks,
+  `dist/rust-erp-r07-proof.json` `allPassed: true`. The producer ran with
+  the PostgreSQL postmaster renamed `archava-postgres` so the concurrent
+  ERP lane's `pkill -x postgres` could not kill its fixtures; the suites
+  and the named-witness proof are unchanged.
 
 - **C01 command coverage is 7/7 AND the product surface is now built.** The
   audit's sentence "angka 1/7 adalah command coverage" still stands as a

@@ -19,6 +19,8 @@ import { WITNESSES as PROVIDER_CONTRACTS_WITNESSES } from '../provider-contracts
 import { WITNESSES as PURCHASING_WITNESSES } from '../erp/verify-purchasing.mjs'
 import { WITNESSES as FOODSERVICE_WITNESSES } from '../erp/verify-foodservice.mjs'
 import { WITNESSES as R04_WITNESSES } from '../erp/verify-r04.mjs'
+import { WITNESSES as R05_WITNESSES } from '../erp/verify-r05.mjs'
+import { WITNESSES as R07_WITNESSES } from '../erp/verify-r07.mjs'
 import { WITNESSES as CAPACITY_WITNESSES } from '../capacity-conformance.mjs'
 import {
   WITNESSES as PLANNING_WITNESSES,
@@ -419,6 +421,69 @@ test('the P-ERP-R04 witness map and the frozen manifest cannot drift apart', () 
       )
       assert.ok(
         ['organizations', 'proposals', 'projects'].includes(suite),
+        `${check}: witness ${JSON.stringify(name)} names unknown suite ${JSON.stringify(suite)}`,
+      )
+    }
+  }
+})
+
+test('the P-ERP-R05 witness map and the frozen manifest cannot drift apart', () => {
+  // Same property as the kernel-ERP and R04 proofs, for the R05 surface:
+  // the cohorts' manifest checks over the named Rust test functions —
+  // PACKET-004 seeded scheduling, PACKET-005 grew the map with
+  // accommodation and PACKET-006 grew it again with assets. Both
+  // directions, and the frozen `witnessTotal` (29) too.
+  const manifest = loadManifest(repoRoot)
+  const spec = manifest.proofs['P-ERP-R05']
+  assert.deepEqual([...Object.keys(R05_WITNESSES)].sort(), [...spec.requiredChecks].sort())
+  const witnessTotal = Object.values(R05_WITNESSES).reduce(
+    (sum, list) => sum + list.length,
+    0,
+  )
+  assert.equal(witnessTotal, spec.expect.witnessTotal)
+  for (const [check, witnesses] of Object.entries(R05_WITNESSES)) {
+    assert.ok(witnesses.length > 0, `${check} has no witness tests`)
+    for (const [suite, name] of witnesses) {
+      assert.match(
+        name,
+        /^[a-z0-9_]+$/,
+        `${check}: witness name ${JSON.stringify(name)} is not a test identifier`,
+      )
+      assert.ok(
+        ['scheduling', 'accommodation', 'assets'].includes(suite),
+        `${check}: witness ${JSON.stringify(name)} names unknown suite ${JSON.stringify(suite)}`,
+      )
+    }
+  }
+})
+
+test('the P-ERP-R07 witness map and the frozen manifest cannot drift apart', () => {
+  // Same property as the kernel-ERP and R04 proofs, for the R07 surface:
+  // the cohorts' manifest checks over the named Rust test functions —
+  // PACKET-007 lands billing whole and PACKET-008 grows the same map with
+  // subscriptions and PACKET-009 grows it again with attendance, seeding the
+  // map and the manifest TOGETHER (R07 opens its
+  // OWN proof; the closed 29-check R05 surface stays untouched). Both
+  // directions, and the frozen `witnessTotal` (40, grown additively by any
+  // later R07 cohort) too.
+  const manifest = loadManifest(repoRoot)
+  const spec = manifest.proofs['P-ERP-R07']
+  assert.deepEqual([...Object.keys(R07_WITNESSES)].sort(), [...spec.requiredChecks].sort())
+  const witnessTotal = Object.values(R07_WITNESSES).reduce(
+    (sum, list) => sum + list.length,
+    0,
+  )
+  assert.equal(witnessTotal, spec.expect.witnessTotal)
+  for (const [check, witnesses] of Object.entries(R07_WITNESSES)) {
+    assert.ok(witnesses.length > 0, `${check} has no witness tests`)
+    for (const [suite, name] of witnesses) {
+      assert.match(
+        name,
+        /^[a-z0-9_]+$/,
+        `${check}: witness name ${JSON.stringify(name)} is not a test identifier`,
+      )
+      assert.ok(
+        ['billing', 'subscriptions', 'attendance'].includes(suite),
         `${check}: witness ${JSON.stringify(name)} names unknown suite ${JSON.stringify(suite)}`,
       )
     }

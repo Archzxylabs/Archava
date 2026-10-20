@@ -132,6 +132,45 @@ pub const PROPOSALS_MIGRATIONS: &[&str] = &["001_proposals_scope_amendments"];
 /// `packages/projects-pg/migrations/001_project_delivery.sql` (PACKET-003).
 pub const PROJECTS_MIGRATIONS: &[&str] = &["001_project_delivery"];
 
+/// The scheduling ledger's migrations, in apply order —
+/// `packages/scheduling-pg/migrations/{001_resource_reservations,002_shared_occupancy}.sql`
+/// (PACKET-004): 002 is the shared-occupancy kernel the accommodation cohort
+/// reserves through, and both migrations belong to the scheduling package.
+pub const SCHEDULING_MIGRATIONS: &[&str] = &["001_resource_reservations", "002_shared_occupancy"];
+
+/// The accommodation ledger's migration, in apply order —
+/// `packages/accommodation-pg/migrations/001_room_night_stays.sql`
+/// (PACKET-005).
+pub const ACCOMMODATION_MIGRATIONS: &[&str] = &["001_room_night_stays"];
+
+/// The assets ledger's migration, in apply order —
+/// `packages/assets-pg/migrations/001_assets_custody_maintenance.sql`
+/// (PACKET-006).
+pub const ASSETS_MIGRATIONS: &[&str] = &["001_assets_custody_maintenance"];
+
+/// `packages/billing-pg/migrations/001_billing_invoices_settlement.sql`
+/// (Archxy 2's ERP namespace, R07 first cohort, PACKET-007):
+/// memberships/invoices (with the priced-line sheets, corrections,
+/// attempts and settlement events) + the guard triggers + the forced
+/// tenant policies, byte-faithful to the TS package's frozen migration.
+pub const BILLING_MIGRATIONS: &[&str] = &["001_billing_invoices_settlement"];
+
+/// The subscriptions ledger's migration, in apply order —
+/// `packages/subscriptions-pg/migrations/001_subscriptions_entitlements_usage.sql`
+/// (Archxy 2's ERP namespace, R07 second cohort, PACKET-008):
+/// memberships/subscriptions/entitlements/usage events + the immutability
+/// triggers + the forced tenant policies, byte-faithful to the TS
+/// package's frozen migration.
+pub const SUBSCRIPTIONS_MIGRATIONS: &[&str] = &["001_subscriptions_entitlements_usage"];
+
+/// The attendance ledger's migration, in apply order —
+/// `packages/attendance-pg/migrations/001_attendance_sessions_rosters.sql`
+/// (Archxy 2's ERP namespace, R07 third cohort, PACKET-009):
+/// memberships/sessions/rosters/check-in events + the immutability
+/// triggers + the forced tenant policies, byte-faithful to the TS
+/// package's frozen migration.
+pub const ATTENDANCE_MIGRATIONS: &[&str] = &["001_attendance_sessions_rosters"];
+
 /// The provider attempt ledger's migration, in apply order —
 /// `packages/provider-runtime/migrations/001_provider_attempts.sql` (the R09
 /// provider slice): the budget buckets and the pending→finalized attempt rows
@@ -223,6 +262,29 @@ pub struct Fixture {
     pub organizations_ledger: Vec<(String, String)>,
     pub proposals_ledger: Vec<(String, String)>,
     pub projects_ledger: Vec<(String, String)>,
+    /// The same ledger for `archava_scheduling` — the R05 reservations
+    /// cohort (PACKET-004; the occupancy kernel rides migration 002).
+    pub scheduling_ledger: Vec<(String, String)>,
+    /// The same ledger for `archava_accommodation` — the R05 stays cohort
+    /// (PACKET-005).
+    pub accommodation_ledger: Vec<(String, String)>,
+    /// The same ledger for `archava_assets` — the R05 custody cohort
+    /// (PACKET-006).
+    pub assets_ledger: Vec<(String, String)>,
+    /// The same ledger for `archava_billing` — the R07 settlement cohort
+    /// (PACKET-007), the eight operational tables the balance CHECK and
+    /// the guard triggers defend.
+    pub billing_ledger: Vec<(String, String)>,
+    /// The same ledger for `archava_subscriptions` — the R07 entitlements
+    /// cohort (PACKET-008), the six operational tables the quota CHECK,
+    /// the usage-idempotency UNIQUE constraint and the immutability
+    /// triggers defend.
+    pub subscriptions_ledger: Vec<(String, String)>,
+    /// The same ledger for `archava_attendance` — the R07 attendance
+    /// cohort (PACKET-009), the six operational tables the roster/ticket
+    /// UNIQUE constraints, the capacity CHECK and the immutability
+    /// triggers defend.
+    pub attendance_ledger: Vec<(String, String)>,
     /// The same ledger for `archava_owner` — the owner-configuration
     /// revisions, receipts, audit and grants (C03).
     pub owner_ledger: Vec<(String, String)>,
@@ -798,6 +860,54 @@ async fn provision_with_commerce_usize(commerce_through: usize) -> Fixture {
         "archava_projects_migrations",
     )
     .await;
+    // Archxy 2 ERP namespace (PACKET-004): the scheduling ledger applies BOTH
+    // migrations under the same owner role; 002 carries the shared occupancy
+    // kernel and the accommodation entry-point RPC.
+    let scheduling_ledger = migrate_ledger(
+        &owner_pool,
+        "archava_scheduling",
+        "archava_scheduling_migrations",
+    )
+    .await;
+    // (PACKET-005) the accommodation ledger migrates AFTER scheduling: its
+    // rooms reference `archava_scheduling.resources` and its stays sit inside
+    // the scheduling occupancy kernel.
+    let accommodation_ledger = migrate_ledger(
+        &owner_pool,
+        "archava_accommodation",
+        "archava_accommodation_migrations",
+    )
+    .await;
+    // (PACKET-006) the assets ledger, its own namespace with no shared kernel.
+    let assets_ledger =
+        migrate_ledger(&owner_pool, "archava_assets", "archava_assets_migrations").await;
+    // Archxy 2 ERP namespace (PACKET-007): the billing ledger migrates
+    // under the same owner role, after the R05 family — no cross-schema
+    // FOREIGN KEY exists, but the namespace's one printed apply order
+    // holds (the R07 area's first subject).
+    let billing_ledger =
+        migrate_ledger(&owner_pool, "archava_billing", "archava_billing_migrations").await;
+    // Archxy 2 ERP namespace (PACKET-008): the subscriptions ledger
+    // migrates under the same owner role, after the settlement sibling —
+    // no cross-schema FOREIGN KEY exists, but the namespace's one printed
+    // apply order holds.
+    let subscriptions_ledger = migrate_ledger(
+        &owner_pool,
+        "archava_subscriptions",
+        "archava_subscriptions_migrations",
+    )
+    .await;
+    // Archxy 2 ERP namespace (PACKET-009): the attendance ledger migrates
+    // under the same owner role, after the entitlements sibling — no
+    // cross-schema FOREIGN KEY exists, but the namespace's one printed
+    // apply order holds.
+    let attendance_ledger = migrate_ledger(
+        &owner_pool,
+        "archava_attendance",
+        "archava_attendance_migrations",
+    )
+    .await;
+    // R09's provider slice
     // R09's provider slice: the attempt ledger migrates under the same owner
     // role, one UTC-anchored schema next to the domain ledgers. The runtime
     // role must stay a NON-owner of `archava_provider` — `create`'s role
@@ -992,6 +1102,130 @@ async fn provision_with_commerce_usize(commerce_through: usize) -> Fixture {
         format!(
             "GRANT EXECUTE ON FUNCTION archava_projects.lock_membership(text,text) TO {RUNTIME_USER}"
         ),
+        // Archxy 2 ERP (PACKET-004) — the port of grantSchedulingRuntime:
+        // resources/reservations/commands rw, the shared occupancy kernel
+        // rw (the accommodation cohort reserves through it), audit insert.
+        format!("GRANT USAGE ON SCHEMA archava_scheduling TO {RUNTIME_USER}"),
+        format!(
+            "GRANT SELECT ON archava_scheduling.schema_migrations,\
+             archava_scheduling.memberships TO {RUNTIME_USER}"
+        ),
+        format!(
+            "GRANT SELECT,INSERT,UPDATE ON archava_scheduling.resources,\
+             archava_scheduling.reservations,archava_scheduling.commands TO {RUNTIME_USER}"
+        ),
+        format!("GRANT SELECT,INSERT ON archava_scheduling.audit TO {RUNTIME_USER}"),
+        format!(
+            "GRANT SELECT,INSERT,UPDATE ON archava_scheduling.occupancy TO {RUNTIME_USER}"
+        ),
+        format!(
+            "GRANT EXECUTE ON FUNCTION archava_scheduling.lock_membership(text,text) TO {RUNTIME_USER}"
+        ),
+        // Archxy 2 ERP (PACKET-005) — the port of grantAccommodationRuntime:
+        // properties/stay-nights insert, room types/rooms/stays/commands rw,
+        // audit insert, the membership and property locks, and the
+        // create-accommodation-resource RPC the scheduling migration owns.
+        format!("GRANT USAGE ON SCHEMA archava_accommodation TO {RUNTIME_USER}"),
+        format!(
+            "GRANT SELECT ON archava_accommodation.schema_migrations,\
+             archava_accommodation.memberships TO {RUNTIME_USER}"
+        ),
+        format!(
+            "GRANT SELECT,INSERT ON archava_accommodation.properties,\
+             archava_accommodation.stay_nights TO {RUNTIME_USER}"
+        ),
+        format!(
+            "GRANT SELECT,INSERT,UPDATE ON archava_accommodation.room_types,\
+             archava_accommodation.rooms,archava_accommodation.stays,\
+             archava_accommodation.commands TO {RUNTIME_USER}"
+        ),
+        format!("GRANT SELECT,INSERT ON archava_accommodation.audit TO {RUNTIME_USER}"),
+        format!(
+            "GRANT EXECUTE ON FUNCTION archava_accommodation.lock_membership(text,text) TO {RUNTIME_USER}"
+        ),
+        format!(
+            "GRANT EXECUTE ON FUNCTION archava_accommodation.lock_property(text,uuid) TO {RUNTIME_USER}"
+        ),
+        format!(
+            "GRANT EXECUTE ON FUNCTION archava_scheduling.create_accommodation_resource(text,uuid,text,text) TO {RUNTIME_USER}"
+        ),
+        // Archxy 2 ERP (PACKET-006) — the port of grantAssetsRuntime: schema
+        // usage, memberships read, assets/custody/maintenance/commands/audit
+        // rw, and the membership lock.
+        format!("GRANT USAGE ON SCHEMA archava_assets TO {RUNTIME_USER}"),
+        format!(
+            "GRANT SELECT ON archava_assets.schema_migrations,\
+             archava_assets.memberships TO {RUNTIME_USER}"
+        ),
+        format!(
+            "GRANT SELECT,INSERT,UPDATE ON archava_assets.assets,\
+             archava_assets.custody_events,archava_assets.maintenance_records,\
+             archava_assets.commands,archava_assets.audit TO {RUNTIME_USER}"
+        ),
+        format!(
+            "GRANT EXECUTE ON FUNCTION archava_assets.lock_membership(text,text) TO {RUNTIME_USER}"
+        ),
+        // Archxy 2 ERP namespace (PACKET-007): the billing grants — the port
+        // of grantBillingRuntime (`packages/billing-pg/src/migrate.ts`),
+        // statement for statement: schema usage, the history+membership
+        // read, the invoice/command writes (the mutation surface's UPDATE
+        // + INSERT tables), the append-only child inserts, the audit
+        // insert, and the membership lock's SECURITY DEFINER function.
+        format!("GRANT USAGE ON SCHEMA archava_billing TO {RUNTIME_USER}"),
+        format!(
+            "GRANT SELECT ON archava_billing.schema_migrations,\
+             archava_billing.memberships TO {RUNTIME_USER}"
+        ),
+        format!(
+            "GRANT SELECT,INSERT,UPDATE ON archava_billing.invoices,\
+             archava_billing.commands TO {RUNTIME_USER}"
+        ),
+        format!(
+            "GRANT SELECT,INSERT ON archava_billing.invoice_lines,\
+             archava_billing.invoice_corrections,archava_billing.payment_attempts,\
+             archava_billing.payment_events,archava_billing.audit TO {RUNTIME_USER}"
+        ),
+        format!(
+            "GRANT EXECUTE ON FUNCTION archava_billing.lock_membership(text,text) TO {RUNTIME_USER}"
+        ),
+        // Archxy 2 ERP namespace (PACKET-008): the subscriptions grants —
+        // the port of grantSubscriptionsRuntime
+        // (`packages/subscriptions-pg/src/migrate.ts`), statement for
+        // statement: schema usage, the history+membership read, the
+        // subscription/entitlement/usage/command/audit writes, and the
+        // membership lock's SECURITY DEFINER function.
+        format!("GRANT USAGE ON SCHEMA archava_subscriptions TO {RUNTIME_USER}"),
+        format!(
+            "GRANT SELECT ON archava_subscriptions.schema_migrations,\
+             archava_subscriptions.memberships TO {RUNTIME_USER}"
+        ),
+        format!(
+            "GRANT SELECT,INSERT,UPDATE ON archava_subscriptions.subscriptions,\
+             archava_subscriptions.entitlements,archava_subscriptions.usage_events,\
+             archava_subscriptions.commands,archava_subscriptions.audit TO {RUNTIME_USER}"
+        ),
+        format!(
+            "GRANT EXECUTE ON FUNCTION archava_subscriptions.lock_membership(text,text) TO {RUNTIME_USER}"
+        ),
+        // Archxy 2 ERP namespace (PACKET-009): the attendance grants — the
+        // port of grantAttendanceRuntime
+        // (`packages/attendance-pg/src/migrate.ts`), statement for
+        // statement: schema usage, the history+membership read, the
+        // session/roster/event/command/audit writes, and the membership
+        // lock's SECURITY DEFINER function.
+        format!("GRANT USAGE ON SCHEMA archava_attendance TO {RUNTIME_USER}"),
+        format!(
+            "GRANT SELECT ON archava_attendance.schema_migrations,\
+             archava_attendance.memberships TO {RUNTIME_USER}"
+        ),
+        format!(
+            "GRANT SELECT,INSERT,UPDATE ON archava_attendance.sessions,\
+             archava_attendance.rosters,archava_attendance.check_in_events,\
+             archava_attendance.commands,archava_attendance.audit TO {RUNTIME_USER}"
+        ),
+        format!(
+            "GRANT EXECUTE ON FUNCTION archava_attendance.lock_membership(text,text) TO {RUNTIME_USER}"
+        ),
         // R09 provider slice — the port of grantProviderRuntime
         // (`packages/provider-runtime/src/postgres.ts`), statement for
         // statement, mirrored by
@@ -1054,6 +1288,12 @@ async fn provision_with_commerce_usize(commerce_through: usize) -> Fixture {
         organizations_ledger,
         proposals_ledger,
         projects_ledger,
+        scheduling_ledger,
+        accommodation_ledger,
+        assets_ledger,
+        billing_ledger,
+        subscriptions_ledger,
+        attendance_ledger,
         provider_ledger,
         owner_ledger,
         dir,
@@ -1220,6 +1460,18 @@ fn migrations_package(namespace: &str) -> &'static str {
         "archava_organizations" => "organizations-pg",
         "archava_proposals" => "proposals-pg",
         "archava_projects" => "projects-pg",
+        "archava_scheduling" => "scheduling-pg",
+        "archava_accommodation" => "accommodation-pg",
+        "archava_assets" => "assets-pg",
+        // (PACKET-007) the R07 settlement ledger migrates from its own TS
+        // package, byte-faithful, one migration deep.
+        "archava_billing" => "billing-pg",
+        // (PACKET-008) the R07 entitlements ledger migrates from its own TS
+        // package, byte-faithful, one migration deep.
+        "archava_subscriptions" => "subscriptions-pg",
+        // (PACKET-009) the R07 attendance ledger migrates from its own TS
+        // package, byte-faithful, one migration deep.
+        "archava_attendance" => "attendance-pg",
         // R09's provider ledger: the migration file the TS store reads too.
         "archava_provider" => "provider-runtime",
         _ => "commerce-pg",
@@ -1244,6 +1496,12 @@ pub fn ledger_expectations(namespace: &str) -> Vec<(String, String)> {
         "archava_organizations" => ORGANIZATIONS_MIGRATIONS,
         "archava_proposals" => PROPOSALS_MIGRATIONS,
         "archava_projects" => PROJECTS_MIGRATIONS,
+        "archava_scheduling" => SCHEDULING_MIGRATIONS,
+        "archava_accommodation" => ACCOMMODATION_MIGRATIONS,
+        "archava_assets" => ASSETS_MIGRATIONS,
+        "archava_billing" => BILLING_MIGRATIONS,
+        "archava_subscriptions" => SUBSCRIPTIONS_MIGRATIONS,
+        "archava_attendance" => ATTENDANCE_MIGRATIONS,
         "archava_provider" => PROVIDER_MIGRATIONS,
         "archava_owner" => OWNER_MIGRATIONS,
         _ => COMMERCE_MIGRATIONS,
@@ -1322,6 +1580,12 @@ pub async fn attach(data_dir: &Path, port: u16) -> Fixture {
         organizations_ledger: ledger_expectations("archava_organizations"),
         proposals_ledger: ledger_expectations("archava_proposals"),
         projects_ledger: ledger_expectations("archava_projects"),
+        scheduling_ledger: ledger_expectations("archava_scheduling"),
+        accommodation_ledger: ledger_expectations("archava_accommodation"),
+        assets_ledger: ledger_expectations("archava_assets"),
+        billing_ledger: ledger_expectations("archava_billing"),
+        subscriptions_ledger: ledger_expectations("archava_subscriptions"),
+        attendance_ledger: ledger_expectations("archava_attendance"),
         provider_ledger: ledger_expectations("archava_provider"),
         owner_ledger: ledger_expectations("archava_owner"),
         dir,

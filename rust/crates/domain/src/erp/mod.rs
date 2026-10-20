@@ -23,8 +23,17 @@ pub mod foodservice;
 pub mod organizations;
 pub mod projects;
 pub mod proposals;
+// R05 cohorts (PACKET-004..006).
+pub mod accommodation;
+pub mod assets;
 pub mod purchasing;
+pub mod scheduling;
 pub mod stock;
+
+// R07 cohorts (PACKET-007..009).
+pub mod attendance;
+pub mod billing;
+pub mod subscriptions;
 
 // The portable invariant tests live with the rules they pin (no database
 // needed: these run on every `cargo test`, wasm-clean).

@@ -30,6 +30,14 @@ serde.workspace = true
 # ERP fingerprint canonicalization needs a JSON value traversal (archxy2 ERP
 # namespace; integration packet PACKET-000 records this shared-file diff).
 serde_json.workspace = true
+# R07's billing cohort (PACKET-007): the provider-event digest is pure
+# crypto arithmetic — `HMAC-SHA256(domain ‖ framed parts)` under a
+# deployment key — and a digest computed anywhere else is not the
+# settlement's authority. hmac/sha2 are already workspace crates (the
+# provider crate hashes migration files; the host digests sessions); the
+# wasm boundary holds because both are pure-Rust, socket-free.
+hmac.workspace = true
+sha2.workspace = true
 
 [dev-dependencies]
 tokio.workspace = true
