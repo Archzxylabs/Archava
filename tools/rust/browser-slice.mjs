@@ -1415,6 +1415,62 @@ async function main() {
     )
     await shot(page, '18-record-screen')
 
+    // --- C03: the shipped owner-configuration journey ----------------------
+    // These steps are NOT a coverage witness (the frozen P-RUST-BROWSER
+    // checks do not include owner configuration); they are a real UI smoke
+    // that aborts this proof if the shipped owner surface regresses. The
+    // lifecycle's semantic evidence lives in `cargo test -p archava-host
+    // --test own`.
+    process.stdout.write('  · owner: disable crm-pipeline through /app/owner\n')
+    await openPage(page, `${APP}/owner`)
+    await waitText(page, 'owner-state', (value) => value.includes('Configuration revision'))
+    await click(page, 'owner-toggle-crm-pipeline')
+    await click(page, 'owner-preview')
+    await waitText(page, 'owner-plan', (value) => value.includes('Disable crm-pipeline'))
+    await click(page, 'owner-confirm')
+    await waitText(page, 'owner-status', (value) => value.includes('apply committed revision 1'))
+    await openPage(page, `${APP}/contact?id=${ADA_BULK_ID}`)
+    await waitText(page, 'record-pipeline-disabled', (value) => value.length > 0)
+    process.stdout.write('  · owner: disabled module hides the record pipeline\n')
+
+    process.stdout.write('  · owner: re-enable and restore r1, then leave it enabled\n')
+    await openPage(page, `${APP}/owner`)
+    await waitText(page, 'owner-state', (value) => value.includes('Configuration revision 1'))
+    await click(page, 'owner-toggle-crm-pipeline')
+    await click(page, 'owner-preview')
+    await waitText(page, 'owner-plan', (value) => value.includes('Enable crm-pipeline'))
+    await click(page, 'owner-confirm')
+    await waitText(page, 'owner-status', (value) => value.includes('apply committed revision 2'))
+    await openPage(page, `${APP}/contact?id=${ADA_BULK_ID}`)
+    await waitText(page, 'record-opportunities', (value) => value.includes('Browser proof — deal'))
+
+    await openPage(page, `${APP}/owner`)
+    await waitText(page, 'owner-state', (value) => value.includes('Configuration revision 2'))
+    await waitText(page, 'owner-revision-1', () => true)
+    await click(page, 'owner-restore-1')
+    await waitText(page, 'owner-plan', (value) => value.includes('Restore revision 1'))
+    await click(page, 'owner-confirm')
+    await waitText(page, 'owner-status', (value) => value.includes('restore committed revision 3'))
+    await openPage(page, `${APP}/contact?id=${ADA_BULK_ID}`)
+    await waitText(page, 'record-pipeline-disabled', (value) => value.length > 0)
+
+    await openPage(page, `${APP}/owner`)
+    await waitText(page, 'owner-state', (value) => value.includes('Configuration revision 3'))
+    await click(page, 'owner-toggle-crm-pipeline')
+    await click(page, 'owner-preview')
+    await waitText(page, 'owner-plan', (value) => value.includes('Enable crm-pipeline'))
+    await click(page, 'owner-confirm')
+    await waitText(page, 'owner-status', (value) => value.includes('apply committed revision 4'))
+    const ownerRevisions = psql(
+      "SELECT count(*) FROM archava_owner.config_revisions WHERE tenant_id='bulk-demo'",
+      port,
+    )
+    if (ownerRevisions !== '4') {
+      throw new Error(`the owner journey wrote ${ownerRevisions} revisions, not 4`)
+    }
+    process.stdout.write('  · owner: four persisted revisions, pipeline enabled again\n')
+    await shot(page, '18b-owner-configuration')
+
     // --- C01: the assistant desk — prepare, confirm, execute ---------------
     // The audit said the assistant could only PREPARE: execution did not
     // exist. The desk asks the real conversation route, shows the typed
