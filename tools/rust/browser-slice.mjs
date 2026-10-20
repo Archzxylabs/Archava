@@ -175,6 +175,7 @@ const WITNESS_CHECKS = {
   desk_pipeline: 'assistant desk reads and executes through the host',
   contact_create_ui: 'contact create through the product UI',
   pending_marker_survives_reload: 'pending recovery identity survives reload and resolution',
+  record_pending_marker_blocks_new_intent: 'pending recovery identity survives reload and resolution',
   pending_marker_cleared_after_resolution: 'pending recovery identity survives reload and resolution',
   storage_refusal_blocks_submission: 'pending recovery identity survives reload and resolution',
 }
@@ -1576,6 +1577,51 @@ async function main() {
       'the visible form refused an invalid contact, then created "Browser proof — new contact" (psql: revision 1, owner alice) and the record screen read it',
     )
     await shot(page, '20-contact-create')
+
+    // --- C05 extension: the record screen honours the app-owned marker -----
+    // Every committing form writes the marker before the send; while one is
+    // unresolved (here: the exact stored shape an unknown outcome leaves
+    // behind) a NEW intent is refused and the agent is pointed at recovery.
+    // Reads stay available, because a pending write is not a reason to hide
+    // the record.
+    const beforeBlocked = psql(
+      `SELECT count(*) FROM archava_crm.activities WHERE tenant_id='bulk-demo' AND contact_id='${ADA_BULK_ID}'`,
+      port,
+    )
+    await page.evaluate(
+      `localStorage.setItem('archava.pending.bulk-demo', JSON.stringify({requestId:'00000000-0000-4000-8000-00000000c105', tenant:'bulk-demo', principal:'alice', createdAt:new Date().toISOString()}))`,
+    )
+    await openPage(page, `${APP}/contact?id=${ADA_BULK_ID}`)
+    await waitText(page, 'record-name', (text) => text.includes('Ada Lovelace'))
+    const pendingNotice = await waitText(page, 'record-pending', (text) =>
+      text.includes('00000000-0000-4000-8000-00000000c105'),
+    )
+    await fill(page, 'record-activity-summary', 'must not be written while pending')
+    await click(page, 'record-activity-add')
+    const blockedRefusal = await waitText(page, 'record-action', (text) =>
+      text.includes('Refused:'),
+    )
+    if (!blockedRefusal.includes('pending_unresolved')) {
+      throw new Error(`a new intent was not refused while a marker existed: ${blockedRefusal}`)
+    }
+    const afterBlocked = psql(
+      `SELECT count(*) FROM archava_crm.activities WHERE tenant_id='bulk-demo' AND contact_id='${ADA_BULK_ID}'`,
+      port,
+    )
+    if (afterBlocked !== beforeBlocked) {
+      throw new Error(`the blocked write still reached PostgreSQL: ${beforeBlocked} → ${afterBlocked}`)
+    }
+    await page.evaluate(`localStorage.removeItem('archava.pending.bulk-demo')`)
+    await openPage(page, `${APP}/contact?id=${ADA_BULK_ID}`)
+    await waitText(page, 'record-name', (text) => text.includes('Ada Lovelace'))
+    const clearedNotice = await textOf(page, 'record-pending')
+    if (clearedNotice !== null) {
+      throw new Error(`the record still claims an unresolved marker: ${clearedNotice}`)
+    }
+    witness(
+      'record_pending_marker_blocks_new_intent',
+      'the record screen read the app-owned marker, refused a new write with pending_unresolved (no PostgreSQL row), and unblocked after resolution',
+    )
 
     // Graceful stop of the attached server: its fixture owns the surviving
     // instance now; its Drop stops PostgreSQL and removes the directory.

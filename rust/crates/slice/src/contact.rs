@@ -14,6 +14,7 @@ use leptos::task::spawn_local;
 use leptos_router::hooks::use_query_map;
 
 use crate::draft::uuid_string;
+use crate::pending::{self, PendingMarker};
 use crate::session::{self, Answer, FetchError};
 
 #[derive(Clone, Debug, PartialEq)]
@@ -121,6 +122,11 @@ pub fn Contact() -> impl IntoView {
     // the SAME action after an unknown outcome reuses the key (the server
     // replays instead of executing twice); a changed form mints a new one.
     let pending = RwSignal::new(None::<(String, String)>);
+    // An unresolved app-owned marker from an earlier submission (this page,
+    // the draft screen or the create form). Reads stay available; a NEW write
+    // intent is refused until it is resolved, while the retry of the SAME key
+    // remains allowed.
+    let blocked = RwSignal::new(None::<String>);
 
     // The edit form's boxes carry the record's current values once loaded.
     let edit_name = RwSignal::new(String::new());
@@ -131,6 +137,18 @@ pub fn Contact() -> impl IntoView {
     let opportunity_title = RwSignal::new(String::new());
     let move_stage = RwSignal::new("qualified".to_string());
     let move_reason = RwSignal::new(String::new());
+
+    Effect::new(move |_| {
+        if session.get().is_none() {
+            return;
+        }
+        let Some(held) = session::held() else {
+            return;
+        };
+        if let Some(marker) = pending::read(&held.tenant, &held.principal) {
+            blocked.set(Some(marker.request_id));
+        }
+    });
 
     let load = move |hiatus: bool| {
         if hiatus {
@@ -248,15 +266,45 @@ pub fn Contact() -> impl IntoView {
 
     // One typed submission for every action on the page.
     let send = move |what: &'static str, command: serde_json::Value| {
-        let key = match pending.get_untracked() {
-            Some((key, held)) if held == what => key,
-            _ => {
+        // A retry of the SAME key is the resolution path; any other intent is
+        // a second command while the first may have committed.
+        let retry_key = match pending.get_untracked() {
+            Some((key, held)) if held == what => Some(key),
+            _ => None,
+        };
+        if let Some(marker_id) = blocked.get_untracked() {
+            if retry_key.as_deref() != Some(marker_id.as_str()) {
+                set_action.set(ActionState::Refused {
+                    reason: "pending_unresolved".to_string(),
+                    message: "An earlier submission is unresolved; resolve it on the recovery page before a new write.".to_string(),
+                });
+                return;
+            }
+        }
+        let key = match retry_key {
+            Some(key) => key,
+            None => {
                 let key = uuid_string();
                 pending.set(Some((key.clone(), what.to_string())));
                 key
             }
         };
-        let tenant = session::held().map(|held| held.tenant).unwrap_or_default();
+        let Some(held) = session::held() else {
+            return;
+        };
+        let tenant = held.tenant.clone();
+        // The marker is app-owned state, written BEFORE the send: a storage
+        // refusal blocks the submission instead of sending unrecoverably.
+        if blocked.get_untracked().as_deref() != Some(key.as_str()) {
+            let marker = PendingMarker::new(key.clone(), tenant.clone(), held.principal.clone());
+            if let Err(why) = pending::write(&marker) {
+                set_action.set(ActionState::Refused {
+                    reason: "pending_unavailable".to_string(),
+                    message: format!("The pending marker could not be stored: {why}"),
+                });
+                return;
+            }
+        }
         let body = serde_json::json!({
             "tenant": tenant,
             "requestId": key,
@@ -267,6 +315,8 @@ pub fn Contact() -> impl IntoView {
         spawn_local(async move {
             match session::api_fetch("POST", "/crm/commands", Some(body)).await {
                 Ok(Answer { status: 200, body }) if body["decision"] == "receipt" => {
+                    pending::clear(&tenant);
+                    blocked.set(None);
                     pending.set(None);
                     let receipt = body["receipt"]["id"]
                         .as_str()
@@ -361,6 +411,23 @@ pub fn Contact() -> impl IntoView {
                             <dt>"Revision"</dt><dd data-testid="record-revision">{revision.to_string()}</dd>
                         </dl>
 
+                        {move || match blocked.get() {
+                            Some(request_id) => {
+                                let href = format!("/app/recover?id={request_id}");
+                                view! {
+                                    <p class="refusal" data-testid="record-pending">
+                                        "An earlier submission is unresolved (request "
+                                        <code>{request_id.clone()}</code>
+                                        "). A new write is refused until it is resolved: "
+                                        <a data-testid="record-pending-recover" href=href>
+                                            "the recovery page"
+                                        </a>
+                                    </p>
+                                }
+                                .into_any()
+                            }
+                            None => view! { <p></p> }.into_any(),
+                        }}
                         {move || match action.get() {
                             ActionState::Idle => view! { <p></p> }.into_any(),
                             ActionState::Busy => view! {

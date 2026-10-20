@@ -119,3 +119,13 @@ owned paths: `rust/**`, `tools/rust/**`, `tools/own/**`, `docs/rust/**` and new
   assistant integration suite is 13/13 and the browser run then completed the
   desk journey. Without the product-surface proof the bug was invisible to
   every unit and route test.
+
+- **C05 extended to the record screen (2026-10-20; browser proof pending).**
+  `contact.rs` now writes the app-owned marker before EVERY record write,
+  refuses a NEW intent while one is unresolved (`pending_unresolved`, with a
+  recovery link), keeps the retry of the SAME key allowed, and clears the
+  marker on known outcomes. The harness witness
+  `record_pending_marker_blocks_new_intent` is added; the browser run is
+  pending because the Archxy 2 lane is executing `pkill -x postgres` and
+  workspace tests on the same machine. Not claimed as verified until that
+  run is green.
