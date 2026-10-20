@@ -611,3 +611,44 @@ async fn racing_applies_converge_to_one_revision_and_one_receipt() {
     assert_eq!(count(&fixture, "apply_receipts").await, 1);
     assert_eq!(count(&fixture, "config_audit").await, 1);
 }
+
+#[tokio::test]
+async fn a_rebuilt_host_recovers_the_same_receipt_and_history_from_postgres() {
+    let fixture = provision().await;
+    seed(&fixture).await;
+    let app = archava_host::router(state(&fixture).await);
+    let alice = login(&app, "alice").await;
+
+    let (_, planned) = post(
+        &app,
+        "/own/plan",
+        &plan_body(0, &[], &["crm-pipeline"]),
+        &alice,
+    )
+    .await;
+    let hash = planned["plan"]["planHash"].as_str().unwrap().to_string();
+    let body = apply_body("own-restart-request", 0, &[], &["crm-pipeline"], &hash);
+    let (status, applied) = post(&app, "/own/apply", &body, &alice).await;
+    assert_eq!(status, StatusCode::OK, "{applied}");
+    assert_eq!(applied["receipt"]["revision"], 1);
+    drop(app);
+
+    // A NEW serving state over the same durable ledger — no in-memory carry.
+    // The same session token still authenticates (the session row is in
+    // PostgreSQL), inspect reads revision 1, and the SAME request id replays
+    // the SAME receipt instead of minting revision 2.
+    let restarted = archava_host::router(state(&fixture).await);
+    let (status, inspected) = get(&restarted, &format!("/own/config?tenant={ACME}"), &alice).await;
+    assert_eq!(status, StatusCode::OK, "{inspected}");
+    assert_eq!(inspected["config"]["revision"], 1);
+    let (status, replayed) = post(&restarted, "/own/apply", &body, &alice).await;
+    assert_eq!(status, StatusCode::OK, "{replayed}");
+    assert_eq!(replayed["replayed"], true);
+    assert_eq!(replayed["receipt"]["revision"], 1);
+
+    let (status, history) = get(&restarted, &format!("/own/history?tenant={ACME}"), &alice).await;
+    assert_eq!(status, StatusCode::OK, "{history}");
+    assert_eq!(history["revisions"].as_array().unwrap().len(), 1);
+    assert_eq!(count(&fixture, "config_revisions").await, 1);
+    assert_eq!(count(&fixture, "apply_receipts").await, 1);
+}
