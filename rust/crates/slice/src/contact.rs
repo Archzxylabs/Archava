@@ -86,6 +86,7 @@ enum RecordState {
         activities: Vec<Activity>,
         followups: Vec<Followup>,
         opportunities: Vec<Opportunity>,
+        pipeline_enabled: bool,
     },
     Refused {
         reason: String,
@@ -236,6 +237,7 @@ pub fn Contact() -> impl IntoView {
                             })
                         })
                         .collect();
+                    let pipeline_enabled = body["pipelineEnabled"].as_bool().unwrap_or(true);
                     // The edit boxes adopt the freshly read facts: a write
                     // bumps the revision, and the next write must carry the
                     // revision this page just learned, not a stale one.
@@ -247,6 +249,7 @@ pub fn Contact() -> impl IntoView {
                         activities,
                         followups,
                         opportunities,
+                        pipeline_enabled,
                     });
                 }
                 Ok(Answer { status, body }) => set_state.set(RecordState::Refused {
@@ -392,7 +395,7 @@ pub fn Contact() -> impl IntoView {
                     </p>
                 }
                 .into_any(),
-                RecordState::Loaded { facts, activities, followups, opportunities } => {
+                RecordState::Loaded { facts, activities, followups, opportunities, pipeline_enabled } => {
                     let revision = facts.revision;
                     let contact_id_value = facts.id.clone();
                     let update_id = facts.id.clone();
@@ -564,6 +567,13 @@ pub fn Contact() -> impl IntoView {
                                 .collect::<Vec<_>>()}
                         </ul>
 
+                        {(!pipeline_enabled).then(|| view! {
+                            <p class="refusal" data-testid="record-pipeline-disabled">
+                                "The CRM pipeline module is disabled by the owner; "
+                                "opportunities and stage history are not shown."
+                            </p>
+                        })}
+                        {pipeline_enabled.then(|| view! {
                         <h2>"Pipeline"</h2>
                         <ul data-testid="record-opportunities">
                             {move_buttons
@@ -656,6 +666,7 @@ pub fn Contact() -> impl IntoView {
                                 on:input=move |ev| opportunity_title.set(event_target_value(&ev)) /></label>
                             <button data-testid="record-opportunity-create">"Open opportunity"</button>
                         </form>
+                        })}
                         <p class="hint">
                             "Contact id: "<code data-testid="record-id">{contact_id_value}</code>
                         </p>

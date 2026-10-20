@@ -46,6 +46,10 @@ pub struct ModuleSpec {
     pub entitled: bool,
     /// The module's artifact is installed on this host.
     pub installed: bool,
+    /// A mandatory module cannot be disabled: the product cannot serve the
+    /// tenant without it. (Optional modules can, subject to dependents.)
+    #[serde(default)]
+    pub mandatory: bool,
     pub readiness: Readiness,
     pub cost: CostClass,
 }
@@ -136,6 +140,7 @@ pub enum BlockedReason {
     NotInstalled,
     ModuleUnavailable,
     MissingDependency,
+    Mandatory,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -237,12 +242,7 @@ impl Store {
     }
 
     pub fn plan(&self, request: &Request) -> Result<Plan, PlanError> {
-        if request.base_revision != self.current.revision {
-            return Err(PlanError::StaleBase {
-                current: self.current.revision,
-            });
-        }
-        Ok(self.build_plan(request))
+        self.catalogue.plan(&self.current, request)
     }
 
     /// Apply a plan under a request id. The SAME id returns the SAME receipt
@@ -323,21 +323,46 @@ impl Store {
         };
         self.plan(&request).map_err(RestoreError::Plan)
     }
+}
 
-    fn build_plan(&self, request: &Request) -> Plan {
-        let mut enabled = self.current.enabled.clone();
+impl Catalogue {
+    /// The deterministic, stateless planner. The same inputs produce the same
+    /// plan identity whether the caller is the dashboard, the assistant or a
+    /// test; the persisted store is a thin, transactional caller of this.
+    pub fn plan(&self, current: &OwnerConfig, request: &Request) -> Result<Plan, PlanError> {
+        if request.base_revision != current.revision {
+            return Err(PlanError::StaleBase {
+                current: current.revision,
+            });
+        }
+        Ok(self.build_plan(current, request))
+    }
+
+    fn build_plan(&self, current: &OwnerConfig, request: &Request) -> Plan {
+        let mut enabled = current.enabled.clone();
         let mut changes = Vec::new();
         let mut effects = Vec::new();
         let mut blocked: Option<Blocked> = None;
 
         for module_id in &request.disable {
-            if self.catalogue.module(module_id).is_none() {
-                blocked.get_or_insert_with(|| Blocked {
-                    reason: BlockedReason::UnknownModule,
-                    module: module_id.clone(),
-                    detail: "The catalogue does not contain this module.".to_string(),
-                });
-                continue;
+            match self.module(module_id) {
+                None => {
+                    blocked.get_or_insert_with(|| Blocked {
+                        reason: BlockedReason::UnknownModule,
+                        module: module_id.clone(),
+                        detail: "The catalogue does not contain this module.".to_string(),
+                    });
+                    continue;
+                }
+                Some(module) if module.mandatory => {
+                    blocked.get_or_insert_with(|| Blocked {
+                        reason: BlockedReason::Mandatory,
+                        module: module.id.clone(),
+                        detail: "A mandatory module cannot be disabled.".to_string(),
+                    });
+                    continue;
+                }
+                Some(_) => {}
             }
             if enabled.remove(module_id) {
                 changes.push(Change::Disable {
@@ -351,7 +376,7 @@ impl Store {
                 // replanned against the same base, not partially applied.
                 break;
             }
-            match self.catalogue.module(module_id) {
+            match self.module(module_id) {
                 None => {
                     blocked = Some(Blocked {
                         reason: BlockedReason::UnknownModule,
@@ -400,7 +425,7 @@ impl Store {
             // its dependency is off, or disabling a dependency still required,
             // are the same explicit refusal.
             if let Some(module) = enabled.iter().find_map(|id| {
-                self.catalogue.module(id).and_then(|module| {
+                self.module(id).and_then(|module| {
                     module
                         .requires
                         .iter()
@@ -420,7 +445,7 @@ impl Store {
             }
         }
 
-        let mut terminology = self.current.terminology.clone();
+        let mut terminology = current.terminology.clone();
         if let Some(requested) = &request.terminology {
             for (stage, label) in &requested.pipeline_labels {
                 if terminology.pipeline_labels.get(stage) != Some(label) {
@@ -440,20 +465,15 @@ impl Store {
         // current one, revision included. Only an applicable plan names the
         // next revision.
         let config = if blocked.is_some() {
-            self.current.clone()
+            current.clone()
         } else {
             OwnerConfig {
-                revision: self.current.revision + 1,
+                revision: current.revision + 1,
                 enabled,
                 terminology,
             }
         };
-        let plan_hash = hash(&canonical(
-            &self.current,
-            &config,
-            &changes,
-            blocked.as_ref(),
-        ));
+        let plan_hash = hash(&canonical(current, &config, &changes, blocked.as_ref()));
         Plan {
             plan_hash,
             base_revision: request.base_revision,

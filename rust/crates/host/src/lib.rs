@@ -42,6 +42,8 @@ pub mod crm;
 // writer along with the other shared-file patches.
 pub mod erp;
 mod identity;
+// C03: the persisted owner-configuration lifecycle (archava_owner ledger).
+pub mod own;
 pub mod router;
 
 #[cfg(test)]

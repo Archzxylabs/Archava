@@ -116,6 +116,7 @@ archava-domain = { path = "crates/domain" }
 # host implements the flow's `HostCrm` seam; the dependency stays one-way
 # (the assistant crate must never import the host).
 archava-assistant = { path = "crates/assistant" }
+archava-own = { path = "crates/own" }
 # The HTTP surface, declared so `crates/slice` (§1.4B) can consume it as
 # `archava-host.workspace = true`. Nothing else depends on it — the host is the
 # top of the internal stack — and the slice takes it ONLY in its server build;

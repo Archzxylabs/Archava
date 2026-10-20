@@ -286,13 +286,14 @@ async fn run() {
         seed(&new_instance).await;
     }
 
-    let state = AppState::try_new_crm(
+    let state = AppState::try_new_owner(
         new_instance.runtime_pool.clone(),
         commerce_ledger(),
         &new_instance.commerce_ledger,
         &new_instance.identity_ledger,
         IDENTITY_KEY,
         &new_instance.crm_ledger,
+        &new_instance.owner_ledger,
     )
     .await
     .expect("a servable fixture must construct serving state");
@@ -457,6 +458,21 @@ async fn seed(fixture: &Fixture) {
             .await
             .expect("seed the CRM membership");
         }
+    }
+
+    // C03: the owner surface's grants are separate from CRM memberships. Alice
+    // manages configuration on both fixture tenants; Bob deliberately has no
+    // owner grant, so the browser proof can see the missing-grant refusal.
+    for tenant in ["acme-retail", "bulk-demo"] {
+        sqlx::query(
+            "INSERT INTO archava_owner.owner_grants \
+             (tenant_id, principal_id, permissions, active) \
+             VALUES ($1, 'alice', ARRAY['config.read','config.apply'], true)",
+        )
+        .bind(tenant)
+        .execute(&fixture.admin_pool)
+        .await
+        .expect("seed the owner grant");
     }
 
     for (tenant, id, full_name, email, owner) in CONTACTS {

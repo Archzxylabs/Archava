@@ -252,6 +252,39 @@ impl AppState {
         Ok(state)
     }
 
+    /// Serving state for the owner-configuration surface: [`try_new_crm`]'s
+    /// gates continued by the `archava_owner` ledger's own checksum-exact
+    /// readiness and forced-RLS check. Only the owner surface needs it, so
+    /// existing CRM/ERP callers keep their signatures.
+    pub async fn try_new_owner(
+        pool: PgPool,
+        ledger: Ledger,
+        expected_migrations: &[(String, String)],
+        expected_identity_migrations: &[(String, String)],
+        identity_key: &[u8],
+        expected_crm_migrations: &[(String, String)],
+        expected_owner_migrations: &[(String, String)],
+    ) -> Result<Self, AuthorityError> {
+        let state = Self::try_new_crm(
+            pool,
+            ledger,
+            expected_migrations,
+            expected_identity_migrations,
+            identity_key,
+            expected_crm_migrations,
+        )
+        .await?;
+        assert_startup_readiness(
+            state.pool(),
+            crate::own::NAMESPACE,
+            crate::own::LEDGER,
+            crate::own::OWNER_TABLES,
+            expected_owner_migrations,
+        )
+        .await?;
+        Ok(state)
+    }
+
     /// Serving state for the ERP cohorts — [`AppState::try_new_crm`]'s shape
     /// continued by the purchasing ledger's own gate. The kernel receipts
     /// write cross-ledger into `archava_commerce`, so the app still builds on
@@ -329,6 +362,14 @@ pub fn router(state: AppState) -> Router {
         .route("/approvals/approve", post(approval_grant))
         .route("/crm/commands", post(crate::crm::crm_command))
         .route("/crm/commands/status", get(crate::crm::command_status))
+        // C03: the persisted owner-configuration lifecycle. Session + CSRF
+        // first; the archava_owner grant and RLS tenant are checked inside.
+        .route("/own/config", get(crate::own::config))
+        .route("/own/plan", post(crate::own::plan))
+        .route("/own/apply", post(crate::own::apply))
+        .route("/own/restore/plan", post(crate::own::restore_plan))
+        .route("/own/restore", post(crate::own::restore))
+        .route("/own/history", get(crate::own::history))
         // R03's assistant slice: the CRM conversation. Session + CSRF first,
         // tenant from the path, the flow's own gates after.
         .route(

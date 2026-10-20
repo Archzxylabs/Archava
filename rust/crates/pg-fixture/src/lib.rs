@@ -124,6 +124,12 @@ pub const FOOD_MIGRATIONS: &[&str] = &["001_tables_recipes_tickets"];
 /// the `archava-providers` crate's store runs through.
 pub const PROVIDER_MIGRATIONS: &[&str] = &["001_provider_attempts"];
 
+/// The owner-configuration ledger's migration, in apply order — Rust-owned at
+/// `rust/crates/host/migrations/owner` (C03). The owner surface's grants are
+/// its own (owner PRD §6), so this ledger is additive and references no
+/// TS-owned table.
+pub const OWNER_MIGRATIONS: &[&str] = &["001_owner_config"];
+
 /// The namespace and ledger label the commerce schema uses.
 pub const NAMESPACE: &str = "archava_commerce";
 pub const LEDGER: &str = "Commerce";
@@ -198,6 +204,9 @@ pub struct Fixture {
     /// ERP ledger (PACKET-001): tickets, recipes and the menus whose menu
     /// products live IN `archava_commerce`.
     pub foodservice_ledger: Vec<(String, String)>,
+    /// The same ledger for `archava_owner` — the owner-configuration
+    /// revisions, receipts, audit and grants (C03).
+    pub owner_ledger: Vec<(String, String)>,
     /// The same ledger for `archava_provider` — the R09 provider attempt
     /// ledger (buckets, pending→finalized attempts, restore holds), through
     /// whose forced-RLS scope the provider budget is a real PostgreSQL
@@ -759,6 +768,10 @@ async fn provision_with_commerce_usize(commerce_through: usize) -> Fixture {
         "archava_provider_migrations",
     )
     .await;
+    // C03: the owner-configuration ledger, migrated by the same owner role so
+    // the runtime is a non-owner here exactly as it is elsewhere.
+    let owner_ledger =
+        migrate_ledger(&owner_pool, "archava_owner", "archava_owner_migrations").await;
 
     // 5. Runtime grants — the port of grantCommerceRuntime
     //    (`packages/commerce-pg/src/migrate.ts:59-76`), statement for statement.
@@ -895,6 +908,16 @@ async fn provision_with_commerce_usize(commerce_through: usize) -> Fixture {
         // stays SELECT-only so only the migration path records history, and
         // the forced-RLS scope (`archava.provider_bucket`) makes every write
         // bucket-local regardless of the grant's breadth.
+        // C03 owner configuration: grants and revisions are read-only to the
+        // runtime; revisions, receipts and audit are append-only (no UPDATE,
+        // no DELETE). RLS still scopes every row to the session tenant.
+        format!("GRANT USAGE ON SCHEMA archava_owner TO {RUNTIME_USER}"),
+        format!(
+            "GRANT SELECT ON archava_owner.schema_migrations,             archava_owner.owner_grants,archava_owner.config_revisions,             archava_owner.config_audit TO {RUNTIME_USER}"
+        ),
+        format!(
+            "GRANT SELECT,INSERT ON archava_owner.config_revisions,             archava_owner.apply_receipts,archava_owner.config_audit TO {RUNTIME_USER}"
+        ),
         format!("GRANT USAGE ON SCHEMA archava_provider TO {RUNTIME_USER}"),
         format!("GRANT SELECT ON archava_provider.schema_migrations TO {RUNTIME_USER}"),
         format!(
@@ -937,6 +960,7 @@ async fn provision_with_commerce_usize(commerce_through: usize) -> Fixture {
         purchasing_ledger,
         foodservice_ledger,
         provider_ledger,
+        owner_ledger,
         dir,
     }
 }
@@ -1120,11 +1144,10 @@ pub fn ledger_expectations(namespace: &str) -> Vec<(String, String)> {
         "archava_purchasing" => PURCHASING_MIGRATIONS,
         "archava_foodservice" => FOOD_MIGRATIONS,
         "archava_provider" => PROVIDER_MIGRATIONS,
+        "archava_owner" => OWNER_MIGRATIONS,
         _ => COMMERCE_MIGRATIONS,
     };
-    let package = migrations_package(namespace);
-    let migrations_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join(format!("../../../packages/{package}/migrations"));
+    let migrations_dir = migrations_dir(namespace);
     migrations
         .iter()
         .map(|id| {
@@ -1196,14 +1219,28 @@ pub async fn attach(data_dir: &Path, port: u16) -> Fixture {
         purchasing_ledger: ledger_expectations("archava_purchasing"),
         foodservice_ledger: ledger_expectations("archava_foodservice"),
         provider_ledger: ledger_expectations("archava_provider"),
+        owner_ledger: ledger_expectations("archava_owner"),
         dir,
     }
 }
 
+/// The directory one namespace's migration files live in. TS-owned ledgers
+/// live under `packages/<package>/migrations`; the Rust-owned owner ledger
+/// lives beside its host crate. One definition for both readers (apply and
+/// re-derivation), so a restart never recomputes a different input.
+fn migrations_dir(namespace: &str) -> std::path::PathBuf {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../..");
+    if namespace == "archava_owner" {
+        return root.join("rust/crates/host/migrations/owner");
+    }
+    root.join(format!(
+        "packages/{}/migrations",
+        migrations_package(namespace)
+    ))
+}
+
 async fn migrate_ledger(pool: &PgPool, namespace: &str, lock_label: &str) -> Vec<(String, String)> {
-    let package = migrations_package(namespace);
-    let migrations_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join(format!("../../../packages/{package}/migrations"));
+    let migrations_dir = migrations_dir(namespace);
     // The recorded pairs come from the SAME derivation an attach re-runs —
     // one definition, so a restart always recomputes what a fresh apply
     // recorded.

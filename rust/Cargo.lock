@@ -114,6 +114,7 @@ dependencies = [
  "archava-assistant",
  "archava-core",
  "archava-domain",
+ "archava-own",
  "archava-pg-fixture",
  "axum",
  "base64",

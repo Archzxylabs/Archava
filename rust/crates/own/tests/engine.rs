@@ -25,13 +25,14 @@ fn module(
         requires: requires.iter().map(|id| id.to_string()).collect(),
         entitled,
         installed,
+        mandatory: false,
         readiness,
         cost,
     }
 }
 
 fn catalogue() -> Catalogue {
-    Catalogue {
+    let mut catalogue = Catalogue {
         modules: vec![
             module(
                 "core",
@@ -82,7 +83,9 @@ fn catalogue() -> Catalogue {
                 CostClass::Review,
             ),
         ],
-    }
+    };
+    catalogue.modules[0].mandatory = true;
+    catalogue
 }
 
 fn base() -> OwnerConfig {
@@ -410,4 +413,14 @@ fn t09_a_request_cannot_invent_readiness_cost_or_authority() {
         .expect("laundry effect");
     assert_eq!(laundry.readiness, Readiness::NeedsSetup);
     assert_eq!(laundry.cost, CostClass::Usage);
+}
+
+#[test]
+fn t07_a_mandatory_module_cannot_be_disabled() {
+    let store = store();
+    let plan = store.plan(&request(1, &[], &["core"])).unwrap();
+    let blocked = plan.blocked.as_ref().expect("core is mandatory");
+    assert_eq!(blocked.reason, BlockedReason::Mandatory);
+    assert_eq!(blocked.module, "core");
+    assert_eq!(plan.config, *store.current());
 }

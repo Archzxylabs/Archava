@@ -362,6 +362,16 @@ impl CrmCommand {
         )
     }
 
+    /// Whether the operation belongs to the optional `crm-pipeline` module.
+    /// The owner can disable it; the backend then refuses the operation even
+    /// when the caller skips the UI (A1-OWN-02).
+    fn needs_pipeline_module(&self) -> bool {
+        matches!(
+            self,
+            CrmCommand::OpportunityCreate { .. } | CrmCommand::OpportunityMove { .. }
+        )
+    }
+
     /// Trim every caller string the way the TS schema's `.trim()` does, in
     /// place, BEFORE the fingerprint is computed — so two submissions that
     /// differ only by surrounding whitespace are one command.
@@ -1285,6 +1295,11 @@ pub struct CrmRecordValue {
     pub(crate) activities: Vec<CrmActivity>,
     pub(crate) followups: Vec<CrmFollowup>,
     pub(crate) opportunities: Vec<CrmOpportunity>,
+    /// The persisted owner decision for the optional pipeline module. The UI
+    /// uses it to hide/annotate the pipeline surface; the backend gate does
+    /// not depend on the client honouring it.
+    #[serde(rename = "pipelineEnabled")]
+    pub(crate) pipeline_enabled: bool,
 }
 
 pub(crate) async fn record(
@@ -1400,7 +1415,15 @@ async fn read_record(
     };
     // One query for every opportunity on the record: the stage history is a
     // bounded, immutable projection of the rows this caller may already read.
-    let transitions: Vec<(Uuid, Option<String>, String, String, i32, String)> = {
+    let pipeline_enabled = {
+        let connection = transaction.checked_executor().await?;
+        matches!(
+            crate::own::module_enabled(connection, &query.tenant, "crm-pipeline").await,
+            Ok(true)
+        )
+    };
+    let transitions: Vec<(Uuid, Option<String>, String, String, i32, String)> = if pipeline_enabled
+    {
         let connection = transaction.checked_executor().await?;
         let ids: Vec<Uuid> = opportunities.iter().map(|row| row.0).collect();
         sqlx::query_as(
@@ -1414,6 +1437,8 @@ async fn read_record(
         .fetch_all(connection)
         .await
         .map_err(|source| AuthorityError::database(CRM_LEDGER.ledger, source))?
+    } else {
+        Vec::new()
     };
     let _ = transaction.rollback().await;
     let mut history: HashMap<Uuid, Vec<CrmTransition>> = HashMap::new();
@@ -1432,6 +1457,7 @@ async fn read_record(
     Ok((
         StatusCode::OK,
         CrmBody::Record(CrmRecordValue {
+            pipeline_enabled,
             contact: CrmContact {
                 id: id.to_string(),
                 tenant_id: query.tenant.as_str().to_string(),
@@ -1564,6 +1590,32 @@ pub async fn submit_command(
     if needs_contacts_read && !access.allows(Permission::CONTACTS_READ) {
         let _ = transaction.rollback().await;
         return Ok(refused("role_not_allowed", "Contact access is required."));
+    }
+
+    // The optional pipeline module is a persisted owner decision, not a UI
+    // preference: a disabled module refuses here, before any claim or write.
+    if submission.command.needs_pipeline_module() {
+        let enabled = {
+            let connection = transaction.checked_executor().await?;
+            crate::own::module_enabled(connection, &submission.tenant, "crm-pipeline").await
+        };
+        match enabled {
+            Ok(true) => {}
+            Ok(false) => {
+                let _ = transaction.rollback().await;
+                return Ok(refused(
+                    "module_disabled",
+                    "The CRM pipeline module is disabled for this tenant.",
+                ));
+            }
+            Err(_) => {
+                let _ = transaction.rollback().await;
+                return Ok(refused(
+                    "owner_unavailable",
+                    "The owner configuration is unavailable; nothing was changed.",
+                ));
+            }
+        }
     }
 
     // 2. The idempotency claim. `ON CONFLICT DO NOTHING` loses the claim to

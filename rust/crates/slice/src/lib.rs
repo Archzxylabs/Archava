@@ -44,6 +44,8 @@ pub mod draft;
 #[cfg(target_arch = "wasm32")]
 pub mod hydrate;
 pub mod login;
+/// C03: the owner-configuration surface.
+pub mod owner;
 pub mod pending;
 pub mod recover;
 pub mod session;
@@ -53,6 +55,7 @@ use contacts::Contacts;
 use desk::Desk;
 use draft::Draft;
 use login::Login;
+use owner::Owner;
 use recover::Recover;
 
 /// The exact header the host's CSRF gate reads
@@ -94,6 +97,7 @@ pub fn App() -> impl IntoView {
             <header>
                 <a href="/app" class="home">Archava CRM slice</a>
                 <a href="/app/desk" data-testid="nav-desk">"Assistant desk"</a>
+                <a href="/app/owner" data-testid="nav-owner">"Owner"</a>
                 <session::SessionMarker />
             </header>
             <main>
@@ -103,6 +107,7 @@ pub fn App() -> impl IntoView {
                     <Route path=path!("app/contact") view=Contact />
                     <Route path=path!("app/desk") view=Desk />
                     <Route path=path!("app/draft") view=Draft />
+                    <Route path=path!("app/owner") view=Owner />
                     <Route path=path!("app/recover") view=Recover />
                 </Routes>
             </main>

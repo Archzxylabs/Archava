@@ -22,7 +22,7 @@ of behaviour.
 | --- | --- | --- | --- | --- | --- |
 | C01 | A1-CRM | All seven baseline writes, existing reads and usable CRM screens/action flow — not `followup.create` plus a read-only assistant | **Locally verified (2026-10-20).** Commands: all seven contract operations (`contact.create/update`, `activity.add`, `followup.create/complete`, `opportunity.create/move`) with the TS wire names, tri-state patch, boundary validation before database work, the operation-family write grant (+`contacts.read` for the pipeline lane), scope containment, `PIPELINE_TRANSITIONS` as its own state machine with immutable history, and one transaction per command carrying effect + audit + receipt. Reads: contacts list (literal search, stable cursor pages), record with contact/activities/follow-ups/opportunities AND each opportunity's transition history (one scoped query). Product UI: contacts search/next-page/selection/detail + a real `contact.create` form (C05 marker written before the send, storage refusal blocks, unresolved marker blocks a fresh attempt with a recovery link, host refusal renders its reason); `/app/contact` edit/activity/follow-up complete/opportunity create/move/history; `/app/desk` visible assistant panel over the real conversation route (overview, worklist, pipeline, contacts, summary, planner identity) where a prepared completion carries `requiresApproval`, the task stays `open:1` until the human confirms, and the confirmation executes the typed `followup.complete`; plus draft/recover and login/logout. Proof: `cargo test -p archava-host --test crm -- --test-threads=1` → 36/36; assistant suite 13/13, assistant lib 25/25; `pnpm rust:browser-slice` → 32/32 witnesses, exit 0 (record effects asserted in PostgreSQL, desk `open:1` before / `completed:2` + `alice:followup.complete` after, create form psql row at revision 1 owned by alice, pipeline history rendered, planner identity shown). Scope note: the TS panel's optional `approvalBase` native-approval SERVICE is not part of this slice; the consent surface here is prepare → explicit human confirmation → typed command (A1-CRM-03's separate intent/consent contracts), and the service-on-behalf lane is proven at the core level with both actors recorded. | **locally verified** | Final Codex audit; `integrated verified` only after it |
 | C02 | A1-AUTH | UI logout revokes the server session and closes cookie/bearer/reconnect authority | **Closed locally (2026-10-20).** `Identity::revoke` (`rust/crates/host/src/identity.rs`) deletes the session row and appends the `logout` identity event in one transaction; `POST /logout` (`rust/crates/host/src/router.rs`) runs the CSRF gate BEFORE revocation, deletes the row, then expires the cookie (`Max-Age=0`); the slice's `close_server_session` closes the server session first and clears local facts only after the server says so (a 401 "no session" also clears, a 403/503 keeps state and reports the refusal). Proof: `cargo test -p archava-host --test session --offline` → 6 passed, 0 failed (read/mutate/recover refused after logout, missing/forged CSRF with a LIVE session refused without revoking, other sessions untouched, restart does not resurrect, no-session logout = 401); `pnpm rust:browser-slice` → 20/20 witnesses, EXIT=0, including `logout_revokes_server_session` (psql: the presented row is gone) and `logout_blocks_old_credential` (same browser reads /contacts → 401). | **locally verified** | Re-run the full gate after C01 lands |
-| C03 | A1-OWN | Actual owner configuration lifecycle and semantic OWN-T01–T10 proofs | `tools/own/verify.mjs` derives T01 from a policy-consumer `outcome.ok`, T06 from writer-fence/rollback rehearsals, T07 from deployment-plan unit tests, T10 from the TypeScript CRM browser battery — none exercise an owner config apply/restore | **open** (audit says OWN-V1 "delivered" is not supported) | Build the real config lifecycle (inspect→plan→preview→confirm→apply→recovery→history→restore) as one serving engine for chat+dashboard, then re-bind each OWN-Txx to the operation it names |
+| C03 | A1-OWN | Actual owner configuration lifecycle and semantic OWN-T01–T10 proofs | **Partially verified (2026-10-20).** Engine 13/13; persisted `archava_owner` lifecycle + routes + `/app/owner` UI + CRM `crm-pipeline` gate proven by `cargo test -p archava-host --test own -- --test-threads=1` → 7/7 (disable→`module_disabled`→enable, replay, stale/foreign confirmation, missing/revoked grant, restore-as-new-revision with intact history, racing applies = one revision, mandatory blocked). Still open: T01 two packaged consumers, T02 chat=dashboard parity, T06 restart leg, T10 browser journey, OWN evidence producer re-binding, final gate | **open** (partially verified) | Bind T01/T02/T10 and the OWN evidence producer; run the browser owner journey and the final gate |
 | C04 | A1-REUSE | Two packaged independent consumers execute real CRM business behaviour on isolated persisted data | `tools/rust/k05-k04-consumers.mjs` bundles `archava-core`/`archava-domain`; consumer witnesses cover tenant IDs, role table, action registry, `CommandAuthorizer` — no CRM repository/operation runs | **open** | Extend both consumers to run contact/activity/follow-up/opportunity read-write-recovery against their own persisted store, from identical released CRM artifacts |
 | C05 | A1-RECOVERY | App-owned pending identity survives reload/unknown outcome and blocks accidental new intent | **Closed locally (2026-10-20).** New `rust/crates/slice/src/pending.rs` stores an account/workspace-bound marker (`requestId` + `tenant` + `principal` + `createdAt` only — no business payload, no secret) BEFORE the send; a storage refusal blocks the submission instead of sending unrecoverably; `draft.rs` restores the ORIGINAL key on mount (session-bound effect), re-submits under it, refuses a fresh key while unresolved, and clears the marker on any known outcome (200/409/refusal) and on committed recovery; logout clears every marker. Proof: `pnpm rust:browser-slice` → 20/20, EXIT=0, including `pending_marker_survives_reload` (reload returns the original key; fresh key refused), `pending_marker_cleared_after_resolution` (committed receipt clears it) and `storage_refusal_blocks_submission` (host never saw the command — psql count 0). | **locally verified** | Re-run the full gate after C01 lands |
 | C06 | A1-UI | Literal query encoding, functional cursor pagination and reset/error/race semantics in the browser | **Closed locally (2026-10-20).** `contacts.rs` now percent-encodes tenant, search and cursor (`query_encode`); the page renders real `Next page`/`First page` actions driven by the server's cursor, resets the cursor when the filter changes, and names "this page is the last" when the server returns none. Host keyset (`ORDER BY id`, `id > after`) was already correct. Proof: `pnpm rust:browser-slice` → 20/20, EXIT=0, including `literal_search_is_encoded` (`Ada &` finds only "Ada & Lovelace Ltd"; the audit's `Ada&limit=1` returns 0 rows) and `cursor_pagination_loads_later_rows` (26 rows: page 1 = 20 → next = 6 → first page returns the same first row). | **locally verified** | Re-run the full gate after C01 lands |
@@ -130,22 +130,50 @@ owned paths: `rust/**`, `tools/rust/**`, `tools/own/**`, `docs/rust/**` and new
   workspace tests on the same machine. Not claimed as verified until that
   run is green.
 
-- **C03 foundation landed (2026-10-20; lifecycle NOT delivered).** New leaf
-  crate `archava-own` (serde only) is the shared deterministic engine the
-  owner PRD requires for both the dashboard and the assistant: typed
-  catalogue/config/request, immutable plans with a stable plan identity,
-  explicit `blocked` results (unknown / not entitled / not installed /
-  unavailable / missing dependency), confirmation bound to plan hash + base
-  revision, idempotent apply under a request id, append-only history and
-  restore that is revalidated against the CURRENT catalogue and lands as a
-  NEW revision. Twelve integration witnesses map to T01/T02/T03/T05/T06/
-  T07/T08/T09 (`cargo test -p archava-own`, 12/12), including a closed
-  request that cannot invent readiness, cost or authority.
-  Explicitly NOT delivered, and the reason C03 stays **open**: persistence
-  (the `Store` is in memory), grants/HTTP routes, inspect/preview/confirm
-  UI, unknown-outcome recovery for an OWN apply, and the browser journey.
-  T04 (backend authority refusals against real PostgreSQL), T09 and T10
-  remain unproven; nothing in the host uses the crate yet.
+- **C03 engine + persistence + API + UI landed (2026-10-20; lifecycle
+  locally verified, T01/T02/T10 still open).** The leaf crate
+  `archava-own` is now stateless-plan capable (`Catalogue::plan`, the host's
+  transactional caller) and models `mandatory` modules: disabling one yields
+  a `mandatory` blocked plan. It still provides typed catalogue/config/
+  request, immutable plans with a stable identity, explicit blocked results,
+  confirmation bound to plan hash + base revision, idempotent apply,
+  append-only history and restore-as-a-new-revision revalidated against the
+  current catalogue. `cargo test -p archava-own` → **13/13**.
+  Persistence is real: Rust-owned ledger `archava_owner`
+  (`rust/crates/host/migrations/owner/001_owner_config.sql`) carries separate
+  `config.read`/`config.apply` grants, revision + receipt + audit rows,
+  append-only grants (no UPDATE/DELETE to the runtime) and forced RLS keyed
+  by `archava.tenant_id`; the fixture migrates/grants it and
+  `AppState::try_new_owner` asserts its checksum-exact readiness.
+  `rust/crates/host/src/own.rs` serves `GET /own/config`,
+  `POST /own/plan`, `POST /own/apply`, `POST /own/restore/plan`,
+  `POST /own/restore`, `GET /own/history`: one transaction per apply
+  (grant → advisory tenant lock → duplicate-receipt replay/conflict → current
+  revision → catalogue plan → blocked/confirmation checks → revision +
+  receipt + audit), row/JSON revision cross-checks, and a fail-closed
+  `owner_unavailable` when the ledger cannot be read.
+  The CRM backend now refuses `opportunity.create`/`opportunity.move` with
+  `module_disabled` when the persisted config disables `crm-pipeline`
+  (before any claim/write), the record read omits transition history and
+  reports `pipelineEnabled: false`, and the shipped `/app/owner` page drives
+  inspect → plan → preview → confirm → applied → history/restore against
+  those routes. Proof: `cargo test -p archava-host --test own --offline --
+  --test-threads=1` → **7 passed, 0 failed, 116.61s** (real HTTP + real
+  PostgreSQL + real sessions/CSRF): disable → backend `module_disabled` →
+  enable → `opportunity` receipt; duplicate request id replays one receipt
+  with one effect; stale base and foreign confirmation refuse without
+  writing; missing and revoked grants refuse; restore lands as revision 3
+  while history `[3,2,1]` and business contacts stay intact; racing applies
+  converge to one revision/receipt/audit; a mandatory module is blocked with
+  nothing written.
+  Explicitly still open, and why C03 is not claimed closed: T01 (two
+  packaged business-model consumers, shared CRM behaviour) and T02 (chat
+  plan equals dashboard plan) are C04/assistant work not delivered here;
+  T06's restart/lost-response leg and T10's browser journey have not been
+  run against the owner page; the frozen OWN evidence producer
+  (`tools/own/verify.mjs`) has NOT been re-bound to this engine, so no
+  P-OWN-Txx evidence is claimed. The final gate has not been run at this
+  HEAD.
 
 - **C07 reevaluated honestly (2026-10-20; still open).** The frozen
   manifest is untouched (93 items / 53 proofs). A read-only
