@@ -13,6 +13,10 @@
 //! fathers' and deliberately so.
 
 pub mod foodservice;
+// R04 cohorts (PACKET-003).
+pub mod organizations;
+pub mod projects;
+pub mod proposals;
 pub mod purchasing;
 
 use archava_adapters::rls::{TenantContextError, TenantTransaction};
@@ -138,3 +142,86 @@ pub(crate) async fn begin_foodservice(
     }
     Ok(transaction)
 }
+
+// ===========================================================================
+// The R04 ledgers (PACKET-003) — organizations, proposals and projects. The
+// three cohorts share the kernel ledgers' gate shape: one descriptor, one
+// opener with the same `SET LOCAL` guards, and routes that drive the
+// adapters' step functions from ONE transaction.
+// ===========================================================================
+
+/// The organizations ledger descriptor — `001_organizations_affiliations`
+/// creates the five data tables plus `schema_migrations`.
+pub(crate) const ORGANIZATIONS_LEDGER: Ledger = Ledger {
+    namespace: "archava_organizations",
+    ledger: "organizations",
+    tables: &[
+        "memberships",
+        "organizations",
+        "affiliations",
+        "commands",
+        "audit",
+    ],
+};
+
+/// The proposals ledger descriptor — `001_proposals_scope_amendments`
+/// creates the seven data tables plus `schema_migrations`.
+pub(crate) const PROPOSALS_LEDGER: Ledger = Ledger {
+    namespace: "archava_proposals",
+    ledger: "proposals",
+    tables: &[
+        "memberships",
+        "proposals",
+        "scope_items",
+        "scope_versions",
+        "change_requests",
+        "commands",
+        "audit",
+    ],
+};
+
+/// The projects ledger descriptor — `001_project_delivery` creates the six
+/// data tables plus `schema_migrations`.
+pub(crate) const PROJECTS_LEDGER: Ledger = Ledger {
+    namespace: "archava_projects",
+    ledger: "projects",
+    tables: &[
+        "memberships",
+        "projects",
+        "milestones",
+        "tasks",
+        "commands",
+        "audit",
+    ],
+};
+
+macro_rules! r04_opener {
+    ($name:ident, $ledger:ident) => {
+        pub(crate) async fn $name(
+            state: &crate::router::AppState,
+            tenant: archava_core::tenant::TenantId,
+        ) -> Result<TenantTransaction<'_>, ErpGateError> {
+            let mut transaction =
+                TenantTransaction::begin(state.pool(), $ledger.namespace, $ledger.ledger, tenant)
+                    .await
+                    .map_err(ErpGateError::from)?;
+            {
+                let connection = transaction.checked_executor().await?;
+                for statement in [
+                    "SET LOCAL statement_timeout='10s'",
+                    "SET LOCAL lock_timeout='3s'",
+                ] {
+                    sqlx::query(statement)
+                        .execute(&mut *connection)
+                        .await
+                        .map_err(|source| ErpGateError::Database($ledger.ledger, source))?;
+                }
+            }
+            Ok(transaction)
+        }
+    };
+}
+
+r04_opener!(begin_organizations, ORGANIZATIONS_LEDGER);
+r04_opener!(begin_proposals, PROPOSALS_LEDGER);
+r04_opener!(begin_projects, PROJECTS_LEDGER);

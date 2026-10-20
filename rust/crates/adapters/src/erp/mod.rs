@@ -32,6 +32,9 @@
 
 pub mod commerce_kernel;
 pub mod foodservice;
+pub mod organizations;
+pub mod projects;
+pub mod proposals;
 pub mod purchasing;
 
 use archava_domain::erp::ErpError;

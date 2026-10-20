@@ -287,6 +287,20 @@ export function gateSteps() {
       'erp foodservice suite',
       () => step('erp foodservice suite', ['node', 'tools/rust/erp/verify-foodservice.mjs']),
     ],
+    // Same pattern for P-ERP-R04: the R04 migration's three ledgers —
+    // organizations, proposals, projects. The workspace step cannot prove the
+    // named witnesses each cohort's nine checks need (authorized life chains,
+    // gate refusals that hold nothing, revoked recovery, key/fingerprint
+    // collision, cross-tenant refusal, lost-response replay, and the cohort
+    // effects — affiliation release, the CR amendment snapshot, the delivered
+    // gate and the reached-milestone parent gate), so this producer re-runs
+    // the three `erp_*` suites and grades each check against its named
+    // witness. Added with the R04 cohort in PACKET-003 (scope edit for
+    // review).
+    [
+      'erp R04 suites',
+      () => step('erp R04 suites', ['node', 'tools/rust/erp/verify-r04.mjs']),
+    ],
     // Same pattern for P-R03-DOMAIN: the R03 CRM domain lane spans three
     // suites (the command lane repository, the conversation route over HTTP,
     // and the assistant crate's injected-host flow tests). The workspace step
@@ -701,6 +715,44 @@ export function fastGateEvidenceMapping() {
           )
         } catch (error) {
           throw new Error(`erp foodservice witness proof unreadable: ${error.message}`)
+        }
+      },
+    },
+    {
+      // The Archxy 2 ERP namespace's R04 ledgers proof: same witness binding,
+      // over the three R04 suites' witnesses. Added with the R04 cohort in
+      // PACKET-003 (scope edit for review).
+      proof: 'P-ERP-R04',
+      checks: {
+        'authorized organization life documents its chain': { step: 'erp R04 suites' },
+        'update on archived refuses and holds nothing': { step: 'erp R04 suites' },
+        'affiliation gates refuse without holding': { step: 'erp R04 suites' },
+        'revoked organizations grant refused on recovery': { step: 'erp R04 suites' },
+        'same key different command conflicts': { step: 'erp R04 suites' },
+        'cross-tenant caller refused before any write': { step: 'erp R04 suites' },
+        'lost response replays without a second organization': { step: 'erp R04 suites' },
+        'archived organization still releases its affiliation': { step: 'erp R04 suites' },
+        'missing organizations grant refused': { step: 'erp R04 suites' },
+        'authorized proposal flow documents its life': { step: 'erp R04 suites' },
+        'accept before submit refuses and holds nothing': { step: 'erp R04 suites' },
+        'reject records rejected exactly once': { step: 'erp R04 suites' },
+        'revoked proposals grant refused on recovery': { step: 'erp R04 suites' },
+        'lost response replays without a second snapshot': { step: 'erp R04 suites' },
+        'change request lifecycle amends the scope': { step: 'erp R04 suites' },
+        'missing proposals grant refused': { step: 'erp R04 suites' },
+        'authorized delivery chain walks the state table': { step: 'erp R04 suites' },
+        'delivered gate requires the work': { step: 'erp R04 suites' },
+        'out-of-table transitions refuse and hold nothing': { step: 'erp R04 suites' },
+        'revoked projects grant refused on recovery': { step: 'erp R04 suites' },
+        'lost response replays without a second project': { step: 'erp R04 suites' },
+        'task under a reached milestone cannot reopen': { step: 'erp R04 suites' },
+        'missing projects grant refused': { step: 'erp R04 suites' },
+      },
+      details: () => {
+        try {
+          return JSON.parse(readFileSync(join(root, 'dist/rust-erp-r04-proof.json'), 'utf8'))
+        } catch (error) {
+          throw new Error(`erp R04 witness proof unreadable: ${error.message}`)
         }
       },
     },

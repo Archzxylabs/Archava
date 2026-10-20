@@ -395,6 +395,33 @@ pub fn router(state: AppState) -> Router {
             "/erp/foodservice/commands/status",
             get(crate::erp::foodservice::food_service_status),
         )
+        // Archxy 2's R04 ledgers (PACKET-003): organizations, proposals and
+        // projects, the same session+CSRF/tenant-path shape as the cohorts
+        // above.
+        .route(
+            "/erp/organizations/commands",
+            post(crate::erp::organizations::organization_command),
+        )
+        .route(
+            "/erp/organizations/commands/status",
+            get(crate::erp::organizations::organization_status),
+        )
+        .route(
+            "/erp/proposals/commands",
+            post(crate::erp::proposals::proposal_command),
+        )
+        .route(
+            "/erp/proposals/commands/status",
+            get(crate::erp::proposals::proposal_status),
+        )
+        .route(
+            "/erp/projects/commands",
+            post(crate::erp::projects::project_command),
+        )
+        .route(
+            "/erp/projects/commands/status",
+            get(crate::erp::projects::project_status),
+        )
         .with_state(state)
 }
 

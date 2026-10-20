@@ -118,6 +118,20 @@ pub const PURCHASING_MIGRATIONS: &[&str] = &["001_suppliers_orders_receipts"];
 /// `archava_foodservice` next to the other cohort schemas.
 pub const FOOD_MIGRATIONS: &[&str] = &["001_tables_recipes_tickets"];
 
+/// The organizations ledger's migration, in apply order —
+/// `packages/organizations-pg/migrations/001_organizations_affiliations.sql`
+/// (Archxy 2's ERP namespace, PACKET-003).
+pub const ORGANIZATIONS_MIGRATIONS: &[&str] = &["001_organizations_affiliations"];
+
+/// The proposals ledger's migration, in apply order —
+/// `packages/proposals-pg/migrations/001_proposals_scope_amendments.sql`
+/// (PACKET-003).
+pub const PROPOSALS_MIGRATIONS: &[&str] = &["001_proposals_scope_amendments"];
+
+/// The projects ledger's migration, in apply order —
+/// `packages/projects-pg/migrations/001_project_delivery.sql` (PACKET-003).
+pub const PROJECTS_MIGRATIONS: &[&str] = &["001_project_delivery"];
+
 /// The provider attempt ledger's migration, in apply order —
 /// `packages/provider-runtime/migrations/001_provider_attempts.sql` (the R09
 /// provider slice): the budget buckets and the pending→finalized attempt rows
@@ -204,6 +218,11 @@ pub struct Fixture {
     /// ERP ledger (PACKET-001): tickets, recipes and the menus whose menu
     /// products live IN `archava_commerce`.
     pub foodservice_ledger: Vec<(String, String)>,
+    /// The same ledger for `archava_organizations`, `archava_proposals` and
+    /// `archava_projects` — the R04 cohorts' ledgers (PACKET-003).
+    pub organizations_ledger: Vec<(String, String)>,
+    pub proposals_ledger: Vec<(String, String)>,
+    pub projects_ledger: Vec<(String, String)>,
     /// The same ledger for `archava_owner` — the owner-configuration
     /// revisions, receipts, audit and grants (C03).
     pub owner_ledger: Vec<(String, String)>,
@@ -758,6 +777,27 @@ async fn provision_with_commerce_usize(commerce_through: usize) -> Fixture {
         "archava_foodservice_migrations",
     )
     .await;
+    // Archxy 2 ERP namespace (PACKET-003): the three R04 ledgers migrate under
+    // the same owner role from their own packages; ordering after the commerce
+    // family keeps every ledger's advisory lock label distinct.
+    let organizations_ledger = migrate_ledger(
+        &owner_pool,
+        "archava_organizations",
+        "archava_organizations_migrations",
+    )
+    .await;
+    let proposals_ledger = migrate_ledger(
+        &owner_pool,
+        "archava_proposals",
+        "archava_proposals_migrations",
+    )
+    .await;
+    let projects_ledger = migrate_ledger(
+        &owner_pool,
+        "archava_projects",
+        "archava_projects_migrations",
+    )
+    .await;
     // R09's provider slice: the attempt ledger migrates under the same owner
     // role, one UTC-anchored schema next to the domain ledgers. The runtime
     // role must stay a NON-owner of `archava_provider` — `create`'s role
@@ -900,6 +940,58 @@ async fn provision_with_commerce_usize(commerce_through: usize) -> Fixture {
         format!(
             "GRANT EXECUTE ON FUNCTION archava_foodservice.lock_membership(text,text) TO {RUNTIME_USER}"
         ),
+        // Archxy 2 ERP (PACKET-003) — the port of grantOrganizationsRuntime
+        // (`packages/organizations-pg/src/migrate.ts`), statement for
+        // statement: memberships read, organizations/affiliations/commands/
+        // audit rw, `lock_membership` executes.
+        format!("GRANT USAGE ON SCHEMA archava_organizations TO {RUNTIME_USER}"),
+        format!(
+            "GRANT SELECT ON archava_organizations.schema_migrations,\
+             archava_organizations.memberships TO {RUNTIME_USER}"
+        ),
+        format!(
+            "GRANT SELECT,INSERT,UPDATE ON archava_organizations.organizations,\
+             archava_organizations.affiliations,archava_organizations.commands,\
+             archava_organizations.audit TO {RUNTIME_USER}"
+        ),
+        format!(
+            "GRANT EXECUTE ON FUNCTION archava_organizations.lock_membership(text,text) TO {RUNTIME_USER}"
+        ),
+        // Archxy 2 ERP (PACKET-003) — the port of grantProposalsRuntime:
+        // proposals/scope versions/change requests rw, snapshots-editable
+        // scope items, audit rw, `lock_membership` executes.
+        format!("GRANT USAGE ON SCHEMA archava_proposals TO {RUNTIME_USER}"),
+        format!(
+            "GRANT SELECT ON archava_proposals.schema_migrations,\
+             archava_proposals.memberships TO {RUNTIME_USER}"
+        ),
+        format!(
+            "GRANT SELECT,INSERT,UPDATE ON archava_proposals.proposals,\
+             archava_proposals.scope_versions,archava_proposals.change_requests,\
+             archava_proposals.commands,archava_proposals.audit TO {RUNTIME_USER}"
+        ),
+        format!(
+            "GRANT SELECT,INSERT,UPDATE,DELETE ON archava_proposals.scope_items TO {RUNTIME_USER}"
+        ),
+        format!(
+            "GRANT EXECUTE ON FUNCTION archava_proposals.lock_membership(text,text) TO {RUNTIME_USER}"
+        ),
+        // Archxy 2 ERP (PACKET-003) — the port of grantProjectsRuntime:
+        // projects/tasks/milestones rw, audit INSERT-only, `lock_membership`
+        // executes.
+        format!("GRANT USAGE ON SCHEMA archava_projects TO {RUNTIME_USER}"),
+        format!(
+            "GRANT SELECT ON archava_projects.schema_migrations,\
+             archava_projects.memberships TO {RUNTIME_USER}"
+        ),
+        format!(
+            "GRANT SELECT,INSERT,UPDATE ON archava_projects.projects,archava_projects.tasks,\
+             archava_projects.milestones,archava_projects.commands TO {RUNTIME_USER}"
+        ),
+        format!("GRANT SELECT,INSERT ON archava_projects.audit TO {RUNTIME_USER}"),
+        format!(
+            "GRANT EXECUTE ON FUNCTION archava_projects.lock_membership(text,text) TO {RUNTIME_USER}"
+        ),
         // R09 provider slice — the port of grantProviderRuntime
         // (`packages/provider-runtime/src/postgres.ts`), statement for
         // statement, mirrored by
@@ -959,6 +1051,9 @@ async fn provision_with_commerce_usize(commerce_through: usize) -> Fixture {
         crm_ledger,
         purchasing_ledger,
         foodservice_ledger,
+        organizations_ledger,
+        proposals_ledger,
+        projects_ledger,
         provider_ledger,
         owner_ledger,
         dir,
@@ -1122,6 +1217,9 @@ fn migrations_package(namespace: &str) -> &'static str {
         // frozen in; no other ledger may inherit one of these directories.
         "archava_purchasing" => "purchasing-pg",
         "archava_foodservice" => "foodservice-pg",
+        "archava_organizations" => "organizations-pg",
+        "archava_proposals" => "proposals-pg",
+        "archava_projects" => "projects-pg",
         // R09's provider ledger: the migration file the TS store reads too.
         "archava_provider" => "provider-runtime",
         _ => "commerce-pg",
@@ -1143,6 +1241,9 @@ pub fn ledger_expectations(namespace: &str) -> Vec<(String, String)> {
         "archava_crm" => CRM_MIGRATIONS,
         "archava_purchasing" => PURCHASING_MIGRATIONS,
         "archava_foodservice" => FOOD_MIGRATIONS,
+        "archava_organizations" => ORGANIZATIONS_MIGRATIONS,
+        "archava_proposals" => PROPOSALS_MIGRATIONS,
+        "archava_projects" => PROJECTS_MIGRATIONS,
         "archava_provider" => PROVIDER_MIGRATIONS,
         "archava_owner" => OWNER_MIGRATIONS,
         _ => COMMERCE_MIGRATIONS,
@@ -1218,6 +1319,9 @@ pub async fn attach(data_dir: &Path, port: u16) -> Fixture {
         crm_ledger: ledger_expectations("archava_crm"),
         purchasing_ledger: ledger_expectations("archava_purchasing"),
         foodservice_ledger: ledger_expectations("archava_foodservice"),
+        organizations_ledger: ledger_expectations("archava_organizations"),
+        proposals_ledger: ledger_expectations("archava_proposals"),
+        projects_ledger: ledger_expectations("archava_projects"),
         provider_ledger: ledger_expectations("archava_provider"),
         owner_ledger: ledger_expectations("archava_owner"),
         dir,

@@ -809,6 +809,7 @@
         "pg authority suite",
         "erp purchasing suite",
         "erp foodservice suite",
+        "erp R04 suites",
         "R03 domain suite",
         "R09 context suite",
         "capacity conformance suite",
@@ -1156,6 +1157,56 @@
       "artifacts": [],
       "referenced": [
         "dist/rust-erp-foodservice-proof.json"
+      ]
+    },
+    "P-ERP-R04": {
+      "kind": "evidence",
+      "producedBy": "pnpm rust:verify → erp R04 suites step (tools/rust/erp/verify-r04.mjs) grading named witness tests in rust/crates/host/tests/erp_{organizations,proposals,projects}.rs against the owned PostgreSQL fixture — the R04 ledgers' runtime half, added with PACKET-003 (the pure domain half is the frozen P-R04-DOMAIN)",
+      "requiredChecks": [
+        "authorized organization life documents its chain",
+        "update on archived refuses and holds nothing",
+        "affiliation gates refuse without holding",
+        "revoked organizations grant refused on recovery",
+        "same key different command conflicts",
+        "cross-tenant caller refused before any write",
+        "lost response replays without a second organization",
+        "archived organization still releases its affiliation",
+        "missing organizations grant refused",
+        "authorized proposal flow documents its life",
+        "accept before submit refuses and holds nothing",
+        "reject records rejected exactly once",
+        "revoked proposals grant refused on recovery",
+        "lost response replays without a second snapshot",
+        "change request lifecycle amends the scope",
+        "missing proposals grant refused",
+        "authorized delivery chain walks the state table",
+        "delivered gate requires the work",
+        "out-of-table transitions refuse and hold nothing",
+        "revoked projects grant refused on recovery",
+        "lost response replays without a second project",
+        "task under a reached milestone cannot reopen",
+        "missing projects grant refused"
+      ],
+      "expect": {
+        "witnessTotal": 27,
+        "namedRegressions": {
+          "RN-ERP-01": "revoked organizations grant refused on recovery",
+          "RN-ERP-02": "same key different command conflicts"
+        }
+      },
+      "sourcePaths": [
+        "rust/crates/host",
+        "rust/crates/adapters/src/erp",
+        "rust/crates/domain/src/erp",
+        "rust/crates/core",
+        "tools/rust/erp/verify-r04.mjs",
+        "packages/organizations-pg/migrations",
+        "packages/proposals-pg/migrations",
+        "packages/projects-pg/migrations"
+      ],
+      "artifacts": [],
+      "referenced": [
+        "dist/rust-erp-r04-proof.json"
       ]
     },
     "P-READINESS-PG": {

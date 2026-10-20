@@ -18,6 +18,7 @@ import { WITNESSES as ASSISTANT_CONTEXT_WITNESSES } from '../assistant-context.m
 import { WITNESSES as PROVIDER_CONTRACTS_WITNESSES } from '../provider-contracts.mjs'
 import { WITNESSES as PURCHASING_WITNESSES } from '../erp/verify-purchasing.mjs'
 import { WITNESSES as FOODSERVICE_WITNESSES } from '../erp/verify-foodservice.mjs'
+import { WITNESSES as R04_WITNESSES } from '../erp/verify-r04.mjs'
 import { WITNESSES as CAPACITY_WITNESSES } from '../capacity-conformance.mjs'
 import {
   WITNESSES as PLANNING_WITNESSES,
@@ -387,6 +388,37 @@ test('the P-ERP-FOODSERVICE witness map and the frozen manifest cannot drift apa
       assert.equal(
         suite,
         'foodservice',
+        `${check}: witness ${JSON.stringify(name)} names unknown suite ${JSON.stringify(suite)}`,
+      )
+    }
+  }
+})
+
+test('the P-ERP-R04 witness map and the frozen manifest cannot drift apart', () => {
+  // Same three-lists-equal property as the two kernel-ERP proofs, for the
+  // R04 ledgers: 23 manifest checks over the three `erp_*` suites' named
+  // Rust test functions (9 per cohort, with the shared gate-conflict and
+  // cross-tenant checks carrying three witnesses each so every cohort
+  // proves the shared rule on its own tables). Both directions, and the
+  // frozen `witnessTotal` (27) too.
+  const manifest = loadManifest(repoRoot)
+  const spec = manifest.proofs['P-ERP-R04']
+  assert.deepEqual([...Object.keys(R04_WITNESSES)].sort(), [...spec.requiredChecks].sort())
+  const witnessTotal = Object.values(R04_WITNESSES).reduce(
+    (sum, list) => sum + list.length,
+    0,
+  )
+  assert.equal(witnessTotal, spec.expect.witnessTotal)
+  for (const [check, witnesses] of Object.entries(R04_WITNESSES)) {
+    assert.ok(witnesses.length > 0, `${check} has no witness tests`)
+    for (const [suite, name] of witnesses) {
+      assert.match(
+        name,
+        /^[a-z0-9_]+$/,
+        `${check}: witness name ${JSON.stringify(name)} is not a test identifier`,
+      )
+      assert.ok(
+        ['organizations', 'proposals', 'projects'].includes(suite),
         `${check}: witness ${JSON.stringify(name)} names unknown suite ${JSON.stringify(suite)}`,
       )
     }

@@ -19,6 +19,10 @@
 //! absorbed.
 
 pub mod foodservice;
+// R04 cohorts (PACKET-003).
+pub mod organizations;
+pub mod projects;
+pub mod proposals;
 pub mod purchasing;
 pub mod stock;
 
