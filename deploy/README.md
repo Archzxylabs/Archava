@@ -20,7 +20,7 @@ node tools/rust/build-slice.mjs
 ```
 
 The build produces `target/release/archava-server` and `target/site/pkg`.
-There is no root pnpm installation or `apps/web` build step. Produce a new
+There is no root pnpm installation or separate browser app build step. Produce a new
 native distribution from fresh artifacts:
 
 ```bash

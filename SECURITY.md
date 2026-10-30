@@ -36,8 +36,7 @@ In scope:
 - the Rust host (`crates/host`, `crates/adapters`,
   `crates/slice`) and its HTTP surface;
 - tenant isolation, session/CSRF handling, authority and approval binding;
-- the historical TypeScript host/operator material preserved under
-  `tools/legacy` and `examples/legacy`;
+- historical TypeScript host/operator material recoverable from git history;
 - backup, restore and release tooling that handles credentials or tenant data;
 - committed configuration that weakens the documented security posture.
 

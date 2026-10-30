@@ -24,8 +24,6 @@ The Cargo workspace lives at the repository root. Business engines, HTTP APIs, a
 | `config/` | Shared release/tooling catalogue; crate-owned fixtures and historical data live elsewhere |
 | `deploy/` | Reference runtime packaging, service, proxy, and PostgreSQL role setup |
 | `tools/` | Current checks, builds, launchers, and dependency inventory |
-| `tools/legacy/` | Preserved migration-era tools that require the removed TypeScript workspace |
-| `examples/legacy/` | Historical consumer templates and examples; dependencies are not installed at the root |
 | `docs/` | Current entry documents, specifications, plans, research, and dated evidence |
 | `target/`, `.local/` | Ignored generated artifacts and local state; outside the source architecture |
 
