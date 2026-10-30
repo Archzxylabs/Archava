@@ -71,6 +71,19 @@ fn cli(root: &Path, owner_url: &str, args: &[&str]) -> (i32, Value) {
     });
     (output.status.code().unwrap(), body)
 }
+fn manifest_counts() -> (usize, usize) {
+    let repository = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let manifest: Value = serde_json::from_slice(
+        &std::fs::read(repository.join("migrations/manifest.v1.json")).unwrap(),
+    )
+    .unwrap();
+    let ledgers = manifest["ledgers"].as_array().unwrap();
+    let migrations = ledgers
+        .iter()
+        .map(|ledger| ledger["migrations"].as_array().unwrap().len())
+        .sum();
+    (ledgers.len(), migrations)
+}
 #[tokio::test]
 async fn empty_install_owner_bootstrap_replay_refusal_and_cli_disaster_recovery() {
     let f = provision().await;
@@ -89,8 +102,15 @@ async fn empty_install_owner_bootstrap_replay_refusal_and_cli_disaster_recovery(
         &["migrate", "--runtime-role", "archava_runtime"],
     );
     assert_eq!(code, 0, "{result}");
-    assert_eq!(result["installation"]["migration"]["ledgers"], 24);
-    assert_eq!(result["installation"]["migration"]["applied"], 36);
+    let (ledgers, migrations) = manifest_counts();
+    assert_eq!(
+        result["installation"]["migration"]["ledgers"],
+        json!(ledgers)
+    );
+    assert_eq!(
+        result["installation"]["migration"]["applied"],
+        json!(migrations)
+    );
     let (code, result) = cli(
         &root.0,
         &owner,
