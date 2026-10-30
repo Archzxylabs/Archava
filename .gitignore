@@ -1,14 +1,11 @@
 # dependencies
 node_modules/
-.pnpm-store/
 
 # build output
-.next/
 out/
 dist/
 .local/
 build/
-*.tsbuildinfo
 
 # rust build output — target/ must never be staged. Cargo.lock is
 # deliberately NOT ignored: R01 pins the host stack (axum 0.8.9, sqlx 0.9.0,
@@ -34,12 +31,7 @@ secrets*
 service-account*
 
 # tooling caches
-.turbo/
-.nx/
 coverage/
-.eslintcache
-playwright-report/
-test-results/
 
 # os / editor
 .DS_Store
@@ -50,5 +42,3 @@ Thumbs.db
 
 # logs
 *.log
-npm-debug.log*
-pnpm-debug.log*
