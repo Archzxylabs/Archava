@@ -1,0 +1,8 @@
+{
+  "rustPassed": 1005,
+  "rustFailed": 0,
+  "rustIgnored": 0,
+  "resultLines": 84,
+  "sourceSha256": "c5f5a09e38e2f5b249fda520df441059e16c9cdf91bde88538511f1b5c3779b7",
+  "note": "Workspace verification after native Tier1 UI/mission/install/restore/provenance; before any following restore exclusion/costing/provider changes."
+}

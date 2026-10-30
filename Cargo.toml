@@ -1,0 +1,199 @@
+# Archava root workspace. Current boundaries: docs/architecture/README.md.
+
+[workspace]
+resolver = "2"
+members = [
+  "crates/core",
+  "crates/adapters",
+  "crates/domain",
+  "crates/host",
+  "crates/pricing",
+  "crates/rates",
+  "crates/native",
+  "crates/assembly",
+  "crates/capacity",
+  "crates/assistant",
+  "crates/own",
+  "crates/pg-fixture",
+  "crates/providers",
+  "crates/context",
+  "crates/slice",
+  "crates/ops",
+  "crates/orbz",
+  "crates/cockpit",
+  "crates/mcp",
+  "crates/evals",
+  "crates/campaigns",
+  "crates/rpa",
+]
+
+[workspace.package]
+edition = "2021"
+version = "0.1.0"
+publish = false
+rust-version = "1.96"
+
+# The release profile is the one the benchmark measures. `lto` and
+# `codegen-units = 1` are on deliberately: R08 compares Rust release against
+# optimized TypeScript, and an unoptimized Rust build would be a dishonest win
+# for the baseline. This matches the pilot's profile so the two are comparable.
+[profile.release]
+lto = true
+codegen-units = 1
+opt-level = 3
+panic = "abort"
+strip = true
+
+[workspace.dependencies]
+archava-providers = { path = "crates/providers" }
+# Native provider HTTP; fixed TLS backend, bounded clients, no default proxy/cookie features.
+reqwest = { version = "=0.13.5", default-features = false, features = ["rustls", "json", "stream"] }
+subtle = { version = "2.6", default-features = false }
+# --- Internal crates ------------------------------------------------------
+# Path dependencies on the workspace's own crates. These are declared here and
+# consumed as `archava-core.workspace = true` so every member resolves to the
+# same local path; a member that spelled the path out itself could drift onto a
+# different copy.
+#
+# The dependency direction is enforced by what each crate imports, and it is one
+# directional: core has no internal dependencies; domain depends on core; adapters depend
+# on core and domain; host composes those layers. `archava-core` must never depend on `archava-host` —
+# a contract that imports its own HTTP surface is a contract that cannot be
+# tested without one.
+archava-core = { path = "crates/core", version = "0.1.0" }
+archava-adapters = { path = "crates/adapters" }
+archava-domain = { path = "crates/domain" }
+# R03's assistant layer — contracts, planner and the conversation flow. The
+# host implements the flow's `HostCrm` seam; the dependency stays one-way
+# (the assistant crate must never import the host).
+archava-assistant = { path = "crates/assistant" }
+archava-own = { path = "crates/own" }
+# The HTTP surface, declared so `crates/slice` (§1.4B) can consume it as
+# `archava-host.workspace = true`. Nothing else depends on it — the host is the
+# top of the internal stack — and the slice takes it ONLY in its server build;
+# its wasm target resolves this table never, which is what keeps "the host
+# cannot compile for wasm32" true while the UI it serves can.
+archava-host = { path = "crates/host" }
+# R10's operational crate (`release identity / lease / runbook`). Declared so
+# `crates/ops` consumes it as `archava-assembly.workspace = true` — one local
+# path for the catalogue the verifier reads.
+archava-assembly = { path = "crates/assembly", version = "0.1.0" }
+# R10's dev-only rehearsal fixture. `archava-ops` uses it for the
+# upgrade/restore/rollback rehearsals in its test target; the library itself
+# names it only in dev-dependencies, keeping the fixture out of anything a
+# shipped crate could import.
+archava-pg-fixture = { path = "crates/pg-fixture" }
+archava-orbz = { path = "crates/orbz", version = "0.1.0" }
+archava-cockpit = { path = "crates/cockpit", version = "0.1.0" }
+archava-mcp = { path = "crates/mcp", version = "0.1.0" }
+archava-evals = { path = "crates/evals", version = "0.1.0" }
+archava-campaigns = { path = "crates/campaigns", version = "0.1.0" }
+archava-rpa = { path = "crates/rpa", version = "0.1.0" }
+
+# Versions resolve from the live registry and are frozen in Cargo.lock at R01
+# (ADR-R04). Nothing is carried over from the pilot's pins without a
+# compatibility check.
+#
+# Measured with `cargo search`, not assumed: axum 0.8.9, sqlx 0.9.0,
+# tokio 1.53.3, leptos 0.9.0-rc0 (the Leptos *stable* line is what this
+# workspace adopts — see its entry below). The pilot in Lab/Experiments/
+# rust-pilot holds none of these — it is five pure-computation crates — so
+# nothing here is inherited from it.
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "2.0"
+tracing = "0.1"
+# sha2 for the migration-ledger checksums. Already in Cargo.lock (sqlx depends
+# on it), so this adds no registry resolution — the version is the locked one.
+# The baseline hashes migration files with sha256 (`packages/commerce-pg/src/
+# migrate.ts:13`) and the readiness port must produce the SAME digest form.
+sha2 = "0.10"
+aes-gcm = "0.10"
+
+# RA01 host identity: the baseline's session cryptography, port for port.
+# `scrypt` at the fixed OWASP parameters identity-pg pins (N=32768, r=8, p=3);
+# `hmac` for the session/csrf/bucket digests `createHmac` produces there;
+# `base64` for its base64url session tokens; `uuid` for request and approval
+# ids; `getrandom` for the 32 random bytes behind each token. `scrypt` runs
+# with default features off: the encoded form is identity-pg's own
+# `scrypt$32768$8$3$…` shape, not the PHC string its password-hash feature
+# would wrap it in, so the two implementations can verify each other's output.
+scrypt = { version = "0.11", default-features = false }
+hmac = "0.12"
+base64 = "0.22"
+uuid = { version = "1", features = ["v4", "serde"] }
+getrandom = "0.4"
+# The assistant planner's anchored vocabulary. Already inside the offline
+# dependency graph (regex 1.13.1 arrives with `tracing-subscriber`'s env
+# filter); declared here so every member that matches text resolves to the
+# same engine.
+regex = "1.13.1"
+
+# --- Host stack ---------------------------------------------------------
+# `sqlx` for the postgres driver alone: raw SQL and explicit transactions, never
+# a query DSL, because the authority rules live in PostgreSQL row-level security
+# and the baseline's domain repositories own their SQL.
+#
+# The `macros` feature is deliberately absent, and removing it is a security
+# property rather than a dependency trim. `sqlx::query!` and its siblings are
+# compile-time macros: they connect to a live database *during the build* to
+# validate SQL against the real schema. This workspace must never do that — the
+# standing constraint forbids using the owner database as a target, so a build
+# that requires one would either fail on a clean checkout or tempt someone into
+# pointing it at the owner. Only the runtime `sqlx::query` path is used, which
+# needs no build-time connection. `migrate` is absent for the same reason: the
+# RLS migrations are applied by an operator with role-separated access
+# (`migrations/<ledger>/`), not by this host at build time.
+sqlx = { version = "0.9.0", default-features = false, features = [
+  "runtime-tokio",
+  "postgres",
+  # Typed `Uuid` binds for the `commands` idempotency key and the `approvals`
+  # primary key. Without it `sqlx::Type<Postgres>` is unimplemented for
+  # `Uuid` and every bind would have to hand-roll `::uuid` casts — string
+  # data round-tripping through a typed column is exactly the escape hatch
+  # the schema is meant to close.
+  "uuid",
+  # `serde_json::Value` in both directions: the `commands.receipt` and
+  # `approvals` payloads are JSONB columns (RA01), and binding a receipt as
+  # anything other than JSON would mean string-escaping user data into a
+  # typed column. `serde_json` itself is already in the tree.
+  "json",
+] }
+tokio = { version = "1.54.1", features = ["macros", "rt-multi-thread", "net", "signal"] }
+
+# The HTTP surface. `axum` 0.8.9 measured with `cargo search`.
+#
+# `macros` is enabled because the host builds its router with the routing macro
+# rather than a hand-rolled matcher, matching how `apps/crm` declares its routes
+# declaratively rather than dispatching by hand.
+axum = { version = "0.8.9", features = ["macros"] }
+
+# §1.4B's UI framework. Leptos is pinned to the 0.8 STABLE line on purpose
+# (§1.4A item 4: "latest search result yang RC bukan bukti" — the newest thing
+# on crates.io is 0.9.0-rc0, and an RC is a reason to wait, not to adopt).
+# 0.8.22 is the newest stable release, its MSRV is 1.88 (the toolchain here is
+# 1.96.0), and `leptos_axum 0.8.10` — the axum integration for the same line —
+# declares `axum ^0.8`, so the slice reuses this workspace's axum 0.8.9 rather
+# than dragging a second axum into the lock. The features are selected per
+# compilation target by `crates/slice` itself: `ssr` for the server build,
+# `hydrate` for the wasm build, never both (Leptos declares the pair
+# mutually exclusive).
+leptos = { version = "0.8.22" }
+leptos_axum = { version = "0.8.10" }
+# The router is a separate crate in the same release line (newest stable
+# 0.8.7, measured with `cargo info`); the slice's views declare routes with it.
+leptos_router = { version = "0.8.7" }
+# The hydrate bin is a wasm-bindgen export (the browser's entry point into the
+# hydrated tree).
+wasm-bindgen = "0.2.129"
+
+# Fast development compilation profiles
+[profile.dev]
+opt-level = 0
+debug = 1
+split-debuginfo = "unpacked"
+incremental = true
+
+# Optimize external dependencies in dev so runtime speed is high
+[profile.dev.package."*"]
+opt-level = 2

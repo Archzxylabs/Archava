@@ -1,0 +1,359 @@
+# PACKET-008 — the second R07 cohort: subscriptions (entitlements, metered usage and the corrected paid-activation rule; P-ERP-R07 grows 13 → 26)
+
+**Archxy 2 → Archxy 1.** Successor to PACKET-007: its hunks are ASSUMED
+FOLDED before this diff is applied — the a/ side of every hunk below is
+literally "current main (2026-10-20, HEAD `e1e83c6` — `C01: all seven CRM
+writes + the record screen`) with PACKET-003.diff, PACKET-004.diff,
+PACKET-005.diff, PACKET-006.diff and PACKET-007.diff applied". Built by
+patching a fresh `--no-local` clone of today's main in `/tmp/opencode`
+(`patch -p1 --forward --fuzz=3`; all five prior packets fold with ZERO
+rejects), then overlaying this copy's five shared files and diffing. This
+packet's own hunks apply onto that fold with `--fuzz=0` and ZERO rejects
+(verified this round), and they are ADDITIVE-ONLY: none of them removes a
+line main gained after this copy's base.
+
+**This packet adds NO hunks to the four LIBRARY single-writer files**
+(tools/library/pack.mjs, tools/library/manifest.mjs, package.json,
+docs/LOCAL_LIBRARY_HANDOFF.md), NO Cargo.toml/Cargo.lock change
+(`@archava/subscriptions-pg` already rides the committed catalogue and
+ships transitively through the pack's dependency closure) and NO change
+to `tools/rust/erp/verify-r07.mjs` (Archxy 2-owned producer; it moves
+with the candidate copy, not with this packet).
+
+**Why the copy's files differ from main outside the hunks.** This copy's
+HEAD (`21234bb`) is an ancestor of main (`e1e83c6`, 32 commits back);
+main has since gained C01/C02 (CRM writes, server logout, literal search)
+and the A1-00 snapshot. Those commits touch `router.rs` (logout and
+`/crm/records` routes) and `required-coverage.json` (five P-FAST-GATE
+checks) — both files this packet must edit. The packet therefore carries
+ONLY the subscriptions hunks: after applying it, `pg-fixture/lib.rs`,
+`verify.mjs` and `verify.test.mjs` are BYTE-IDENTICAL to this copy's
+versions (round-trip `cmp` green), while `router.rs` and
+`required-coverage.json` equal this copy's versions PLUS main's newer
+C01/C02/A1-00 lines, which the hunks leave untouched. DO NOT overwrite
+either file with the candidate copy's raw version — that would revert
+main's CRM/logout work.
+
+**What the cohort is.** The R07 entitlements/usage ledger ported from
+`packages/subscriptions-pg/*` and `packages/subscriptions/*`:
+
+- the strict `{type, commandId, …}` grammar for five commands
+  (`create_subscription`, `record_payment`, `consume_usage`,
+  `change_status`, `grant_entitlement`) and the four-permission
+  vocabulary (`subscriptions.read/write/payment/usage` + `audit.read`);
+- **the audit-A05 correction** (D19/D21 in `KNOWN_DIFFERENCES.md`):
+  a paid plan's entitlement may NOT be consumed while the subscription
+  is `draft` (never paid) — the gate answers the TS's 402 class with the
+  reason label `not_paid` and records NOTHING; `change_status` may not
+  push a never-paid draft to `active` (only `record_payment` activates),
+  `canceled`/`expired` are terminal, and `paused → active` requires a
+  payment record on file;
+- the usage idempotency key is a slot: a duplicate `(entitlement, key)`
+  answers 409 `conflict` instead of the baseline's 500-class database
+  failure, and the meter counts once (D20);
+- the quota boundary, the `past_due` 402 refusal, the revoked
+  entitlement 403, the stale-revision 409, cross-tenant refusal before
+  any statement, and the command-level replay (same bytes →
+  `idempotencyReplay: true`, one row) all ride the same transaction;
+- **the first Rust READ surface in the ERP namespace**: five of the six
+  TS read areas are served over HTTP — command status, list, detail
+  (with entitlements), entitlements and usage history (`getAccess` is
+  resolved by the gate from the membership row, not a route), all
+  bounded (`limit` 1..100, `offset` ≥ 0, status/contact filters judged
+  by the strict grammar).
+
+**Evidence.** `P-ERP-R07` grows 13 → 26 required checks in the frozen
+manifest (`expect.witnessTotal` 26, `RN-ERP-03` =
+"an unpaid draft grants no consumption right"); the producer re-runs
+BOTH suites (`erp_billing` 13 + `erp_subscriptions` 13) and writes
+`dist/rust-erp-r07-proof.json`. Both suites run at libtest's DEFAULT
+width (no thread pin, no hidden retry): the subscriptions suite's login
+slots are `max_active_derivations()` — the production
+password-derivation budget of two — so the gate measures the same
+concurrency a real host allows. (The first draft hardcoded four slots
+and a full-width run correctly answered 503 `busy`.)
+
+**Shared-file hunks in this packet (5):**
+- `docs/rust/required-coverage.json` — the 13 new `requiredChecks`, the
+  `witnessTotal` 13 → 26, `RN-ERP-03`, and the `producedBy` text.
+- `rust/crates/host/src/router.rs` — the six `/erp/subscriptions/*`
+  routes, mounted after the billing ones.
+- `rust/crates/pg-fixture/src/lib.rs` — `SUBSCRIPTIONS_MIGRATIONS` (one
+  migration, sha256 recomputed against the TS bytes), the
+  `subscriptions_ledger` field, its provision step, the runtime grants,
+  the package arm, the ledger-expectation arm and the instantiation.
+- `tools/rust/test/verify.test.mjs` — the drift test's suite list grows
+  `'billing'` → `'billing', 'subscriptions'` and its comment's frozen
+  tally 13 → 26.
+- `tools/rust/verify.mjs` — the `P-ERP-R07` evidence map gains the 13
+  subscription checks (all bound to the existing `erp R07 suites` step)
+  and its comment.
+
+**Apply order:** PACKET-003, PACKET-004, PACKET-005, PACKET-006,
+PACKET-007, then this packet as
+`patch -p1 --directory=<main> < PACKET-008.diff`; confirm `git status`
+on the five listed files. The fixture hunks sit after the billing ones
+in the same `migrate_ledger` chain (scheduling → accommodation → assets
+→ billing → subscriptions) and inside the same provision flow, so the
+commerce rehearsals keep working.
+
+diff --git a/rust/crates/host/src/router.rs b/rust/crates/host/src/router.rs
+--- a/rust/crates/host/src/router.rs
++++ b/rust/crates/host/src/router.rs
+@@ -433,6 +428,34 @@
+             "/erp/billing/commands/status",
+             get(crate::erp::billing::billing_status),
+         )
++        // Archxy 2's R07 subscriptions ledger (PACKET-008): the
++        // entitlements/usage cohort — the READ surfaces come with it
++        // (list, detail, entitlements, usage history), because a ledger
++        // whose rows can only be written is not a usable domain.
++        .route(
++            "/erp/subscriptions/commands",
++            post(crate::erp::subscriptions::subscription_command),
++        )
++        .route(
++            "/erp/subscriptions/commands/status",
++            get(crate::erp::subscriptions::subscription_status),
++        )
++        .route(
++            "/erp/subscriptions/subscriptions",
++            get(crate::erp::subscriptions::subscription_list),
++        )
++        .route(
++            "/erp/subscriptions/subscriptions/detail",
++            get(crate::erp::subscriptions::subscription_detail),
++        )
++        .route(
++            "/erp/subscriptions/entitlements",
++            get(crate::erp::subscriptions::subscription_entitlements),
++        )
++        .route(
++            "/erp/subscriptions/usage-events",
++            get(crate::erp::subscriptions::subscription_usage),
++        )
+         .with_state(state)
+ }
+ 
+diff --git a/rust/crates/pg-fixture/src/lib.rs b/rust/crates/pg-fixture/src/lib.rs
+--- a/rust/crates/pg-fixture/src/lib.rs
++++ b/rust/crates/pg-fixture/src/lib.rs
+@@ -164,6 +164,14 @@
+ /// tenant policies, byte-faithful to the TS package's frozen migration.
+ pub const BILLING_MIGRATIONS: &[&str] = &["001_billing_invoices_settlement"];
+ 
++/// The subscriptions ledger's migration, in apply order —
++/// `packages/subscriptions-pg/migrations/001_subscriptions_entitlements_usage.sql`
++/// (Archxy 2's ERP namespace, R07 second cohort, PACKET-008):
++/// memberships/subscriptions/entitlements/usage events + the immutability
++/// triggers + the forced tenant policies, byte-faithful to the TS
++/// package's frozen migration.
++pub const SUBSCRIPTIONS_MIGRATIONS: &[&str] = &["001_subscriptions_entitlements_usage"];
++
+ /// The provider attempt ledger's migration, in apply order —
+ /// `packages/provider-runtime/migrations/001_provider_attempts.sql` (the R09
+ /// provider slice): the budget buckets and the pending→finalized attempt rows
+@@ -268,6 +276,11 @@
+     /// (PACKET-007), the eight operational tables the balance CHECK and
+     /// the guard triggers defend.
+     pub billing_ledger: Vec<(String, String)>,
++    /// The same ledger for `archava_subscriptions` — the R07 entitlements
++    /// cohort (PACKET-008), the six operational tables the quota CHECK,
++    /// the usage-idempotency UNIQUE constraint and the immutability
++    /// triggers defend.
++    pub subscriptions_ledger: Vec<(String, String)>,
+     /// The same ledger for `archava_provider` — the R09 provider attempt
+     /// ledger (buckets, pending→finalized attempts, restore holds), through
+     /// whose forced-RLS scope the provider budget is a real PostgreSQL
+@@ -875,6 +888,16 @@
+     // holds (the R07 area's first subject).
+     let billing_ledger =
+         migrate_ledger(&owner_pool, "archava_billing", "archava_billing_migrations").await;
++    // Archxy 2 ERP namespace (PACKET-008): the subscriptions ledger
++    // migrates under the same owner role, after the settlement sibling —
++    // no cross-schema FOREIGN KEY exists, but the namespace's one printed
++    // apply order holds.
++    let subscriptions_ledger = migrate_ledger(
++        &owner_pool,
++        "archava_subscriptions",
++        "archava_subscriptions_migrations",
++    )
++    .await;
+     // R09's provider slice: the attempt ledger migrates under the same owner
+     // role, one UTC-anchored schema next to the domain ledgers. The runtime
+     // role must stay a NON-owner of `archava_provider` — `create`'s role
+@@ -1165,6 +1188,25 @@
+         format!(
+             "GRANT EXECUTE ON FUNCTION archava_billing.lock_membership(text,text) TO {RUNTIME_USER}"
+         ),
++        // Archxy 2 ERP namespace (PACKET-008): the subscriptions grants —
++        // the port of grantSubscriptionsRuntime
++        // (`packages/subscriptions-pg/src/migrate.ts`), statement for
++        // statement: schema usage, the history+membership read, the
++        // subscription/entitlement/usage/command/audit writes, and the
++        // membership lock's SECURITY DEFINER function.
++        format!("GRANT USAGE ON SCHEMA archava_subscriptions TO {RUNTIME_USER}"),
++        format!(
++            "GRANT SELECT ON archava_subscriptions.schema_migrations,\
++             archava_subscriptions.memberships TO {RUNTIME_USER}"
++        ),
++        format!(
++            "GRANT SELECT,INSERT,UPDATE ON archava_subscriptions.subscriptions,\
++             archava_subscriptions.entitlements,archava_subscriptions.usage_events,\
++             archava_subscriptions.commands,archava_subscriptions.audit TO {RUNTIME_USER}"
++        ),
++        format!(
++            "GRANT EXECUTE ON FUNCTION archava_subscriptions.lock_membership(text,text) TO {RUNTIME_USER}"
++        ),
+         // R09 provider slice — the port of grantProviderRuntime
+         // (`packages/provider-runtime/src/postgres.ts`), statement for
+         // statement, mirrored by
+@@ -1221,6 +1263,7 @@
+         accommodation_ledger,
+         assets_ledger,
+         billing_ledger,
++        subscriptions_ledger,
+         provider_ledger,
+         dir,
+     }
+@@ -1400,6 +1443,9 @@
+         // (PACKET-007) the R07 settlement ledger migrates from its own TS
+         // package, byte-faithful, one migration deep.
+         "archava_billing" => "billing-pg",
++        // (PACKET-008) the R07 entitlements ledger migrates from its own TS
++        // package, byte-faithful, one migration deep.
++        "archava_subscriptions" => "subscriptions-pg",
+         // R09's provider ledger: the migration file the TS store reads too.
+         "archava_provider" => "provider-runtime",
+         _ => "commerce-pg",
+@@ -1428,6 +1474,7 @@
+         "archava_accommodation" => ACCOMMODATION_MIGRATIONS,
+         "archava_assets" => ASSETS_MIGRATIONS,
+         "archava_billing" => BILLING_MIGRATIONS,
++        "archava_subscriptions" => SUBSCRIPTIONS_MIGRATIONS,
+         "archava_provider" => PROVIDER_MIGRATIONS,
+         _ => COMMERCE_MIGRATIONS,
+     };
+@@ -1516,6 +1563,8 @@
+         assets_ledger: ledger_expectations("archava_assets"),
+         // (PACKET-007) the R07 settlement cohort's frozen pair list.
+         billing_ledger: ledger_expectations("archava_billing"),
++        // (PACKET-008) the R07 entitlements cohort's frozen pair list.
++        subscriptions_ledger: ledger_expectations("archava_subscriptions"),
+         provider_ledger: ledger_expectations("archava_provider"),
+         dir,
+     }
+diff --git a/tools/rust/verify.mjs b/tools/rust/verify.mjs
+--- a/tools/rust/verify.mjs
++++ b/tools/rust/verify.mjs
+@@ -836,10 +836,12 @@
+       },
+     },
+     {
+-      // The Archxy 2 ERP namespace's R07 proof (PACKET-007): the billing
+-      // cohort's thirteen witnesses — the R07 surface's FIRST cohort, any
+-      // later cohort growing this same block additively (the R05 surface
+-      // is closed and stays untouched; the proof never forks per cohort).
++      // The Archxy 2 ERP namespace's R07 proof (PACKET-007, grown by
++      // PACKET-008): the billing cohort's thirteen witnesses and the
++      // subscriptions cohort's thirteen — the R07 surface's first two
++      // cohorts, any later cohort growing this same block additively (the
++      // R05 surface is closed and stays untouched; the proof never forks
++      // per cohort).
+       proof: 'P-ERP-R07',
+       checks: {
+         'authorized billing life documents its settlement': { step: 'erp R07 suites' },
+@@ -855,6 +857,20 @@
+         'lost response replays without a second row': { step: 'erp R07 suites' },
+         'narrow billing grants refuse the arms they lack': { step: 'erp R07 suites' },
+         'transition state and wire boundaries refuse the movement': { step: 'erp R07 suites' },
++        // The subscriptions cohort (PACKET-008) grows the same proof.
++        'authorized subscription life documents its entitlements': { step: 'erp R07 suites' },
++        'an unpaid draft grants no consumption right': { step: 'erp R07 suites' },
++        'the quota boundary refuses and records nothing': { step: 'erp R07 suites' },
++        'a duplicate usage key conflicts and records nothing': { step: 'erp R07 suites' },
++        'a past due subscription refuses usage': { step: 'erp R07 suites' },
++        'activation without a payment record refuses': { step: 'erp R07 suites' },
++        'a revoked entitlement refuses usage': { step: 'erp R07 suites' },
++        'the stale revision conflicts and records nothing': { step: 'erp R07 suites' },
++        'the same subscription key a different command conflicts': { step: 'erp R07 suites' },
++        'lost response replays the recorded subscription receipt': { step: 'erp R07 suites' },
++        'cross-tenant subscription callers refuse before any write': { step: 'erp R07 suites' },
++        'narrow subscription grants refuse exactly the arms they lack': { step: 'erp R07 suites' },
++        'the subscription wire boundary and read projections hold': { step: 'erp R07 suites' },
+       },
+       details: () => {
+         try {
+diff --git a/tools/rust/test/verify.test.mjs b/tools/rust/test/verify.test.mjs
+--- a/tools/rust/test/verify.test.mjs
++++ b/tools/rust/test/verify.test.mjs
+@@ -429,11 +429,12 @@
+ 
+ test('the P-ERP-R07 witness map and the frozen manifest cannot drift apart', () => {
+   // Same property as the kernel-ERP and R04 proofs, for the R07 surface:
+-  // the billing cohort's manifest checks over the named Rust test
+-  // functions — PACKET-007 lands the cohort whole, seeding the map and the
+-  // manifest TOGETHER (R07 opens its OWN proof; the closed 29-check R05
+-  // surface stays untouched). Both directions, and the frozen
+-  // `witnessTotal` (13, grown additively by any later R07 cohort) too.
++  // the cohorts' manifest checks over the named Rust test functions —
++  // PACKET-007 lands billing whole and PACKET-008 grows the same map with
++  // subscriptions, seeding the map and the manifest TOGETHER (R07 opens its
++  // OWN proof; the closed 29-check R05 surface stays untouched). Both
++  // directions, and the frozen `witnessTotal` (26, grown additively by any
++  // later R07 cohort) too.
+   const manifest = loadManifest(repoRoot)
+   const spec = manifest.proofs['P-ERP-R07']
+   assert.deepEqual([...Object.keys(R07_WITNESSES)].sort(), [...spec.requiredChecks].sort())
+@@ -451,7 +452,7 @@
+         `${check}: witness name ${JSON.stringify(name)} is not a test identifier`,
+       )
+       assert.ok(
+-        ['billing'].includes(suite),
++        ['billing', 'subscriptions'].includes(suite),
+         `${check}: witness ${JSON.stringify(name)} names unknown suite ${JSON.stringify(suite)}`,
+       )
+     }
+diff --git a/docs/rust/required-coverage.json b/docs/rust/required-coverage.json
+--- a/docs/rust/required-coverage.json
++++ b/docs/rust/required-coverage.json
+@@ -1812,7 +1808,7 @@
+     },
+     "P-ERP-R07": {
+       "kind": "evidence",
+-      "producedBy": "pnpm rust:verify → erp R07 suites step (tools/rust/erp/verify-r07.mjs) grading named witness tests in rust/crates/host/tests/erp_billing.rs against the owned PostgreSQL fixture — the R07 billing ledger's runtime half, opened whole by the billing cohort with PACKET-007 (the R05 surface is closed at 29 checks and never grows again, so the R07 migration area opens its OWN growing evidence surface that later cohorts extend additively; the pure domain half is the frozen P-R07-DOMAIN)",
++      "producedBy": "pnpm rust:verify → erp R07 suites step (tools/rust/erp/verify-r07.mjs) grading named witness tests in rust/crates/host/tests/erp_billing.rs (billing cohort, PACKET-007) and rust/crates/host/tests/erp_subscriptions.rs (subscriptions cohort, PACKET-008) against the owned PostgreSQL fixture — the R07 ledgers' runtime halves, opened whole by the billing cohort (the R05 surface is closed at 29 checks and never grows again, so the R07 migration area opens its OWN growing evidence surface that later cohorts extend additively; the pure domain half is the frozen P-R07-DOMAIN). The subscriptions cohort carries the corrected paid-activation rule (audit A05 / RN-ERP-03) and the R07 read projections the TS api serves",
+       "requiredChecks": [
+         "authorized billing life documents its settlement",
+         "a forged claim settles nothing",
+@@ -1826,13 +1822,27 @@
+         "same billing key different command conflicts",
+         "lost response replays without a second row",
+         "narrow billing grants refuse the arms they lack",
+-        "transition state and wire boundaries refuse the movement"
++        "transition state and wire boundaries refuse the movement",
++        "authorized subscription life documents its entitlements",
++        "an unpaid draft grants no consumption right",
++        "the quota boundary refuses and records nothing",
++        "a duplicate usage key conflicts and records nothing",
++        "a past due subscription refuses usage",
++        "activation without a payment record refuses",
++        "a revoked entitlement refuses usage",
++        "the stale revision conflicts and records nothing",
++        "the same subscription key a different command conflicts",
++        "lost response replays the recorded subscription receipt",
++        "cross-tenant subscription callers refuse before any write",
++        "narrow subscription grants refuse exactly the arms they lack",
++        "the subscription wire boundary and read projections hold"
+       ],
+       "expect": {
+-        "witnessTotal": 13,
++        "witnessTotal": 26,
+         "namedRegressions": {
+           "RN-ERP-01": "revoked billing grant refused on recovery",
+-          "RN-ERP-02": "same billing key different command conflicts"
++          "RN-ERP-02": "same billing key different command conflicts",
++          "RN-ERP-03": "an unpaid draft grants no consumption right"
+         }
+       },
+       "sourcePaths": [

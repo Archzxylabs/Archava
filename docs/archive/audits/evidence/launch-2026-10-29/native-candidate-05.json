@@ -1,0 +1,21 @@
+{
+  "distribution": "dist/native-candidate-20261030-05",
+  "sourceSha256": "2b0662617e3769a0cc07b750a89ce499da23051e14dd5506635dda400ce5644a",
+  "artifacts": 42,
+  "bytes": 20945298,
+  "runtimeVersion": "0.1.0",
+  "catalog": {
+    "id": "archava-local-library",
+    "version": "1.19.0"
+  },
+  "browser": "recovery-browser-queue-green-02/result.json",
+  "sourceChecks": [
+    "recovery-review-unit.log",
+    "recovery-review-final-clippy.log",
+    "recovery-review-portable.log",
+    "recovery-queue-release-build.log"
+  ],
+  "browserChecks": 25,
+  "pageErrors": 0,
+  "cleanupExitCode": 0
+}

@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "resend": [
+    {
+      "id": "main-resend",
+      "tenant": "your-workspace",
+      "fromAddress": "Acme Billing <billing@example.com>",
+      "apiKeyEnv": "ARCHAVA_RESEND_API_KEY"
+    }
+  ]
+}

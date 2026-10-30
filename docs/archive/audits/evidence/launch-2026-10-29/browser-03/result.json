@@ -1,0 +1,80 @@
+{
+  "startedAt": "2026-10-29T07:57:39.136Z",
+  "scope": "Synthetic local fixture, real Chromium/SSR/WASM/HTTP/PostgreSQL; production binary restart. No live provider or public/TLS deployment acceptance.",
+  "checks": [
+    {
+      "id": "F01-authenticated-hydration",
+      "status": "passed",
+      "details": "Real login, session cookie, WASM handlers and contact query"
+    },
+    {
+      "id": "F02-contact-navigation-idempotency",
+      "status": "passed",
+      "details": "Opening the new record creates no second contact or other mutation"
+    },
+    {
+      "id": "F02-browser-to-database",
+      "status": "passed",
+      "details": {
+        "contact": "b6dd7d89-be97-49bb-b9a2-84ca9121b08f",
+        "requestId": "5b0c0717-2b41-4501-929b-ba6c6526ed37",
+        "proof": "Created via UI, reviewed/applied twice, exactly one follow-up and durable receipt via non-owner SQL"
+      }
+    },
+    {
+      "id": "F03-lost-response-recovery",
+      "status": "passed",
+      "details": {
+        "requestId": "dfcce62e-1499-495d-8381-48b756abfc89",
+        "proof": "Response deliberately lost after real commit; UI shows uncertainty and recovers without resubmitting"
+      }
+    },
+    {
+      "id": "F04-csrf-refusal",
+      "status": "passed",
+      "details": "Valid mutation body without the CSRF header is refused"
+    },
+    {
+      "id": "F03-production-restart",
+      "status": "passed",
+      "details": "Fresh production process, same PostgreSQL and browser session, committed receipt survives"
+    },
+    {
+      "id": "F04-role-and-tenant-refusal",
+      "status": "passed",
+      "details": "Read-only UI submission creates no effect; foreign tenant read refused"
+    },
+    {
+      "id": "UI-mobile-layout",
+      "status": "passed",
+      "details": "390px viewport has no horizontal page overflow"
+    }
+  ],
+  "errors": [],
+  "browserExecutable": "/usr/bin/brave",
+  "browserSandboxDisabled": false,
+  "status": "passed",
+  "pageErrors": [],
+  "fixtureCleanup": {
+    "exitCode": 0,
+    "signal": null
+  },
+  "finishedAt": "2026-10-29T07:57:43.401Z",
+  "artifacts": [
+    {
+      "path": "target/release/examples/slice_server",
+      "bytes": 12685288,
+      "sha256": "578a3859c3c5e01ccc3f03722ba87a534963f69dfa34098bd4a9124dfb5408a7"
+    },
+    {
+      "path": "target/release/archava-server",
+      "bytes": 13302552,
+      "sha256": "13e107733992b18b89bf70a9fa7a2355784c6ac51ed001739edde4b8fd348efc"
+    },
+    {
+      "path": "target/site/pkg/archava-slice_bg.wasm",
+      "bytes": 2060136,
+      "sha256": "d21eede0497ec4f273697227f365f319d110feb8eac20f2aa694bc6ec7b37c4e"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "candidate": "dist/native-candidate-20261029-01",
+  "profileSha256": "b1eb0b4f27c8b6fd63bffe1fc3d93185cefd81fdc883078479e974d75c5cde20",
+  "sourceSha256": "c5f5a09e38e2f5b249fda520df441059e16c9cdf91bde88538511f1b5c3779b7",
+  "runtimeVersion": "0.1.0",
+  "catalog": {
+    "id": "archava-local-library",
+    "version": "1.19.0"
+  },
+  "artifacts": 40,
+  "bytes": 20547579,
+  "browser": "operations-browser-03/result.json",
+  "bounds": [
+    "Local Linux candidate; no push/deploy performed",
+    "Provider live deferred by owner",
+    "Costing/payment/provider/write-worker/serving fencing work remains open"
+  ]
+}

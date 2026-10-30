@@ -1,0 +1,134 @@
+{
+  "startedAt": "2026-10-29T09:13:05.474Z",
+  "scope": "Synthetic local fixture, real Chromium/SSR/WASM/HTTP/PostgreSQL; production binary restart. No live provider or public/TLS deployment acceptance.",
+  "checks": [
+    {
+      "id": "F01-authenticated-hydration",
+      "status": "passed",
+      "details": "Real login, session cookie, WASM handlers and contact query"
+    },
+    {
+      "id": "F02-contact-navigation-idempotency",
+      "status": "passed",
+      "details": "Opening the new record creates no second contact or other mutation"
+    },
+    {
+      "id": "F02-browser-to-database",
+      "status": "passed",
+      "details": {
+        "contact": "a7d80328-f75a-4253-8c97-bb6cfb6ce36e",
+        "requestId": "69e591ba-d99e-4205-8a9e-d87b652b12c8",
+        "proof": "Created via UI, reviewed/applied twice, exactly one follow-up and durable receipt via non-owner SQL"
+      }
+    },
+    {
+      "id": "F03-lost-response-recovery",
+      "status": "passed",
+      "details": {
+        "requestId": "4e0d6011-2093-49b5-8721-79405bd120a5",
+        "proof": "Response deliberately lost after real commit; UI shows uncertainty and recovers without resubmitting"
+      }
+    },
+    {
+      "id": "F04-csrf-refusal",
+      "status": "passed",
+      "details": "Valid mutation body without the CSRF header is refused"
+    },
+    {
+      "id": "F03-production-restart",
+      "status": "passed",
+      "details": "Fresh production process, same PostgreSQL and browser session, committed receipt survives"
+    },
+    {
+      "id": "D02-commerce-ui",
+      "status": "passed",
+      "details": "Catalog creation → stock adjustment → multi-line draft → reserve → fulfill; 2 units deducted"
+    },
+    {
+      "id": "D03-purchasing-ui",
+      "status": "passed",
+      "details": "Supplier → offer → draft → confirmation → inspected delivery (4 accepted, 1 rejected); stock moves from 6 to 10"
+    },
+    {
+      "id": "D09-billing-ui",
+      "status": "passed",
+      "details": "Invoice draft → issue; ledger outstanding 30000 IDR, settled 0; no client assertion of payment"
+    },
+    {
+      "id": "D12-support-ui",
+      "status": "passed",
+      "details": "Create → start → resolve; transitions visible from persisted case detail"
+    },
+    {
+      "id": "Cockpit-operator-ui",
+      "status": "passed",
+      "details": "Create dependent mission → three real authorized read tools → durable observations → touchdown"
+    },
+    {
+      "id": "UI-operations-mobile",
+      "status": "passed",
+      "details": "Sales workflow fits a 390px page with tables scrolling inside their frame"
+    },
+    {
+      "id": "F04-role-and-tenant-refusal",
+      "status": "passed",
+      "details": "Read-only UI submission creates no effect; foreign tenant read refused"
+    },
+    {
+      "id": "UI-mobile-layout",
+      "status": "passed",
+      "details": "390px viewport has no horizontal page overflow"
+    }
+  ],
+  "errors": [
+    "AssertionError [ERR_ASSERTION]: Unexpected JavaScript/WASM errors\n+ actual - expected\n\n+ [\n+   'slice panic: panicked at /home/haikaru/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/reactive_graph-0.2.16/src/traits.rs:361:29:\\n' +\n+     'Tried to access a reactive value that has already been disposed.',\n+   'RuntimeError: unreachable\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5079]:0x2b3563\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5066]:0x2b3521\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4909]:0x2b2e6a\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[2330]:0x2671f7\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[3474]:0x29aabf\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5044]:0x2b346a\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4436]:0x2b0111\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4263]:0x2adb56\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[353]:0x128fed\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4701]:0x2b2170',\n+   'slice panic: panicked at /home/haikaru/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/reactive_graph-0.2.16/src/traits.rs:361:29:\\n' +\n+     'Tried to access a reactive value that has already been disposed.',\n+   'RuntimeError: unreachable\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5079]:0x2b3563\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5066]:0x2b3521\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4909]:0x2b2e6a\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[2330]:0x2671f7\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[3474]:0x29aabf\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5044]:0x2b346a\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4436]:0x2b0111\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4263]:0x2adb56\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[353]:0x128fed\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4701]:0x2b2170',\n+   'slice panic: panicked at /home/haikaru/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/reactive_graph-0.2.16/src/traits.rs:361:29:\\n' +\n+     'Tried to access a reactive value that has already been disposed.',\n+   'RuntimeError: unreachable\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5079]:0x2b3563\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5066]:0x2b3521\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4909]:0x2b2e6a\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[2330]:0x2671f7\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[3474]:0x29aabf\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5044]:0x2b346a\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4436]:0x2b0111\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4263]:0x2adb56\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[353]:0x128fed\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4701]:0x2b2170',\n+   'slice panic: panicked at /home/haikaru/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/reactive_graph-0.2.16/src/traits.rs:361:29:\\n' +\n+     'Tried to access a reactive value that has already been disposed.',\n+   'RuntimeError: unreachable\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5079]:0x2b3563\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5066]:0x2b3521\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4909]:0x2b2e6a\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[2330]:0x2671f7\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[3474]:0x29aabf\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5044]:0x2b346a\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4436]:0x2b0111\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4263]:0x2adb56\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[353]:0x128fed\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4701]:0x2b2170',\n+   'slice panic: panicked at /home/haikaru/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/reactive_graph-0.2.16/src/traits.rs:361:29:\\n' +\n+     'Tried to access a reactive value that has already been disposed.',\n+   'RuntimeError: unreachable\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5079]:0x2b3563\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5066]:0x2b3521\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4909]:0x2b2e6a\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[2330]:0x2671f7\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[3474]:0x29aabf\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5044]:0x2b346a\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4436]:0x2b0111\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4263]:0x2adb56\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[353]:0x128fed\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4701]:0x2b2170',\n+   'slice panic: panicked at /home/haikaru/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/reactive_graph-0.2.16/src/traits.rs:361:29:\\n' +\n+     'Tried to access a reactive value that has already been disposed.',\n+   'RuntimeError: unreachable\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5079]:0x2b3563\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5066]:0x2b3521\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4909]:0x2b2e6a\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[2330]:0x2671f7\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[3474]:0x29aabf\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5044]:0x2b346a\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4436]:0x2b0111\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4263]:0x2adb56\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[353]:0x128fed\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4701]:0x2b2170',\n+   'slice panic: panicked at /home/haikaru/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/reactive_graph-0.2.16/src/traits.rs:361:29:\\n' +\n+     'Tried to access a reactive value that has already been disposed.',\n+   'RuntimeError: unreachable\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5079]:0x2b3563\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5066]:0x2b3521\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4909]:0x2b2e6a\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[2330]:0x2671f7\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[3474]:0x29aabf\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5044]:0x2b346a\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4436]:0x2b0111\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4263]:0x2adb56\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[353]:0x128fed\\n' +\n+     '    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4701]:0x2b2170'\n+ ]\n- []\n\n    at file:///home/haikaru/Archverse/Lab/Archava/tools/e2e/verify.mjs:196:10"
+  ],
+  "browserExecutable": "/usr/bin/brave",
+  "browserSandboxDisabled": false,
+  "operations": {
+    "product": "ca0a2e9c-b75e-4cb9-ac32-90d092797c3b",
+    "order": "cd8c540b-3c97-4772-b947-323faaa76011",
+    "purchase": "bc36646b-a25d-474f-8af9-8617fa091506",
+    "invoice": "adadd413-b6e2-463a-a1a9-51bf3840367d",
+    "support": "9e389391-5a58-42f0-8c4b-d65b5f7d6c44"
+  },
+  "status": "failed",
+  "pageErrors": [
+    "slice panic: panicked at /home/haikaru/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/reactive_graph-0.2.16/src/traits.rs:361:29:\nTried to access a reactive value that has already been disposed.",
+    "RuntimeError: unreachable\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5079]:0x2b3563\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5066]:0x2b3521\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4909]:0x2b2e6a\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[2330]:0x2671f7\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[3474]:0x29aabf\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5044]:0x2b346a\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4436]:0x2b0111\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4263]:0x2adb56\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[353]:0x128fed\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4701]:0x2b2170",
+    "slice panic: panicked at /home/haikaru/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/reactive_graph-0.2.16/src/traits.rs:361:29:\nTried to access a reactive value that has already been disposed.",
+    "RuntimeError: unreachable\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5079]:0x2b3563\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5066]:0x2b3521\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4909]:0x2b2e6a\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[2330]:0x2671f7\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[3474]:0x29aabf\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5044]:0x2b346a\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4436]:0x2b0111\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4263]:0x2adb56\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[353]:0x128fed\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4701]:0x2b2170",
+    "slice panic: panicked at /home/haikaru/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/reactive_graph-0.2.16/src/traits.rs:361:29:\nTried to access a reactive value that has already been disposed.",
+    "RuntimeError: unreachable\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5079]:0x2b3563\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5066]:0x2b3521\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4909]:0x2b2e6a\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[2330]:0x2671f7\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[3474]:0x29aabf\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5044]:0x2b346a\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4436]:0x2b0111\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4263]:0x2adb56\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[353]:0x128fed\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4701]:0x2b2170",
+    "slice panic: panicked at /home/haikaru/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/reactive_graph-0.2.16/src/traits.rs:361:29:\nTried to access a reactive value that has already been disposed.",
+    "RuntimeError: unreachable\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5079]:0x2b3563\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5066]:0x2b3521\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4909]:0x2b2e6a\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[2330]:0x2671f7\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[3474]:0x29aabf\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5044]:0x2b346a\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4436]:0x2b0111\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4263]:0x2adb56\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[353]:0x128fed\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4701]:0x2b2170",
+    "slice panic: panicked at /home/haikaru/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/reactive_graph-0.2.16/src/traits.rs:361:29:\nTried to access a reactive value that has already been disposed.",
+    "RuntimeError: unreachable\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5079]:0x2b3563\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5066]:0x2b3521\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4909]:0x2b2e6a\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[2330]:0x2671f7\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[3474]:0x29aabf\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5044]:0x2b346a\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4436]:0x2b0111\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4263]:0x2adb56\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[353]:0x128fed\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4701]:0x2b2170",
+    "slice panic: panicked at /home/haikaru/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/reactive_graph-0.2.16/src/traits.rs:361:29:\nTried to access a reactive value that has already been disposed.",
+    "RuntimeError: unreachable\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5079]:0x2b3563\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5066]:0x2b3521\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4909]:0x2b2e6a\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[2330]:0x2671f7\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[3474]:0x29aabf\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5044]:0x2b346a\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4436]:0x2b0111\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4263]:0x2adb56\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[353]:0x128fed\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4701]:0x2b2170",
+    "slice panic: panicked at /home/haikaru/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/reactive_graph-0.2.16/src/traits.rs:361:29:\nTried to access a reactive value that has already been disposed.",
+    "RuntimeError: unreachable\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5079]:0x2b3563\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5066]:0x2b3521\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4909]:0x2b2e6a\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[2330]:0x2671f7\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[3474]:0x29aabf\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[5044]:0x2b346a\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4436]:0x2b0111\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4263]:0x2adb56\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[353]:0x128fed\n    at http://127.0.0.1:39023/pkg/archava-slice_bg.wasm:wasm-function[4701]:0x2b2170"
+  ],
+  "fixtureCleanup": {
+    "exitCode": 0,
+    "signal": null
+  },
+  "finishedAt": "2026-10-29T09:13:13.076Z",
+  "artifacts": [
+    {
+      "path": "target/release/examples/slice_server",
+      "bytes": 14706944,
+      "sha256": "4ed8ccc35b3d498d4ecf0c2b155627c829f631042d49faca2dbeccb5c9598942"
+    },
+    {
+      "path": "target/release/archava-server",
+      "bytes": 15324016,
+      "sha256": "9bd0bd02b6566fdab89aadcec538f7cfb4328b3fcf6f36d49c3557b76edf2e63"
+    },
+    {
+      "path": "target/site/pkg/archava-slice_bg.wasm",
+      "bytes": 2936627,
+      "sha256": "3bf857606994876a86b70eec0396e4f6acb3b36cea4e647a9f7f633a1a96cfc7"
+    }
+  ]
+}

@@ -1,0 +1,320 @@
+# PACKET-001 — R06 foodservice kernel slice: the ONE stock pool's second writer
+# a/ = working copy minus the foodservice patch (snapshot + PACKET-000 content),
+# b/ = isolated copy (Archxy 2 patch), rebuilt 2026-10-17 from live state.
+# Shared files only; Archxy 2-owned paths move wholesale and are not diffed:
+#  rust/crates/domain/src/erp/**  (foodservice.rs + erp/mod.rs registration)
+#  rust/crates/adapters/src/erp/** (foodservice.rs, commerce_kernel order-side,
+#                                   erp/mod.rs registration)
+#  rust/crates/host/src/erp/**    (foodservice.rs + erp/mod.rs begin_foodservice)
+#  rust/crates/host/tests/erp_foodservice.rs
+#  tools/rust/erp/verify-foodservice.mjs
+#  packages/foodservice-pg/**     (TS source of truth the port mirrors — owned)
+#  docs/rust/archxy2/**           (Archxy 2 doc trio, hands off separately)
+#
+# INTEGRATION BASIS: the main tree has NOT integrated PACKET-000 yet (verified
+# 2026-10-17: no `erp purchasing suite`, no P-ERP-PURCHASING, no purchasing_ledger
+# in main). Every hunk below is ADDITIVE and lands right after PACKET-000's
+# corresponding purchasing content; the two packets do not overlap and can fold
+# in either order. rust/Cargo.lock is UNCHANGED by this cohort: the foodservice
+# kernel adds no new dependencies (uuid via sqlx is already in scope).
+#
+# VERIFIED IN THE COPY: erp_foodservice 9/9 (~108s), erp_purchasing 9/9,
+# node --test tools/rust/test 20/20, producers live-green (dist/rust-erp-*.json),
+# cargo fmt + clippy --workspace --all-targets clean.
+
+### rust/crates/host/src/router.rs
+--- a/rust/crates/host/src/router.rs
++++ b/rust/crates/host/src/router.rs
+@@ -327,6 +327,14 @@
+             "/erp/purchasing/commands/status",
+             get(crate::erp::purchasing::purchase_status),
+         )
++        .route(
++            "/erp/foodservice/commands",
++            post(crate::erp::foodservice::food_service_command),
++        )
++        .route(
++            "/erp/foodservice/commands/status",
++            get(crate::erp::foodservice::food_service_status),
++        )
+         .with_state(state)
+ }
+ 
+
+### rust/crates/pg-fixture/src/lib.rs
+# SEMANTIC-INTEGRATION NOTE: identical situation to PACKET-000 — main gained
+# ledger_expectations()/attach()/dir() AFTER this copy's snapshot. Fold these
+# hunks into MAIN'S CURRENT file: FOOD_MIGRATIONS after PURCHASING_MIGRATIONS
+# (or wherever the purchasing const lands), the foodservice_ledger field next
+# to purchasing_ledger, the migrate_ledger call after the purchasing one, the
+# foodservice GRANT block inside the grants vec, the constructor field, and the
+# migrations_package arm. Do not apply by line offset.
+--- a/rust/crates/pg-fixture/src/lib.rs
++++ b/rust/crates/pg-fixture/src/lib.rs
+@@ -113,6 +113,12 @@
+ /// transaction.
+ pub const PURCHASING_MIGRATIONS: &[&str] = &["001_suppliers_orders_receipts"];
+ 
++/// The foodservice ledger's migration, in apply order —
++/// `packages/foodservice-pg/migrations/001_tables_recipes_tickets.sql`.
++/// Added by the Archxy 2 ERP namespace (PACKET-001): a single migration
++/// above `archava_foodservice` next to the other cohort schemas.
++pub const FOOD_MIGRATIONS: &[&str] = &["001_tables_recipes_tickets"];
++
+ /// The namespace and ledger label the commerce schema uses.
+ pub const NAMESPACE: &str = "archava_commerce";
+ pub const LEDGER: &str = "Commerce";
+@@ -183,6 +189,10 @@
+     /// the shared fixture is Archxy 1's single-writer file, the exact diff rides
+     /// in `docs/rust/archxy2/INTEGRATION_REQUESTS.md` PACKET-000).
+     pub purchasing_ledger: Vec<(String, String)>,
++    /// The same ledger for `archava_foodservice` — the stock cohort's second
++    /// ERP ledger (PACKET-001): tickets, recipes and the menus whose menu
++    /// products live IN `archava_commerce`.
++    pub foodservice_ledger: Vec<(String, String)>,
+     dir: PathBuf,
+ }
+ 
+@@ -665,6 +675,17 @@
+         PURCHASING_MIGRATIONS,
+     )
+     .await;
++    // Archxy 2 ERP namespace (PACKET-001): the foodservice ledger migrates
++    // under the same owner role; its recipes JOIN `archava_commerce.products`
++    // and its ticket flow claims commerce commands, so it runs after the
++    // commerce and purchasing migrations (order above).
++    let foodservice_ledger = migrate_ledger(
++        &owner_pool,
++        "archava_foodservice",
++        "archava_foodservice_migrations",
++        FOOD_MIGRATIONS,
++    )
++    .await;
+ 
+     // 5. Runtime grants — the port of grantCommerceRuntime
+     //    (`packages/commerce-pg/src/migrate.ts:59-76`), statement for statement.
+@@ -764,6 +785,28 @@
+         format!(
+             "GRANT EXECUTE ON FUNCTION archava_purchasing.lock_membership(text,text) TO {RUNTIME_USER}"
+         ),
++        // Archxy 2 ERP (PACKET-001) — the port of grantFoodServiceRuntime
++        // (`packages/foodservice-pg/src/migrate.ts`), statement for statement:
++        // menus/tables/tickets draft writing, recipe versions editable while
++        // unsealed, components and history append-only, `lock_membership`
++        // executes because migration 001 REVOKEs it from PUBLIC.
++        format!("GRANT USAGE ON SCHEMA archava_foodservice TO {RUNTIME_USER}"),
++        format!(
++            "GRANT SELECT ON archava_foodservice.schema_migrations,\
++             archava_foodservice.memberships TO {RUNTIME_USER}"
++        ),
++        format!(
++            "GRANT SELECT,INSERT,UPDATE ON archava_foodservice.tables,\
++             archava_foodservice.menu_items,archava_foodservice.tickets,\
++             archava_foodservice.commands,archava_foodservice.recipe_versions TO {RUNTIME_USER}"
++        ),
++        format!(
++            "GRANT SELECT,INSERT ON archava_foodservice.recipe_components,\
++             archava_foodservice.ticket_lines,archava_foodservice.audit TO {RUNTIME_USER}"
++        ),
++        format!(
++            "GRANT EXECUTE ON FUNCTION archava_foodservice.lock_membership(text,text) TO {RUNTIME_USER}"
++        ),
+     ];
+     for statement in grants {
+         sqlx::query(sqlx::AssertSqlSafe(statement.as_str()))
+@@ -788,6 +831,7 @@
+         identity_ledger,
+         crm_ledger,
+         purchasing_ledger,
++        foodservice_ledger,
+         dir,
+     }
+ }
+@@ -865,6 +909,9 @@
+         // The Archxy 2 ERP cohort's migrations live in the purchasing package
+         // they were frozen in; no other ledger may inherit this directory.
+         "archava_purchasing" => "purchasing-pg",
++        // (PACKET-001) the foodservice ledger's migration lives in its own
++        // package for the same reason.
++        "archava_foodservice" => "foodservice-pg",
+         _ => "commerce-pg",
+     }
+ }
+
+### tools/rust/verify.mjs
+--- a/tools/rust/verify.mjs
++++ b/tools/rust/verify.mjs
+@@ -274,6 +274,19 @@
+       'erp purchasing suite',
+       () => step('erp purchasing suite', ['node', 'tools/rust/erp/verify-purchasing.mjs']),
+     ],
++    // Same pattern for P-ERP-FOODSERVICE — the R06 kitchen slice: menus,
++    // recipes, and dining tickets riding the SAME commerce stock pool as its
++    // second consumer. The workspace step cannot prove the NINE witnesses the
++    // slice needs (shared-pool exactly-once, over-reservation refusal,
++    // non-tracked ingredient rollback, revoked recovery, key/fingerprint
++    // collision, cross-tenant, grant gate, lost-response replay, cancel
++    // release), so this producer re-runs `--test erp_foodservice` and grades
++    // each check against its named witness in the harness output. Added with
++    // the foodservice cohort in PACKET-001 (scope edit for review).
++    [
++      'erp foodservice suite',
++      () => step('erp foodservice suite', ['node', 'tools/rust/erp/verify-foodservice.mjs']),
++    ],
+     // The tests written for `node --test` and then left unwired: a run nobody
+     // invokes proves nothing. The files are named explicitly, not `node --test
+     // tools/rust` — that form also sweeps up the three vitest `*.test.ts` files in
+@@ -512,6 +525,34 @@
+         }
+       },
+     },
++    {
++      // The Archxy 2 ERP namespace's kitchen-slice proof: same witness
++      // binding, over the `erp_foodservice` suite's nine witnesses. Added
++      // with the foodservice cohort in PACKET-001 (scope edit for review).
++      proof: 'P-ERP-FOODSERVICE',
++      checks: {
++        'authorized food flow consumes the shared pool exactly once': {
++          step: 'erp foodservice suite',
++        },
++        'over-reservation refuses without holding stock': { step: 'erp foodservice suite' },
++        'recipe refuses a non-tracked ingredient': { step: 'erp foodservice suite' },
++        'revoked food grant refused on recovery': { step: 'erp foodservice suite' },
++        'same key different command conflicts': { step: 'erp foodservice suite' },
++        'cross-tenant caller refused before any write': { step: 'erp foodservice suite' },
++        'lost response replays without a second reservation': { step: 'erp foodservice suite' },
++        'cancel releases the reservation untouched': { step: 'erp foodservice suite' },
++        'missing foodservice grant refused': { step: 'erp foodservice suite' },
++      },
++      details: () => {
++        try {
++          return JSON.parse(
++            readFileSync(join(root, 'dist/rust-erp-foodservice-proof.json'), 'utf8'),
++          )
++        } catch (error) {
++          throw new Error(`erp foodservice witness proof unreadable: ${error.message}`)
++        }
++      },
++    },
+     {
+       proof: 'P-COLD-CONSUMERS',
+       checks: {
+
+### tools/rust/test/verify.test.mjs
+# NOTE on rendering: the two drift tests share near-identical bodies, so the
+# hunks alignment is shifted — it still applies cleanly with `patch` or
+# `git apply`; the only semantic content is the new import line and the new
+# test() block after the purchasing one.
+--- a/tools/rust/test/verify.test.mjs
++++ b/tools/rust/test/verify.test.mjs
+@@ -14,6 +14,7 @@
+ import { WITNESSES } from '../pg-readiness.mjs'
+ import { WITNESSES as AUTHORITY_WITNESSES } from '../pg-authority.mjs'
+ import { WITNESSES as PURCHASING_WITNESSES } from '../erp/verify-purchasing.mjs'
++import { WITNESSES as FOODSERVICE_WITNESSES } from '../erp/verify-foodservice.mjs'
+ import { loadManifest, repoRoot } from '../coverage.mjs'
+ import { readEvidence } from '../evidence.mjs'
+ 
+@@ -350,6 +351,37 @@
+         `${check}: witness ${JSON.stringify(name)} names unknown suite ${JSON.stringify(suite)}`,
+       )
+     }
++  }
++})
++
++test('the P-ERP-FOODSERVICE witness map and the frozen manifest cannot drift apart', () => {
++  // Same three-lists-equal property as P-ERP-PURCHASING, for the ERP
++  // namespace's kitchen slice: a manifest check with no witness is a check
++  // nothing produces, and a witness naming a check the manifest does not
++  // require is a proof of something nobody asked for. Both directions, and
++  // the frozen `witnessTotal` too.
++  const manifest = loadManifest(repoRoot)
++  const spec = manifest.proofs['P-ERP-FOODSERVICE']
++  assert.deepEqual([...Object.keys(FOODSERVICE_WITNESSES)].sort(), [...spec.requiredChecks].sort())
++  const witnessTotal = Object.values(FOODSERVICE_WITNESSES).reduce(
++    (sum, list) => sum + list.length,
++    0,
++  )
++  assert.equal(witnessTotal, spec.expect.witnessTotal)
++  for (const [check, witnesses] of Object.entries(FOODSERVICE_WITNESSES)) {
++    assert.ok(witnesses.length > 0, `${check} has no witness tests`)
++    for (const [suite, name] of witnesses) {
++      assert.match(
++        name,
++        /^[a-z0-9_]+$/,
++        `${check}: witness name ${JSON.stringify(name)} is not a test identifier`,
++      )
++      assert.equal(
++        suite,
++        'foodservice',
++        `${check}: witness ${JSON.stringify(name)} names unknown suite ${JSON.stringify(suite)}`,
++      )
++    }
+   }
+ })
+ 
+
+### docs/rust/required-coverage.json
+# Key-order matters for reviewability (docs convention): P-ERP-FOODSERVICE is
+# inserted directly after P-ERP-PURCHASING; the fast-gate check after
+# "erp purchasing suite". Re-serialize only if the surrounding file was
+# re-formatted in main.
+--- a/docs/rust/required-coverage.json
++++ b/docs/rust/required-coverage.json
+@@ -808,6 +808,7 @@
+         "pg readiness suites",
+         "pg authority suite",
+         "erp purchasing suite",
++        "erp foodservice suite",
+         "rust unit tests (node --test)",
+         "p1 pricing parity",
+         "p2 rates parity",
+@@ -1117,6 +1118,41 @@
+         "dist/rust-erp-purchasing-proof.json"
+       ]
+     },
++    "P-ERP-FOODSERVICE": {
++      "kind": "evidence",
++      "producedBy": "pnpm rust:verify → erp foodservice suite step (tools/rust/erp/verify-foodservice.mjs) grading named witness tests in rust/crates/host/tests/erp_foodservice.rs against the owned PostgreSQL fixture",
++      "requiredChecks": [
++        "authorized food flow consumes the shared pool exactly once",
++        "over-reservation refuses without holding stock",
++        "recipe refuses a non-tracked ingredient",
++        "revoked food grant refused on recovery",
++        "same key different command conflicts",
++        "cross-tenant caller refused before any write",
++        "lost response replays without a second reservation",
++        "cancel releases the reservation untouched",
++        "missing foodservice grant refused"
++      ],
++      "expect": {
++        "witnessTotal": 9,
++        "namedRegressions": {
++          "RN-ERP-01": "revoked food grant refused on recovery",
++          "RN-ERP-02": "same key different command conflicts"
++        }
++      },
++      "sourcePaths": [
++        "rust/crates/host",
++        "rust/crates/adapters",
++        "rust/crates/domain",
++        "rust/crates/core",
++        "tools/rust/erp/verify-foodservice.mjs",
++        "packages/commerce-pg/migrations",
++        "packages/foodservice-pg/migrations"
++      ],
++      "artifacts": [],
++      "referenced": [
++        "dist/rust-erp-foodservice-proof.json"
++      ]
++    },
+     "P-READINESS-PG": {
+       "kind": "evidence",
+       "producedBy": "pnpm rust:verify → pg readiness suites step (tools/rust/pg-readiness.mjs) grading named witness tests in rust/crates/host/tests/readiness.rs and rust/crates/adapters/tests/tenant_context.rs against the owned PostgreSQL fixture",
+
+### tools/rust/erp/verify-foodservice.mjs (NEW — Archxy 2-owned, not diffed)
+# The P-ERP-FOODSERVICE producer; ships with the cohort. SUITES key
+# `foodservice` → `-p archava-host --test erp_foodservice`; WITNESSES maps the
+# nine manifest checks to the nine suite witnesses by exact test identifier.
+# Contract stated in the file header; guarded main() so tests import it
+# without launching cargo.

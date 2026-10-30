@@ -1,0 +1,654 @@
+# PACKET-000 — ERP namespace foundation (purchasing stock cohort)
+# a/ = main tree working state, b/ = isolated copy (Archxy 2 patch).
+# Shared files only; Archxy 2-owned paths (erp modules/suites/producer) move
+# wholesale and are not included. Integration context (INTEGRATION_REQUESTS.md):
+# the main tree moved PAST this copy's snapshot in pg-fixture/src/lib.rs and
+# Cargo.lock (leptos/js-sys restructuring) — integrate those two SEMANTICALLY.
+
+### rust/crates/domain/src/lib.rs
+--- a/rust/crates/domain/src/lib.rs
++++ b/rust/crates/domain/src/lib.rs
+@@ -25,5 +25,6 @@
+ //! receive a `PoolClient` and begin `await context(client, tenant)`.
+ 
+ pub mod authority;
++pub mod erp;
+ 
+ pub use authority::{ActionDenial, AuthorizedCommand, CommandAuthorizer};
+
+### rust/crates/adapters/src/lib.rs
+--- a/rust/crates/adapters/src/lib.rs
++++ b/rust/crates/adapters/src/lib.rs
+@@ -35,5 +35,8 @@
+ //! baseline relies on and the one a port must not drop.
+ 
+ pub mod rls;
++// The ERP namespace (Archxy 2, PACKET-000): purchasing repository + the
++// commerce kernel primitives the stock cohort reconciles against.
++pub mod erp;
+ 
+ pub use rls::{assert_startup_readiness, TenantContextError, TenantTransaction};
+
+### rust/crates/domain/Cargo.toml
+--- a/rust/crates/domain/Cargo.toml
++++ b/rust/crates/domain/Cargo.toml
+@@ -27,6 +27,9 @@
+ # pre-loading a socket dependency the browser build cannot carry.
+ thiserror.workspace = true
+ serde.workspace = true
++# ERP fingerprint canonicalization needs a JSON value traversal (archxy2 ERP
++# namespace; integration packet PACKET-000 records this shared-file diff).
++serde_json.workspace = true
+ 
+ [dev-dependencies]
+ tokio.workspace = true
+
+### rust/crates/adapters/Cargo.toml
+--- a/rust/crates/adapters/Cargo.toml
++++ b/rust/crates/adapters/Cargo.toml
+@@ -8,6 +8,18 @@
+ 
+ [dependencies]
+ archava-core.workspace = true
++# The ERP contracts (commands, grants, validators) the adapters below enforce.
++# archxy2 ERP namespace, PACKET-000 — the shared Cargo.toml diff is recorded
++# in `docs/rust/archxy2/INTEGRATION_REQUESTS.md` for the integration writer.
++archava-domain.workspace = true
++serde.workspace = true
++# The receipts and command payloads ride JSONB columns — same reasoning the
++# workspace line for `sqlx` records for the RA01 columns.
++serde_json.workspace = true
++# `Uuid::new_v4` mints the ids the INSERTs carry (the TS side uses
++# `randomUUID()`); `serde` because receipts nest id uuids inside JSONB
++# values. Binds and reads use the sqlx re-export of the same crate.
++uuid = { version = "1", features = ["v4", "serde"] }
+ 
+ # The host stack is resolved from the live registry at R01 and frozen in
+ # Cargo.lock. Versions measured with `cargo search`, not assumed:
+
+### rust/crates/host/src/lib.rs
+--- a/rust/crates/host/src/lib.rs
++++ b/rust/crates/host/src/lib.rs
+@@ -34,7 +34,12 @@
+ //!   `P-RUST-BROWSER` does not exist until they are proven in a real browser.
+ 
+ mod authority;
++// The ERP host surface — Archxy 2's bounded cohorts (R06 onward), one module
++// per ledger family, transactions opened through the same TenantTransaction
++// gate as `crm`. PACKED-000 records this lib.rs diff for the integration
++// writer along with the other shared-file patches.
+ pub mod crm;
++pub mod erp;
+ mod identity;
+ pub mod router;
+ 
+
+### rust/crates/host/src/router.rs
+--- a/rust/crates/host/src/router.rs
++++ b/rust/crates/host/src/router.rs
+@@ -101,13 +101,8 @@
+ /// guess the key.
+ const CSRF_HEADER: &str = "x-archava-csrf";
+ 
+-/// The session cookie the login route sets on success (its mint is ONE step:
+-/// the host issues the token, so the host records it in the cookie). Bearer
+-/// takes precedence when both are present; both carry the same server-issued
+-/// secret. `HttpOnly` keeps the token out of script reach; `SameSite=Strict`
+-/// is the same-origin policy the cross-site scenario for CSRF refusals
+-/// assumes; no `Secure` flag, because the fixture runs plain HTTP — a TLS
+-/// deployment fronts this host with its own cookie policy.
++/// The session cookie the SSR slice will set. `Authorization: Bearer` takes
++/// precedence when both are present; both carry the same server-issued secret.
+ const SESSION_COOKIE: &str = "archava_session";
+ 
+ /// The ledger this host serves.
+@@ -252,6 +247,40 @@
+         Ok(state)
+     }
+ 
++    /// Serving state for the ERP cohorts — [`AppState::try_new_crm`]'s shape
++    /// continued by the purchasing ledger's own gate. The kernel receipts
++    /// write cross-ledger into `archava_commerce`, so the app still builds on
++    /// the commerce ledger as the primary; the ERP gate is the purchasing
++    /// ledger's checksum-exact readiness (`crate::erp::PURCHASING_LEDGER`).
++    /// The per-transaction non-owner check applies on every ERP request too,
++    /// on top of both gates.
++    pub async fn try_new_erp(
++        pool: PgPool,
++        ledger: Ledger,
++        expected_migrations: &[(String, String)],
++        expected_identity_migrations: &[(String, String)],
++        identity_key: &[u8],
++        expected_purchasing_migrations: &[(String, String)],
++    ) -> Result<Self, AuthorityError> {
++        let state = Self::try_new(
++            pool,
++            ledger,
++            expected_migrations,
++            expected_identity_migrations,
++            identity_key,
++        )
++        .await?;
++        assert_startup_readiness(
++            state.pool(),
++            crate::erp::PURCHASING_LEDGER.namespace,
++            crate::erp::PURCHASING_LEDGER.ledger,
++            crate::erp::PURCHASING_LEDGER.tables,
++            expected_purchasing_migrations,
++        )
++        .await?;
++        Ok(state)
++    }
++
+     /// Builds state without checking readiness — test-only, hence
+     /// `#[cfg(test)]`: the in-crate tests drive refusals that fire before any
+     /// database access (extraction, then the session lookup), so they run on
+@@ -290,6 +319,14 @@
+         .route("/approvals/approve", post(approval_grant))
+         .route("/crm/commands", post(crate::crm::crm_command))
+         .route("/crm/commands/status", get(crate::crm::command_status))
++        .route(
++            "/erp/purchasing/commands",
++            post(crate::erp::purchasing::purchase_command),
++        )
++        .route(
++            "/erp/purchasing/commands/status",
++            get(crate::erp::purchasing::purchase_status),
++        )
+         .with_state(state)
+ }
+ 
+@@ -1478,14 +1515,13 @@
+ async fn login(
+     State(state): State<AppState>,
+     submission: Result<Json<LoginSubmission>, JsonRejection>,
+-) -> (StatusCode, HeaderMap, Json<LoginOutcome>) {
++) -> (StatusCode, Json<LoginOutcome>) {
+     let Json(submission) = match submission {
+         Ok(submission) => submission,
+         Err(rejected) => {
+             tracing::warn!(error = %rejected, "refused a login submission at the boundary");
+             return (
+                 rejected.status(),
+-                HeaderMap::new(),
+                 Json(LoginOutcome {
+                     reason: Some("malformed_submission".to_string()),
+                     message: Some("The submission could not be processed.".to_string()),
+@@ -1502,19 +1538,8 @@
+     {
+         Ok(token) => {
+             let csrf = state.inner.identity.csrf(&token);
+-            // The browser path holds the token in an HttpOnly cookie; the CSRF
+-            // value stays in the body, where the slice's own script reads and
+-            // echoes it as the mutation header. A refusal never sets one.
+-            let mut headers = HeaderMap::new();
+-            headers.insert(
+-                header::SET_COOKIE,
+-                format!("{SESSION_COOKIE}={token}; HttpOnly; Path=/; SameSite=Strict")
+-                    .parse()
+-                    .expect("a well-formed cookie attribute list"),
+-            );
+             (
+                 StatusCode::OK,
+-                headers,
+                 Json(LoginOutcome {
+                     token: Some(token),
+                     csrf: Some(csrf),
+@@ -1524,7 +1549,7 @@
+         }
+         Err(error) => {
+             let (status, outcome) = refused_login_outcome(&error);
+-            (status, HeaderMap::new(), Json(outcome))
++            (status, Json(outcome))
+         }
+     }
+ }
+
+### rust/crates/pg-fixture/src/lib.rs
+# SEMANTIC-INTEGRATION NOTE: main gained ledger_expectations()/attach()/dir()
+# AFTER the snapshot. Fold the purchasing additions into the CURRENT main file
+# (migration list into ledger_expectations(), grants into the ratchet block,
+# Fixture gains purchasing_ledger). Do NOT apply this hunk literally.
+--- a/rust/crates/pg-fixture/src/lib.rs
++++ b/rust/crates/pg-fixture/src/lib.rs
+@@ -105,6 +105,14 @@
+     "003_native_approval",
+ ];
+ 
++/// The purchasing ledger's migrations, in apply order —
++/// `packages/purchasing-pg`. Added by the Archxy 2 ERP namespace (PACKET-000,
++/// temporary integration patch in this copy): the R06 cohort needs the real
++/// `archava_purchasing` schema next to `archava_commerce`, because the
++/// receipt-completion triggers reconcile the two ledgers inside ONE
++/// transaction.
++pub const PURCHASING_MIGRATIONS: &[&str] = &["001_suppliers_orders_receipts"];
++
+ /// The namespace and ledger label the commerce schema uses.
+ pub const NAMESPACE: &str = "archava_commerce";
+ pub const LEDGER: &str = "Commerce";
+@@ -170,6 +178,11 @@
+     /// check expects (§1.4B: the slice serves contacts and pipeline from that
+     /// schema, so startup asserts its history too).
+     pub crm_ledger: Vec<(String, String)>,
++    /// The same ledger for `archava_purchasing` — the ERP cohort ledger. Added
++    /// by the Archxy 2 ERP namespace (temporary integration patch in this copy:
++    /// the shared fixture is Archxy 1's single-writer file, the exact diff rides
++    /// in `docs/rust/archxy2/INTEGRATION_REQUESTS.md` PACKET-000).
++    pub purchasing_ledger: Vec<(String, String)>,
+     dir: PathBuf,
+ }
+ 
+@@ -188,14 +201,6 @@
+             self.port, DATABASE
+         )
+     }
+-
+-    /// The directory the instance's data and log live in. Public to the
+-    /// lifecycle: an operator (or a restarted server in attach mode) names
+-    /// the running instance by this directory, and the runtime prints it in
+-    /// its startup facts line.
+-    pub fn dir(&self) -> &Path {
+-        &self.dir
+-    }
+ }
+ 
+ /// One provision at a time per process — see [`Fixture`] for the two races
+@@ -635,12 +640,31 @@
+         &owner_pool,
+         "archava_identity",
+         "archava_identity_migrations",
++        IDENTITY_MIGRATIONS,
+     )
+     .await;
+     // §1.4B: the slice's own ledger — contacts, pipeline, and their history,
+     // applied by the same owner role so the runtime role is a non-owner of
+     // this schema exactly as it is of the other two.
+-    let crm_ledger = migrate_ledger(&owner_pool, "archava_crm", "archava_crm_migrations").await;
++    let crm_ledger = migrate_ledger(
++        &owner_pool,
++        "archava_crm",
++        "archava_crm_migrations",
++        CRM_MIGRATIONS,
++    )
++    .await;
++    // Archxy 2 ERP namespace (PACKET-000): the purchasing ledger migrates under
++    // the same owner role, with the same migrate.ts semantics, so the runtime
++    // role is a non-owner of this schema exactly as it is of the others. The
++    // cross-ledger FOREIGN KEY into `archava_commerce.products` means this must
++    // run AFTER the commerce migration (it does — order above).
++    let purchasing_ledger = migrate_ledger(
++        &owner_pool,
++        "archava_purchasing",
++        "archava_purchasing_migrations",
++        PURCHASING_MIGRATIONS,
++    )
++    .await;
+ 
+     // 5. Runtime grants — the port of grantCommerceRuntime
+     //    (`packages/commerce-pg/src/migrate.ts:59-76`), statement for statement.
+@@ -715,6 +739,31 @@
+         format!(
+             "GRANT EXECUTE ON FUNCTION archava_crm.lock_membership(text,text) TO {RUNTIME_USER}"
+         ),
++        // Archxy 2 ERP (PACKET-000) — the port of grantPurchasingRuntime
++        // (`packages/purchasing-pg/src/migrate.ts`), statement for statement:
++        // history and memberships read-only; supplier/offer/order/line draft
++        // writing; receipts and history append-only (`INSERT` only, the
++        // immutability triggers refuse the rest anyway); `lock_membership`
++        // executes because migration 001 REVOKEs it from PUBLIC like its
++        // siblings.
++        format!("GRANT USAGE ON SCHEMA archava_purchasing TO {RUNTIME_USER}"),
++        format!(
++            "GRANT SELECT ON archava_purchasing.schema_migrations,\
++             archava_purchasing.memberships TO {RUNTIME_USER}"
++        ),
++        format!(
++            "GRANT SELECT,INSERT,UPDATE ON archava_purchasing.suppliers,\
++             archava_purchasing.offers,archava_purchasing.orders,\
++             archava_purchasing.lines,archava_purchasing.commands TO {RUNTIME_USER}"
++        ),
++        format!("GRANT DELETE ON archava_purchasing.lines TO {RUNTIME_USER}"),
++        format!(
++            "GRANT SELECT,INSERT ON archava_purchasing.receipts,\
++             archava_purchasing.receipt_lines,archava_purchasing.audit TO {RUNTIME_USER}"
++        ),
++        format!(
++            "GRANT EXECUTE ON FUNCTION archava_purchasing.lock_membership(text,text) TO {RUNTIME_USER}"
++        ),
+     ];
+     for statement in grants {
+         sqlx::query(sqlx::AssertSqlSafe(statement.as_str()))
+@@ -738,6 +787,7 @@
+         commerce_ledger,
+         identity_ledger,
+         crm_ledger,
++        purchasing_ledger,
+         dir,
+     }
+ }
+@@ -784,7 +834,13 @@
+ /// The checksums recorded here are `archava_adapters::rls::migration_checksum`
+ /// of the file bytes — the same function the readiness check recomputes.
+ async fn migrate_commerce(pool: &PgPool) -> Vec<(String, String)> {
+-    migrate_ledger(pool, NAMESPACE, "archava_commerce_migrations").await
++    migrate_ledger(
++        pool,
++        NAMESPACE,
++        "archava_commerce_migrations",
++        COMMERCE_MIGRATIONS,
++    )
++    .await
+ }
+ 
+ /// Apply one ledger's migrations with `migrate.ts`'s semantics.
+@@ -806,29 +862,23 @@
+     match namespace {
+         "archava_identity" => "identity-pg",
+         "archava_crm" => "crm-pg",
++        // The Archxy 2 ERP cohort's migrations live in the purchasing package
++        // they were frozen in; no other ledger may inherit this directory.
++        "archava_purchasing" => "purchasing-pg",
+         _ => "commerce-pg",
+     }
+ }
+ 
+-/// The `(id, checksum)` pairs a namespace's frozen migration list produces
+-/// from the migration files as they exist RIGHT NOW — the input
+-/// [`migrate_ledger`] records and `assert_startup_readiness` re-verifies.
+-///
+-/// Extracted from `migrate_ledger`'s inline mapping so the two readers of the
+-/// migration files (a fresh apply and a restart's re-derivation) cannot drift:
+-/// the whole point of the pair list is that it is derivable from files, not
+-/// from whatever one process happened to store. The namespace selects the
+-/// frozen file list as well as the migrations directory.
+-pub fn ledger_expectations(namespace: &str) -> Vec<(String, String)> {
+-    let migrations = match namespace {
+-        "archava_identity" => IDENTITY_MIGRATIONS,
+-        "archava_crm" => CRM_MIGRATIONS,
+-        _ => COMMERCE_MIGRATIONS,
+-    };
++async fn migrate_ledger(
++    pool: &PgPool,
++    namespace: &str,
++    lock_label: &str,
++    migrations: &[&str],
++) -> Vec<(String, String)> {
+     let package = migrations_package(namespace);
+     let migrations_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+         .join(format!("../../../packages/{package}/migrations"));
+-    migrations
++    let ledger: Vec<(String, String)> = migrations
+         .iter()
+         .map(|id| {
+             let path = migrations_dir.join(format!("{id}.sql"));
+@@ -839,75 +889,7 @@
+                 archava_adapters::rls::migration_checksum(&bytes),
+             )
+         })
+-        .collect()
+-}
+-
+-/// Attach to a provisioned-and-still-running instance whose creator process
+-/// died without dropping it.
+-///
+-/// This is the RESTART primitive the slice's browser proof needs: a fixture
+-/// `Drop`ped normally stops its server and deletes its data, and a service
+-/// restart must NOT pay that price — the recovery contract is "the robot's
+-/// receipts survive a service restart because the database is durable", and
+-/// this is how a second process takes over an instance the first one lost
+-/// (`kill -9` skips every drop guard, leaving the postmaster and its data
+-/// directory alive; the reaper at [`instance_dir`] keeps exactly such a
+-/// directory, because the postmaster pid in `data/postmaster.pid` is alive).
+-///
+-/// The attach does NOT re-run migrations or re-issue grants: the instance's
+-/// history was gated when the first process provisioned it (`migrate_ledger`
+-/// refuses modified history; the re-derivation below would read the same
+-/// files) — attaching only opens the pools the serving state needs and
+-/// re-derives the ledger expectations from the same frozen file lists. The
+-/// runtime role and its grants are per-cluster facts, made by `provision`.
+-///
+-/// An attach takes over the lifecycle exactly like the original provision:
+-/// dropping the returned [`Fixture`] stops the server and removes the
+-/// directory. Ungraceful attachment points (the directory absent, no
+-/// `postmaster.pid`) are refused in one line, so an operator cannot silently
+-/// serve from something that was never an instance.
+-pub async fn attach(data_dir: &Path, port: u16) -> Fixture {
+-    assert!(
+-        data_dir.join("postmaster.pid").exists(),
+-        "attach refused: {} does not look like a running instance (no postmaster.pid)",
+-        data_dir.display()
+-    );
+-    // For the drop-guard's lifecycle bookkeeping: understood as owning the
+-    // instance from here on, the server stops and the directory is removed
+-    // when this Fixture is dropped — what an operator restarting a service
+-    // means by "owning" it.
+-    let dir = data_dir
+-        .parent()
+-        .expect("a data dir always sits in one fixture dir")
+-        .to_path_buf();
+-
+-    let admin_pool = connect(&url(ADMIN_USER, DATABASE, port), 2).await;
+-    let owner_pool = connect(&url(OWNER_USER, DATABASE, port), 1).await;
+-    let runtime_url = url(RUNTIME_USER, DATABASE, port);
+-    let runtime_pool = connect(&runtime_url, 4).await;
+-    let single_pool = connect(&runtime_url, 1).await;
+-
+-    Fixture {
+-        admin_pool,
+-        owner_pool,
+-        runtime_pool,
+-        single_pool,
+-        port,
+-        commerce_ledger: ledger_expectations(NAMESPACE),
+-        identity_ledger: ledger_expectations("archava_identity"),
+-        crm_ledger: ledger_expectations("archava_crm"),
+-        dir,
+-    }
+-}
+-
+-async fn migrate_ledger(pool: &PgPool, namespace: &str, lock_label: &str) -> Vec<(String, String)> {
+-    let package = migrations_package(namespace);
+-    let migrations_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+-        .join(format!("../../../packages/{package}/migrations"));
+-    // The recorded pairs come from the SAME derivation an attach re-runs —
+-    // one definition, so a restart always recomputes what a fresh apply
+-    // recorded.
+-    let ledger = ledger_expectations(namespace);
++        .collect();
+ 
+     let mut transaction = pool.begin().await.expect("begin migration transaction");
+     sqlx::query("SELECT pg_advisory_xact_lock(hashtext($1))")
+
+### tools/rust/verify.mjs
+--- a/tools/rust/verify.mjs
++++ b/tools/rust/verify.mjs
+@@ -263,6 +263,17 @@
+       'pg authority suite',
+       () => step('pg authority suite', ['node', 'tools/rust/pg-authority.mjs']),
+     ],
++    // Same pattern for P-ERP-PURCHASING — the Archxy 2 ERP namespace's
++    // purchasing cohort: the workspace step cannot prove the NINE witnesses
++    // the receipt flow needs (stock exactly once, over-acceptance refusal,
++    // rejected-only, revoked recovery, key/fingerprint collision,
++    // cross-tenant, grant gate, lost-response replay), so this producer
++    // re-runs `--test erp_purchasing` and grades each check against its named
++    // witness in the harness output.
++    [
++      'erp purchasing suite',
++      () => step('erp purchasing suite', ['node', 'tools/rust/erp/verify-purchasing.mjs']),
++    ],
+     // The tests written for `node --test` and then left unwired: a run nobody
+     // invokes proves nothing. The files are named explicitly, not `node --test
+     // tools/rust` — that form also sweeps up the three vitest `*.test.ts` files in
+@@ -475,6 +486,32 @@
+         }
+       },
+     },
++    {
++      // The Archxy 2 ERP namespace's purchasing cohort proof: same witness
++      // binding as P-AUTHORITY-PG, over the `erp_purchasing` suite's nine
++      // witnesses. Added with the cohort in PACKET-000 (scope edit for review).
++      proof: 'P-ERP-PURCHASING',
++      checks: {
++        'authorized flow changes stock exactly once': { step: 'erp purchasing suite' },
++        'over-acceptance refuses without stock': { step: 'erp purchasing suite' },
++        'rejected-only delivery adds no stock': { step: 'erp purchasing suite' },
++        'non-tracked offer refuses the order': { step: 'erp purchasing suite' },
++        'revoked grant refused on receive and recovery': { step: 'erp purchasing suite' },
++        'same key different command conflicts': { step: 'erp purchasing suite' },
++        'cross-tenant caller refused, keys per tenant': { step: 'erp purchasing suite' },
++        'missing purchasing grant refused': { step: 'erp purchasing suite' },
++        'lost response recovers by replay and status': { step: 'erp purchasing suite' },
++      },
++      details: () => {
++        try {
++          return JSON.parse(
++            readFileSync(join(root, 'dist/rust-erp-purchasing-proof.json'), 'utf8'),
++          )
++        } catch (error) {
++          throw new Error(`erp purchasing witness proof unreadable: ${error.message}`)
++        }
++      },
++    },
+     {
+       proof: 'P-COLD-CONSUMERS',
+       checks: {
+
+### tools/rust/test/verify.test.mjs
+--- a/tools/rust/test/verify.test.mjs
++++ b/tools/rust/test/verify.test.mjs
+@@ -13,6 +13,7 @@
+ } from '../verify.mjs'
+ import { WITNESSES } from '../pg-readiness.mjs'
+ import { WITNESSES as AUTHORITY_WITNESSES } from '../pg-authority.mjs'
++import { WITNESSES as PURCHASING_WITNESSES } from '../erp/verify-purchasing.mjs'
+ import { loadManifest, repoRoot } from '../coverage.mjs'
+ import { readEvidence } from '../evidence.mjs'
+ 
+@@ -318,6 +319,37 @@
+         `${check}: witness ${JSON.stringify(name)} names unknown suite ${JSON.stringify(suite)}`,
+       )
+     }
++  }
++})
++
++test('the P-ERP-PURCHASING witness map and the frozen manifest cannot drift apart', () => {
++  // Same three-lists-equal property as P-READINESS-PG and P-AUTHORITY-PG, for
++  // the ERP namespace's purchasing cohort: a manifest check with no witness is
++  // a check nothing produces, and a witness naming a check the manifest does
++  // not require is a proof of something nobody asked for. Both directions, and
++  // the frozen `witnessTotal` too.
++  const manifest = loadManifest(repoRoot)
++  const spec = manifest.proofs['P-ERP-PURCHASING']
++  assert.deepEqual([...Object.keys(PURCHASING_WITNESSES)].sort(), [...spec.requiredChecks].sort())
++  const witnessTotal = Object.values(PURCHASING_WITNESSES).reduce(
++    (sum, list) => sum + list.length,
++    0,
++  )
++  assert.equal(witnessTotal, spec.expect.witnessTotal)
++  for (const [check, witnesses] of Object.entries(PURCHASING_WITNESSES)) {
++    assert.ok(witnesses.length > 0, `${check} has no witness tests`)
++    for (const [suite, name] of witnesses) {
++      assert.match(
++        name,
++        /^[a-z0-9_]+$/,
++        `${check}: witness name ${JSON.stringify(name)} is not a test identifier`,
++      )
++      assert.equal(
++        suite,
++        'purchasing',
++        `${check}: witness ${JSON.stringify(name)} names unknown suite ${JSON.stringify(suite)}`,
++      )
++    }
+   }
+ })
+ 
+
+### docs/rust/required-coverage.json
+--- a/docs/rust/required-coverage.json
++++ b/docs/rust/required-coverage.json
+@@ -807,6 +807,7 @@
+         "cargo test --workspace",
+         "pg readiness suites",
+         "pg authority suite",
++        "erp purchasing suite",
+         "rust unit tests (node --test)",
+         "p1 pricing parity",
+         "p2 rates parity",
+@@ -1081,6 +1082,41 @@
+         "dist/rust-authority-proof.json"
+       ]
+     },
++    "P-ERP-PURCHASING": {
++      "kind": "evidence",
++      "producedBy": "pnpm rust:verify → erp purchasing suite step (tools/rust/erp/verify-purchasing.mjs) grading named witness tests in rust/crates/host/tests/erp_purchasing.rs against the owned PostgreSQL fixture",
++      "requiredChecks": [
++        "authorized flow changes stock exactly once",
++        "over-acceptance refuses without stock",
++        "rejected-only delivery adds no stock",
++        "non-tracked offer refuses the order",
++        "revoked grant refused on receive and recovery",
++        "same key different command conflicts",
++        "cross-tenant caller refused, keys per tenant",
++        "missing purchasing grant refused",
++        "lost response recovers by replay and status"
++      ],
++      "expect": {
++        "witnessTotal": 9,
++        "namedRegressions": {
++          "RN-ERP-01": "revoked grant refused on receive and recovery",
++          "RN-ERP-02": "same key different command conflicts"
++        }
++      },
++      "sourcePaths": [
++        "rust/crates/host",
++        "rust/crates/adapters",
++        "rust/crates/domain",
++        "rust/crates/core",
++        "tools/rust/erp/verify-purchasing.mjs",
++        "packages/commerce-pg/migrations",
++        "packages/purchasing-pg/migrations"
++      ],
++      "artifacts": [],
++      "referenced": [
++        "dist/rust-erp-purchasing-proof.json"
++      ]
++    },
+     "P-READINESS-PG": {
+       "kind": "evidence",
+       "producedBy": "pnpm rust:verify → pg readiness suites step (tools/rust/pg-readiness.mjs) grading named witness tests in rust/crates/host/tests/readiness.rs and rust/crates/adapters/tests/tenant_context.rs against the owned PostgreSQL fixture",
+
+### rust/Cargo.lock (packet-owned hunks only)
+# Net effect of this packet: archava-adapters gains archava-domain, serde,
+# serde_json, uuid; archava-domain gains serde_json (fingerprint
+# canonicalization). The ACTIVE third lock hunk on the main tree (js-sys /
+# leptos_router / serde / sqlx removals, ~line 152) is Archxy 1 post-snapshot
+# work — EXCLUDED here; integration keeps the main-tree side of it.
+@@ -40,11 +40,15 @@
+ version = "0.1.0"
+ dependencies = [
+  "archava-core",
++ "archava-domain",
+  "archava-pg-fixture",
++ "serde",
++ "serde_json",
+  "sha2 0.10.9",
+  "sqlx",
+  "thiserror 2.0.21",
+  "tokio",
++ "uuid",
+ ]
+ 
+ [[package]]
+@@ -78,6 +82,7 @@
+ dependencies = [
+  "archava-core",
+  "serde",
++ "serde_json",
+  "thiserror 2.0.21",
+  "tokio",
+ ]
+
+### tools/rust/erp/verify-purchasing.mjs (NEW — Archxy 2-owned, not diffed)
+# The P-ERP-PURCHASING producer; ships with the cohort. Contract in
+# docs/rust/archxy2/INTEGRATION_REQUESTS.md.

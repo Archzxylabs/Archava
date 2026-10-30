@@ -1,0 +1,1350 @@
+[
+  {
+    "path": ".cargo/config.toml",
+    "sha256": "049ad56d4d523df5b3c328e1dfd785be2bf53dd2f10ae3bb7f9b49bf74af5edb"
+  },
+  {
+    "path": ".github/dependabot.yml",
+    "sha256": "bd305b3a1e9d1ea2ecdaf667ea45ceaff3381fc9c0b0ba1971dc438c38666452"
+  },
+  {
+    "path": ".github/workflows/ci.yml",
+    "sha256": "aa15f879b26a6fadb3b6ebac26733af8797978648f63db9fee3297b5e71e00c5"
+  },
+  {
+    "path": ".github/workflows/release-identity.yml",
+    "sha256": "c85354021b645aefd704aad3e31fc5078acacd1b8da9b0296c481f132b24c891"
+  },
+  {
+    "path": ".github/workflows/security-audit.yml",
+    "sha256": "091b3efc55e9277ffa0cd41e9d270b2f18263e631f80ce3000b5522c05808e21"
+  },
+  {
+    "path": "Cargo.lock",
+    "sha256": "bc067967e4cf780ca74a4a2c17894b68953783e62f7749106bfdf7b78c6c9668"
+  },
+  {
+    "path": "Cargo.toml",
+    "sha256": "04bc9500ec3457b9a8e0534ae49ed35d9715e4676b594a92664ef68471e42511"
+  },
+  {
+    "path": "crates/adapters/Cargo.toml",
+    "sha256": "2473159f0950c5d481cc81df41d31e0253eb042022d6db02a55cbc25398aa360"
+  },
+  {
+    "path": "crates/adapters/src/erp/accommodation.rs",
+    "sha256": "829850846e77106552d0fbeb50a6428275f57612baa7a538785c0a8e5bdec4d7"
+  },
+  {
+    "path": "crates/adapters/src/erp/assets.rs",
+    "sha256": "176c1baeedd3979c7c1e86f26850434bb5c24c0fb2e5fbaed879512fe4d54be0"
+  },
+  {
+    "path": "crates/adapters/src/erp/attendance.rs",
+    "sha256": "6b6e22891a53a8881c94a5a58e94dae3d64f67063ebc02c71634ae22a6be7793"
+  },
+  {
+    "path": "crates/adapters/src/erp/billing.rs",
+    "sha256": "d9169f7d975fdc15fd99c2ce12e63b09ce5a8af883ebbd91dc7c3ee457e809d8"
+  },
+  {
+    "path": "crates/adapters/src/erp/commerce_kernel.rs",
+    "sha256": "d346e71cf042c0a196e806ab0eaa44aeaddadde560a6de75c0c6d32c17e685cd"
+  },
+  {
+    "path": "crates/adapters/src/erp/field_services.rs",
+    "sha256": "e195634783a6642bccb3e3ffcd83d5d6f01cbd28a8dfb82542bcb779a54c2a54"
+  },
+  {
+    "path": "crates/adapters/src/erp/foodservice.rs",
+    "sha256": "7903b544cc33f268a4d5c9237396533cc7efe07874f1623b577981fc6d0b9d09"
+  },
+  {
+    "path": "crates/adapters/src/erp/formal_education.rs",
+    "sha256": "13246f6d0a83a5217a0d652addc6f8be3da72bbb1dbee298294bf2439903921d"
+  },
+  {
+    "path": "crates/adapters/src/erp/fulfillment.rs",
+    "sha256": "3ea92877fb99c990d02249e1f98f2f31377fdb61115fa78d83d4ed225b3d7606"
+  },
+  {
+    "path": "crates/adapters/src/erp/laundry.rs",
+    "sha256": "f39945baad606e9118f8b76f2c016204c90033aa6f9e81f551172c6e8e724f97"
+  },
+  {
+    "path": "crates/adapters/src/erp/mod.rs",
+    "sha256": "1869b76cc59e52705da2dd2a69f303ee6326d143779ff48298c1fe83b5c7b0d1"
+  },
+  {
+    "path": "crates/adapters/src/erp/organizations.rs",
+    "sha256": "24189e0d0407de6f8dafcb67c817f84bc8ecf82a08976bb2fb67f8843a48c7f3"
+  },
+  {
+    "path": "crates/adapters/src/erp/projects.rs",
+    "sha256": "6014944dd05e7f5c55d40b9c6a6670cd2fd0cc49f6c6692c19e331feb7fbd44d"
+  },
+  {
+    "path": "crates/adapters/src/erp/proposals.rs",
+    "sha256": "94999f92dc542436de97fedc9dd8ed6d7482aba6b074c63c936530d5614e3c18"
+  },
+  {
+    "path": "crates/adapters/src/erp/purchasing.rs",
+    "sha256": "c50c5012546f9ad77dacb02c5f26548d3856f8baa7db24f457b7a43b1c513824"
+  },
+  {
+    "path": "crates/adapters/src/erp/scheduling.rs",
+    "sha256": "268be564c55839f615cecd03aba0d30d6aa6ee4fcabbbe556c5dc2aa3dce2a0d"
+  },
+  {
+    "path": "crates/adapters/src/erp/subscriptions.rs",
+    "sha256": "a30d04e1979aae52ab5c7ac28f0be2f3f0bd29805afe5216d3163994fbf2ec75"
+  },
+  {
+    "path": "crates/adapters/src/erp/support.rs",
+    "sha256": "b1f57fec6c8a880df57de5ab3f9d572af199c7fcbc175dfa979fa6297dba0f3f"
+  },
+  {
+    "path": "crates/adapters/src/lib.rs",
+    "sha256": "26de0632dc50af93aa09f3e2795749bf021e22a07e60cadd76b27e9ddc62f94a"
+  },
+  {
+    "path": "crates/adapters/src/rls.rs",
+    "sha256": "8f84b9d38eda68143f19ad4d2c0584698c1bbd0cf0cc61d9b58cc7cf8e6cd84c"
+  },
+  {
+    "path": "crates/adapters/tests/tenant_context.rs",
+    "sha256": "bd1a05c0a44b6ba1938e489a3be6ae196e08a2a91eb17e42cc650e17b9144951"
+  },
+  {
+    "path": "crates/assembly/Cargo.toml",
+    "sha256": "5203ee9f2ad44442237c7ff3099048f0f6c5d7388414de570ce60cf695447c87"
+  },
+  {
+    "path": "crates/assembly/src/catalog.rs",
+    "sha256": "c7a5950a07a793f875c2fe144f4b3aace86d2acf318b80a20c09d909d388d60d"
+  },
+  {
+    "path": "crates/assembly/src/contracts.rs",
+    "sha256": "779b16b6534935b216d19cd115fbc7448c1f88ad2f1f97e68c7975ea454d4d7d"
+  },
+  {
+    "path": "crates/assembly/src/error.rs",
+    "sha256": "2f30bc4afafa451395b59edc489ab8638f084e59da34d19270e392f2bdba7142"
+  },
+  {
+    "path": "crates/assembly/src/lib.rs",
+    "sha256": "e4e015df822d74bb267362fdce52812692076a89a793444dbd0ea03e12f0f847"
+  },
+  {
+    "path": "crates/assembly/src/module_contracts.rs",
+    "sha256": "476545efdf304f0a440457b1033dda6ba8aae865ea6f8fdd9914cd75e7a35c83"
+  },
+  {
+    "path": "crates/assembly/src/plan.rs",
+    "sha256": "4a4583e82bd487ae35a4d3504c27276b881ec86ac1280a38b02e064fc7abd660"
+  },
+  {
+    "path": "crates/assembly/src/request.rs",
+    "sha256": "4725a1a8cfb366f7b3464e1fe8242fe246e5a92643aefcb92f05f4ce76e527ad"
+  },
+  {
+    "path": "crates/assembly/tests/assembly.rs",
+    "sha256": "f6e9db85691a54aa2a4e10f2eb6f21eb4bfcad785279aea2dcbe57a8774836f7"
+  },
+  {
+    "path": "crates/assistant/Cargo.toml",
+    "sha256": "0e73810df69dcda2c74e3fc9ab370f0e5773896e0bbeed1caf38be42094e48ad"
+  },
+  {
+    "path": "crates/assistant/src/contracts.rs",
+    "sha256": "a6bf8ec55601c80b7af6aa71291672feab040483293bf9168bc88989f850bf88"
+  },
+  {
+    "path": "crates/assistant/src/conversation.rs",
+    "sha256": "bae18cc975138e403d978ac51cb8423a6b815185fb9fc4cfa2c6856d2cfe5efc"
+  },
+  {
+    "path": "crates/assistant/src/lib.rs",
+    "sha256": "f4fdcb761c11f49e99ee6afdd89533d198146337f76300f69f062864e446215d"
+  },
+  {
+    "path": "crates/assistant/src/planner.rs",
+    "sha256": "b84aec5ec6c95148e5b4b22ae9348a46f1ae1659a69d7006fc24c046d9b7a942"
+  },
+  {
+    "path": "crates/campaigns/Cargo.toml",
+    "sha256": "bbefb3a92f60495e0cc9fa32d6ab376dfeeb503958a71e8df5e689802fe0c465"
+  },
+  {
+    "path": "crates/campaigns/src/campaign.rs",
+    "sha256": "1b3634e78f6614e79a1903bb4d206ec43ea1ddb75a262183a3643933e2777201"
+  },
+  {
+    "path": "crates/campaigns/src/lib.rs",
+    "sha256": "cff7c1be002047271779ee67c1fdb292dfb8d589302c77fe61c5d47975cccc42"
+  },
+  {
+    "path": "crates/campaigns/src/runner.rs",
+    "sha256": "88c6dea5c5eaaa5f62796428460a7f3f34cfd83835cf1191d53c62b1088c6adf"
+  },
+  {
+    "path": "crates/campaigns/src/trigger.rs",
+    "sha256": "37cf10a1e12ae7411d52530a240913efef6c810b78a283f9fa54dfff7ce40dc9"
+  },
+  {
+    "path": "crates/capacity/Cargo.toml",
+    "sha256": "077f0ed4987fce65b267c88c09081622325bf839d2af2c990b954a116f80689f"
+  },
+  {
+    "path": "crates/capacity/src/calendar.rs",
+    "sha256": "fa3fea8184a824f3c228f7c9519e75e24faf50edc065e881eb938b4d91cc2701"
+  },
+  {
+    "path": "crates/capacity/src/error.rs",
+    "sha256": "3d0a0045731336b02d1866baa8f9bb52d39efd1b93489ff49f2677d41e873592"
+  },
+  {
+    "path": "crates/capacity/src/lib.rs",
+    "sha256": "f8ab37e77a4f5ee610da5b5e4725913f885d2103df1fc8634e52285901839c53"
+  },
+  {
+    "path": "crates/capacity/src/schedule.rs",
+    "sha256": "057f4313852812fad994ba14102c3713a525e8049f15444331ce9f3a13c97134"
+  },
+  {
+    "path": "crates/capacity/tests/capacity.rs",
+    "sha256": "4609ab66d839b71aa1dc9fc08ed9bf3d374af73308e9e6b78ef288659931683b"
+  },
+  {
+    "path": "crates/cockpit/Cargo.toml",
+    "sha256": "eaa9ee8cfeff5ec330f0a2e9a1ce60fd0a381501a79f58e20f5daaa3b48071c3"
+  },
+  {
+    "path": "crates/cockpit/src/durable.rs",
+    "sha256": "98b7aae9aa50b671dd069f55ee5c37fe52f4bf4bd3c012a86fbfeb8659c60bf0"
+  },
+  {
+    "path": "crates/cockpit/src/event_stream.rs",
+    "sha256": "55cee172762e9aa5a7bb37c5851aa242ac3f7f77f071e46058efc816b5958e40"
+  },
+  {
+    "path": "crates/cockpit/src/flight_status.rs",
+    "sha256": "f08da1f0c5065913650def41558585d8e1ef7d3c3a22583c21df1cfdcc5ce0f1"
+  },
+  {
+    "path": "crates/cockpit/src/lib.rs",
+    "sha256": "10363a47a909fa269070d1f340c34b2c605674c23807aad50e30b26c0d1833aa"
+  },
+  {
+    "path": "crates/cockpit/src/mission.rs",
+    "sha256": "8936dce5f3e235194bac1a44fae03c6c4f81297e0735c6c066b4e70e47bea178"
+  },
+  {
+    "path": "crates/cockpit/src/subagent.rs",
+    "sha256": "f5cbfe99939d88588ae12b401dfdeda160e575983f0dd0e8b482408c751a4005"
+  },
+  {
+    "path": "crates/cockpit/src/tools.rs",
+    "sha256": "b4d9b08a3d378d2e2375161ec0c2a103f25882663873eac07adcb0d6dcc82b64"
+  },
+  {
+    "path": "crates/context/Cargo.toml",
+    "sha256": "a09e06c9175671acd1165e05a6cddbc73ad6b8ed3d26aa2eae1794b491fcb630"
+  },
+  {
+    "path": "crates/context/src/consent.rs",
+    "sha256": "9dd83bd4e9590e8d5ce7a56d1c85780ac7b3f12be127da4a58f16b185d0b2603"
+  },
+  {
+    "path": "crates/context/src/decision/mod.rs",
+    "sha256": "d0f749d782f89ccdb13ad9f3f242f5191403d738fda0f488736b69905395a9db"
+  },
+  {
+    "path": "crates/context/src/decision/orchestrator.rs",
+    "sha256": "be53ad05c718c19861f7aafcb3d025dee1087e0b6effbe69b36c72a020105697"
+  },
+  {
+    "path": "crates/context/src/decision/policy.rs",
+    "sha256": "4cb02d7da526e7458b7bc9478b74d51e0af35f5ed1fba107765656156f5c6b16"
+  },
+  {
+    "path": "crates/context/src/decision/provider.rs",
+    "sha256": "a4fa1d2d078afc06a4c993f37eb01a377147832ced6d69fe9a83ddb48a9a3c95"
+  },
+  {
+    "path": "crates/context/src/decision/tasks.rs",
+    "sha256": "97f242c88493f0996ac1023036f123aebdd781a2bf732841f9e23b81689fca3e"
+  },
+  {
+    "path": "crates/context/src/decision/turn.rs",
+    "sha256": "15d486f404384d363ac353e656739a2d30d16c3d1658bfb76cc17a245523c457"
+  },
+  {
+    "path": "crates/context/src/decision/vocabulary.rs",
+    "sha256": "ac6640f4e2767dd9f0366a36de319382ab07e55b87a98f81a535ba5476d50608"
+  },
+  {
+    "path": "crates/context/src/knowledge/mod.rs",
+    "sha256": "5237b788d25e91f05ab61be6b4852a377e05e73677732499660d1a9970546075"
+  },
+  {
+    "path": "crates/context/src/knowledge/retrieval.rs",
+    "sha256": "d795a462362bae777820a1313bc9293ae2156b7f0e991d0479f386e073012b66"
+  },
+  {
+    "path": "crates/context/src/knowledge/schema.rs",
+    "sha256": "61218833c3d8d2f45da735278838b5de1cc0d2046be66ddab16f12cdd6ce0716"
+  },
+  {
+    "path": "crates/context/src/knowledge/store.rs",
+    "sha256": "a1df2a072ba37ca00af3393d0e5e4b027482aa5d10d5123eecedb44ca342e70e"
+  },
+  {
+    "path": "crates/context/src/knowledge/structured_truth.rs",
+    "sha256": "edeafe25981126e8d118a2f1ac28727de4182f090a05916f0445b7bf395f75d4"
+  },
+  {
+    "path": "crates/context/src/knowledge/text.rs",
+    "sha256": "26fa114f9ee85e9281428f2fd964626cb5eeb59555a0d2031647e1670caa69d1"
+  },
+  {
+    "path": "crates/context/src/lib.rs",
+    "sha256": "faf2095d1d317b1c2a68e62602df7901767bbae460aa4541ac381b058d326d71"
+  },
+  {
+    "path": "crates/context/src/mask.rs",
+    "sha256": "d2df2dbc442a5a79cae93a45098a18efaf4687e091d0421a8e10ffe1f57ad6d5"
+  },
+  {
+    "path": "crates/context/src/turn_context.rs",
+    "sha256": "43575371c22dbdaaca3678085860f33002e31c120a8847338faef9e81c499eb9"
+  },
+  {
+    "path": "crates/context/tests/context.rs",
+    "sha256": "71883a265913cc616dcf081d7017a6016ee706b4e3e05a8b495a7beae16cf1ba"
+  },
+  {
+    "path": "crates/core/Cargo.toml",
+    "sha256": "88eba024d629e6078aaa81c24e5ebd5df7f5987fedaaf701975382f6a429b81e"
+  },
+  {
+    "path": "crates/core/src/actions.rs",
+    "sha256": "674a14dad398fa430bf83965c6267d3efcc2f3b23b4d8a8175b347b082fb82ca"
+  },
+  {
+    "path": "crates/core/src/graph.rs",
+    "sha256": "e1c61b0d49f55777b95d91e8c423bc9e7bda24f5674f8c51d584e25d15b2a3d1"
+  },
+  {
+    "path": "crates/core/src/lib.rs",
+    "sha256": "29cea50a3c5a3ef0f4077986e8521a3ffba69e6ca65b6a5513acbcc70c2348ec"
+  },
+  {
+    "path": "crates/core/src/roles.rs",
+    "sha256": "3d00877c7d9aa0db04aaea3d15c75e92caa1a1a816d2e8ef0368fbdadc35fe73"
+  },
+  {
+    "path": "crates/core/src/tenant.rs",
+    "sha256": "0f7c63971ca93223861c79c5a7bbb607200e77a30fc0166c7abfd4ae417edbce"
+  },
+  {
+    "path": "crates/domain/Cargo.toml",
+    "sha256": "66ae9955c12dee8b716e38b9f9303e995a988bbd83be533ae3c2e1723f3775f3"
+  },
+  {
+    "path": "crates/domain/src/authority.rs",
+    "sha256": "1034491877ab2174133a83614695ef448bdfed02247e84ff3f8443ef3a610c55"
+  },
+  {
+    "path": "crates/domain/src/erp/accommodation.rs",
+    "sha256": "14bef6a9c97d4a01801e0ee5318dbee030b3cda1b8f4c7fb999f8d61feb71bd1"
+  },
+  {
+    "path": "crates/domain/src/erp/assets.rs",
+    "sha256": "00fa2435da37ea0cd5f181d2ac9a06a317dfd5075238372b45fafab2f8d98c6f"
+  },
+  {
+    "path": "crates/domain/src/erp/attendance.rs",
+    "sha256": "285e3d5c73c2d67b03f51042c9fdaaf384e063236d8e63dae086d9b9121e9419"
+  },
+  {
+    "path": "crates/domain/src/erp/auto_workshop.rs",
+    "sha256": "4a99739302eef4973282767f83044abbc8c43179888f9221c739f421706701b1"
+  },
+  {
+    "path": "crates/domain/src/erp/billing.rs",
+    "sha256": "e4b67e77d1bbb1e045e8ad8db808d28e5ea5cd9e2768cd49cd26e0301061c1b7"
+  },
+  {
+    "path": "crates/domain/src/erp/clinical_records.rs",
+    "sha256": "496b6e31949e506da1f6f3b5bfb41f951a7bd946b1dbd26670a1bac24a6e4528"
+  },
+  {
+    "path": "crates/domain/src/erp/consignment.rs",
+    "sha256": "81f817f3d5c6d606b3402663a9a94b9cc7ebf424c8cc0e52f4434a949be3af23"
+  },
+  {
+    "path": "crates/domain/src/erp/equipment_rental.rs",
+    "sha256": "3c40c0d4d93946e1f50498138935f8f7af647d1dc56305b105e7aa8f797b3d7c"
+  },
+  {
+    "path": "crates/domain/src/erp/expenses.rs",
+    "sha256": "474f18607bdc6ba1046534d62fc79cd692c508d5c20dde3c4b0fa589c8c16522"
+  },
+  {
+    "path": "crates/domain/src/erp/field_services.rs",
+    "sha256": "4eaa594f7ec8b2b78ef77bfe3c21d92998a8be1ee6f159584d4ab2e384f51447"
+  },
+  {
+    "path": "crates/domain/src/erp/fleet_management.rs",
+    "sha256": "36b0a613b2f37c95e64da99adf608e62ce8be6805955e23631b08e165d190138"
+  },
+  {
+    "path": "crates/domain/src/erp/foodservice.rs",
+    "sha256": "c2ea36bf9d85512d1e1b84af62f469186e7972efbae72b4a6f12a3f2b7092f52"
+  },
+  {
+    "path": "crates/domain/src/erp/formal_education.rs",
+    "sha256": "b38acbc7c9ca060b22974a66816f56132829d7252a349de111cd9db8f8f0cfd7"
+  },
+  {
+    "path": "crates/domain/src/erp/fulfillment.rs",
+    "sha256": "76ff2c0b23e66fa0d2b1cd4c4d16aea0e44a68326e6733291b5048bac967dc12"
+  },
+  {
+    "path": "crates/domain/src/erp/general_ledger.rs",
+    "sha256": "4f6e769153ba2c913d1f37664c11786b1de1d96b4d3fbe7e251ffa87b7895c27"
+  },
+  {
+    "path": "crates/domain/src/erp/inventory_costing.rs",
+    "sha256": "bc167c18deb0e182a1ca1ce1481ba8a8c4249c39801ff8fd7f4f4ccdbf6d3c54"
+  },
+  {
+    "path": "crates/domain/src/erp/laundry.rs",
+    "sha256": "123bc2b2da3dfed9abb9ca97c6605caffb416a1e230fc322336afb66c7383b76"
+  },
+  {
+    "path": "crates/domain/src/erp/lms_digital.rs",
+    "sha256": "712d40a02b9dabe575b8558147feae3953dc0a16a8717f546f801300f6525b94"
+  },
+  {
+    "path": "crates/domain/src/erp/marketplace.rs",
+    "sha256": "7d1eb07730018f8f28a488db86f6401e6b373b40cd4c0ea7eb459e821d841f15"
+  },
+  {
+    "path": "crates/domain/src/erp/mod.rs",
+    "sha256": "561157ad9cb699137de27dd130a066ca05db8c1a511453b2bbe6f6198b6092aa"
+  },
+  {
+    "path": "crates/domain/src/erp/mrp_discrete.rs",
+    "sha256": "ad9a0c50eb96b1b470f1653d179e5edd1c228e988f26692a15f1a4e1036d6db5"
+  },
+  {
+    "path": "crates/domain/src/erp/organizations.rs",
+    "sha256": "adc9a9757409e3a68fecc023d53c4e236fa72469e692e7c76ab76f81847c274d"
+  },
+  {
+    "path": "crates/domain/src/erp/patient_queue.rs",
+    "sha256": "18e22ffe570b6b48aa7057075bc2204c82372df76a1e20e6c2c692132cef5c1e"
+  },
+  {
+    "path": "crates/domain/src/erp/payroll.rs",
+    "sha256": "02ced7d754153b3d60b494c83e38e933ebbf7ad6a12663f0cb80547a9ac06b50"
+  },
+  {
+    "path": "crates/domain/src/erp/pharmacy_dispense.rs",
+    "sha256": "0bd3de691d93137f116845cfe196c331647f99b75905be0466fea3c43b2546d4"
+  },
+  {
+    "path": "crates/domain/src/erp/pos_terminal.rs",
+    "sha256": "e77f3539918a046d4580a099caed3c229eefc2c31b051920ec21eecb1fca7d32"
+  },
+  {
+    "path": "crates/domain/src/erp/projects.rs",
+    "sha256": "66be1e4cd7bb0af7c03a92c06f5ee32657f23d6d1e6f84542e8843f7595597af"
+  },
+  {
+    "path": "crates/domain/src/erp/property_lease.rs",
+    "sha256": "56bca6edcb8c3f2f0f7c3b39a41eb528f548e3d0753524364524da4903aab618"
+  },
+  {
+    "path": "crates/domain/src/erp/proposals.rs",
+    "sha256": "74aec7a27ed2d98df025a85bb0ca1194b744f0ad2eccb33f2bbf28864025ddc5"
+  },
+  {
+    "path": "crates/domain/src/erp/purchasing.rs",
+    "sha256": "7f1e8e3a463c7bfb0e286780a068bac3865740c55f44e905ca4627c316ef30a9"
+  },
+  {
+    "path": "crates/domain/src/erp/quality_control.rs",
+    "sha256": "d82c556fd5d35a01ac2ba922b3068dd104537918e1ed9fff0319d53c9f8d5241"
+  },
+  {
+    "path": "crates/domain/src/erp/salon_spa.rs",
+    "sha256": "d85a5f16e3b2b3967fc0ec65ddaedb4077bdab2b722a4048e5208a1217288b29"
+  },
+  {
+    "path": "crates/domain/src/erp/scheduling.rs",
+    "sha256": "4b8ccb3b91e171a7ba4c466944d24927a92a548dc10bbbf7b7f5eeadc960fac9"
+  },
+  {
+    "path": "crates/domain/src/erp/stock.rs",
+    "sha256": "087bce77cc902fac2dea9bae99162cd4ee6edb4273152530b8c1d0c1f7030a5a"
+  },
+  {
+    "path": "crates/domain/src/erp/studio_canvas.rs",
+    "sha256": "4093b2d2dc454af91f2c996abd2f3d0682f06fbffdc4fdb47173e9638fd8364a"
+  },
+  {
+    "path": "crates/domain/src/erp/subscriptions.rs",
+    "sha256": "c261d246642fbc940377142d9a87ad3a8a1497dd947e5e667cfa4b67321e7b3b"
+  },
+  {
+    "path": "crates/domain/src/erp/support.rs",
+    "sha256": "82e425da9fade6e90f48e80e33c9c1a946fbe363bfd1bb40e49ea1eeefc50b02"
+  },
+  {
+    "path": "crates/domain/src/erp/tax_indonesia.rs",
+    "sha256": "9ca31216b2d56979282bbe8ff782bb064f5229c93a3d4b44e7a316f415c93239"
+  },
+  {
+    "path": "crates/domain/src/erp/tests.rs",
+    "sha256": "1fab35a7246b22a3f1f78ab968a485599e864a0b06aab372f1dfceed1483ef60"
+  },
+  {
+    "path": "crates/domain/src/erp/venue_booking.rs",
+    "sha256": "a4335885f8344d7e4c17da349e8607de6ae6859e787f29435fe1aa03bf0d4da6"
+  },
+  {
+    "path": "crates/domain/src/feed.rs",
+    "sha256": "dcba8445a897c70fc8318fc7f1c4de6dcc677c7f97fe12e48c813eaeaa1c8cb9"
+  },
+  {
+    "path": "crates/domain/src/hardware/escpos.rs",
+    "sha256": "5c9e34a82ce0b62aad2b4bca62e4c4dc0e812ef4ba2dbfe5a0870b87f67e9e64"
+  },
+  {
+    "path": "crates/domain/src/hardware/mod.rs",
+    "sha256": "f105f5289242592a5ae564a3cfa4695851ab73cb0c5b5c3d413a00919414b14e"
+  },
+  {
+    "path": "crates/domain/src/ingestion.rs",
+    "sha256": "38921d909d5e224aa394d841dfc1825941f2726a3e2bbde26466956ed8c1f239"
+  },
+  {
+    "path": "crates/domain/src/lib.rs",
+    "sha256": "613f28407ff05114553e3e291d6bd88adbee375ecc318f3c73156a25840946f5"
+  },
+  {
+    "path": "crates/domain/src/messaging/mod.rs",
+    "sha256": "9feba0e64a659fd94e8547d362101efff65e6305128393ba5f2318a3e7975201"
+  },
+  {
+    "path": "crates/domain/src/messaging/whatsapp.rs",
+    "sha256": "0487de61d1e772380043187f1668d6853f3e2011eea23fe05c895645db22182f"
+  },
+  {
+    "path": "crates/domain/src/modality.rs",
+    "sha256": "68390c278b659fdcaee78a046622ed94c2be7af29329c58a233f48d78ceaf26c"
+  },
+  {
+    "path": "crates/domain/src/presets.rs",
+    "sha256": "2f38c4209cd5348cd93eec1648ac46453623358936f202ffbc67f2d8c1d2aa8b"
+  },
+  {
+    "path": "crates/domain/src/preview.rs",
+    "sha256": "03a824a7d8f20f704f9ab29fddaa703aa124c57f104a6d3d355348e450c61298"
+  },
+  {
+    "path": "crates/domain/src/telematics/mod.rs",
+    "sha256": "8c19487ec939361d84f0265f18807e2aab34e5351906742a845350572023735b"
+  },
+  {
+    "path": "crates/evals/Cargo.toml",
+    "sha256": "490ba5168b1b60e85710f44a922ab156aa0c16f61e19e78ea8f60555a5021f78"
+  },
+  {
+    "path": "crates/evals/src/evaluator.rs",
+    "sha256": "2553a6572fc3f8f1653d14c62ad36d1de0a29f7e1b95db34eaa08ecfb93f324f"
+  },
+  {
+    "path": "crates/evals/src/lib.rs",
+    "sha256": "53ef864058b4c5c03665e4f6fb963a4a8642a243338becf8fc347db621f12e5e"
+  },
+  {
+    "path": "crates/evals/src/synthetic.rs",
+    "sha256": "ad81b314b0f294ab65147df37f28f8344d8fb4147901ff921bb3fbd5b4e3a027"
+  },
+  {
+    "path": "crates/host/Cargo.toml",
+    "sha256": "7dbb0b2798c2201f4f21a7f9ba4134a0c83780c5f748e953fc4763dbff00e147"
+  },
+  {
+    "path": "crates/host/src/assistant.rs",
+    "sha256": "517a5d1bb1890cbb53bb0ffdf0f1dff9170865a7183ec5ee01126f5fda147c61"
+  },
+  {
+    "path": "crates/host/src/authority.rs",
+    "sha256": "b8b38a0f1190f3eff1cf71d9667b205db7428bdc82a6c4becfb82bf28e3dcee1"
+  },
+  {
+    "path": "crates/host/src/cockpit.rs",
+    "sha256": "a993326950eae6025b081a0ac9c73bece098c1d7b981fb99f42c20b907b31597"
+  },
+  {
+    "path": "crates/host/src/crm.rs",
+    "sha256": "0bfc5225eac3a9e3f3cd91126fb0b375c00bc73290a9300f3c652d8fa1981cad"
+  },
+  {
+    "path": "crates/host/src/erp/accommodation.rs",
+    "sha256": "1184a40e2880e540d0722451163cbdf271a5b56ec2c70c1e5349de55cea90060"
+  },
+  {
+    "path": "crates/host/src/erp/assets.rs",
+    "sha256": "757edeecb1d7047c518575269cbd6e0c333dfb07691f96c2d77487f1eab45cba"
+  },
+  {
+    "path": "crates/host/src/erp/attendance.rs",
+    "sha256": "3da28669a7d02fd4a19ba6686566a12b1fb5663a07c5954b582132cadacfc91c"
+  },
+  {
+    "path": "crates/host/src/erp/billing.rs",
+    "sha256": "093df4c3038c8241664b53293261137052666c6e8fd525cbf911d61cbaaf3c4f"
+  },
+  {
+    "path": "crates/host/src/erp/field_services.rs",
+    "sha256": "0227b0202a5ff6ab3f236d8ee06760b0c947aff7c4aedab590c4d0754e8b5da8"
+  },
+  {
+    "path": "crates/host/src/erp/foodservice.rs",
+    "sha256": "b76894f437f4d82042253863299644a19f60c913f19791a0be10a4b8992bfb54"
+  },
+  {
+    "path": "crates/host/src/erp/formal_education.rs",
+    "sha256": "dde0f1c441d29e05a938cffdc9aeef1a6d2de4a895a8a78efca2152cb8551457"
+  },
+  {
+    "path": "crates/host/src/erp/fulfillment.rs",
+    "sha256": "5ee6ab4ba75d136926157e1c8e834ac3da32efcc15974f258ece46f0d5158206"
+  },
+  {
+    "path": "crates/host/src/erp/laundry.rs",
+    "sha256": "30d2d877533146f4d17ecd123c6d87200f1f05a0229fbddd8581d91a4e8a05c3"
+  },
+  {
+    "path": "crates/host/src/erp/mod.rs",
+    "sha256": "d3cdeffa8fc08b03abb6944eab786f88ddcd47d9827f6bd71b0ae9c45195d378"
+  },
+  {
+    "path": "crates/host/src/erp/organizations.rs",
+    "sha256": "f5dd2d1dec6082cdd3bc0e6537aa998efa98b48482fa74e23684bdaa1bee45f3"
+  },
+  {
+    "path": "crates/host/src/erp/projects.rs",
+    "sha256": "34ea03e69b6364c59db61c396979f85ad94a8c1f82b80faf43cbfebaa11d2671"
+  },
+  {
+    "path": "crates/host/src/erp/proposals.rs",
+    "sha256": "6fd51c369179ab1374b313c8186ff2244ed1a4dd2e38c8b241a2686bb5314206"
+  },
+  {
+    "path": "crates/host/src/erp/purchasing.rs",
+    "sha256": "cb264768112efd764db5e7eb8df453da3cbd70b90d35532357fba9becaa4cd52"
+  },
+  {
+    "path": "crates/host/src/erp/scheduling.rs",
+    "sha256": "e85064363fec7ed3cc0d37bbe6695ae5bdd3539973babc13498b8132aa412022"
+  },
+  {
+    "path": "crates/host/src/erp/subscriptions.rs",
+    "sha256": "ab7a11640430b662493733a5b7a76eb5d916210ad920481c819c2ea6f9337318"
+  },
+  {
+    "path": "crates/host/src/erp/support.rs",
+    "sha256": "a7914e2d39290b79784b72b5b3d83c9b5b3fabcaefea430ad3dd1d75af9c1b41"
+  },
+  {
+    "path": "crates/host/src/extractors.rs",
+    "sha256": "4d3dae51151411b18e1644d6f9ec84b7ee1282bbe0699e9bcdf19523beb94e24"
+  },
+  {
+    "path": "crates/host/src/feed.rs",
+    "sha256": "f062fd1d6ef06b6f94282c73e698c94a6d69eced918c215bbc3ee8ef26059012"
+  },
+  {
+    "path": "crates/host/src/identity.rs",
+    "sha256": "ff31a5240e25fc04bbbfd1752e09865704e3f5fb9c488175d5d9838ce409ad35"
+  },
+  {
+    "path": "crates/host/src/ingestion.rs",
+    "sha256": "227bc5b8afb3aee3973a7554667862348166a79f86c0d7370295bedd2f4a6933"
+  },
+  {
+    "path": "crates/host/src/lib.rs",
+    "sha256": "fe5e3c94579b8cd054546983be0fbf07f5831ac87b3658fa223fc3a4a961e45a"
+  },
+  {
+    "path": "crates/host/src/metrics.rs",
+    "sha256": "d7834163889c94c1563ddcc7daf1064548e3e05c5e55c7d969fb4cf518e97a62"
+  },
+  {
+    "path": "crates/host/src/orbz.rs",
+    "sha256": "64bcd49a39221c320baa93f2dcbdbed6fc4f0c4c339ba7b2397851ba7cd9ed74"
+  },
+  {
+    "path": "crates/host/src/own.rs",
+    "sha256": "b021fac708bfe45540a729c1d4c9510fa5f3911b057056f23933224bc01c82be"
+  },
+  {
+    "path": "crates/host/src/preview.rs",
+    "sha256": "ccb0cf5f1f269250c2b4626fe076281a83925059b89a22c010628e323a6d117f"
+  },
+  {
+    "path": "crates/host/src/router.rs",
+    "sha256": "befa089d2bc1ee0fb9eb0a9a7491fff3b60eaf10097f772d7d280bc8d6e70580"
+  },
+  {
+    "path": "crates/host/src/security.rs",
+    "sha256": "406cacca3b60ff6fdfc3c42d7cdc3468687eee6a6336dbc881be35551093d87c"
+  },
+  {
+    "path": "crates/host/src/webhooks.rs",
+    "sha256": "4db7bc715a0be4b47551c2b219dee095397ba20e9598d840bd7c5d884ddc38d4"
+  },
+  {
+    "path": "crates/host/tests/assistant.rs",
+    "sha256": "70b6e40f8b49d9a7031c569c119c41a1e2add1b6f3c6e988690d63171be309c8"
+  },
+  {
+    "path": "crates/host/tests/authority.rs",
+    "sha256": "7f113b01613233249d83c051adff0326a81ddfe167a68c38ddad63f4b838a08c"
+  },
+  {
+    "path": "crates/host/tests/crm.rs",
+    "sha256": "062935a6b9aac7078ab3515505f41f2d5b34d8acb991f43e8b96b3edc3f21c84"
+  },
+  {
+    "path": "crates/host/tests/erp_accommodation.rs",
+    "sha256": "fe9a1ae96236c535b5c6c18af5163687f0d0bb128b54c9cd95c624f362b7747f"
+  },
+  {
+    "path": "crates/host/tests/erp_assets.rs",
+    "sha256": "2fe09c5f8559d0f24ae70a44901181b2d393c132b94a3067cf06e7ed305a4f91"
+  },
+  {
+    "path": "crates/host/tests/erp_attendance.rs",
+    "sha256": "5c8d49281f3f5190e5d229f768f32ce7ee2bd745223579138f2629633d7cdc41"
+  },
+  {
+    "path": "crates/host/tests/erp_billing.rs",
+    "sha256": "0a76ad80a89fb8ae5762aa649f0f981132ed0e4291fd5def10ab61fb074f2ccf"
+  },
+  {
+    "path": "crates/host/tests/erp_field_services.rs",
+    "sha256": "f8ebf1b15a70a4a9939ea5decc26d54a193d3da82a80c213df478dbbc5a93e78"
+  },
+  {
+    "path": "crates/host/tests/erp_foodservice.rs",
+    "sha256": "cefe5bc9b8b5df390467880ae9e1412e8c04229a09861b6aff7e21d818a694af"
+  },
+  {
+    "path": "crates/host/tests/erp_formal_education.rs",
+    "sha256": "9f717eda7632b053fa4d307b973eaa3a878598f705511162533d2bc576d7e235"
+  },
+  {
+    "path": "crates/host/tests/erp_fulfillment.rs",
+    "sha256": "60b7848129e92968de58d3ed7b7402225c6fb4f433ecb1e62d7ac59c2503d48a"
+  },
+  {
+    "path": "crates/host/tests/erp_laundry.rs",
+    "sha256": "23cb310f72cff8cc58827933bcfbc5273a4df671bddef08ef2a9c5e78778e8db"
+  },
+  {
+    "path": "crates/host/tests/erp_organizations.rs",
+    "sha256": "1d978bd1759034f8a8095a11daccbc73f73f41f4e793232cf07f378cd1050489"
+  },
+  {
+    "path": "crates/host/tests/erp_projects.rs",
+    "sha256": "bac212acc40b2e21f342271adb7d6816fa5b729f0f41720f885af6fabd976178"
+  },
+  {
+    "path": "crates/host/tests/erp_proposals.rs",
+    "sha256": "01cea6af42137ad16abc215b1cef52d9a4dab660b048dcf42cdc7a378af6ec61"
+  },
+  {
+    "path": "crates/host/tests/erp_purchasing.rs",
+    "sha256": "dd4e9f32c0b8d60176c1441ddf6a61e440b22623f01f18822e131c942a656d8a"
+  },
+  {
+    "path": "crates/host/tests/erp_scheduling.rs",
+    "sha256": "50bb8023cd3e0bf01f88b2531233dd11ba63e452ef3a94dc8875f5cd1b50d347"
+  },
+  {
+    "path": "crates/host/tests/erp_subscriptions.rs",
+    "sha256": "820273b085dc0ec90d5e506e880106db795665d0fbaa948a43117fada853cceb"
+  },
+  {
+    "path": "crates/host/tests/erp_support.rs",
+    "sha256": "488687b1e600f312a5644ea93771bc9ff2baf107bd133d0b9606652d1379782a"
+  },
+  {
+    "path": "crates/host/tests/kdf_budget.rs",
+    "sha256": "b34e5fc916c99195644861af2238d5311deef1fd1c397b2dc2084d84fce375e4"
+  },
+  {
+    "path": "crates/host/tests/own.rs",
+    "sha256": "d3967a09fb2874e9addbbe47af78cd5fcec080ac4e5a2756575db9efbdae27d6"
+  },
+  {
+    "path": "crates/host/tests/readiness.rs",
+    "sha256": "0ded85ceeeb27fc39583d2c945f5248d2cfab750b288bf1b582b40a77def1d96"
+  },
+  {
+    "path": "crates/host/tests/session.rs",
+    "sha256": "69ba2f73d490feb1e2fa1b9e74224d8d7307667da6efa961e9d51c339f5d22e1"
+  },
+  {
+    "path": "crates/mcp/Cargo.toml",
+    "sha256": "68b03eebebdd42847cebfbc17e4e8fd217fe681e8b4377b7abba0c7b96957a2a"
+  },
+  {
+    "path": "crates/mcp/src/client.rs",
+    "sha256": "34f7326880de882feec95b4f0532fa8584fba327223912df21f92c142eaa0a10"
+  },
+  {
+    "path": "crates/mcp/src/lib.rs",
+    "sha256": "004659cda80e3902ab5a6e6cb255fc4b052027871d230bb4ad906aa970681488"
+  },
+  {
+    "path": "crates/mcp/src/protocol.rs",
+    "sha256": "05666f584253bba2fb21ab022d2f597215e5e6a58f5973d90cecaba29f02a527"
+  },
+  {
+    "path": "crates/mcp/src/server.rs",
+    "sha256": "c6b538f8b5639f11815fe4756a4abfe7c2e00f24b3090fd027a2df31c34f2690"
+  },
+  {
+    "path": "crates/native/Cargo.toml",
+    "sha256": "c4421662f5fe08d1543e14adfe7d337c292b3041ec43074806db7d34a32e888f"
+  },
+  {
+    "path": "crates/native/build.rs",
+    "sha256": "896b3808e78cc6ed8047dfc9e1762ab67c904de8b59d4deeedfd2c931f6e3460"
+  },
+  {
+    "path": "crates/native/src/lib.rs",
+    "sha256": "8be9afc3a200eecc5749701824d3f9d405ac4f5ce642b0189905b04fd1964032"
+  },
+  {
+    "path": "crates/ops/Cargo.toml",
+    "sha256": "f2f81a1620fa322d3a5cf83407a5a17420daba042b1f022ec8f82c9291acbe9b"
+  },
+  {
+    "path": "crates/ops/src/backup.rs",
+    "sha256": "b2404ac2e9a257bb4d782000170bd4a311d15d7b890985bbfa2f9bfa1b99f1ea"
+  },
+  {
+    "path": "crates/ops/src/cli.rs",
+    "sha256": "fc1f331ff7ac3d963652438759c4a74e4b84fc7d07417df84f09d9b938dfba84"
+  },
+  {
+    "path": "crates/ops/src/doctor.rs",
+    "sha256": "b944e86de72695a47789652b2ae6e4a83fc9054ef3a2e8b4d26d45ab52890030"
+  },
+  {
+    "path": "crates/ops/src/lease.rs",
+    "sha256": "0f41b5310c3dce3f389cc811c66859e4dba562a8ca0a515bf29cc1e9f18d1a39"
+  },
+  {
+    "path": "crates/ops/src/lib.rs",
+    "sha256": "072556858d4b477411a0881c4eba4d089b81315d2245e64c4a8f1995433c171e"
+  },
+  {
+    "path": "crates/ops/src/main.rs",
+    "sha256": "2c8ba8043d46f905f8f25f3b5599865025f3739afd2dc804f11aa724c783bcdd"
+  },
+  {
+    "path": "crates/ops/src/release.rs",
+    "sha256": "fa4fe2018bed0f42c6085e1d71896be0d8292d96f470422fe6c1e39156cecee6"
+  },
+  {
+    "path": "crates/ops/src/runbook.rs",
+    "sha256": "9122d755b6295c4d953ef1fda0659a3cf3a29a75473d8c9af12233834e374a7f"
+  },
+  {
+    "path": "crates/ops/tests/upgrade_restore.rs",
+    "sha256": "9e8d5ad63816c1992515311139374f5eb853b99a29630497f6932b6450bf102f"
+  },
+  {
+    "path": "crates/orbz/Cargo.toml",
+    "sha256": "750fdc5e58cbf7e2f9cddf2c9e828005e005a7ff622ee3007f09fb5a0ab2d33d"
+  },
+  {
+    "path": "crates/orbz/src/episodes.rs",
+    "sha256": "0a7b110061f81efa013f33b4410115a97b7d6a033c84905b7e2237b4ed1a2b7d"
+  },
+  {
+    "path": "crates/orbz/src/lib.rs",
+    "sha256": "327c7c8c4fd9c078c4dca7676ebf89feaf7969d4395de1c44c04fe910ae98f47"
+  },
+  {
+    "path": "crates/orbz/src/progressive.rs",
+    "sha256": "1e97eb91ed015cc7df81d7b7d942d1ce219bad36fdeaa819349dc50ad577e6f3"
+  },
+  {
+    "path": "crates/orbz/src/reflection.rs",
+    "sha256": "e9f23a9609c036ac6af2e35ca3749213450edcec8926d64968316642e1b4e5c0"
+  },
+  {
+    "path": "crates/orbz/src/security.rs",
+    "sha256": "ff97778d662da9de018d72b4c001d970a9886b6d50b6d75cba87cb5813d95e7f"
+  },
+  {
+    "path": "crates/orbz/src/temporal.rs",
+    "sha256": "e06b76a7c59d825f7308414844dd49ed14adf6260d5e7a6ffcc021d052e9cc08"
+  },
+  {
+    "path": "crates/orbz/src/uri.rs",
+    "sha256": "50eeef167c6495d065cea31adcb0aa0924d3fb59d7a94c8c805995fa544c46b1"
+  },
+  {
+    "path": "crates/own/Cargo.toml",
+    "sha256": "5040af1fb115ccb6050ea15cfd6c470d0e6e59568f7235d2146c1c6b84d9df7a"
+  },
+  {
+    "path": "crates/own/src/lib.rs",
+    "sha256": "b4f91305da0cfdc3e86489e1d834fb7faabf687cbc51f4b65e00e400c78bf71b"
+  },
+  {
+    "path": "crates/own/tests/engine.rs",
+    "sha256": "834f4527edfbec3941d396056b2ed5c333a89a9a1a2cfe6d2e2a733c553fbf1c"
+  },
+  {
+    "path": "crates/pg-fixture/Cargo.toml",
+    "sha256": "1658533f72fc8e4ab97c006447d3e61941ff740db8eed2665e44f1719e8c6504"
+  },
+  {
+    "path": "crates/pg-fixture/src/lib.rs",
+    "sha256": "c0c3ebd2af6d2ff786db27bebd584aede5856b62a5654fc51a43a6d0ef4f860c"
+  },
+  {
+    "path": "crates/pg-fixture/tests/socket_dir.rs",
+    "sha256": "aaff57b3209ba8a00be92471673b1498b2aafdeecb8a3e0fd2f6c84888f258df"
+  },
+  {
+    "path": "crates/pg-fixture/tests/socket_dir_forced.rs",
+    "sha256": "3dac0bc639a526ffaa5c859a4a97b1039a58b291ecbf1ac9629050f67a33f8bc"
+  },
+  {
+    "path": "crates/pricing/Cargo.toml",
+    "sha256": "27823e3872ebd3e85c2877573a835416212670516efddddb1d5ac502d81050fd"
+  },
+  {
+    "path": "crates/pricing/src/classify.rs",
+    "sha256": "69198d8f71410460e0ecd0ffb103dd0998399fde089ee970addeed9000a13796"
+  },
+  {
+    "path": "crates/pricing/src/engine.rs",
+    "sha256": "3e3220366aa3a515392f2f3e05ad7c3c718b4d2d43a24468e5d1b08575a73285"
+  },
+  {
+    "path": "crates/pricing/src/error.rs",
+    "sha256": "7f87eb408d7a0e03e43cd974e59757a38fb113b5d1800a3776332eb4bfcc1b15"
+  },
+  {
+    "path": "crates/pricing/src/jsmath.rs",
+    "sha256": "fdacfae92bcf3aab49eb33f80d8bb9588eb3f03947b39365cf06fe7ba76d43cc"
+  },
+  {
+    "path": "crates/pricing/src/lib.rs",
+    "sha256": "36d8e83a19a536c390294869c11d83df59bcb46307f05357a0866cc2fe0399d0"
+  },
+  {
+    "path": "crates/pricing/src/pricebook.rs",
+    "sha256": "935c052586fd7fdd83e0d0319b9b883c0972bbe45a38d0aaa2c3aed9d27ba88d"
+  },
+  {
+    "path": "crates/pricing/src/request.rs",
+    "sha256": "45582dfd0b7628f95cdd6ce7b099eb3a19f607201598c570dce0bb2487a7ac23"
+  },
+  {
+    "path": "crates/providers/Cargo.toml",
+    "sha256": "993201bb6072ac105a594536f6288917f8b2da7bd860fd3a1d7eab6ef82b0095"
+  },
+  {
+    "path": "crates/providers/src/contracts.rs",
+    "sha256": "4c8e13ca3606b84747de2be1f4fed7b91768220da60916bcace27a5f96f29ac9"
+  },
+  {
+    "path": "crates/providers/src/gemini.rs",
+    "sha256": "41f78ccad1c15921cd0e7b95413b147e302b49ce077607f20fc1018c484c2b3a"
+  },
+  {
+    "path": "crates/providers/src/lib.rs",
+    "sha256": "cc667697ace4e81e881cdee0a169fac2ec05916ff002066d30dbc850e8516288"
+  },
+  {
+    "path": "crates/providers/src/pilot.rs",
+    "sha256": "d89e38e26e9a805a0daca1e81b4e215c17c0a46cd254572b5f7c3d1c23ed3128"
+  },
+  {
+    "path": "crates/providers/src/postmark.rs",
+    "sha256": "c2a5d4848665a41cd7805fbbd8002cf71faf5d99db77d1a7187e20f7353d715b"
+  },
+  {
+    "path": "crates/providers/src/runtime.rs",
+    "sha256": "d36ccbe9949cced0f17b543340bfa8c916539ebd6b111729874f3fab748dda1b"
+  },
+  {
+    "path": "crates/providers/src/store.rs",
+    "sha256": "4b49d21f6df23e21275ea10ba0dfac94d5f355fe98e4f662abd57e30e867a56f"
+  },
+  {
+    "path": "crates/providers/tests/provider_contracts.rs",
+    "sha256": "5c807d1ee0d047d75b015fbaed986ef450d345b493e0d94b052db1943c03472c"
+  },
+  {
+    "path": "crates/providers/tests/provider_runtime.rs",
+    "sha256": "3dce07a6713c301bd8afe068b464f348ab3a3790f62de37f006c28758de16ef1"
+  },
+  {
+    "path": "crates/rates/Cargo.toml",
+    "sha256": "f25d1c16af95f4e832a65bc9291e7b7268da5a57935948dd61ff7c4b47a3d424"
+  },
+  {
+    "path": "crates/rates/src/lib.rs",
+    "sha256": "43d3aac1444d4549a993cbfee5d6330d05f3bcfc6479f34732cd9f86e9988ea8"
+  },
+  {
+    "path": "crates/rates/tests/rates.rs",
+    "sha256": "a3b2aaa8eb4ff88ce67643d634bc6646f9f18bb45c275fd3a9143d1bd8d4484d"
+  },
+  {
+    "path": "crates/rpa/Cargo.toml",
+    "sha256": "386c29413672dd06a3be023342ab07c0d408ac38dd2559d20db6be4f2976d78c"
+  },
+  {
+    "path": "crates/rpa/src/action.rs",
+    "sha256": "1fd87e0f9d9cbfc024a48556aa9457a2b6e84c576ba3026852383cc7e597ee28"
+  },
+  {
+    "path": "crates/rpa/src/executor.rs",
+    "sha256": "4097fce33bd9592e8fd95589f697dcf6b2c046c0cc0e9aaf5cfa21411c9c9c50"
+  },
+  {
+    "path": "crates/rpa/src/lib.rs",
+    "sha256": "792b4e88e531f73abc736f44b47eb3904f58b2376314f317f589a7b6e2f322c7"
+  },
+  {
+    "path": "crates/rpa/src/security.rs",
+    "sha256": "3b4f3a5da35141de9660df89f21e53322948363e0902979918a53e2686729e23"
+  },
+  {
+    "path": "crates/slice/Cargo.toml",
+    "sha256": "36792eb1ecda43526b78dfac2c46488738839b72f19e830a4f3e72e5b3d4df10"
+  },
+  {
+    "path": "crates/slice/examples/slice_server.rs",
+    "sha256": "813258af543ed1e125f89506e423a6c611ce8847584842dc2d33412555b225a9"
+  },
+  {
+    "path": "crates/slice/src/bin/archava_server.rs",
+    "sha256": "cb55e33d571c28d2c2c1eb2e0f839e952dfb3ed361572cb2770e949fe93db193"
+  },
+  {
+    "path": "crates/slice/src/contact.rs",
+    "sha256": "0e8711e2e8e1152d48e010ca63813d8663f9ebd735baa531a32ac3812618d485"
+  },
+  {
+    "path": "crates/slice/src/contact_context.rs",
+    "sha256": "25f66168e9425ea8c9510ae257d13eca4378d61b365befd20875cb74eaac1b04"
+  },
+  {
+    "path": "crates/slice/src/contacts.rs",
+    "sha256": "adf60ef9bb30031c2beff7c517a45bb41473d7491076391386f5fa0d58c4908e"
+  },
+  {
+    "path": "crates/slice/src/desk.rs",
+    "sha256": "1264f300054cf1ddb7e59a63168b0c16624deef7b9fffc2d5bd35c2cc3c29e06"
+  },
+  {
+    "path": "crates/slice/src/draft.rs",
+    "sha256": "31a34177836e093690866c2cfcc9064f869d30cc0f37d1101e8b3051c0d531f0"
+  },
+  {
+    "path": "crates/slice/src/erp.rs",
+    "sha256": "f75774b299b1be80b055bc7b73573ac742c736d5ac3b36c960adb30ef5f97e26"
+  },
+  {
+    "path": "crates/slice/src/home.rs",
+    "sha256": "68472e978f0687c14bceb7a4d6d997ecb76fb7127be127ea7ed4b94fa218514c"
+  },
+  {
+    "path": "crates/slice/src/hydrate.rs",
+    "sha256": "497d794b39d994355e5f8bf56de04fb4e836e19cb0ea86ec0dafab2b6adbcdde"
+  },
+  {
+    "path": "crates/slice/src/lib.rs",
+    "sha256": "a6db5a0d8b292b2289e6e0a660073ade9eeb968f5291cfbbe371b568b8494edf"
+  },
+  {
+    "path": "crates/slice/src/login.rs",
+    "sha256": "40439e0b8b3ed248f5b3aa41b2ffade53ebbdc1d0f3cc4a661326afad75e567b"
+  },
+  {
+    "path": "crates/slice/src/owner.rs",
+    "sha256": "d98d01a30c97a4b64c490664dd7200e970bf06a30a9d16b8ffddd59098583788"
+  },
+  {
+    "path": "crates/slice/src/pending.rs",
+    "sha256": "00306d885e55a44b1d20cc7e62d9b11635c6225b770b1ac19289ac2d141f6aa1"
+  },
+  {
+    "path": "crates/slice/src/recover.rs",
+    "sha256": "bca66c2b294b000dabd7ed1064ca31b29fd3f20420f82cafff641ff98f09f072"
+  },
+  {
+    "path": "crates/slice/src/server.rs",
+    "sha256": "183580db3fcba20187998a0f3bd69a4bac39976a02bd74105d009a8c77661e79"
+  },
+  {
+    "path": "crates/slice/src/session.rs",
+    "sha256": "d2b979ade42eac80b624f96b0942c648a0efbb1970c3e84812282964a25048d8"
+  },
+  {
+    "path": "crates/slice/src/workspace.rs",
+    "sha256": "f0730b7a44f45c1eea93c638d8ff0d02479aa01f2c916497a5e79ad89869603f"
+  },
+  {
+    "path": "crates/slice/tests/persistent_launcher.rs",
+    "sha256": "326e669d8bf393222420a744cbd0a0fa2ce42f0f12cd573fadda420efa5bbb4e"
+  },
+  {
+    "path": "migrations/accommodation-pg/001_room_night_stays.sql",
+    "sha256": "45f558b7e22d7ef12dc6c1eabbe9c5655870786cb74d552def60edceb1e61098"
+  },
+  {
+    "path": "migrations/act-confirmation-pg/001_confirmation_challenges.sql",
+    "sha256": "e08b510c105f36339e549ff08c0210d132c66c74057209f7fadeacc5df9cda3c"
+  },
+  {
+    "path": "migrations/act-host-pg/001_host_intents.sql",
+    "sha256": "349fbb17938e5426d9c911911a262216d139a33f20ba5fe9154aef238baae894"
+  },
+  {
+    "path": "migrations/act-host-pg/002_host_scope_binding.sql",
+    "sha256": "545b449aaf42ac26dadbf6e8fbc6bf3a9c15ad5f2a5283e05a1a6d9db717fc19"
+  },
+  {
+    "path": "migrations/act-storage/001_act_attempts.sql",
+    "sha256": "2810236f26d029cce734fbacc726a179abc629ee90b1caaa73634a581c780934"
+  },
+  {
+    "path": "migrations/assets-pg/001_assets_custody_maintenance.sql",
+    "sha256": "b77c70bddd01512defad588a04497380aafd923dd52c833ab30fc578c9c6cfec"
+  },
+  {
+    "path": "migrations/attendance-pg/001_attendance_sessions_rosters.sql",
+    "sha256": "f71bab0e95d33c253bac9eae573675e5fe321c33f8d81f7124561351f7484883"
+  },
+  {
+    "path": "migrations/billing-pg/001_billing_invoices_settlement.sql",
+    "sha256": "b14f434495c526384a726ddf83eb685b610d229d379d0974b2c38df59f96dfbc"
+  },
+  {
+    "path": "migrations/capacity-pg/001_delivery_capacity_pools.sql",
+    "sha256": "df1f3b29e3c39ccddabb0a31a7e025709eeccd2c44ed80e2104b3d0c673c30c3"
+  },
+  {
+    "path": "migrations/cockpit-pg/001_cockpit_durable_missions.sql",
+    "sha256": "436acb2d3b98fab9979a77a524a40671985bfe4c138b81503ace276dea1a72fd"
+  },
+  {
+    "path": "migrations/commerce-pg/001_catalog_orders_stock.sql",
+    "sha256": "afbfdec5d977dd2cea2eaf52ad0c60ad8731375af1447c299dd58a3aba53d9df"
+  },
+  {
+    "path": "migrations/commerce-pg/002_managed_menu_products.sql",
+    "sha256": "3ae7debc5b2dc1c53e47f10f317a2656aec0d47c644fd006d1809e30fbb76ffe"
+  },
+  {
+    "path": "migrations/commerce-pg/003_purchase_receipts.sql",
+    "sha256": "de658b69951dc030dd750a53ef797b1ebfaf2d39619ac0d4c8d33a00f1cbd8d1"
+  },
+  {
+    "path": "migrations/commerce-pg/004_bound_approvals.sql",
+    "sha256": "33870679fb6c3d9a960d6b23dd63e5765814be56b2ea50729911293444e4c9b2"
+  },
+  {
+    "path": "migrations/crm-act/001_native_confirmations.sql",
+    "sha256": "591a2fb0e8c62e13fd01c375e155a66ea70b1fa62049ddb23d4adf1300b8ebb3"
+  },
+  {
+    "path": "migrations/crm-pg/001_crm_contacts.sql",
+    "sha256": "400869cc13e7f5ffa4c4aa25993555b88a59f464a1ba5087694fbf6618fe22d9"
+  },
+  {
+    "path": "migrations/crm-pg/002_sales_pipeline.sql",
+    "sha256": "e3e62bbd1e1b7a7efa7a89b52daa368e88d5219cf151a88d570d1148878099b4"
+  },
+  {
+    "path": "migrations/crm-pg/003_native_approval.sql",
+    "sha256": "361f807212921599ca2a546a19bf14007824105f3c5e54dc82b218eace179281"
+  },
+  {
+    "path": "migrations/field-services-pg/001_field_services_dispatch_visits.sql",
+    "sha256": "094bf7d79c03ec16654d1adccb07984514d90524311822deaab51fc9683aa8d1"
+  },
+  {
+    "path": "migrations/field-services-pg/002_field_services_tenant_isolation.sql",
+    "sha256": "ca9124f24e57f9b5d71b76d02107d599f27b65190e1241806e12783fe84b153d"
+  },
+  {
+    "path": "migrations/foodservice-pg/001_tables_recipes_tickets.sql",
+    "sha256": "48f40f77cf51b47da53c08f77648b23ca7969b50b6eb887c646c52f03d58d4b5"
+  },
+  {
+    "path": "migrations/formal-education-pg/001_formal_education_enrollment.sql",
+    "sha256": "8cbe38d058d38e461507aca92f211cb5aeedf168b3349f69e91841e95b38b4c5"
+  },
+  {
+    "path": "migrations/formal-education-pg/002_formal_education_tenant_keys.sql",
+    "sha256": "e954d547fb3013f6d96ecf824b8dd6f6c434bd426ce00921686d04df85503e53"
+  },
+  {
+    "path": "migrations/fulfillment-pg/001_fulfillment_jobs_evidence.sql",
+    "sha256": "901ab569b84baa26008c2128144dff1d0bc0214d6cfd32f7567faeaae9fc9cb6"
+  },
+  {
+    "path": "migrations/identity-pg/001_identity.sql",
+    "sha256": "6071a4d73cf915557c2c7058550c35e40819be77e1792eb9907179ff8639022b"
+  },
+  {
+    "path": "migrations/laundry-pg/001_laundry_orders_processing.sql",
+    "sha256": "0152962d7fe05b506c757c739657615334acbda62f04eb5c61ba3fc340ba08a6"
+  },
+  {
+    "path": "migrations/orbz-pg/001_agentic_memory_orbz.sql",
+    "sha256": "1f32580a663049c9e3e75407941bdf0cdbe85b7247d93273edcd7124c287fc3a"
+  },
+  {
+    "path": "migrations/organizations-pg/001_organizations_affiliations.sql",
+    "sha256": "0480df5ab70a1e7b2effaa424636c80f1540d4ce59584c4bb54dbf2e32bb411a"
+  },
+  {
+    "path": "migrations/owner-pg/001_owner_config.sql",
+    "sha256": "120b7e82d059b9c56531ab2310136ecb2232b5b40f8b29442684df80ba642df7"
+  },
+  {
+    "path": "migrations/projects-pg/001_project_delivery.sql",
+    "sha256": "f157d38588c9cd6493de87c7d00c454252f64ff34f12e5d5b5d5403864cbbcc0"
+  },
+  {
+    "path": "migrations/proposals-pg/001_proposals_scope_amendments.sql",
+    "sha256": "966d4a5ad28b1535f058e72cdf6bd2bd59fc9dc4c147968d3637fcb069ece4a8"
+  },
+  {
+    "path": "migrations/provider-runtime/001_provider_attempts.sql",
+    "sha256": "dd2698e6c090167f154a1c8a0cecc784388a3cadb5f7db312b311dbf3851c61f"
+  },
+  {
+    "path": "migrations/purchasing-pg/001_suppliers_orders_receipts.sql",
+    "sha256": "45773eefa96889dc1d538587c53da7eb0d4b9f915cdb3ae22e9abcfad560d8ae"
+  },
+  {
+    "path": "migrations/scheduling-pg/001_resource_reservations.sql",
+    "sha256": "83c9b7e255c09ab81a063823cfba3e6ea8a4df2c9b7eaabfa981fde1114bb058"
+  },
+  {
+    "path": "migrations/scheduling-pg/002_shared_occupancy.sql",
+    "sha256": "d6f005c5c51f54711133282b829b84e8669b1ab6de4f85d6dcd1f8cb5eb0503b"
+  },
+  {
+    "path": "migrations/subscriptions-pg/001_subscriptions_entitlements_usage.sql",
+    "sha256": "7c830dd1a52c957e3c94a4f47204af9ae7c95d623a67f9beb0184f230068caa4"
+  },
+  {
+    "path": "migrations/support-pg/001_cases_notes_resolution.sql",
+    "sha256": "339785aed708a97ddb4410b08e834cc7fd1236acd94c9f77ec8182efefdf7961"
+  },
+  {
+    "path": "migrations/universal-pg/001_universal_enterprise_ledgers.sql",
+    "sha256": "2bca5d6ae0cefd4eb02bf3babe01ec987d4b19850f189347d68ca82f51162543"
+  },
+  {
+    "path": "rust-toolchain.toml",
+    "sha256": "e70c85aa3575aa36b6455c1eac0a8e22cbfa76c458a9e0d4a10ff3e64c84af90"
+  },
+  {
+    "path": "static/archava.css",
+    "sha256": "009d4ee4ab88497b6c515e4240a6469997b21c0df481583a184a72f58f3c398b"
+  },
+  {
+    "path": "static/archava.js",
+    "sha256": "6f3e616d3cb6eeb0f47248697ace7caa31b64240bb9d129e3362e3616f301444"
+  },
+  {
+    "path": "static/v1/archava.js",
+    "sha256": "6f3e616d3cb6eeb0f47248697ace7caa31b64240bb9d129e3362e3616f301444"
+  },
+  {
+    "path": "static/workspace.css",
+    "sha256": "bc5ce8c90501ab188843ac2fa48f24ae378c39f27ad24e43f4c990d605b32e97"
+  },
+  {
+    "path": "tools/check-docs.mjs",
+    "sha256": "946a3451aefd382970f98214e4c7e311214a455366cd6a5bfceabf3f66eda96d"
+  },
+  {
+    "path": "tools/check-structure.mjs",
+    "sha256": "469d10b74d4da42b9bbd9cddf8d60bf100936c9ac1488d564f9718cdb3e219fa"
+  },
+  {
+    "path": "tools/release/sbom.mjs",
+    "sha256": "33cb2a62ab6107409b113803c2b4d614548b19ed10b356a78b3e20dceb283ce0"
+  },
+  {
+    "path": "tools/rust/benchmark/rust/Cargo.lock",
+    "sha256": "18847d1275b17864b8ade9f19b822617ffd6b97611773770e0424aca8138d3f5"
+  },
+  {
+    "path": "tools/rust/benchmark/rust/Cargo.toml",
+    "sha256": "83853f65726284a595a4667037490cd5e63027f9b53f01de9ebd6923a8c5983e"
+  },
+  {
+    "path": "tools/rust/benchmark/rust/rust-toolchain.toml",
+    "sha256": "28f51bd03e5b982eedcd803e61b961680c5b2a0a1d69f146f4d63f5f57b3175d"
+  },
+  {
+    "path": "tools/rust/benchmark/rust/src/main.rs",
+    "sha256": "c6b9e3af2c5ecb755c292db973c0185d545a73c4ad39d8173a0514d1a670dc01"
+  },
+  {
+    "path": "tools/rust/build-slice.mjs",
+    "sha256": "77ffe0f72323748ee65fc0f0c1744ff40ca6d1edecde8048d173ee0c82db6e77"
+  },
+  {
+    "path": "tools/rust/dev-slice.mjs",
+    "sha256": "25e3dc73b2abb0c8fb057dbb3159957cba7f87569567a76cb9e405a6315bdd57"
+  },
+  {
+    "path": "tools/rust/run-persistent.mjs",
+    "sha256": "858bc3ebe768133bd1b49141a8d037ef39f3551ffde6533d4299bfc9e6fa65d6"
+  },
+  {
+    "path": "tools/rust/verify.mjs",
+    "sha256": "3efef5ab8304003013c7c8b946c218c3b8a7bb6c3747b02e955c8edab43c536a"
+  },
+  {
+    "path": "tools/test/docs.test.mjs",
+    "sha256": "3b5a73b60e3d93cb62c6369ee5c6743ef075e160407a70bafda93ef66803f209"
+  },
+  {
+    "path": "tools/test/structure.test.mjs",
+    "sha256": "a1df916af9a7116c7469a746ba23ff668cd6033fd3b8e635dc8347baff81c5a0"
+  },
+  {
+    "path": "tools/test/verify.test.mjs",
+    "sha256": "49c5840cbb6da6f2a76bb25a418b9366a87dc4e42dadc7135841cea41b02e5ac"
+  }
+]

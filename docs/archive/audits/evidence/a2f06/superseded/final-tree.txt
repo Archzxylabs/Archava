@@ -1,0 +1,7 @@
+HEAD=412f763e17f3a68a457fd76c7b929184c50c916a
+timestamp=2026-10-22T08:34:43+07:00
+--- scoped file hashes ---
+70c496badf02399499e7bcaa685ead09a0606ad7d4e86ac5478dd4368bc51437  crates/own/src/lib.rs
+524f63a5a51d152a473e1fe169340f853e3af6f625176ba325ccb632cafb1553  crates/own/tests/engine.rs
+08616162df02f9888f635c8042f83e6aca4eecc652dd70eeaeba5f905b12a532  crates/host/src/own.rs
+a57f6486d5bc259b0f0c402662a267dee0263b11129407d88400a853142aac1c  crates/host/tests/own.rs

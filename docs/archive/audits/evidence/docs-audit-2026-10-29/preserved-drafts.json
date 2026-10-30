@@ -1,0 +1,42 @@
+[
+  {
+    "source": "docs/architecture/COCKPIT_TASK_ARCHITECTURE.md",
+    "snapshot": "docs/history/subsystem-drafts-2026-10-29/architecture/COCKPIT_TASK_ARCHITECTURE.md",
+    "sha256": "5890276a6fa0d6d639fe7c9ed216fd6b23ee4425703e4e4ef17267b9f2d97183"
+  },
+  {
+    "source": "docs/architecture/ORBZ_MEMORY_ARCHITECTURE.md",
+    "snapshot": "docs/history/subsystem-drafts-2026-10-29/architecture/ORBZ_MEMORY_ARCHITECTURE.md",
+    "sha256": "9459ff43c3c32a8444fdcafe01858f11cddc720848e0e65274ec813b8db01fc0"
+  },
+  {
+    "source": "docs/architecture/FRONTIER_AGENTIC_CRATES.md",
+    "snapshot": "docs/history/subsystem-drafts-2026-10-29/architecture/FRONTIER_AGENTIC_CRATES.md",
+    "sha256": "e2ba2d4a6fb6ba1de3da760dce2ec2e55401b3d7dc938be0d1da3ea01d979006"
+  },
+  {
+    "source": "docs/architecture/ENTERPRISE_ENGINES.md",
+    "snapshot": "docs/history/subsystem-drafts-2026-10-29/architecture/ENTERPRISE_ENGINES.md",
+    "sha256": "000205c9bacbde03bf3f3ab5970775b61c1a881db792a72a784e340537c90e1e"
+  },
+  {
+    "source": "docs/architecture/DECISION_INTELLIGENCE.md",
+    "snapshot": "docs/history/subsystem-drafts-2026-10-29/architecture/DECISION_INTELLIGENCE.md",
+    "sha256": "ba7c6cfa6394e699b18cb9d0b2cbd87db9c4ddac82a534f8453030221ab3a36b"
+  },
+  {
+    "source": "docs/architecture/DURABLE_ACT_OPERATIONS.md",
+    "snapshot": "docs/history/subsystem-drafts-2026-10-29/architecture/DURABLE_ACT_OPERATIONS.md",
+    "sha256": "6d416a7cc1dea46a406f4a39ddc8db339141ee4dee9934212926b3a4a41ce01c"
+  },
+  {
+    "source": "docs/integration/INTEGRATION_GUIDE.md",
+    "snapshot": "docs/history/subsystem-drafts-2026-10-29/integration/INTEGRATION_GUIDE.md",
+    "sha256": "7b88d726293aa1d825a313c7eac73581d0989bbf29fccaab8e97203f78a733b2"
+  },
+  {
+    "source": "docs/integration/EMBED_INTEGRATION_GUIDE.md",
+    "snapshot": "docs/history/subsystem-drafts-2026-10-29/integration/EMBED_INTEGRATION_GUIDE.md",
+    "sha256": "a51a040f4dbae4d4e71d45205eb400a068354b6229a76b6d70a1332415697e19"
+  }
+]

@@ -1,0 +1,38 @@
+[Unit]
+Description=Archava persistent Rust runtime
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=archava
+Group=archava
+WorkingDirectory=/opt/archava
+EnvironmentFile=/etc/archava/archava.env
+ExecStart=/opt/archava/bin/archava-server
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=30s
+KillSignal=SIGTERM
+UMask=0077
+
+# The runtime serves static bytes and queries PostgreSQL. It does not need to
+# write to its own tree, create devices, or load kernel modules.
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallArchitectures=native
+ReadWritePaths=/var/lib/archava
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

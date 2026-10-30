@@ -1,0 +1,72 @@
+{
+  "startedAt": "2026-10-29T09:41:10.020Z",
+  "scope": "Synthetic local fixture, real Chromium/SSR/WASM/HTTP/PostgreSQL; production binary restart. No live provider or public/TLS deployment acceptance.",
+  "checks": [
+    {
+      "id": "F01-authenticated-hydration",
+      "status": "passed",
+      "details": "Real login, session cookie, WASM handlers and contact query"
+    },
+    {
+      "id": "F02-contact-navigation-idempotency",
+      "status": "passed",
+      "details": "Opening the new record creates no second contact or other mutation"
+    },
+    {
+      "id": "F02-browser-to-database",
+      "status": "passed",
+      "details": {
+        "contact": "2304020f-3c24-44de-8361-d35a659491a0",
+        "requestId": "d804a79a-d3c6-4d6e-a698-d28cffcad8da",
+        "proof": "Created via UI, reviewed/applied twice, exactly one follow-up and durable receipt via non-owner SQL"
+      }
+    },
+    {
+      "id": "F03-lost-response-recovery",
+      "status": "passed",
+      "details": {
+        "requestId": "9a6b12d0-3cdb-49d1-a521-bc51d0b3d500",
+        "proof": "Response deliberately lost after real commit; UI shows uncertainty and recovers without resubmitting"
+      }
+    },
+    {
+      "id": "F04-csrf-refusal",
+      "status": "passed",
+      "details": "Valid mutation body without the CSRF header is refused"
+    },
+    {
+      "id": "F03-production-restart",
+      "status": "passed",
+      "details": "Fresh production process, same PostgreSQL and browser session, committed receipt survives"
+    }
+  ],
+  "errors": [
+    "Error: Timed out: CRM http503 retains uncertain outcome\n    at until (file:///home/haikaru/Archverse/Lab/Archava/tools/e2e/verify.mjs:32:9)\n    at async file:///home/haikaru/Archverse/Lab/Archava/tools/e2e/verify.mjs:191:5"
+  ],
+  "browserExecutable": "/usr/bin/brave",
+  "browserSandboxDisabled": false,
+  "status": "failed",
+  "pageErrors": [],
+  "fixtureCleanup": {
+    "exitCode": 0,
+    "signal": null
+  },
+  "finishedAt": "2026-10-29T09:41:43.546Z",
+  "artifacts": [
+    {
+      "path": "target/release/examples/slice_server",
+      "bytes": 14706240,
+      "sha256": "68a388b5623a610ab8751bd68fb95d889ed8055ce2dd45459add005d421bcd0f"
+    },
+    {
+      "path": "target/release/archava-server",
+      "bytes": 15323312,
+      "sha256": "2c45e27d3d3cc98c01f62c68e73097994dc5938e27c3237152f1e9c64d9dccf4"
+    },
+    {
+      "path": "target/site/pkg/archava-slice_bg.wasm",
+      "bytes": 2941550,
+      "sha256": "309face620477d60f8651960a4b78b6a1d27614347fe7ea7e0f7e86c80530646"
+    }
+  ]
+}

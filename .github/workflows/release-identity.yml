@@ -1,0 +1,78 @@
+name: Release identity
+
+# Verifies the Rust release build, computes reproducible cryptographic digests,
+# and packages production artifacts for the sovereign Archava platform.
+#
+# Triggered on version tags ('v*') or manual dispatch.
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-identity-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release-build:
+    name: Build & Verify Platform Release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          toolchain: 1.96.0
+          components: rustfmt, clippy
+          targets: wasm32-unknown-unknown
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+
+      - name: Install build toolchain dependencies & PostgreSQL
+        run: |
+          sudo apt-get update && sudo apt-get install -y postgresql clang mold sccache || sudo apt-get install -y postgresql clang mold
+          echo "/usr/lib/postgresql/$(ls /usr/lib/postgresql | sort -V | tail -1)/bin" >> "$GITHUB_PATH"
+          if ! command -v sccache &> /dev/null; then
+            echo "RUSTC_WRAPPER=" >> "$GITHUB_ENV"
+          fi
+
+      - name: Install pinned wasm-bindgen CLI
+        run: cargo install wasm-bindgen-cli --version 0.2.129 --locked
+
+      - name: Verify Code Formatting
+        run: cargo fmt --all --check
+
+      - name: Linter Quality Gate
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Run Full Workspace Test Suite
+        run: cargo test --workspace --locked -- --test-threads=1
+
+      - name: Build Native Server & Client WASM Site Bundle
+        run: node tools/rust/build-slice.mjs
+
+      - name: Browser operator acceptance
+        run: node tools/e2e/verify.mjs --output target/e2e/release
+
+      - name: Package verified native distribution
+        run: |
+          node tools/rust/package-native.mjs --out dist/native
+          tar -czf dist/archava-native-linux-x86_64.tar.gz -C dist/native .
+          sha256sum dist/archava-native-linux-x86_64.tar.gz > dist/archava-native-linux-x86_64.tar.gz.sha256
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: archava-platform-release
+          path: |
+            dist/archava-native-linux-x86_64.tar.gz
+            dist/archava-native-linux-x86_64.tar.gz.sha256
+            target/e2e/release/
+          if-no-files-found: error
+          retention-days: 90

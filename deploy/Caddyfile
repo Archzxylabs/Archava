@@ -1,0 +1,22 @@
+# Caddy terminates TLS and forwards to the runtime. HSTS, CSP, nosniff and
+# Referrer-Policy are set by the application itself; duplicating them here
+# would produce two headers with potentially different values.
+{$ARCHAVA_DOMAIN:localhost} {
+	encode zstd gzip
+
+	# The application serves /metrics unauthenticated for a local scraper.
+	# Do not publish it: scrape 127.0.0.1:8347 directly, or replace this block
+	# with an explicit monitoring-network allow-list.
+	@metrics path /metrics
+	respond @metrics 404
+
+	reverse_proxy {$ARCHAVA_UPSTREAM:127.0.0.1:8347} {
+		health_uri /readyz
+		health_interval 10s
+		health_timeout 3s
+	}
+
+	header {
+		-Server
+	}
+}

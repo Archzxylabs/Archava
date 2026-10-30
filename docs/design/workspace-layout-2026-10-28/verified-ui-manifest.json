@@ -1,0 +1,9 @@
+{
+  "crates/slice/src/workspace.rs": "f0730b7a44f45c1eea93c638d8ff0d02479aa01f2c916497a5e79ad89869603f",
+  "crates/slice/src/home.rs": "68472e978f0687c14bceb7a4d6d997ecb76fb7127be127ea7ed4b94fa218514c",
+  "crates/slice/src/contacts.rs": "adf60ef9bb30031c2beff7c517a45bb41473d7491076391386f5fa0d58c4908e",
+  "crates/slice/src/owner.rs": "d98d01a30c97a4b64c490664dd7200e970bf06a30a9d16b8ffddd59098583788",
+  "crates/slice/src/contact_context.rs": "25f66168e9425ea8c9510ae257d13eca4378d61b365befd20875cb74eaac1b04",
+  "crates/slice/src/erp.rs": "f75774b299b1be80b055bc7b73573ac742c736d5ac3b36c960adb30ef5f97e26",
+  "static/workspace.css": "bc5ce8c90501ab188843ac2fa48f24ae378c39f27ad24e43f4c990d605b32e97"
+}

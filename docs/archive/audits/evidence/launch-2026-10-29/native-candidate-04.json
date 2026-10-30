@@ -1,0 +1,13 @@
+{
+  "distribution": "dist/native-candidate-20261029-04",
+  "sourceSha256": "1c38f928a77e1d5154a9a6f67df01d0e2b9b43fb2a3b68acbdaf84c0b8c1c015",
+  "artifacts": 42,
+  "bytes": 20807602,
+  "runtimeVersion": "0.1.0",
+  "catalog": {
+    "id": "archava-local-library",
+    "version": "1.19.0"
+  },
+  "browser": "costing-browser/result.json",
+  "workspace": "costing-workspace-verify.log"
+}

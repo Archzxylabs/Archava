@@ -1,0 +1,452 @@
+{
+  "schema": "archxy2.erp.verdict/v1",
+  "generatedAt": "2026-10-20",
+  "verdict": "ERP locally verified — integration pending",
+  "independentReview": "pending",
+  "main": {
+    "repo": "/home/haikaru/Archverse/Lab/Archava_Platform",
+    "head": "0179c2a",
+    "headSubject": "ERP PACKET-003: fold the R04 ledgers (organizations, proposals, projects)",
+    "packetsFolded": [
+      "PACKET-000",
+      "PACKET-001",
+      "PACKET-002",
+      "PACKET-003"
+    ],
+    "packetsPending": [
+      "PACKET-004",
+      "PACKET-005",
+      "PACKET-006",
+      "PACKET-007",
+      "PACKET-008",
+      "PACKET-009",
+      "PACKET-010"
+    ]
+  },
+  "copy": {
+    "repo": "/home/haikaru/Archverse/Lab/Archava_Platform_archxy2_erp",
+    "head": "21234bb",
+    "dirty": true
+  },
+  "toolchain": {
+    "rustc": "1.96.0",
+    "node": "v26.10.0"
+  },
+  "proofs": {
+    "P-ERP-R04": {
+      "requiredChecks": 23,
+      "witnessTotal": 27,
+      "status": "green"
+    },
+    "P-ERP-R05": {
+      "requiredChecks": 29,
+      "witnessTotal": 29,
+      "status": "green"
+    },
+    "P-ERP-R07": {
+      "requiredChecks": 52,
+      "witnessTotal": 52,
+      "status": "green"
+    },
+    "P-ERP-PURCHASING": {
+      "requiredChecks": 9,
+      "witnessTotal": 9,
+      "status": "green"
+    },
+    "P-ERP-FOODSERVICE": {
+      "requiredChecks": 9,
+      "witnessTotal": 9,
+      "status": "green"
+    },
+    "P-MODULE-CONSUMERS": {
+      "requiredChecks": 2,
+      "witnessTotal": 4,
+      "status": "green"
+    },
+    "P-FAST-GATE": {
+      "requiredChecks": 21,
+      "witnessTotal": null,
+      "status": "green"
+    }
+  },
+  "domains": [
+    {
+      "milestone": "R04",
+      "domain": "organizations",
+      "status": "locally_verified",
+      "witnesses": 9,
+      "reads": {
+        "present": false,
+        "areas": 0
+      },
+      "tools": false,
+      "panels": false,
+      "consumers": "battery",
+      "packet": "PACKET-003"
+    },
+    {
+      "milestone": "R04",
+      "domain": "proposals",
+      "status": "locally_verified",
+      "witnesses": 9,
+      "reads": {
+        "present": false,
+        "areas": 0
+      },
+      "tools": false,
+      "panels": false,
+      "consumers": "battery",
+      "packet": "PACKET-003"
+    },
+    {
+      "milestone": "R04",
+      "domain": "projects",
+      "status": "locally_verified",
+      "witnesses": 9,
+      "reads": {
+        "present": false,
+        "areas": 0
+      },
+      "tools": false,
+      "panels": false,
+      "consumers": "battery",
+      "packet": "PACKET-003"
+    },
+    {
+      "milestone": "R04",
+      "domain": "capacity",
+      "status": "not_started",
+      "witnesses": 0,
+      "reads": {
+        "present": false,
+        "areas": 0
+      },
+      "tools": false,
+      "panels": false,
+      "consumers": null,
+      "packet": null
+    },
+    {
+      "milestone": "R05",
+      "domain": "scheduling",
+      "status": "locally_verified",
+      "witnesses": 9,
+      "reads": {
+        "present": false,
+        "areas": 0
+      },
+      "tools": false,
+      "panels": false,
+      "consumers": "battery",
+      "packet": "PACKET-004"
+    },
+    {
+      "milestone": "R05",
+      "domain": "accommodation",
+      "status": "locally_verified",
+      "witnesses": 10,
+      "reads": {
+        "present": false,
+        "areas": 0
+      },
+      "tools": false,
+      "panels": false,
+      "consumers": "battery",
+      "packet": "PACKET-005"
+    },
+    {
+      "milestone": "R05",
+      "domain": "assets",
+      "status": "locally_verified",
+      "witnesses": 10,
+      "reads": {
+        "present": false,
+        "areas": 0
+      },
+      "tools": false,
+      "panels": false,
+      "consumers": "battery",
+      "packet": "PACKET-006"
+    },
+    {
+      "milestone": "R06",
+      "domain": "commerce",
+      "status": "partial_kernel",
+      "witnesses": 0,
+      "reads": {
+        "present": false,
+        "areas": 0
+      },
+      "tools": false,
+      "panels": false,
+      "consumers": null,
+      "packet": null
+    },
+    {
+      "milestone": "R06",
+      "domain": "purchasing",
+      "status": "locally_verified",
+      "witnesses": 9,
+      "reads": {
+        "present": false,
+        "areas": 0
+      },
+      "tools": false,
+      "panels": false,
+      "consumers": "battery",
+      "packet": null
+    },
+    {
+      "milestone": "R06",
+      "domain": "foodservice",
+      "status": "locally_verified",
+      "witnesses": 9,
+      "reads": {
+        "present": false,
+        "areas": 0
+      },
+      "tools": false,
+      "panels": false,
+      "consumers": "battery",
+      "packet": null
+    },
+    {
+      "milestone": "R07",
+      "domain": "billing",
+      "status": "locally_verified",
+      "witnesses": 13,
+      "reads": {
+        "present": false,
+        "areas": 0
+      },
+      "tools": false,
+      "panels": false,
+      "consumers": "battery",
+      "packet": "PACKET-007"
+    },
+    {
+      "milestone": "R07",
+      "domain": "subscriptions",
+      "status": "locally_verified",
+      "witnesses": 13,
+      "reads": {
+        "present": true,
+        "areas": 5
+      },
+      "tools": false,
+      "panels": false,
+      "consumers": "pack_closure_only",
+      "packet": "PACKET-008"
+    },
+    {
+      "milestone": "R07",
+      "domain": "attendance",
+      "status": "locally_verified",
+      "witnesses": 14,
+      "reads": {
+        "present": true,
+        "areas": 6
+      },
+      "tools": false,
+      "panels": false,
+      "consumers": "pack_closure_only",
+      "packet": "PACKET-009"
+    },
+    {
+      "milestone": "R07",
+      "domain": "support",
+      "status": "locally_verified",
+      "witnesses": 12,
+      "reads": {
+        "present": true,
+        "areas": 4
+      },
+      "tools": false,
+      "panels": false,
+      "consumers": "pack_closure_only",
+      "packet": "PACKET-010"
+    },
+    {
+      "milestone": "R07",
+      "domain": "fulfillment",
+      "status": "not_started",
+      "witnesses": 0,
+      "reads": {
+        "present": false,
+        "areas": 0
+      },
+      "tools": false,
+      "panels": false,
+      "consumers": null,
+      "packet": null
+    },
+    {
+      "milestone": "R08",
+      "domain": "laundry",
+      "status": "not_started",
+      "witnesses": 0,
+      "reads": {
+        "present": false,
+        "areas": 0
+      },
+      "tools": false,
+      "panels": false,
+      "consumers": null,
+      "packet": null
+    },
+    {
+      "milestone": "R08",
+      "domain": "field-services",
+      "status": "not_started",
+      "witnesses": 0,
+      "reads": {
+        "present": false,
+        "areas": 0
+      },
+      "tools": false,
+      "panels": false,
+      "consumers": null,
+      "packet": null
+    },
+    {
+      "milestone": "R08",
+      "domain": "formal-education",
+      "status": "not_started",
+      "witnesses": 0,
+      "reads": {
+        "present": false,
+        "areas": 0
+      },
+      "tools": false,
+      "panels": false,
+      "consumers": null,
+      "packet": null
+    }
+  ],
+  "packets": [
+    {
+      "file": "PACKET-003.diff",
+      "sha256": "1a909f20e951b920c2b8c681634a61b3ad6a2b6d984348525771cb69743a6aa9",
+      "files": [
+        "rust/crates/host/src/router.rs",
+        "rust/crates/pg-fixture/src/lib.rs",
+        "tools/rust/verify.mjs",
+        "tools/rust/test/verify.test.mjs",
+        "docs/rust/required-coverage.json"
+      ]
+    },
+    {
+      "file": "PACKET-004.diff",
+      "sha256": "0459a9606f480cbe379955035428aa9e339fb82e3a7659378bf8b3e194c2264b",
+      "files": [
+        "rust/crates/host/src/router.rs",
+        "rust/crates/pg-fixture/src/lib.rs",
+        "tools/rust/verify.mjs",
+        "tools/rust/test/verify.test.mjs",
+        "docs/rust/required-coverage.json"
+      ]
+    },
+    {
+      "file": "PACKET-005.diff",
+      "sha256": "0b8b1b384ca02da8f1cece3375b1c194d61352f61fca09622615311fbbd3e3b2",
+      "files": [
+        "rust/crates/host/src/router.rs",
+        "rust/crates/pg-fixture/src/lib.rs",
+        "tools/rust/verify.mjs",
+        "tools/rust/test/verify.test.mjs",
+        "docs/rust/required-coverage.json"
+      ]
+    },
+    {
+      "file": "PACKET-006.diff",
+      "sha256": "c9ec3a00d077f191e3f270b73470473c344719d468be6684d4f96a72c3db4044",
+      "files": [
+        "rust/crates/host/src/router.rs",
+        "rust/crates/pg-fixture/src/lib.rs",
+        "tools/rust/verify.mjs",
+        "tools/rust/test/verify.test.mjs",
+        "docs/rust/required-coverage.json"
+      ]
+    },
+    {
+      "file": "PACKET-007.diff",
+      "sha256": "fbcbaee74e8c0fea580d6cac929555386e49c8b1e5abdacc0a78b494eb0ef903",
+      "files": [
+        "docs/rust/required-coverage.json",
+        "rust/Cargo.lock",
+        "rust/crates/domain/Cargo.toml",
+        "rust/crates/host/src/router.rs",
+        "rust/crates/pg-fixture/src/lib.rs",
+        "tools/rust/test/verify.test.mjs",
+        "tools/rust/verify.mjs"
+      ]
+    },
+    {
+      "file": "PACKET-008.diff",
+      "sha256": "d6ddefb2caff508a8b27fe72be57d7be96fe041b727c76e3aa9c5275f3ed9e0f",
+      "files": [
+        "rust/crates/host/src/router.rs",
+        "rust/crates/pg-fixture/src/lib.rs",
+        "tools/rust/verify.mjs",
+        "tools/rust/test/verify.test.mjs",
+        "docs/rust/required-coverage.json"
+      ]
+    },
+    {
+      "file": "PACKET-009.diff",
+      "sha256": "e0eabf8f9925a616f096657f36cb72ac4e51de59e122613b89982a5e876ad937",
+      "files": [
+        "rust/crates/host/src/router.rs",
+        "rust/crates/pg-fixture/src/lib.rs",
+        "tools/rust/verify.mjs",
+        "tools/rust/test/verify.test.mjs",
+        "docs/rust/required-coverage.json"
+      ]
+    },
+    {
+      "file": "PACKET-010.diff",
+      "sha256": "4964e4c8e414c5b868a3ad099fc2c215bc71ebc2ac63751b436879dd71802758",
+      "files": [
+        "docs/rust/required-coverage.json",
+        "rust/crates/host/src/router.rs",
+        "rust/crates/pg-fixture/src/lib.rs",
+        "tools/rust/test/verify.test.mjs",
+        "tools/rust/verify.mjs"
+      ]
+    }
+  ],
+  "totals": {
+    "domains": 18,
+    "locallyVerified": 12,
+    "partialKernel": 1,
+    "notStarted": 5,
+    "witnesses": 126,
+    "domainsWithReads": 3,
+    "domainsWithTools": 0,
+    "domainsWithPanels": 0,
+    "domainsWithConfigAdapters": 0
+  },
+  "gaps": [
+    "fulfillment, laundry, field-services, formal-education, capacity and commerce reads/commands are not ported",
+    "Rust read projections exist for subscriptions (5 of 6 TS areas), attendance (6 of 6) and support (4 of 5; grant folded into access)",
+    "No Rust tool surface, Leptos panel, module configuration/disable adapter or CLI worker seam exists for any ERP domain",
+    "The two-consumer batteries cover 18 modules through billing; @archava/subscriptions-pg, @archava/attendance-pg and @archava/support-pg are not yet exercised by them",
+    "No ERP data upgrade/restore/seed run exists (fresh + prior-profile fixture windows only)",
+    "PACKET-004 … PACKET-010 are not folded into main; no ERP proof has been run on the integrated candidate",
+    "independent_review is pending (no Codex/legal/production acceptance is claimed)"
+  ],
+  "commands": {
+    "cargo test -p archava-domain --lib": "97/97 (89 + 8 support)",
+    "cargo test -p archava-adapters --lib": "13/13 (the earlier 24/24 row was a mis-record; the lib reports 13 on both trees)",
+    "cargo test -p archava-host --lib": "41/41",
+    "cargo test -p archava-host --test erp_attendance": "14/14 (493.76 s standalone; 634.2 s inside the producer run)",
+    "cargo test -p archava-host --test erp_subscriptions": "13/13 (inside the producer run; 485.1 s)",
+    "cargo test -p archava-host --test erp_billing": "13/13 (inside the producer run; 514.9 s)",
+    "node tools/rust/erp/verify-r07.mjs": "PASS 52/52 (billing 13, subscriptions 13, attendance 14, support 12); dist/rust-erp-r07-proof.json witnessTotal 52, allPassed true",
+    "node --test (five gate files)": "91/91",
+    "cargo fmt --all -- --check": "clean",
+    "cargo clippy --workspace --all-targets -- -D warnings": "0 warnings",
+    "cargo test --workspace": "PASS — 55 test-result blocks, 0 failed, 752 tests passed (clean tree; erp_support 12/12 in 698.46 s)",
+    "cargo test -p archava-host --test erp_support": "12/12 (597.6 s inside the producer run; 698.46 s inside the final workspace run)"
+  }
+}

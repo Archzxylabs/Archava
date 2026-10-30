@@ -1,0 +1,11 @@
+=== out-of-scope dirs touched since session start (08:20)? ===
+(empty above = untouched)
+
+=== files I touched (in-scope) ===
+rust/crates/own/src/lib.rs
+rust/crates/own/tests/engine.rs
+rust/crates/host/src/own.rs
+rust/crates/host/tests/own.rs
+
+=== Cargo.lock unchanged? ===
+(empty = clean)

@@ -1,0 +1,240 @@
+{
+  "startedAt": "2026-10-30T07:55:48.404Z",
+  "scope": "Synthetic local fixture, real Chromium/SSR/WASM/HTTP/PostgreSQL; production binary restart. No live provider or public/TLS deployment acceptance.",
+  "checks": [
+    {
+      "id": "F01-authenticated-hydration",
+      "status": "passed",
+      "details": "Real login, session cookie, WASM handlers and contact query"
+    },
+    {
+      "id": "F02-contact-navigation-idempotency",
+      "status": "passed",
+      "details": "Opening the new record creates no second contact or other mutation"
+    },
+    {
+      "id": "F02-browser-to-database",
+      "status": "passed",
+      "details": {
+        "contact": "7e4779b9-116d-4c05-8138-88fed3ad5745",
+        "requestId": "a84671fc-8c3c-4970-9b68-d110889aa282",
+        "proof": "Created via UI, reviewed/applied twice, exactly one follow-up and durable receipt via non-owner SQL"
+      }
+    },
+    {
+      "id": "F03-lost-response-recovery",
+      "status": "passed",
+      "details": {
+        "requestId": "cef2522a-70e6-4651-b871-e93284bca52d",
+        "proof": "Response deliberately lost after real commit; UI shows uncertainty and recovers without resubmitting"
+      }
+    },
+    {
+      "id": "F04-csrf-refusal",
+      "status": "passed",
+      "details": "Valid mutation body without the CSRF header is refused"
+    },
+    {
+      "id": "PAY-UI-original-reference",
+      "status": "passed",
+      "details": "Real HTTP creation + SQL commit; lost response survives reload and recovers the original link, one provider invocation"
+    },
+    {
+      "id": "PAY-UI-verified-settlement",
+      "status": "passed",
+      "details": "Status queried from owned HTTP gateway; actual invoice settled 100 IDR without a client mark-paid action"
+    },
+    {
+      "id": "PAY-UI-refund",
+      "status": "passed",
+      "details": "Authenticated cumulative refund 40 IDR reopens the invoice with settlement 60 and outstanding 40"
+    },
+    {
+      "id": "Ops-native-startup-refusals",
+      "status": "passed",
+      "details": "Duplicate bind fails before takeover; a free port with default takeover=false refuses the active lease; the original process stays ready with its epoch unchanged"
+    },
+    {
+      "id": "F03-production-restart",
+      "status": "passed",
+      "details": "Fresh production process, same PostgreSQL and browser session, committed receipt survives"
+    },
+    {
+      "id": "CRM-http503-receipt-recovery",
+      "status": "passed",
+      "details": "A real committed write receives an unusable acknowledgement; UI retains the key and recovers exactly one effect"
+    },
+    {
+      "id": "CRM-mismatched200-receipt-recovery",
+      "status": "passed",
+      "details": "A real committed write receives an unusable acknowledgement; UI retains the key and recovers exactly one effect"
+    },
+    {
+      "id": "CRM-two-tabs-and-conflicting-retry",
+      "status": "passed",
+      "details": "Two independently opened contact forms retain separate keys; a conflicting retry is refused without losing either key; exact replay clears only its own marker"
+    },
+    {
+      "id": "CRM-before-commit-and-logout-recovery",
+      "status": "passed",
+      "details": "A request dropped before reaching the server survives sign-out/login and review; the original key commits one contact, while the already committed request replays exactly once"
+    },
+    {
+      "id": "CRM-pending-account-isolation",
+      "status": "passed",
+      "details": "A legacy marker remains readable by its original account without blocking or being cleared by another account"
+    },
+    {
+      "id": "ERP-before-commit-retry",
+      "status": "passed",
+      "details": "A dropped request is reviewed and resubmitted under the same key; the successful retry then loses its response, keeping recovery reachable"
+    },
+    {
+      "id": "UI-operations-appearance",
+      "status": "passed",
+      "details": "Soft light and charcoal dark render the same workspace; appearance persists across navigation"
+    },
+    {
+      "id": "ERP-lost-response-recovery",
+      "status": "passed",
+      "details": "Stock adjustment loses its successful response; reload preserves the original key, status recovers it, and stock remains exactly 8"
+    },
+    {
+      "id": "D02-commerce-ui",
+      "status": "passed",
+      "details": "Catalog creation → stock adjustment → multi-line draft → reserve → fulfill; 2 units deducted"
+    },
+    {
+      "id": "ERP-exact-costing",
+      "status": "passed",
+      "details": "Opening 8 × 10000 → FIFO fulfillment 2 costs 20000 → receipt 4 × 9000 + 4000 landed fee; remaining inventory is exactly 100000 IDR, rejects excluded"
+    },
+    {
+      "id": "D03-purchasing-ui",
+      "status": "passed",
+      "details": "Supplier → offer → draft → confirmation → inspected delivery (4 accepted, 1 rejected); stock moves from 6 to 10"
+    },
+    {
+      "id": "D09-billing-ui",
+      "status": "passed",
+      "details": "Invoice draft → issue; ledger outstanding 30000 IDR, settled 0; no client assertion of payment"
+    },
+    {
+      "id": "D12-support-ui",
+      "status": "passed",
+      "details": "Create → start → resolve; transitions visible from persisted case detail"
+    },
+    {
+      "id": "Cockpit-operator-ui",
+      "status": "passed",
+      "details": "Create dependent mission → three real authorized read tools → durable observations → touchdown"
+    },
+    {
+      "id": "UI-operations-mobile",
+      "status": "passed",
+      "details": "Sales workflow fits a 390px page with tables scrolling inside their frame"
+    },
+    {
+      "id": "ERP-independent-SQL",
+      "status": "passed",
+      "details": {
+        "inventoryValue": "100000",
+        "fulfillmentCost": "20000",
+        "stock": 10,
+        "sales": "fulfilled",
+        "purchase": "received",
+        "invoice": "issued",
+        "settled": 0,
+        "support": "resolved"
+      }
+    },
+    {
+      "id": "F05-owner-confirmation",
+      "status": "passed",
+      "details": "Owner reviews and confirms a configuration revision; a matching receipt and persisted revision are present"
+    },
+    {
+      "id": "F04-role-and-tenant-refusal",
+      "status": "passed",
+      "details": "Read-only UI submission creates no effect; foreign tenant read refused"
+    },
+    {
+      "id": "UI-mobile-layout",
+      "status": "passed",
+      "details": "390px viewport has no horizontal page overflow"
+    },
+    {
+      "id": "Ops-native-writer-lifecycle",
+      "status": "passed",
+      "details": {
+        "beforeEpoch": 2,
+        "takeoverEpoch": 3,
+        "restartedEpoch": 4,
+        "staleLoginStatus": 503,
+        "proof": "Two actual native processes: old readiness/write refused, stale shutdown preserves successor, graceful drain permits default=false restart"
+      }
+    }
+  ],
+  "errors": [],
+  "browserExecutable": "/usr/bin/brave",
+  "browserSandboxDisabled": false,
+  "payments": {
+    "invoice": "36e3b39a-13cf-42be-82b2-898fa6ca4cc4",
+    "order": "archava-f5dfa6a8-f799-4195-8639-4d208a88ce72",
+    "providerCreates": 1,
+    "providerChecks": 3
+  },
+  "acknowledgementFaults": [
+    {
+      "mode": "http503",
+      "requestId": "7949d19c-5204-4700-a535-31a070de853c",
+      "sql": {
+        "same_email_rows": 1,
+        "contact_rows": 1,
+        "followups": 3,
+        "receipt_rows": 1
+      }
+    },
+    {
+      "mode": "mismatched200",
+      "requestId": "1dcfcd86-2abd-4514-8e45-ec48ba775260",
+      "sql": {
+        "same_email_rows": 1,
+        "contact_rows": 1,
+        "followups": 4,
+        "receipt_rows": 1
+      }
+    }
+  ],
+  "operations": {
+    "product": "5ed2e561-25d9-45c9-a09e-1116813e2b43",
+    "order": "a64c9f88-4d1f-4371-b1db-d1cf404936f2",
+    "purchase": "371b3c4e-4322-41ad-86e8-544734160e8b",
+    "invoice": "9d9e1a5e-d4b5-4495-afc7-7f711f30e2fc",
+    "support": "7601262c-1f59-45d4-9afa-dbba0dc3bbbf"
+  },
+  "status": "passed",
+  "pageErrors": [],
+  "fixtureCleanup": {
+    "exitCode": 0,
+    "signal": null
+  },
+  "finishedAt": "2026-10-30T07:56:04.882Z",
+  "artifacts": [
+    {
+      "path": "target/release/examples/slice_server",
+      "bytes": 19876832,
+      "sha256": "68fbe37a8be1ef2dab6a1cd51301b0b1dd1d47b90412eb0d711f8e09bba3eb47"
+    },
+    {
+      "path": "target/release/archava-server",
+      "bytes": 20661240,
+      "sha256": "4d45e4719879216aea63c2f459b2d8358d67604a5bad598f8e7d07a536cfb53e"
+    },
+    {
+      "path": "target/site/pkg/archava-slice_bg.wasm",
+      "bytes": 3350270,
+      "sha256": "33a6d6c375ac3765b20de47dfcad7460679493bbe69f6b2cca6e58da1e96dede"
+    }
+  ]
+}

@@ -1,0 +1,604 @@
+{
+  "summary": {
+    "layout_checks": 96,
+    "page_errors": [],
+    "selected_record_binding": true,
+    "real_activity_in_context": true,
+    "stale_response_ignored": true,
+    "refused_read_clears_context": true,
+    "context_to_followup_and_receipt": true,
+    "empty_search_clears_context": true,
+    "create_contact": true,
+    "mobile_focus": true,
+    "menu_same_route_and_navigation": true,
+    "unmount_with_request_in_flight": true,
+    "theme_persistence": true,
+    "home_real_counts": true,
+    "home_record_link": true,
+    "home_empty_state": true,
+    "home_refused_not_zero": true,
+    "home_invalid_response": true,
+    "home_page_scope": true,
+    "home_unmount_during_request": true,
+    "mobile_menu_escape": true,
+    "home_signed_out": true
+  },
+  "layouts": [
+    {
+      "theme": "light",
+      "page": "home",
+      "width": 1440,
+      "scrollWidth": 1440
+    },
+    {
+      "theme": "light",
+      "page": "home",
+      "width": 1024,
+      "scrollWidth": 1024
+    },
+    {
+      "theme": "light",
+      "page": "home",
+      "width": 768,
+      "scrollWidth": 768
+    },
+    {
+      "theme": "light",
+      "page": "home",
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "theme": "light",
+      "page": "home",
+      "width": 360,
+      "scrollWidth": 360
+    },
+    {
+      "theme": "light",
+      "page": "home",
+      "width": 320,
+      "scrollWidth": 320
+    },
+    {
+      "theme": "light",
+      "page": "contacts",
+      "width": 1440,
+      "scrollWidth": 1440
+    },
+    {
+      "theme": "light",
+      "page": "contacts",
+      "width": 1024,
+      "scrollWidth": 1024
+    },
+    {
+      "theme": "light",
+      "page": "contacts",
+      "width": 768,
+      "scrollWidth": 768
+    },
+    {
+      "theme": "light",
+      "page": "contacts",
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "theme": "light",
+      "page": "contacts",
+      "width": 360,
+      "scrollWidth": 360
+    },
+    {
+      "theme": "light",
+      "page": "contacts",
+      "width": 320,
+      "scrollWidth": 320
+    },
+    {
+      "theme": "light",
+      "page": "erp",
+      "width": 1440,
+      "scrollWidth": 1440
+    },
+    {
+      "theme": "light",
+      "page": "erp",
+      "width": 1024,
+      "scrollWidth": 1024
+    },
+    {
+      "theme": "light",
+      "page": "erp",
+      "width": 768,
+      "scrollWidth": 768
+    },
+    {
+      "theme": "light",
+      "page": "erp",
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "theme": "light",
+      "page": "erp",
+      "width": 360,
+      "scrollWidth": 360
+    },
+    {
+      "theme": "light",
+      "page": "erp",
+      "width": 320,
+      "scrollWidth": 320
+    },
+    {
+      "theme": "light",
+      "page": "contact",
+      "width": 1440,
+      "scrollWidth": 1440
+    },
+    {
+      "theme": "light",
+      "page": "contact",
+      "width": 1024,
+      "scrollWidth": 1024
+    },
+    {
+      "theme": "light",
+      "page": "contact",
+      "width": 768,
+      "scrollWidth": 768
+    },
+    {
+      "theme": "light",
+      "page": "contact",
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "theme": "light",
+      "page": "contact",
+      "width": 360,
+      "scrollWidth": 360
+    },
+    {
+      "theme": "light",
+      "page": "contact",
+      "width": 320,
+      "scrollWidth": 320
+    },
+    {
+      "theme": "light",
+      "page": "desk",
+      "width": 1440,
+      "scrollWidth": 1440
+    },
+    {
+      "theme": "light",
+      "page": "desk",
+      "width": 1024,
+      "scrollWidth": 1024
+    },
+    {
+      "theme": "light",
+      "page": "desk",
+      "width": 768,
+      "scrollWidth": 768
+    },
+    {
+      "theme": "light",
+      "page": "desk",
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "theme": "light",
+      "page": "desk",
+      "width": 360,
+      "scrollWidth": 360
+    },
+    {
+      "theme": "light",
+      "page": "desk",
+      "width": 320,
+      "scrollWidth": 320
+    },
+    {
+      "theme": "light",
+      "page": "owner",
+      "width": 1440,
+      "scrollWidth": 1440
+    },
+    {
+      "theme": "light",
+      "page": "owner",
+      "width": 1024,
+      "scrollWidth": 1024
+    },
+    {
+      "theme": "light",
+      "page": "owner",
+      "width": 768,
+      "scrollWidth": 768
+    },
+    {
+      "theme": "light",
+      "page": "owner",
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "theme": "light",
+      "page": "owner",
+      "width": 360,
+      "scrollWidth": 360
+    },
+    {
+      "theme": "light",
+      "page": "owner",
+      "width": 320,
+      "scrollWidth": 320
+    },
+    {
+      "theme": "light",
+      "page": "draft",
+      "width": 1440,
+      "scrollWidth": 1440
+    },
+    {
+      "theme": "light",
+      "page": "draft",
+      "width": 1024,
+      "scrollWidth": 1024
+    },
+    {
+      "theme": "light",
+      "page": "draft",
+      "width": 768,
+      "scrollWidth": 768
+    },
+    {
+      "theme": "light",
+      "page": "draft",
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "theme": "light",
+      "page": "draft",
+      "width": 360,
+      "scrollWidth": 360
+    },
+    {
+      "theme": "light",
+      "page": "draft",
+      "width": 320,
+      "scrollWidth": 320
+    },
+    {
+      "theme": "light",
+      "page": "recover",
+      "width": 1440,
+      "scrollWidth": 1440
+    },
+    {
+      "theme": "light",
+      "page": "recover",
+      "width": 1024,
+      "scrollWidth": 1024
+    },
+    {
+      "theme": "light",
+      "page": "recover",
+      "width": 768,
+      "scrollWidth": 768
+    },
+    {
+      "theme": "light",
+      "page": "recover",
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "theme": "light",
+      "page": "recover",
+      "width": 360,
+      "scrollWidth": 360
+    },
+    {
+      "theme": "light",
+      "page": "recover",
+      "width": 320,
+      "scrollWidth": 320
+    },
+    {
+      "theme": "dark",
+      "page": "home",
+      "width": 1440,
+      "scrollWidth": 1440
+    },
+    {
+      "theme": "dark",
+      "page": "home",
+      "width": 1024,
+      "scrollWidth": 1024
+    },
+    {
+      "theme": "dark",
+      "page": "home",
+      "width": 768,
+      "scrollWidth": 768
+    },
+    {
+      "theme": "dark",
+      "page": "home",
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "theme": "dark",
+      "page": "home",
+      "width": 360,
+      "scrollWidth": 360
+    },
+    {
+      "theme": "dark",
+      "page": "home",
+      "width": 320,
+      "scrollWidth": 320
+    },
+    {
+      "theme": "dark",
+      "page": "contacts",
+      "width": 1440,
+      "scrollWidth": 1440
+    },
+    {
+      "theme": "dark",
+      "page": "contacts",
+      "width": 1024,
+      "scrollWidth": 1024
+    },
+    {
+      "theme": "dark",
+      "page": "contacts",
+      "width": 768,
+      "scrollWidth": 768
+    },
+    {
+      "theme": "dark",
+      "page": "contacts",
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "theme": "dark",
+      "page": "contacts",
+      "width": 360,
+      "scrollWidth": 360
+    },
+    {
+      "theme": "dark",
+      "page": "contacts",
+      "width": 320,
+      "scrollWidth": 320
+    },
+    {
+      "theme": "dark",
+      "page": "erp",
+      "width": 1440,
+      "scrollWidth": 1440
+    },
+    {
+      "theme": "dark",
+      "page": "erp",
+      "width": 1024,
+      "scrollWidth": 1024
+    },
+    {
+      "theme": "dark",
+      "page": "erp",
+      "width": 768,
+      "scrollWidth": 768
+    },
+    {
+      "theme": "dark",
+      "page": "erp",
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "theme": "dark",
+      "page": "erp",
+      "width": 360,
+      "scrollWidth": 360
+    },
+    {
+      "theme": "dark",
+      "page": "erp",
+      "width": 320,
+      "scrollWidth": 320
+    },
+    {
+      "theme": "dark",
+      "page": "contact",
+      "width": 1440,
+      "scrollWidth": 1440
+    },
+    {
+      "theme": "dark",
+      "page": "contact",
+      "width": 1024,
+      "scrollWidth": 1024
+    },
+    {
+      "theme": "dark",
+      "page": "contact",
+      "width": 768,
+      "scrollWidth": 768
+    },
+    {
+      "theme": "dark",
+      "page": "contact",
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "theme": "dark",
+      "page": "contact",
+      "width": 360,
+      "scrollWidth": 360
+    },
+    {
+      "theme": "dark",
+      "page": "contact",
+      "width": 320,
+      "scrollWidth": 320
+    },
+    {
+      "theme": "dark",
+      "page": "desk",
+      "width": 1440,
+      "scrollWidth": 1440
+    },
+    {
+      "theme": "dark",
+      "page": "desk",
+      "width": 1024,
+      "scrollWidth": 1024
+    },
+    {
+      "theme": "dark",
+      "page": "desk",
+      "width": 768,
+      "scrollWidth": 768
+    },
+    {
+      "theme": "dark",
+      "page": "desk",
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "theme": "dark",
+      "page": "desk",
+      "width": 360,
+      "scrollWidth": 360
+    },
+    {
+      "theme": "dark",
+      "page": "desk",
+      "width": 320,
+      "scrollWidth": 320
+    },
+    {
+      "theme": "dark",
+      "page": "owner",
+      "width": 1440,
+      "scrollWidth": 1440
+    },
+    {
+      "theme": "dark",
+      "page": "owner",
+      "width": 1024,
+      "scrollWidth": 1024
+    },
+    {
+      "theme": "dark",
+      "page": "owner",
+      "width": 768,
+      "scrollWidth": 768
+    },
+    {
+      "theme": "dark",
+      "page": "owner",
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "theme": "dark",
+      "page": "owner",
+      "width": 360,
+      "scrollWidth": 360
+    },
+    {
+      "theme": "dark",
+      "page": "owner",
+      "width": 320,
+      "scrollWidth": 320
+    },
+    {
+      "theme": "dark",
+      "page": "draft",
+      "width": 1440,
+      "scrollWidth": 1440
+    },
+    {
+      "theme": "dark",
+      "page": "draft",
+      "width": 1024,
+      "scrollWidth": 1024
+    },
+    {
+      "theme": "dark",
+      "page": "draft",
+      "width": 768,
+      "scrollWidth": 768
+    },
+    {
+      "theme": "dark",
+      "page": "draft",
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "theme": "dark",
+      "page": "draft",
+      "width": 360,
+      "scrollWidth": 360
+    },
+    {
+      "theme": "dark",
+      "page": "draft",
+      "width": 320,
+      "scrollWidth": 320
+    },
+    {
+      "theme": "dark",
+      "page": "recover",
+      "width": 1440,
+      "scrollWidth": 1440
+    },
+    {
+      "theme": "dark",
+      "page": "recover",
+      "width": 1024,
+      "scrollWidth": 1024
+    },
+    {
+      "theme": "dark",
+      "page": "recover",
+      "width": 768,
+      "scrollWidth": 768
+    },
+    {
+      "theme": "dark",
+      "page": "recover",
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "theme": "dark",
+      "page": "recover",
+      "width": 360,
+      "scrollWidth": 360
+    },
+    {
+      "theme": "dark",
+      "page": "recover",
+      "width": 320,
+      "scrollWidth": 320
+    }
+  ]
+}

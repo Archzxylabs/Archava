@@ -1,0 +1,42 @@
+{
+  "startedAt": "2026-10-29T07:45:29.014Z",
+  "scope": "Synthetic local fixture, real Chromium/SSR/WASM/HTTP/PostgreSQL; production binary restart. No live provider or public/TLS deployment acceptance.",
+  "checks": [
+    {
+      "id": "F01-authenticated-hydration",
+      "status": "passed",
+      "details": "Real login, session cookie, WASM handlers and contact query"
+    }
+  ],
+  "errors": [
+    "Error: Timed out: unique contact search\n    at until (file:///home/haikaru/Archverse/Lab/Archava/tools/e2e/verify.mjs:31:9)\n    at async selectDraft (file:///home/haikaru/Archverse/Lab/Archava/tools/e2e/verify.mjs:143:5)\n    at async file:///home/haikaru/Archverse/Lab/Archava/tools/e2e/verify.mjs:156:3"
+  ],
+  "browserExecutable": "/usr/bin/brave",
+  "status": "failed",
+  "pageErrors": [
+    "slice panic: panicked at /home/haikaru/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/reactive_graph-0.2.16/src/traits.rs:361:29:\nTried to access a reactive value that has already been disposed.",
+    "RuntimeError: unreachable\n    at http://127.0.0.1:44069/pkg/archava-slice_bg.wasm:wasm-function[3768]:0x1e0603\n    at http://127.0.0.1:44069/pkg/archava-slice_bg.wasm:wasm-function[3755]:0x1e05c1\n    at http://127.0.0.1:44069/pkg/archava-slice_bg.wasm:wasm-function[3648]:0x1e0119\n    at http://127.0.0.1:44069/pkg/archava-slice_bg.wasm:wasm-function[1686]:0x1a919b\n    at http://127.0.0.1:44069/pkg/archava-slice_bg.wasm:wasm-function[2500]:0x1cd5d6\n    at http://127.0.0.1:44069/pkg/archava-slice_bg.wasm:wasm-function[3738]:0x1e0532\n    at http://127.0.0.1:44069/pkg/archava-slice_bg.wasm:wasm-function[3260]:0x1ddac1\n    at http://127.0.0.1:44069/pkg/archava-slice_bg.wasm:wasm-function[3108]:0x1db987\n    at http://127.0.0.1:44069/pkg/archava-slice_bg.wasm:wasm-function[1337]:0x190e93\n    at http://127.0.0.1:44069/pkg/archava-slice_bg.wasm:wasm-function[308]:0xd3f4d"
+  ],
+  "fixtureCleanup": {
+    "exitCode": 0,
+    "signal": null
+  },
+  "finishedAt": "2026-10-29T07:46:01.655Z",
+  "artifacts": [
+    {
+      "path": "target/release/examples/slice_server",
+      "bytes": 12681384,
+      "sha256": "cf5e9d81c596b8638eb905335ecb9dc675fce130f48841b84a4872841811c17e"
+    },
+    {
+      "path": "target/release/archava-server",
+      "bytes": 13298712,
+      "sha256": "fad918cf0dc3492258ef6fbb3848edc19702fe9b20d498ac6c187a8b58a99f1f"
+    },
+    {
+      "path": "target/site/pkg/archava-slice_bg.wasm",
+      "bytes": 2059483,
+      "sha256": "1874f7328d94429a969118f33544f2d8d7273eed575e81d3d07af809c9d4c522"
+    }
+  ]
+}

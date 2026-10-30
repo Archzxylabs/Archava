@@ -1,6 +1,0 @@
-# Retained from the working Archava baseline. Upgrade these plugins together.
-livekit-agents[tavus]==1.7.1
-livekit-plugins-google==1.7.1
-livekit-plugins-tavus==1.7.1
-livekit-plugins-spatius==1.7.1
-python-dotenv==1.2.3

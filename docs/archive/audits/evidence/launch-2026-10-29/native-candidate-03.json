@@ -1,0 +1,15 @@
+{
+  "candidate": "dist/native-candidate-20261029-03",
+  "profileSha256": "5fdb36bc67fbda1a2e5abb53393a537145ae3d642fe4a1d5192f98240d676344",
+  "sourceSha256": "2ab36c70d6908d24703c51f51263a8b18fb0890e6d5d4f91be3e6eac1e395ae7",
+  "runtimeVersion": "0.1.0",
+  "artifacts": 40,
+  "bytes": 20581400,
+  "browser": "recovery-browser-green-02/result.json",
+  "browserChecks": 20,
+  "browserErrors": 0,
+  "bounds": [
+    "Current local Linux recovery/UI checkpoint, not complete MVP",
+    "Costing, externalproviders, servingfencing and remaining recovery gaps open"
+  ]
+}

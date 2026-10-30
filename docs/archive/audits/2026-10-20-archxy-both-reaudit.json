@@ -1,0 +1,601 @@
+{
+  "schema": "codex.archxy-both-reaudit/v1",
+  "auditedAt": "2026-10-20T14:24:10.082168+00:00",
+  "verdict": {
+    "archxy1": "substantial verified CRM progress; full mandate incomplete",
+    "archxy2": "ERP kernel progress; full mandate incomplete",
+    "fullRustAccepted": false,
+    "operationalKitsAcceptedByThisAudit": 0,
+    "wholeProjectProgressPercent": null
+  },
+  "snapshots": {
+    "archxy1": {
+      "root": "/home/haikaru/Archverse/Lab/Archava_Platform",
+      "headBefore": "412f763e17f3a68a457fd76c7b929184c50c916a",
+      "headAfter": "412f763e17f3a68a457fd76c7b929184c50c916a",
+      "coveredFiles": 252,
+      "changedPaths": []
+    },
+    "archxy2": {
+      "root": "/home/haikaru/Archverse/Lab/Archava_Platform_archxy2_erp",
+      "headBefore": "21234bb012db018d7632e870575682c37aa38695",
+      "headAfter": "21234bb012db018d7632e870575682c37aa38695",
+      "coveredFiles": 248,
+      "changedPaths": []
+    }
+  },
+  "tests": {
+    "workspaceSuites": [
+      {
+        "suite": "tests/crm.rs (target/release/deps/crm-f62b05cff6c2fb97)",
+        "passed": 36,
+        "failed": 0,
+        "ignored": 0,
+        "log": "/home/haikaru/.cache/archava-codex-audits/reaudit-20261020-smdy3a0h/focused-tests.log"
+      },
+      {
+        "suite": "tests/erp_attendance.rs (target/release/deps/erp_attendance-745e0a046948da2a)",
+        "passed": 14,
+        "failed": 0,
+        "ignored": 0,
+        "log": "/home/haikaru/.cache/archava-codex-audits/reaudit-20261020-smdy3a0h/focused-tests.log"
+      },
+      {
+        "suite": "tests/erp_billing.rs (target/release/deps/erp_billing-e2b78c0b28c70294)",
+        "passed": 13,
+        "failed": 0,
+        "ignored": 0,
+        "log": "/home/haikaru/.cache/archava-codex-audits/reaudit-20261020-smdy3a0h/focused-tests.log"
+      },
+      {
+        "suite": "tests/erp_subscriptions.rs (target/release/deps/erp_subscriptions-5a6a75a60eac3128)",
+        "passed": 13,
+        "failed": 0,
+        "ignored": 0,
+        "log": "/home/haikaru/.cache/archava-codex-audits/reaudit-20261020-smdy3a0h/focused-tests.log"
+      },
+      {
+        "suite": "tests/own.rs (target/release/deps/own-b33e6379c401553b)",
+        "passed": 11,
+        "failed": 0,
+        "ignored": 0,
+        "log": "/home/haikaru/.cache/archava-codex-audits/reaudit-20261020-smdy3a0h/focused-tests.log"
+      },
+      {
+        "suite": "tests/session.rs (target/release/deps/session-325f7e5ab1a69b2b)",
+        "passed": 6,
+        "failed": 0,
+        "ignored": 0,
+        "log": "/home/haikaru/.cache/archava-codex-audits/reaudit-20261020-smdy3a0h/focused-tests.log"
+      },
+      {
+        "suite": "tests/assistant.rs (target/release/deps/assistant-f570efa63eb6f9fd)",
+        "passed": 14,
+        "failed": 0,
+        "ignored": 0,
+        "log": "/home/haikaru/.cache/archava-codex-audits/reaudit-20261020-smdy3a0h/assistant-tests.log"
+      },
+      {
+        "suite": "tests/engine.rs (target/release/deps/engine-0eb820cc0cd045e6)",
+        "passed": 13,
+        "failed": 0,
+        "ignored": 0,
+        "log": "/home/haikaru/.cache/archava-codex-audits/reaudit-20261020-smdy3a0h/own-engine-tests.log"
+      }
+    ],
+    "passed": 120,
+    "failed": 0,
+    "ignored": 0,
+    "reproducedCounterexamples": 6,
+    "counterexamplesAreAcceptancePasses": false
+  },
+  "browser": {
+    "checks": {
+      "rustLoginAndContactRead": true,
+      "pagination": {
+        "firstRows": 20,
+        "nextRows": 9,
+        "disjoint": true
+      },
+      "literalSearch": {
+        "rows": 0
+      },
+      "crmLostResponseReload": {
+        "originalKey": "7edb14ac-8acb-4c9b-8c56-c59b66a0810f",
+        "effectRows": 1,
+        "appStorageRetainedKey": true,
+        "recovered": "Committed. Receipt: {\"id\":\"5bd9f3e7-2378-4c38-a204-1a888eb86ed0\",\"kind\":\"followup\",\"revision\":1}\"7edb14ac-8acb-4c9b-8c56-c59b66a0810f\""
+      },
+      "logout": {
+        "uiMarker": "signed outsign out ",
+        "authenticatedReadStatus": 401
+      }
+    },
+    "findings": {
+      "ownerUnknownOutcome": {
+        "requestId": "0eb46965-005b-4b18-b4dd-4872b946e77b",
+        "statusBeforeRetry": "opaque value",
+        "revisionRows": 1,
+        "keyInAppStorage": false,
+        "retry": {
+          "confirmation": {
+            "baseRevision": 0,
+            "planHash": "02e1105c3f3ed3b9"
+          },
+          "request": {
+            "baseRevision": 0,
+            "disable": ["crm-pipeline"],
+            "enable": []
+          },
+          "requestId": "9e3f1f00-7b60-4ceb-a8fd-e2548bdf3c7e",
+          "tenant": "acme-retail"
+        },
+        "statusAfterRetry": "Refused: stale_base — The configuration moved; replan against the current revision.",
+        "stateAfterReload": "Configuration revision 1 · catalogue owner-catalogue@1 · pricing included@1",
+        "pendingRecoveryUi": []
+      }
+    },
+    "lifecycle": {
+      "serverPid": 282932,
+      "fixture": {
+        "port": 43303,
+        "data": "/tmp/aca20-vso3zq2d/archava-pg-fixture-282932-1792505870489813300/data"
+      },
+      "browserPid": 282987,
+      "browserStopped": true,
+      "serverStopped": true
+    },
+    "startedAt": "2026-10-20T14:17:50.459Z",
+    "finishedAt": "2026-10-20T14:17:55.711Z"
+  },
+  "coverage": {
+    "complete": false,
+    "diagnostics": 177,
+    "requiredItems": 93,
+    "requiredProofs": 56,
+    "finalExitCode": 1,
+    "finalEvidence": "coverage-final.json"
+  },
+  "domainPresence": {
+    "main": [
+      {
+        "name": "organizations",
+        "domain": true,
+        "adapters": true,
+        "host": true,
+        "slice": false,
+        "host_tests": true
+      },
+      {
+        "name": "proposals",
+        "domain": true,
+        "adapters": true,
+        "host": true,
+        "slice": false,
+        "host_tests": true
+      },
+      {
+        "name": "projects",
+        "domain": true,
+        "adapters": true,
+        "host": true,
+        "slice": false,
+        "host_tests": true
+      },
+      {
+        "name": "capacity",
+        "domain": false,
+        "adapters": false,
+        "host": false,
+        "slice": false,
+        "host_tests": false
+      },
+      {
+        "name": "scheduling",
+        "domain": true,
+        "adapters": true,
+        "host": true,
+        "slice": false,
+        "host_tests": true
+      },
+      {
+        "name": "accommodation",
+        "domain": true,
+        "adapters": true,
+        "host": true,
+        "slice": false,
+        "host_tests": true
+      },
+      {
+        "name": "assets",
+        "domain": true,
+        "adapters": true,
+        "host": true,
+        "slice": false,
+        "host_tests": true
+      },
+      {
+        "name": "commerce",
+        "domain": false,
+        "adapters": false,
+        "host": false,
+        "slice": false,
+        "host_tests": false
+      },
+      {
+        "name": "purchasing",
+        "domain": true,
+        "adapters": true,
+        "host": true,
+        "slice": false,
+        "host_tests": true
+      },
+      {
+        "name": "foodservice",
+        "domain": true,
+        "adapters": true,
+        "host": true,
+        "slice": false,
+        "host_tests": true
+      },
+      {
+        "name": "billing",
+        "domain": true,
+        "adapters": true,
+        "host": true,
+        "slice": false,
+        "host_tests": true
+      },
+      {
+        "name": "subscriptions",
+        "domain": true,
+        "adapters": true,
+        "host": true,
+        "slice": false,
+        "host_tests": true
+      },
+      {
+        "name": "attendance",
+        "domain": true,
+        "adapters": true,
+        "host": true,
+        "slice": false,
+        "host_tests": true
+      },
+      {
+        "name": "support",
+        "domain": false,
+        "adapters": false,
+        "host": false,
+        "slice": false,
+        "host_tests": false
+      },
+      {
+        "name": "fulfillment",
+        "domain": false,
+        "adapters": false,
+        "host": false,
+        "slice": false,
+        "host_tests": false
+      },
+      {
+        "name": "laundry",
+        "domain": false,
+        "adapters": false,
+        "host": false,
+        "slice": false,
+        "host_tests": false
+      },
+      {
+        "name": "field_services",
+        "domain": false,
+        "adapters": false,
+        "host": false,
+        "slice": false,
+        "host_tests": false
+      },
+      {
+        "name": "formal_education",
+        "domain": false,
+        "adapters": false,
+        "host": false,
+        "slice": false,
+        "host_tests": false
+      }
+    ],
+    "archxy2": [
+      {
+        "name": "organizations",
+        "domain": true,
+        "adapters": true,
+        "host": true,
+        "slice": false,
+        "host_tests": true
+      },
+      {
+        "name": "proposals",
+        "domain": true,
+        "adapters": true,
+        "host": true,
+        "slice": false,
+        "host_tests": true
+      },
+      {
+        "name": "projects",
+        "domain": true,
+        "adapters": true,
+        "host": true,
+        "slice": false,
+        "host_tests": true
+      },
+      {
+        "name": "capacity",
+        "domain": false,
+        "adapters": false,
+        "host": false,
+        "slice": false,
+        "host_tests": false
+      },
+      {
+        "name": "scheduling",
+        "domain": true,
+        "adapters": true,
+        "host": true,
+        "slice": false,
+        "host_tests": true
+      },
+      {
+        "name": "accommodation",
+        "domain": true,
+        "adapters": true,
+        "host": true,
+        "slice": false,
+        "host_tests": true
+      },
+      {
+        "name": "assets",
+        "domain": true,
+        "adapters": true,
+        "host": true,
+        "slice": false,
+        "host_tests": true
+      },
+      {
+        "name": "commerce",
+        "domain": false,
+        "adapters": false,
+        "host": false,
+        "slice": false,
+        "host_tests": false
+      },
+      {
+        "name": "purchasing",
+        "domain": true,
+        "adapters": true,
+        "host": true,
+        "slice": false,
+        "host_tests": true
+      },
+      {
+        "name": "foodservice",
+        "domain": true,
+        "adapters": true,
+        "host": true,
+        "slice": false,
+        "host_tests": true
+      },
+      {
+        "name": "billing",
+        "domain": true,
+        "adapters": true,
+        "host": true,
+        "slice": false,
+        "host_tests": true
+      },
+      {
+        "name": "subscriptions",
+        "domain": true,
+        "adapters": true,
+        "host": true,
+        "slice": false,
+        "host_tests": true
+      },
+      {
+        "name": "attendance",
+        "domain": true,
+        "adapters": true,
+        "host": true,
+        "slice": false,
+        "host_tests": true
+      },
+      {
+        "name": "support",
+        "domain": true,
+        "adapters": true,
+        "host": true,
+        "slice": false,
+        "host_tests": true
+      },
+      {
+        "name": "fulfillment",
+        "domain": false,
+        "adapters": false,
+        "host": false,
+        "slice": false,
+        "host_tests": false
+      },
+      {
+        "name": "laundry",
+        "domain": false,
+        "adapters": false,
+        "host": false,
+        "slice": false,
+        "host_tests": false
+      },
+      {
+        "name": "field_services",
+        "domain": false,
+        "adapters": false,
+        "host": false,
+        "slice": false,
+        "host_tests": false
+      },
+      {
+        "name": "formal_education",
+        "domain": false,
+        "adapters": false,
+        "host": false,
+        "slice": false,
+        "host_tests": false
+      }
+    ]
+  },
+  "findings": [
+    {
+      "id": "F01",
+      "priority": "P1",
+      "owner": "Archxy 2",
+      "kind": "reproduced_business_rule_bug",
+      "title": "Zero payment activates a paid subscription and allows usage",
+      "source": "rust/crates/adapters/src/erp/subscriptions.rs:420",
+      "evidence": "counterexamples-retry.log"
+    },
+    {
+      "id": "F02",
+      "priority": "P1",
+      "owner": "Archxy 2",
+      "kind": "reproduced_state_machine_bug",
+      "title": "record_payment revives a canceled subscription",
+      "source": "rust/crates/adapters/src/erp/subscriptions.rs:430",
+      "evidence": "counterexamples-retry.log"
+    },
+    {
+      "id": "F03",
+      "priority": "P1",
+      "owner": "Archxy 2",
+      "kind": "reproduced_authorization_bug",
+      "title": "Audit-only actor denied subscription list can read another actors command receipt",
+      "source": "rust/crates/host/src/erp/subscriptions.rs:524",
+      "evidence": "subscription-status-probe.log"
+    },
+    {
+      "id": "F04",
+      "priority": "P1",
+      "owner": "Archxy 1",
+      "kind": "reproduced_confirmation_binding_bug",
+      "title": "Owner plan confirmation survives cost/readiness change",
+      "source": "rust/crates/own/src/lib.rs:488",
+      "evidence": "own-probe.log"
+    },
+    {
+      "id": "F05",
+      "priority": "P2",
+      "owner": "Archxy 1",
+      "kind": "reproduced_browser_recovery_bug",
+      "title": "Owner unknown outcome loses application-owned request identity and retry remints it",
+      "source": "rust/crates/slice/src/owner.rs:188",
+      "evidence": "browser-probe.json"
+    },
+    {
+      "id": "F06",
+      "priority": "P2",
+      "owner": "Archxy 1",
+      "kind": "reproduced_restore_bug",
+      "title": "Configuration restore merges away absence and retains labels absent at the target",
+      "source": "rust/crates/own/src/lib.rs:448",
+      "evidence": "own-probe.log"
+    },
+    {
+      "id": "F07",
+      "priority": "P1",
+      "owner": "Archxy 2; Archxy 1 integration",
+      "kind": "required_scope_gap",
+      "title": "ERP lacks five domain implementations, full commerce surface, panels, tools, config adapters and Rust consumers",
+      "source": "/home/haikaru/Archverse/Lab/Archava_Platform_archxy2_erp/docs/rust/archxy2/ERP_SCOPE.md:51",
+      "evidence": "domain-presence.json"
+    },
+    {
+      "id": "F08",
+      "priority": "P2",
+      "owner": "Archxy 1",
+      "kind": "dependency_closure_gap",
+      "title": "CRM cold consumers require all shipped ERP source and migrations",
+      "source": "tools/rust/k05-k04-consumers.mjs:374",
+      "evidence": "source inspection"
+    },
+    {
+      "id": "F09",
+      "priority": "P1",
+      "owner": "Archxy 1",
+      "kind": "required_rust_migration_gap",
+      "title": "First-party SDK/widget remains TypeScript beyond a thin facade",
+      "source": "tools/rust/sdk-widget.mjs:5",
+      "evidence": "source inspection"
+    },
+    {
+      "id": "F10",
+      "priority": "P1",
+      "owner": "Archxy 1",
+      "kind": "candidate_evidence_gap",
+      "title": "Required coverage is incomplete with stale or failed evidence and overbroad owner witness grading",
+      "source": "tools/rust/coverage.mjs:294",
+      "evidence": "coverage.json"
+    }
+  ],
+  "cleanup": {
+    "attempts": [
+      {
+        "artifact": "browser-probe-attempt1.json",
+        "taskProcesses": {
+          "browserPid": "stopped",
+          "serverPid": "stopped"
+        },
+        "fixtureDataExists": false,
+        "fixturePortListening": false
+      },
+      {
+        "artifact": "browser-probe-attempt2.json",
+        "taskProcesses": {
+          "browserPid": "stopped",
+          "serverPid": "stopped"
+        },
+        "fixtureDataExists": false,
+        "fixturePortListening": false
+      },
+      {
+        "artifact": "browser-probe.json",
+        "taskProcesses": {
+          "browserPid": "stopped",
+          "serverPid": "stopped"
+        },
+        "fixtureDataExists": false,
+        "fixturePortListening": false
+      }
+    ],
+    "remainingFixtureDirectories": [],
+    "allStopped": true,
+    "taskScratchRemoved": true
+  },
+  "rawEvidenceRoot": "/home/haikaru/.cache/archava-codex-audits/reaudit-20261020-smdy3a0h",
+  "limits": [
+    "Not a complete release/security/benchmark/upgrade acceptance run",
+    "Support working copy source/packet inspected; support suite not rerun",
+    "Standalone harness imports current audited crates under its own retained offline lockfile",
+    "Source-presence counts are not completion percentages",
+    "Historical global-pkill allegation was not independently attributed and is not an audit finding"
+  ],
+  "mutations": {
+    "productSource": false,
+    "ownerDatabase": false,
+    "privateConfiguration": false,
+    "externalEffects": false,
+    "commit": false,
+    "push": false,
+    "createdFiles": [
+      "docs/ARCHXY_BOTH_REAUDIT_2026-10-20.md",
+      "docs/audit/2026-10-20-archxy-both-reaudit.json"
+    ],
+    "buildArtifacts": "task-owned harness and normal Cargo targets",
+    "auditCache": "/home/haikaru/.cache/archava-codex-audits/reaudit-20261020-smdy3a0h"
+  }
+}

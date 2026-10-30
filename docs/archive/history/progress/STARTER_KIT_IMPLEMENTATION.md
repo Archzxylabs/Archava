@@ -1,0 +1,434 @@
+# Starter-kit implementation work
+
+<!-- documentation-status -->
+> **Status: historical programme/progress ledger.** Reviewed for documentation ownership on 29 October 2026. Use the [current architecture](../../ARCHITECTURE.md) and [developer guide](../../DEVELOPER_GUIDE.md) for the active workspace. Original versions, commands, and acceptance statements below describe their recorded context; this page is not fresh release evidence.
+
+The user authorized completing the researched kit programme on 10 October 2026.
+The objective covers the 40-family catalogue and usable domain implementations,
+not only metadata. Local/free constraints and existing action/privacy boundaries
+continue to apply. ARCHZXY's website remains an independent consumer project.
+
+On 11 October the user requested uninterrupted execution across milestones until
+the authorized programme is complete. Continue after accepted slices; milestone
+reports are progress, not reasons to stop. Identify required external access or
+domain decisions concretely while independent work continues. Full-kit acceptance
+still requires declared domain/capability evidence; paid services and fabricated
+support are not authorized by this instruction.
+
+## Work ledger
+
+| Work                                                                                         | Acceptance                                                                                                                                                                             | Current state                                                                       |
+| -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| KIT-01 typed trusted catalogue                                                               | Forty families, explicit domain ownership/configuration/API/action/UI/operability requirements; immutable public contracts; no implicit support from research status                   | Accepted: local catalogue/planner scope                                             |
+| KIT-02 deterministic requirement and readiness planner                                       | Every selected requirement has a disposition; full kits with missing implementations refuse assembly; narrow accepted scopes remain explicitly narrow; typed API and local CLI         | Accepted: local catalogue/planner scope                                             |
+| KIT-03 packaged consumption                                                                  | Two cold-installed consumers use the same catalogue/planner without source imports; browser-safe contracts; existing profile/CRM behaviour preserved                                   | Accepted: verified independent consumers                                            |
+| KIT-04 project services                                                                      | A bounded persistent project/task/milestone workflow through authorized API/dashboard; scope/revision/audit/recovery; reuse without CRM forks                                          | Accepted: bounded local tracking                                                    |
+| KIT-05 scheduling and accommodation                                                          | Time/resource scheduling and domain-specific room-night/stay/housekeeping ownership; concurrency/cancellation/restore evidence                                                         | Accepted: bounded reservations and accommodation                                    |
+| KIT-06 orders, retail and food service                                                       | Catalogue/orders/stock and restaurant table/kitchen rules; validated composition and failure semantics                                                                                 | Accepted: bounded commerce and food service                                         |
+| KIT-07 remaining general kits                                                                | Build the 24 general families' explicit scopes from shared services and separate extensions; each needs its own evidence                                                               | In progress: bounded support, purchasing, organizations, proposals/scope, capacity, |
+| assets, subscriptions, attendance, fulfillment, field services and formal education accepted |
+| KIT-08 specialist kits                                                                       | Domain review plus selected authoritative-system adapters, supported configuration, privacy and live integration evidence; 16 research families are not native full-system commitments | Pending                                                                             |
+| KIT-09 operator handoff                                                                      | Reproducible releases, migration/recovery, acceptance manifest and honest support catalogue                                                                                            | Candidate: handoff tooling closed, release identity and product audit still open    |
+
+No candidate is promoted to accepted from a file count, generated manifest, UI
+visibility, mocked provider response or a generic CRUD engine. Specialist adapter
+implementation depends on the selected backend's contract and domain scope;
+unselected/unconfigured integrations remain blockers. Existing accepted library
+profile 1.3.0 is historical evidence, not automatic acceptance of new packages.
+
+Scope can be made narrower only when recorded explicitly; this ledger retains
+outstanding work until it has real acceptance. No company website, pricebook change,
+paid call, private-data AI disclosure or public publishing follows from kit selection.
+
+## First implementation slice
+
+The operator selected project delivery first because ARCHZXY can use it internally.
+The user explicitly delegated ordering while retaining the full catalogue target.
+Profile 1.4.0 adds `@archava/kits`, `@archava/projects` and `@archava/projects-pg`
+to the prior 25-artifact release: 28 internal artifacts, unchanged 18 external pins,
+one additive project migration and six owned database ledgers. Host 0.7.0 and
+configuration package 0.6.0 retain prior settings and four-module defaults.
+
+The planner supports narrow `crm_inquiry` for K01/K05 and `project_tracking` for
+K05/K31. The latter is internal generic project tracking; construction/EPC-specific
+costing, safety, procurement and contractual workflows are not implemented.
+All forty full operating kits remain candidates and refuse assembly when their
+domain/capability requirements are missing. No kit has full operational acceptance.
+
+See [project delivery scope and integration](../../modules/PROJECT_DELIVERY_MODULE.md). The next
+domain slice was scheduling/resource reservations, followed by accommodation and
+orders/retail/food service. This work order does not remove the remaining kit work.
+
+## Second implementation slice
+
+Profile 1.5.0 adds `scheduling` and `scheduling-pg` 0.1.0: 30 internal artifacts,
+18 unchanged external pins and seven owned database ledgers, with host 0.8.0,
+config 0.7.0 and kits 0.2.0. Assembly v3 adds optional scheduling while preserving
+v1/v2 compositions and old defaults. The independent appointment/rental consumers
+share the same implementation for exclusive timed reservations; full K07/K10
+operating kits remain blocked. See [reservation scope](../../modules/RESOURCE_RESERVATIONS_MODULE.md).
+
+KIT-05 scheduling foundation is accepted locally for capacity-one resources,
+holds/expiry, confirmation, moves/cancellation, maintenance blocks, current grants,
+idempotency/audit and restart/restore. At the 1.5.0 checkpoint accommodation was pending: room-night
+inventory, room types/tariffs, guest stays, check-in/out and housekeeping need
+separate domain rules. Next implement that bounded accommodation extension, then
+orders/retail/food service. Remaining general/specialist families and full-programme
+handoff remain in this ledger. No complete operating kit is promoted by this slice.
+
+## Third implementation slice
+
+Profile 1.6.0 adds accommodation 0.1.0 and scheduling's shared capacity kernel
+0.2.0: 32 compiled artifacts, 18 unchanged external pins, eight owned database
+ledgers, host 0.9.0, config 0.8.0 and kits 0.3.0. Assembly v4 adds optional
+accommodation and preserves earlier contracts and defaults. Hotel/villa consumers
+install identical domain code. Narrow K01 `accommodation_stays` now composes
+individual rooms, frozen nightly rates, guest stay lifecycle and housekeeping.
+
+KIT-05 is accepted for these bounded local scheduling and accommodation scopes.
+It does not accept full appointment, rental or hotel kits: group/pooled bookings,
+rate calendars, OTA/public booking, financial flows and other explicit requirements
+remain open. See [accommodation scope and proof](../../modules/ACCOMMODATION_MODULE.md).
+
+Next implement KIT-06 shared catalogue/orders/stock and explicit retail and
+restaurant extensions. KIT-07/08/09 and all forty full operating kits retain their
+outstanding acceptance requirements. Current release acceptance is recorded in
+[the release ledger](LOCAL_LIBRARY_RELEASE.md).
+
+## Fourth implementation slice
+
+Profile 1.7.0 adds commerce 0.1.0 and its PostgreSQL adapter: 34 artifacts,
+18 unchanged external pins, nine owned ledgers, host 0.10.0, config 0.9.0 and kits
+0.4.0. Assembly v5 adds optional commerce without changing earlier contracts or
+defaults. Independent retail/wholesale consumers share one catalog/order/stock
+implementation; narrow K03/K04 `commerce_orders` composes the validated scope.
+
+The domain proves frozen prices, atomic expiring stock reservations, fulfillment,
+partial restock/discard returns, current authority, idempotency, audit and recovery.
+KIT-06 remains in progress until explicit restaurant ownership also passes its
+acceptance. Continue with [food-service implementation](../plans/FOODSERVICE_MODULE_PLAN.md),
+then KIT-07/08/09. All forty full operating kits retain their missing requirements;
+no milestone completion ends the authorized programme. See
+[commerce contract](../../modules/COMMERCE_MODULE.md) and [release evidence](LOCAL_LIBRARY_RELEASE.md).
+
+## Fifth implementation slice
+
+Profile 1.8.0 adds food-service 0.1.0 and commerce's shared domain SPI 0.2.0:
+36 artifacts, 18 unchanged external pins, ten owned ledgers, host 0.11.0, config
+0.10.0 and kits 0.5.0. Assembly v6 adds optional restaurant service, requiring
+shared commerce in the owner host; previous contracts and defaults are preserved.
+The additive managed-menu migration preserves non-empty archived 1.7 records.
+
+KIT-06 is accepted for bounded catalog/orders/stock and whole-ticket restaurant/
+catering operation: physical tables, sealed recipe snapshots, backend prices,
+ingredient reservation/consumption, kitchen/service progression and waste/refusal.
+It does not accept any full operating kit. Per-item POS, financial flows, hardware,
+public ordering and every other declared kit gap remain open. See
+[food-service contract](../../modules/FOODSERVICE_MODULE.md) and [release evidence](LOCAL_LIBRARY_RELEASE.md).
+
+Continue KIT-07 with [shared support cases](../plans/SUPPORT_CASES_MODULE_PLAN.md), then
+remaining general/specialist requirements and full-programme handoff. Specialist
+backend selection/access and domain review remain explicit gates rather than
+invented integration evidence. The user's uninterrupted-execution instruction
+continues across this accepted slice.
+
+## Sixth implementation slice
+
+Profile 1.9.0 adds support/support-pg 0.1.0: 38 artifacts, 18 unchanged external
+pins, eleven owned ledgers, host 0.12.0, config 0.11.0 and kits 0.6.0. Assembly v7
+preserves previous contracts/defaults. Independent professional-service and
+property-operations consumers use the same case/notes/assignment/resolution code.
+Narrow K05/K06/K12/K18/K21 `support_cases` scopes compose current support evidence.
+
+KIT-07 is in progress. Support acceptance covers private internal cases, current
+resource assignment, investigation/waiting, explicit resolution/closure/reopening,
+immutable prior cycles, internal targets, UUID recovery and restart/restore. It
+accepts no contractual SLA, customer delivery, legal/clinical workflow or full kit.
+See [support contract](../../modules/SUPPORT_CASES_MODULE.md) and [release evidence](LOCAL_LIBRARY_RELEASE.md).
+
+Continue with [purchasing and physical receipts](../plans/PURCHASING_MODULE_PLAN.md), then
+remaining general/specialist requirements and programme handoff. All forty full
+operating kits still retain their declared gaps. The uninterrupted-execution
+instruction continues across this checkpoint.
+
+## Seventh implementation slice
+
+Profile 1.10.0 adds `purchasing` and `purchasing-pg` 0.1.0 alongside commerce
+0.3.0 (with additive `003_purchase_receipts.sql` migration, private transaction SPI
+`receivePurchaseStock`): 40 compiled artifacts, 18 unchanged external pins, twelve
+owned ledgers, host 0.13.0, config 0.12.0 and kits 0.7.0. Assembly v8 preserves
+previous contracts/defaults and introduces optional purchasing composition.
+
+The domain proves supplier quotes, backend offer validation, reviewed drafts,
+confirmed POs, physical partial inspection, rejection findings, stock receipts
+into a single shared commerce stock pool, forced tenant RLS, machine mutation
+denial, restart/restore, and owner data baseline preservation.
+Narrow K02/K04/K18/K23 `purchase_receipts` scopes compose current purchasing evidence.
+
+KIT-07 continues with Organizations, Proposals/Scope, and Capacity Estimation.
+
+## Eighth implementation slice
+
+Adds `organizations` and `organizations-pg` 0.1.0: 42 compiled artifacts,
+18 unchanged external pins, thirteen owned ledgers (`001_organizations_affiliations.sql`),
+and assembly v8 optional composition. Independent wholesale (`K04`) and
+recruitment (`K21`) consumers share identical domain code and browser-safe dashboards.
+Narrow `organization_accounts` scope proves organization master data, primary
+affiliation uniqueness constraint (at most one active primary contact per organization),
+secondary contact links, revision locking, forced tenant RLS, and restart/restore.
+
+## Ninth implementation slice
+
+Adds `proposals` and `proposals-pg` 0.1.0: 44 compiled artifacts, 18 unchanged
+external pins, fourteen owned ledgers (`001_proposals_scope_amendments.sql`),
+and assembly v8 optional composition. Independent agency (`K05`) and construction/EPC
+(`K31`) consumers share identical domain code and browser-safe dashboards.
+Narrow `proposals_scope` scope proves proposal draft deliverables, client acceptance,
+immutable baseline Scope Version 1 snapshot, versioned change request amendments
+advancing scope to v2+, forced tenant RLS, and restart/restore.
+
+## Tenth implementation slice
+
+Adds `capacity` and `capacity-pg` 0.1.0: 46 compiled artifacts, 18 unchanged
+external pins, fifteen owned ledgers (`001_delivery_capacity_pools.sql`),
+and assembly v8 optional composition. Independent agency (`K05`) and construction/EPC
+(`K31`) consumers share identical domain code and browser-safe dashboards.
+Narrow `delivery_capacity` scope proves capacity pool windows, deterministic daily
+burn-rate calculations, queueing upon concurrency saturation, dynamic finish handover,
+burned-unit progress updates, slot completion/cancellation release, forced tenant RLS,
+and restart/restore.
+
+## Eleventh implementation slice
+
+Adds `assets` and `assets-pg` 0.1.0: 48 compiled artifacts, 18 unchanged external pins,
+sixteen owned ledgers (`001_assets_custody_maintenance.sql`, reaching 16/16 schema capacity),
+host 0.15.0, config 0.14.0, kits 0.9.0, and assembly v10 optional composition. Independent
+vehicle/equipment rental (`K10`) and repair workshop (`K18`) consumers share identical domain
+code and browser-safe dashboards.
+Narrow `asset_register` scope proves serialized item identity, business-owned vs customer-owned
+custody tracking, custody dispatch/return handovers with condition grading, preventive and
+corrective maintenance logs with replaced parts audit, optimistic revision locking, forced tenant RLS,
+machine mutation denial, resilient receipt recovery state machine, and restart/restore.
+
+## Twelfth implementation slice
+
+Adds `subscriptions` and `subscriptions-pg` 0.1.0: 50 compiled artifacts, 18 unchanged external pins,
+seventeen owned ledgers (`001_subscriptions_entitlements_usage.sql`), host 0.16.0, config 0.15.0, kits 0.10.0,
+and assembly v11 optional composition. Independent SaaS sales (`K09`) and gym/club (`K08`) consumers
+share identical domain code and browser-safe dashboards.
+Narrow `subscriptions_entitlements` scope proves recurring subscription lifecycles, explicit entitlements
+(`metered`, `seat_count`, `boolean_access`, `pass_bundle`), backend payment confirmation, quota exhaustion refusal,
+idempotent usage consumption audit, optimistic revision locking, forced tenant RLS, machine mutation denial,
+resilient receipt recovery state machine (S1), and restart/restore.
+
+## Thirteenth implementation slice
+
+Adds `attendance` and `attendance-pg` 0.1.0: 52 compiled artifacts, 18 unchanged external pins,
+eighteen owned ledgers (`001_attendance_sessions_rosters.sql`), host 0.17.0, config 0.16.0, kits 0.11.0,
+and assembly v12 optional composition. Independent training/course (`K13`) and event/meetup
+(`K15`) consumers share identical domain code and browser-safe dashboards.
+Narrow `attendance_roster` scope proves bounded session creation with seat capacity, roster registration,
+verified check-in events with per-roster idempotency keys, duplicate scan refusal and idempotent replay,
+optimistic revision locking, session enrollment/attended counters, read-only tool boundaries, superuser and
+schema-owner refusal, service-principal and inactive/zero-grant refusal, forced tenant RLS isolation,
+immutable audit, resilient receipt recovery state machine (S1), and idempotent restart recovery.
+
+All forty full operating kits continue to retain their declared domain and adapter gaps.
+No complete operating kit is promoted by these narrow scopes.
+
+## Fourteenth implementation slice
+
+Adds `fulfillment` and `fulfillment-pg` 0.1.0: 54 compiled artifacts, 18 unchanged external pins,
+nineteen owned ledgers (`001_fulfillment_jobs_evidence.sql`), host 0.18.0, config 0.17.0, kits 0.12.0,
+and assembly v13 terminal composition. Independent warehouse/logistics (`K20`) and simple made-to-order
+production (`K23`) consumers share identical domain code and browser-safe dashboards.
+Narrow `fulfillment_dispatch` scope proves bounded dispatch and work-order evidence with a monotonic
+receive-store-pick-pack-dispatch-deliver custody chain, returns gated on a prior dispatch, delivery
+findings under a one-clear-per-reconciliation gate that blocks completion, material/output/scrap counters
+kept on separate axes over append-only job lines, dedicated dispatch and produce grants, superuser and
+schema-owner refusal, service-principal and inactive/zero-grant refusal, forced tenant RLS isolation,
+immutable audit, resilient receipt recovery state machine (S1), and idempotent restart recovery.
+
+All forty full operating kits continue to retain their declared domain and adapter gaps.
+No complete operating kit is promoted by these narrow scopes.
+
+## Fifteenth implementation slice
+
+Adds `billing` and `billing-pg` 0.1.0: 56 compiled artifacts, 18 unchanged external pins,
+twenty owned ledgers (`001_billing_invoices_settlement.sql`), host 0.19.0, config 0.18.0, kits 0.13.0,
+and assembly v14 terminal composition. Independent asset/equipment rental (`K10`) and outpatient
+clinic (`K25`) consumers share identical domain code and browser-safe dashboards.
+Narrow `billing_invoicing` scope proves immutable invoice intent with a priced snapshot frozen at
+creation, issue-time snapshot freezing, append-only correction chains that adjust what is owed without
+rewriting a priced total, payment attempts that carry no field capable of asserting a result, settlement
+recorded only by a correctly signed provider notification under the domain-separated
+`archava/billing/provider-event/v1` digest, tampered-amount/foreign-key/foreign-domain/unconfigured-provider
+refusals, the `billing.write` grant being required even for a correctly signed event, dedicated
+issue/correct/void grants separate from write, refund reopening `settled → issued` while `void` stays terminal,
+failed notifications moving no state at all, superuser and schema-owner refusal, service-principal and
+inactive/zero-grant refusal, forced tenant RLS isolation, immutable audit, resilient receipt recovery
+state machine (S1), and idempotent restart recovery.
+
+All forty full operating kits continue to retain their declared domain and adapter gaps.
+No complete operating kit is promoted by these narrow scopes.
+
+## Sixteenth implementation slice
+
+Adds `laundry` and `laundry-pg` 0.1.0: 58 compiled artifacts, 18 unchanged external pins,
+twenty-one owned ledgers (`001_laundry_orders_processing.sql`), host 0.20.0, config 0.19.0, kits 0.14.0,
+and assembly v15 terminal composition. Independent kilo laundry (`K19` weight) and dry
+cleaning/steam pressing (`K19` item) consumers share identical domain code and browser-safe dashboards.
+Narrow `laundry_processing` scope proves counted intake lines validated server-side with frozen
+`line_total_minor` and `total_minor` never carried in the client payload, a monotonic
+intake-tag-wash-dry-press-quality_check-ready-handover chain that refuses any step before intake and any
+repeat or backwards step, quality findings under a one-clear-per-reconciliation gate that raises and
+lowers `unreconciled_count` and refuses `ready` while an exception is open and until a quality check
+exists, dedicated `laundry.process` machine grant separate from the counter `laundry.write` grant,
+separate piece and gram accumulation counters, terminal `returned`/`canceled` states refusing further
+evidence, superuser and schema-owner refusal, service-principal and inactive/zero-grant refusal, forced
+tenant RLS isolation, immutable audit, resilient receipt recovery state machine (S1), and idempotent
+restart recovery.
+All forty full operating kits continue to retain their declared domain and adapter gaps.
+No complete operating kit is promoted by these narrow scopes.
+
+## Seventeenth implementation slice
+
+Adds `field-services` and `field-services-pg` 0.1.0: 60 compiled artifacts, 18 unchanged
+external pins, twenty-two owned ledgers (`001_field_services_dispatch_visits.sql`), host
+0.20.0, config 0.19.0, kits 0.14.0, and assembly v16 terminal composition. The domain
+records appointment-bound technician dispatch and its evidence only; scheduling remains the
+owned domain that mints the appointment, and invoicing remains billing's authority.
+
+Narrow `field_dispatch` scope proves an appointment-locked `create_job` that refuses a
+command whose `appointmentRef` is absent, a monotonic
+requested-assigned-visited-evidenced-signed_off-approved chain with terminal `canceled` and
+`approved` states that refuse any further evidence, a site visit that must precede the first
+work line, separate `labour`/`part` evidence whose counters accumulate on their own axes
+(hours never become pieces), customer signoff as an acceptance gate that must exist and be
+accepted before approval is reachable, a back edge from `signed_off` to `evidenced` so
+revised evidence is re-signed, the dedicated `field.dispatch` grant separate from the
+counter `field.write` grant and `field.signoff` separate from both, superuser and
+schema-owner refusal, service-principal and inactive/zero-grant refusal, forced tenant RLS
+isolation, immutable audit, the resilient receipt recovery state machine (S1) across all
+five failure modes, and idempotent restart recovery.
+
+The compiled host proof exercises the whole chain through headless Chromium against a real
+compiled CRM: disabled routes 404, enabling the module never auto-enrolls an account,
+CSRF/origin/viewer-write refusal, unknown-tool boundaries, restart retention, then the
+dispatch-to-signoff workflow, then the five S1 recovery modes.
+
+All forty full operating kits continue to retain their declared domain and adapter gaps.
+No complete operating kit is promoted by these narrow scopes.
+
+## Eighteenth implementation slice — KIT-09 operator handoff
+
+The operator handoff requirement was audited against machine evidence rather than
+prose, and three of its four parts were real work.
+
+_Reproducible releases_ were already proven: two `pnpm library:pack` runs produce
+byte-identical `dist/library/artifacts.json`, `release-profile.json` and
+`security-proof/results.json` across 60 tarballs.
+
+_Migration/recovery was broken._ `pnpm crm:verify-upgrade --cold-prior` exited 1 with
+`npm error code EALLOWSCRIPTS`, and `tools/library/verify-accommodation.mjs` carried the
+same latent defect on archived commit `0e396bd`, passing today only because a warm prior
+artifact happened to exist. Root cause: the owner's user-level npm config sets
+`allow-scripts`, pnpm re-injects user config into every workspace script it runs, and npm
+reads environment config as CLI-level policy, refusing it for a project-scoped install.
+The guard that already exists in `apps/crm/scripts/build.mjs` deletes the variable from
+`process.env`, which is sufficient only where npm is invoked directly. Both broken sites
+reach the archived build _through_ pnpm, so the caller now deletes the variable and points
+npm at an empty user config, and invokes the archived build script with `node` directly.
+The archived installs already pass `--ignore-scripts`, so no lifecycle script is lost.
+Both cold-prior proofs now exit 0.
+
+_The acceptance manifest was stale and hand-written._ `docs/audit/local-library/manifest.json`
+is frozen at profile 1.3.0 (1458 tests / 102 files) while the working tree is at 1.17.0
+(1786 tests / 134 files, fifty-four of them the formal-education tests added after this ledger
+was first measured) — real evidence carrying a wrong
+profile, which is exactly the drift a hand-maintained number invites. `tools/library/manifest.mjs` now generates
+`docs/audit/local-library/acceptance-<profile>.json` from the existing proof artifacts,
+and refuses to produce a manifest at all when a source is missing, when any source declares
+a different profile than the trusted catalogue, or when the upgrade proof did not target the
+current profile. `operationalKitsAccepted` is copied, never derived; `limits` is copied
+verbatim so `certification: false`, `penetrationTest: false` and the 13 moderate template
+generator names each defect rather than silently dropping a section. The write is idempotent:
+`sameEvidence()` compares manifests by value, ignoring `generatedAt` and formatting, so a
+re-run over unchanged evidence keeps the timestamp already on disk and the file — and the git
+diff — stays untouched. The timestamp is preserved rather than dropped because six of the seven
+evidence entries report `checkedAt: null` (their proofs record none), so it is the only place
+stating when this evidence set was collected. The write also runs through prettier with this
+repository's own config, because `JSON.stringify` expands arrays that prettier keeps on one
+line: without it the manifest would be the one committed file `pnpm format:check` rejects
+until someone formats it by hand, and the two states would differ so every regeneration would
+dirty the tree. One operational note for whoever regenerates it: the generator does not carry
+a `narrowScopesAccepted` figure, because the only source with a field of that name hardcodes an
+empty list — the narrow scopes that exist are recorded in the ledger below, not proven by any
+of these machines. The 1.3.0 file is left untouched: it is the historical baseline that
+`PRD.md` references.
+
+The same audit found two prose claims frozen below live evidence — `docs/LOCAL_LIBRARY_RELEASE.md`
+and `docs/BUILD_STATUS.md` both stated "80 controls" where the security matrix carries 83.
+Both are corrected. The hand-typed number in prose remains hand-typed; the durable change is
+that the manifest derives it.
+
+KIT-09 is accepted for this bounded operator-handoff scope: reproducible releases, a working
+cold-prior migration/recovery path, and a generated acceptance manifest that refuses to be
+produced from incomplete evidence. It does not accept a full operating kit, and the honest
+support catalogue is unchanged — `operationalKitsAccepted` stays `0` and all forty full
+operating kits retain their declared domain and adapter gaps. Browser, upgrade and benchmark
+evidence is still produced by standalone commands rather than by `pnpm security:verify`, so a
+manifest is only as fresh as the last standalone run of those three.
+
+_Follow-up of 14 October: the generator accepted mixed evidence (review H01)._ It compared
+version strings but copied `security.catalogSha256`/`artifactSha256` without recomputing them,
+never compared the loaded release-profile catalog against the trusted catalogue field for
+field, and never checked the artifact inventory against the release profile. A catalog hash
+that was never computed from anything, a 1.16.0 release catalog beside a 1.17.0 manifest, and
+an inventory missing one artifact all produced a confident file; emptied command/control/check
+arrays produced one with no refusal at all. The generator now treats the release identity as
+one fact — the loaded catalog must equal the trusted catalogue field for field, both digests must
+be recomputable from the loaded release profile using `tools/security/verify.mjs:213-218`'s own
+convention, the inventory and the profile must name the same artifacts with the same sha256 and
+version, and no required proof section may be present yet empty. Twelve negative cases in
+`tools/library/test/manifest.test.ts` cover exactly those defects; against the generator as it
+was, 12 of 22 fail and 10 pass, so the tests fail before the fix and pass after it. Inventory 60
+and controls 83 are read from evidence, never hardcoded.
+
+_Separating the evidence summary from the verdict (review H03)._ A collector that reports what
+the proofs said — including failed controls and failed unit tests — is doing its job. A file
+named `acceptance-<profile>.json` that leaves the operator to infer the verdict from the absence
+of a refusal is not. The manifest now carries `accepted: null` alongside a `notAccepted` list
+naming each reason acceptance is not warranted, and the CLI prints them. For the current
+evidence those reasons are zero accepted operational kits and the certification and
+penetration-test gates. The verifier's own policy is preserved rather than replaced:
+`platform-audit`, `runtime-audit` and `template-audit` run with `allowed = [0, 1]`, so a
+`template-audit` exit 1 is a recorded finding and is not restated as a new defect.
+
+_Release identity stays open (review H02, continuing A07)._ The archived candidate in
+`dist/releases/1.17.0/library` does not match the current artifact set: 58 artifacts, assembly
+v15.0.0 and 21 ledgers against 60, v16.0.0 and 22, field services being the added ledger. Two
+identical pack runs prove the current set is reproducible and prove nothing about the archive,
+so the old archive is preserved unchanged instead of being overwritten or re-labelled to look
+current. `docs/BUILD_STATUS.md` and `docs/LOCAL_LIBRARY_RELEASE.md` now state the mismatch
+rather than claiming a match. This slice stays a **candidate** until a fresh archive and an
+exact comparison close it, and until the authorization and integrity findings in
+[the product audit](../../audit/PROJECT_AUDIT_2026-10-14.md) are closed — 86/86 controls do not close
+A01-A05.
+
+## Nineteenth implementation slice — formal education
+
+Adds `@archava/formal-education` and `@archava/formal-education-pg` 0.1.0 with the single
+`001_formal_education_enrollment.sql` migration: 62 compiled artifacts, 18 unchanged external
+pins, twenty-three owned ledgers (`archava_edu`), and assembly contract `17.0.0` with
+`formalEducation` as its optional composition. The domain proves bounded admission, term
+enrollment, recorded attendance that requires an enrolled student and names its appointment,
+recorded results bounded by the assessment's own maximum, domain review as the publishing
+boundary, terminal retention, the three non-overlapping access scopes, forced tenant RLS with
+a non-superuser runtime role, append-only evidence tables, the status chain enforced in SQL,
+and fingerprint replay. Two consumers share unchanged domain code and a browser-safe
+dashboard. See [the education contract](../../modules/FORMAL_EDUCATION_MODULE.md).
+
+Narrow `education_records` scope proves the academic record and the reviewed publishing
+boundary. It accepts no teaching, no curriculum authoring and no full operating kit — the
+host proof's `operationalKitsAccepted` stays empty, as it does for every slice here.

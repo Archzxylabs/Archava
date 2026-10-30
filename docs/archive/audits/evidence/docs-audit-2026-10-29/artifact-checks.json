@@ -1,0 +1,113 @@
+[
+  {
+    "path": "docs/audit/evidence/a6/emit-thresholds.mjs",
+    "check": "syntax only",
+    "exitCode": 0,
+    "output": ""
+  },
+  {
+    "path": "docs/audit/evidence/a6/per-package-coverage.mjs",
+    "check": "syntax only",
+    "exitCode": 0,
+    "output": ""
+  },
+  {
+    "path": "docs/audit/evidence/a6/per-package-coverage.py",
+    "check": "ast.parse",
+    "result": "valid"
+  },
+  {
+    "path": "docs/audit/evidence/a6/prove-gate.sh",
+    "check": "syntax only",
+    "exitCode": 0,
+    "output": ""
+  },
+  {
+    "path": "docs/audit/historical_handoff/archxy2/packets/PACKET-000.diff",
+    "check": "unified patch structure, not application",
+    "oldHeaders": 10,
+    "newHeaders": 10,
+    "hunks": 28,
+    "result": "readable"
+  },
+  {
+    "path": "docs/audit/historical_handoff/archxy2/packets/PACKET-001.diff",
+    "check": "unified patch structure, not application",
+    "oldHeaders": 5,
+    "newHeaders": 5,
+    "hunks": 13,
+    "result": "readable"
+  },
+  {
+    "path": "docs/audit/historical_handoff/archxy2/packets/PACKET-002.diff",
+    "check": "unified patch structure, not application",
+    "oldHeaders": 5,
+    "newHeaders": 5,
+    "hunks": 8,
+    "result": "readable"
+  },
+  {
+    "path": "docs/audit/historical_handoff/archxy2/packets/PACKET-003.diff",
+    "check": "unified patch structure, not application",
+    "oldHeaders": 5,
+    "newHeaders": 5,
+    "hunks": 16,
+    "result": "readable"
+  },
+  {
+    "path": "docs/audit/historical_handoff/archxy2/packets/PACKET-004.diff",
+    "check": "unified patch structure, not application",
+    "oldHeaders": 5,
+    "newHeaders": 5,
+    "hunks": 16,
+    "result": "readable"
+  },
+  {
+    "path": "docs/audit/historical_handoff/archxy2/packets/PACKET-005.diff",
+    "check": "unified patch structure, not application",
+    "oldHeaders": 5,
+    "newHeaders": 5,
+    "hunks": 18,
+    "result": "readable"
+  },
+  {
+    "path": "docs/audit/historical_handoff/archxy2/packets/PACKET-006.diff",
+    "check": "unified patch structure, not application",
+    "oldHeaders": 5,
+    "newHeaders": 5,
+    "hunks": 18,
+    "result": "readable"
+  },
+  {
+    "path": "docs/audit/historical_handoff/archxy2/packets/PACKET-007.diff",
+    "check": "unified patch structure, not application",
+    "oldHeaders": 7,
+    "newHeaders": 7,
+    "hunks": 18,
+    "result": "readable"
+  },
+  {
+    "path": "docs/audit/historical_handoff/archxy2/packets/PACKET-008.diff",
+    "check": "unified patch structure, not application",
+    "oldHeaders": 5,
+    "newHeaders": 5,
+    "hunks": 15,
+    "result": "readable"
+  },
+  {
+    "path": "docs/audit/historical_handoff/archxy2/packets/PACKET-009.diff",
+    "check": "unified patch structure, not application",
+    "oldHeaders": 5,
+    "newHeaders": 5,
+    "hunks": 16,
+    "result": "readable"
+  },
+  {
+    "path": "docs/audit/historical_handoff/archxy2/packets/PACKET-010.diff",
+    "check": "unified patch structure, not application",
+    "oldHeaders": 5,
+    "newHeaders": 5,
+    "hunks": 16,
+    "result": "readable"
+  }
+]

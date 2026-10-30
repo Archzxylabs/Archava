@@ -1,6 +1,6 @@
 [toolchain]
 # The benchmark crate builds OUTSIDE the product workspace (an empty
-# `[workspace]` table keeps cargo from adopting it), so `rust/rust-toolchain.toml`
+# `[workspace]` table keeps cargo from adopting it), so `rust-toolchain.toml`
 # does not reach this directory — rustup resolves the pin from the invocation
 # directory upward, and this is the first pin it finds here.
 #

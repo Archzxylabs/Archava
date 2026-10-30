@@ -1,6 +1,0 @@
-{
-  "tenantId": "field-services-demo",
-  "title": "Field crew supplies",
-  "principal": "procurement-owner",
-  "viewer": "procurement-viewer"
-}

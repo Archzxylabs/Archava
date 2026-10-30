@@ -1,0 +1,10 @@
+{
+  "config/README.md": "3a38311be8063a7438dd9c68783436aeb962c09457ee1fa196ce0b111814ee57",
+  "config/library-release.v1.json": "95cd46283b0a52f64ec1855dd9e759fb883b4c4db19c7bb3e77bafe097903f86",
+  "crates/pricing/tests/fixtures/pricing.v1.json": "2499bc82220188dad4daff276f73159ddcff9233944169fdf8f0dcc3f14f7831",
+  "docs/history/config/templates.v1.json": "8b7a9e0a75df5e6e871eb444196b143486afa6332e9a14e69819737d5c7abdeb",
+  "crates/pricing/src/engine.rs": "3e3220366aa3a515392f2f3e05ad7c3c718b4d2d43a24468e5d1b08575a73285",
+  "crates/pricing/src/pricebook.rs": "935c052586fd7fdd83e0d0319b9b883c0972bbe45a38d0aaa2c3aed9d27ba88d",
+  "crates/pricing/src/lib.rs": "36d8e83a19a536c390294869c11d83df59bcb46307f05357a0866cc2fe0399d0",
+  "crates/native/src/lib.rs": "8be9afc3a200eecc5749701824d3f9d405ac4f5ce642b0189905b04fd1964032"
+}

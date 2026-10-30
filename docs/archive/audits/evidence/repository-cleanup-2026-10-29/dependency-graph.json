@@ -1,0 +1,312 @@
+[
+  {
+    "crate": "archava-core",
+    "manifest": "crates/core/Cargo.toml",
+    "dependencies": []
+  },
+  {
+    "crate": "archava-adapters",
+    "manifest": "crates/adapters/Cargo.toml",
+    "dependencies": [
+      {
+        "crate": "archava-core",
+        "kind": "normal",
+        "target": null
+      },
+      {
+        "crate": "archava-domain",
+        "kind": "normal",
+        "target": null
+      },
+      {
+        "crate": "archava-pg-fixture",
+        "kind": "dev",
+        "target": null
+      }
+    ]
+  },
+  {
+    "crate": "archava-domain",
+    "manifest": "crates/domain/Cargo.toml",
+    "dependencies": [
+      {
+        "crate": "archava-core",
+        "kind": "normal",
+        "target": null
+      }
+    ]
+  },
+  {
+    "crate": "archava-pg-fixture",
+    "manifest": "crates/pg-fixture/Cargo.toml",
+    "dependencies": [
+      {
+        "crate": "archava-adapters",
+        "kind": "normal",
+        "target": null
+      }
+    ]
+  },
+  {
+    "crate": "archava-host",
+    "manifest": "crates/host/Cargo.toml",
+    "dependencies": [
+      {
+        "crate": "archava-adapters",
+        "kind": "normal",
+        "target": null
+      },
+      {
+        "crate": "archava-assistant",
+        "kind": "normal",
+        "target": null
+      },
+      {
+        "crate": "archava-cockpit",
+        "kind": "normal",
+        "target": null
+      },
+      {
+        "crate": "archava-core",
+        "kind": "normal",
+        "target": null
+      },
+      {
+        "crate": "archava-domain",
+        "kind": "normal",
+        "target": null
+      },
+      {
+        "crate": "archava-orbz",
+        "kind": "normal",
+        "target": null
+      },
+      {
+        "crate": "archava-own",
+        "kind": "normal",
+        "target": null
+      },
+      {
+        "crate": "archava-pg-fixture",
+        "kind": "dev",
+        "target": null
+      }
+    ]
+  },
+  {
+    "crate": "archava-assistant",
+    "manifest": "crates/assistant/Cargo.toml",
+    "dependencies": []
+  },
+  {
+    "crate": "archava-cockpit",
+    "manifest": "crates/cockpit/Cargo.toml",
+    "dependencies": [
+      {
+        "crate": "archava-core",
+        "kind": "normal",
+        "target": null
+      },
+      {
+        "crate": "archava-orbz",
+        "kind": "normal",
+        "target": null
+      }
+    ]
+  },
+  {
+    "crate": "archava-orbz",
+    "manifest": "crates/orbz/Cargo.toml",
+    "dependencies": [
+      {
+        "crate": "archava-core",
+        "kind": "normal",
+        "target": null
+      }
+    ]
+  },
+  {
+    "crate": "archava-own",
+    "manifest": "crates/own/Cargo.toml",
+    "dependencies": []
+  },
+  {
+    "crate": "archava-pricing",
+    "manifest": "crates/pricing/Cargo.toml",
+    "dependencies": []
+  },
+  {
+    "crate": "archava-rates",
+    "manifest": "crates/rates/Cargo.toml",
+    "dependencies": []
+  },
+  {
+    "crate": "archava-native",
+    "manifest": "crates/native/Cargo.toml",
+    "dependencies": [
+      {
+        "crate": "archava-pricing",
+        "kind": "normal",
+        "target": null
+      },
+      {
+        "crate": "archava-rates",
+        "kind": "normal",
+        "target": null
+      }
+    ]
+  },
+  {
+    "crate": "archava-assembly",
+    "manifest": "crates/assembly/Cargo.toml",
+    "dependencies": []
+  },
+  {
+    "crate": "archava-capacity",
+    "manifest": "crates/capacity/Cargo.toml",
+    "dependencies": []
+  },
+  {
+    "crate": "archava-providers",
+    "manifest": "crates/providers/Cargo.toml",
+    "dependencies": [
+      {
+        "crate": "archava-pg-fixture",
+        "kind": "dev",
+        "target": null
+      }
+    ]
+  },
+  {
+    "crate": "archava-context",
+    "manifest": "crates/context/Cargo.toml",
+    "dependencies": [
+      {
+        "crate": "archava-core",
+        "kind": "normal",
+        "target": null
+      }
+    ]
+  },
+  {
+    "crate": "archava-slice",
+    "manifest": "crates/slice/Cargo.toml",
+    "dependencies": [
+      {
+        "crate": "archava-pg-fixture",
+        "kind": "dev",
+        "target": null
+      },
+      {
+        "crate": "archava-adapters",
+        "kind": "normal",
+        "target": "cfg(not(target_arch = \"wasm32\"))"
+      },
+      {
+        "crate": "archava-host",
+        "kind": "normal",
+        "target": "cfg(not(target_arch = \"wasm32\"))"
+      }
+    ]
+  },
+  {
+    "crate": "archava-ops",
+    "manifest": "crates/ops/Cargo.toml",
+    "dependencies": [
+      {
+        "crate": "archava-assembly",
+        "kind": "normal",
+        "target": null
+      },
+      {
+        "crate": "archava-pg-fixture",
+        "kind": "dev",
+        "target": null
+      }
+    ]
+  },
+  {
+    "crate": "archava-mcp",
+    "manifest": "crates/mcp/Cargo.toml",
+    "dependencies": [
+      {
+        "crate": "archava-cockpit",
+        "kind": "normal",
+        "target": null
+      },
+      {
+        "crate": "archava-core",
+        "kind": "normal",
+        "target": null
+      },
+      {
+        "crate": "archava-orbz",
+        "kind": "normal",
+        "target": null
+      }
+    ]
+  },
+  {
+    "crate": "archava-evals",
+    "manifest": "crates/evals/Cargo.toml",
+    "dependencies": [
+      {
+        "crate": "archava-cockpit",
+        "kind": "normal",
+        "target": null
+      },
+      {
+        "crate": "archava-core",
+        "kind": "normal",
+        "target": null
+      },
+      {
+        "crate": "archava-domain",
+        "kind": "normal",
+        "target": null
+      },
+      {
+        "crate": "archava-orbz",
+        "kind": "normal",
+        "target": null
+      }
+    ]
+  },
+  {
+    "crate": "archava-campaigns",
+    "manifest": "crates/campaigns/Cargo.toml",
+    "dependencies": [
+      {
+        "crate": "archava-cockpit",
+        "kind": "normal",
+        "target": null
+      },
+      {
+        "crate": "archava-core",
+        "kind": "normal",
+        "target": null
+      },
+      {
+        "crate": "archava-domain",
+        "kind": "normal",
+        "target": null
+      },
+      {
+        "crate": "archava-orbz",
+        "kind": "normal",
+        "target": null
+      }
+    ]
+  },
+  {
+    "crate": "archava-rpa",
+    "manifest": "crates/rpa/Cargo.toml",
+    "dependencies": [
+      {
+        "crate": "archava-core",
+        "kind": "normal",
+        "target": null
+      }
+    ]
+  }
+]

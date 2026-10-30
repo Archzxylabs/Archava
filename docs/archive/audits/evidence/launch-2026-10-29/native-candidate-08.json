@@ -1,0 +1,24 @@
+{
+  "distribution": "dist/native-candidate-20261030-08",
+  "sourceSha256": "3b305619efa707362c8dc9d5f255e15520d5d46142acaa873d7decd2af5e6545",
+  "artifacts": 47,
+  "bytes": 26021363,
+  "runtimeVersion": "0.1.0",
+  "catalog": {
+    "id": "archava-local-library",
+    "version": "1.19.0"
+  },
+  "browser": "gateway-browser/result.json",
+  "browserChecks": 30,
+  "pageErrors": 0,
+  "cleanupExitCode": 0,
+  "payments": {
+    "providerCreates": 1,
+    "providerChecks": 3
+  },
+  "mail": {
+    "emailOutboxTable": "archava_billing.email_outbox",
+    "migration": "003_invoice_email_outbox.sql",
+    "resendProvider": "https://api.resend.com/emails"
+  }
+}

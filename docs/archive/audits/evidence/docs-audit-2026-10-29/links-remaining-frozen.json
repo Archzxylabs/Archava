@@ -1,0 +1,4227 @@
+{
+  "scope": "Original 492 records only; generated draft copies are excluded. Current-guide links are validated by check-docs.mjs.",
+  "files": [
+    {
+      "currentPath": "docs/audit/ARCHXY_1_CRM_AUDIT_2026-10-19.md",
+      "references": [
+        {
+          "href": "audit/2026-10-19-archxy1-crm-audit.json",
+          "line": 15,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/audit/2026-10-19-archxy1-crm-audit.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../rust/crates/host/src/crm.rs",
+          "line": 51,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/host/src/crm.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../packages/crm/src/contracts.ts",
+          "line": 52,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/packages/crm/src/contracts.ts",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../packages/crm/src/pipeline-contracts.ts",
+          "line": 53,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/packages/crm/src/pipeline-contracts.ts",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../rust/crates/slice/src/lib.rs",
+          "line": 68,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/slice/src/lib.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../rust/crates/slice/src/session.rs",
+          "line": 81,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/slice/src/session.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "OWNER_CONFIGURATION_PRD.md",
+          "line": 103,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/OWNER_CONFIGURATION_PRD.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../tools/own/verify.mjs",
+          "line": 105,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/tools/own/verify.mjs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../tools/rust/k05-k04-consumers.mjs",
+          "line": 130,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/tools/rust/k05-k04-consumers.mjs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../examples/rust-kit-consumers/kit-template/tests/kit_witness.rs",
+          "line": 132,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/examples/rust-kit-consumers/kit-template/tests/kit_witness.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../rust/crates/slice/src/draft.rs",
+          "line": 155,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/slice/src/draft.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../rust/crates/slice/src/contacts.rs",
+          "line": 171,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/slice/src/contacts.rs",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/audit/ARCHXY_BOTH_REAUDIT_2026-10-20.md",
+      "references": [
+        {
+          "href": "../ARCHXY_1_FULL_IMPLEMENTATION_TASK.md",
+          "line": 9,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/ARCHXY_1_FULL_IMPLEMENTATION_TASK.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../ARCHXY_2_FULL_IMPLEMENTATION_TASK.md",
+          "line": 10,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/ARCHXY_2_FULL_IMPLEMENTATION_TASK.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../rust/crates/domain/src/erp/subscriptions.rs:675",
+          "line": 48,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/domain/src/erp/subscriptions.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../rust/crates/adapters/src/erp/subscriptions.rs:420",
+          "line": 49,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/adapters/src/erp/subscriptions.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../rust/crates/adapters/src/erp/subscriptions.rs:430",
+          "line": 67,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/adapters/src/erp/subscriptions.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../rust/crates/host/src/erp/subscriptions.rs:524",
+          "line": 82,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/host/src/erp/subscriptions.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../rust/crates/adapters/src/erp/subscriptions.rs:861",
+          "line": 83,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/adapters/src/erp/subscriptions.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../rust/crates/own/src/lib.rs:488",
+          "line": 100,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/own/src/lib.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../rust/crates/host/src/own.rs:699",
+          "line": 103,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/host/src/own.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../rust/crates/slice/src/owner.rs:188",
+          "line": 120,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/slice/src/owner.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../rust/crates/slice/src/owner.rs:255",
+          "line": 121,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/slice/src/owner.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../tools/own/verify.mjs:436",
+          "line": 129,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/tools/own/verify.mjs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../rust/crates/own/src/lib.rs:448",
+          "line": 139,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/own/src/lib.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../rust/crates/host/src/own.rs:720",
+          "line": 141,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/host/src/own.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../../Archava_Platform_archxy2_erp/docs/rust/archxy2/ERP_SCOPE.md:51",
+          "line": 165,
+          "type": "markdown",
+          "kind": "local",
+          "target": "Archava_Platform_archxy2_erp/docs/rust/archxy2/ERP_SCOPE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../tools/rust/erp/module-consumers.ts:9",
+          "line": 173,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/tools/rust/erp/module-consumers.ts",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../tools/rust/k05-k04-consumers.mjs:338",
+          "line": 182,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/tools/rust/k05-k04-consumers.mjs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../tools/rust/k05-k04-consumers.mjs:374",
+          "line": 184,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/tools/rust/k05-k04-consumers.mjs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../tools/rust/sdk-widget.mjs:5",
+          "line": 197,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/tools/rust/sdk-widget.mjs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../packages/sdk/src/index.ts:1",
+          "line": 199,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/packages/sdk/src/index.ts",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../packages/chat/src/view.ts:1",
+          "line": 201,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/packages/chat/src/view.ts",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-20-archxy-both-reaudit.json",
+          "line": 290,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/audit/2026-10-20-archxy-both-reaudit.json",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/audit/ARCHXY_KIT09_REVIEW_2026-10-14.md",
+      "references": [
+        {
+          "href": "../../CLAUDE.md",
+          "line": 13,
+          "type": "markdown",
+          "kind": "local",
+          "target": "CLAUDE.md",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/audit/ARCHXY_KIT09_REVIEW_2026-10-15.md",
+      "references": [
+        {
+          "href": "../ARCHXY_RUST_PILOT_TASK.md",
+          "line": 128,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/ARCHXY_RUST_PILOT_TASK.md",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/audit/ARCHXY_RUST_AUDIT_2026-10-16.md",
+      "references": [
+        {
+          "href": "PRD_FULL_RUST.md",
+          "line": 6,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/PRD_FULL_RUST.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "OWNER_CONFIGURATION_PRD.md",
+          "line": 8,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/OWNER_CONFIGURATION_PRD.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-16-rust-audit.json",
+          "line": 33,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/audit/2026-10-16-rust-audit.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../rust/crates/host/src/router.rs",
+          "line": 65,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/host/src/router.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../rust/crates/adapters/src/rls.rs",
+          "line": 104,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/adapters/src/rls.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../tools/rust/benchmark/test/pricing-coverage.test.ts",
+          "line": 130,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/tools/rust/benchmark/test/pricing-coverage.test.ts",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../tools/rust/verify.mjs",
+          "line": 147,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/tools/rust/verify.mjs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../.github/workflows/ci.yml",
+          "line": 165,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/.github/workflows/ci.yml",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../tools/rust/build-artifacts.mjs",
+          "line": 167,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/tools/rust/build-artifacts.mjs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "rust/migration-inventory.json",
+          "line": 189,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/rust/migration-inventory.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../tools/rust/verify-release.mjs",
+          "line": 197,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/tools/rust/verify-release.mjs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../rust/crates/capacity/src/schedule.rs",
+          "line": 218,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/capacity/src/schedule.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../rust/crates/capacity/src/calendar.rs",
+          "line": 223,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/capacity/src/calendar.rs",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/audit/ARCHXY_RUST_AUDIT_2026-10-16_EVENING.md",
+      "references": [
+        {
+          "href": "audit/2026-10-16-rust-evening-audit.json",
+          "line": 12,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/audit/2026-10-16-rust-evening-audit.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../rust/crates/host/src/router.rs#L169",
+          "line": 18,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/host/src/router.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../rust/crates/host/src/router.rs#L304",
+          "line": 20,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/host/src/router.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../rust/crates/pg-fixture/src/lib.rs#L243",
+          "line": 48,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/pg-fixture/src/lib.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../rust/crates/pg-fixture/src/lib.rs#L288",
+          "line": 50,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/pg-fixture/src/lib.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../rust/crates/capacity/src/calendar.rs#L110",
+          "line": 79,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/capacity/src/calendar.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../rust/crates/capacity/src/calendar.rs#L260",
+          "line": 81,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/capacity/src/calendar.rs",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/audit/ARCHXY_RUST_AUDIT_2026-10-17.md",
+      "references": [
+        {
+          "href": "audit/2026-10-17-rust-audit.json",
+          "line": 10,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/audit/2026-10-17-rust-audit.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../rust/crates/pg-fixture/src/lib.rs#L172",
+          "line": 32,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/pg-fixture/src/lib.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../rust/crates/pg-fixture/src/lib.rs#L731",
+          "line": 33,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/pg-fixture/src/lib.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../rust/crates/host/src/router.rs#L987",
+          "line": 52,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/host/src/router.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../rust/crates/host/src/router.rs#L943",
+          "line": 66,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/host/src/router.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../rust/crates/host/src/identity.rs#L69",
+          "line": 89,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/host/src/identity.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../ARCHXY_NEXT_EXECUTION_PROMPT.md",
+          "line": 157,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/ARCHXY_NEXT_EXECUTION_PROMPT.md",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/audit/ARCHXY_RUST_PROGRESS_REVIEW_2026-10-15.md",
+      "references": [
+        {
+          "href": "../rust/crates/host/src/router.rs",
+          "line": 67,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/host/src/router.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../rust/crates/adapters/src/rls.rs",
+          "line": 127,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/adapters/src/rls.rs",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/audit/ARCHXY_RUST_REAUDIT_2026-10-16.md",
+      "references": [
+        {
+          "href": "audit/2026-10-16-rust-reaudit.json",
+          "line": 30,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/audit/2026-10-16-rust-reaudit.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../tools/rust/verify-release.mjs",
+          "line": 74,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/tools/rust/verify-release.mjs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../tools/rust/inventory.mjs",
+          "line": 94,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/tools/rust/inventory.mjs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../rust/crates/adapters/tests/tenant_context.rs",
+          "line": 117,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/adapters/tests/tenant_context.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../rust/crates/host/tests/extractors.rs",
+          "line": 149,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/host/tests/extractors.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../ARCHXY_FULL_RUST_EXECUTION_TASK.md",
+          "line": 225,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/ARCHXY_FULL_RUST_EXECUTION_TASK.md",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/audit/ARCHXY_RUST_REAUDIT_2026-10-16_LATE.md",
+      "references": [
+        {
+          "href": "audit/2026-10-16-rust-late-reaudit.json",
+          "line": 13,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/audit/2026-10-16-rust-late-reaudit.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../rust/crates/host/src/router.rs#L982",
+          "line": 35,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/host/src/router.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../rust/crates/host/src/router.rs#L939",
+          "line": 55,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/host/src/router.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../packages/commerce-pg/src/migrate.ts#L5",
+          "line": 75,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/packages/commerce-pg/src/migrate.ts",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../rust/crates/capacity/src/calendar.rs#L326",
+          "line": 107,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/capacity/src/calendar.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../rust/crates/host/src/authority.rs#L145",
+          "line": 128,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/crates/host/src/authority.rs",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/audit/CLEANUP_AND_REUSE_2026-10-08.md",
+      "references": [
+        {
+          "href": "audit/2026-10-08-reuse-proof.json",
+          "line": 50,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/audit/2026-10-08-reuse-proof.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-08-cleanup-dependencies.json",
+          "line": 51,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/audit/2026-10-08-cleanup-dependencies.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "LIBRARY_CONSUMPTION.md",
+          "line": 54,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/LIBRARY_CONSUMPTION.md",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/audit/CRM_COMMAND_RECOVERY_2026-10-09.md",
+      "references": [
+        {
+          "href": "audit/2026-10-09-crm-recovery-db-proof.json",
+          "line": 46,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/audit/2026-10-09-crm-recovery-db-proof.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-09-crm-recovery-host-proof.json",
+          "line": 47,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/audit/2026-10-09-crm-recovery-host-proof.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-09-crm-recovery-browser-proof.json",
+          "line": 48,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/audit/2026-10-09-crm-recovery-browser-proof.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-09-crm-recovery-installed-proof.json",
+          "line": 49,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/audit/2026-10-09-crm-recovery-installed-proof.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "CRM_COMMAND_RECOVERY.md",
+          "line": 74,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/CRM_COMMAND_RECOVERY.md",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/audit/CRM_CONVERSATION_2026-10-08.md",
+      "references": [
+        {
+          "href": "audit/2026-10-08-crm-conversation-proof.json",
+          "line": 38,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/audit/2026-10-08-crm-conversation-proof.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "CRM_CONVERSATION.md",
+          "line": 63,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/CRM_CONVERSATION.md",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/audit/CRM_GEMINI_2026-10-09.md",
+      "references": [
+        {
+          "href": "audit/2026-10-09-crm-gemini-live-proof.json",
+          "line": 44,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/audit/2026-10-09-crm-gemini-live-proof.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-09-crm-gemini-db-proof.json",
+          "line": 45,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/audit/2026-10-09-crm-gemini-db-proof.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-09-crm-gemini-runtime-proof.json",
+          "line": 46,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/audit/2026-10-09-crm-gemini-runtime-proof.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-09-crm-gemini-browser-proof.json",
+          "line": 47,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/audit/2026-10-09-crm-gemini-browser-proof.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "CRM_GEMINI_PILOT.md",
+          "line": 67,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/CRM_GEMINI_PILOT.md",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/audit/CRM_M2_2026-10-08.md",
+      "references": [
+        {
+          "href": "CRM_MODULE.md",
+          "line": 7,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/CRM_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-08-crm-proof.json",
+          "line": 42,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/audit/2026-10-08-crm-proof.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-08-crm-dependencies.json",
+          "line": 43,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/audit/2026-10-08-crm-dependencies.json",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/audit/CRM_M3_LOCAL_2026-10-08.md",
+      "references": [
+        {
+          "href": "CRM_RUNTIME.md",
+          "line": 6,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/CRM_RUNTIME.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-08-crm-runtime-proof.json",
+          "line": 45,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/audit/2026-10-08-crm-runtime-proof.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-08-crm-runtime-dependencies.json",
+          "line": 46,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/audit/2026-10-08-crm-runtime-dependencies.json",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/audit/CRM_PIPELINE_2026-10-09.md",
+      "references": [
+        {
+          "href": "CRM_PIPELINE.md",
+          "line": 6,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/CRM_PIPELINE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-09-crm-pipeline-proof.json",
+          "line": 22,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/audit/2026-10-09-crm-pipeline-proof.json",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/audit/PROJECT_AUDIT_2026-10-07.md",
+      "references": [
+        {
+          "href": "../packages/chat/src/money.ts#L1",
+          "line": 49,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/packages/chat/src/money.ts",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../apps/web/src/server/server.ts#L99",
+          "line": 49,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/apps/web/src/server/server.ts",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../packages/config/src/client/resolver.ts#L61",
+          "line": 57,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/packages/config/src/client/resolver.ts",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../tools/configurator/src/client-config.ts#L24",
+          "line": 57,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/tools/configurator/src/client-config.ts",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../packages/config/src/client/schema.ts#L44",
+          "line": 61,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/packages/config/src/client/schema.ts",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-07-dependencies.json",
+          "line": 67,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/audit/2026-10-07-dependencies.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../config/templates.v1.json",
+          "line": 85,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/config/templates.v1.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../tools/configurator/src/intake.ts#L52",
+          "line": 85,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/tools/configurator/src/intake.ts",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../packages/act-host/src/host.ts#L416",
+          "line": 91,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/packages/act-host/src/host.ts",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../packages/act-host/src/attempts.ts#L60",
+          "line": 91,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/packages/act-host/src/attempts.ts",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../packages/assistant/src/turn.ts#L117",
+          "line": 99,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/packages/assistant/src/turn.ts",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../packages/act-host/src/host.ts",
+          "line": 99,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/packages/act-host/src/host.ts",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../apps/web/src/server/server.ts#L202",
+          "line": 99,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/apps/web/src/server/server.ts",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../packages/act-postmark/src/status.ts#L68",
+          "line": 105,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/packages/act-postmark/src/status.ts",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../Archava Template/backend/agent.py",
+          "line": 111,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/Archava Template/backend/agent.py",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../packages/assistant/src/turn.ts",
+          "line": 111,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/packages/assistant/src/turn.ts",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../packages/sdk/src/session.ts",
+          "line": 111,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/packages/sdk/src/session.ts",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../apps/web/src/frontend/data.ts",
+          "line": 117,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/apps/web/src/frontend/data.ts",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../apps/web/src/frontend/ui.ts#L68",
+          "line": 117,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/apps/web/src/frontend/ui.ts",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "history/nx.placeholder.json",
+          "line": 125,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/history/nx.placeholder.json",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/audit/PROJECT_AUDIT_2026-10-14.md",
+      "references": [
+        {
+          "href": "../packages/subscriptions-pg/src/repository.ts",
+          "line": 100,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/packages/subscriptions-pg/src/repository.ts",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../packages/field-services-pg/src/repository.ts",
+          "line": 120,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/packages/field-services-pg/src/repository.ts",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../packages/billing-pg/src/repository.ts",
+          "line": 122,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/packages/billing-pg/src/repository.ts",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../packages/attendance-pg/src/repository.ts",
+          "line": 145,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/packages/attendance-pg/src/repository.ts",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../packages/subscriptions-pg/src/repository.ts",
+          "line": 157,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/packages/subscriptions-pg/src/repository.ts",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../packages/field-services/package.json",
+          "line": 166,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/packages/field-services/package.json",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/audit/PROJECT_REAUDIT_2026-10-10.md",
+      "references": [
+        {
+          "href": "audit/2026-10-10-project-reaudit.json",
+          "line": 26,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/audit/2026-10-10-project-reaudit.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "ARCHITECTURE.md",
+          "line": 28,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/ARCHITECTURE.md",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/audit/PROVIDER_RUNTIME_2026-10-09.md",
+      "references": [
+        {
+          "href": "audit/2026-10-09-provider-runtime-db-proof.json",
+          "line": 42,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/audit/2026-10-09-provider-runtime-db-proof.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-09-provider-runtime-host-proof.json",
+          "line": 43,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/audit/2026-10-09-provider-runtime-host-proof.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-09-provider-runtime-browser-proof.json",
+          "line": 44,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/audit/2026-10-09-provider-runtime-browser-proof.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-09-provider-runtime-live-smoke.json",
+          "line": 45,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/audit/2026-10-09-provider-runtime-live-smoke.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "PROVIDER_RUNTIME.md",
+          "line": 66,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/audit/PROVIDER_RUNTIME.md",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/history/design/FRONTEND.md",
+      "references": [
+        {
+          "href": "../apps/web/pages/archava.html",
+          "line": 57,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/apps/web/pages/archava.html",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../apps/web/src/frontend/marketing.ts",
+          "line": 58,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/apps/web/src/frontend/marketing.ts",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../apps/web/pages/workspace.html",
+          "line": 59,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/apps/web/pages/workspace.html",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../apps/web/src/frontend/workspace.ts",
+          "line": 60,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/apps/web/src/frontend/workspace.ts",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../apps/web/src/frontend/data.ts",
+          "line": 61,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/apps/web/src/frontend/data.ts",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../apps/web/src/frontend/ui.ts",
+          "line": 62,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/apps/web/src/frontend/ui.ts",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../apps/web/public/archava.css",
+          "line": 63,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/apps/web/public/archava.css",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../apps/web/public/workspace.css",
+          "line": 64,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/apps/web/public/workspace.css",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../apps/web/src/server/server.ts",
+          "line": 65,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/apps/web/src/server/server.ts",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../apps/web/test/frontend-data.test.ts",
+          "line": 66,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/apps/web/test/frontend-data.test.ts",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/history/design/design-research.md",
+      "references": [
+        {
+          "href": "../../Archcore/docs/ARCHCORE_FRONTEND_MOTION_AUDIT.md",
+          "line": 21,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/Archcore/docs/ARCHCORE_FRONTEND_MOTION_AUDIT.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../../Archcore/apps/marketplace-web/src/main.ts",
+          "line": 22,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/Archcore/apps/marketplace-web/src/main.ts",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../../Archcore/apps/marketplace-web/src/gpuScene.ts",
+          "line": 23,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/Archcore/apps/marketplace-web/src/gpuScene.ts",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../../Archcore/apps/marketplace-web/public/index.html",
+          "line": 24,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/Archcore/apps/marketplace-web/public/index.html",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../../Archcore/apps/marketplace-web/public/styles.css",
+          "line": 25,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/Archcore/apps/marketplace-web/public/styles.css",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../../Archava_onchain/src/components/VideoHero.tsx",
+          "line": 35,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/Archava_onchain/src/components/VideoHero.tsx",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../../Archava_onchain/src/lib/motion.ts",
+          "line": 36,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/Archava_onchain/src/lib/motion.ts",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../../Archava_onchain/src/styles.css",
+          "line": 37,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/Archava_onchain/src/styles.css",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../../Archava_onchain/src/components/LiveCallDock.tsx",
+          "line": 38,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/Archava_onchain/src/components/LiveCallDock.tsx",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../BUILD_STATUS.md",
+          "line": 46,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/BUILD_STATUS.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../Archava%20Template/README.md",
+          "line": 46,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/Archava Template/README.md",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/history/PRD.md",
+      "references": [
+        {
+          "href": "docs/REUSABLE_PLATFORM_RESEARCH.md",
+          "line": 11,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/REUSABLE_PLATFORM_RESEARCH.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/BUSINESS_MODEL_RESEARCH_2026-10-08.md",
+          "line": 12,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/BUSINESS_MODEL_RESEARCH_2026-10-08.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/BUSINESS_CAPABILITY_MATRIX.md",
+          "line": 13,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/BUSINESS_CAPABILITY_MATRIX.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/history/PRD.v1.0.0.md",
+          "line": 14,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/history/PRD.v1.0.0.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/PRD_FULL_RUST.md",
+          "line": 15,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/PRD_FULL_RUST.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "ARCHXY_FULL_RUST_EXECUTION_TASK.md",
+          "line": 21,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/ARCHXY_FULL_RUST_EXECUTION_TASK.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/OWNER_CONFIGURATION_PRD.md",
+          "line": 26,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/OWNER_CONFIGURATION_PRD.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/PROJECT_REAUDIT_2026-10-10.md",
+          "line": 34,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/PROJECT_REAUDIT_2026-10-10.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/ARCHITECTURE.md",
+          "line": 1128,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/ARCHITECTURE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/BUILD_STATUS.md",
+          "line": 1128,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/BUILD_STATUS.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/REUSABLE_PLATFORM_RESEARCH.md",
+          "line": 1475,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/REUSABLE_PLATFORM_RESEARCH.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/history/PRD.v1.0.0.md",
+          "line": 1477,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/history/PRD.v1.0.0.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/BUSINESS_CAPABILITY_MATRIX.md",
+          "line": 1776,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/BUSINESS_CAPABILITY_MATRIX.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/STARTER_KIT_COVERAGE_RESEARCH_2026-10-10.md",
+          "line": 1788,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/STARTER_KIT_COVERAGE_RESEARCH_2026-10-10.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/audit/2026-10-10-starter-kit-catalog.json",
+          "line": 1792,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/audit/2026-10-10-starter-kit-catalog.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/STARTER_KIT_IMPLEMENTATION.md",
+          "line": 1821,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/STARTER_KIT_IMPLEMENTATION.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/PROJECT_DELIVERY_MODULE.md",
+          "line": 1828,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/PROJECT_DELIVERY_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/RESOURCE_RESERVATIONS_MODULE.md",
+          "line": 1839,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/RESOURCE_RESERVATIONS_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/ACCOMMODATION_MODULE.md",
+          "line": 1854,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/ACCOMMODATION_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/COMMERCE_MODULE.md",
+          "line": 1863,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/COMMERCE_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/FOODSERVICE_MODULE.md",
+          "line": 1871,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/FOODSERVICE_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/SUPPORT_CASES_MODULE.md",
+          "line": 1880,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/SUPPORT_CASES_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/PURCHASING_MODULE.md",
+          "line": 1889,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/PURCHASING_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/LOCAL_LIBRARY_RELEASE.md",
+          "line": 2157,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/LOCAL_LIBRARY_RELEASE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/audit/local-library/manifest.json",
+          "line": 2158,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/audit/local-library/manifest.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/OWNER_CONFIGURATION_PRD.md",
+          "line": 2195,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/OWNER_CONFIGURATION_PRD.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "ARCHXY_FULL_RUST_EXECUTION_TASK.md",
+          "line": 2241,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/ARCHXY_FULL_RUST_EXECUTION_TASK.md",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/history/delegation/README.md",
+      "references": [
+        {
+          "href": "../docs/LOCAL_OWNER_PILOT.md",
+          "line": 17,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/LOCAL_OWNER_PILOT.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../docs/PROJECT_AUDIT_2026-10-07.md",
+          "line": 22,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/PROJECT_AUDIT_2026-10-07.md",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/history/delegation/act-operational-readiness/README.md",
+      "references": [
+        {
+          "href": "../../docs/LOCAL_OWNER_PILOT.md",
+          "line": 6,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/LOCAL_OWNER_PILOT.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../../docs/DURABLE_ACT_OPERATIONS.md",
+          "line": 8,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/DURABLE_ACT_OPERATIONS.md",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/history/delegation/act-operational-readiness/a1.md",
+      "references": [
+        {
+          "href": "../../docs/DURABLE_ACT_OPERATIONS.md",
+          "line": 34,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/DURABLE_ACT_OPERATIONS.md",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/history/design.md",
+      "references": [
+        {
+          "href": "docs/FRONTEND.md",
+          "line": 8,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/FRONTEND.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/design-preview.html",
+          "line": 14,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/design-preview.html",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/design-research.md",
+          "line": 32,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/design-research.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/design-preview.html",
+          "line": 305,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/design-preview.html",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/design-research.md",
+          "line": 306,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/design-research.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/design/website-desktop.png",
+          "line": 307,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/design/website-desktop.png",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/design/crm-desktop.png",
+          "line": 307,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/design/crm-desktop.png",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/design/erp-desktop.png",
+          "line": 307,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/design/erp-desktop.png",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/design/website-mobile.png",
+          "line": 307,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/design/website-mobile.png",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/design/crm-mobile.png",
+          "line": 307,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/design/crm-mobile.png",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/design/erp-mobile.png",
+          "line": 307,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/design/erp-mobile.png",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/design-research.md#verifikasi-preview-lokal",
+          "line": 309,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/design-research.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/design/website-desktop.png",
+          "line": 313,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/design/website-desktop.png",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/design/crm-desktop.png",
+          "line": 317,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/design/crm-desktop.png",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/design/erp-desktop.png",
+          "line": 321,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/docs/design/erp-desktop.png",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/history/platform-2026-10-28/ARCHITECTURE.md",
+      "references": [
+        {
+          "href": "../crates/context/src/decision/provider.rs",
+          "line": 117,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/crates/context/src/decision/provider.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../crates/assistant/",
+          "line": 117,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/crates/assistant",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../crates/cockpit/",
+          "line": 117,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/crates/cockpit",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../crates/orbz/",
+          "line": 117,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/crates/orbz",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "COCKPIT_TASK_ARCHITECTURE.md",
+          "line": 130,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/COCKPIT_TASK_ARCHITECTURE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "ORBZ_MEMORY_ARCHITECTURE.md",
+          "line": 137,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/ORBZ_MEMORY_ARCHITECTURE.md",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/history/platform-2026-10-28/BUILD_STATUS.md",
+      "references": [
+        {
+          "href": "../deploy/README.md",
+          "line": 26,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/deploy/README.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "LAUNDRY_MODULE.md",
+          "line": 30,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/LAUNDRY_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "FIELD_SERVICES_MODULE.md",
+          "line": 31,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/FIELD_SERVICES_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "PROJECT_AUDIT_2026-10-14.md",
+          "line": 74,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/PROJECT_AUDIT_2026-10-14.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "FORMAL_EDUCATION_MODULE.md",
+          "line": 75,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/FORMAL_EDUCATION_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-15-release-1.17.0.json",
+          "line": 76,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/audit/2026-10-15-release-1.17.0.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-13-release-1.17.0.json",
+          "line": 77,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/audit/2026-10-13-release-1.17.0.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "LOCAL_LIBRARY_RELEASE.md",
+          "line": 78,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/LOCAL_LIBRARY_RELEASE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "BILLING_MODULE.md",
+          "line": 87,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/BILLING_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-13-release-1.16.0.json",
+          "line": 114,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/audit/2026-10-13-release-1.16.0.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "LOCAL_LIBRARY_RELEASE.md",
+          "line": 115,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/LOCAL_LIBRARY_RELEASE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "FULFILLMENT_MODULE.md",
+          "line": 124,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/FULFILLMENT_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-13-release-1.15.0.json",
+          "line": 148,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/audit/2026-10-13-release-1.15.0.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "LOCAL_LIBRARY_RELEASE.md",
+          "line": 149,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/LOCAL_LIBRARY_RELEASE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "ATTENDANCE_MODULE.md",
+          "line": 158,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/ATTENDANCE_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-13-release-1.14.0.json",
+          "line": 180,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/audit/2026-10-13-release-1.14.0.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "LOCAL_LIBRARY_RELEASE.md",
+          "line": 181,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/LOCAL_LIBRARY_RELEASE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "SUBSCRIPTIONS_MODULE.md",
+          "line": 185,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/SUBSCRIPTIONS_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-12-release-1.13.0.json",
+          "line": 204,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/audit/2026-10-12-release-1.13.0.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "LOCAL_LIBRARY_RELEASE.md",
+          "line": 205,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/LOCAL_LIBRARY_RELEASE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "ASSETS_MODULE.md",
+          "line": 214,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/ASSETS_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-12-release-1.12.0.json",
+          "line": 233,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/audit/2026-10-12-release-1.12.0.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "LOCAL_LIBRARY_RELEASE.md",
+          "line": 234,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/LOCAL_LIBRARY_RELEASE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "ORGANIZATIONS_MODULE.md",
+          "line": 243,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/ORGANIZATIONS_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "PROPOSALS_MODULE.md",
+          "line": 244,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/PROPOSALS_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "CAPACITY_MODULE.md",
+          "line": 245,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/CAPACITY_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-12-release-1.11.0.json",
+          "line": 264,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/audit/2026-10-12-release-1.11.0.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "LOCAL_LIBRARY_RELEASE.md",
+          "line": 265,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/LOCAL_LIBRARY_RELEASE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "PURCHASING_MODULE.md",
+          "line": 274,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/PURCHASING_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-11-purchasing-release.json",
+          "line": 295,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/audit/2026-10-11-purchasing-release.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "LOCAL_LIBRARY_RELEASE.md",
+          "line": 296,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/LOCAL_LIBRARY_RELEASE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "SUPPORT_CASES_MODULE.md",
+          "line": 307,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/SUPPORT_CASES_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-11-support-release.json",
+          "line": 324,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/audit/2026-10-11-support-release.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "LOCAL_LIBRARY_RELEASE.md",
+          "line": 325,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/LOCAL_LIBRARY_RELEASE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "PURCHASING_MODULE_PLAN.md",
+          "line": 329,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/PURCHASING_MODULE_PLAN.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "RESOURCE_RESERVATIONS_MODULE.md",
+          "line": 336,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/RESOURCE_RESERVATIONS_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "STARTER_KIT_IMPLEMENTATION.md",
+          "line": 341,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/STARTER_KIT_IMPLEMENTATION.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-11-resource-reservations-release.json",
+          "line": 356,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/audit/2026-10-11-resource-reservations-release.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "PROJECT_DELIVERY_MODULE.md",
+          "line": 370,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/PROJECT_DELIVERY_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "STARTER_KIT_IMPLEMENTATION.md",
+          "line": 371,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/STARTER_KIT_IMPLEMENTATION.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-11-kit-project-release.json",
+          "line": 372,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/audit/2026-10-11-kit-project-release.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "LOCAL_LIBRARY_RELEASE.md",
+          "line": 396,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/LOCAL_LIBRARY_RELEASE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "LOCAL_LIBRARY_HANDOFF.md",
+          "line": 396,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/LOCAL_LIBRARY_HANDOFF.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "LOCAL_LIBRARY_RELEASE.md",
+          "line": 416,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/LOCAL_LIBRARY_RELEASE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "PROJECT_AUDIT_2026-10-07.md",
+          "line": 423,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/PROJECT_AUDIT_2026-10-07.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "LIBRARY_CONSUMPTION.md",
+          "line": 432,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/LIBRARY_CONSUMPTION.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "CRM_MODULE.md",
+          "line": 435,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/CRM_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "CRM_RUNTIME.md",
+          "line": 442,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/CRM_RUNTIME.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "CRM_CONVERSATION.md",
+          "line": 448,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/CRM_CONVERSATION.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "CRM_PIPELINE.md",
+          "line": 456,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/CRM_PIPELINE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "CRM_GEMINI_PILOT.md",
+          "line": 465,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/CRM_GEMINI_PILOT.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "PROVIDER_RUNTIME.md",
+          "line": 474,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/PROVIDER_RUNTIME.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "CRM_COMMAND_RECOVERY.md",
+          "line": 481,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/CRM_COMMAND_RECOVERY.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "FRONTEND.md",
+          "line": 484,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/FRONTEND.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "../Archava Template/README.md",
+          "line": 485,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/Archava Template/README.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "DECISION_INTELLIGENCE.md",
+          "line": 691,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/DECISION_INTELLIGENCE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "JEV_PROVIDER_RESEARCH.md",
+          "line": 691,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/JEV_PROVIDER_RESEARCH.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "JEV_EVAL_READINESS.md",
+          "line": 702,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/JEV_EVAL_READINESS.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "ACT_PILOT.md",
+          "line": 732,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/ACT_PILOT.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "ACT_PILOT.md",
+          "line": 761,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/ACT_PILOT.md",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/history/platform-2026-10-28/DEVELOPER_GUIDE.md",
+      "references": [
+        {
+          "href": "crates/domain/src/erp/dental_clinic.rs",
+          "line": 105,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/crates/domain/src/erp/dental_clinic.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "crates/domain/src/erp/mod.rs",
+          "line": 125,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/crates/domain/src/erp/mod.rs",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/history/platform-2026-10-28/README.md",
+      "references": [
+        {
+          "href": "crates/context/src/decision/provider.rs",
+          "line": 67,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/crates/context/src/decision/provider.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "crates/domain/src/erp/general_ledger.rs",
+          "line": 91,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/crates/domain/src/erp/general_ledger.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "crates/domain/src/erp/tax_indonesia.rs",
+          "line": 98,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/crates/domain/src/erp/tax_indonesia.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "crates/domain/src/erp/inventory_costing.rs",
+          "line": 105,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/crates/domain/src/erp/inventory_costing.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "crates/domain/src/hardware/escpos.rs",
+          "line": 111,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/crates/domain/src/hardware/escpos.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "static/archava.js",
+          "line": 111,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/static/archava.js",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "crates/domain/src/telematics/mod.rs",
+          "line": 116,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/crates/domain/src/telematics/mod.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "crates/domain/src/messaging/whatsapp.rs",
+          "line": 121,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/crates/domain/src/messaging/whatsapp.rs",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/INTEGRATION_GUIDE.md",
+          "line": 234,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/docs/INTEGRATION_GUIDE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/audit/",
+          "line": 242,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/platform-2026-10-28/docs/audit",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/history/progress/ACT_PILOT.md",
+      "references": [
+        {
+          "href": "DURABLE_ACT_OPERATIONS.md",
+          "line": 74,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/DURABLE_ACT_OPERATIONS.md",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/history/progress/CRM_COMPLETION.md",
+      "references": [
+        {
+          "href": "audit/2026-10-09-completion-validation.json",
+          "line": 90,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/audit/2026-10-09-completion-validation.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-09-completion-crm-proof.json",
+          "line": 92,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/audit/2026-10-09-completion-crm-proof.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-09-completion-act-proof.json",
+          "line": 94,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/audit/2026-10-09-completion-act-proof.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-09-completion-runtime-proof.json",
+          "line": 96,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/audit/2026-10-09-completion-runtime-proof.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-09-completion-browser-proof.json",
+          "line": 98,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/audit/2026-10-09-completion-browser-proof.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-09-completion-installed-proof.json",
+          "line": 100,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/audit/2026-10-09-completion-installed-proof.json",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/history/progress/DELIVERY_PROGRESS.md",
+      "references": [
+        {
+          "href": "audit/PROJECT_REAUDIT_2026-10-10.md",
+          "line": 8,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/audit/PROJECT_REAUDIT_2026-10-10.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "CRM_PIPELINE.md",
+          "line": 39,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/CRM_PIPELINE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/CRM_PIPELINE_2026-10-09.md",
+          "line": 40,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/audit/CRM_PIPELINE_2026-10-09.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "LIBRARY_CONSUMPTION.md",
+          "line": 118,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/LIBRARY_CONSUMPTION.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "modules/CRM_MODULE.md",
+          "line": 131,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/modules/CRM_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/CRM_M2_2026-10-08.md",
+          "line": 137,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/audit/CRM_M2_2026-10-08.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "CRM_RUNTIME.md",
+          "line": 146,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/CRM_RUNTIME.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "CRM_CONVERSATION.md",
+          "line": 164,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/CRM_CONVERSATION.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "CRM_GEMINI_PILOT.md",
+          "line": 175,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/CRM_GEMINI_PILOT.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "PROVIDER_RUNTIME.md",
+          "line": 186,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/PROVIDER_RUNTIME.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "CRM_COMMAND_RECOVERY.md",
+          "line": 199,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/CRM_COMMAND_RECOVERY.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "CRM_WORKLIST.md",
+          "line": 221,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/CRM_WORKLIST.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "CRM_OVERVIEW.md",
+          "line": 241,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/CRM_OVERVIEW.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "CRM_BACKUPS.md",
+          "line": 250,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/CRM_BACKUPS.md",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/history/progress/INTERNAL_OWNER_PROGRESS.md",
+      "references": [
+        {
+          "href": "audit/PROJECT_REAUDIT_2026-10-10.md",
+          "line": 3,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/audit/PROJECT_REAUDIT_2026-10-10.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "DURABLE_ACT_OPERATIONS.md",
+          "line": 43,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/DURABLE_ACT_OPERATIONS.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "CRM_WORKLIST.md",
+          "line": 64,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/CRM_WORKLIST.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "CRM_OVERVIEW.md",
+          "line": 76,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/CRM_OVERVIEW.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "CRM_BACKUPS.md",
+          "line": 82,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/CRM_BACKUPS.md",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/history/progress/LOCAL_LIBRARY_CHANGELOG.md",
+      "references": [
+        {
+          "href": "../config/library-release.v1.json",
+          "line": 27,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/config/library-release.v1.json",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/history/progress/LOCAL_LIBRARY_HANDOFF.md",
+      "references": [
+        {
+          "href": "modules/PROJECT_DELIVERY_MODULE.md",
+          "line": 13,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/modules/PROJECT_DELIVERY_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "modules/RESOURCE_RESERVATIONS_MODULE.md",
+          "line": 14,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/modules/RESOURCE_RESERVATIONS_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "modules/ACCOMMODATION_MODULE.md",
+          "line": 15,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/modules/ACCOMMODATION_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "modules/COMMERCE_MODULE.md",
+          "line": 16,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/modules/COMMERCE_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "modules/FOODSERVICE_MODULE.md",
+          "line": 17,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/modules/FOODSERVICE_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "modules/SUPPORT_CASES_MODULE.md",
+          "line": 18,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/modules/SUPPORT_CASES_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "modules/PURCHASING_MODULE.md",
+          "line": 19,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/modules/PURCHASING_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "ORGANIZATIONS_MODULE.md",
+          "line": 20,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/ORGANIZATIONS_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "PROPOSALS_MODULE.md",
+          "line": 21,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/PROPOSALS_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "CAPACITY_MODULE.md",
+          "line": 22,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/CAPACITY_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "modules/ASSETS_MODULE.md",
+          "line": 23,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/modules/ASSETS_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "modules/SUBSCRIPTIONS_MODULE.md",
+          "line": 24,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/modules/SUBSCRIPTIONS_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "modules/ATTENDANCE_MODULE.md",
+          "line": 25,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/modules/ATTENDANCE_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "modules/FULFILLMENT_MODULE.md",
+          "line": 26,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/modules/FULFILLMENT_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "modules/BILLING_MODULE.md",
+          "line": 27,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/modules/BILLING_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "modules/LAUNDRY_MODULE.md",
+          "line": 28,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/modules/LAUNDRY_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "modules/FIELD_SERVICES_MODULE.md",
+          "line": 29,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/modules/FIELD_SERVICES_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "modules/FORMAL_EDUCATION_MODULE.md",
+          "line": 30,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/modules/FORMAL_EDUCATION_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "CRM_RUNTIME.md",
+          "line": 65,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/CRM_RUNTIME.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/local-library/security.json",
+          "line": 266,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/audit/local-library/security.json",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/history/progress/LOCAL_LIBRARY_RELEASE.md",
+      "references": [
+        {
+          "href": "BUILD_STATUS.md",
+          "line": 13,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/BUILD_STATUS.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/local-library/acceptance-1.17.0.json",
+          "line": 65,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/audit/local-library/acceptance-1.17.0.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/local-library/manifest.json",
+          "line": 74,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/audit/local-library/manifest.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/PROJECT_AUDIT_2026-10-14.md",
+          "line": 80,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/audit/PROJECT_AUDIT_2026-10-14.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "modules/FIELD_SERVICES_MODULE.md",
+          "line": 83,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/modules/FIELD_SERVICES_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "modules/LAUNDRY_MODULE.md",
+          "line": 84,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/modules/LAUNDRY_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "modules/FORMAL_EDUCATION_MODULE.md",
+          "line": 85,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/modules/FORMAL_EDUCATION_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "modules/BILLING_MODULE.md",
+          "line": 119,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/modules/BILLING_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-13-release-1.16.0.json",
+          "line": 119,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/audit/2026-10-13-release-1.16.0.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "modules/FULFILLMENT_MODULE.md",
+          "line": 149,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/modules/FULFILLMENT_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-13-release-1.15.0.json",
+          "line": 149,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/audit/2026-10-13-release-1.15.0.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "modules/ATTENDANCE_MODULE.md",
+          "line": 179,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/modules/ATTENDANCE_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-13-release-1.14.0.json",
+          "line": 179,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/audit/2026-10-13-release-1.14.0.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "modules/SUBSCRIPTIONS_MODULE.md",
+          "line": 208,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/modules/SUBSCRIPTIONS_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-12-release-1.13.0.json",
+          "line": 208,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/audit/2026-10-12-release-1.13.0.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "modules/ASSETS_MODULE.md",
+          "line": 239,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/modules/ASSETS_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-12-release-1.12.0.json",
+          "line": 239,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/audit/2026-10-12-release-1.12.0.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "ORGANIZATIONS_MODULE.md",
+          "line": 273,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/ORGANIZATIONS_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "PROPOSALS_MODULE.md",
+          "line": 273,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/PROPOSALS_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "CAPACITY_MODULE.md",
+          "line": 274,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/CAPACITY_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-12-release-1.11.0.json",
+          "line": 274,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/audit/2026-10-12-release-1.11.0.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "modules/PURCHASING_MODULE.md",
+          "line": 307,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/modules/PURCHASING_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-11-purchasing-release.json",
+          "line": 308,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/audit/2026-10-11-purchasing-release.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "modules/SUPPORT_CASES_MODULE.md",
+          "line": 342,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/modules/SUPPORT_CASES_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-11-support-release.json",
+          "line": 343,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/audit/2026-10-11-support-release.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "plans/PURCHASING_MODULE_PLAN.md",
+          "line": 345,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/plans/PURCHASING_MODULE_PLAN.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "modules/FOODSERVICE_MODULE.md",
+          "line": 380,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/modules/FOODSERVICE_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-11-foodservice-release.json",
+          "line": 381,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/audit/2026-10-11-foodservice-release.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "plans/SUPPORT_CASES_MODULE_PLAN.md",
+          "line": 384,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/plans/SUPPORT_CASES_MODULE_PLAN.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "modules/COMMERCE_MODULE.md",
+          "line": 414,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/modules/COMMERCE_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-11-commerce-release.json",
+          "line": 415,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/audit/2026-10-11-commerce-release.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "plans/FOODSERVICE_MODULE_PLAN.md",
+          "line": 417,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/plans/FOODSERVICE_MODULE_PLAN.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "modules/ACCOMMODATION_MODULE.md",
+          "line": 438,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/modules/ACCOMMODATION_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-11-accommodation-release.json",
+          "line": 439,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/audit/2026-10-11-accommodation-release.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-11-resource-reservations-release.json",
+          "line": 478,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/audit/2026-10-11-resource-reservations-release.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "modules/RESOURCE_RESERVATIONS_MODULE.md",
+          "line": 480,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/modules/RESOURCE_RESERVATIONS_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-11-kit-project-release.json",
+          "line": 506,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/audit/2026-10-11-kit-project-release.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "modules/PROJECT_DELIVERY_MODULE.md",
+          "line": 515,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/modules/PROJECT_DELIVERY_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/local-library/security.json",
+          "line": 604,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/audit/local-library/security.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/local-library/capacity.json",
+          "line": 632,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/audit/local-library/capacity.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/local-library/manifest.json",
+          "line": 641,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/audit/local-library/manifest.json",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/history/progress/LOCAL_OWNER_PILOT.md",
+      "references": [
+        {
+          "href": "CRM_WORKLIST.md",
+          "line": 7,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/CRM_WORKLIST.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-09-owner-validation.json",
+          "line": 105,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/audit/2026-10-09-owner-validation.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-09-owner-act-proof.json",
+          "line": 109,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/audit/2026-10-09-owner-act-proof.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-09-owner-crm-proof.json",
+          "line": 111,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/audit/2026-10-09-owner-crm-proof.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-09-owner-runtime-proof.json",
+          "line": 113,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/audit/2026-10-09-owner-runtime-proof.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-09-owner-browser-proof.json",
+          "line": 115,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/audit/2026-10-09-owner-browser-proof.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "audit/2026-10-09-owner-installed-proof.json",
+          "line": 117,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/audit/2026-10-09-owner-installed-proof.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "CRM_OVERVIEW.md",
+          "line": 132,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/CRM_OVERVIEW.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "CRM_BACKUPS.md",
+          "line": 136,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/progress/CRM_BACKUPS.md",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/history/tasks/ARCHXY_1_FULL_IMPLEMENTATION_TASK.md",
+      "references": [
+        {
+          "href": "docs/ARCHXY_1_CRM_AUDIT_2026-10-19.md",
+          "line": 52,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/ARCHXY_1_CRM_AUDIT_2026-10-19.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/audit/2026-10-19-archxy1-crm-audit.json",
+          "line": 53,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/audit/2026-10-19-archxy1-crm-audit.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "PRD.md",
+          "line": 54,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/PRD.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/PRD_FULL_RUST.md",
+          "line": 54,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/PRD_FULL_RUST.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/OWNER_CONFIGURATION_PRD.md",
+          "line": 56,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/OWNER_CONFIGURATION_PRD.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/PROJECT_AUDIT_2026-10-14.md",
+          "line": 61,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/PROJECT_AUDIT_2026-10-14.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/ARCHXY_KIT09_REVIEW_2026-10-15.md",
+          "line": 62,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/ARCHXY_KIT09_REVIEW_2026-10-15.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/ARCHXY_RUST_AUDIT_2026-10-17.md",
+          "line": 63,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/ARCHXY_RUST_AUDIT_2026-10-17.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/ARCHXY_RUST_REAUDIT_2026-10-16_LATE.md",
+          "line": 64,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/ARCHXY_RUST_REAUDIT_2026-10-16_LATE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/CRM_MODULE.md",
+          "line": 66,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/CRM_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/CRM_PIPELINE.md",
+          "line": 66,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/CRM_PIPELINE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/CRM_OVERVIEW.md",
+          "line": 67,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/CRM_OVERVIEW.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/CRM_WORKLIST.md",
+          "line": 67,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/CRM_WORKLIST.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/CRM_COMPLETION.md",
+          "line": 68,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/CRM_COMPLETION.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/CRM_COMMAND_RECOVERY.md",
+          "line": 68,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/CRM_COMMAND_RECOVERY.md",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/history/tasks/ARCHXY_2_FULL_IMPLEMENTATION_TASK.md",
+      "references": [
+        {
+          "href": "PRD.md",
+          "line": 49,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/PRD.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/PRD_FULL_RUST.md",
+          "line": 49,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/PRD_FULL_RUST.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/OWNER_CONFIGURATION_PRD.md",
+          "line": 52,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/OWNER_CONFIGURATION_PRD.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/PROJECT_AUDIT_2026-10-14.md",
+          "line": 60,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/PROJECT_AUDIT_2026-10-14.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/ARCHXY_KIT09_REVIEW_2026-10-15.md",
+          "line": 61,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/ARCHXY_KIT09_REVIEW_2026-10-15.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/ARCHXY_RUST_AUDIT_2026-10-17.md",
+          "line": 62,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/ARCHXY_RUST_AUDIT_2026-10-17.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/ARCHXY_1_CRM_AUDIT_2026-10-19.md",
+          "line": 63,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/ARCHXY_1_CRM_AUDIT_2026-10-19.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/RESOURCE_RESERVATIONS_MODULE.md",
+          "line": 309,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/RESOURCE_RESERVATIONS_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/ACCOMMODATION_MODULE.md",
+          "line": 318,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/ACCOMMODATION_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/ASSETS_MODULE.md",
+          "line": 333,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/ASSETS_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/COMMERCE_MODULE.md",
+          "line": 348,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/COMMERCE_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/PURCHASING_MODULE.md",
+          "line": 362,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/PURCHASING_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/FOODSERVICE_MODULE.md",
+          "line": 378,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/FOODSERVICE_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/BILLING_MODULE.md",
+          "line": 403,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/BILLING_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/SUBSCRIPTIONS_MODULE.md",
+          "line": 419,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/SUBSCRIPTIONS_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/ATTENDANCE_MODULE.md",
+          "line": 432,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/ATTENDANCE_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/SUPPORT_CASES_MODULE.md",
+          "line": 445,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/SUPPORT_CASES_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/FULFILLMENT_MODULE.md",
+          "line": 458,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/FULFILLMENT_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/LAUNDRY_MODULE.md",
+          "line": 472,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/LAUNDRY_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/FIELD_SERVICES_MODULE.md",
+          "line": 484,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/FIELD_SERVICES_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/FORMAL_EDUCATION_MODULE.md",
+          "line": 496,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/FORMAL_EDUCATION_MODULE.md",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/history/tasks/ARCHXY_FULL_RUST_EXECUTION_TASK.md",
+      "references": [
+        {
+          "href": "docs/OWNER_CONFIGURATION_PRD.md",
+          "line": 28,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/OWNER_CONFIGURATION_PRD.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/PRD_FULL_RUST.md",
+          "line": 41,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/PRD_FULL_RUST.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/ARCHXY_RUST_PROGRESS_REVIEW_2026-10-15.md",
+          "line": 91,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/ARCHXY_RUST_PROGRESS_REVIEW_2026-10-15.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/ARCHXY_RUST_AUDIT_2026-10-16.md",
+          "line": 133,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/ARCHXY_RUST_AUDIT_2026-10-16.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/audit/2026-10-16-rust-audit.json",
+          "line": 134,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/audit/2026-10-16-rust-audit.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/ARCHXY_RUST_REAUDIT_2026-10-16.md",
+          "line": 262,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/ARCHXY_RUST_REAUDIT_2026-10-16.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/audit/2026-10-16-rust-reaudit.json",
+          "line": 263,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/audit/2026-10-16-rust-reaudit.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/ARCHXY_RUST_AUDIT_2026-10-16_EVENING.md",
+          "line": 348,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/ARCHXY_RUST_AUDIT_2026-10-16_EVENING.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/audit/2026-10-16-rust-evening-audit.json",
+          "line": 349,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/audit/2026-10-16-rust-evening-audit.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "PRD.md",
+          "line": 512,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/PRD.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "agent.md",
+          "line": 512,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/agent.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/ARCHXY_RUST_AUDIT_2026-10-17.md",
+          "line": 523,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/ARCHXY_RUST_AUDIT_2026-10-17.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/audit/2026-10-17-rust-audit.json",
+          "line": 524,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/audit/2026-10-17-rust-audit.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/OWNER_CONFIGURATION_PRD.md",
+          "line": 529,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/OWNER_CONFIGURATION_PRD.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/ARCHXY_RUST_AUDIT_2026-10-16.md",
+          "line": 539,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/ARCHXY_RUST_AUDIT_2026-10-16.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/audit/2026-10-16-rust-audit.json",
+          "line": 540,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/audit/2026-10-16-rust-audit.json",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/PRD_FULL_RUST.md",
+          "line": 543,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/PRD_FULL_RUST.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "PRD.md",
+          "line": 545,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/PRD.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/ARCHITECTURE.md",
+          "line": 545,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/ARCHITECTURE.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/PROJECT_AUDIT_2026-10-14.md",
+          "line": 547,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/PROJECT_AUDIT_2026-10-14.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/ARCHXY_KIT09_REVIEW_2026-10-14.md",
+          "line": 548,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/ARCHXY_KIT09_REVIEW_2026-10-14.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/ARCHXY_KIT09_REVIEW_2026-10-15.md",
+          "line": 549,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/ARCHXY_KIT09_REVIEW_2026-10-15.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/RUST_MIGRATION_RESEARCH_2026-10-14.md",
+          "line": 550,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/RUST_MIGRATION_RESEARCH_2026-10-14.md",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/history/tasks/ARCHXY_IMPLEMENTATION_TASK.md",
+      "references": [
+        {
+          "href": "docs/ARCHXY_1_CRM_AUDIT_2026-10-19.md",
+          "line": 15,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/ARCHXY_1_CRM_AUDIT_2026-10-19.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/PRD_FULL_RUST.md",
+          "line": 37,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/PRD_FULL_RUST.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/ARCHXY_KIT09_REVIEW_2026-10-15.md",
+          "line": 49,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/ARCHXY_KIT09_REVIEW_2026-10-15.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/ARCHXY_KIT09_REVIEW_2026-10-14.md",
+          "line": 99,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/ARCHXY_KIT09_REVIEW_2026-10-14.md",
+          "exists": false,
+          "outside_repo": false
+        },
+        {
+          "href": "docs/PROJECT_AUDIT_2026-10-14.md",
+          "line": 118,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/PROJECT_AUDIT_2026-10-14.md",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/history/tasks/ARCHXY_NEXT_EXECUTION_PROMPT.md",
+      "references": [
+        {
+          "href": "docs/ARCHXY_1_CRM_AUDIT_2026-10-19.md",
+          "line": 5,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/history/tasks/docs/ARCHXY_1_CRM_AUDIT_2026-10-19.md",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/rust/ARCHXY1_ACCEPTANCE_MATRIX.md",
+      "references": [
+        {
+          "href": "audit/2026-10-19-archxy1-crm-audit.json",
+          "line": 11,
+          "type": "markdown",
+          "kind": "local",
+          "target": "docs/rust/audit/2026-10-19-archxy1-crm-audit.json",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    },
+    {
+      "currentPath": "docs/rust/EXECUTION_STATE.md",
+      "references": [
+        {
+          "href": "../../ARCHXY_1_FULL_IMPLEMENTATION_TASK.md",
+          "line": 40,
+          "type": "markdown",
+          "kind": "local",
+          "target": "ARCHXY_1_FULL_IMPLEMENTATION_TASK.md",
+          "exists": false,
+          "outside_repo": false
+        }
+      ]
+    }
+  ]
+}

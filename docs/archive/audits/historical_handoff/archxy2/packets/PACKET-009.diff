@@ -1,0 +1,333 @@
+# PACKET-009 — the third R07 cohort: attendance (roster-bound check-in, seat/check-in concurrency and six read projections; P-ERP-R07 grows 26 → 40)
+
+**Archxy 2 → Archxy 1.** Successor to PACKET-008: its hunks are ASSUMED
+FOLDED before this diff is applied — the a/ side of every hunk below is
+literally "current main (2026-10-20, HEAD `6c06998` — `C03: the matrix
+counts the twelfth witness`; eight commits past `e1e83c6`, including
+`620b502` C07 coverage measurement and `91341cd` C03 owner-configuration
+engine) with PACKET-003.diff, PACKET-004.diff, PACKET-005.diff,
+PACKET-006.diff, PACKET-007.diff and PACKET-008.diff applied". Built by
+patching a fresh `--no-local` clone of today's main in `/tmp/opencode`
+(`patch -p1 --forward --fuzz=3` for 003–007, `--fuzz=0` for 008; all six
+prior packets fold onto `6c06998` with ZERO rejects), committing that fold
+as a baseline, applying this cohort's five shared-file hunks and diffing.
+This packet's own hunks apply onto that fold with `--fuzz=0` and ZERO
+rejects.
+
+**Additive-only.** No hunk removes a line main gained after this copy's
+base; the two files that carry C01/C03 work (`router.rs`,
+`required-coverage.json`) keep it. No Cargo change, no `packages/` change,
+and ZERO hunks on the four byte-locked library single-writer files. The
+`tools/rust/erp/verify-r07.mjs` producer is Archxy 2-owned and travels in
+the candidate copy, not here; this packet only grows the shared fast-gate
+evidence map (`tools/rust/verify.mjs`) that names the new checks.
+
+**Files (5 shared single-writer):**
+- `rust/crates/host/src/router.rs` — the seven attendance routes after the
+  subscriptions mounts.
+- `rust/crates/pg-fixture/src/lib.rs` — `ATTENDANCE_MIGRATIONS`, the
+  `attendance_ledger` field, the eighteenth provision step (after
+  subscriptions), its runtime grants, the `migrations_package` and
+  `ledger_expectations` arms, and both constructors.
+- `tools/rust/verify.mjs` — the R07 fast-gate comment + the fourteen
+  attendance check mappings.
+- `tools/rust/test/verify.test.mjs` — the R07 witness-map suite allowlist
+  (attendance) and the frozen `witnessTotal` comment (26 → 40).
+- `docs/rust/required-coverage.json` — `P-ERP-R07` grows to 40 checks,
+  `witnessTotal` 40, `RN-ERP-04` (the A04 roster binding), the attendance
+  `sourcePaths` and the producedBy clause.
+
+**What the cohort is.** Five commands (`create_session`,
+`register_participant`, `record_check_in`, `update_roster_status`,
+`change_session_status`) against `archava_attendance`'s six tables, with
+the audit-A04 correction as a row-SELECT property (`session_id=$3`) plus a
+pure domain policy (`check_in_refusal`) that checks the roster↔session
+binding first; seat allocation and check-in serialize on the session/roster
+row locks; duplicate roster/ticket/session-code boundaries are 409
+(`D23`); `scope=assigned` narrows every read (`D24`); a session window must
+strictly advance (`D25`). Six read projections (access, session list,
+detail+roster+check-ins, roster, check-in ledger, command status) and
+fourteen named witnesses grow the same `P-ERP-R07` proof from 26 to 40.
+
+**Apply:** `patch -p1 --forward --fuzz=0 < PACKET-009.diff` on
+main+003…008. The new source files (`domain|adapters|host/src/erp/attendance.rs`,
+`host/tests/erp_attendance.rs`, the two `mod.rs` lines, `tools/rust/erp/verify-r07.mjs`
+and the `docs/rust/archxy2/` reports) are delivered by the candidate copy.
+diff --git a/docs/rust/required-coverage.json b/docs/rust/required-coverage.json
+index c591636..80e1756 100644
+--- a/docs/rust/required-coverage.json
++++ b/docs/rust/required-coverage.json
+@@ -1814,7 +1814,7 @@
+     },
+     "P-ERP-R07": {
+       "kind": "evidence",
+-      "producedBy": "pnpm rust:verify → erp R07 suites step (tools/rust/erp/verify-r07.mjs) grading named witness tests in rust/crates/host/tests/erp_billing.rs (billing cohort, PACKET-007) and rust/crates/host/tests/erp_subscriptions.rs (subscriptions cohort, PACKET-008) against the owned PostgreSQL fixture — the R07 ledgers' runtime halves, opened whole by the billing cohort (the R05 surface is closed at 29 checks and never grows again, so the R07 migration area opens its OWN growing evidence surface that later cohorts extend additively; the pure domain half is the frozen P-R07-DOMAIN). The subscriptions cohort carries the corrected paid-activation rule (audit A05 / RN-ERP-03) and the R07 read projections the TS api serves",
++      "producedBy": "pnpm rust:verify → erp R07 suites step (tools/rust/erp/verify-r07.mjs) grading named witness tests in rust/crates/host/tests/erp_billing.rs (billing cohort, PACKET-007) and rust/crates/host/tests/erp_subscriptions.rs (subscriptions cohort, PACKET-008) and rust/crates/host/tests/erp_attendance.rs (attendance cohort, PACKET-009) against the owned PostgreSQL fixture — the R07 ledgers' runtime halves, opened whole by the billing cohort (the R05 surface is closed at 29 checks and never grows again, so the R07 migration area opens its OWN growing evidence surface that later cohorts extend additively; the pure domain half is the frozen P-R07-DOMAIN). The subscriptions cohort carries the corrected paid-activation rule (audit A05 / RN-ERP-03) and the R07 read projections the TS api serves. The attendance cohort (PACKET-009) carries the corrected roster binding (audit A04 / RN-ERP-04), the seat/check-in concurrency witnesses and the attendance read projections the TS api serves (access, session list/detail, roster, check-in ledger)",
+       "requiredChecks": [
+         "authorized billing life documents its settlement",
+         "a forged claim settles nothing",
+@@ -1841,14 +1841,29 @@
+         "lost response replays the recorded subscription receipt",
+         "cross-tenant subscription callers refuse before any write",
+         "narrow subscription grants refuse exactly the arms they lack",
+-        "the subscription wire boundary and read projections hold"
++        "the subscription wire boundary and read projections hold",
++        "authorized attendance life documents its sessions and check-ins",
++        "a roster from another session cannot check in",
++        "the seat boundary refuses and holds nothing",
++        "a duplicate registration conflicts and records nothing",
++        "the same check in key a different command conflicts",
++        "concurrent check ins record exactly one attendance",
++        "a closed session refuses registration and check in",
++        "the stale attendance revision conflicts and records nothing",
++        "lost response replays the recorded attendance receipt",
++        "the same attendance key a different command conflicts",
++        "cross tenant attendance callers refuse before any write",
++        "revoked attendance grant refused on recovery",
++        "narrow attendance grants refuse exactly the arms they lack",
++        "the attendance wire boundary and read projections hold"
+       ],
+       "expect": {
+-        "witnessTotal": 26,
++        "witnessTotal": 40,
+         "namedRegressions": {
+           "RN-ERP-01": "revoked billing grant refused on recovery",
+           "RN-ERP-02": "same billing key different command conflicts",
+-          "RN-ERP-03": "an unpaid draft grants no consumption right"
++          "RN-ERP-03": "an unpaid draft grants no consumption right",
++          "RN-ERP-04": "a roster from another session cannot check in"
+         }
+       },
+       "sourcePaths": [
+@@ -1857,7 +1872,8 @@
+         "rust/crates/domain/src/erp",
+         "rust/crates/core",
+         "tools/rust/erp/verify-r07.mjs",
+-        "packages/billing-pg/migrations"
++        "packages/billing-pg/migrations",
++        "packages/attendance-pg/migrations"
+       ],
+       "artifacts": [],
+       "referenced": [
+diff --git a/rust/crates/host/src/router.rs b/rust/crates/host/src/router.rs
+index 4c2944c..553b1cc 100644
+--- a/rust/crates/host/src/router.rs
++++ b/rust/crates/host/src/router.rs
+@@ -461,6 +461,39 @@ pub fn router(state: AppState) -> Router {
+             "/erp/subscriptions/usage-events",
+             get(crate::erp::subscriptions::subscription_usage),
+         )
++        // Archxy 2's R07 attendance ledger (PACKET-009): the
++        // session/roster/check-in cohort — the corrected roster binding
++        // (audit A04) is a row-SELECT property, and the read surfaces
++        // (list, detail, roster, check-ins, access) ride the same
++        // transaction opener.
++        .route(
++            "/erp/attendance/commands",
++            post(crate::erp::attendance::attendance_command),
++        )
++        .route(
++            "/erp/attendance/commands/status",
++            get(crate::erp::attendance::attendance_status),
++        )
++        .route(
++            "/erp/attendance/access",
++            get(crate::erp::attendance::attendance_access),
++        )
++        .route(
++            "/erp/attendance/sessions",
++            get(crate::erp::attendance::attendance_list),
++        )
++        .route(
++            "/erp/attendance/sessions/detail",
++            get(crate::erp::attendance::attendance_detail),
++        )
++        .route(
++            "/erp/attendance/roster",
++            get(crate::erp::attendance::attendance_roster),
++        )
++        .route(
++            "/erp/attendance/check-ins",
++            get(crate::erp::attendance::attendance_check_ins),
++        )
+         .with_state(state)
+ }
+ 
+diff --git a/rust/crates/pg-fixture/src/lib.rs b/rust/crates/pg-fixture/src/lib.rs
+index bc8c008..ff4e4d7 100644
+--- a/rust/crates/pg-fixture/src/lib.rs
++++ b/rust/crates/pg-fixture/src/lib.rs
+@@ -172,6 +172,14 @@ pub const BILLING_MIGRATIONS: &[&str] = &["001_billing_invoices_settlement"];
+ /// package's frozen migration.
+ pub const SUBSCRIPTIONS_MIGRATIONS: &[&str] = &["001_subscriptions_entitlements_usage"];
+ 
++/// The attendance ledger's migration, in apply order —
++/// `packages/attendance-pg/migrations/001_attendance_sessions_rosters.sql`
++/// (Archxy 2's ERP namespace, R07 third cohort, PACKET-009):
++/// memberships/sessions/rosters/check-in events + the immutability
++/// triggers + the forced tenant policies, byte-faithful to the TS
++/// package's frozen migration.
++pub const ATTENDANCE_MIGRATIONS: &[&str] = &["001_attendance_sessions_rosters"];
++
+ /// The provider attempt ledger's migration, in apply order —
+ /// `packages/provider-runtime/migrations/001_provider_attempts.sql` (the R09
+ /// provider slice): the budget buckets and the pending→finalized attempt rows
+@@ -281,6 +289,11 @@ pub struct Fixture {
+     /// the usage-idempotency UNIQUE constraint and the immutability
+     /// triggers defend.
+     pub subscriptions_ledger: Vec<(String, String)>,
++    /// The same ledger for `archava_attendance` — the R07 attendance
++    /// cohort (PACKET-009), the six operational tables the roster/ticket
++    /// UNIQUE constraints, the capacity CHECK and the immutability
++    /// triggers defend.
++    pub attendance_ledger: Vec<(String, String)>,
+     /// The same ledger for `archava_provider` — the R09 provider attempt
+     /// ledger (buckets, pending→finalized attempts, restore holds), through
+     /// whose forced-RLS scope the provider budget is a real PostgreSQL
+@@ -898,6 +911,16 @@ async fn provision_with_commerce_usize(commerce_through: usize) -> Fixture {
+         "archava_subscriptions_migrations",
+     )
+     .await;
++    // Archxy 2 ERP namespace (PACKET-009): the attendance ledger migrates
++    // under the same owner role, after the entitlements sibling — no
++    // cross-schema FOREIGN KEY exists, but the namespace's one printed
++    // apply order holds.
++    let attendance_ledger = migrate_ledger(
++        &owner_pool,
++        "archava_attendance",
++        "archava_attendance_migrations",
++    )
++    .await;
+     // R09's provider slice: the attempt ledger migrates under the same owner
+     // role, one UTC-anchored schema next to the domain ledgers. The runtime
+     // role must stay a NON-owner of `archava_provider` — `create`'s role
+@@ -1207,6 +1230,25 @@ async fn provision_with_commerce_usize(commerce_through: usize) -> Fixture {
+         format!(
+             "GRANT EXECUTE ON FUNCTION archava_subscriptions.lock_membership(text,text) TO {RUNTIME_USER}"
+         ),
++        // Archxy 2 ERP namespace (PACKET-009): the attendance grants — the
++        // port of grantAttendanceRuntime
++        // (`packages/attendance-pg/src/migrate.ts`), statement for
++        // statement: schema usage, the history+membership read, the
++        // session/roster/event/command/audit writes, and the membership
++        // lock's SECURITY DEFINER function.
++        format!("GRANT USAGE ON SCHEMA archava_attendance TO {RUNTIME_USER}"),
++        format!(
++            "GRANT SELECT ON archava_attendance.schema_migrations,\
++             archava_attendance.memberships TO {RUNTIME_USER}"
++        ),
++        format!(
++            "GRANT SELECT,INSERT,UPDATE ON archava_attendance.sessions,\
++             archava_attendance.rosters,archava_attendance.check_in_events,\
++             archava_attendance.commands,archava_attendance.audit TO {RUNTIME_USER}"
++        ),
++        format!(
++            "GRANT EXECUTE ON FUNCTION archava_attendance.lock_membership(text,text) TO {RUNTIME_USER}"
++        ),
+         // R09 provider slice — the port of grantProviderRuntime
+         // (`packages/provider-runtime/src/postgres.ts`), statement for
+         // statement, mirrored by
+@@ -1264,6 +1306,7 @@ async fn provision_with_commerce_usize(commerce_through: usize) -> Fixture {
+         assets_ledger,
+         billing_ledger,
+         subscriptions_ledger,
++        attendance_ledger,
+         provider_ledger,
+         dir,
+     }
+@@ -1446,6 +1489,9 @@ fn migrations_package(namespace: &str) -> &'static str {
+         // (PACKET-008) the R07 entitlements ledger migrates from its own TS
+         // package, byte-faithful, one migration deep.
+         "archava_subscriptions" => "subscriptions-pg",
++        // (PACKET-009) the R07 attendance ledger migrates from its own TS
++        // package, byte-faithful, one migration deep.
++        "archava_attendance" => "attendance-pg",
+         // R09's provider ledger: the migration file the TS store reads too.
+         "archava_provider" => "provider-runtime",
+         _ => "commerce-pg",
+@@ -1475,6 +1521,7 @@ pub fn ledger_expectations(namespace: &str) -> Vec<(String, String)> {
+         "archava_assets" => ASSETS_MIGRATIONS,
+         "archava_billing" => BILLING_MIGRATIONS,
+         "archava_subscriptions" => SUBSCRIPTIONS_MIGRATIONS,
++        "archava_attendance" => ATTENDANCE_MIGRATIONS,
+         "archava_provider" => PROVIDER_MIGRATIONS,
+         _ => COMMERCE_MIGRATIONS,
+     };
+@@ -1565,6 +1612,8 @@ pub async fn attach(data_dir: &Path, port: u16) -> Fixture {
+         billing_ledger: ledger_expectations("archava_billing"),
+         // (PACKET-008) the R07 entitlements cohort's frozen pair list.
+         subscriptions_ledger: ledger_expectations("archava_subscriptions"),
++        // (PACKET-009) the R07 attendance cohort's frozen pair list.
++        attendance_ledger: ledger_expectations("archava_attendance"),
+         provider_ledger: ledger_expectations("archava_provider"),
+         dir,
+     }
+diff --git a/tools/rust/test/verify.test.mjs b/tools/rust/test/verify.test.mjs
+index 51b5822..fb1ae5c 100644
+--- a/tools/rust/test/verify.test.mjs
++++ b/tools/rust/test/verify.test.mjs
+@@ -431,9 +431,10 @@ test('the P-ERP-R07 witness map and the frozen manifest cannot drift apart', ()
+   // Same property as the kernel-ERP and R04 proofs, for the R07 surface:
+   // the cohorts' manifest checks over the named Rust test functions —
+   // PACKET-007 lands billing whole and PACKET-008 grows the same map with
+-  // subscriptions, seeding the map and the manifest TOGETHER (R07 opens its
++  // subscriptions and PACKET-009 grows it again with attendance, seeding the
++  // map and the manifest TOGETHER (R07 opens its
+   // OWN proof; the closed 29-check R05 surface stays untouched). Both
+-  // directions, and the frozen `witnessTotal` (26, grown additively by any
++  // directions, and the frozen `witnessTotal` (40, grown additively by any
+   // later R07 cohort) too.
+   const manifest = loadManifest(repoRoot)
+   const spec = manifest.proofs['P-ERP-R07']
+@@ -452,7 +453,7 @@ test('the P-ERP-R07 witness map and the frozen manifest cannot drift apart', ()
+         `${check}: witness name ${JSON.stringify(name)} is not a test identifier`,
+       )
+       assert.ok(
+-        ['billing', 'subscriptions'].includes(suite),
++        ['billing', 'subscriptions', 'attendance'].includes(suite),
+         `${check}: witness ${JSON.stringify(name)} names unknown suite ${JSON.stringify(suite)}`,
+       )
+     }
+diff --git a/tools/rust/verify.mjs b/tools/rust/verify.mjs
+index 827e964..02c6dd2 100644
+--- a/tools/rust/verify.mjs
++++ b/tools/rust/verify.mjs
+@@ -837,11 +837,11 @@ export function fastGateEvidenceMapping() {
+     },
+     {
+       // The Archxy 2 ERP namespace's R07 proof (PACKET-007, grown by
+-      // PACKET-008): the billing cohort's thirteen witnesses and the
+-      // subscriptions cohort's thirteen — the R07 surface's first two
+-      // cohorts, any later cohort growing this same block additively (the
+-      // R05 surface is closed and stays untouched; the proof never forks
+-      // per cohort).
++      // PACKET-008 and PACKET-009): the billing cohort's thirteen
++      // witnesses, the subscriptions cohort's thirteen and the attendance
++      // cohort's fourteen — the R07 surface's first three cohorts, any
++      // later cohort growing this same block additively (the R05 surface
++      // is closed and stays untouched; the proof never forks per cohort).
+       proof: 'P-ERP-R07',
+       checks: {
+         'authorized billing life documents its settlement': { step: 'erp R07 suites' },
+@@ -871,6 +871,21 @@ export function fastGateEvidenceMapping() {
+         'cross-tenant subscription callers refuse before any write': { step: 'erp R07 suites' },
+         'narrow subscription grants refuse exactly the arms they lack': { step: 'erp R07 suites' },
+         'the subscription wire boundary and read projections hold': { step: 'erp R07 suites' },
++        // The attendance cohort (PACKET-009) grows the same proof.
++        'authorized attendance life documents its sessions and check-ins': { step: 'erp R07 suites' },
++        'a roster from another session cannot check in': { step: 'erp R07 suites' },
++        'the seat boundary refuses and holds nothing': { step: 'erp R07 suites' },
++        'a duplicate registration conflicts and records nothing': { step: 'erp R07 suites' },
++        'the same check in key a different command conflicts': { step: 'erp R07 suites' },
++        'concurrent check ins record exactly one attendance': { step: 'erp R07 suites' },
++        'a closed session refuses registration and check in': { step: 'erp R07 suites' },
++        'the stale attendance revision conflicts and records nothing': { step: 'erp R07 suites' },
++        'lost response replays the recorded attendance receipt': { step: 'erp R07 suites' },
++        'the same attendance key a different command conflicts': { step: 'erp R07 suites' },
++        'cross tenant attendance callers refuse before any write': { step: 'erp R07 suites' },
++        'revoked attendance grant refused on recovery': { step: 'erp R07 suites' },
++        'narrow attendance grants refuse exactly the arms they lack': { step: 'erp R07 suites' },
++        'the attendance wire boundary and read projections hold': { step: 'erp R07 suites' },
+       },
+       details: () => {
+         try {

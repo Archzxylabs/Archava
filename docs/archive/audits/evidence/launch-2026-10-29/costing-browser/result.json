@@ -1,0 +1,183 @@
+{
+  "startedAt": "2026-10-30T01:02:03.447Z",
+  "scope": "Synthetic local fixture, real Chromium/SSR/WASM/HTTP/PostgreSQL; production binary restart. No live provider or public/TLS deployment acceptance.",
+  "checks": [
+    {
+      "id": "F01-authenticated-hydration",
+      "status": "passed",
+      "details": "Real login, session cookie, WASM handlers and contact query"
+    },
+    {
+      "id": "F02-contact-navigation-idempotency",
+      "status": "passed",
+      "details": "Opening the new record creates no second contact or other mutation"
+    },
+    {
+      "id": "F02-browser-to-database",
+      "status": "passed",
+      "details": {
+        "contact": "cb446bd1-450b-4403-82d5-a544de705125",
+        "requestId": "092ddb4a-c13c-4b1a-9afa-7930565143fa",
+        "proof": "Created via UI, reviewed/applied twice, exactly one follow-up and durable receipt via non-owner SQL"
+      }
+    },
+    {
+      "id": "F03-lost-response-recovery",
+      "status": "passed",
+      "details": {
+        "requestId": "fbb2d6b0-c1ba-4ed7-aeaa-0892703cb1a7",
+        "proof": "Response deliberately lost after real commit; UI shows uncertainty and recovers without resubmitting"
+      }
+    },
+    {
+      "id": "F04-csrf-refusal",
+      "status": "passed",
+      "details": "Valid mutation body without the CSRF header is refused"
+    },
+    {
+      "id": "F03-production-restart",
+      "status": "passed",
+      "details": "Fresh production process, same PostgreSQL and browser session, committed receipt survives"
+    },
+    {
+      "id": "CRM-http503-receipt-recovery",
+      "status": "passed",
+      "details": "A real committed write receives an unusable acknowledgement; UI retains the key and recovers exactly one effect"
+    },
+    {
+      "id": "CRM-mismatched200-receipt-recovery",
+      "status": "passed",
+      "details": "A real committed write receives an unusable acknowledgement; UI retains the key and recovers exactly one effect"
+    },
+    {
+      "id": "UI-operations-appearance",
+      "status": "passed",
+      "details": "Soft light and charcoal dark render the same workspace; appearance persists across navigation"
+    },
+    {
+      "id": "ERP-lost-response-recovery",
+      "status": "passed",
+      "details": "Stock adjustment loses its successful response; reload preserves the original key, status recovers it, and stock remains exactly 8"
+    },
+    {
+      "id": "D02-commerce-ui",
+      "status": "passed",
+      "details": "Catalog creation → stock adjustment → multi-line draft → reserve → fulfill; 2 units deducted"
+    },
+    {
+      "id": "ERP-exact-costing",
+      "status": "passed",
+      "details": "Opening 8 × 10000 → FIFO fulfillment 2 costs 20000 → receipt 4 × 9000 + 4000 landed fee; remaining inventory is exactly 100000 IDR, rejects excluded"
+    },
+    {
+      "id": "D03-purchasing-ui",
+      "status": "passed",
+      "details": "Supplier → offer → draft → confirmation → inspected delivery (4 accepted, 1 rejected); stock moves from 6 to 10"
+    },
+    {
+      "id": "D09-billing-ui",
+      "status": "passed",
+      "details": "Invoice draft → issue; ledger outstanding 30000 IDR, settled 0; no client assertion of payment"
+    },
+    {
+      "id": "D12-support-ui",
+      "status": "passed",
+      "details": "Create → start → resolve; transitions visible from persisted case detail"
+    },
+    {
+      "id": "Cockpit-operator-ui",
+      "status": "passed",
+      "details": "Create dependent mission → three real authorized read tools → durable observations → touchdown"
+    },
+    {
+      "id": "UI-operations-mobile",
+      "status": "passed",
+      "details": "Sales workflow fits a 390px page with tables scrolling inside their frame"
+    },
+    {
+      "id": "ERP-independent-SQL",
+      "status": "passed",
+      "details": {
+        "inventoryValue": "100000",
+        "fulfillmentCost": "20000",
+        "stock": 10,
+        "sales": "fulfilled",
+        "purchase": "received",
+        "invoice": "issued",
+        "settled": 0,
+        "support": "resolved"
+      }
+    },
+    {
+      "id": "F05-owner-confirmation",
+      "status": "passed",
+      "details": "Owner reviews and confirms a configuration revision; a matching receipt and persisted revision are present"
+    },
+    {
+      "id": "F04-role-and-tenant-refusal",
+      "status": "passed",
+      "details": "Read-only UI submission creates no effect; foreign tenant read refused"
+    },
+    {
+      "id": "UI-mobile-layout",
+      "status": "passed",
+      "details": "390px viewport has no horizontal page overflow"
+    }
+  ],
+  "errors": [],
+  "browserExecutable": "/usr/bin/brave",
+  "browserSandboxDisabled": false,
+  "acknowledgementFaults": [
+    {
+      "mode": "http503",
+      "requestId": "6beeba10-cab9-4e24-9ff9-d2d426df99c3",
+      "sql": {
+        "same_email_rows": 1,
+        "contact_rows": 1,
+        "followups": 3,
+        "receipt_rows": 1
+      }
+    },
+    {
+      "mode": "mismatched200",
+      "requestId": "4e597f98-11cf-4d9e-8195-3d2d1f51c86f",
+      "sql": {
+        "same_email_rows": 1,
+        "contact_rows": 1,
+        "followups": 4,
+        "receipt_rows": 1
+      }
+    }
+  ],
+  "operations": {
+    "product": "ab82713d-bc50-4238-975a-0393fa23ad61",
+    "order": "6aa5f3b2-3ceb-418e-96f5-6754e2720c9a",
+    "purchase": "f6196a92-b1af-45af-a661-c4bcfbe84154",
+    "invoice": "a4ee94ac-8698-4399-8589-b881f1d9a504",
+    "support": "7dfaae5b-13b4-428b-a458-d65efd9ad9c0"
+  },
+  "status": "passed",
+  "pageErrors": [],
+  "fixtureCleanup": {
+    "exitCode": 0,
+    "signal": null
+  },
+  "finishedAt": "2026-10-30T01:02:14.314Z",
+  "artifacts": [
+    {
+      "path": "target/release/examples/slice_server",
+      "bytes": 14855768,
+      "sha256": "e9b751f1a57d830186ed4325f17904ef6684f4290756325845309e1bf8a67004"
+    },
+    {
+      "path": "target/release/archava-server",
+      "bytes": 15489192,
+      "sha256": "941640a28035584b24a1ba734cfa0156fb5baa63d25483e7468081095513dbd8"
+    },
+    {
+      "path": "target/site/pkg/archava-slice_bg.wasm",
+      "bytes": 2992646,
+      "sha256": "024e9af610dba8b5c7981321577ccb0aa63953e1bf94d38f9d423a126007deb8"
+    }
+  ]
+}

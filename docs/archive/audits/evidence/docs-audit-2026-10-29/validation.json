@@ -1,0 +1,62 @@
+{
+  "reviewedDate": "2026-10-29",
+  "result": "passed-local-documentation-scope",
+  "scope": "Documentation organization, navigation and artifact integrity. No Rust, provider, browser, deployment or external URL checks were rerun.",
+  "commands": [
+    {
+      "id": "structure",
+      "chunk_id": "d2ef99",
+      "wall_time_seconds": 1.0303e-05,
+      "exit_code": 0,
+      "original_token_count": 9,
+      "output": "Structure: 22 crates; 0 problem(s)\n"
+    },
+    {
+      "id": "helper-tests",
+      "chunk_id": "ad5544",
+      "wall_time_seconds": 1.0121e-05,
+      "exit_code": 0,
+      "original_token_count": 722,
+      "output": "TAP version 13\n# Subtest: Markdown extracts balanced and angle destinations, skips code examples\nok 1 - Markdown extracts balanced and angle destinations, skips code examples\n  ---\n  duration_ms: 2.161168\n  type: 'test'\n  ...\n# Subtest: missing source links and heading fragments fail while valid headings pass\nok 2 - missing source links and heading fragments fail while valid headings pass\n  ---\n  duration_ms: 3.962875\n  type: 'test'\n  ...\n# Subtest: archives remain frozen while their maintained indexes are checked\nok 3 - archives remain frozen while their maintained indexes are checked\n  ---\n  duration_ms: 1.427345\n  type: 'test'\n  ...\n# Subtest: machine paths and repository escapes fail, web URLs are outside scope\nok 4 - machine paths and repository escapes fail, web URLs are outside scope\n  ---\n  duration_ms: 0.84906\n  type: 'test'\n  ...\n# Subtest: encoded spaces, same-page anchors, duplicate headings and source line annotations work\nok 5 - encoded spaces, same-page anchors, duplicate headings and source line annotations work\n  ---\n  duration_ms: 1.403404\n  type: 'test'\n  ...\n# Subtest: core rejects an HTTP-layer dependency\nok 6 - core rejects an HTTP-layer dependency\n  ---\n  duration_ms: 2.940914\n  type: 'test'\n  ...\n# Subtest: dev-only fixtures are allowed; production fixtures are refused\nok 7 - dev-only fixtures are allowed; production fixtures are refused\n  ---\n  duration_ms: 1.664149\n  type: 'test'\n  ...\n# Subtest: missing embedded files and a second workspace are detected\nok 8 - missing embedded files and a second workspace are detected\n  ---\n  duration_ms: 1.0769\n  type: 'test'\n  ...\n# Subtest: historical tools are excluded, active broken imports are detected\nok 9 - historical tools are excluded, active broken imports are detected\n  ---\n  duration_ms: 1.417571\n  type: 'test'\n  ...\n# Subtest: the UI cannot pull the HTTP host into its WASM build\nok 10 - the UI cannot pull the HTTP host into its WASM build\n  ---\n  duration_ms: 1.808269\n  type: 'test'\n  ...\n# Subtest: import examples inside ordinary strings are not treated as module imports\nok 11 - import examples inside ordinary strings are not treated as module imports\n  ---\n  duration_ms: 0.720185\n  type: 'test'\n  ...\n# $ first\n# $ first\n# Subtest: the default gate includes workspace integration tests and locked resolution\nok 12 - the default gate includes workspace integration tests and locked resolution\n  ---\n  duration_ms: 0.740031\n  type: 'test'\n  ...\n# Subtest: offline and library-only scope are explicit\nok 13 - offline and library-only scope are explicit\n  ---\n  duration_ms: 0.18881\n  type: 'test'\n  ...\n# Subtest: a failed or interrupted child stops later checks\nok 14 - a failed or interrupted child stops later checks\n  ---\n  duration_ms: 0.68296\n  type: 'test'\n  ...\n1..14\n# tests 14\n# suites 0\n# pass 14\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 64.831995\n"
+    },
+    {
+      "id": "maintained-docs",
+      "chunk_id": "3527a9",
+      "wall_time_seconds": 1.2045e-05,
+      "exit_code": 0,
+      "original_token_count": 16,
+      "output": "Documentation: 67 maintained files, 701 local links, 0 problems\n"
+    },
+    {
+      "id": "ci-yaml",
+      "chunk_id": "71c3c5",
+      "wall_time_seconds": 1.6065e-05,
+      "exit_code": 0,
+      "original_token_count": 18,
+      "output": "CI YAML parsed; docs gate and docs tests present. Remote CI not run.\n"
+    }
+  ],
+  "baselineFiles": 492,
+  "finalFiles": 519,
+  "maintainedMarkdownFiles": 67,
+  "localLinksChecked": 701,
+  "helperTestsPassed": 14,
+  "structuredJsonParsed": {
+    "baseline": 119,
+    "final": 129
+  },
+  "pngIntegrityChecks": 49,
+  "archivedProducerStaticSyntaxChecks": 4,
+  "readableUnifiedPatchFiles": 11,
+  "originalProtectedFilesPreserved": 368,
+  "originalStructuredArtifactsPreserved": 251,
+  "preservedDrafts": 8,
+  "relocations": 20,
+  "maintainedNavigationProblems": 0,
+  "unavailableHistoricalReferences": {
+    "amongOriginalFiles": 443,
+    "includingPreservedDraftCopies": 448
+  },
+  "remoteCiRun": false,
+  "backgroundServicesStarted": 0
+}

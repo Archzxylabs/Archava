@@ -1,0 +1,18 @@
+[package]
+name = "archava-cockpit"
+description = "Autonomous durable execution & task engine for Archava (Temporal + LangGraph + OpenHands)"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+archava-core = { path = "../core", version = "0.1.0" }
+archava-orbz = { path = "../orbz", version = "0.1.0" }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+uuid.workspace = true
+
+[dev-dependencies]

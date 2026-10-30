@@ -1,0 +1,13 @@
+[package]
+name = "archava-rpa"
+description = "Computer Use & Vision Headless RPA Bridge for Legacy Banking & Government Portals"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+archava-core.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+uuid.workspace = true

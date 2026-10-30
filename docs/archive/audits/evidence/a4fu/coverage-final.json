@@ -1,0 +1,1917 @@
+{
+  "requiredCoverage": {
+    "manifest": "docs/rust/required-coverage.json",
+    "manifestDigest": "sha256:fa5631e9ca960e71122455663da703de7bf863d4f6e66743893f5b5ec4f916d3",
+    "frozen": "2026-10-16",
+    "items": [
+      {
+        "id": "R00-FREEZE-INVENTORY",
+        "proofs": [
+          "D-INVENTORY",
+          "J-INVENTORY-JSON"
+        ]
+      },
+      {
+        "id": "R00-FINDINGS-RECHECK",
+        "proofs": [
+          "D-KNOWN-DIFFS"
+        ]
+      },
+      {
+        "id": "R00-DECISIONS",
+        "proofs": [
+          "D-DECISIONS"
+        ]
+      },
+      {
+        "id": "R00-EXECUTION-STATE",
+        "proofs": [
+          "D-EXECUTION-STATE"
+        ]
+      },
+      {
+        "id": "R00-CONTRACTS-CONSUMERS",
+        "proofs": [
+          "J-CONFIG-CONTRACTS",
+          "J-INVENTORY-JSON"
+        ]
+      },
+      {
+        "id": "R01-WORKSPACE",
+        "proofs": [
+          "P-FAST-GATE"
+        ]
+      },
+      {
+        "id": "R01-CONTRACTS-ERRORS",
+        "proofs": [
+          "P-FAST-GATE"
+        ]
+      },
+      {
+        "id": "R01-AUTHORITY-POLICY-SEAM",
+        "proofs": [
+          "P-FAST-GATE",
+          "P-AUTHORITY-PG"
+        ]
+      },
+      {
+        "id": "R01-NONOWNER-RLS-COHORT",
+        "proofs": [
+          "P-FAST-GATE",
+          "P-READINESS-PG"
+        ]
+      },
+      {
+        "id": "R01-AXUM-HOST",
+        "proofs": [
+          "P-FAST-GATE",
+          "P-READINESS-PG"
+        ]
+      },
+      {
+        "id": "R01-LEPTOS-UI",
+        "proofs": [
+          "P-RUST-BROWSER"
+        ]
+      },
+      {
+        "id": "R01-NO-SECRETS-WASM-SSR",
+        "proofs": [
+          "P-WASM-PORTABLE"
+        ]
+      },
+      {
+        "id": "R01-PERF-BUDGETS",
+        "proofs": [
+          "P-BENCHMARK"
+        ]
+      },
+      {
+        "id": "R02-PRICING-PORTED",
+        "proofs": [
+          "P-P1-PARITY",
+          "P-FAST-GATE"
+        ]
+      },
+      {
+        "id": "R02-RATES-PORTED",
+        "proofs": [
+          "P-P2-PARITY",
+          "P-FAST-GATE"
+        ]
+      },
+      {
+        "id": "R02-PARITY-BOUNDARY",
+        "proofs": [
+          "P-P1-PARITY",
+          "P-P2-PARITY"
+        ]
+      },
+      {
+        "id": "R02-ASSEMBLY-PLANNING",
+        "proofs": [
+          "P-FAST-GATE",
+          "P-PLANNING-CONFORMANCE"
+        ]
+      },
+      {
+        "id": "R02-CAPACITY-MATH",
+        "proofs": [
+          "P-FAST-GATE",
+          "P-CAPACITY-CONFORMANCE"
+        ]
+      },
+      {
+        "id": "R02-BENCHMARK",
+        "proofs": [
+          "P-BENCHMARK",
+          "P-ARTIFACT-PROOFS"
+        ]
+      },
+      {
+        "id": "R02-TWO-COLD-CONSUMERS",
+        "proofs": [
+          "P-COLD-CONSUMERS"
+        ]
+      },
+      {
+        "id": "R02-REFERENCE-PILOT",
+        "proofs": [
+          "D-KNOWN-DIFFS"
+        ]
+      },
+      {
+        "id": "R03-IDENTITY-SESSIONS-CSRF",
+        "proofs": [
+          "P-AUTHORITY-PG",
+          "P-RUST-BROWSER"
+        ]
+      },
+      {
+        "id": "R03-CONTACTS-PIPELINE",
+        "proofs": [
+          "P-R03-DOMAIN",
+          "P-RUST-BROWSER"
+        ]
+      },
+      {
+        "id": "R03-CONFIRMATION-RECEIPTS",
+        "proofs": [
+          "P-R03-DOMAIN",
+          "P-RUST-BROWSER",
+          "P-AUTHORITY-PG"
+        ]
+      },
+      {
+        "id": "R03-ASSISTANT-CHAT",
+        "proofs": [
+          "P-R03-DOMAIN"
+        ]
+      },
+      {
+        "id": "R03-K05-K04-CONSUMERS",
+        "proofs": [
+          "P-K05-K04"
+        ]
+      },
+      {
+        "id": "R03-NEGATIVE-EVIDENCE",
+        "proofs": [
+          "P-AUTHORITY-PG",
+          "P-RUST-BROWSER"
+        ]
+      },
+      {
+        "id": "R04-ORGANIZATIONS",
+        "proofs": [
+          "P-R04-DOMAIN"
+        ]
+      },
+      {
+        "id": "R04-PROPOSALS-AMENDMENTS",
+        "proofs": [
+          "P-R04-DOMAIN"
+        ]
+      },
+      {
+        "id": "R04-PROJECTS",
+        "proofs": [
+          "P-R04-DOMAIN"
+        ]
+      },
+      {
+        "id": "R04-CAPACITY-OPERATIONS",
+        "proofs": [
+          "P-R04-DOMAIN"
+        ]
+      },
+      {
+        "id": "R04-UI-API-CLI",
+        "proofs": [
+          "P-R04-DOMAIN"
+        ]
+      },
+      {
+        "id": "R04-TWO-CONSUMERS",
+        "proofs": [
+          "P-MODULE-CONSUMERS"
+        ]
+      },
+      {
+        "id": "R05-SCHEDULING",
+        "proofs": [
+          "P-R05-DOMAIN"
+        ]
+      },
+      {
+        "id": "R05-ACCOMMODATION",
+        "proofs": [
+          "P-R05-DOMAIN"
+        ]
+      },
+      {
+        "id": "R05-ASSET-BOUNDARY",
+        "proofs": [
+          "P-R05-DOMAIN"
+        ]
+      },
+      {
+        "id": "R05-UI-API-PROOF",
+        "proofs": [
+          "P-R05-DOMAIN",
+          "P-RUST-BROWSER"
+        ]
+      },
+      {
+        "id": "R05-TWO-CONSUMERS",
+        "proofs": [
+          "P-MODULE-CONSUMERS"
+        ]
+      },
+      {
+        "id": "R06-SINGLE-STOCK-POOL",
+        "proofs": [
+          "P-R06-DOMAIN"
+        ]
+      },
+      {
+        "id": "R06-PARTIAL-RECEIPTS",
+        "proofs": [
+          "P-R06-DOMAIN"
+        ]
+      },
+      {
+        "id": "R06-RECEIPTS-AUDIT-CLAIMS",
+        "proofs": [
+          "P-R06-DOMAIN"
+        ]
+      },
+      {
+        "id": "R06-SINGLE-WRITER",
+        "proofs": [
+          "P-R06-DOMAIN"
+        ]
+      },
+      {
+        "id": "R06-TENANT-SCOPE",
+        "proofs": [
+          "P-R06-DOMAIN",
+          "P-READINESS-PG"
+        ]
+      },
+      {
+        "id": "R06-TWO-CONSUMERS",
+        "proofs": [
+          "P-MODULE-CONSUMERS"
+        ]
+      },
+      {
+        "id": "R07-BILLING-SETTLEMENT",
+        "proofs": [
+          "P-R07-DOMAIN"
+        ]
+      },
+      {
+        "id": "R07-SUBSCRIPTIONS",
+        "proofs": [
+          "P-R07-DOMAIN"
+        ]
+      },
+      {
+        "id": "R07-ATTENDANCE",
+        "proofs": [
+          "P-R07-DOMAIN"
+        ]
+      },
+      {
+        "id": "R07-SUPPORT",
+        "proofs": [
+          "P-R07-DOMAIN"
+        ]
+      },
+      {
+        "id": "R07-FULFILLMENT",
+        "proofs": [
+          "P-R07-DOMAIN"
+        ]
+      },
+      {
+        "id": "R07-FINANCIAL-INTEGRITY",
+        "proofs": [
+          "P-R07-DOMAIN"
+        ]
+      },
+      {
+        "id": "R07-TWO-CONSUMERS",
+        "proofs": [
+          "P-MODULE-CONSUMERS"
+        ]
+      },
+      {
+        "id": "R08-LAUNDRY",
+        "proofs": [
+          "P-R08-DOMAIN"
+        ]
+      },
+      {
+        "id": "R08-FIELD-SERVICES",
+        "proofs": [
+          "P-R08-DOMAIN"
+        ]
+      },
+      {
+        "id": "R08-FORMAL-EDUCATION",
+        "proofs": [
+          "P-R08-DOMAIN"
+        ]
+      },
+      {
+        "id": "R08-OTHER-EXTENSIONS",
+        "proofs": [
+          "P-R08-DOMAIN",
+          "D-COMPLETION-REPORT"
+        ]
+      },
+      {
+        "id": "R08-TWO-CONSUMERS",
+        "proofs": [
+          "P-MODULE-CONSUMERS"
+        ]
+      },
+      {
+        "id": "R09-CONTEXT-KNOWLEDGE-DECISION",
+        "proofs": [
+          "P-ASSISTANT-CONTEXT"
+        ]
+      },
+      {
+        "id": "R09-ASSISTANT-BUDGETS",
+        "proofs": [
+          "P-ASSISTANT-CONTEXT",
+          "P-PROVIDER-CONTRACTS"
+        ]
+      },
+      {
+        "id": "R09-SDK-WIDGET-PAGE-AWARENESS",
+        "proofs": [
+          "P-SDK-WIDGET"
+        ]
+      },
+      {
+        "id": "R09-REALTIME-VOICE-AVATAR",
+        "proofs": [
+          "P-REALTIME-VOICE"
+        ]
+      },
+      {
+        "id": "R09-PROVIDER-CONTRACTS",
+        "proofs": [
+          "P-PROVIDER-CONTRACTS"
+        ]
+      },
+      {
+        "id": "R10-OPERATIONAL-CLI",
+        "proofs": [
+          "P-CLI-OPERATIONS"
+        ]
+      },
+      {
+        "id": "R10-ASSEMBLY-PACK-VERIFY",
+        "proofs": [
+          "P-CLI-OPERATIONS"
+        ]
+      },
+      {
+        "id": "R10-FRESH-INSTALL-UPGRADE",
+        "proofs": [
+          "P-UPGRADE-RESTORE-RUST"
+        ]
+      },
+      {
+        "id": "R10-BACKUP-RESTORE",
+        "proofs": [
+          "P-UPGRADE-RESTORE-RUST"
+        ]
+      },
+      {
+        "id": "R10-HANDOVER-ROLLBACK",
+        "proofs": [
+          "P-UPGRADE-RESTORE-RUST"
+        ]
+      },
+      {
+        "id": "R10-RELEASE-ARCHIVE",
+        "proofs": [
+          "P-RELEASE-IDENTITY"
+        ]
+      },
+      {
+        "id": "R11-INVENTORY-DISPOSITION",
+        "proofs": [
+          "D-COMPLETION-REPORT",
+          "J-INVENTORY-JSON"
+        ]
+      },
+      {
+        "id": "R11-NO-HIDDEN-RUNTIME",
+        "proofs": [
+          "P-LEGACY-REPLACEMENT"
+        ]
+      },
+      {
+        "id": "R11-LEGACY-REPLACEMENT",
+        "proofs": [
+          "P-LEGACY-REPLACEMENT",
+          "D-COMPLETION-REPORT"
+        ]
+      },
+      {
+        "id": "R11-ALL-GATES",
+        "proofs": [
+          "D-COMPLETION-REPORT",
+          "D-AUDIT-PACKET"
+        ]
+      },
+      {
+        "id": "R11-KIT-READINESS",
+        "proofs": [
+          "P-SECURITY-CHAIN",
+          "D-COMPLETION-REPORT"
+        ]
+      },
+      {
+        "id": "R11-COMPAT-EXCEPTIONS",
+        "proofs": [
+          "D-AUDIT-PACKET"
+        ]
+      },
+      {
+        "id": "OWN-T01",
+        "proofs": [
+          "P-OWN-T01"
+        ]
+      },
+      {
+        "id": "OWN-T02",
+        "proofs": [
+          "P-OWN-T02"
+        ]
+      },
+      {
+        "id": "OWN-T03",
+        "proofs": [
+          "P-OWN-T03"
+        ]
+      },
+      {
+        "id": "OWN-T04",
+        "proofs": [
+          "P-OWN-T04"
+        ]
+      },
+      {
+        "id": "OWN-T05",
+        "proofs": [
+          "P-OWN-T05"
+        ]
+      },
+      {
+        "id": "OWN-T06",
+        "proofs": [
+          "P-OWN-T06"
+        ]
+      },
+      {
+        "id": "OWN-T07",
+        "proofs": [
+          "P-OWN-T07"
+        ]
+      },
+      {
+        "id": "OWN-T08",
+        "proofs": [
+          "P-OWN-T08"
+        ]
+      },
+      {
+        "id": "OWN-T09",
+        "proofs": [
+          "P-OWN-T09"
+        ]
+      },
+      {
+        "id": "OWN-T10",
+        "proofs": [
+          "P-OWN-T10"
+        ]
+      },
+      {
+        "id": "G01-BASELINE",
+        "proofs": [
+          "D-INVENTORY",
+          "J-INVENTORY-JSON",
+          "D-KNOWN-DIFFS"
+        ]
+      },
+      {
+        "id": "G02-CONTRACTS",
+        "proofs": [
+          "P-FAST-GATE",
+          "P-P1-PARITY",
+          "P-P2-PARITY"
+        ]
+      },
+      {
+        "id": "G03-AUTHORITY",
+        "proofs": [
+          "P-AUTHORITY-PG",
+          "P-READINESS-PG"
+        ]
+      },
+      {
+        "id": "G04-DOMAIN-INTEGRITY",
+        "proofs": [
+          "P-R04-DOMAIN",
+          "P-R05-DOMAIN",
+          "P-R06-DOMAIN",
+          "P-R07-DOMAIN",
+          "P-R08-DOMAIN"
+        ]
+      },
+      {
+        "id": "G05-REUSE",
+        "proofs": [
+          "P-COLD-CONSUMERS",
+          "P-MODULE-CONSUMERS"
+        ]
+      },
+      {
+        "id": "G06-UI-SDK",
+        "proofs": [
+          "P-RUST-BROWSER",
+          "P-SDK-WIDGET",
+          "P-REALTIME-VOICE"
+        ]
+      },
+      {
+        "id": "G07-DATA-RECOVERY",
+        "proofs": [
+          "P-UPGRADE-RESTORE-RUST",
+          "P-COLD-PRIOR-UPGRADE",
+          "P-COLD-PRIOR-RECOVERY"
+        ]
+      },
+      {
+        "id": "G08-QUALITY-PERF",
+        "proofs": [
+          "P-FAST-GATE",
+          "P-BENCHMARK",
+          "P-SECURITY-CHAIN"
+        ]
+      },
+      {
+        "id": "G09-RELEASE-IDENTITY",
+        "proofs": [
+          "P-RELEASE-IDENTITY",
+          "J-CONFIG-CONTRACTS"
+        ]
+      },
+      {
+        "id": "G10-OPERATIONS-RETIREMENT",
+        "proofs": [
+          "P-CLI-OPERATIONS",
+          "P-LEGACY-REPLACEMENT"
+        ]
+      }
+    ],
+    "proofs": [
+      {
+        "id": "P-FAST-GATE",
+        "kind": "evidence",
+        "requiredChecks": [
+          "build release artifacts",
+          "cargo fmt --all --check",
+          "cargo clippy --all-targets -- -D warnings",
+          "cargo test --workspace",
+          "pg readiness suites",
+          "pg authority suite",
+          "erp purchasing suite",
+          "erp foodservice suite",
+          "erp R04 suites",
+          "erp R05 suites",
+          "erp R07 suites",
+          "R03 domain suite",
+          "R09 context suite",
+          "capacity conformance suite",
+          "rust unit tests (node --test)",
+          "p1 pricing parity",
+          "p2 rates parity",
+          "two cold consumers",
+          "planning conformance suite",
+          "wasm portable boundary",
+          "R09 provider contracts"
+        ],
+        "sourcePaths": [
+          "rust/crates",
+          "rust/Cargo.toml",
+          "rust/Cargo.lock",
+          "rust/rust-toolchain.toml",
+          "tools/rust/verify.mjs",
+          "tools/rust/evidence.mjs",
+          "tools/rust/parity",
+          "tools/library/verify-rust-consumers.mjs",
+          "examples/rust-consumers",
+          "config/pricing.v1.json"
+        ],
+        "artifacts": [
+          "rust/target/package/archava-pricing-0.1.0.crate",
+          "rust/target/package/archava-rates-0.1.0.crate",
+          "rust/target/release/libarchava_native.node"
+        ],
+        "referenced": [
+          "tools/rust/parity/evidence/p1-parity.json",
+          "tools/rust/parity/evidence/p2-parity.json",
+          "dist/rust-consumer-proof.json"
+        ]
+      },
+      {
+        "id": "P-P1-PARITY",
+        "kind": "evidence",
+        "requiredChecks": [
+          "p1 parity harness exits 0",
+          "frozen expectation reconciled"
+        ],
+        "sourcePaths": [
+          "rust/crates/pricing",
+          "rust/crates/native",
+          "tools/rust/parity",
+          "config/pricing.v1.json"
+        ],
+        "artifacts": [
+          "rust/target/release/libarchava_native.node"
+        ],
+        "referenced": [
+          "tools/rust/parity/evidence/p1-parity.json"
+        ]
+      },
+      {
+        "id": "P-P2-PARITY",
+        "kind": "evidence",
+        "requiredChecks": [
+          "p2 parity harness exits 0",
+          "frozen expectation reconciled"
+        ],
+        "sourcePaths": [
+          "rust/crates/rates",
+          "rust/crates/pricing",
+          "rust/crates/native",
+          "tools/rust/parity",
+          "config/pricing.v1.json"
+        ],
+        "artifacts": [
+          "rust/target/release/libarchava_native.node"
+        ],
+        "referenced": [
+          "tools/rust/parity/evidence/p2-parity.json"
+        ]
+      },
+      {
+        "id": "P-COLD-CONSUMERS",
+        "kind": "evidence",
+        "requiredChecks": [
+          "consumer A (crate tarballs) compiles and tests offline",
+          "consumer B (copied addon) checks pass offline",
+          "artifact freshness enforced",
+          "no product path in consumer manifests"
+        ],
+        "sourcePaths": [
+          "examples/rust-consumers",
+          "rust/crates/pricing",
+          "rust/crates/rates",
+          "tools/library/verify-rust-consumers.mjs",
+          "config/pricing.v1.json"
+        ],
+        "artifacts": [
+          "rust/target/package/archava-pricing-0.1.0.crate",
+          "rust/target/package/archava-rates-0.1.0.crate",
+          "rust/target/release/libarchava_native.node"
+        ],
+        "referenced": [
+          "dist/rust-consumer-proof.json"
+        ]
+      },
+      {
+        "id": "P-WASM-PORTABLE",
+        "kind": "evidence",
+        "requiredChecks": [
+          "portable crates compile for wasm32",
+          "host crate refused by wasm target (structural boundary)",
+          "no secret-shaped strings in portable sources (wasm surface)"
+        ],
+        "sourcePaths": [
+          "rust/crates",
+          "rust/Cargo.toml"
+        ],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "P-ARTIFACT-PROOFS",
+        "kind": "evidence",
+        "requiredChecks": [
+          "artifact unit proofs execute (no skip, no early return)",
+          "baseline engine walk matches recorded 338/12",
+          "consumer peak memory measured from its own process"
+        ],
+        "sourcePaths": [
+          "tools/rust/benchmark/test",
+          "packages/pricing/src",
+          "config/pricing.v1.json"
+        ],
+        "artifacts": [
+          "tools/rust/benchmark/build/pricing-engine.mjs",
+          "tools/rust/benchmark/rust/target/release/archava-bench"
+        ],
+        "referenced": []
+      },
+      {
+        "id": "P-BENCHMARK",
+        "kind": "evidence",
+        "requiredChecks": [
+          "compiled-consumer benchmark runs",
+          "pricing verdict recorded",
+          "rates verdict recorded",
+          "setup and steady state measured separately"
+        ],
+        "sourcePaths": [
+          "tools/rust/benchmark",
+          "rust/crates/pricing",
+          "rust/crates/rates",
+          "packages/pricing/src",
+          "config/pricing.v1.json"
+        ],
+        "artifacts": [
+          "tools/rust/benchmark/rust/target/release/archava-bench"
+        ],
+        "referenced": [
+          "tools/rust/benchmark/evidence/benchmark.json"
+        ]
+      },
+      {
+        "id": "P-SECURITY-CHAIN",
+        "kind": "evidence",
+        "requiredChecks": [
+          "security chain completes",
+          "declared tolerances honored (no required failure ignored)"
+        ],
+        "sourcePaths": [
+          "tools/security",
+          "packages",
+          "apps/crm"
+        ],
+        "artifacts": [],
+        "referenced": [
+          "dist/security-proof/results.json"
+        ]
+      },
+      {
+        "id": "P-CRM-BROWSER",
+        "kind": "evidence",
+        "requiredChecks": [
+          "CRM browser end-to-end proof passes"
+        ],
+        "sourcePaths": [
+          "apps/crm"
+        ],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "P-COLD-PRIOR-UPGRADE",
+        "kind": "evidence",
+        "requiredChecks": [
+          "cold-prior upgrade and restore passes"
+        ],
+        "sourcePaths": [
+          "apps/crm"
+        ],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "P-COLD-PRIOR-RECOVERY",
+        "kind": "evidence",
+        "requiredChecks": [
+          "cold-prior accommodation recovery passes"
+        ],
+        "sourcePaths": [
+          "packages/accommodation",
+          "packages/accommodation-pg"
+        ],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "P-CRM-BENCHMARK",
+        "kind": "evidence",
+        "requiredChecks": [
+          "CRM benchmark completes"
+        ],
+        "sourcePaths": [
+          "apps/crm"
+        ],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "P-AUTHORITY-PG",
+        "kind": "evidence",
+        "requiredChecks": [
+          "unauthenticated command refused",
+          "forged tenant/role/approval refused",
+          "revoked grant refused on execute",
+          "revoked grant refused on status",
+          "revoked grant refused on replay",
+          "revoked grant refused on recovery",
+          "downgraded grant refused on recovery",
+          "reused key for another command conflicts",
+          "concurrent same-key different-input conflicts",
+          "authorized operation succeeds",
+          "cross-tenant read refused at DB"
+        ],
+        "sourcePaths": [
+          "rust/crates/host",
+          "rust/crates/adapters",
+          "rust/crates/domain",
+          "rust/crates/core",
+          "tools/rust/pg-authority.mjs",
+          "packages/commerce-pg/migrations"
+        ],
+        "artifacts": [],
+        "referenced": [
+          "dist/rust-authority-proof.json"
+        ]
+      },
+      {
+        "id": "P-ERP-PURCHASING",
+        "kind": "evidence",
+        "requiredChecks": [
+          "authorized flow changes stock exactly once",
+          "over-acceptance refuses without stock",
+          "rejected-only delivery adds no stock",
+          "non-tracked offer refuses the order",
+          "revoked grant refused on receive and recovery",
+          "same key different command conflicts",
+          "cross-tenant caller refused, keys per tenant",
+          "missing purchasing grant refused",
+          "lost response recovers by replay and status"
+        ],
+        "sourcePaths": [
+          "rust/crates/host",
+          "rust/crates/adapters",
+          "rust/crates/domain",
+          "rust/crates/core",
+          "tools/rust/erp/verify-purchasing.mjs",
+          "packages/commerce-pg/migrations",
+          "packages/purchasing-pg/migrations"
+        ],
+        "artifacts": [],
+        "referenced": [
+          "dist/rust-erp-purchasing-proof.json"
+        ]
+      },
+      {
+        "id": "P-ERP-FOODSERVICE",
+        "kind": "evidence",
+        "requiredChecks": [
+          "authorized food flow consumes the shared pool exactly once",
+          "over-reservation refuses without holding stock",
+          "recipe refuses a non-tracked ingredient",
+          "revoked food grant refused on recovery",
+          "same key different command conflicts",
+          "cross-tenant caller refused before any write",
+          "lost response replays without a second reservation",
+          "cancel releases the reservation untouched",
+          "missing foodservice grant refused"
+        ],
+        "sourcePaths": [
+          "rust/crates/host",
+          "rust/crates/adapters",
+          "rust/crates/domain",
+          "rust/crates/core",
+          "tools/rust/erp/verify-foodservice.mjs",
+          "packages/commerce-pg/migrations",
+          "packages/foodservice-pg/migrations"
+        ],
+        "artifacts": [],
+        "referenced": [
+          "dist/rust-erp-foodservice-proof.json"
+        ]
+      },
+      {
+        "id": "P-ERP-R04",
+        "kind": "evidence",
+        "requiredChecks": [
+          "authorized organization life documents its chain",
+          "update on archived refuses and holds nothing",
+          "affiliation gates refuse without holding",
+          "revoked organizations grant refused on recovery",
+          "same key different command conflicts",
+          "cross-tenant caller refused before any write",
+          "lost response replays without a second organization",
+          "archived organization still releases its affiliation",
+          "missing organizations grant refused",
+          "authorized proposal flow documents its life",
+          "accept before submit refuses and holds nothing",
+          "reject records rejected exactly once",
+          "revoked proposals grant refused on recovery",
+          "lost response replays without a second snapshot",
+          "change request lifecycle amends the scope",
+          "missing proposals grant refused",
+          "authorized delivery chain walks the state table",
+          "delivered gate requires the work",
+          "out-of-table transitions refuse and hold nothing",
+          "revoked projects grant refused on recovery",
+          "lost response replays without a second project",
+          "task under a reached milestone cannot reopen",
+          "missing projects grant refused"
+        ],
+        "sourcePaths": [
+          "rust/crates/host",
+          "rust/crates/adapters/src/erp",
+          "rust/crates/domain/src/erp",
+          "rust/crates/core",
+          "tools/rust/erp/verify-r04.mjs",
+          "packages/organizations-pg/migrations",
+          "packages/proposals-pg/migrations",
+          "packages/projects-pg/migrations"
+        ],
+        "artifacts": [],
+        "referenced": [
+          "dist/rust-erp-r04-proof.json"
+        ]
+      },
+      {
+        "id": "P-ERP-R05",
+        "kind": "evidence",
+        "requiredChecks": [
+          "authorized scheduling flow documents its life",
+          "overlapping hold refuses and holds nothing",
+          "terminal reservation refuses further updates",
+          "revoked scheduling grant refused on recovery",
+          "same key different command conflicts",
+          "cross-tenant caller refused before any write",
+          "lost response replays without a second resource",
+          "insufficient grants refuse before any statement",
+          "malformed instant is a boundary 400",
+          "authorized accommodation flow documents its life",
+          "wall-clock gap or repeat is a conflict",
+          "overlapping stay refuses and holds nothing",
+          "housekeeping vocabulary and occupancy refuse the room",
+          "revoked accommodation grant refused on recovery",
+          "same accommodation key different command conflicts",
+          "lost response replays without a second stay",
+          "cross-tenant accommodation caller refused before any write",
+          "narrow accommodation grants refuse the arms they lack",
+          "stay window capacity and boundary gates refuse",
+          "authorized assets life documents its custody",
+          "customer-owned intake records the service intake",
+          "custody vocabulary and state boundaries refuse the movement",
+          "revoked assets grant refused on recovery",
+          "same assets key different command conflicts",
+          "lost response replays without a second asset",
+          "cross-tenant assets caller refused before any write",
+          "narrow assets grants refuse the arms they lack",
+          "stale revision terminal state and wire boundaries refuse",
+          "status read answers the assets command status document"
+        ],
+        "sourcePaths": [
+          "rust/crates/host",
+          "rust/crates/adapters/src/erp",
+          "rust/crates/domain/src/erp",
+          "rust/crates/core",
+          "tools/rust/erp/verify-r05.mjs",
+          "packages/scheduling-pg/migrations",
+          "packages/accommodation-pg/migrations",
+          "packages/assets-pg/migrations"
+        ],
+        "artifacts": [],
+        "referenced": [
+          "dist/rust-erp-r05-proof.json"
+        ]
+      },
+      {
+        "id": "P-ERP-R07",
+        "kind": "evidence",
+        "requiredChecks": [
+          "authorized billing life documents its settlement",
+          "a forged claim settles nothing",
+          "correction reversal respects its invoice",
+          "voiding holds on recorded settlement",
+          "settlement beyond the balance holds nothing",
+          "a failed outcome moves no money and no revision",
+          "the attempt arm asserts no result",
+          "revoked billing grant refused on recovery",
+          "cross-tenant billing caller refused before any write",
+          "same billing key different command conflicts",
+          "lost response replays without a second row",
+          "narrow billing grants refuse the arms they lack",
+          "transition state and wire boundaries refuse the movement",
+          "authorized subscription life documents its entitlements",
+          "an unpaid draft grants no consumption right",
+          "the quota boundary refuses and records nothing",
+          "a duplicate usage key conflicts and records nothing",
+          "a past due subscription refuses usage",
+          "activation without a payment record refuses",
+          "a revoked entitlement refuses usage",
+          "the stale revision conflicts and records nothing",
+          "the same subscription key a different command conflicts",
+          "lost response replays the recorded subscription receipt",
+          "cross-tenant subscription callers refuse before any write",
+          "narrow subscription grants refuse exactly the arms they lack",
+          "the subscription wire boundary and read projections hold",
+          "authorized attendance life documents its sessions and check-ins",
+          "a roster from another session cannot check in",
+          "the seat boundary refuses and holds nothing",
+          "a duplicate registration conflicts and records nothing",
+          "the same check in key a different command conflicts",
+          "concurrent check ins record exactly one attendance",
+          "a closed session refuses registration and check in",
+          "the stale attendance revision conflicts and records nothing",
+          "lost response replays the recorded attendance receipt",
+          "the same attendance key a different command conflicts",
+          "cross tenant attendance callers refuse before any write",
+          "revoked attendance grant refused on recovery",
+          "narrow attendance grants refuse exactly the arms they lack",
+          "the attendance wire boundary and read projections hold"
+        ],
+        "sourcePaths": [
+          "rust/crates/host",
+          "rust/crates/adapters/src/erp",
+          "rust/crates/domain/src/erp",
+          "rust/crates/core",
+          "tools/rust/erp/verify-r07.mjs",
+          "packages/billing-pg/migrations",
+          "packages/attendance-pg/migrations"
+        ],
+        "artifacts": [],
+        "referenced": [
+          "dist/rust-erp-r07-proof.json"
+        ]
+      },
+      {
+        "id": "P-READINESS-PG",
+        "kind": "evidence",
+        "requiredChecks": [
+          "startup readiness blocks on missing forced policy",
+          "startup readiness blocks on modified migration checksum",
+          "startup readiness blocks on owner runtime",
+          "host refuses to serve before readiness passes",
+          "pooled tenant context does not leak across begin"
+        ],
+        "sourcePaths": [
+          "rust/crates/adapters",
+          "rust/crates/host",
+          "tools/rust/pg-readiness.mjs",
+          "packages/commerce-pg/migrations",
+          "packages/identity-pg/migrations"
+        ],
+        "artifacts": [],
+        "referenced": [
+          "dist/rust-readiness-proof.json"
+        ]
+      },
+      {
+        "id": "P-RUST-BROWSER",
+        "kind": "evidence",
+        "requiredChecks": [
+          "login SSR/hydration in real browser",
+          "contacts/pipeline read",
+          "reviewed business command executed",
+          "persisted effect verified in DB",
+          "durable receipt readable",
+          "authorized recovery after refresh",
+          "authorized recovery after lost response",
+          "authorized recovery after restart",
+          "CSRF negative",
+          "stale revision negative",
+          "unauthenticated/forged negative",
+          "session logout revokes server authority",
+          "literal search and cursor pagination",
+          "pending recovery identity survives reload and resolution",
+          "contact record writes through the product UI",
+          "assistant desk reads and executes through the host",
+          "contact create through the product UI"
+        ],
+        "sourcePaths": [
+          "rust"
+        ],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "P-CAPACITY-CONFORMANCE",
+        "kind": "evidence",
+        "requiredChecks": [
+          "non-finite input rejected (invalid_request)",
+          "calendar overflow returns controlled error (no hang)",
+          "loop bounds advance (iteration cap honored)",
+          "horizon and allocation bounds enforced",
+          "extreme overflow returns controlled error",
+          "corrected parity retained"
+        ],
+        "sourcePaths": [
+          "rust/crates/capacity",
+          "tools/rust/capacity-probe.mjs",
+          "tools/rust/capacity-conformance.mjs"
+        ],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "P-PLANNING-CONFORMANCE",
+        "kind": "evidence",
+        "requiredChecks": [
+          "conformance cases pass",
+          "measurement coverage recorded",
+          "cold-consumer planning proof passes"
+        ],
+        "sourcePaths": [
+          "rust/crates/assembly",
+          "tools/rust/planning-conformance.mjs"
+        ],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "P-R03-DOMAIN",
+        "kind": "evidence",
+        "requiredChecks": [
+          "contacts/pipeline repository tests pass",
+          "command receipt state machine tests pass",
+          "assistant planning refusal tests pass"
+        ],
+        "sourcePaths": [
+          "rust"
+        ],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "P-R04-DOMAIN",
+        "kind": "evidence",
+        "requiredChecks": [
+          "revision/race tests pass",
+          "same-transaction invariants pass",
+          "UI/API/CLI path tests pass"
+        ],
+        "sourcePaths": [
+          "rust"
+        ],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "P-R05-DOMAIN",
+        "kind": "evidence",
+        "requiredChecks": [
+          "overlap/race tests pass",
+          "cancellation and recovery tests pass",
+          "single occupancy authority test passes"
+        ],
+        "sourcePaths": [
+          "rust"
+        ],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "P-R06-DOMAIN",
+        "kind": "evidence",
+        "requiredChecks": [
+          "single stock pool invariant passes",
+          "partial receipt tests pass",
+          "same-transaction receipt/audit/claim tests pass",
+          "rollback/race tests pass"
+        ],
+        "sourcePaths": [
+          "rust"
+        ],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "P-R07-DOMAIN",
+        "kind": "evidence",
+        "requiredChecks": [
+          "financial state tests pass",
+          "provider-authoritative settlement test passes",
+          "entitlement tests pass",
+          "relationship/delegation tests pass"
+        ],
+        "sourcePaths": [
+          "rust"
+        ],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "P-R08-DOMAIN",
+        "kind": "evidence",
+        "requiredChecks": [
+          "laundry cohort tests pass",
+          "field-services dispatch tests pass",
+          "formal-education tests pass",
+          "scoped authority tests pass"
+        ],
+        "sourcePaths": [
+          "rust"
+        ],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "P-K05-K04",
+        "kind": "evidence",
+        "requiredChecks": [
+          "K05 consumer assembled and verified",
+          "K04 consumer assembled and verified",
+          "identical core/CRM artifact hashes"
+        ],
+        "sourcePaths": [
+          "rust"
+        ],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "P-MODULE-CONSUMERS",
+        "kind": "evidence",
+        "requiredChecks": [
+          "every accepted module has two independently installed consumers",
+          "no workspace/path dependency in either consumer"
+        ],
+        "sourcePaths": [
+          "examples/rust-consumers/erp",
+          "tools/rust/erp/module-consumers.ts",
+          "tools/library/pack.mjs"
+        ],
+        "artifacts": [],
+        "referenced": [
+          "dist/rust-erp-module-consumers-proof.json"
+        ]
+      },
+      {
+        "id": "P-ASSISTANT-CONTEXT",
+        "kind": "evidence",
+        "requiredChecks": [
+          "context/knowledge/decision parity tests pass",
+          "provider budget/recovery tests pass",
+          "consent/privacy tests pass"
+        ],
+        "sourcePaths": [
+          "rust"
+        ],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "P-SDK-WIDGET",
+        "kind": "evidence",
+        "requiredChecks": [
+          "SDK builds without owner credentials/internal tools",
+          "widget embed works in two host integrations",
+          "page awareness tests pass"
+        ],
+        "sourcePaths": [
+          "rust"
+        ],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "P-REALTIME-VOICE",
+        "kind": "evidence",
+        "requiredChecks": [
+          "realtime lifecycle tests pass",
+          "documented vendor bridge recorded",
+          "Chat fallback works"
+        ],
+        "sourcePaths": [
+          "rust"
+        ],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "P-PROVIDER-CONTRACTS",
+        "kind": "evidence",
+        "requiredChecks": [
+          "provider contracts preserved",
+          "idempotency/reconciliation tests pass",
+          "free/local policy honored"
+        ],
+        "sourcePaths": [
+          "rust"
+        ],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "P-CLI-OPERATIONS",
+        "kind": "evidence",
+        "requiredChecks": [
+          "operator commands replaced with Rust equivalents",
+          "assembly/pack/verify CLI path passes",
+          "runbook commands executed"
+        ],
+        "sourcePaths": [
+          "rust"
+        ],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "P-UPGRADE-RESTORE-RUST",
+        "kind": "evidence",
+        "requiredChecks": [
+          "fresh install upgrade passes",
+          "prior-profile upgrade passes",
+          "backup/restore rehearsal passes",
+          "rollback rehearsal passes",
+          "fenced single-writer handover passes"
+        ],
+        "sourcePaths": [
+          "rust"
+        ],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "P-RELEASE-IDENTITY",
+        "kind": "evidence",
+        "requiredChecks": [
+          "release profile version matches config source of truth",
+          "artifact digests recomputed and recorded",
+          "prior archives preserved (no overwrite)"
+        ],
+        "sourcePaths": [
+          "config/library-release.v1.json"
+        ],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "P-LEGACY-REPLACEMENT",
+        "kind": "evidence",
+        "requiredChecks": [
+          "no first-party Node/Python business runtime reachable from candidate",
+          "vendor/build/test bridges documented explicitly",
+          "retired wiring has verified replacement"
+        ],
+        "sourcePaths": [
+          "rust",
+          "apps",
+          "packages",
+          "tools"
+        ],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "P-OWN-T01",
+        "kind": "evidence",
+        "requiredChecks": [
+          "two business models on identical released core/CRM",
+          "owner config changes via UI only"
+        ],
+        "sourcePaths": [
+          "rust",
+          "config"
+        ],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "P-OWN-T02",
+        "kind": "evidence",
+        "requiredChecks": [
+          "chat plan equals dashboard plan",
+          "authoritative base/config/catalogue/pricing identity recorded"
+        ],
+        "sourcePaths": [
+          "rust",
+          "config"
+        ],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "P-OWN-T03",
+        "kind": "evidence",
+        "requiredChecks": [
+          "preview shows changes/dependencies/readiness/cost",
+          "no hidden activation/payment/provider effect"
+        ],
+        "sourcePaths": [
+          "rust",
+          "config"
+        ],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "P-OWN-T04",
+        "kind": "evidence",
+        "requiredChecks": [
+          "missing grant rejected",
+          "public session rejected",
+          "forged tenant/role/approval rejected",
+          "revoked confirm/status/replay rejected"
+        ],
+        "sourcePaths": [
+          "rust",
+          "config"
+        ],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "P-OWN-T05",
+        "kind": "evidence",
+        "requiredChecks": [
+          "incompatible dependency yields blocked result",
+          "blocked result never counted PASS"
+        ],
+        "sourcePaths": [
+          "rust",
+          "config"
+        ],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "P-OWN-T06",
+        "kind": "evidence",
+        "requiredChecks": [
+          "racing apply converges to one effect",
+          "refresh/lost response/restart recoverable"
+        ],
+        "sourcePaths": [
+          "rust",
+          "config"
+        ],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "P-OWN-T07",
+        "kind": "evidence",
+        "requiredChecks": [
+          "enable/disable changes UI/API/tool availability",
+          "disabled direct API rejected",
+          "dependent disable rejected"
+        ],
+        "sourcePaths": [
+          "rust",
+          "config"
+        ],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "P-OWN-T08",
+        "kind": "evidence",
+        "requiredChecks": [
+          "records/audit/receipts/permissions preserved",
+          "restore does not rewrite history"
+        ],
+        "sourcePaths": [
+          "rust",
+          "config"
+        ],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "P-OWN-T09",
+        "kind": "evidence",
+        "requiredChecks": [
+          "stale snapshot forces replan",
+          "changed targets force reconfirmation",
+          "no invented price/readiness"
+        ],
+        "sourcePaths": [
+          "rust",
+          "config"
+        ],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "P-OWN-T10",
+        "kind": "evidence",
+        "requiredChecks": [
+          "inspect→plan→preview→confirm→applied→recovery/history/restore in real browser",
+          "no owner code/file/terminal steps"
+        ],
+        "sourcePaths": [
+          "rust",
+          "config"
+        ],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "D-INVENTORY",
+        "kind": "document",
+        "requiredChecks": [],
+        "sourcePaths": [],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "D-DECISIONS",
+        "kind": "document",
+        "requiredChecks": [],
+        "sourcePaths": [],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "D-KNOWN-DIFFS",
+        "kind": "document",
+        "requiredChecks": [],
+        "sourcePaths": [],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "D-EXECUTION-STATE",
+        "kind": "document",
+        "requiredChecks": [],
+        "sourcePaths": [],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "D-COMPLETION-REPORT",
+        "kind": "document",
+        "requiredChecks": [],
+        "sourcePaths": [],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "D-AUDIT-PACKET",
+        "kind": "document",
+        "requiredChecks": [],
+        "sourcePaths": [],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "J-INVENTORY-JSON",
+        "kind": "json",
+        "requiredChecks": [],
+        "sourcePaths": [],
+        "artifacts": [],
+        "referenced": []
+      },
+      {
+        "id": "J-CONFIG-CONTRACTS",
+        "kind": "json",
+        "requiredChecks": [],
+        "sourcePaths": [],
+        "artifacts": [],
+        "referenced": []
+      }
+    ]
+  },
+  "errors": [
+    "proof P-FAST-GATE: required check \"cargo test --workspace\" is \"fail: step \\\"cargo test --workspace\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-FAST-GATE: required check \"pg readiness suites\" is \"fail: step \\\"pg readiness suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-FAST-GATE: required check \"pg authority suite\" is \"fail: step \\\"pg authority suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-FAST-GATE: required check \"erp purchasing suite\" is \"fail: step \\\"erp purchasing suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-FAST-GATE: required check \"erp foodservice suite\" is \"fail: step \\\"erp foodservice suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-FAST-GATE: required check \"erp R04 suites\" is \"fail: step \\\"erp R04 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-FAST-GATE: required check \"erp R05 suites\" is \"fail: step \\\"erp R05 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-FAST-GATE: required check \"erp R07 suites\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-FAST-GATE: required check \"R03 domain suite\" is \"fail: step \\\"R03 domain suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-FAST-GATE: required check \"R09 context suite\" is \"fail: step \\\"R09 context suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-FAST-GATE: required check \"capacity conformance suite\" is \"fail: step \\\"capacity conformance suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-FAST-GATE: required check \"rust unit tests (node --test)\" is \"fail: step \\\"rust unit tests (node --test)\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-FAST-GATE: required check \"p1 pricing parity\" is \"fail: step \\\"p1 pricing parity\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-FAST-GATE: required check \"p2 rates parity\" is \"fail: step \\\"p2 rates parity\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-FAST-GATE: required check \"two cold consumers\" is \"fail: step \\\"two cold consumers\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-FAST-GATE: required check \"planning conformance suite\" is \"fail: step \\\"planning conformance suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-FAST-GATE: required check \"R09 provider contracts\" is \"fail: step \\\"R09 provider contracts\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-FAST-GATE: recorded sources do not cover the manifest's sourcePaths (missing e.g. rust/crates/host/src/security.rs, rust/crates/pg-fixture/tests/socket_dir.rs, rust/crates/pg-fixture/tests/socket_dir_forced.rs)",
+    "proof P-FAST-GATE: sourceDigest mismatch (recorded sha256:3fd47fcdeaac57215a3494588636c426d2e151ec05c0631ea91433369fe7f1d7, recomputed sha256:284d93e5e0226967fef1fb20aa8b434cd7e8129a3f6f6cdea02b3e39df404500) — covered sources changed after the proof ran",
+    "proof P-P1-PARITY: required check \"p1 parity harness exits 0\" is \"fail: step \\\"p1 pricing parity\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-P1-PARITY: required check \"frozen expectation reconciled\" is \"fail: step \\\"p1 pricing parity\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-P1-PARITY: sourceDigest mismatch (recorded sha256:77f89490c2de2dc8e19086273fcf4ebf080dad0b146853ee1b139b6ab1472ef5, recomputed sha256:05ae18dfe441f06f4d0c333508a890e06896e5a4465dd001de5765d6de88d5df) — covered sources changed after the proof ran",
+    "proof P-P2-PARITY: required check \"p2 parity harness exits 0\" is \"fail: step \\\"p2 rates parity\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-P2-PARITY: required check \"frozen expectation reconciled\" is \"fail: step \\\"p2 rates parity\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-P2-PARITY: sourceDigest mismatch (recorded sha256:49ead9984656b1b2f1f1fa0d99bdcad2b5302843815d90fe8edae9a0c462a895, recomputed sha256:320bdf99fc7538e4cf91f56fe221311d49017645b7f4202f07bbb44b198b2309) — covered sources changed after the proof ran",
+    "proof P-COLD-CONSUMERS: required check \"consumer A (crate tarballs) compiles and tests offline\" is \"fail: step \\\"two cold consumers\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-COLD-CONSUMERS: required check \"consumer B (copied addon) checks pass offline\" is \"fail: step \\\"two cold consumers\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-COLD-CONSUMERS: required check \"artifact freshness enforced\" is \"fail: step \\\"two cold consumers\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-COLD-CONSUMERS: required check \"no product path in consumer manifests\" is \"fail: step \\\"two cold consumers\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-COLD-CONSUMERS: sourceDigest mismatch (recorded sha256:3bbe662a92357026483f18689eb98912e129be6ddc05124ee877be815ed50dfd, recomputed sha256:863deccd9734f562af5f85a09e5f82b331c9aef6a7663501362aa5209090ab79) — covered sources changed after the proof ran",
+    "proof P-WASM-PORTABLE: recorded sources do not cover the manifest's sourcePaths (missing e.g. rust/crates/host/src/security.rs, rust/crates/pg-fixture/tests/socket_dir.rs, rust/crates/pg-fixture/tests/socket_dir_forced.rs)",
+    "proof P-WASM-PORTABLE: sourceDigest mismatch (recorded sha256:55085e0264a4da586f15e2d3680d34521d7016f5fc05ae9086bab99430b4e8e2, recomputed sha256:f41ca348536cea150d0d217e1cc013b2998d4a500183e4a0ae2b5b06b5bf6e31) — covered sources changed after the proof ran",
+    "proof P-ARTIFACT-PROOFS: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"412f763e17f3a68a457fd76c7b929184c50c916a\" (stale or foreign proof)",
+    "proof P-ARTIFACT-PROOFS: identity.node is \"v26.10.0\", live candidate has \"v22.23.2\" (stale or foreign proof)",
+    "proof P-ARTIFACT-PROOFS: artifact tools/rust/benchmark/rust/target/release/archava-bench no longer exists on disk",
+    "proof P-BENCHMARK: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"412f763e17f3a68a457fd76c7b929184c50c916a\" (stale or foreign proof)",
+    "proof P-BENCHMARK: identity.node is \"v26.10.0\", live candidate has \"v22.23.2\" (stale or foreign proof)",
+    "proof P-BENCHMARK: sourceDigest mismatch (recorded sha256:930d7585b2c7af2a023f00349298ffc9e0156782808848f2869e762c8ddada03, recomputed sha256:91a2a0b9f1b03fc0ed6c45d4b9808e47e7b7c47d7d6612e12a1d1812d095f72f) — covered sources changed after the proof ran",
+    "proof P-BENCHMARK: artifact tools/rust/benchmark/rust/target/release/archava-bench no longer exists on disk",
+    "proof P-SECURITY-CHAIN: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"412f763e17f3a68a457fd76c7b929184c50c916a\" (stale or foreign proof)",
+    "proof P-SECURITY-CHAIN: identity.node is \"v26.10.0\", live candidate has \"v22.23.2\" (stale or foreign proof)",
+    "proof P-SECURITY-CHAIN: recorded sources do not cover the manifest's sourcePaths (missing e.g. apps/crm/test/password-fixture.test.ts, packages/attendance-pg/test/replay.test.ts, packages/attendance-pg/test/scope.test.ts)",
+    "proof P-SECURITY-CHAIN: sourceDigest mismatch (recorded sha256:b251dbc9712ca291ebf26d5a3460899901b24a6bc665fd771d3c492915f85817, recomputed sha256:a168b8d6e1f630dea1d7e5a3df29e397c080a6c5d38bc8a162df018e91372773) — covered sources changed after the proof ran",
+    "proof P-CRM-BROWSER: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"412f763e17f3a68a457fd76c7b929184c50c916a\" (stale or foreign proof)",
+    "proof P-CRM-BROWSER: identity.node is \"v26.10.0\", live candidate has \"v22.23.2\" (stale or foreign proof)",
+    "proof P-CRM-BROWSER: recorded sources do not cover the manifest's sourcePaths (missing e.g. apps/crm/test/password-fixture.test.ts)",
+    "proof P-CRM-BROWSER: sourceDigest mismatch (recorded sha256:8b8d8f89546df5e8bc3352f384346adada2de62b830a2ccb32dc1101f329390b, recomputed sha256:0cbe40cf8dfab3ca3f408f8e25b96a3f919be9324fb752eb235f9878c9425da3) — covered sources changed after the proof ran",
+    "proof P-COLD-PRIOR-UPGRADE: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"412f763e17f3a68a457fd76c7b929184c50c916a\" (stale or foreign proof)",
+    "proof P-COLD-PRIOR-UPGRADE: identity.node is \"v26.10.0\", live candidate has \"v22.23.2\" (stale or foreign proof)",
+    "proof P-COLD-PRIOR-UPGRADE: recorded sources do not cover the manifest's sourcePaths (missing e.g. apps/crm/test/password-fixture.test.ts)",
+    "proof P-COLD-PRIOR-UPGRADE: sourceDigest mismatch (recorded sha256:8b8d8f89546df5e8bc3352f384346adada2de62b830a2ccb32dc1101f329390b, recomputed sha256:0cbe40cf8dfab3ca3f408f8e25b96a3f919be9324fb752eb235f9878c9425da3) — covered sources changed after the proof ran",
+    "proof P-COLD-PRIOR-RECOVERY: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"412f763e17f3a68a457fd76c7b929184c50c916a\" (stale or foreign proof)",
+    "proof P-COLD-PRIOR-RECOVERY: identity.node is \"v26.10.0\", live candidate has \"v22.23.2\" (stale or foreign proof)",
+    "proof P-CRM-BENCHMARK: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"412f763e17f3a68a457fd76c7b929184c50c916a\" (stale or foreign proof)",
+    "proof P-CRM-BENCHMARK: identity.node is \"v26.10.0\", live candidate has \"v22.23.2\" (stale or foreign proof)",
+    "proof P-CRM-BENCHMARK: recorded sources do not cover the manifest's sourcePaths (missing e.g. apps/crm/test/password-fixture.test.ts)",
+    "proof P-CRM-BENCHMARK: sourceDigest mismatch (recorded sha256:8b8d8f89546df5e8bc3352f384346adada2de62b830a2ccb32dc1101f329390b, recomputed sha256:0cbe40cf8dfab3ca3f408f8e25b96a3f919be9324fb752eb235f9878c9425da3) — covered sources changed after the proof ran",
+    "proof P-AUTHORITY-PG: required check \"unauthenticated command refused\" is \"fail: step \\\"pg authority suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-AUTHORITY-PG: required check \"forged tenant/role/approval refused\" is \"fail: step \\\"pg authority suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-AUTHORITY-PG: required check \"revoked grant refused on execute\" is \"fail: step \\\"pg authority suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-AUTHORITY-PG: required check \"revoked grant refused on status\" is \"fail: step \\\"pg authority suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-AUTHORITY-PG: required check \"revoked grant refused on replay\" is \"fail: step \\\"pg authority suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-AUTHORITY-PG: required check \"revoked grant refused on recovery\" is \"fail: step \\\"pg authority suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-AUTHORITY-PG: required check \"downgraded grant refused on recovery\" is \"fail: step \\\"pg authority suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-AUTHORITY-PG: required check \"reused key for another command conflicts\" is \"fail: step \\\"pg authority suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-AUTHORITY-PG: required check \"concurrent same-key different-input conflicts\" is \"fail: step \\\"pg authority suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-AUTHORITY-PG: required check \"authorized operation succeeds\" is \"fail: step \\\"pg authority suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-AUTHORITY-PG: required check \"cross-tenant read refused at DB\" is \"fail: step \\\"pg authority suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-AUTHORITY-PG: recorded sources do not cover the manifest's sourcePaths (missing e.g. rust/crates/host/src/security.rs)",
+    "proof P-AUTHORITY-PG: sourceDigest mismatch (recorded sha256:4ed79fc228edf09d7bd2c1b32761a42a96825c93f29a1146f7f2faf984f392ec, recomputed sha256:196e9adf705274367b5860b43378530b42b2430fcb0444c8aaf53632f434c5c1) — covered sources changed after the proof ran",
+    "proof P-ERP-PURCHASING: required check \"authorized flow changes stock exactly once\" is \"fail: step \\\"erp purchasing suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-PURCHASING: required check \"over-acceptance refuses without stock\" is \"fail: step \\\"erp purchasing suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-PURCHASING: required check \"rejected-only delivery adds no stock\" is \"fail: step \\\"erp purchasing suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-PURCHASING: required check \"non-tracked offer refuses the order\" is \"fail: step \\\"erp purchasing suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-PURCHASING: required check \"revoked grant refused on receive and recovery\" is \"fail: step \\\"erp purchasing suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-PURCHASING: required check \"same key different command conflicts\" is \"fail: step \\\"erp purchasing suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-PURCHASING: required check \"cross-tenant caller refused, keys per tenant\" is \"fail: step \\\"erp purchasing suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-PURCHASING: required check \"missing purchasing grant refused\" is \"fail: step \\\"erp purchasing suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-PURCHASING: required check \"lost response recovers by replay and status\" is \"fail: step \\\"erp purchasing suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-PURCHASING: recorded sources do not cover the manifest's sourcePaths (missing e.g. rust/crates/host/src/security.rs)",
+    "proof P-ERP-PURCHASING: sourceDigest mismatch (recorded sha256:c5683485775076c4921b153f594c4233634b40a52bb09dfd9ad202ffa9728460, recomputed sha256:0259583964d45aa1826b40c2b27dc4136e5c3cae5f9f7cde3227e35274a882bb) — covered sources changed after the proof ran",
+    "proof P-ERP-FOODSERVICE: required check \"authorized food flow consumes the shared pool exactly once\" is \"fail: step \\\"erp foodservice suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-FOODSERVICE: required check \"over-reservation refuses without holding stock\" is \"fail: step \\\"erp foodservice suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-FOODSERVICE: required check \"recipe refuses a non-tracked ingredient\" is \"fail: step \\\"erp foodservice suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-FOODSERVICE: required check \"revoked food grant refused on recovery\" is \"fail: step \\\"erp foodservice suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-FOODSERVICE: required check \"same key different command conflicts\" is \"fail: step \\\"erp foodservice suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-FOODSERVICE: required check \"cross-tenant caller refused before any write\" is \"fail: step \\\"erp foodservice suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-FOODSERVICE: required check \"lost response replays without a second reservation\" is \"fail: step \\\"erp foodservice suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-FOODSERVICE: required check \"cancel releases the reservation untouched\" is \"fail: step \\\"erp foodservice suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-FOODSERVICE: required check \"missing foodservice grant refused\" is \"fail: step \\\"erp foodservice suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-FOODSERVICE: recorded sources do not cover the manifest's sourcePaths (missing e.g. rust/crates/host/src/security.rs)",
+    "proof P-ERP-FOODSERVICE: sourceDigest mismatch (recorded sha256:03644922f227392a87f6c97df85344031616ffcefa22eb20813a9b4b96087292, recomputed sha256:250fb4a59dec6ce6086264c4c98fa1d1e9de6de1e6fb3d5e994abaa0e1de6283) — covered sources changed after the proof ran",
+    "proof P-ERP-R04: required check \"authorized organization life documents its chain\" is \"fail: step \\\"erp R04 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R04: required check \"update on archived refuses and holds nothing\" is \"fail: step \\\"erp R04 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R04: required check \"affiliation gates refuse without holding\" is \"fail: step \\\"erp R04 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R04: required check \"revoked organizations grant refused on recovery\" is \"fail: step \\\"erp R04 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R04: required check \"same key different command conflicts\" is \"fail: step \\\"erp R04 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R04: required check \"cross-tenant caller refused before any write\" is \"fail: step \\\"erp R04 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R04: required check \"lost response replays without a second organization\" is \"fail: step \\\"erp R04 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R04: required check \"archived organization still releases its affiliation\" is \"fail: step \\\"erp R04 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R04: required check \"missing organizations grant refused\" is \"fail: step \\\"erp R04 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R04: required check \"authorized proposal flow documents its life\" is \"fail: step \\\"erp R04 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R04: required check \"accept before submit refuses and holds nothing\" is \"fail: step \\\"erp R04 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R04: required check \"reject records rejected exactly once\" is \"fail: step \\\"erp R04 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R04: required check \"revoked proposals grant refused on recovery\" is \"fail: step \\\"erp R04 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R04: required check \"lost response replays without a second snapshot\" is \"fail: step \\\"erp R04 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R04: required check \"change request lifecycle amends the scope\" is \"fail: step \\\"erp R04 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R04: required check \"missing proposals grant refused\" is \"fail: step \\\"erp R04 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R04: required check \"authorized delivery chain walks the state table\" is \"fail: step \\\"erp R04 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R04: required check \"delivered gate requires the work\" is \"fail: step \\\"erp R04 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R04: required check \"out-of-table transitions refuse and hold nothing\" is \"fail: step \\\"erp R04 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R04: required check \"revoked projects grant refused on recovery\" is \"fail: step \\\"erp R04 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R04: required check \"lost response replays without a second project\" is \"fail: step \\\"erp R04 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R04: required check \"task under a reached milestone cannot reopen\" is \"fail: step \\\"erp R04 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R04: required check \"missing projects grant refused\" is \"fail: step \\\"erp R04 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R04: recorded sources do not cover the manifest's sourcePaths (missing e.g. rust/crates/host/src/security.rs)",
+    "proof P-ERP-R04: sourceDigest mismatch (recorded sha256:4fd4316a9397351021b054dd5b64bd8d5df3d59614a9c94851011c7eeef07c50, recomputed sha256:a593936d9c08be6d86cec620f0a2e1bae8e535219389466722a31dfd2a660949) — covered sources changed after the proof ran",
+    "proof P-ERP-R04: details missing frozen tally \"namedRegressions\"",
+    "proof P-ERP-R05: required check \"authorized scheduling flow documents its life\" is \"fail: step \\\"erp R05 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R05: required check \"overlapping hold refuses and holds nothing\" is \"fail: step \\\"erp R05 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R05: required check \"terminal reservation refuses further updates\" is \"fail: step \\\"erp R05 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R05: required check \"revoked scheduling grant refused on recovery\" is \"fail: step \\\"erp R05 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R05: required check \"same key different command conflicts\" is \"fail: step \\\"erp R05 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R05: required check \"cross-tenant caller refused before any write\" is \"fail: step \\\"erp R05 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R05: required check \"lost response replays without a second resource\" is \"fail: step \\\"erp R05 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R05: required check \"insufficient grants refuse before any statement\" is \"fail: step \\\"erp R05 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R05: required check \"malformed instant is a boundary 400\" is \"fail: step \\\"erp R05 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R05: required check \"authorized accommodation flow documents its life\" is \"fail: step \\\"erp R05 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R05: required check \"wall-clock gap or repeat is a conflict\" is \"fail: step \\\"erp R05 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R05: required check \"overlapping stay refuses and holds nothing\" is \"fail: step \\\"erp R05 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R05: required check \"housekeeping vocabulary and occupancy refuse the room\" is \"fail: step \\\"erp R05 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R05: required check \"revoked accommodation grant refused on recovery\" is \"fail: step \\\"erp R05 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R05: required check \"same accommodation key different command conflicts\" is \"fail: step \\\"erp R05 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R05: required check \"lost response replays without a second stay\" is \"fail: step \\\"erp R05 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R05: required check \"cross-tenant accommodation caller refused before any write\" is \"fail: step \\\"erp R05 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R05: required check \"narrow accommodation grants refuse the arms they lack\" is \"fail: step \\\"erp R05 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R05: required check \"stay window capacity and boundary gates refuse\" is \"fail: step \\\"erp R05 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R05: required check \"authorized assets life documents its custody\" is \"fail: step \\\"erp R05 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R05: required check \"customer-owned intake records the service intake\" is \"fail: step \\\"erp R05 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R05: required check \"custody vocabulary and state boundaries refuse the movement\" is \"fail: step \\\"erp R05 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R05: required check \"revoked assets grant refused on recovery\" is \"fail: step \\\"erp R05 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R05: required check \"same assets key different command conflicts\" is \"fail: step \\\"erp R05 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R05: required check \"lost response replays without a second asset\" is \"fail: step \\\"erp R05 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R05: required check \"cross-tenant assets caller refused before any write\" is \"fail: step \\\"erp R05 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R05: required check \"narrow assets grants refuse the arms they lack\" is \"fail: step \\\"erp R05 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R05: required check \"stale revision terminal state and wire boundaries refuse\" is \"fail: step \\\"erp R05 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R05: required check \"status read answers the assets command status document\" is \"fail: step \\\"erp R05 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R05: recorded sources do not cover the manifest's sourcePaths (missing e.g. rust/crates/host/src/security.rs)",
+    "proof P-ERP-R05: sourceDigest mismatch (recorded sha256:69f46962f8340b9bfa9f5a28f75b9366d293c5ae91499cd0899a665a16c6dc7c, recomputed sha256:018d5c79778192882c10f48e2defcc8d20a4f4cacbf5e8a596b800dbaf21f5e3) — covered sources changed after the proof ran",
+    "proof P-ERP-R05: details missing frozen tally \"namedRegressions\"",
+    "proof P-ERP-R07: required check \"authorized billing life documents its settlement\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"a forged claim settles nothing\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"correction reversal respects its invoice\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"voiding holds on recorded settlement\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"settlement beyond the balance holds nothing\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"a failed outcome moves no money and no revision\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"the attempt arm asserts no result\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"revoked billing grant refused on recovery\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"cross-tenant billing caller refused before any write\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"same billing key different command conflicts\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"lost response replays without a second row\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"narrow billing grants refuse the arms they lack\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"transition state and wire boundaries refuse the movement\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"authorized subscription life documents its entitlements\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"an unpaid draft grants no consumption right\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"the quota boundary refuses and records nothing\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"a duplicate usage key conflicts and records nothing\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"a past due subscription refuses usage\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"activation without a payment record refuses\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"a revoked entitlement refuses usage\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"the stale revision conflicts and records nothing\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"the same subscription key a different command conflicts\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"lost response replays the recorded subscription receipt\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"cross-tenant subscription callers refuse before any write\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"narrow subscription grants refuse exactly the arms they lack\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"the subscription wire boundary and read projections hold\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"authorized attendance life documents its sessions and check-ins\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"a roster from another session cannot check in\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"the seat boundary refuses and holds nothing\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"a duplicate registration conflicts and records nothing\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"the same check in key a different command conflicts\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"concurrent check ins record exactly one attendance\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"a closed session refuses registration and check in\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"the stale attendance revision conflicts and records nothing\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"lost response replays the recorded attendance receipt\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"the same attendance key a different command conflicts\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"cross tenant attendance callers refuse before any write\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"revoked attendance grant refused on recovery\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"narrow attendance grants refuse exactly the arms they lack\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: required check \"the attendance wire boundary and read projections hold\" is \"fail: step \\\"erp R07 suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ERP-R07: recorded sources do not cover the manifest's sourcePaths (missing e.g. rust/crates/host/src/security.rs)",
+    "proof P-ERP-R07: sourceDigest mismatch (recorded sha256:e17df330f1d580a3e026116e78703f6bb0754b9e8286167418f56f91795944b6, recomputed sha256:f41fa249e10330636d302a0b9757006d05474557395acbd06800d495ee32f04a) — covered sources changed after the proof ran",
+    "proof P-ERP-R07: details missing frozen tally \"namedRegressions\"",
+    "proof P-READINESS-PG: required check \"startup readiness blocks on missing forced policy\" is \"fail: step \\\"pg readiness suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-READINESS-PG: required check \"startup readiness blocks on modified migration checksum\" is \"fail: step \\\"pg readiness suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-READINESS-PG: required check \"startup readiness blocks on owner runtime\" is \"fail: step \\\"pg readiness suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-READINESS-PG: required check \"host refuses to serve before readiness passes\" is \"fail: step \\\"pg readiness suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-READINESS-PG: required check \"pooled tenant context does not leak across begin\" is \"fail: step \\\"pg readiness suites\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-READINESS-PG: recorded sources do not cover the manifest's sourcePaths (missing e.g. rust/crates/host/src/security.rs)",
+    "proof P-READINESS-PG: sourceDigest mismatch (recorded sha256:d0fa9b6979435e56daf477aef015610f57740e717b46a3febb1ab33f51cdd42e, recomputed sha256:e5f785564575b9e42b020b5f58b4c81f5bda68fc5e354f1674cd1dd6c70b87b6) — covered sources changed after the proof ran",
+    "proof P-RUST-BROWSER: recorded sources do not cover the manifest's sourcePaths (missing e.g. rust/crates/host/src/security.rs)",
+    "proof P-RUST-BROWSER: sourceDigest mismatch (recorded sha256:83397b7170416c4b7fbe0d7056b8f41f23af735ec04c07c3322fa01588e763b5, recomputed sha256:f77700be966a0b5a8d38c26e5cf4155e8cd4539d50df113620f0d4e671e44c85) — covered sources changed after the proof ran",
+    "proof P-CAPACITY-CONFORMANCE: required check \"non-finite input rejected (invalid_request)\" is \"fail: step \\\"capacity conformance suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-CAPACITY-CONFORMANCE: required check \"calendar overflow returns controlled error (no hang)\" is \"fail: step \\\"capacity conformance suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-CAPACITY-CONFORMANCE: required check \"loop bounds advance (iteration cap honored)\" is \"fail: step \\\"capacity conformance suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-CAPACITY-CONFORMANCE: required check \"horizon and allocation bounds enforced\" is \"fail: step \\\"capacity conformance suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-CAPACITY-CONFORMANCE: required check \"extreme overflow returns controlled error\" is \"fail: step \\\"capacity conformance suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-CAPACITY-CONFORMANCE: required check \"corrected parity retained\" is \"fail: step \\\"capacity conformance suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-CAPACITY-CONFORMANCE: sourceDigest mismatch (recorded sha256:610b6c02b7739c39c3ef4210215b2beed6dbcffd2c4981cd6503a72903abea0c, recomputed sha256:284f6920f2f9dee3db5cfe99bbf27bb3aa91a43202a0ea6b4286df8d7910ab19) — covered sources changed after the proof ran",
+    "proof P-PLANNING-CONFORMANCE: required check \"conformance cases pass\" is \"fail: step \\\"planning conformance suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-PLANNING-CONFORMANCE: required check \"measurement coverage recorded\" is \"fail: step \\\"planning conformance suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-PLANNING-CONFORMANCE: required check \"cold-consumer planning proof passes\" is \"fail: step \\\"planning conformance suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-PLANNING-CONFORMANCE: sourceDigest mismatch (recorded sha256:dac16b48593540903ea64248e143681236429a3b974726eac1e63815fe41c479, recomputed sha256:462d000878f5bf066629d4027ba0bcb37f5b737d8430463e3def1ebdc223c34a) — covered sources changed after the proof ran",
+    "proof P-R03-DOMAIN: required check \"contacts/pipeline repository tests pass\" is \"fail: step \\\"R03 domain suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-R03-DOMAIN: required check \"command receipt state machine tests pass\" is \"fail: step \\\"R03 domain suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-R03-DOMAIN: required check \"assistant planning refusal tests pass\" is \"fail: step \\\"R03 domain suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-R03-DOMAIN: recorded sources do not cover the manifest's sourcePaths (missing e.g. rust/crates/host/src/security.rs, rust/crates/pg-fixture/tests/socket_dir.rs, rust/crates/pg-fixture/tests/socket_dir_forced.rs)",
+    "proof P-R03-DOMAIN: sourceDigest mismatch (recorded sha256:654abd0cc5273d0dedc4cffabee742e85aa25a3d77c0d4231c18afa46a03ddfc, recomputed sha256:f77700be966a0b5a8d38c26e5cf4155e8cd4539d50df113620f0d4e671e44c85) — covered sources changed after the proof ran",
+    "proof P-R04-DOMAIN: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+    "proof P-R05-DOMAIN: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+    "proof P-R06-DOMAIN: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+    "proof P-R07-DOMAIN: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+    "proof P-R08-DOMAIN: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+    "proof P-K05-K04: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"412f763e17f3a68a457fd76c7b929184c50c916a\" (stale or foreign proof)",
+    "proof P-K05-K04: identity.node is \"v26.10.0\", live candidate has \"v22.23.2\" (stale or foreign proof)",
+    "proof P-K05-K04: recorded sources do not cover the manifest's sourcePaths (missing e.g. rust/crates/adapters/src/erp/accommodation.rs, rust/crates/adapters/src/erp/assets.rs, rust/crates/adapters/src/erp/attendance.rs)",
+    "proof P-K05-K04: sourceDigest mismatch (recorded sha256:cc4fa3cf9b564db40ca9f9a2b97c721eff1e3d13fc0aeb8843f871c5d7a77e51, recomputed sha256:f77700be966a0b5a8d38c26e5cf4155e8cd4539d50df113620f0d4e671e44c85) — covered sources changed after the proof ran",
+    "proof P-MODULE-CONSUMERS: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"412f763e17f3a68a457fd76c7b929184c50c916a\" (stale or foreign proof)",
+    "proof P-MODULE-CONSUMERS: identity.node is \"v26.10.0\", live candidate has \"v22.23.2\" (stale or foreign proof)",
+    "proof P-MODULE-CONSUMERS: sourceDigest mismatch (recorded sha256:54d8d03218c7c8c5215fc310591cd9537293d6e963884ba4efdbaebe241ab943, recomputed sha256:5d6bc7969e67666d19a7ac967849c540ee31bbf8d7384e7f1493bb43fd0dfa8d) — covered sources changed after the proof ran",
+    "proof P-ASSISTANT-CONTEXT: required check \"context/knowledge/decision parity tests pass\" is \"fail: step \\\"R09 context suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ASSISTANT-CONTEXT: required check \"provider budget/recovery tests pass\" is \"fail: step \\\"R09 context suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ASSISTANT-CONTEXT: required check \"consent/privacy tests pass\" is \"fail: step \\\"R09 context suite\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-ASSISTANT-CONTEXT: recorded sources do not cover the manifest's sourcePaths (missing e.g. rust/crates/host/src/security.rs, rust/crates/pg-fixture/tests/socket_dir.rs, rust/crates/pg-fixture/tests/socket_dir_forced.rs)",
+    "proof P-ASSISTANT-CONTEXT: sourceDigest mismatch (recorded sha256:654abd0cc5273d0dedc4cffabee742e85aa25a3d77c0d4231c18afa46a03ddfc, recomputed sha256:f77700be966a0b5a8d38c26e5cf4155e8cd4539d50df113620f0d4e671e44c85) — covered sources changed after the proof ran",
+    "proof P-SDK-WIDGET: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"412f763e17f3a68a457fd76c7b929184c50c916a\" (stale or foreign proof)",
+    "proof P-SDK-WIDGET: identity.node is \"v26.10.0\", live candidate has \"v22.23.2\" (stale or foreign proof)",
+    "proof P-SDK-WIDGET: recorded sources do not cover the manifest's sourcePaths (missing e.g. rust/crates/adapters/src/erp/accommodation.rs, rust/crates/adapters/src/erp/assets.rs, rust/crates/adapters/src/erp/attendance.rs)",
+    "proof P-SDK-WIDGET: sourceDigest mismatch (recorded sha256:cc4fa3cf9b564db40ca9f9a2b97c721eff1e3d13fc0aeb8843f871c5d7a77e51, recomputed sha256:f77700be966a0b5a8d38c26e5cf4155e8cd4539d50df113620f0d4e671e44c85) — covered sources changed after the proof ran",
+    "proof P-REALTIME-VOICE: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"412f763e17f3a68a457fd76c7b929184c50c916a\" (stale or foreign proof)",
+    "proof P-REALTIME-VOICE: identity.node is \"v26.10.0\", live candidate has \"v22.23.2\" (stale or foreign proof)",
+    "proof P-REALTIME-VOICE: recorded sources do not cover the manifest's sourcePaths (missing e.g. rust/crates/adapters/src/erp/accommodation.rs, rust/crates/adapters/src/erp/assets.rs, rust/crates/adapters/src/erp/attendance.rs)",
+    "proof P-REALTIME-VOICE: sourceDigest mismatch (recorded sha256:cc4fa3cf9b564db40ca9f9a2b97c721eff1e3d13fc0aeb8843f871c5d7a77e51, recomputed sha256:f77700be966a0b5a8d38c26e5cf4155e8cd4539d50df113620f0d4e671e44c85) — covered sources changed after the proof ran",
+    "proof P-PROVIDER-CONTRACTS: required check \"provider contracts preserved\" is \"fail: step \\\"R09 provider contracts\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-PROVIDER-CONTRACTS: required check \"idempotency/reconciliation tests pass\" is \"fail: step \\\"R09 provider contracts\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-PROVIDER-CONTRACTS: required check \"free/local policy honored\" is \"fail: step \\\"R09 provider contracts\\\" did not pass in this invocation (cargo test --workspace: cargo test --workspace failed with exit 101\\n    ran for 124.7s)\"",
+    "proof P-PROVIDER-CONTRACTS: recorded sources do not cover the manifest's sourcePaths (missing e.g. rust/crates/host/src/security.rs, rust/crates/pg-fixture/tests/socket_dir.rs, rust/crates/pg-fixture/tests/socket_dir_forced.rs)",
+    "proof P-PROVIDER-CONTRACTS: sourceDigest mismatch (recorded sha256:654abd0cc5273d0dedc4cffabee742e85aa25a3d77c0d4231c18afa46a03ddfc, recomputed sha256:f77700be966a0b5a8d38c26e5cf4155e8cd4539d50df113620f0d4e671e44c85) — covered sources changed after the proof ran",
+    "proof P-CLI-OPERATIONS: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"412f763e17f3a68a457fd76c7b929184c50c916a\" (stale or foreign proof)",
+    "proof P-CLI-OPERATIONS: identity.node is \"v26.10.0\", live candidate has \"v22.23.2\" (stale or foreign proof)",
+    "proof P-CLI-OPERATIONS: recorded sources do not cover the manifest's sourcePaths (missing e.g. rust/crates/adapters/src/erp/accommodation.rs, rust/crates/adapters/src/erp/assets.rs, rust/crates/adapters/src/erp/attendance.rs)",
+    "proof P-CLI-OPERATIONS: sourceDigest mismatch (recorded sha256:cc4fa3cf9b564db40ca9f9a2b97c721eff1e3d13fc0aeb8843f871c5d7a77e51, recomputed sha256:f77700be966a0b5a8d38c26e5cf4155e8cd4539d50df113620f0d4e671e44c85) — covered sources changed after the proof ran",
+    "proof P-UPGRADE-RESTORE-RUST: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"412f763e17f3a68a457fd76c7b929184c50c916a\" (stale or foreign proof)",
+    "proof P-UPGRADE-RESTORE-RUST: identity.node is \"v26.10.0\", live candidate has \"v22.23.2\" (stale or foreign proof)",
+    "proof P-UPGRADE-RESTORE-RUST: recorded sources do not cover the manifest's sourcePaths (missing e.g. rust/crates/adapters/src/erp/accommodation.rs, rust/crates/adapters/src/erp/assets.rs, rust/crates/adapters/src/erp/attendance.rs)",
+    "proof P-UPGRADE-RESTORE-RUST: sourceDigest mismatch (recorded sha256:cc4fa3cf9b564db40ca9f9a2b97c721eff1e3d13fc0aeb8843f871c5d7a77e51, recomputed sha256:f77700be966a0b5a8d38c26e5cf4155e8cd4539d50df113620f0d4e671e44c85) — covered sources changed after the proof ran",
+    "proof P-RELEASE-IDENTITY: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"412f763e17f3a68a457fd76c7b929184c50c916a\" (stale or foreign proof)",
+    "proof P-RELEASE-IDENTITY: identity.node is \"v26.10.0\", live candidate has \"v22.23.2\" (stale or foreign proof)",
+    "proof P-LEGACY-REPLACEMENT: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"412f763e17f3a68a457fd76c7b929184c50c916a\" (stale or foreign proof)",
+    "proof P-LEGACY-REPLACEMENT: identity.node is \"v26.10.0\", live candidate has \"v22.23.2\" (stale or foreign proof)",
+    "proof P-LEGACY-REPLACEMENT: recorded sources do not cover the manifest's sourcePaths (missing e.g. apps/crm/test/password-fixture.test.ts, apps/web/src/frontend/html.ts, apps/web/src/server/security.ts)",
+    "proof P-LEGACY-REPLACEMENT: sourceDigest mismatch (recorded sha256:27ed70d0ed42e83093316319a5e772d0074a4bc6361798eaa830ce1ae09e10ef, recomputed sha256:5c3951289a6502487042b3530ec3892aa208fa9bb11db95ca5f95edd010c47ba) — covered sources changed after the proof ran",
+    "proof P-OWN-T01: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"412f763e17f3a68a457fd76c7b929184c50c916a\" (stale or foreign proof)",
+    "proof P-OWN-T01: identity.node is \"v26.10.0\", live candidate has \"v22.23.2\" (stale or foreign proof)",
+    "proof P-OWN-T01: recorded sources do not cover the manifest's sourcePaths (missing e.g. rust/crates/adapters/src/erp/accommodation.rs, rust/crates/adapters/src/erp/assets.rs, rust/crates/adapters/src/erp/attendance.rs)",
+    "proof P-OWN-T01: sourceDigest mismatch (recorded sha256:689b89f7fbec38225f1b28952d095ed8f3962ec2adf1e0d9ade1bd22d675ace5, recomputed sha256:d360e01914a5f257332fa950c5be304b8a0c31af7d0ff60b311922355430e8d8) — covered sources changed after the proof ran",
+    "proof P-OWN-T02: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"412f763e17f3a68a457fd76c7b929184c50c916a\" (stale or foreign proof)",
+    "proof P-OWN-T02: identity.node is \"v26.10.0\", live candidate has \"v22.23.2\" (stale or foreign proof)",
+    "proof P-OWN-T02: recorded sources do not cover the manifest's sourcePaths (missing e.g. rust/crates/adapters/src/erp/accommodation.rs, rust/crates/adapters/src/erp/assets.rs, rust/crates/adapters/src/erp/attendance.rs)",
+    "proof P-OWN-T02: sourceDigest mismatch (recorded sha256:689b89f7fbec38225f1b28952d095ed8f3962ec2adf1e0d9ade1bd22d675ace5, recomputed sha256:d360e01914a5f257332fa950c5be304b8a0c31af7d0ff60b311922355430e8d8) — covered sources changed after the proof ran",
+    "proof P-OWN-T03: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"412f763e17f3a68a457fd76c7b929184c50c916a\" (stale or foreign proof)",
+    "proof P-OWN-T03: identity.node is \"v26.10.0\", live candidate has \"v22.23.2\" (stale or foreign proof)",
+    "proof P-OWN-T03: recorded sources do not cover the manifest's sourcePaths (missing e.g. rust/crates/adapters/src/erp/accommodation.rs, rust/crates/adapters/src/erp/assets.rs, rust/crates/adapters/src/erp/attendance.rs)",
+    "proof P-OWN-T03: sourceDigest mismatch (recorded sha256:689b89f7fbec38225f1b28952d095ed8f3962ec2adf1e0d9ade1bd22d675ace5, recomputed sha256:d360e01914a5f257332fa950c5be304b8a0c31af7d0ff60b311922355430e8d8) — covered sources changed after the proof ran",
+    "proof P-OWN-T04: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"412f763e17f3a68a457fd76c7b929184c50c916a\" (stale or foreign proof)",
+    "proof P-OWN-T04: identity.node is \"v26.10.0\", live candidate has \"v22.23.2\" (stale or foreign proof)",
+    "proof P-OWN-T04: recorded sources do not cover the manifest's sourcePaths (missing e.g. rust/crates/adapters/src/erp/accommodation.rs, rust/crates/adapters/src/erp/assets.rs, rust/crates/adapters/src/erp/attendance.rs)",
+    "proof P-OWN-T04: sourceDigest mismatch (recorded sha256:689b89f7fbec38225f1b28952d095ed8f3962ec2adf1e0d9ade1bd22d675ace5, recomputed sha256:d360e01914a5f257332fa950c5be304b8a0c31af7d0ff60b311922355430e8d8) — covered sources changed after the proof ran",
+    "proof P-OWN-T05: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"412f763e17f3a68a457fd76c7b929184c50c916a\" (stale or foreign proof)",
+    "proof P-OWN-T05: identity.node is \"v26.10.0\", live candidate has \"v22.23.2\" (stale or foreign proof)",
+    "proof P-OWN-T05: recorded sources do not cover the manifest's sourcePaths (missing e.g. rust/crates/adapters/src/erp/accommodation.rs, rust/crates/adapters/src/erp/assets.rs, rust/crates/adapters/src/erp/attendance.rs)",
+    "proof P-OWN-T05: sourceDigest mismatch (recorded sha256:689b89f7fbec38225f1b28952d095ed8f3962ec2adf1e0d9ade1bd22d675ace5, recomputed sha256:d360e01914a5f257332fa950c5be304b8a0c31af7d0ff60b311922355430e8d8) — covered sources changed after the proof ran",
+    "proof P-OWN-T06: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"412f763e17f3a68a457fd76c7b929184c50c916a\" (stale or foreign proof)",
+    "proof P-OWN-T06: identity.node is \"v26.10.0\", live candidate has \"v22.23.2\" (stale or foreign proof)",
+    "proof P-OWN-T06: recorded sources do not cover the manifest's sourcePaths (missing e.g. rust/crates/adapters/src/erp/accommodation.rs, rust/crates/adapters/src/erp/assets.rs, rust/crates/adapters/src/erp/attendance.rs)",
+    "proof P-OWN-T06: sourceDigest mismatch (recorded sha256:689b89f7fbec38225f1b28952d095ed8f3962ec2adf1e0d9ade1bd22d675ace5, recomputed sha256:d360e01914a5f257332fa950c5be304b8a0c31af7d0ff60b311922355430e8d8) — covered sources changed after the proof ran",
+    "proof P-OWN-T07: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"412f763e17f3a68a457fd76c7b929184c50c916a\" (stale or foreign proof)",
+    "proof P-OWN-T07: identity.node is \"v26.10.0\", live candidate has \"v22.23.2\" (stale or foreign proof)",
+    "proof P-OWN-T07: recorded sources do not cover the manifest's sourcePaths (missing e.g. rust/crates/adapters/src/erp/accommodation.rs, rust/crates/adapters/src/erp/assets.rs, rust/crates/adapters/src/erp/attendance.rs)",
+    "proof P-OWN-T07: sourceDigest mismatch (recorded sha256:689b89f7fbec38225f1b28952d095ed8f3962ec2adf1e0d9ade1bd22d675ace5, recomputed sha256:d360e01914a5f257332fa950c5be304b8a0c31af7d0ff60b311922355430e8d8) — covered sources changed after the proof ran",
+    "proof P-OWN-T08: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"412f763e17f3a68a457fd76c7b929184c50c916a\" (stale or foreign proof)",
+    "proof P-OWN-T08: identity.node is \"v26.10.0\", live candidate has \"v22.23.2\" (stale or foreign proof)",
+    "proof P-OWN-T08: recorded sources do not cover the manifest's sourcePaths (missing e.g. rust/crates/adapters/src/erp/accommodation.rs, rust/crates/adapters/src/erp/assets.rs, rust/crates/adapters/src/erp/attendance.rs)",
+    "proof P-OWN-T08: sourceDigest mismatch (recorded sha256:689b89f7fbec38225f1b28952d095ed8f3962ec2adf1e0d9ade1bd22d675ace5, recomputed sha256:d360e01914a5f257332fa950c5be304b8a0c31af7d0ff60b311922355430e8d8) — covered sources changed after the proof ran",
+    "proof P-OWN-T09: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"412f763e17f3a68a457fd76c7b929184c50c916a\" (stale or foreign proof)",
+    "proof P-OWN-T09: identity.node is \"v26.10.0\", live candidate has \"v22.23.2\" (stale or foreign proof)",
+    "proof P-OWN-T09: recorded sources do not cover the manifest's sourcePaths (missing e.g. rust/crates/adapters/src/erp/accommodation.rs, rust/crates/adapters/src/erp/assets.rs, rust/crates/adapters/src/erp/attendance.rs)",
+    "proof P-OWN-T09: sourceDigest mismatch (recorded sha256:689b89f7fbec38225f1b28952d095ed8f3962ec2adf1e0d9ade1bd22d675ace5, recomputed sha256:d360e01914a5f257332fa950c5be304b8a0c31af7d0ff60b311922355430e8d8) — covered sources changed after the proof ran",
+    "proof P-OWN-T10: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"412f763e17f3a68a457fd76c7b929184c50c916a\" (stale or foreign proof)",
+    "proof P-OWN-T10: identity.node is \"v26.10.0\", live candidate has \"v22.23.2\" (stale or foreign proof)",
+    "proof P-OWN-T10: recorded sources do not cover the manifest's sourcePaths (missing e.g. rust/crates/adapters/src/erp/accommodation.rs, rust/crates/adapters/src/erp/assets.rs, rust/crates/adapters/src/erp/attendance.rs)",
+    "proof P-OWN-T10: sourceDigest mismatch (recorded sha256:689b89f7fbec38225f1b28952d095ed8f3962ec2adf1e0d9ade1bd22d675ace5, recomputed sha256:d360e01914a5f257332fa950c5be304b8a0c31af7d0ff60b311922355430e8d8) — covered sources changed after the proof ran"
+  ],
+  "complete": false
+}

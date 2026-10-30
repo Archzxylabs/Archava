@@ -1,0 +1,496 @@
+# PACKET-003 — the R04 ledgers (organizations, proposals, projects) runtime half
+
+**Archxy 2 → Archxy 1.** Successor to PACKETS 000/001/002 (their semantics are
+assumed integrated in this diff's a/ side, which is the current main tree, not
+the 2026-10-17 baseline). Apply as: `patch -p1 --directory=<main> < PACKET-003.diff`
+after confirming `git status` on the listed files. Everything else in R04 is
+Archxy 2-owned and ships wholesale (no diff here):
+
+- `rust/crates/domain/src/erp/{organizations,proposals,projects}.rs` — the pure
+  contract ports (serde-only, wasm-clean), `erp/mod.rs` gains three `pub mod`
+  lines. 50/50 `cargo test -p archava-domain`.
+- `rust/crates/adapters/src/erp/{organizations,proposals,projects}.rs` — typed
+  mutations ported statement-for-statement from
+  `packages/{organizations,proposals,projects}-pg/src/repository.ts`;
+  `erp/mod.rs` gains three `pub mod` lines. 24 `cargo test -p archava-adapters`.
+- `rust/crates/host/src/erp/{organizations,proposals,projects}.rs` + `mod.rs` —
+  gate modules (`ErpGateError`, per-ledger descriptor + opener via
+  `r04_opener!`, six routes mounting `/erp/{organizations,proposals,projects}/
+  commands{,/status}`) and status handlers.
+- `rust/crates/host/tests/erp_{organizations,proposals,projects}.rs` — the
+  three witness suites, 9/9 each (27/27), TMPDIR-backed fixture.
+- `tools/rust/erp/verify-r04.mjs` — the P-ERP-R04 producer (new file).
+- `tools/rust/erp/module-consumers.ts` + `module-consumers.witnesses.mjs` — the
+  R04 ledgers join the two-consumer battery scope (10 ERP modules hashed;
+  each consumer's verify battery exercises ALL of them from tarballs).
+- `examples/rust-consumers/erp/{hospitality,professional-services}/` — deps,
+  browser mounts (`mountOrganizationDashboard` for both +
+  `mountProjectDashboard`/`mountProposalsDashboard` respectively), typed
+  `server-contract.ts` exports, R04 battery sections.
+- `docs/rust/archxy2/**` — the working trio (this packet's prose).
+
+## Shared-file deltas (the diff below), single-writer Archxy 1 territory:
+
+1. `rust/crates/host/src/router.rs` — six R04 routes beside the kernel-ERP
+   mounts (same scope, same gate shape as PACKET-000/001).
+2. `rust/crates/pg-fixture/src/lib.rs` — R04 migration consts, Fixture
+   ledger fields, three `migrate_ledger` calls, the port of
+   `grant{Organizations,Proposals,Projects}Runtime`, the migrations-package
+   arms and the `ledger_expectations` map + instantiation.
+3. `tools/rust/verify.mjs` — the `erp R04 suites` step +
+   `P-ERP-R04` evidence-mapping entry.
+4. `tools/rust/test/verify.test.mjs` — `R04_WITNESSES` import + the
+   P-ERP-R04 drift test (asserted against the compressed manifest `expect`).
+5. `docs/rust/required-coverage.json` — `erp R04 suites` in P-FAST-GATE's
+   `requiredChecks`, the `P-ERP-R04` evidence block (23 checks,
+   witnessTotal 27, RN-ERP-01/02), and P-MODULE-CONSUMERS' `producedBy`
+   noting the R04 battery scope.
+
+## Verification state (all green, executed in the candidate copy):
+
+- `cargo test -p archava-domain --offline` → 50/50
+- `cargo test -p archava-adapters --offline` → 13+11 = 24/24
+- `TMPDIR=/home/haikaru/Archverse/tmp-fixture cargo test --offline
+  --test erp_{organizations,proposals,projects}` → 9/9 × 3 = 27/27
+- `cargo clippy -p archava-domain -p archava-adapters -p archava-pg-fixture
+  -p archava-host --all-targets --offline` → 0 warnings
+- `cargo fmt --all --check` → clean on every file except
+  `rust/crates/providers/src/gemini.rs`, which is dirty ON MAIN ITSELF
+  (pre-existing to this packet; untouched here).
+- `node --test tools/rust/test/verify.test.mjs` → 25/25 (main's 24 + the new
+  P-ERP-R04 drift test)
+- `node --test tools/rust/test/verify-release.test.mjs` → 24/24 (after taking
+  main's `docs/LOCAL_LIBRARY_HANDOFF.md` wholesale — the copy's snapshot
+  predates the K05 consumers para; no content edit of ours)
+- `node tools/rust/wasm-boundary.mjs` → PASS
+- `TMPDIR=… node tools/rust/erp/verify-r04.mjs` → PASS,
+  `dist/rust-erp-r04-proof.json`
+- `pnpm erp:verify-consumers` → PASS — both verticals install the compiled
+  tarballs and their batteries exercise all ten ERP modules.
+
+## Known integration notes
+
+- The a/ side of every hunk is CURRENT MAIN (2026-10-18), rebased: the packet
+  was rebuilt after your R03/R09/assistant/capacity/planning gate machinery
+  landed, so hunks apply on today's files, not the 2026-10-17 baseline.
+- `rust/Cargo.toml` / `rust/Cargo.lock` untouched (hash rule respected).
+- Fixture behavior is unchanged for the pre-existing ledgers; the three R04
+  schema notes: `time_delta_days`/`total_days` are INT4, `cost_delta_value`/
+  `total_value` are BIGINT, decoded accordingly.
+
+
+--- a/rust/crates/host/src/router.rs
++++ b/rust/crates/host/src/router.rs
+@@ -349,6 +349,34 @@
+             "/erp/foodservice/commands/status",
+             get(crate::erp::foodservice::food_service_status),
+         )
++        // Archxy 2's R04 ledgers (PACKET-003): the organizations, proposals and
++        // projects cohorts mount beside the kernel cohorts, same gate shape:
++        // session + CSRF on the mutation, tenant from the path, the cohort's
++        // own gates after.
++        .route(
++            "/erp/organizations/commands",
++            post(crate::erp::organizations::organization_command),
++        )
++        .route(
++            "/erp/organizations/commands/status",
++            get(crate::erp::organizations::organization_status),
++        )
++        .route(
++            "/erp/proposals/commands",
++            post(crate::erp::proposals::proposal_command),
++        )
++        .route(
++            "/erp/proposals/commands/status",
++            get(crate::erp::proposals::proposal_status),
++        )
++        .route(
++            "/erp/projects/commands",
++            post(crate::erp::projects::project_command),
++        )
++        .route(
++            "/erp/projects/commands/status",
++            get(crate::erp::projects::project_status),
++        )
+         .with_state(state)
+ }
+ 
+
+
+--- a/rust/crates/pg-fixture/src/lib.rs
++++ b/rust/crates/pg-fixture/src/lib.rs
+@@ -118,6 +118,22 @@
+ /// `archava_foodservice` next to the other cohort schemas.
+ pub const FOOD_MIGRATIONS: &[&str] = &["001_tables_recipes_tickets"];
+ 
++/// The organizations ledger's migration, in apply order —
++/// `packages/organizations-pg/migrations/001_organizations_affiliations.sql`.
++/// Added by the Archxy 2 ERP namespace (PACKET-003): the R04 calendar
++/// schema, verbatim the TS package's frozen migration.
++pub const ORGANIZATIONS_MIGRATIONS: &[&str] = &["001_organizations_affiliations"];
++
++/// The proposals ledger's migration, in apply order —
++/// `packages/proposals-pg/migrations/001_proposals_scope_amendments.sql`.
++/// Added by the Archxy 2 ERP namespace (PACKET-003).
++pub const PROPOSALS_MIGRATIONS: &[&str] = &["001_proposals_scope_amendments"];
++
++/// The projects ledger's migration, in apply order —
++/// `packages/projects-pg/migrations/001_project_delivery.sql`. Added by the
++/// Archxy 2 ERP namespace (PACKET-003).
++pub const PROJECTS_MIGRATIONS: &[&str] = &["001_project_delivery"];
++
+ /// The provider attempt ledger's migration, in apply order —
+ /// `packages/provider-runtime/migrations/001_provider_attempts.sql` (the R09
+ /// provider slice): the budget buckets and the pending→finalized attempt rows
+@@ -198,6 +214,15 @@
+     /// ERP ledger (PACKET-001): tickets, recipes and the menus whose menu
+     /// products live IN `archava_commerce`.
+     pub foodservice_ledger: Vec<(String, String)>,
++    /// The same ledger for `archava_organizations` — the R04 calendar cohort
++    /// (PACKET-003).
++    pub organizations_ledger: Vec<(String, String)>,
++    /// The same ledger for `archava_proposals` — the R04 scope cohort
++    /// (PACKET-003).
++    pub proposals_ledger: Vec<(String, String)>,
++    /// The same ledger for `archava_projects` — the R04 delivery cohort
++    /// (PACKET-003).
++    pub projects_ledger: Vec<(String, String)>,
+     /// The same ledger for `archava_provider` — the R09 provider attempt
+     /// ledger (buckets, pending→finalized attempts, restore holds), through
+     /// whose forced-RLS scope the provider budget is a real PostgreSQL
+@@ -695,6 +720,29 @@
+         "archava_foodservice_migrations",
+     )
+     .await;
++    // Archxy 2 ERP namespace (PACKET-003): the three R04 ledgers migrate
++    // under the same owner role from their own packages; none of their
++    // FOREIGN KEYs cross schemas, but ordering after the commerce family
++    // keeps every ledger's advisory lock label distinct and the apply order
++    // printed in one place.
++    let organizations_ledger = migrate_ledger(
++        &owner_pool,
++        "archava_organizations",
++        "archava_organizations_migrations",
++    )
++    .await;
++    let proposals_ledger = migrate_ledger(
++        &owner_pool,
++        "archava_proposals",
++        "archava_proposals_migrations",
++    )
++    .await;
++    let projects_ledger = migrate_ledger(
++        &owner_pool,
++        "archava_projects",
++        "archava_projects_migrations",
++    )
++    .await;
+     // R09's provider slice: the attempt ledger migrates under the same owner
+     // role, one UTC-anchored schema next to the domain ledgers. The runtime
+     // role must stay a NON-owner of `archava_provider` — `create`'s role
+@@ -825,6 +873,63 @@
+         ),
+         format!(
+             "GRANT EXECUTE ON FUNCTION archava_foodservice.lock_membership(text,text) TO {RUNTIME_USER}"
++        ),
++        // Archxy 2 ERP (PACKET-003) — the port of grantOrganizationsRuntime
++        // (`packages/organizations-pg/src/migrate.ts`), statement for
++        // statement: resource tables and the idempotency surface rw, audit
++        // included because the ledger's audit step writes a row per commit,
++        // `lock_membership` executes because migration 001 REVOKEs it from
++        // PUBLIC.
++        format!("GRANT USAGE ON SCHEMA archava_organizations TO {RUNTIME_USER}"),
++        format!(
++            "GRANT SELECT ON archava_organizations.schema_migrations,\
++             archava_organizations.memberships TO {RUNTIME_USER}"
++        ),
++        format!(
++            "GRANT SELECT,INSERT,UPDATE ON archava_organizations.organizations,\
++             archava_organizations.affiliations,archava_organizations.commands,\
++             archava_organizations.audit TO {RUNTIME_USER}"
++        ),
++        format!(
++            "GRANT EXECUTE ON FUNCTION archava_organizations.lock_membership(text,text) TO {RUNTIME_USER}"
++        ),
++        // Archxy 2 ERP (PACKET-003) — the port of grantProposalsRuntime
++        // (`packages/proposals-pg/src/migrate.ts`), statement for statement:
++        // proposals/scope versions/change requests rw, snapshots-editable
++        // scope items (the amendment insert rewrites the cloned rows),
++        // audit rw, `lock_membership` executes.
++        format!("GRANT USAGE ON SCHEMA archava_proposals TO {RUNTIME_USER}"),
++        format!(
++            "GRANT SELECT ON archava_proposals.schema_migrations,\
++             archava_proposals.memberships TO {RUNTIME_USER}"
++        ),
++        format!(
++            "GRANT SELECT,INSERT,UPDATE ON archava_proposals.proposals,\
++             archava_proposals.scope_versions,archava_proposals.change_requests,\
++             archava_proposals.commands,archava_proposals.audit TO {RUNTIME_USER}"
++        ),
++        format!(
++            "GRANT SELECT,INSERT,UPDATE,DELETE ON archava_proposals.scope_items TO {RUNTIME_USER}"
++        ),
++        format!(
++            "GRANT EXECUTE ON FUNCTION archava_proposals.lock_membership(text,text) TO {RUNTIME_USER}"
++        ),
++        // Archxy 2 ERP (PACKET-003) — the port of grantProjectsRuntime
++        // (`packages/projects-pg/src/migrate.ts`), statement for statement:
++        // projects/tasks/milestones rw, audit INSERT-only, `lock_membership`
++        // executes.
++        format!("GRANT USAGE ON SCHEMA archava_projects TO {RUNTIME_USER}"),
++        format!(
++            "GRANT SELECT ON archava_projects.schema_migrations,\
++             archava_projects.memberships TO {RUNTIME_USER}"
++        ),
++        format!(
++            "GRANT SELECT,INSERT,UPDATE ON archava_projects.projects,archava_projects.tasks,\
++             archava_projects.milestones,archava_projects.commands TO {RUNTIME_USER}"
++        ),
++        format!("GRANT SELECT,INSERT ON archava_projects.audit TO {RUNTIME_USER}"),
++        format!(
++            "GRANT EXECUTE ON FUNCTION archava_projects.lock_membership(text,text) TO {RUNTIME_USER}"
+         ),
+         // R09 provider slice — the port of grantProviderRuntime
+         // (`packages/provider-runtime/src/postgres.ts`), statement for
+@@ -865,6 +970,9 @@
+         crm_ledger,
+         purchasing_ledger,
+         foodservice_ledger,
++        organizations_ledger,
++        proposals_ledger,
++        projects_ledger,
+         provider_ledger,
+         dir,
+     }
+@@ -938,6 +1046,11 @@
+         // frozen in; no other ledger may inherit one of these directories.
+         "archava_purchasing" => "purchasing-pg",
+         "archava_foodservice" => "foodservice-pg",
++        // (PACKET-003) the three R04 ledgers migrate from their own TS
++        // packages, byte-faithful.
++        "archava_organizations" => "organizations-pg",
++        "archava_proposals" => "proposals-pg",
++        "archava_projects" => "projects-pg",
+         // R09's provider ledger: the migration file the TS store reads too.
+         "archava_provider" => "provider-runtime",
+         _ => "commerce-pg",
+@@ -959,6 +1072,9 @@
+         "archava_crm" => CRM_MIGRATIONS,
+         "archava_purchasing" => PURCHASING_MIGRATIONS,
+         "archava_foodservice" => FOOD_MIGRATIONS,
++        "archava_organizations" => ORGANIZATIONS_MIGRATIONS,
++        "archava_proposals" => PROPOSALS_MIGRATIONS,
++        "archava_projects" => PROJECTS_MIGRATIONS,
+         "archava_provider" => PROVIDER_MIGRATIONS,
+         _ => COMMERCE_MIGRATIONS,
+     };
+@@ -1035,6 +1151,9 @@
+         crm_ledger: ledger_expectations("archava_crm"),
+         purchasing_ledger: ledger_expectations("archava_purchasing"),
+         foodservice_ledger: ledger_expectations("archava_foodservice"),
++        organizations_ledger: ledger_expectations("archava_organizations"),
++        proposals_ledger: ledger_expectations("archava_proposals"),
++        projects_ledger: ledger_expectations("archava_projects"),
+         provider_ledger: ledger_expectations("archava_provider"),
+         dir,
+     }
+
+
+--- a/tools/rust/verify.mjs
++++ b/tools/rust/verify.mjs
+@@ -286,6 +286,21 @@
+     [
+       'erp foodservice suite',
+       () => step('erp foodservice suite', ['node', 'tools/rust/erp/verify-foodservice.mjs']),
++    ],
++    // Same pattern for P-ERP-R04: the R04 migration's three ledgers —
++    // organizations, proposals, projects. The workspace step cannot prove the
++    // named witnesses each cohort's nine checks need (authorized life chains,
++    // gate refusals that hold nothing, revoked recovery, key/fingerprint
++    // collision, cross-tenant refusal, lost-response replay, and the cohort
++    // effects — affiliation release, the CR amendment snapshot, the delivered
++    // gate and the reached-milestone parent gate), so this producer re-runs
++    // the three `erp_*` suites and grades each check against its named
++    // witness. Added with the R04 cohort in PACKET-003 (scope edit for
++    // review). It sits with the two kernel-ERP steps because all three
++    // rebuild disposable PostgreSQL fixtures one suite at a time.
++    [
++      'erp R04 suites',
++      () => step('erp R04 suites', ['node', 'tools/rust/erp/verify-r04.mjs']),
+     ],
+     // Same pattern for P-R03-DOMAIN: the R03 CRM domain lane spans three
+     // suites (the command lane repository, the conversation route over HTTP,
+@@ -671,6 +686,44 @@
+       },
+     },
+     {
++      // The Archxy 2 ERP namespace's R04 ledgers proof: same witness binding,
++      // over the three R04 suites' witnesses. Added with the R04 cohort in
++      // PACKET-003 (scope edit for review).
++      proof: 'P-ERP-R04',
++      checks: {
++        'authorized organization life documents its chain': { step: 'erp R04 suites' },
++        'update on archived refuses and holds nothing': { step: 'erp R04 suites' },
++        'affiliation gates refuse without holding': { step: 'erp R04 suites' },
++        'revoked organizations grant refused on recovery': { step: 'erp R04 suites' },
++        'same key different command conflicts': { step: 'erp R04 suites' },
++        'cross-tenant caller refused before any write': { step: 'erp R04 suites' },
++        'lost response replays without a second organization': { step: 'erp R04 suites' },
++        'archived organization still releases its affiliation': { step: 'erp R04 suites' },
++        'missing organizations grant refused': { step: 'erp R04 suites' },
++        'authorized proposal flow documents its life': { step: 'erp R04 suites' },
++        'accept before submit refuses and holds nothing': { step: 'erp R04 suites' },
++        'reject records rejected exactly once': { step: 'erp R04 suites' },
++        'revoked proposals grant refused on recovery': { step: 'erp R04 suites' },
++        'lost response replays without a second snapshot': { step: 'erp R04 suites' },
++        'change request lifecycle amends the scope': { step: 'erp R04 suites' },
++        'missing proposals grant refused': { step: 'erp R04 suites' },
++        'authorized delivery chain walks the state table': { step: 'erp R04 suites' },
++        'delivered gate requires the work': { step: 'erp R04 suites' },
++        'out-of-table transitions refuse and hold nothing': { step: 'erp R04 suites' },
++        'revoked projects grant refused on recovery': { step: 'erp R04 suites' },
++        'lost response replays without a second project': { step: 'erp R04 suites' },
++        'task under a reached milestone cannot reopen': { step: 'erp R04 suites' },
++        'missing projects grant refused': { step: 'erp R04 suites' },
++      },
++      details: () => {
++        try {
++          return JSON.parse(readFileSync(join(root, 'dist/rust-erp-r04-proof.json'), 'utf8'))
++        } catch (error) {
++          throw new Error(`erp R04 witness proof unreadable: ${error.message}`)
++        }
++      },
++    },
++    {
+       proof: 'P-COLD-CONSUMERS',
+       checks: {
+         'consumer A (crate tarballs) compiles and tests offline': { step: 'two cold consumers' },
+
+
+--- a/tools/rust/test/verify.test.mjs
++++ b/tools/rust/test/verify.test.mjs
+@@ -17,6 +17,7 @@
+ import { WITNESSES as ASSISTANT_CONTEXT_WITNESSES } from '../assistant-context.mjs'
+ import { WITNESSES as PURCHASING_WITNESSES } from '../erp/verify-purchasing.mjs'
+ import { WITNESSES as FOODSERVICE_WITNESSES } from '../erp/verify-foodservice.mjs'
++import { WITNESSES as R04_WITNESSES } from '../erp/verify-r04.mjs'
+ import { WITNESSES as CAPACITY_WITNESSES } from '../capacity-conformance.mjs'
+ import {
+   WITNESSES as PLANNING_WITNESSES,
+@@ -386,6 +387,37 @@
+       assert.equal(
+         suite,
+         'foodservice',
++        `${check}: witness ${JSON.stringify(name)} names unknown suite ${JSON.stringify(suite)}`,
++      )
++    }
++  }
++})
++
++test('the P-ERP-R04 witness map and the frozen manifest cannot drift apart', () => {
++  // Same three-lists-equal property as the two kernel-ERP proofs, for the
++  // R04 ledgers: 23 manifest checks over the three `erp_*` suites' named
++  // Rust test functions (9 per cohort, with the shared gate-conflict and
++  // cross-tenant checks carrying three witnesses each so every cohort
++  // proves the shared rule on its own tables). Both directions, and the
++  // frozen `witnessTotal` (27) too.
++  const manifest = loadManifest(repoRoot)
++  const spec = manifest.proofs['P-ERP-R04']
++  assert.deepEqual([...Object.keys(R04_WITNESSES)].sort(), [...spec.requiredChecks].sort())
++  const witnessTotal = Object.values(R04_WITNESSES).reduce(
++    (sum, list) => sum + list.length,
++    0,
++  )
++  assert.equal(witnessTotal, spec.expect.witnessTotal)
++  for (const [check, witnesses] of Object.entries(R04_WITNESSES)) {
++    assert.ok(witnesses.length > 0, `${check} has no witness tests`)
++    for (const [suite, name] of witnesses) {
++      assert.match(
++        name,
++        /^[a-z0-9_]+$/,
++        `${check}: witness name ${JSON.stringify(name)} is not a test identifier`,
++      )
++      assert.ok(
++        ['organizations', 'proposals', 'projects'].includes(suite),
+         `${check}: witness ${JSON.stringify(name)} names unknown suite ${JSON.stringify(suite)}`,
+       )
+     }
+
+
+--- a/docs/rust/required-coverage.json
++++ b/docs/rust/required-coverage.json
+@@ -809,6 +809,7 @@
+         "pg authority suite",
+         "erp purchasing suite",
+         "erp foodservice suite",
++        "erp R04 suites",
+         "R03 domain suite",
+         "R09 context suite",
+         "capacity conformance suite",
+@@ -1157,6 +1158,56 @@
+         "dist/rust-erp-foodservice-proof.json"
+       ]
+     },
++    "P-ERP-R04": {
++      "kind": "evidence",
++      "producedBy": "pnpm rust:verify → erp R04 suites step (tools/rust/erp/verify-r04.mjs) grading named witness tests in rust/crates/host/tests/erp_{organizations,proposals,projects}.rs against the owned PostgreSQL fixture — the R04 ledgers' runtime half, added with PACKET-003 (the pure domain half is the frozen P-R04-DOMAIN)",
++      "requiredChecks": [
++        "authorized organization life documents its chain",
++        "update on archived refuses and holds nothing",
++        "affiliation gates refuse without holding",
++        "revoked organizations grant refused on recovery",
++        "same key different command conflicts",
++        "cross-tenant caller refused before any write",
++        "lost response replays without a second organization",
++        "archived organization still releases its affiliation",
++        "missing organizations grant refused",
++        "authorized proposal flow documents its life",
++        "accept before submit refuses and holds nothing",
++        "reject records rejected exactly once",
++        "revoked proposals grant refused on recovery",
++        "lost response replays without a second snapshot",
++        "change request lifecycle amends the scope",
++        "missing proposals grant refused",
++        "authorized delivery chain walks the state table",
++        "delivered gate requires the work",
++        "out-of-table transitions refuse and hold nothing",
++        "revoked projects grant refused on recovery",
++        "lost response replays without a second project",
++        "task under a reached milestone cannot reopen",
++        "missing projects grant refused"
++      ],
++      "expect": {
++        "witnessTotal": 27,
++        "namedRegressions": {
++          "RN-ERP-01": "revoked organizations grant refused on recovery",
++          "RN-ERP-02": "same key different command conflicts"
++        }
++      },
++      "sourcePaths": [
++        "rust/crates/host",
++        "rust/crates/adapters/src/erp",
++        "rust/crates/domain/src/erp",
++        "rust/crates/core",
++        "tools/rust/erp/verify-r04.mjs",
++        "packages/organizations-pg/migrations",
++        "packages/proposals-pg/migrations",
++        "packages/projects-pg/migrations"
++      ],
++      "artifacts": [],
++      "referenced": [
++        "dist/rust-erp-r04-proof.json"
++      ]
++    },
+     "P-READINESS-PG": {
+       "kind": "evidence",
+       "producedBy": "pnpm rust:verify → pg readiness suites step (tools/rust/pg-readiness.mjs) grading named witness tests in rust/crates/host/tests/readiness.rs and rust/crates/adapters/tests/tenant_context.rs against the owned PostgreSQL fixture",
+@@ -1341,7 +1392,7 @@
+     },
+     "P-MODULE-CONSUMERS": {
+       "kind": "evidence",
+-      "producedBy": "pnpm erp:verify-consumers (tools/rust/erp/module-consumers.ts installs two product verticals from the compiled library tarballs and grades each consumer's verify battery + installed-module resolution)",
++      "producedBy": "pnpm erp:verify-consumers (tools/rust/erp/module-consumers.ts installs two product verticals from the compiled library tarballs and grades each consumer's verify battery + installed-module resolution) — the battery scope covers the accepted R06 pair plus the R04 ledgers added with PACKET-003",
+       "requiredChecks": [
+         "every accepted module has two independently installed consumers",
+         "no workspace/path dependency in either consumer"

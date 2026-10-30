@@ -1,0 +1,9 @@
+HEAD=412f763e17f3a68a457fd76c7b929184c50c916a
+timestamp=2026-10-22T08:43:03+07:00
+branch=feat/laundry-1.17.0
+--- scoped file hashes (final, post-fmt) ---
+b4f91305da0cfdc3e86489e1d834fb7faabf687cbc51f4b65e00e400c78bf71b  crates/own/src/lib.rs
+834f4527edfbec3941d396056b2ed5c333a89a9a1a2cfe6d2e2a733c553fbf1c  crates/own/tests/engine.rs
+08616162df02f9888f635c8042f83e6aca4eecc652dd70eeaeba5f905b12a532  crates/host/src/own.rs
+a57f6486d5bc259b0f0c402662a267dee0263b11129407d88400a853142aac1c  crates/host/tests/own.rs
+--- rustfmt touched nothing else (cargo fmt --all --check must be empty) ---

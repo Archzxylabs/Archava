@@ -1,0 +1,2 @@
+    Checking archava-slice v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/slice)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.87s

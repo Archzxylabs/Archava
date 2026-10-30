@@ -1,0 +1,261 @@
+{
+  "schemaVersion": 1,
+  "audit": "archxy-1-crm",
+  "localDate": "2026-10-19",
+  "timezone": "Asia/Jakarta",
+  "auditor": "Codex",
+  "verdict": "incomplete_not_accepted",
+  "snapshot": {
+    "startedAt": "2026-10-18T20:34:08.685882+00:00",
+    "completedAt": "2026-10-18T20:43:54.615901+00:00",
+    "head": "409eab9a3e366c40b05dbc56e3c850cefa2c7c9b",
+    "branch": "feat/laundry-1.17.0",
+    "releaseProfile": "1.18.0",
+    "publicFilesHashed": 1349,
+    "changedBaselineFiles": []
+  },
+  "scope": "Archxy 1 Rust CRM, assistant, UI and related owner configuration/reuse/evidence; not full ERP or release-chain rerun",
+  "findings": [
+    {
+      "id": "C01",
+      "priority": "P1",
+      "title": "Missing six existing CRM writes and product UI parity",
+      "evidenceType": "source review + executed unsupported-operation witness"
+    },
+    {
+      "id": "C02",
+      "priority": "P1",
+      "title": "UI sign-out leaves server session usable",
+      "evidenceType": "independent Chromium + cookie-authenticated PostgreSQL API"
+    },
+    {
+      "id": "C03",
+      "priority": "P1",
+      "title": "OWN-V1 PASS mappings do not prove owner configuration behavior",
+      "evidenceType": "semantic producer/requirement review"
+    },
+    {
+      "id": "C04",
+      "priority": "P2",
+      "title": "Two-consumer proof exercises policy, not persisted CRM behavior",
+      "evidenceType": "consumer artifact/witness source review"
+    },
+    {
+      "id": "C05",
+      "priority": "P2",
+      "title": "Pending request identity lost on draft reload after response loss",
+      "evidenceType": "independent Chromium + actual stored follow-up"
+    },
+    {
+      "id": "C06",
+      "priority": "P2",
+      "title": "Unencoded literal search and missing cursor navigation",
+      "evidenceType": "independent Chromium/API comparison"
+    },
+    {
+      "id": "C07",
+      "priority": "P2",
+      "title": "Stale proof identities/source evidence plus five ERP gaps",
+      "evidenceType": "fresh read-only coverage validator, exit 1"
+    }
+  ],
+  "freshVerification": {
+    "command": "TMPDIR=<owned-short-temp> cargo test --release --locked --offline -p archava-host --test crm --test assistant -- --test-threads=1",
+    "exit": 0,
+    "crm": {
+      "passed": 27,
+      "failed": 0
+    },
+    "assistant": {
+      "passed": 13,
+      "failed": 0
+    },
+    "independentBrowserProbeExit": 0
+  },
+  "baselineWriteOperations": [
+    "contact.create",
+    "contact.update",
+    "activity.add",
+    "followup.create",
+    "followup.complete",
+    "opportunity.create",
+    "opportunity.move"
+  ],
+  "implementedRustWriteOperations": ["followup.create"],
+  "missingRustWriteOperations": [
+    "contact.create",
+    "contact.update",
+    "activity.add",
+    "followup.complete",
+    "opportunity.create",
+    "opportunity.move"
+  ],
+  "coverage": {
+    "complete": false,
+    "exit": 1,
+    "diagnosticsCount": 32,
+    "identityMismatches": 26,
+    "sourceDigestMismatches": 1,
+    "missingProofs": 5,
+    "errors": [
+      "proof P-ARTIFACT-PROOFS: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"409eab9a3e366c40b05dbc56e3c850cefa2c7c9b\" (stale or foreign proof)",
+      "proof P-BENCHMARK: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"409eab9a3e366c40b05dbc56e3c850cefa2c7c9b\" (stale or foreign proof)",
+      "proof P-SECURITY-CHAIN: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"409eab9a3e366c40b05dbc56e3c850cefa2c7c9b\" (stale or foreign proof)",
+      "proof P-CRM-BROWSER: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"409eab9a3e366c40b05dbc56e3c850cefa2c7c9b\" (stale or foreign proof)",
+      "proof P-COLD-PRIOR-UPGRADE: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"409eab9a3e366c40b05dbc56e3c850cefa2c7c9b\" (stale or foreign proof)",
+      "proof P-COLD-PRIOR-RECOVERY: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"409eab9a3e366c40b05dbc56e3c850cefa2c7c9b\" (stale or foreign proof)",
+      "proof P-CRM-BENCHMARK: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"409eab9a3e366c40b05dbc56e3c850cefa2c7c9b\" (stale or foreign proof)",
+      "proof P-RUST-BROWSER: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"409eab9a3e366c40b05dbc56e3c850cefa2c7c9b\" (stale or foreign proof)",
+      "proof P-R04-DOMAIN: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+      "proof P-R05-DOMAIN: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+      "proof P-R06-DOMAIN: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+      "proof P-R07-DOMAIN: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+      "proof P-R08-DOMAIN: no evidence document in dist/rust-evidence/ (missing or unparsable)",
+      "proof P-K05-K04: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"409eab9a3e366c40b05dbc56e3c850cefa2c7c9b\" (stale or foreign proof)",
+      "proof P-MODULE-CONSUMERS: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"409eab9a3e366c40b05dbc56e3c850cefa2c7c9b\" (stale or foreign proof)",
+      "proof P-SDK-WIDGET: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"409eab9a3e366c40b05dbc56e3c850cefa2c7c9b\" (stale or foreign proof)",
+      "proof P-REALTIME-VOICE: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"409eab9a3e366c40b05dbc56e3c850cefa2c7c9b\" (stale or foreign proof)",
+      "proof P-CLI-OPERATIONS: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"409eab9a3e366c40b05dbc56e3c850cefa2c7c9b\" (stale or foreign proof)",
+      "proof P-UPGRADE-RESTORE-RUST: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"409eab9a3e366c40b05dbc56e3c850cefa2c7c9b\" (stale or foreign proof)",
+      "proof P-RELEASE-IDENTITY: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"409eab9a3e366c40b05dbc56e3c850cefa2c7c9b\" (stale or foreign proof)",
+      "proof P-LEGACY-REPLACEMENT: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"409eab9a3e366c40b05dbc56e3c850cefa2c7c9b\" (stale or foreign proof)",
+      "proof P-LEGACY-REPLACEMENT: sourceDigest mismatch (recorded sha256:27ed70d0ed42e83093316319a5e772d0074a4bc6361798eaa830ce1ae09e10ef, recomputed sha256:eaa3e8bc63e6cbdd0cfff754042bb05c18357f2f96ace057975d55a89b62ff11) \u2014 covered sources changed after the proof ran",
+      "proof P-OWN-T01: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"409eab9a3e366c40b05dbc56e3c850cefa2c7c9b\" (stale or foreign proof)",
+      "proof P-OWN-T02: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"409eab9a3e366c40b05dbc56e3c850cefa2c7c9b\" (stale or foreign proof)",
+      "proof P-OWN-T03: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"409eab9a3e366c40b05dbc56e3c850cefa2c7c9b\" (stale or foreign proof)",
+      "proof P-OWN-T04: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"409eab9a3e366c40b05dbc56e3c850cefa2c7c9b\" (stale or foreign proof)",
+      "proof P-OWN-T05: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"409eab9a3e366c40b05dbc56e3c850cefa2c7c9b\" (stale or foreign proof)",
+      "proof P-OWN-T06: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"409eab9a3e366c40b05dbc56e3c850cefa2c7c9b\" (stale or foreign proof)",
+      "proof P-OWN-T07: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"409eab9a3e366c40b05dbc56e3c850cefa2c7c9b\" (stale or foreign proof)",
+      "proof P-OWN-T08: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"409eab9a3e366c40b05dbc56e3c850cefa2c7c9b\" (stale or foreign proof)",
+      "proof P-OWN-T09: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"409eab9a3e366c40b05dbc56e3c850cefa2c7c9b\" (stale or foreign proof)",
+      "proof P-OWN-T10: identity.head is \"94307eddcd82195a77583894b8624d846eb602b2\", live candidate has \"409eab9a3e366c40b05dbc56e3c850cefa2c7c9b\" (stale or foreign proof)"
+    ]
+  },
+  "browser": {
+    "checks": {
+      "rustLoginAndContactRead": true
+    },
+    "findings": {
+      "pagination": {
+        "rows": 20,
+        "notice": "a further page exists after b2eda527-d50b-4302-9094-92d05e4fba27",
+        "buttons": [
+          "sign out",
+          "Refresh",
+          "Draft",
+          "Draft",
+          "Draft",
+          "Draft",
+          "Draft",
+          "Draft",
+          "Draft",
+          "Draft",
+          "Draft",
+          "Draft",
+          "Draft",
+          "Draft",
+          "Draft",
+          "Draft",
+          "Draft",
+          "Draft",
+          "Draft",
+          "Draft",
+          "Draft",
+          "Draft"
+        ]
+      },
+      "searchQuery": {
+        "literal": "Ada&limit=1",
+        "encodedApiStatus": 200,
+        "encodedApiRows": 0,
+        "uiRows": ["Ada Lovelace\tada@lovelace.test\talice\t1\tDraft"]
+      },
+      "pendingRefresh": {
+        "key": "ec757ce8-6da6-4925-a6a1-293fa0484b0c",
+        "status": "opaque value \u2014 recover with request id ec757ce8-6da6-4925-a6a1-293fa0484b0c \u2014 open recovery with this request id",
+        "effectRows": 1,
+        "afterKey": "36183da8-2953-4c8d-a29d-a9c6d6083ab1",
+        "url": "http://127.0.0.1:35687/app/draft?contact=2c3e5a10-1111-4111-8111-0000000000a1&revision=1&name=Ada%20Lovelace",
+        "oldKeyInStorage": false,
+        "statusAfterReload": ""
+      },
+      "logout": {
+        "uiMarker": "signed outsign out",
+        "csrfStored": null,
+        "authenticatedReadStatus": 200,
+        "readableContactRows": 20
+      }
+    },
+    "lifecycle": {
+      "serverPid": 359802,
+      "fixture": {
+        "port": 33899,
+        "data": "/tmp/acrm-esm5z8pl/archava-pg-fixture-359802-1792356036091363947/data"
+      },
+      "browserPid": 359854,
+      "browserStopped": true,
+      "serverStopped": true
+    },
+    "startedAt": "2026-10-18T20:40:36.080Z",
+    "finishedAt": "2026-10-18T20:40:39.220Z"
+  },
+  "lifecycle": [
+    {
+      "run": "browser-probe.json",
+      "fixtureDirectoryRemoved": true,
+      "fixturePortClosed": true,
+      "serverStopped": true,
+      "browserStopped": true
+    },
+    {
+      "run": "browser-probe.json.attempt1",
+      "fixtureDirectoryRemoved": true,
+      "fixturePortClosed": true,
+      "serverStopped": true,
+      "browserStopped": true
+    },
+    {
+      "run": "browser-probe.json.attempt2",
+      "fixtureDirectoryRemoved": true,
+      "fixturePortClosed": true,
+      "serverStopped": true,
+      "browserStopped": true
+    }
+  ],
+  "sourceHashes": {
+    "rust/crates/host/src/crm.rs": "acd134fce084556fc7bf6fa5b2dcb111183eebb132da1814de4e29c726883c86",
+    "rust/crates/host/src/assistant.rs": "d8ae427d75586f2089b15af72830b1c27ce5ceff57e1d551d2279e26e6940574",
+    "rust/crates/host/src/router.rs": "3f547f41b66d038e0bca7362fe4aeea572296909ffaa1690fcaffac61aaeb5f2",
+    "rust/crates/slice/src/lib.rs": "30f7df66b7c42c3f97fe1e94df0a80efcef16114ca906311724200c57704e227",
+    "rust/crates/slice/src/session.rs": "9dfad37a3d671c1f814e5718eac82c4bd6e646030d4778c90293abbf9b3ecd8c",
+    "rust/crates/slice/src/contacts.rs": "eb5d5754c080ad981a62bde450b92f6f140a2032b9f83120461f57ee5dc96862",
+    "rust/crates/slice/src/draft.rs": "32e590071ab88adcdb1ccc7f9c7ebaa989233f5a085c339377643aabc17e677a",
+    "rust/crates/slice/src/recover.rs": "ff33910c1da8e417126180bb40c730e8763b0a88739f0f2652573737db472a93",
+    "rust/crates/host/tests/crm.rs": "5a9e20246f7d70164fccdffadf48a51d49c5afe9aad4ad66bf5d6014cb945dfd",
+    "rust/crates/host/tests/assistant.rs": "54daf1cb5e2d32c4a829a29d3469682068412b7fc23c8de30d67342483802a2d",
+    "tools/own/verify.mjs": "ae393df881e1438b601a8d592479f9b2da4c0fe28b815daac7b5125b112f2bf0",
+    "tools/rust/k05-k04-consumers.mjs": "14310e3c23bc7bc3d37fd4fe4d4208e41b0675caf84388e34e1185bfcb46bd6c",
+    "docs/PRD_FULL_RUST.md": "0567c95a1461527a36272dd79efb8f91c30617b54838c320cf96494205735d93",
+    "docs/OWNER_CONFIGURATION_PRD.md": "0ca3babf6d007f0031691bb7163e08409dbaa8ff9b50d54f1c7ddc710ce51b25",
+    "docs/rust/required-coverage.json": "9014279b927d35ea4190fdb51184e997bddc5196bab7753daf6867bb2c89720a"
+  },
+  "rawEvidenceDirectory": "/home/haikaru/.cache/archava-codex-audits/crm-20261019-7m0dxhzw",
+  "rawEvidenceHashes": {
+    "baseline.json": "e3f5b7a082ebbcef6bec403c81eb7c9e27cff7dbe2c241e8a5264086023f3e33",
+    "crm-tests.log": "2f905c8c7d81a98316ed969d29234d89930e6a127f3b7bc1e8bc13b9a1de96cc",
+    "crm-assistant-release-tests.log": "a2ab17756103e5c3f18bdbda6c5ef597b0d86f14eca4b47c1ac51feeb750e3b9",
+    "coverage.json": "c8051e23e4243ad8b209086ab4fd0635a7a36edf5d073f8010f9c5e9751e8a21",
+    "browser-probe.json": "514dd739ba6d5feba5887f7fecc707c2f7459059a563a111ffd0ffb09f27bb50",
+    "browser-probe.mjs": "9ce2562708431d457f63653d4a9eaecb5147125b834ccf516eb21b90d26d799f",
+    "browser-server-adaptation.txt": "f77616fe3795be34932b697424712b3f04679104e0fe95dd53dc15c7528026d7",
+    "audit-integrity.json": "743c4d765966d7240f712b06828f6d8c2815d3b6843e4da05e501e9c45581195"
+  },
+  "limitations": [
+    "Long TMPDIR socket failure was audit setup; corrected release suites pass.",
+    "Two initial browser harness attempts retained; final hydrated/fresh-profile run passed.",
+    "Existing consumer/OWN claims reviewed semantically, expensive full drivers not rerun.",
+    "No full release/security/ERP suites or live provider calls.",
+    "Production source and owner data unchanged; no commit/push."
+  ]
+}

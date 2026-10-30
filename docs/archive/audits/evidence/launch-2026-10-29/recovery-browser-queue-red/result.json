@@ -1,0 +1,104 @@
+{
+  "startedAt": "2026-10-30T01:08:27.275Z",
+  "scope": "Synthetic local fixture, real Chromium/SSR/WASM/HTTP/PostgreSQL; production binary restart. No live provider or public/TLS deployment acceptance.",
+  "checks": [
+    {
+      "id": "F01-authenticated-hydration",
+      "status": "passed",
+      "details": "Real login, session cookie, WASM handlers and contact query"
+    },
+    {
+      "id": "F02-contact-navigation-idempotency",
+      "status": "passed",
+      "details": "Opening the new record creates no second contact or other mutation"
+    },
+    {
+      "id": "F02-browser-to-database",
+      "status": "passed",
+      "details": {
+        "contact": "083033db-68e2-4906-abf1-3777232774a2",
+        "requestId": "b3a3f476-7e16-4877-a45d-864cdcc5e5e2",
+        "proof": "Created via UI, reviewed/applied twice, exactly one follow-up and durable receipt via non-owner SQL"
+      }
+    },
+    {
+      "id": "F03-lost-response-recovery",
+      "status": "passed",
+      "details": {
+        "requestId": "7cb13d6f-9b5f-47b4-9331-95cb95cd6e29",
+        "proof": "Response deliberately lost after real commit; UI shows uncertainty and recovers without resubmitting"
+      }
+    },
+    {
+      "id": "F04-csrf-refusal",
+      "status": "passed",
+      "details": "Valid mutation body without the CSRF header is refused"
+    },
+    {
+      "id": "F03-production-restart",
+      "status": "passed",
+      "details": "Fresh production process, same PostgreSQL and browser session, committed receipt survives"
+    },
+    {
+      "id": "CRM-http503-receipt-recovery",
+      "status": "passed",
+      "details": "A real committed write receives an unusable acknowledgement; UI retains the key and recovers exactly one effect"
+    },
+    {
+      "id": "CRM-mismatched200-receipt-recovery",
+      "status": "passed",
+      "details": "A real committed write receives an unusable acknowledgement; UI retains the key and recovers exactly one effect"
+    }
+  ],
+  "errors": [
+    "Error: Timed out: contact retains original reference\n    at until (file:///home/haikaru/Archverse/Lab/Archava/tools/e2e/verify.mjs:33:9)\n    at async verifyPendingRecovery (file:///home/haikaru/Archverse/Lab/Archava/tools/e2e/recovery.mjs:22:41)\n    at async file:///home/haikaru/Archverse/Lab/Archava/tools/e2e/verify.mjs:199:3"
+  ],
+  "browserExecutable": "/usr/bin/brave",
+  "browserSandboxDisabled": false,
+  "acknowledgementFaults": [
+    {
+      "mode": "http503",
+      "requestId": "770aeea4-6f0b-4e31-9ffd-436aa7e13a70",
+      "sql": {
+        "same_email_rows": 1,
+        "contact_rows": 1,
+        "followups": 3,
+        "receipt_rows": 1
+      }
+    },
+    {
+      "mode": "mismatched200",
+      "requestId": "4455a17b-550f-4fb8-83fb-8a5fb1788148",
+      "sql": {
+        "same_email_rows": 1,
+        "contact_rows": 1,
+        "followups": 4,
+        "receipt_rows": 1
+      }
+    }
+  ],
+  "status": "failed",
+  "pageErrors": [],
+  "fixtureCleanup": {
+    "exitCode": 0,
+    "signal": null
+  },
+  "finishedAt": "2026-10-30T01:09:02.503Z",
+  "artifacts": [
+    {
+      "path": "target/release/examples/slice_server",
+      "bytes": 14855768,
+      "sha256": "e9b751f1a57d830186ed4325f17904ef6684f4290756325845309e1bf8a67004"
+    },
+    {
+      "path": "target/release/archava-server",
+      "bytes": 15489192,
+      "sha256": "941640a28035584b24a1ba734cfa0156fb5baa63d25483e7468081095513dbd8"
+    },
+    {
+      "path": "target/site/pkg/archava-slice_bg.wasm",
+      "bytes": 2992646,
+      "sha256": "024e9af610dba8b5c7981321577ccb0aa63953e1bf94d38f9d423a126007deb8"
+    }
+  ]
+}

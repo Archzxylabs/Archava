@@ -1,0 +1,102 @@
+[
+  {
+    "from": "docs/plans/FOODSERVICE_MODULE_PLAN.md",
+    "to": "docs/history/plans/FOODSERVICE_MODULE_PLAN.md",
+    "sha256Before": "6783824c31c55b3fd1f0316a85524b66b674bf1e9c5d7189f88bfb519db6d5e2"
+  },
+  {
+    "from": "docs/plans/PURCHASING_MODULE_PLAN.md",
+    "to": "docs/history/plans/PURCHASING_MODULE_PLAN.md",
+    "sha256Before": "b9efd567885823fef96065e94eb17fbdcebca2ead3e771da5a452f172c6b83df"
+  },
+  {
+    "from": "docs/plans/SUPPORT_CASES_MODULE_PLAN.md",
+    "to": "docs/history/plans/SUPPORT_CASES_MODULE_PLAN.md",
+    "sha256Before": "f62e868d56abfbecef2d4ce1621fabc2a64cebb1921e218b056bff93dfdd8305"
+  },
+  {
+    "from": "docs/modules/BUSINESS_CAPABILITY_MATRIX.md",
+    "to": "docs/plans/BUSINESS_CAPABILITY_MATRIX.md",
+    "sha256Before": "4a7f491a607c8e024f40835616789a5c2573a2a34b689efb8a307663ee517b90"
+  },
+  {
+    "from": "docs/reference/STARTER_KIT_IMPLEMENTATION.md",
+    "to": "docs/history/progress/STARTER_KIT_IMPLEMENTATION.md",
+    "sha256Before": "e15689d40c9924bb26a6150ac96e3620da875579d6632f94a7aadb691bbb7d74"
+  },
+  {
+    "from": "docs/reference/UNIVERSAL_BUSINESS_LIBRARY.md",
+    "to": "docs/plans/UNIVERSAL_BUSINESS_LIBRARY.md",
+    "sha256Before": "e89991cd92642fd993837a1e5149b2f9ad44ea488f2499a881d24b8f000b75ef"
+  },
+  {
+    "from": "docs/research/ARCHAVA_STRATEGY_AND_EVOLUTION.md",
+    "to": "docs/plans/ARCHAVA_STRATEGY_AND_EVOLUTION.md",
+    "sha256Before": "08c67598bc6e1dae84136bd5f7cb8cb59bccd508be03d575f7ac91c731d80e53"
+  },
+  {
+    "from": "docs/research/ARCHAVA_REUSABLE_PLATFORM_PROPOSAL.md",
+    "to": "docs/plans/ARCHAVA_REUSABLE_PLATFORM_PROPOSAL.md",
+    "sha256Before": "6e3b0aebf4198326ca81a74a9a1fa834fdec4fe9966012277c830c44aed2e305"
+  },
+  {
+    "from": "docs/design/FRONTEND.md",
+    "to": "docs/history/design/FRONTEND.md",
+    "sha256Before": "1af6808324cef762580b0778f50e918fbbc6cf633d33a757a7a8578cd3967564"
+  },
+  {
+    "from": "docs/design/design-preview.html",
+    "to": "docs/history/design/design-preview.html",
+    "sha256Before": "f956aa01be4f25ea9dab3bcac33dc29237928d123eff11ad04ab56b80e5885c2"
+  },
+  {
+    "from": "docs/design/design-research.md",
+    "to": "docs/history/design/design-research.md",
+    "sha256Before": "198565583d02a7e867b8cbf5e5136a841d1d608e691b34d326d323da81e1be41"
+  },
+  {
+    "from": "docs/design/erp-desktop.png",
+    "to": "docs/history/design/erp-desktop.png",
+    "sha256Before": "16b9677072444640364452083bf3ecc55f08447e3c1e2378abe68d10f51d0fac"
+  },
+  {
+    "from": "docs/design/erp-mobile.png",
+    "to": "docs/history/design/erp-mobile.png",
+    "sha256Before": "1d94de2faa6ed88e677f5ebdb3f4e7ab1ae16c9b54a71bbd966ecf290fd01376"
+  },
+  {
+    "from": "docs/audit/2026-10-08-business-model-sources.json",
+    "to": "docs/research/evidence/2026-10-08-business-model-sources.json",
+    "sha256Before": "44ec77e3f5faebe9bb1428b28e4cf3569f4804cd5078bc7395b620f03794e083"
+  },
+  {
+    "from": "docs/audit/2026-10-10-starter-kit-sources.json",
+    "to": "docs/research/evidence/2026-10-10-starter-kit-sources.json",
+    "sha256Before": "840f4b194ae6e707a6d7c0739861f2649c46a17c428cafbc26260b29d1e2cb2e"
+  },
+  {
+    "from": "docs/audit/2026-10-10-starter-kit-catalog.json",
+    "to": "docs/research/evidence/2026-10-10-starter-kit-catalog.json",
+    "sha256Before": "2c3e5f9a56b0a0698b2871a1f47f34bb76cda0878cd58f15caeec061cfbb2825"
+  },
+  {
+    "from": "docs/design/crm-desktop.png",
+    "to": "docs/history/design/crm-desktop.png",
+    "sha256Before": "98da3a0b10ee2c9400038fd2b7d28fbb3a27e222c230bf5ac8afa9ee8f5d65aa"
+  },
+  {
+    "from": "docs/design/crm-mobile.png",
+    "to": "docs/history/design/crm-mobile.png",
+    "sha256Before": "f5277a98df697e8bf2d93c73791a75dbd5f755f6c31841097c221adb2d7196df"
+  },
+  {
+    "from": "docs/design/website-desktop.png",
+    "to": "docs/history/design/website-desktop.png",
+    "sha256Before": "867f8885aab49da7eafb8f1b6f131bb916855cba3ee5d6691f35615de94859e1"
+  },
+  {
+    "from": "docs/design/website-mobile.png",
+    "to": "docs/history/design/website-mobile.png",
+    "sha256Before": "e0b648c0f1b7293d3fc346c4a2923b0cb408322b59ad73f75fa2fb7e75946745"
+  }
+]

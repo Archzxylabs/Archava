@@ -1,0 +1,8 @@
+Baseline 2026-10-22 — coverage-final-baseline.json, istanbul percent() arithmetic (floor, 2dp)
+                                | files |   lines  | functions | branches | statements |
+all instrumented (the gate)     |  286 |    33.20 |    41.21 |    33.91 |    32.38 |
+zero-coverage packages (12)     |   26 |     0.00 |     0.00 |     0.00 |     0.00 |
+scopes with coverage (54)       |  260 |    38.50 |    48.55 |    40.59 |    37.67 |
+
+zero-coverage surface: 2964 of 21558 instrumented lines (13.75%), 26 files, 12 scopes
+The 38.50% row is descriptive only — the gate enforces the 33.20% full-report row plus one floor per package.

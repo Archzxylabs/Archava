@@ -1,0 +1,206 @@
+{
+  "audit": "archlab-archava-platform-2026-10-21",
+  "auditor": "archlab (Hermes)",
+  "baseline": {
+    "repo": "/home/haikaru/Archverse/Lab/Archava_Platform",
+    "head": "412f763e17f3a68a457fd76c7b929184c50c916a",
+    "branch": "feat/laundry-1.17.0",
+    "working_tree": {
+      "tracked_modified": 27,
+      "untracked": 16,
+      "insertions": 1516,
+      "deletions": 1160
+    },
+    "workspace_projects": 70,
+    "lockfile_importers": 71,
+    "loc_ts_rust": 220176,
+    "source_files_ts_rust": 640
+  },
+  "gates": {
+    "structure": { "exit": 0, "note": "70 workspace projects, every @archava/* import declared" },
+    "typecheck": { "exit": 0 },
+    "test": {
+      "exit": 0,
+      "tests": 1821,
+      "files": 137,
+      "failed": 0,
+      "skipped": 0,
+      "duration_s": 7.24
+    },
+    "build": { "exit": 0 },
+    "crm_verify_runtime": { "exit": 0, "checks": 44, "passed": 44 },
+    "format_check": {
+      "exit": 1,
+      "files_with_issues": 36,
+      "scope": "committed files, not only working tree"
+    },
+    "lint": {
+      "exit_default_heap": 134,
+      "note_default_heap": "JavaScript heap out of memory at ~2GB",
+      "exit_8gb_heap": 1,
+      "errors_with_8gb": 49,
+      "rule_breakdown": {
+        "no-unsafe-assignment": 15,
+        "no-unsafe-call": 9,
+        "no-undef": 7,
+        "no-unused-vars": 6,
+        "no-unsafe-return": 5,
+        "no-unsafe-argument": 4,
+        "restrict-plus-operands": 1,
+        "no-unsafe-member-access": 1,
+        "no-unused-labels": 1
+      },
+      "root_cause": [
+        "flat config applies js.configs.recommended to .mjs without Node globals (URL/process undefined)",
+        "examples/** not ignored and outside tsconfig project yet linted with projectService typed rules"
+      ]
+    },
+    "rust_verify": {
+      "exit_first_run": 101,
+      "failure": "cargo test --workspace: archava-adapters --test tenant_context 11/11 failed",
+      "root_cause": "pg-fixture unix socket path under long TMPDIR exceeds 107 bytes; pg_ctl cannot create socket",
+      "rerun_short_tmpdir": "suites green through host authority tests, 0 FAILED at time of report"
+    },
+    "rust_coverage": {
+      "exit": 1,
+      "complete": false,
+      "required_items": 93,
+      "proofs": 56,
+      "diagnostics_first_run": 223,
+      "diagnostics_after_failed_fast_gate": 263
+    },
+    "unit_coverage": {
+      "statements_pct": 30.32,
+      "branches_pct": 32.29,
+      "functions_pct": 37.37,
+      "lines_pct": 31.05,
+      "thresholds_configured": false
+    }
+  },
+  "findings": [
+    {
+      "id": "A1",
+      "severity": "P1",
+      "confidence": "High",
+      "title": "Cross-actor command receipt readable without a read grant (3 Rust endpoints + 7 TS domains)",
+      "evidence": [
+        "rust/crates/host/src/erp/billing.rs:499",
+        "rust/crates/host/src/erp/subscriptions.rs:543",
+        "rust/crates/host/src/erp/attendance.rs:532",
+        "rust/crates/adapters/src/erp/subscriptions.rs:861",
+        "rust/crates/adapters/src/erp/attendance.rs:813"
+      ],
+      "preconditions": "active membership in tenant + knowledge of another principal's command request UUID",
+      "fix": "bind receipt to actor_id and re-answer read gate with current grants, as router.rs status_receipt does (RN01)"
+    },
+    {
+      "id": "A2",
+      "severity": "P1",
+      "confidence": "High",
+      "title": "Owner confirmation does not bind effects/catalogue/pricing identity (F04)",
+      "evidence": [
+        "rust/crates/own/src/lib.rs:489",
+        "rust/crates/own/src/lib.rs:170",
+        "rust/crates/host/src/own.rs:406",
+        "probe: identical plan hash across different cost/readiness catalogues"
+      ]
+    },
+    {
+      "id": "A3",
+      "severity": "P1",
+      "confidence": "High",
+      "title": "Owner apply has no persisted operation identity (F05) and restore merges labels instead of replacing (F06)",
+      "evidence": [
+        "rust/crates/slice/src/owner.rs:188",
+        "rust/crates/own/src/lib.rs:448",
+        "tools/rust/browser-slice.mjs:1460"
+      ]
+    },
+    {
+      "id": "A4",
+      "severity": "P2",
+      "title": "Rust evidence drift and worse diagnostic count (F10)",
+      "evidence": [
+        "docs/rust/EXECUTION_STATE.md:23",
+        "docs/rust/FULL_RUST_COMPLETION_REPORT.md:4",
+        "docs/rust/ARCHXY1_ACCEPTANCE_MATRIX.md:28",
+        "coverage.mjs exit 1 / 93 items / 56 proofs / 223-263 diagnostics"
+      ]
+    },
+    { "id": "A5", "severity": "P3", "title": "pg-fixture not resilient to long TMPDIR" },
+    { "id": "A6", "severity": "P3", "title": "Unit coverage 30% with no thresholds" },
+    {
+      "id": "A7",
+      "severity": "P3",
+      "title": "Stale systemd units; public API and voice worker inactive and disabled"
+    },
+    {
+      "id": "A8",
+      "severity": "P3",
+      "title": "7 injection/XSS/header hardening items (0 P1/P2)",
+      "report": "archlab-2026-10-21-injection.md"
+    },
+    {
+      "id": "A9",
+      "severity": "P2",
+      "title": "vite 7.3.6 advisories in dev graph; no scheduled audit or Dependabot",
+      "report": "archlab-2026-10-21-supplychain.md"
+    },
+    {
+      "id": "A10",
+      "severity": "P2",
+      "title": "assigned scope not enforced on billing/attendance/laundry reads and subscription entitlement/usage reads",
+      "report": "archlab-2026-10-21-authz.md"
+    },
+    {
+      "id": "A11",
+      "severity": "P2/P3",
+      "title": "Rust org/project/proposal/scheduling status skip read grant; global login throttle bucket; tenant-existence oracle",
+      "report": "archlab-2026-10-21-authz.md"
+    }
+  ],
+  "authz_scope": {
+    "route_entries_examined": 250,
+    "typescript": 200,
+    "rust": 50,
+    "require_session": 245,
+    "unauthenticated_by_design": 4,
+    "guest_capable": 1,
+    "command_status_reads": 30,
+    "status_reads_with_grant_or_initiator_binding": { "typescript": "12/19", "rust": "2/11" }
+  },
+  "dependencies": {
+    "pnpm_total": 334,
+    "pnpm_prod": 89,
+    "pnpm_advisories": { "critical": 0, "high": 1, "moderate": 2, "low": 0 },
+    "vulnerable_package": "vite@7.3.6 (dev-only, via vitest)",
+    "fix_available": "vite 7.3.7",
+    "cargo_crates": 327,
+    "cargo_vulnerabilities": 0,
+    "cargo_warnings": ["paste@1.0.15 unmaintained (RUSTSEC-2024-0436)"],
+    "lockfile_integrity": "263/263 sha512",
+    "non_registry_deps": 0,
+    "active_install_hooks": 0
+  },
+  "ops": {
+    "archava-public-api.service": "inactive (dead), disabled, WorkingDirectory path does not exist",
+    "archava-voice-worker.service": "inactive (dead), disabled",
+    "library_artifacts_current": 62,
+    "library_artifacts_archive_1_17_0": 58,
+    "note": "archive/current mismatch matches documented A07; docs are accurate on this point"
+  },
+  "artifacts_dir": "/home/haikaru/.hermes/profiles/archlab/cache/scratch/archava-audit/",
+  "reports": [
+    "docs/audit/ARCHLAB_AUDIT_2026-10-21.md",
+    "docs/audit/archlab-2026-10-21-authz.md",
+    "docs/audit/archlab-2026-10-21-injection.md",
+    "docs/audit/archlab-2026-10-21-owner-claims.md",
+    "docs/audit/archlab-2026-10-21-supplychain.md"
+  ],
+  "limits": [
+    "full security:verify matrix not run",
+    "no live provider calls",
+    "no load/fuzz testing",
+    "coverage is unit-suite only, not host/proof suites"
+  ]
+}

@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "id": "archava-local-library",
-  "version": "1.18.0",
+  "version": "1.19.0",
   "host": {
     "name": "@archava/crm-host",
     "version": "0.20.0"
@@ -96,11 +96,15 @@
     },
     {
       "name": "@archava/act-host-pg",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "migrations": [
         {
           "file": "001_host_intents.sql",
           "checksum": "349fbb17938e5426d9c911911a262216d139a33f20ba5fe9154aef238baae894"
+        },
+        {
+          "file": "002_host_scope_binding.sql",
+          "checksum": "545b449aaf42ac26dadbf6e8fbc6bf3a9c15ad5f2a5283e05a1a6d9db717fc19"
         }
       ]
     },
@@ -452,11 +456,15 @@
     },
     {
       "name": "@archava/field-services-pg",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "migrations": [
         {
           "file": "001_field_services_dispatch_visits.sql",
           "checksum": "094bf7d79c03ec16654d1adccb07984514d90524311822deaab51fc9683aa8d1"
+        },
+        {
+          "file": "002_field_services_tenant_isolation.sql",
+          "checksum": "ca9124f24e57f9b5d71b76d02107d599f27b65190e1241806e12783fe84b153d"
         }
       ]
     },
@@ -467,11 +475,15 @@
     },
     {
       "name": "@archava/formal-education-pg",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "migrations": [
         {
           "file": "001_formal_education_enrollment.sql",
           "checksum": "8cbe38d058d38e461507aca92f211cb5aeedf168b3349f69e91841e95b38b4c5"
+        },
+        {
+          "file": "002_formal_education_tenant_keys.sql",
+          "checksum": "e954d547fb3013f6d96ecf824b8dd6f6c434bd426ce00921686d04df85503e53"
         }
       ]
     }
@@ -590,12 +602,12 @@
     {
       "schema": "archava_field",
       "package": "@archava/field-services-pg",
-      "migrations": ["001_field_services_dispatch_visits"]
+      "migrations": ["001_field_services_dispatch_visits", "002_field_services_tenant_isolation"]
     },
     {
       "schema": "archava_edu",
       "package": "@archava/formal-education-pg",
-      "migrations": ["001_formal_education_enrollment"]
+      "migrations": ["001_formal_education_enrollment", "002_formal_education_tenant_keys"]
     }
   ],
   "requiredAdapters": [
@@ -709,7 +721,7 @@
     },
     {
       "name": "zod",
-      "version": "4.1.12"
+      "version": "4.6.6"
     }
   ]
 }

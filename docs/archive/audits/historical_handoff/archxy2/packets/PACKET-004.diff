@@ -1,0 +1,399 @@
+# PACKET-004 — the R05 scheduling cohort (resource reservations)
+
+**Archxy 2 → Archxy 1.** Successor to PACKET-003: its hunks are ASSUMED
+FOLDED before this diff is applied — the a/ side of every hunk below is
+literally "current main (2026-10-18, HEAD `e7c3854c…`) with
+PACKET-003.diff applied", built by actually patching the fresh files in a
+staging copy. Apply order: PACKET-003 first, then this packet as
+`patch -p1 --directory=<main> < PACKET-004.diff`, confirming `git status`
+on the listed files. Everything else in the R05 scheduling cohort ships
+wholesale (no diff in this file):
+
+- `rust/crates/domain/src/erp/scheduling.rs` — the pure contract port
+  (serde-only, wasm-clean), `erp/mod.rs` gains one `pub mod` line. 55/55
+  `cargo test -p archava-domain` (the +5 are this module's unit tests).
+- `rust/crates/adapters/src/erp/scheduling.rs` — typed mutations ported
+  statement-for-statement from `packages/scheduling-pg/src/repository.ts`
+  (`23P01` = the overlap trigger's conflict verdict; claim-first replay
+  with receipt re-auth; the block arm's extra `resources.write` gate runs
+  BEFORE the arm's own refusals), `erp/mod.rs` gains one `pub mod` line.
+  24 `cargo test -p archava-adapters` (13+11, unchanged — this module
+  ships unit-test only via its integration suite).
+- `rust/crates/host/src/erp/scheduling.rs` + `erp/mod.rs` — the gate
+  module (the ledger descriptor + opener; ONE transaction per command:
+  resolve context → record → commit; the status handler carries the TS
+  `actor_id ≠ principal` forbidden gate) and the two route handlers.
+- `rust/crates/host/tests/erp_scheduling.rs` — the 9-witness integration
+  suite (all pass, ~79 s on the TMPDIR-backed fixture).
+- `tools/rust/erp/verify-r05.mjs` — the P-ERP-R05 producer (new file;
+  witness map exported for the drift test).
+- `tools/rust/erp/module-consumers.ts` + `module-consumers.witnesses.mjs`
+  — the battery scope grows to TWELVE ERP modules (scheduling +
+  scheduling-pg), still hashed across BOTH verticals.
+- `examples/rust-consumers/erp/{hospitality,professional-services}/` —
+  deps, `mountSchedulingDashboard` browser mounts + index.html hosts +
+  client config, typed `server-contract.ts` exports, one R05 battery
+  section each (grammar refusal, instant-offset normalization, wall-clock
+  refusal, timezone refusal, both migration ids, ledger readback,
+  exercised service flow), `scheduling-pg` in the browser leak checks.
+- `docs/rust/archxy2/**` — the working trio (this packet's prose).
+
+## Shared-file deltas (the diff below), single-writer Archxy 1 territory:
+
+1. `rust/crates/host/src/router.rs` — the two scheduling routes beside
+   the R04 mounts (`POST /erp/scheduling/commands`,
+   `GET /erp/scheduling/commands/status`).
+2. `rust/crates/pg-fixture/src/lib.rs` — `SCHEDULING_MIGRATIONS` (TWO
+   migrations: reservations + the shared-occupancy kernel), the
+   `scheduling_ledger` field, the provision call after the projects
+   ledger, the verbatim port of `grantSchedulingRuntime` (occupancy
+   granted from day one, exactly like the TS block), the Fixture
+   instantiation, the `migrations_package` arm and the
+   `ledger_expectations` arm + `attach()` verification. Works unchanged
+   with BOTH your rehearsal provisions (`provision` and
+   `provision_prior_commerce_profile`).
+3. `tools/rust/verify.mjs` — the `erp R05 suites` step (after
+   `erp R04 suites`) + the `P-ERP-R05` evidence-mapping entry.
+4. `tools/rust/test/verify.test.mjs` — `R05_WITNESSES` import + the
+   P-ERP-R05 drift test (suite whitelist `scheduling`; frozen
+   witnessTotal 9).
+5. `docs/rust/required-coverage.json` — `erp R05 suites` appended to
+   P-FAST-GATE's `requiredChecks`, the `P-ERP-R05` evidence block (9
+   checks, RN-ERP-01/02 named on the scheduling tables, witnessTotal 9),
+   and P-MODULE-CONSUMERS' `producedBy` noting the R05 battery scope.
+
+## Verification state (all green, executed in the candidate copy after the
+## rebase onto main `e7c3854c…`, 2026-10-18):
+
+- `cargo test -p archava-domain --offline` → 55/55
+- `cargo test -p archava-adapters --offline` → 24/24
+- `TMPDIR=/home/haikaru/Archverse/tmp-fixture cargo test -p archava-host
+  --test erp_scheduling` → 9/9 (79.3 s)
+- `TMPDIR=… cargo test -p archava-host --test erp_organizations` (rebase
+  spot-check, same fixture) → 9/9 (62.5 s)
+- `cargo clippy -p archava-domain -p archava-adapters -p
+  archava-pg-fixture -p archava-host --all-targets --offline` → 0 warnings
+- `cargo fmt` → clean on the four crates (pg-fixture's only dirty site is
+  main's own `migrate_commerce_upto`, pre-existing, untouched)
+- `node --test tools/rust/test/verify.test.mjs` → 27/27
+- `node --test tools/rust/test/verify-release.test.mjs` → 24/24
+- `node tools/rust/wasm-boundary.mjs` → PASS
+- `TMPDIR=… node tools/rust/erp/verify-r05.mjs` → PASS,
+  `dist/rust-erp-r05-proof.json`
+- `pnpm library:pack` → 62 tarballs; `pnpm erp:verify-consumers` → PASS
+
+## Known integration notes
+
+- The a/ side of every hunk = main-current-PLUS-003 (PACKET-003 re-applied
+  cleanly onto today's files — offsets only, one fuzz-1; re-run its
+  dry-run to confirm on your tree before folding, then apply 003 and this
+  packet in order).
+- `rust/Cargo.toml` / `rust/Cargo.lock` untouched by this packet (no new
+  crates; your Cargo.toml's new ops-crate entry was inherited wholesale in
+  the copy and is unchanged by us).
+- Fixture behavior for pre-existing ledgers is unchanged; the scheduling
+  ledger is additive (a NEW schema, a NEW runtime grant list, and one new
+  entry in the `attach()` verification list).
+- Deferred (recorded in the module headers, never silent): the TS READ
+  paths + the occupancy runtime ride with their serving cohorts
+  (accommodation PACKET-005), `calendar.ts` helpers with accommodation
+  too; the pure domain's timezone check is a SHAPE check (no `Intl` in
+  wasm land — the SQL CHECK is length-only in TS as well; the divergence
+  is deliberate and equal on both sides).
+--- a/rust/crates/host/src/router.rs
++++ b/rust/crates/host/src/router.rs
+@@ -377,6 +377,18 @@
+             "/erp/projects/commands/status",
+             get(crate::erp::projects::project_status),
+         )
++        // Archxy 2's R05 scheduling ledger (PACKET-004): the reservations
++        // cohort mounts beside the R04 cohorts, same gate shape — session +
++        // CSRF on the mutation, tenant from the body, the cohort's own
++        // grant ladder after.
++        .route(
++            "/erp/scheduling/commands",
++            post(crate::erp::scheduling::scheduling_command),
++        )
++        .route(
++            "/erp/scheduling/commands/status",
++            get(crate::erp::scheduling::scheduling_status),
++        )
+         .with_state(state)
+ }
+ 
+--- a/rust/crates/pg-fixture/src/lib.rs
++++ b/rust/crates/pg-fixture/src/lib.rs
+@@ -134,6 +134,14 @@
+ /// Archxy 2 ERP namespace (PACKET-003).
+ pub const PROJECTS_MIGRATIONS: &[&str] = &["001_project_delivery"];
+ 
++/// The scheduling ledger's migrations, in apply order —
++/// `packages/scheduling-pg/migrations/{001_resource_reservations,002_shared_occupancy}.sql`
++/// (Archxy 2's ERP namespace, PACKET-004): TWO migrations because 002 is the
++/// shared-occupancy kernel the accommodation cohort reserves through — the
++/// timed module's own surface never writes it, yet both migrations belong to
++/// the scheduling package and apply together with it.
++pub const SCHEDULING_MIGRATIONS: &[&str] = &["001_resource_reservations", "002_shared_occupancy"];
++
+ /// The provider attempt ledger's migration, in apply order —
+ /// `packages/provider-runtime/migrations/001_provider_attempts.sql` (the R09
+ /// provider slice): the budget buckets and the pending→finalized attempt rows
+@@ -223,6 +231,9 @@
+     /// The same ledger for `archava_projects` — the R04 delivery cohort
+     /// (PACKET-003).
+     pub projects_ledger: Vec<(String, String)>,
++    /// The same ledger for `archava_scheduling` — the R05 reservations
++    /// cohort (PACKET-004; the occupancy kernel rides migration 002).
++    pub scheduling_ledger: Vec<(String, String)>,
+     /// The same ledger for `archava_provider` — the R09 provider attempt
+     /// ledger (buckets, pending→finalized attempts, restore holds), through
+     /// whose forced-RLS scope the provider budget is a real PostgreSQL
+@@ -797,6 +808,17 @@
+         "archava_projects_migrations",
+     )
+     .await;
++    // Archxy 2 ERP namespace (PACKET-004): the scheduling ledger migrates
++    // under the same owner role; BOTH migrations (reservations + the shared
++    // occupancy kernel) apply in one ledger — 002 belongs to the same
++    // package and carries the accommodation entry point (the
++    // create-accommodation-resource RPC) beside the kernel table.
++    let scheduling_ledger = migrate_ledger(
++        &owner_pool,
++        "archava_scheduling",
++        "archava_scheduling_migrations",
++    )
++    .await;
+     // R09's provider slice: the attempt ledger migrates under the same owner
+     // role, one UTC-anchored schema next to the domain ledgers. The runtime
+     // role must stay a NON-owner of `archava_provider` — `create`'s role
+@@ -992,6 +1014,28 @@
+         format!(
+             "GRANT EXECUTE ON FUNCTION archava_projects.lock_membership(text,text) TO {RUNTIME_USER}"
+         ),
++        // Archxy 2 ERP namespace (PACKET-004): the scheduling grants — the
++        // port of grantSchedulingRuntime
++        // (`packages/scheduling-pg/src/migrate.ts`), statement for statement.
++        // The occupancy table is HERE because the TS grant block carries it:
++        // the accommodation cohort reserves through scheduling's kernel, and
++        // the grant exists from the scheduling ledger's own provision.
++        format!("GRANT USAGE ON SCHEMA archava_scheduling TO {RUNTIME_USER}"),
++        format!(
++            "GRANT SELECT ON archava_scheduling.schema_migrations,\
++             archava_scheduling.memberships TO {RUNTIME_USER}"
++        ),
++        format!(
++            "GRANT SELECT,INSERT,UPDATE ON archava_scheduling.resources,\
++             archava_scheduling.reservations,archava_scheduling.commands TO {RUNTIME_USER}"
++        ),
++        format!("GRANT SELECT,INSERT ON archava_scheduling.audit TO {RUNTIME_USER}"),
++        format!(
++            "GRANT SELECT,INSERT,UPDATE ON archava_scheduling.occupancy TO {RUNTIME_USER}"
++        ),
++        format!(
++            "GRANT EXECUTE ON FUNCTION archava_scheduling.lock_membership(text,text) TO {RUNTIME_USER}"
++        ),
+         // R09 provider slice — the port of grantProviderRuntime
+         // (`packages/provider-runtime/src/postgres.ts`), statement for
+         // statement, mirrored by
+@@ -1044,6 +1088,7 @@
+         organizations_ledger,
+         proposals_ledger,
+         projects_ledger,
++        scheduling_ledger,
+         provider_ledger,
+         dir,
+     }
+@@ -1211,6 +1256,9 @@
+         "archava_organizations" => "organizations-pg",
+         "archava_proposals" => "proposals-pg",
+         "archava_projects" => "projects-pg",
++        // (PACKET-004) the R05 reservations ledger migrates from its own TS
++        // package, byte-faithful, including the occupancy-kernel migration.
++        "archava_scheduling" => "scheduling-pg",
+         // R09's provider ledger: the migration file the TS store reads too.
+         "archava_provider" => "provider-runtime",
+         _ => "commerce-pg",
+@@ -1235,6 +1283,7 @@
+         "archava_organizations" => ORGANIZATIONS_MIGRATIONS,
+         "archava_proposals" => PROPOSALS_MIGRATIONS,
+         "archava_projects" => PROJECTS_MIGRATIONS,
++        "archava_scheduling" => SCHEDULING_MIGRATIONS,
+         "archava_provider" => PROVIDER_MIGRATIONS,
+         _ => COMMERCE_MIGRATIONS,
+     };
+@@ -1314,6 +1363,9 @@
+         organizations_ledger: ledger_expectations("archava_organizations"),
+         proposals_ledger: ledger_expectations("archava_proposals"),
+         projects_ledger: ledger_expectations("archava_projects"),
++        // (PACKET-004) the R05 reservations cohort's frozen pair list: both
++        // scheduling migrations recorded, occupancy kernel included.
++        scheduling_ledger: ledger_expectations("archava_scheduling"),
+         provider_ledger: ledger_expectations("archava_provider"),
+         dir,
+     }
+--- a/tools/rust/verify.mjs
++++ b/tools/rust/verify.mjs
+@@ -302,6 +302,22 @@
+       'erp R04 suites',
+       () => step('erp R04 suites', ['node', 'tools/rust/erp/verify-r04.mjs']),
+     ],
++    // Same pattern for P-ERP-R05: the R05 migration's first cohort — the
++    // scheduling ledger. The workspace step cannot prove the named witnesses
++    // the cohort's nine checks need (the authorized reservation life, the
++    // database's overlap verdict, the terminal-state gate, revoked
++    // recovery, key/fingerprint collision, cross-tenant refusal, lost-response
++    // replay, the grant ladder with the block arm's extra write, and the
++    // instant boundary), so this producer re-runs `--test erp_scheduling`
++    // and grades each check against its named witness. Added with the
++    // scheduling cohort in PACKET-004 (scope edit for review); the
++    // accommodation and assets cohorts grow the SAME P-ERP-R05 proof
++    // additively instead of forking new ones. It sits with the kernel-ERP
++    // steps because it rebuilds a disposable PostgreSQL fixture.
++    [
++      'erp R05 suites',
++      () => step('erp R05 suites', ['node', 'tools/rust/erp/verify-r05.mjs']),
++    ],
+     // Same pattern for P-R03-DOMAIN: the R03 CRM domain lane spans three
+     // suites (the command lane repository, the conversation route over HTTP,
+     // and the assistant crate's injected-host flow tests). The workspace step
+@@ -757,6 +773,31 @@
+         }
+       },
+     },
++    {
++      // The Archxy 2 ERP namespace's R05 proof (PACKET-004): the scheduling
++      // cohort's nine witnesses first — the accommodation and assets cohorts
++      // extend this SAME proof additively, so the block (like the producer)
++      // grows instead of forking.
++      proof: 'P-ERP-R05',
++      checks: {
++        'authorized scheduling flow documents its life': { step: 'erp R05 suites' },
++        'overlapping hold refuses and holds nothing': { step: 'erp R05 suites' },
++        'terminal reservation refuses further updates': { step: 'erp R05 suites' },
++        'revoked scheduling grant refused on recovery': { step: 'erp R05 suites' },
++        'same key different command conflicts': { step: 'erp R05 suites' },
++        'cross-tenant caller refused before any write': { step: 'erp R05 suites' },
++        'lost response replays without a second resource': { step: 'erp R05 suites' },
++        'insufficient grants refuse before any statement': { step: 'erp R05 suites' },
++        'malformed instant is a boundary 400': { step: 'erp R05 suites' },
++      },
++      details: () => {
++        try {
++          return JSON.parse(readFileSync(join(root, 'dist/rust-erp-r05-proof.json'), 'utf8'))
++        } catch (error) {
++          throw new Error(`erp R05 witness proof unreadable: ${error.message}`)
++        }
++      },
++    },
+     {
+       proof: 'P-COLD-CONSUMERS',
+       checks: {
+--- a/tools/rust/test/verify.test.mjs
++++ b/tools/rust/test/verify.test.mjs
+@@ -19,6 +19,7 @@
+ import { WITNESSES as PURCHASING_WITNESSES } from '../erp/verify-purchasing.mjs'
+ import { WITNESSES as FOODSERVICE_WITNESSES } from '../erp/verify-foodservice.mjs'
+ import { WITNESSES as R04_WITNESSES } from '../erp/verify-r04.mjs'
++import { WITNESSES as R05_WITNESSES } from '../erp/verify-r05.mjs'
+ import { WITNESSES as CAPACITY_WITNESSES } from '../capacity-conformance.mjs'
+ import {
+   WITNESSES as PLANNING_WITNESSES,
+@@ -391,6 +392,36 @@
+         `${check}: witness ${JSON.stringify(name)} names unknown suite ${JSON.stringify(suite)}`,
+       )
+     }
++  }
++})
++
++test('the P-ERP-R05 witness map and the frozen manifest cannot drift apart', () => {
++  // Same property as the kernel-ERP and R04 proofs, for the R05 surface:
++  // the scheduling cohort's 9 manifest checks over the one `erp_scheduling`
++  // suite's named Rust test functions — one witness per check at the
++  // scheduling slice. Both directions, and the frozen `witnessTotal` (9,
++  // grown additively by the later R05 cohorts) too.
++  const manifest = loadManifest(repoRoot)
++  const spec = manifest.proofs['P-ERP-R05']
++  assert.deepEqual([...Object.keys(R05_WITNESSES)].sort(), [...spec.requiredChecks].sort())
++  const witnessTotal = Object.values(R05_WITNESSES).reduce(
++    (sum, list) => sum + list.length,
++    0,
++  )
++  assert.equal(witnessTotal, spec.expect.witnessTotal)
++  for (const [check, witnesses] of Object.entries(R05_WITNESSES)) {
++    assert.ok(witnesses.length > 0, `${check} has no witness tests`)
++    for (const [suite, name] of witnesses) {
++      assert.match(
++        name,
++        /^[a-z0-9_]+$/,
++        `${check}: witness name ${JSON.stringify(name)} is not a test identifier`,
++      )
++      assert.ok(
++        ['scheduling'].includes(suite),
++        `${check}: witness ${JSON.stringify(name)} names unknown suite ${JSON.stringify(suite)}`,
++      )
++    }
+   }
+ })
+ 
+--- a/docs/rust/required-coverage.json
++++ b/docs/rust/required-coverage.json
+@@ -819,7 +819,8 @@
+         "two cold consumers",
+         "planning conformance suite",
+         "wasm portable boundary",
+-        "R09 provider contracts"
++        "R09 provider contracts",
++        "erp R05 suites"
+       ],
+       "sourcePaths": [
+         "rust/crates",
+@@ -1393,7 +1394,7 @@
+     },
+     "P-MODULE-CONSUMERS": {
+       "kind": "evidence",
+-      "producedBy": "pnpm erp:verify-consumers (tools/rust/erp/module-consumers.ts installs two product verticals from the compiled library tarballs and grades each consumer's verify battery + installed-module resolution) — the battery scope covers the accepted R06 pair plus the R04 ledgers added with PACKET-003",
++      "producedBy": "pnpm erp:verify-consumers (tools/rust/erp/module-consumers.ts installs two product verticals from the compiled library tarballs and grades each consumer's verify battery + installed-module resolution) — the battery scope covers the accepted R06 pair, the R04 ledgers added with PACKET-003, and the R05 scheduling ledger added with PACKET-004",
+       "requiredChecks": [
+         "every accepted module has two independently installed consumers",
+         "no workspace/path dependency in either consumer"
+@@ -1747,6 +1748,40 @@
+         "databaseLedgers",
+         "operatorChecks"
+       ]
++    },
++    "P-ERP-R05": {
++      "kind": "evidence",
++      "producedBy": "pnpm rust:verify → erp R05 suites step (tools/rust/erp/verify-r05.mjs) grading named witness tests in rust/crates/host/tests/erp_scheduling.rs against the owned PostgreSQL fixture — the R05 ledgers' runtime half, opened by the scheduling cohort with PACKET-004 (the accommodation and assets cohorts extend this SAME proof additively; the pure domain half is the frozen P-R05-DOMAIN)",
++      "requiredChecks": [
++        "authorized scheduling flow documents its life",
++        "overlapping hold refuses and holds nothing",
++        "terminal reservation refuses further updates",
++        "revoked scheduling grant refused on recovery",
++        "same key different command conflicts",
++        "cross-tenant caller refused before any write",
++        "lost response replays without a second resource",
++        "insufficient grants refuse before any statement",
++        "malformed instant is a boundary 400"
++      ],
++      "expect": {
++        "witnessTotal": 9,
++        "namedRegressions": {
++          "RN-ERP-01": "revoked scheduling grant refused on recovery",
++          "RN-ERP-02": "same key different command conflicts"
++        }
++      },
++      "sourcePaths": [
++        "rust/crates/host",
++        "rust/crates/adapters/src/erp",
++        "rust/crates/domain/src/erp",
++        "rust/crates/core",
++        "tools/rust/erp/verify-r05.mjs",
++        "packages/scheduling-pg/migrations"
++      ],
++      "artifacts": [],
++      "referenced": [
++        "dist/rust-erp-r05-proof.json"
++      ]
+     }
+   }
+ }

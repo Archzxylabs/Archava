@@ -1,0 +1,320 @@
+{
+  "schemaVersion": 1,
+  "distribution": "native",
+  "catalog": {
+    "id": "archava-local-library",
+    "version": "1.19.0"
+  },
+  "runtimeVersion": "0.1.0",
+  "sourceSha256": "3f15b46affacd17a8f049c49a922318dc0571b68d7e3e848d498a11ef6447803",
+  "artifacts": [
+    {
+      "name": "archava.env.example",
+      "version": "1.19.0",
+      "tarball": "archava.env.example",
+      "sha256": "d77b70aee09526a5065cbb7b5bc5a040e016b46ea7512adebfbeee859364f015",
+      "bytes": 1092
+    },
+    {
+      "name": "bin/archava-ops",
+      "version": "1.19.0",
+      "tarball": "bin/archava-ops",
+      "sha256": "91c82365a174f43fe333a2a6d69d388ba410473fbb2d838e6007e20acb1cf4a3",
+      "bytes": 1906880
+    },
+    {
+      "name": "bin/archava-server",
+      "version": "1.19.0",
+      "tarball": "bin/archava-server",
+      "sha256": "b1df210b92360bed5c240f1d4d74dd60c89abe0bdaf34805bbff1e98fa6ef288",
+      "bytes": 15599280
+    },
+    {
+      "name": "build-provenance.json",
+      "version": "1.19.0",
+      "tarball": "build-provenance.json",
+      "sha256": "c6a72b73c9171864bd528b011d947a27141975a8e8a1a736bb5feab112c440d7",
+      "bytes": 56197
+    },
+    {
+      "name": "config/library-release.v1.json",
+      "version": "1.19.0",
+      "tarball": "config/library-release.v1.json",
+      "sha256": "95cd46283b0a52f64ec1855dd9e759fb883b4c4db19c7bb3e77bafe097903f86",
+      "bytes": 18819
+    },
+    {
+      "name": "migrations/accommodation-pg/001_room_night_stays.sql",
+      "version": "1.19.0",
+      "tarball": "migrations/accommodation-pg/001_room_night_stays.sql",
+      "sha256": "45f558b7e22d7ef12dc6c1eabbe9c5655870786cb74d552def60edceb1e61098",
+      "bytes": 18314
+    },
+    {
+      "name": "migrations/assets-pg/001_assets_custody_maintenance.sql",
+      "version": "1.19.0",
+      "tarball": "migrations/assets-pg/001_assets_custody_maintenance.sql",
+      "sha256": "b77c70bddd01512defad588a04497380aafd923dd52c833ab30fc578c9c6cfec",
+      "bytes": 7369
+    },
+    {
+      "name": "migrations/attendance-pg/001_attendance_sessions_rosters.sql",
+      "version": "1.19.0",
+      "tarball": "migrations/attendance-pg/001_attendance_sessions_rosters.sql",
+      "sha256": "f71bab0e95d33c253bac9eae573675e5fe321c33f8d81f7124561351f7484883",
+      "bytes": 7269
+    },
+    {
+      "name": "migrations/billing-pg/001_billing_invoices_settlement.sql",
+      "version": "1.19.0",
+      "tarball": "migrations/billing-pg/001_billing_invoices_settlement.sql",
+      "sha256": "b14f434495c526384a726ddf83eb685b610d229d379d0974b2c38df59f96dfbc",
+      "bytes": 11157
+    },
+    {
+      "name": "migrations/cockpit-pg/001_cockpit_durable_missions.sql",
+      "version": "1.19.0",
+      "tarball": "migrations/cockpit-pg/001_cockpit_durable_missions.sql",
+      "sha256": "436acb2d3b98fab9979a77a524a40671985bfe4c138b81503ace276dea1a72fd",
+      "bytes": 5448
+    },
+    {
+      "name": "migrations/commerce-pg/001_catalog_orders_stock.sql",
+      "version": "1.19.0",
+      "tarball": "migrations/commerce-pg/001_catalog_orders_stock.sql",
+      "sha256": "afbfdec5d977dd2cea2eaf52ad0c60ad8731375af1447c299dd58a3aba53d9df",
+      "bytes": 22114
+    },
+    {
+      "name": "migrations/commerce-pg/002_managed_menu_products.sql",
+      "version": "1.19.0",
+      "tarball": "migrations/commerce-pg/002_managed_menu_products.sql",
+      "sha256": "3ae7debc5b2dc1c53e47f10f317a2656aec0d47c644fd006d1809e30fbb76ffe",
+      "bytes": 909
+    },
+    {
+      "name": "migrations/commerce-pg/003_purchase_receipts.sql",
+      "version": "1.19.0",
+      "tarball": "migrations/commerce-pg/003_purchase_receipts.sql",
+      "sha256": "de658b69951dc030dd750a53ef797b1ebfaf2d39619ac0d4c8d33a00f1cbd8d1",
+      "bytes": 4398
+    },
+    {
+      "name": "migrations/commerce-pg/004_bound_approvals.sql",
+      "version": "1.19.0",
+      "tarball": "migrations/commerce-pg/004_bound_approvals.sql",
+      "sha256": "33870679fb6c3d9a960d6b23dd63e5765814be56b2ea50729911293444e4c9b2",
+      "bytes": 4101
+    },
+    {
+      "name": "migrations/commerce-pg/005_inventory_cost_layers.sql",
+      "version": "1.19.0",
+      "tarball": "migrations/commerce-pg/005_inventory_cost_layers.sql",
+      "sha256": "ff60fdd9387bbf6808aa7dc16e204938277583ba619f2fe419de38aaa15bac41",
+      "bytes": 13538
+    },
+    {
+      "name": "migrations/commerce-pg/006_private_cost_writers.sql",
+      "version": "1.19.0",
+      "tarball": "migrations/commerce-pg/006_private_cost_writers.sql",
+      "sha256": "782de4255d64e33e5f82fe02316dbe028b092957ba2c7e4c4e7031b58458fe5a",
+      "bytes": 2441
+    },
+    {
+      "name": "migrations/control-pg/001_serving_writer.sql",
+      "version": "1.19.0",
+      "tarball": "migrations/control-pg/001_serving_writer.sql",
+      "sha256": "69b29dada1cb1cdba53df6403e26019bd3e578989f6ffb3a009f265c4b5ce222",
+      "bytes": 6951
+    },
+    {
+      "name": "migrations/crm-pg/001_crm_contacts.sql",
+      "version": "1.19.0",
+      "tarball": "migrations/crm-pg/001_crm_contacts.sql",
+      "sha256": "400869cc13e7f5ffa4c4aa25993555b88a59f464a1ba5087694fbf6618fe22d9",
+      "bytes": 5852
+    },
+    {
+      "name": "migrations/crm-pg/002_sales_pipeline.sql",
+      "version": "1.19.0",
+      "tarball": "migrations/crm-pg/002_sales_pipeline.sql",
+      "sha256": "e3e62bbd1e1b7a7efa7a89b52daa368e88d5219cf151a88d570d1148878099b4",
+      "bytes": 3433
+    },
+    {
+      "name": "migrations/crm-pg/003_native_approval.sql",
+      "version": "1.19.0",
+      "tarball": "migrations/crm-pg/003_native_approval.sql",
+      "sha256": "361f807212921599ca2a546a19bf14007824105f3c5e54dc82b218eace179281",
+      "bytes": 480
+    },
+    {
+      "name": "migrations/field-services-pg/001_field_services_dispatch_visits.sql",
+      "version": "1.19.0",
+      "tarball": "migrations/field-services-pg/001_field_services_dispatch_visits.sql",
+      "sha256": "094bf7d79c03ec16654d1adccb07984514d90524311822deaab51fc9683aa8d1",
+      "bytes": 8639
+    },
+    {
+      "name": "migrations/field-services-pg/002_field_services_tenant_isolation.sql",
+      "version": "1.19.0",
+      "tarball": "migrations/field-services-pg/002_field_services_tenant_isolation.sql",
+      "sha256": "ca9124f24e57f9b5d71b76d02107d599f27b65190e1241806e12783fe84b153d",
+      "bytes": 7532
+    },
+    {
+      "name": "migrations/foodservice-pg/001_tables_recipes_tickets.sql",
+      "version": "1.19.0",
+      "tarball": "migrations/foodservice-pg/001_tables_recipes_tickets.sql",
+      "sha256": "48f40f77cf51b47da53c08f77648b23ca7969b50b6eb887c646c52f03d58d4b5",
+      "bytes": 16540
+    },
+    {
+      "name": "migrations/formal-education-pg/001_formal_education_enrollment.sql",
+      "version": "1.19.0",
+      "tarball": "migrations/formal-education-pg/001_formal_education_enrollment.sql",
+      "sha256": "8cbe38d058d38e461507aca92f211cb5aeedf168b3349f69e91841e95b38b4c5",
+      "bytes": 17593
+    },
+    {
+      "name": "migrations/formal-education-pg/002_formal_education_tenant_keys.sql",
+      "version": "1.19.0",
+      "tarball": "migrations/formal-education-pg/002_formal_education_tenant_keys.sql",
+      "sha256": "e954d547fb3013f6d96ecf824b8dd6f6c434bd426ce00921686d04df85503e53",
+      "bytes": 4910
+    },
+    {
+      "name": "migrations/fulfillment-pg/001_fulfillment_jobs_evidence.sql",
+      "version": "1.19.0",
+      "tarball": "migrations/fulfillment-pg/001_fulfillment_jobs_evidence.sql",
+      "sha256": "901ab569b84baa26008c2128144dff1d0bc0214d6cfd32f7567faeaae9fc9cb6",
+      "bytes": 9005
+    },
+    {
+      "name": "migrations/identity-pg/001_identity.sql",
+      "version": "1.19.0",
+      "tarball": "migrations/identity-pg/001_identity.sql",
+      "sha256": "6071a4d73cf915557c2c7058550c35e40819be77e1792eb9907179ff8639022b",
+      "bytes": 1645
+    },
+    {
+      "name": "migrations/laundry-pg/001_laundry_orders_processing.sql",
+      "version": "1.19.0",
+      "tarball": "migrations/laundry-pg/001_laundry_orders_processing.sql",
+      "sha256": "0152962d7fe05b506c757c739657615334acbda62f04eb5c61ba3fc340ba08a6",
+      "bytes": 8856
+    },
+    {
+      "name": "migrations/manifest.v1.json",
+      "version": "1.19.0",
+      "tarball": "migrations/manifest.v1.json",
+      "sha256": "eb4d78f27c522293123211c3cfa463219932b7e15c61441d2b331c74ef583229",
+      "bytes": 23799
+    },
+    {
+      "name": "migrations/orbz-pg/001_agentic_memory_orbz.sql",
+      "version": "1.19.0",
+      "tarball": "migrations/orbz-pg/001_agentic_memory_orbz.sql",
+      "sha256": "1f32580a663049c9e3e75407941bdf0cdbe85b7247d93273edcd7124c287fc3a",
+      "bytes": 4837
+    },
+    {
+      "name": "migrations/organizations-pg/001_organizations_affiliations.sql",
+      "version": "1.19.0",
+      "tarball": "migrations/organizations-pg/001_organizations_affiliations.sql",
+      "sha256": "0480df5ab70a1e7b2effaa424636c80f1540d4ce59584c4bb54dbf2e32bb411a",
+      "bytes": 5998
+    },
+    {
+      "name": "migrations/owner-pg/001_owner_config.sql",
+      "version": "1.19.0",
+      "tarball": "migrations/owner-pg/001_owner_config.sql",
+      "sha256": "120b7e82d059b9c56531ab2310136ecb2232b5b40f8b29442684df80ba642df7",
+      "bytes": 3877
+    },
+    {
+      "name": "migrations/projects-pg/001_project_delivery.sql",
+      "version": "1.19.0",
+      "tarball": "migrations/projects-pg/001_project_delivery.sql",
+      "sha256": "f157d38588c9cd6493de87c7d00c454252f64ff34f12e5d5b5d5403864cbbcc0",
+      "bytes": 8704
+    },
+    {
+      "name": "migrations/proposals-pg/001_proposals_scope_amendments.sql",
+      "version": "1.19.0",
+      "tarball": "migrations/proposals-pg/001_proposals_scope_amendments.sql",
+      "sha256": "966d4a5ad28b1535f058e72cdf6bd2bd59fc9dc4c147968d3637fcb069ece4a8",
+      "bytes": 7899
+    },
+    {
+      "name": "migrations/provider-runtime/001_provider_attempts.sql",
+      "version": "1.19.0",
+      "tarball": "migrations/provider-runtime/001_provider_attempts.sql",
+      "sha256": "dd2698e6c090167f154a1c8a0cecc784388a3cadb5f7db312b311dbf3851c61f",
+      "bytes": 2742
+    },
+    {
+      "name": "migrations/purchasing-pg/001_suppliers_orders_receipts.sql",
+      "version": "1.19.0",
+      "tarball": "migrations/purchasing-pg/001_suppliers_orders_receipts.sql",
+      "sha256": "45773eefa96889dc1d538587c53da7eb0d4b9f915cdb3ae22e9abcfad560d8ae",
+      "bytes": 19791
+    },
+    {
+      "name": "migrations/purchasing-pg/002_landed_cost_receipts.sql",
+      "version": "1.19.0",
+      "tarball": "migrations/purchasing-pg/002_landed_cost_receipts.sql",
+      "sha256": "f1d8275bd422948654e605b43ff28efe1a6f157ee1b68ce615d266f4fe66e9e9",
+      "bytes": 2991
+    },
+    {
+      "name": "migrations/scheduling-pg/001_resource_reservations.sql",
+      "version": "1.19.0",
+      "tarball": "migrations/scheduling-pg/001_resource_reservations.sql",
+      "sha256": "83c9b7e255c09ab81a063823cfba3e6ea8a4df2c9b7eaabfa981fde1114bb058",
+      "bytes": 10139
+    },
+    {
+      "name": "migrations/scheduling-pg/002_shared_occupancy.sql",
+      "version": "1.19.0",
+      "tarball": "migrations/scheduling-pg/002_shared_occupancy.sql",
+      "sha256": "d6f005c5c51f54711133282b829b84e8669b1ab6de4f85d6dcd1f8cb5eb0503b",
+      "bytes": 6791
+    },
+    {
+      "name": "migrations/subscriptions-pg/001_subscriptions_entitlements_usage.sql",
+      "version": "1.19.0",
+      "tarball": "migrations/subscriptions-pg/001_subscriptions_entitlements_usage.sql",
+      "sha256": "7c830dd1a52c957e3c94a4f47204af9ae7c95d623a67f9beb0184f230068caa4",
+      "bytes": 7506
+    },
+    {
+      "name": "migrations/support-pg/001_cases_notes_resolution.sql",
+      "version": "1.19.0",
+      "tarball": "migrations/support-pg/001_cases_notes_resolution.sql",
+      "sha256": "339785aed708a97ddb4410b08e834cc7fd1236acd94c9f77ec8182efefdf7961",
+      "bytes": 11965
+    },
+    {
+      "name": "README.md",
+      "version": "1.19.0",
+      "tarball": "README.md",
+      "sha256": "945c512be1478b18ee705996729d9ba02d342423c5b90a0fcabd8775e5995b40",
+      "bytes": 6519
+    },
+    {
+      "name": "site/pkg/archava-slice_bg.wasm",
+      "version": "1.19.0",
+      "tarball": "site/pkg/archava-slice_bg.wasm",
+      "sha256": "ac3589e2f76306b1c000b915a0f2fd162bb44f4436e88fab61cadb0af999b889",
+      "bytes": 3060126
+    },
+    {
+      "name": "site/pkg/archava-slice.js",
+      "version": "1.19.0",
+      "tarball": "site/pkg/archava-slice.js",
+      "sha256": "0915a797b6ff64c2742fc1111f3c8b561771cd82ad869e8017a6731e1f0f57a7",
+      "bytes": 51692
+    }
+  ]
+}

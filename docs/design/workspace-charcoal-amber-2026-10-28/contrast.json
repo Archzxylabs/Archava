@@ -1,0 +1,14 @@
+{
+  "light": {
+    "main_text": 13.09,
+    "secondary_text": 5.12,
+    "primary_action": 6.47,
+    "input_boundary": 3.67
+  },
+  "dark": {
+    "main_text": 13.55,
+    "secondary_text": 7.83,
+    "primary_action": 8.57,
+    "input_boundary": 3.96
+  }
+}

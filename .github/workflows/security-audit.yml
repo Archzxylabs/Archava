@@ -1,0 +1,41 @@
+name: Security audit
+
+# Advisories move without a commit. A dependency that was clean the day it was
+# installed becomes a finding while nothing in this tree changes — that is the
+# whole reason this workflow exists on a clock instead of on a push.
+#
+# Both jobs fail the run on a finding and report only: they never bump a version
+# or open a PR on their own.
+
+on:
+  schedule:
+    # 03:17 UTC / 10:17 WIB, daily.
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-audit
+  cancel-in-progress: false
+
+jobs:
+  rust:
+    name: cargo audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+
+      - name: Install cargo-audit
+        run: cargo install cargo-audit --locked
+
+      - name: Audit the Rust workspace (fail on any RUSTSEC vulnerability)
+        run: cargo audit
+
+      - name: Audit the benchmark crate (fail on any RUSTSEC vulnerability)
+        working-directory: tools/rust/benchmark/rust
+        run: cargo audit

@@ -1,0 +1,7 @@
+{
+  "head": "412f763e17f3a68a457fd76c7b929184c50c916a",
+  "dirty": true,
+  "scope": "Takeover of release-readiness findings; source fingerprints exclude private runtime state/credentials",
+  "sourceManifest": "source-before.json",
+  "status": "in progress"
+}

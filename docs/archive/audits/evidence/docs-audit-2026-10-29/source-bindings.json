@@ -1,0 +1,286 @@
+{
+  "reviewedDate": "2026-10-29",
+  "method": "Local source inspection; no fresh runtime acceptance or external compliance check",
+  "bindings": [
+    {
+      "document": "docs/architecture/COCKPIT_TASK_ARCHITECTURE.md",
+      "source": "crates/cockpit/src/durable.rs",
+      "sha256": "98b7aae9aa50b671dd069f55ee5c37fe52f4bf4bd3c012a86fbfeb8659c60bf0"
+    },
+    {
+      "document": "docs/architecture/COCKPIT_TASK_ARCHITECTURE.md",
+      "source": "crates/cockpit/src/flight_status.rs",
+      "sha256": "f08da1f0c5065913650def41558585d8e1ef7d3c3a22583c21df1cfdcc5ce0f1"
+    },
+    {
+      "document": "docs/architecture/COCKPIT_TASK_ARCHITECTURE.md",
+      "source": "crates/cockpit/src/lib.rs",
+      "sha256": "10363a47a909fa269070d1f340c34b2c605674c23807aad50e30b26c0d1833aa"
+    },
+    {
+      "document": "docs/architecture/COCKPIT_TASK_ARCHITECTURE.md",
+      "source": "crates/cockpit/src/mission.rs",
+      "sha256": "8936dce5f3e235194bac1a44fae03c6c4f81297e0735c6c066b4e70e47bea178"
+    },
+    {
+      "document": "docs/architecture/COCKPIT_TASK_ARCHITECTURE.md",
+      "source": "crates/cockpit/src/subagent.rs",
+      "sha256": "f5cbfe99939d88588ae12b401dfdeda160e575983f0dd0e8b482408c751a4005"
+    },
+    {
+      "document": "docs/architecture/COCKPIT_TASK_ARCHITECTURE.md",
+      "source": "crates/host/src/cockpit.rs",
+      "sha256": "a993326950eae6025b081a0ac9c73bece098c1d7b981fb99f42c20b907b31597"
+    },
+    {
+      "document": "docs/architecture/COCKPIT_TASK_ARCHITECTURE.md",
+      "source": "crates/host/src/router.rs",
+      "sha256": "befa089d2bc1ee0fb9eb0a9a7491fff3b60eaf10097f772d7d280bc8d6e70580"
+    },
+    {
+      "document": "docs/architecture/COCKPIT_TASK_ARCHITECTURE.md",
+      "source": "migrations/cockpit-pg/001_cockpit_durable_missions.sql",
+      "sha256": "436acb2d3b98fab9979a77a524a40671985bfe4c138b81503ace276dea1a72fd"
+    },
+    {
+      "document": "docs/architecture/DECISION_INTELLIGENCE.md",
+      "source": "crates/context/src/decision/mod.rs",
+      "sha256": "d0f749d782f89ccdb13ad9f3f242f5191403d738fda0f488736b69905395a9db"
+    },
+    {
+      "document": "docs/architecture/DECISION_INTELLIGENCE.md",
+      "source": "crates/context/src/decision/orchestrator.rs",
+      "sha256": "be53ad05c718c19861f7aafcb3d025dee1087e0b6effbe69b36c72a020105697"
+    },
+    {
+      "document": "docs/architecture/DECISION_INTELLIGENCE.md",
+      "source": "crates/context/src/decision/policy.rs",
+      "sha256": "4cb02d7da526e7458b7bc9478b74d51e0af35f5ed1fba107765656156f5c6b16"
+    },
+    {
+      "document": "docs/architecture/DECISION_INTELLIGENCE.md",
+      "source": "crates/context/src/decision/provider.rs",
+      "sha256": "a4fa1d2d078afc06a4c993f37eb01a377147832ced6d69fe9a83ddb48a9a3c95"
+    },
+    {
+      "document": "docs/architecture/DECISION_INTELLIGENCE.md",
+      "source": "crates/context/src/decision/tasks.rs",
+      "sha256": "97f242c88493f0996ac1023036f123aebdd781a2bf732841f9e23b81689fca3e"
+    },
+    {
+      "document": "docs/architecture/DECISION_INTELLIGENCE.md",
+      "source": "crates/context/src/decision/turn.rs",
+      "sha256": "15d486f404384d363ac353e656739a2d30d16c3d1658bfb76cc17a245523c457"
+    },
+    {
+      "document": "docs/architecture/DECISION_INTELLIGENCE.md",
+      "source": "crates/context/tests/context.rs",
+      "sha256": "088fe03bf313c7d33e92f53368e2caf698a9551bda11773f15464cced63553b3"
+    },
+    {
+      "document": "docs/architecture/DURABLE_ACT_OPERATIONS.md",
+      "source": "crates/host/src/crm.rs",
+      "sha256": "0bfc5225eac3a9e3f3cd91126fb0b375c00bc73290a9300f3c652d8fa1981cad"
+    },
+    {
+      "document": "docs/architecture/DURABLE_ACT_OPERATIONS.md",
+      "source": "crates/host/src/own.rs",
+      "sha256": "b021fac708bfe45540a729c1d4c9510fa5f3911b057056f23933224bc01c82be"
+    },
+    {
+      "document": "docs/architecture/DURABLE_ACT_OPERATIONS.md",
+      "source": "crates/host/src/router.rs",
+      "sha256": "befa089d2bc1ee0fb9eb0a9a7491fff3b60eaf10097f772d7d280bc8d6e70580"
+    },
+    {
+      "document": "docs/architecture/DURABLE_ACT_OPERATIONS.md",
+      "source": "crates/ops/src/lib.rs",
+      "sha256": "072556858d4b477411a0881c4eba4d089b81315d2245e64c4a8f1995433c171e"
+    },
+    {
+      "document": "docs/architecture/DURABLE_ACT_OPERATIONS.md",
+      "source": "crates/own/src/lib.rs",
+      "sha256": "b4f91305da0cfdc3e86489e1d834fb7faabf687cbc51f4b65e00e400c78bf71b"
+    },
+    {
+      "document": "docs/architecture/DURABLE_ACT_OPERATIONS.md",
+      "source": "crates/providers/src/lib.rs",
+      "sha256": "cc667697ace4e81e881cdee0a169fac2ec05916ff002066d30dbc850e8516288"
+    },
+    {
+      "document": "docs/architecture/DURABLE_ACT_OPERATIONS.md",
+      "source": "crates/slice/src/pending.rs",
+      "sha256": "00306d885e55a44b1d20cc7e62d9b11635c6225b770b1ac19289ac2d141f6aa1"
+    },
+    {
+      "document": "docs/architecture/DURABLE_ACT_OPERATIONS.md",
+      "source": "crates/slice/src/recover.rs",
+      "sha256": "bca66c2b294b000dabd7ed1064ca31b29fd3f20420f82cafff641ff98f09f072"
+    },
+    {
+      "document": "docs/architecture/ENTERPRISE_ENGINES.md",
+      "source": "crates/domain/src/erp/general_ledger.rs",
+      "sha256": "4f6e769153ba2c913d1f37664c11786b1de1d96b4d3fbe7e251ffa87b7895c27"
+    },
+    {
+      "document": "docs/architecture/ENTERPRISE_ENGINES.md",
+      "source": "crates/domain/src/erp/inventory_costing.rs",
+      "sha256": "bc167c18deb0e182a1ca1ce1481ba8a8c4249c39801ff8fd7f4f4ccdbf6d3c54"
+    },
+    {
+      "document": "docs/architecture/ENTERPRISE_ENGINES.md",
+      "source": "crates/domain/src/erp/mod.rs",
+      "sha256": "561157ad9cb699137de27dd130a066ca05db8c1a511453b2bbe6f6198b6092aa"
+    },
+    {
+      "document": "docs/architecture/ENTERPRISE_ENGINES.md",
+      "source": "crates/domain/src/erp/tax_indonesia.rs",
+      "sha256": "9ca31216b2d56979282bbe8ff782bb064f5229c93a3d4b44e7a316f415c93239"
+    },
+    {
+      "document": "docs/architecture/ENTERPRISE_ENGINES.md",
+      "source": "crates/domain/src/hardware/escpos.rs",
+      "sha256": "5c9e34a82ce0b62aad2b4bca62e4c4dc0e812ef4ba2dbfe5a0870b87f67e9e64"
+    },
+    {
+      "document": "docs/architecture/ENTERPRISE_ENGINES.md",
+      "source": "crates/domain/src/messaging/whatsapp.rs",
+      "sha256": "0487de61d1e772380043187f1668d6853f3e2011eea23fe05c895645db22182f"
+    },
+    {
+      "document": "docs/architecture/ENTERPRISE_ENGINES.md",
+      "source": "crates/domain/src/telematics/mod.rs",
+      "sha256": "8c19487ec939361d84f0265f18807e2aab34e5351906742a845350572023735b"
+    },
+    {
+      "document": "docs/architecture/ENTERPRISE_ENGINES.md",
+      "source": "crates/host/src/erp/mod.rs",
+      "sha256": "d3cdeffa8fc08b03abb6944eab786f88ddcd47d9827f6bd71b0ae9c45195d378"
+    },
+    {
+      "document": "docs/architecture/ENTERPRISE_ENGINES.md",
+      "source": "crates/host/src/router.rs",
+      "sha256": "befa089d2bc1ee0fb9eb0a9a7491fff3b60eaf10097f772d7d280bc8d6e70580"
+    },
+    {
+      "document": "docs/architecture/ENTERPRISE_ENGINES.md",
+      "source": "crates/slice/src/bin/archava_server.rs",
+      "sha256": "cb55e33d571c28d2c2c1eb2e0f839e952dfb3ed361572cb2770e949fe93db193"
+    },
+    {
+      "document": "docs/architecture/FRONTIER_AGENTIC_CRATES.md",
+      "source": "crates/campaigns/src/runner.rs",
+      "sha256": "88c6dea5c5eaaa5f62796428460a7f3f34cfd83835cf1191d53c62b1088c6adf"
+    },
+    {
+      "document": "docs/architecture/FRONTIER_AGENTIC_CRATES.md",
+      "source": "crates/evals/src/evaluator.rs",
+      "sha256": "2553a6572fc3f8f1653d14c62ad36d1de0a29f7e1b95db34eaa08ecfb93f324f"
+    },
+    {
+      "document": "docs/architecture/FRONTIER_AGENTIC_CRATES.md",
+      "source": "crates/mcp/src/client.rs",
+      "sha256": "34f7326880de882feec95b4f0532fa8584fba327223912df21f92c142eaa0a10"
+    },
+    {
+      "document": "docs/architecture/FRONTIER_AGENTIC_CRATES.md",
+      "source": "crates/mcp/src/lib.rs",
+      "sha256": "004659cda80e3902ab5a6e6cb255fc4b052027871d230bb4ad906aa970681488"
+    },
+    {
+      "document": "docs/architecture/FRONTIER_AGENTIC_CRATES.md",
+      "source": "crates/rpa/src/executor.rs",
+      "sha256": "4097fce33bd9592e8fd95589f697dcf6b2c046c0cc0e9aaf5cfa21411c9c9c50"
+    },
+    {
+      "document": "docs/architecture/ORBZ_MEMORY_ARCHITECTURE.md",
+      "source": "crates/host/src/orbz.rs",
+      "sha256": "64bcd49a39221c320baa93f2dcbdbed6fc4f0c4c339ba7b2397851ba7cd9ed74"
+    },
+    {
+      "document": "docs/architecture/ORBZ_MEMORY_ARCHITECTURE.md",
+      "source": "crates/orbz/src/lib.rs",
+      "sha256": "327c7c8c4fd9c078c4dca7676ebf89feaf7969d4395de1c44c04fe910ae98f47"
+    },
+    {
+      "document": "docs/architecture/ORBZ_MEMORY_ARCHITECTURE.md",
+      "source": "crates/orbz/src/progressive.rs",
+      "sha256": "1e97eb91ed015cc7df81d7b7d942d1ce219bad36fdeaa819349dc50ad577e6f3"
+    },
+    {
+      "document": "docs/architecture/ORBZ_MEMORY_ARCHITECTURE.md",
+      "source": "crates/orbz/src/reflection.rs",
+      "sha256": "e9f23a9609c036ac6af2e35ca3749213450edcec8926d64968316642e1b4e5c0"
+    },
+    {
+      "document": "docs/architecture/ORBZ_MEMORY_ARCHITECTURE.md",
+      "source": "crates/orbz/src/security.rs",
+      "sha256": "ff97778d662da9de018d72b4c001d970a9886b6d50b6d75cba87cb5813d95e7f"
+    },
+    {
+      "document": "docs/architecture/ORBZ_MEMORY_ARCHITECTURE.md",
+      "source": "crates/orbz/src/temporal.rs",
+      "sha256": "e06b76a7c59d825f7308414844dd49ed14adf6260d5e7a6ffcc021d052e9cc08"
+    },
+    {
+      "document": "docs/architecture/ORBZ_MEMORY_ARCHITECTURE.md",
+      "source": "crates/orbz/src/uri.rs",
+      "sha256": "50eeef167c6495d065cea31adcb0aa0924d3fb59d7a94c8c805995fa544c46b1"
+    },
+    {
+      "document": "docs/architecture/ORBZ_MEMORY_ARCHITECTURE.md",
+      "source": "migrations/orbz-pg/001_agentic_memory_orbz.sql",
+      "sha256": "1f32580a663049c9e3e75407941bdf0cdbe85b7247d93273edcd7124c287fc3a"
+    },
+    {
+      "document": "docs/integration/EMBED_INTEGRATION_GUIDE.md",
+      "source": "crates/host/src/router.rs",
+      "sha256": "befa089d2bc1ee0fb9eb0a9a7491fff3b60eaf10097f772d7d280bc8d6e70580"
+    },
+    {
+      "document": "docs/integration/EMBED_INTEGRATION_GUIDE.md",
+      "source": "static/archava.js",
+      "sha256": "6f3e616d3cb6eeb0f47248697ace7caa31b64240bb9d129e3362e3616f301444"
+    },
+    {
+      "document": "docs/integration/INTEGRATION_GUIDE.md",
+      "source": "crates/host/src/crm.rs",
+      "sha256": "0bfc5225eac3a9e3f3cd91126fb0b375c00bc73290a9300f3c652d8fa1981cad"
+    },
+    {
+      "document": "docs/integration/INTEGRATION_GUIDE.md",
+      "source": "crates/host/src/erp/purchasing.rs",
+      "sha256": "cb264768112efd764db5e7eb8df453da3cbd70b90d35532357fba9becaa4cd52"
+    },
+    {
+      "document": "docs/integration/INTEGRATION_GUIDE.md",
+      "source": "crates/host/src/identity.rs",
+      "sha256": "ff31a5240e25fc04bbbfd1752e09865704e3f5fb9c488175d5d9838ce409ad35"
+    },
+    {
+      "document": "docs/integration/INTEGRATION_GUIDE.md",
+      "source": "crates/host/src/own.rs",
+      "sha256": "b021fac708bfe45540a729c1d4c9510fa5f3911b057056f23933224bc01c82be"
+    },
+    {
+      "document": "docs/integration/INTEGRATION_GUIDE.md",
+      "source": "crates/host/src/router.rs",
+      "sha256": "befa089d2bc1ee0fb9eb0a9a7491fff3b60eaf10097f772d7d280bc8d6e70580"
+    },
+    {
+      "document": "docs/integration/INTEGRATION_GUIDE.md",
+      "source": "crates/host/tests/crm.rs",
+      "sha256": "062935a6b9aac7078ab3515505f41f2d5b34d8acb991f43e8b96b3edc3f21c84"
+    },
+    {
+      "document": "docs/integration/INTEGRATION_GUIDE.md",
+      "source": "crates/slice/src/contacts.rs",
+      "sha256": "adf60ef9bb30031c2beff7c517a45bb41473d7491076391386f5fa0d58c4908e"
+    },
+    {
+      "document": "docs/integration/INTEGRATION_GUIDE.md",
+      "source": "crates/slice/src/draft.rs",
+      "sha256": "31a34177836e093690866c2cfcc9064f869d30cc0f37d1101e8b3051c0d531f0"
+    }
+  ]
+}

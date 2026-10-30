@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "midtrans": [
+    {
+      "id": "main-merchant",
+      "tenant": "your-workspace",
+      "servicePrincipal": "payment-gateway",
+      "mode": "sandbox",
+      "serverKeyEnv": "ARCHAVA_MIDTRANS_MAIN_SERVER_KEY"
+    }
+  ]
+}

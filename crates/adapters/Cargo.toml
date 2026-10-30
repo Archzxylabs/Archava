@@ -1,0 +1,52 @@
+[package]
+name = "archava-adapters"
+description = "Non-owner RLS transaction cohort and raw SQL adapters for the Archava Rust host"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+archava-core.workspace = true
+# The ERP contracts (commands, grants, validators) the adapters below enforce.
+# archxy2 ERP namespace, PACKET-000 — the shared Cargo.toml diff is recorded
+# in `docs/archive/rust/archxy2/INTEGRATION_REQUESTS.md` for the integration writer.
+archava-domain.workspace = true
+serde.workspace = true
+# The receipts and command payloads ride JSONB columns — same reasoning the
+# workspace line for `sqlx` records for the RA01 columns.
+serde_json.workspace = true
+# `Uuid::new_v4` mints the ids the INSERTs carry (the TS side uses
+# `randomUUID()`); `serde` because receipts nest id uuids inside JSONB
+# values. Binds and reads use the sqlx re-export of the same crate.
+uuid = { version = "1", features = ["v4", "serde"] }
+
+# The host stack is resolved from the live registry at R01 and frozen in
+# Cargo.lock. Versions measured with `cargo search`, not assumed:
+#   sqlx 0.9.0, tokio 1.53.3
+#
+# `sqlx` is present for the `postgres` feature alone. This crate deliberately
+# uses raw SQL and explicit transactions rather than a query DSL: the baseline's
+# domain repositories own their SQL (`packages/commerce-pg/src/kernel.ts`,
+# `packages/laundry-pg/src/repository.ts`), and the authority rules live in
+# PostgreSQL row-level security that a DSL layer would sit on top of rather than
+# in.
+#
+# The driver shares the host's tokio reactor (`runtime-tokio`) instead of
+# spawning its own, because the Axum host is tokio-based.
+sqlx.workspace = true
+tokio.workspace = true
+thiserror.workspace = true
+# The migration-ledger digest (`migration_checksum`). Same locked version the
+# workspace declares — the port must hash migration files exactly as
+# `packages/commerce-pg/src/migrate.ts:13` does, so the algorithm is a
+# production dependency of the readiness check, not a test convenience.
+sha2.workspace = true
+
+[dev-dependencies]
+# RF02's disposable PostgreSQL. A DEV-dependency only: this crate's lib does not
+# name the fixture, so the production graph stays `core <- adapters <- host`
+# and the fixture is reachable only from `tests/`. The reverse edge (fixture ->
+# this crate, for `migration_checksum`) is a dev-dependency cycle, which Cargo
+# permits precisely for this shape — production depends on nothing that tests it.
+archava-pg-fixture = { path = "../pg-fixture" }

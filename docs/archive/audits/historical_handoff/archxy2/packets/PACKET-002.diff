@@ -1,0 +1,204 @@
+# PACKET-002 — R06-TWO-CONSUMERS: two independently installed ERP module consumers
+# a/ = main-tree current state, b/ = isolated copy (Archxy 2 patch), rebuilt
+# 2026-10-18 from live state. Archxy 2-owned paths ship wholesale and are not
+# diffed BEFORE integration:
+#  examples/rust-consumers/erp/**            (the two consumers: hospitality +
+#            professional-services — TS batteries over BOTH accepted R06
+#            modules (@archava/purchasing + @archava/foodservice and their
+#            -pg ledgers), each with its own client.json/browser story and
+#            per-consumer verify battery)
+#  tools/rust/erp/module-consumers.ts        (the driver: packs the compiled
+#            library, installs tarballs into scratch copies of both
+#            consumers, typecheck/build/verifies, hashes the installed ERP
+#            modules, refuses workspace-resolution, writes the proof JSON)
+#  tools/rust/erp/module-consumers.witnesses.mjs (the witness map for the
+#            manifest drift test; importable without launching tsx/npm)
+#  docs/rust/archxy2/**                      (Archxy 2 doc trio + handoff)
+#
+# The two-consumers shape mirrors examples/crm-consumers and its driver
+# (tools/crm-reference/src/consumers.ts); the proof lands in
+# dist/rust-erp-module-consumers-proof.json and is bound to proof
+# P-MODULE-CONSUMERS in the frozen manifest.
+#
+# NOTE on the packaging seam, decided by evidence: consumers install from the
+# COMPILED npm library tarballs (tools/library/pack.mjs already ships
+# @archava/purchasing-pg + @archava/foodservice-pg — 62 packages pack green in
+# this copy). The cargo-tarball route (cargo package -p archava-domain) was
+# probed first and does NOT work offline — the packaged verify build searches
+# crates.io for the unpublished path-only archava-core even with a version on
+# the workspace dependency and a [patch.crates-io] present — so NO
+# rust/Cargo.toml change rides in this packet; the workspace stays
+# byte-identical to main.
+#
+# VERIFIED IN THE COPY (2026-10-18): `pnpm erp:verify-consumers` PASS end to
+# end (pack 62 packages → both consumers typecheck/build/verify green from
+# node_modules, implementations hash-identical, workspace resolution
+# refused), node --test tools/rust/test/verify-release.test.mjs 23/23,
+# node --test tools/rust/test/verify.test.mjs 20/20.
+#
+# INTEGRATION BASIS: main has not integrated PACKET-000/001 yet (re-verified
+# 2026-10-17), and they touch NONE of the five files here except
+# docs/rust/required-coverage.json — which PACKET-002 edits at a DIFFERENT
+# proof (P-MODULE-CONSUMERS vs P-ERP-*) — so all three packets fold
+# independently in any order.
+
+### package.json
+--- a/package.json
++++ b/package.json
+@@ -23,6 +23,7 @@
+     "format": "prettier --write .",
+     "format:check": "prettier --check .",
+     "configurator": "tsx tools/configurator/src/cli.ts",
++    "erp:verify-consumers": "tsx tools/rust/erp/module-consumers.ts",
+     "decision:eval": "tsx tools/decision-eval/run-rule.ts",
+     "decision:jev-smoke": "tsx tools/decision-eval/live-jev.ts",
+     "decision:jev-eval": "tsx tools/decision-eval/live-jev-eval.ts",
+
+### tools/rust/verify-release.mjs
+--- a/tools/rust/verify-release.mjs
++++ b/tools/rust/verify-release.mjs
+@@ -55,6 +55,7 @@
+  */
+ export const COMMANDS = {
+   'rust fast gate': 'pnpm rust:verify',
++  'erp module consumers': 'pnpm erp:verify-consumers',
+   'compiled-consumer benchmark': 'pnpm rust:benchmark',
+   'rust artifact proofs (vitest)': 'pnpm exec vitest run --config vitest.artifacts.config.ts',
+   'security chain (46 commands)': 'pnpm security:verify',
+@@ -93,6 +94,17 @@
+   return [
+     ['rust fast gate', () => step('rust fast gate', ['node', 'tools/rust/verify.mjs'])],
+ 
++    // R06's two independently installed ERP module consumers — the
++    // P-MODULE-CONSUMERS proof: both product verticals install the compiled
++    // library from tarballs, hash identically across the pair, and run their
++    // verify batteries against the installed modules with no workspace path
++    // on any resolved entry. Added by the Archxy 2 ERP namespace in
++    // PACKET-002 (scope edit for review).
++    [
++      'erp module consumers',
++      () => step('erp module consumers', ['pnpm', 'erp:verify-consumers']),
++    ],
++
+     // Controlled benchmark. Separate from the fast gate because it measures a
+     // compiled consumer against a compiled baseline on the current tree, and
+     // PRD §3.4 requires both sides compiled with a registered steady state.
+@@ -257,6 +269,14 @@
+       step: 'rust artifact proofs (vitest)',
+     },
+     {
++      proof: 'P-MODULE-CONSUMERS',
++      step: 'erp module consumers',
++      details: () =>
++        JSON.parse(
++          readFileSync(join(root, 'dist/rust-erp-module-consumers-proof.json'), 'utf8'),
++        ),
++    },
++    {
+       proof: 'P-BENCHMARK',
+       step: 'compiled-consumer benchmark',
+       details: () =>
+
+### tools/rust/test/verify-release.test.mjs
+# NOTE: only the import and the new drift test change this file — the "two
+# recorded additions" comments and lists are UNCHANGED, because the new
+# command IS documented in docs/LOCAL_LIBRARY_HANDOFF.md (below), so the
+# reconciliation still covers it as documented rather than as an addition,
+# and the notInHandoffList expectation stays at two.
+--- a/tools/rust/test/verify-release.test.mjs
++++ b/tools/rust/test/verify-release.test.mjs
+@@ -14,6 +14,10 @@
+ } from '../verify-release.mjs'
+ import { loadManifest, repoRoot, validateCoverage } from '../coverage.mjs'
+ import { candidateIdentity, readEvidence, writeEvidence } from '../evidence.mjs'
++import {
++  CONSUMERS,
++  WITNESSES as MODULE_CONSUMER_WITNESSES,
++} from '../erp/module-consumers.witnesses.mjs'
+ 
+ /**
+  * The full candidate gate's own tests, run by `node --test`.
+@@ -132,6 +136,33 @@
+   assert.equal(covered.includes('pnpm rust:benchmark'), false)
+ })
+ 
++test('the P-MODULE-CONSUMERS witness map and the frozen manifest cannot drift apart', () => {
++  // The witness map is carried separately from the driver (so `node --test`
++  // can grade it without launching tsx, the pack, or npm) and the three
++  // lists-equal property applies anyway: each manifest check is witnessed by
++  // one stage per consumer, and the frozen `witnessTotal` pins the map size.
++  const manifest = loadManifest(repoRoot)
++  const spec = manifest.proofs['P-MODULE-CONSUMERS']
++  assert.deepEqual(
++    [...Object.keys(MODULE_CONSUMER_WITNESSES)].sort(),
++    [...spec.requiredChecks].sort(),
++  )
++  const witnessTotal = Object.values(MODULE_CONSUMER_WITNESSES).reduce(
++    (sum, list) => sum + list.length,
++    0,
++  )
++  assert.equal(witnessTotal, spec.expect.witnessTotal)
++  for (const [check, witnesses] of Object.entries(MODULE_CONSUMER_WITNESSES)) {
++    assert.ok(witnesses.length > 0, `${check} has no witnesses`)
++    assert.equal(witnesses.length, CONSUMERS.length, `${check} is graded per consumer`)
++    for (const [consumer, stage] of witnesses)
++      assert.ok(
++        CONSUMERS.includes(consumer) && stage.length > 0,
++        `${check}: unknown consumer/stage ${consumer}:${stage}`,
++      )
++  }
++})
++
+ // ---------------------------------------------------------------------------
+ // RF01: the coverage validator, driven against synthetic fixture roots.
+ // Each test builds the smallest tree the validator grades, then removes or
+
+### docs/LOCAL_LIBRARY_HANDOFF.md
+--- a/docs/LOCAL_LIBRARY_HANDOFF.md
++++ b/docs/LOCAL_LIBRARY_HANDOFF.md
+@@ -183,6 +183,7 @@
+ pnpm kits:verify
+ pnpm capacity:verify
+ pnpm library:manifest
++pnpm erp:verify-consumers
+ ```
+ 
+ The dedicated CRM, Act, runtime, reuse and assembly commands remain available.
+
+### docs/rust/required-coverage.json
+# The P-MODULE-CONSUMERS block is REWRITTEN in place (same proof id, same
+# two requiredChecks — the LIST does not change, only its grounding):
+# producedBy names the real producer, expect.witnessTotal pins the four
+# per-consumer stages, sourcePaths bind the consumers + driver + pack,
+# referenced points at dist/rust-erp-module-consumers-proof.json. Submitted
+# scope edit (editPolicy: proofs may be clarified by packet review).
+--- a/docs/rust/required-coverage.json
++++ b/docs/rust/required-coverage.json
+@@ -1335,16 +1335,23 @@
+     },
+     "P-MODULE-CONSUMERS": {
+       "kind": "evidence",
+-      "producedBy": "pnpm rust:verify-release → two independently installed consumers per accepted module",
++      "producedBy": "pnpm erp:verify-consumers (tools/rust/erp/module-consumers.ts installs two product verticals from the compiled library tarballs and grades each consumer's verify battery + installed-module resolution)",
+       "requiredChecks": [
+         "every accepted module has two independently installed consumers",
+         "no workspace/path dependency in either consumer"
+       ],
++      "expect": {
++        "witnessTotal": 4
++      },
+       "sourcePaths": [
+-        "rust"
++        "examples/rust-consumers/erp",
++        "tools/rust/erp/module-consumers.ts",
++        "tools/library/pack.mjs"
+       ],
+       "artifacts": [],
+-      "referenced": []
++      "referenced": [
++        "dist/rust-erp-module-consumers-proof.json"
++      ]
+     },
+     "P-ASSISTANT-CONTEXT": {
+       "kind": "evidence",
+

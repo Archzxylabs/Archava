@@ -1,0 +1,21 @@
+{
+  "README.md": "25d5cd0c9595767c877c85f45a9825d8386ffeef155e8ae4ace85a3626336a1f",
+  "CONTRIBUTING.md": "e928b28fb2b92e998634da605f9a2f0164909765bc22491c8fef70217ac912b1",
+  "Cargo.toml": "05ab904de8778a595751eaac65855b10e11284f456b9cce66d5baa50410e7ab8",
+  "rust-toolchain.toml": "e70c85aa3575aa36b6455c1eac0a8e22cbfa76c458a9e0d4a10ff3e64c84af90",
+  ".github/CODEOWNERS": "f665cecb01c3e2d667a1387af7c79a8cd5c79212c8efeb104588db3a83a65e45",
+  ".github/workflows/ci.yml": "648f861f11863e2dd6e54fd2e6713e1de29ab45777a56a28b3243778429355f2",
+  "crates/slice/src/bin/archava_server.rs": "cb55e33d571c28d2c2c1eb2e0f839e952dfb3ed361572cb2770e949fe93db193",
+  "crates/pg-fixture/src/lib.rs": "5fdb26990f4e1789cdd92a4b650e9d6577316b5b30ccce09b6571054415b2e21",
+  "tools/check-structure.mjs": "469d10b74d4da42b9bbd9cddf8d60bf100936c9ac1488d564f9718cdb3e219fa",
+  "tools/rust/verify.mjs": "69427821763399a96228e94330cab02f69b7652aed1aa33e52692da1f4fd38a9",
+  "tools/rust/build-slice.mjs": "77ffe0f72323748ee65fc0f0c1744ff40ca6d1edecde8048d173ee0c82db6e77",
+  "tools/rust/dev-slice.mjs": "25e3dc73b2abb0c8fb057dbb3159957cba7f87569567a76cb9e405a6315bdd57",
+  "tools/rust/run-persistent.mjs": "858bc3ebe768133bd1b49141a8d037ef39f3551ffde6533d4299bfc9e6fa65d6",
+  "tools/release/sbom.mjs": "33cb2a62ab6107409b113803c2b4d614548b19ed10b356a78b3e20dceb283ce0",
+  "docs/README.md": "c24ed5d022935a0c2a7d0f8f868ebbcdaa700ff9873464eb9cd102ba5f327555",
+  "docs/ARCHITECTURE.md": "93069b740376f64435a7a2e3b74300117819f33d8669a40d12659f026c5b4ef2",
+  "docs/BUILD_STATUS.md": "b041de77afead26c0c3f5dc0d84ad07ffea669dd973f4a0d99fc7d132104530c",
+  "docs/DEVELOPER_GUIDE.md": "3e04d9b8879e535217c98aca9a453d19d14b16f6d211263b956d27e8adb4314c",
+  "deploy/README.md": "9983bf791b646bf0c2783d57324dcd24dcc8a76d4642d9b8aea8bc180b3a826a"
+}

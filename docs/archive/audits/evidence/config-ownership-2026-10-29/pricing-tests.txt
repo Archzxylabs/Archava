@@ -1,0 +1,64 @@
+   Compiling archava-pricing v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/pricing)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.61s
+     Running unittests src/lib.rs (target/debug/deps/archava_pricing-dccf25e4d6f559a5)
+
+running 56 tests
+test classify::tests::a_missing_line_behaves_like_an_explicit_custom_one ... ok
+test classify::tests::an_empty_line_is_custom ... ok
+test classify::tests::capability_paid_is_fixed_even_with_no_monthly ... ok
+test classify::tests::capability_enterprise_is_custom ... ok
+test classify::tests::custom_true_beats_every_other_key ... ok
+test classify::tests::monthly_only_is_fixed_with_a_materialized_zero_setup ... ok
+test classify::tests::monthly_zero_and_monthly_absent_are_different_lines ... ok
+test classify::tests::setup_from_wins_over_setup_and_monthly ... ok
+test classify::tests::presence_tiers_are_always_a_stated_price ... ok
+test classify::tests::setup_makes_a_fixed_line_and_keeps_its_monthly ... ok
+test engine::tests::a_priced_design_addon_joins_the_paid_total ... ok
+test engine::tests::a_duplicated_driver_is_reported_once ... ok
+test engine::tests::a_from_environment_never_joins_the_bundle ... ok
+test engine::tests::a_single_component_never_earns_a_discount ... ok
+test engine::tests::a_single_included_integration_charges_nothing_at_all ... ok
+test engine::tests::a_zero_priced_environment_does_not_join_the_bundle ... ok
+test engine::tests::an_unknown_design_addon_is_scoped_rather_than_rejected ... ok
+test engine::tests::included_standard_integrations_reads_the_capability_allowance ... ok
+test engine::tests::an_enterprise_capability_pushes_its_own_driver ... ok
+test engine::tests::a_zero_request_count_emits_no_line_so_zero_and_one_differ ... ok
+test engine::tests::dedicated_sla_support_blocks_the_total_without_blocking_the_base ... ok
+test engine::tests::priority_support_adds_to_the_recurring_base ... ok
+test engine::tests::the_annual_option_discounts_twelve_months ... ok
+test engine::tests::indonesian_quotes_never_mix_with_global_figures ... ok
+test error::tests::an_empty_detail_still_produces_a_readable_message ... ok
+test error::tests::each_kind_renders_the_baseline_message_verbatim ... ok
+test error::tests::the_kind_survives_round_tripping_for_callers ... ok
+test engine::tests::enterprise_integrations_force_a_custom_quote_without_a_total ... ok
+test engine::tests::the_annual_option_is_absent_without_prepay ... ok
+test engine::tests::custom_and_advanced_integrations_are_ordered_custom_then_advanced ... ok
+test jsmath::tests::math_max_propagates_nan_like_javascript ... ok
+test engine::tests::the_metadata_accessors_report_the_pricebook_verbatim ... ok
+test engine::tests::the_capability_allowance_reduces_chargeable_standard_integrations ... ok
+test engine::tests::the_one_time_total_is_rounded_once_on_the_final_figure ... ok
+test jsmath::tests::math_max_returns_the_first_argument_on_ties ... ok
+test jsmath::tests::math_round_passes_through_non_finite ... ok
+test jsmath::tests::math_round_rounds_halves_toward_positive_infinity ... ok
+test jsmath::tests::negative_and_non_finite_amounts_behave_like_the_baseline ... ok
+test jsmath::tests::rounds_global_amounts_to_the_nearest_fifty_half_up ... ok
+test engine::tests::the_usage_allowance_and_overage_come_from_the_presence_tier ... ok
+test engine::tests::two_paid_components_take_the_two_component_rate ... ok
+test jsmath::tests::rounds_indonesian_amounts_to_the_nearest_hundred_thousand ... ok
+test engine::tests::overage_is_zero_below_the_allowance_and_none_without_a_forecast ... ok
+test engine::tests::the_three_unknown_tier_errors_are_checked_in_a_fixed_order ... ok
+test request::tests::a_snake_case_spelling_is_rejected_rather_than_ignored ... ok
+test request::tests::explicit_values_pass_through_untouched ... ok
+test pricebook::tests::capability_tiers_carry_their_inclusion_allowance ... ok
+test pricebook::tests::the_custom_web_app_line_keeps_every_key_the_file_has ... ok
+test pricebook::tests::both_regions_load_and_stay_independent ... ok
+test request::tests::negative_integration_counts_are_clamped_at_zero ... ok
+test request::tests::json_field_names_are_the_baselines_camel_case ... ok
+test request::tests::omitted_addons_support_and_prepay_default_to_their_baseline_values ... ok
+test pricebook::tests::tier_tables_are_keyed_by_string_and_can_miss ... ok
+test request::tests::omitted_numerics_default_to_zero_not_to_absent ... ok
+test request::tests::usage_forecast_stays_distinguishable_from_zero ... ok
+test pricebook::tests::the_two_rounding_sources_stay_modelled_separately ... ok
+
+test result: ok. 56 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

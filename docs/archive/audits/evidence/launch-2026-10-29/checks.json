@@ -1,0 +1,2784 @@
+[
+  {
+    "id": "workspace-verify",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/rust/verify.mjs",
+      "--offline"
+    ],
+    "startedAt": "2026-10-29T07:30:22.610379+00:00",
+    "finishedAt": "2026-10-29T07:40:43.388302+00:00",
+    "exitCode": 0,
+    "log": "workspace-verify.log"
+  },
+  {
+    "id": "release-build",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/rust/build-slice.mjs"
+    ],
+    "startedAt": "2026-10-29T07:36:59.860508+00:00",
+    "finishedAt": "2026-10-29T07:44:50.362534+00:00",
+    "exitCode": 0,
+    "log": "release-build.log"
+  },
+  {
+    "id": "browser-01",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/e2e/verify.mjs",
+      "--output",
+      "docs/archive/audits/evidence/launch-2026-10-29/browser-01"
+    ],
+    "startedAt": "2026-10-29T07:45:28.982619+00:00",
+    "finishedAt": "2026-10-29T07:46:11.534718+00:00",
+    "exitCode": 1,
+    "log": "browser-01.log"
+  },
+  {
+    "id": "slice-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "-p",
+      "archava-slice",
+      "--all-targets",
+      "--locked",
+      "--offline",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "startedAt": "2026-10-29T07:47:48.042219+00:00",
+    "finishedAt": "2026-10-29T07:48:08.298539+00:00",
+    "exitCode": 0,
+    "log": "slice-clippy.log"
+  },
+  {
+    "id": "release-build-final",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/rust/build-slice.mjs"
+    ],
+    "startedAt": "2026-10-29T07:47:47.914044+00:00",
+    "finishedAt": "2026-10-29T07:53:46.890005+00:00",
+    "exitCode": 0,
+    "log": "release-build-final.log"
+  },
+  {
+    "id": "browser-02",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/e2e/verify.mjs",
+      "--output",
+      "docs/archive/audits/evidence/launch-2026-10-29/browser-02"
+    ],
+    "startedAt": "2026-10-29T07:55:05.998612+00:00",
+    "finishedAt": "2026-10-29T07:55:48.628029+00:00",
+    "exitCode": 1,
+    "log": "browser-02.log"
+  },
+  {
+    "id": "ops-guard-red",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-ops",
+      "--lib",
+      "--locked",
+      "--offline",
+      "release_gate_tests",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-29T07:56:44.534499+00:00",
+    "finishedAt": "2026-10-29T07:56:54.402860+00:00",
+    "exitCode": 101,
+    "log": "ops-guard-red.log"
+  },
+  {
+    "id": "browser-03",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/e2e/verify.mjs",
+      "--output",
+      "docs/archive/audits/evidence/launch-2026-10-29/browser-03"
+    ],
+    "startedAt": "2026-10-29T07:57:39.107729+00:00",
+    "finishedAt": "2026-10-29T07:57:53.274385+00:00",
+    "exitCode": 0,
+    "log": "browser-03.log"
+  },
+  {
+    "id": "ops-guard-green",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-ops",
+      "--lib",
+      "--locked",
+      "--offline",
+      "release_gate_tests",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-29T07:58:11.414304+00:00",
+    "finishedAt": "2026-10-29T07:58:12.317026+00:00",
+    "exitCode": 0,
+    "log": "ops-guard-green.log"
+  },
+  {
+    "id": "commerce-compile",
+    "command": [
+      "cargo",
+      "check",
+      "-p",
+      "archava-host",
+      "--all-targets",
+      "--locked",
+      "--offline"
+    ],
+    "startedAt": "2026-10-29T08:11:56.833553+00:00",
+    "finishedAt": "2026-10-29T08:12:08.573593+00:00",
+    "exitCode": 0,
+    "log": "commerce-compile.log"
+  },
+  {
+    "id": "commerce-api",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-host",
+      "--test",
+      "erp_commerce",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-29T08:14:09.075429+00:00",
+    "finishedAt": "2026-10-29T08:14:29.664841+00:00",
+    "exitCode": 0,
+    "log": "commerce-api.log"
+  },
+  {
+    "id": "workspace-views-compile",
+    "command": [
+      "cargo",
+      "check",
+      "-p",
+      "archava-host",
+      "--all-targets",
+      "--locked",
+      "--offline"
+    ],
+    "startedAt": "2026-10-29T08:19:23.189200+00:00",
+    "finishedAt": "2026-10-29T08:19:23.684028+00:00",
+    "exitCode": 101,
+    "log": "workspace-views-compile.log"
+  },
+  {
+    "id": "workspace-views-compile-02",
+    "command": [
+      "cargo",
+      "check",
+      "-p",
+      "archava-host",
+      "--all-targets",
+      "--locked",
+      "--offline"
+    ],
+    "startedAt": "2026-10-29T08:41:31.346788+00:00",
+    "finishedAt": "2026-10-29T08:41:36.639393+00:00",
+    "exitCode": 0,
+    "log": "workspace-views-compile-02.log"
+  },
+  {
+    "id": "operations-compile",
+    "command": [
+      "cargo",
+      "check",
+      "-p",
+      "archava-slice",
+      "--all-targets",
+      "--locked",
+      "--offline"
+    ],
+    "startedAt": "2026-10-29T08:57:40.381314+00:00",
+    "finishedAt": "2026-10-29T08:57:49.663810+00:00",
+    "exitCode": 101,
+    "log": "operations-compile.log"
+  },
+  {
+    "id": "operations-compile-02",
+    "command": [
+      "cargo",
+      "check",
+      "-p",
+      "archava-slice",
+      "--all-targets",
+      "--locked",
+      "--offline"
+    ],
+    "startedAt": "2026-10-29T08:58:30.531452+00:00",
+    "finishedAt": "2026-10-29T08:58:33.244789+00:00",
+    "exitCode": 101,
+    "log": "operations-compile-02.log"
+  },
+  {
+    "id": "operations-compile-03",
+    "command": [
+      "cargo",
+      "check",
+      "-p",
+      "archava-slice",
+      "--all-targets",
+      "--locked",
+      "--offline"
+    ],
+    "startedAt": "2026-10-29T08:59:02.764654+00:00",
+    "finishedAt": "2026-10-29T08:59:06.670960+00:00",
+    "exitCode": 101,
+    "log": "operations-compile-03.log"
+  },
+  {
+    "id": "operations-compile-04",
+    "command": [
+      "cargo",
+      "check",
+      "-p",
+      "archava-slice",
+      "--all-targets",
+      "--locked",
+      "--offline"
+    ],
+    "startedAt": "2026-10-29T08:59:23.606661+00:00",
+    "finishedAt": "2026-10-29T08:59:29.852443+00:00",
+    "exitCode": 0,
+    "log": "operations-compile-04.log"
+  },
+  {
+    "id": "operations-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "-p",
+      "archava-slice",
+      "--all-targets",
+      "--locked",
+      "--offline",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "startedAt": "2026-10-29T09:00:48.319045+00:00",
+    "finishedAt": "2026-10-29T09:01:07.353614+00:00",
+    "exitCode": 101,
+    "log": "operations-clippy.log"
+  },
+  {
+    "id": "workspace-flow-api",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-host",
+      "--test",
+      "workspace_flows",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-29T09:01:49.789239+00:00",
+    "finishedAt": "2026-10-29T09:01:59.049744+00:00",
+    "exitCode": 101,
+    "log": "workspace-flow-api.log"
+  },
+  {
+    "id": "operations-wasm",
+    "command": [
+      "cargo",
+      "check",
+      "--target",
+      "wasm32-unknown-unknown",
+      "-p",
+      "archava-slice",
+      "--lib",
+      "--features",
+      "hydrate",
+      "--locked",
+      "--offline"
+    ],
+    "startedAt": "2026-10-29T09:01:54.928274+00:00",
+    "finishedAt": "2026-10-29T09:02:04.326306+00:00",
+    "exitCode": 0,
+    "log": "operations-wasm.log"
+  },
+  {
+    "id": "operations-clippy-02",
+    "command": [
+      "cargo",
+      "clippy",
+      "-p",
+      "archava-slice",
+      "--all-targets",
+      "--locked",
+      "--offline",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "startedAt": "2026-10-29T09:02:34.538002+00:00",
+    "finishedAt": "2026-10-29T09:02:43.912424+00:00",
+    "exitCode": 101,
+    "log": "operations-clippy-02.log"
+  },
+  {
+    "id": "workspace-flow-api-02",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-host",
+      "--test",
+      "workspace_flows",
+      "--test",
+      "cockpit",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-29T09:02:49.533719+00:00",
+    "finishedAt": "2026-10-29T09:02:59.852365+00:00",
+    "exitCode": 0,
+    "log": "workspace-flow-api-02.log"
+  },
+  {
+    "id": "operations-helper-check",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "--test",
+      "tools/test/docs.test.mjs",
+      "tools/test/structure.test.mjs",
+      "tools/test/verify.test.mjs"
+    ],
+    "startedAt": "2026-10-29T09:03:18.464014+00:00",
+    "finishedAt": "2026-10-29T09:03:18.559793+00:00",
+    "exitCode": 0,
+    "log": "operations-helper-check.log"
+  },
+  {
+    "id": "operations-release-build",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/rust/build-slice.mjs"
+    ],
+    "startedAt": "2026-10-29T09:03:18.463385+00:00",
+    "finishedAt": "2026-10-29T09:04:40.488907+00:00",
+    "exitCode": 1,
+    "log": "operations-release-build.log"
+  },
+  {
+    "id": "operations-release-build-02",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/rust/build-slice.mjs"
+    ],
+    "startedAt": "2026-10-29T09:05:25.627520+00:00",
+    "finishedAt": "2026-10-29T09:05:30.486577+00:00",
+    "exitCode": 1,
+    "log": "operations-release-build-02.log"
+  },
+  {
+    "id": "install-compile",
+    "command": [
+      "cargo",
+      "check",
+      "-p",
+      "archava-ops",
+      "--all-targets",
+      "--offline"
+    ],
+    "startedAt": "2026-10-29T09:11:13.886192+00:00",
+    "finishedAt": "2026-10-29T09:11:24.645545+00:00",
+    "exitCode": 0,
+    "log": "install-compile.log"
+  },
+  {
+    "id": "operations-release-build-03",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/rust/build-slice.mjs"
+    ],
+    "startedAt": "2026-10-29T09:05:31.873835+00:00",
+    "finishedAt": "2026-10-29T09:11:56.258300+00:00",
+    "exitCode": 0,
+    "log": "operations-release-build-03.log"
+  },
+  {
+    "id": "native-install-rehearsal",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-ops",
+      "--test",
+      "native_install",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-29T09:12:09.235344+00:00",
+    "finishedAt": "2026-10-29T09:12:23.736359+00:00",
+    "exitCode": 101,
+    "log": "native-install-rehearsal.log"
+  },
+  {
+    "id": "native-install-rehearsal-02",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-ops",
+      "--test",
+      "native_install",
+      "--test",
+      "upgrade_restore",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-29T09:13:07.660100+00:00",
+    "finishedAt": "2026-10-29T09:13:18.176260+00:00",
+    "exitCode": 0,
+    "log": "native-install-rehearsal-02.log"
+  },
+  {
+    "id": "operations-browser-01",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/e2e/verify.mjs",
+      "--output",
+      "docs/archive/audits/evidence/launch-2026-10-29/operations-browser-01"
+    ],
+    "startedAt": "2026-10-29T09:13:05.445296+00:00",
+    "finishedAt": "2026-10-29T09:13:22.950141+00:00",
+    "exitCode": 1,
+    "log": "operations-browser-01.log"
+  },
+  {
+    "id": "native-install-rehearsal-03",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-ops",
+      "--test",
+      "native_install",
+      "--test",
+      "upgrade_restore",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-29T09:13:39.177547+00:00",
+    "finishedAt": "2026-10-29T09:14:13.366306+00:00",
+    "exitCode": 0,
+    "log": "native-install-rehearsal-03.log"
+  },
+  {
+    "id": "operations-clippy-03",
+    "command": [
+      "cargo",
+      "clippy",
+      "-p",
+      "archava-slice",
+      "--all-targets",
+      "-p",
+      "archava-ops",
+      "--all-targets",
+      "--locked",
+      "--offline",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "startedAt": "2026-10-29T09:14:57.032873+00:00",
+    "finishedAt": "2026-10-29T09:14:57.070340+00:00",
+    "exitCode": 1,
+    "log": "operations-clippy-03.log"
+  },
+  {
+    "id": "operations-clippy-04",
+    "command": [
+      "cargo",
+      "clippy",
+      "-p",
+      "archava-slice",
+      "-p",
+      "archava-ops",
+      "--all-targets",
+      "--locked",
+      "--offline",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "startedAt": "2026-10-29T09:15:02.704471+00:00",
+    "finishedAt": "2026-10-29T09:15:24.175133+00:00",
+    "exitCode": 101,
+    "log": "operations-clippy-04.log"
+  },
+  {
+    "id": "operations-clippy-05",
+    "command": [
+      "cargo",
+      "clippy",
+      "-p",
+      "archava-slice",
+      "-p",
+      "archava-ops",
+      "--all-targets",
+      "--locked",
+      "--offline",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "startedAt": "2026-10-29T09:15:50.986664+00:00",
+    "finishedAt": "2026-10-29T09:15:56.963459+00:00",
+    "exitCode": 101,
+    "log": "operations-clippy-05.log"
+  },
+  {
+    "id": "operations-release-build-04",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/rust/build-slice.mjs"
+    ],
+    "startedAt": "2026-10-29T09:15:58.059065+00:00",
+    "finishedAt": "2026-10-29T09:22:47.208413+00:00",
+    "exitCode": 0,
+    "log": "operations-release-build-04.log"
+  },
+  {
+    "id": "operations-browser-02",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/e2e/verify.mjs",
+      "--output",
+      "docs/archive/audits/evidence/launch-2026-10-29/operations-browser-02"
+    ],
+    "startedAt": "2026-10-29T09:23:18.700139+00:00",
+    "finishedAt": "2026-10-29T09:23:43.333425+00:00",
+    "exitCode": 0,
+    "log": "operations-browser-02.log"
+  },
+  {
+    "id": "native-package-01",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/rust/package-native.mjs",
+      "--out",
+      "dist/native-candidate-20261029-01"
+    ],
+    "startedAt": "2026-10-29T09:23:18.700146+00:00",
+    "finishedAt": "2026-10-29T09:24:09.927484+00:00",
+    "exitCode": 0,
+    "log": "native-package-01.log"
+  },
+  {
+    "id": "operations-browser-03",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/e2e/verify.mjs",
+      "--output",
+      "docs/archive/audits/evidence/launch-2026-10-29/operations-browser-03"
+    ],
+    "startedAt": "2026-10-29T09:25:42.910598+00:00",
+    "finishedAt": "2026-10-29T09:26:00.887765+00:00",
+    "exitCode": 0,
+    "log": "operations-browser-03.log"
+  },
+  {
+    "id": "mvp-workspace-verify",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/rust/verify.mjs"
+    ],
+    "startedAt": "2026-10-29T09:23:18.700141+00:00",
+    "finishedAt": "2026-10-29T09:33:07.958186+00:00",
+    "exitCode": 0,
+    "log": "mvp-workspace-verify.log"
+  },
+  {
+    "id": "restore-exclusion",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-ops",
+      "--test",
+      "native_install",
+      "--test",
+      "upgrade_restore",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-29T09:33:50.471634+00:00",
+    "finishedAt": "2026-10-29T09:34:03.643788+00:00",
+    "exitCode": 0,
+    "log": "restore-exclusion.log"
+  },
+  {
+    "id": "receipt-contract",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-slice",
+      "--lib",
+      "--locked",
+      "--offline"
+    ],
+    "startedAt": "2026-10-29T09:37:38.590653+00:00",
+    "finishedAt": "2026-10-29T09:38:01.937920+00:00",
+    "exitCode": 0,
+    "log": "receipt-contract.log"
+  },
+  {
+    "id": "receipt-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "-p",
+      "archava-slice",
+      "-p",
+      "archava-ops",
+      "--all-targets",
+      "--locked",
+      "--offline",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "startedAt": "2026-10-29T09:39:29.235791+00:00",
+    "finishedAt": "2026-10-29T09:39:33.144574+00:00",
+    "exitCode": 0,
+    "log": "receipt-clippy.log"
+  },
+  {
+    "id": "restore-exclusion-02",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-ops",
+      "--test",
+      "native_install",
+      "--test",
+      "upgrade_restore",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-29T09:40:19.520121+00:00",
+    "finishedAt": "2026-10-29T09:40:33.499288+00:00",
+    "exitCode": 0,
+    "log": "restore-exclusion-02.log"
+  },
+  {
+    "id": "recovery-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "-p",
+      "archava-slice",
+      "-p",
+      "archava-ops",
+      "--all-targets",
+      "--locked",
+      "--offline",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "startedAt": "2026-10-29T09:40:49.012031+00:00",
+    "finishedAt": "2026-10-29T09:40:56.020593+00:00",
+    "exitCode": 0,
+    "log": "recovery-clippy.log"
+  },
+  {
+    "id": "recovery-browser-red",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/e2e/verify.mjs",
+      "--output",
+      "docs/archive/audits/evidence/launch-2026-10-29/recovery-browser-red"
+    ],
+    "startedAt": "2026-10-29T09:41:09.971846+00:00",
+    "finishedAt": "2026-10-29T09:41:53.439615+00:00",
+    "exitCode": 1,
+    "log": "recovery-browser-red.log"
+  },
+  {
+    "id": "recovery-release-build",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/rust/build-slice.mjs"
+    ],
+    "startedAt": "2026-10-29T09:43:50.405701+00:00",
+    "finishedAt": "2026-10-29T09:51:21.601925+00:00",
+    "exitCode": 1,
+    "log": "recovery-release-build.log"
+  },
+  {
+    "id": "native-stale-source-refusal",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/rust/package-native.mjs",
+      "--out",
+      "dist/native-must-refuse-stale-source"
+    ],
+    "startedAt": "2026-10-29T09:54:45.151236+00:00",
+    "finishedAt": "2026-10-29T09:54:45.209983+00:00",
+    "exitCode": 1,
+    "log": "native-stale-source-refusal.log"
+  },
+  {
+    "id": "recovery-release-build-02",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/rust/build-slice.mjs"
+    ],
+    "startedAt": "2026-10-29T09:54:45.236535+00:00",
+    "finishedAt": "2026-10-29T09:54:46.055905+00:00",
+    "exitCode": 0,
+    "log": "recovery-release-build-02.log"
+  },
+  {
+    "id": "recovery-targeted",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-slice",
+      "--lib",
+      "-p",
+      "archava-ops",
+      "--lib",
+      "--locked",
+      "--offline"
+    ],
+    "startedAt": "2026-10-29T09:54:52.383461+00:00",
+    "finishedAt": "2026-10-29T09:54:52.402105+00:00",
+    "exitCode": 1,
+    "log": "recovery-targeted.log"
+  },
+  {
+    "id": "recovery-targeted-02",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-slice",
+      "-p",
+      "archava-ops",
+      "--lib",
+      "--locked",
+      "--offline"
+    ],
+    "startedAt": "2026-10-29T09:54:58.428159+00:00",
+    "finishedAt": "2026-10-29T09:55:07.800980+00:00",
+    "exitCode": 0,
+    "log": "recovery-targeted-02.log"
+  },
+  {
+    "id": "native-package-02",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/rust/package-native.mjs",
+      "--out",
+      "dist/native-candidate-20261029-02"
+    ],
+    "startedAt": "2026-10-29T09:54:52.384922+00:00",
+    "finishedAt": "2026-10-29T09:55:12.996715+00:00",
+    "exitCode": 0,
+    "log": "native-package-02.log"
+  },
+  {
+    "id": "restore-exclusion-03",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-ops",
+      "--test",
+      "native_install",
+      "--test",
+      "upgrade_restore",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-29T09:55:07.839678+00:00",
+    "finishedAt": "2026-10-29T09:55:22.255457+00:00",
+    "exitCode": 0,
+    "log": "restore-exclusion-03.log"
+  },
+  {
+    "id": "recovery-browser-green",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/e2e/verify.mjs",
+      "--output",
+      "docs/archive/audits/evidence/launch-2026-10-29/recovery-browser-green"
+    ],
+    "startedAt": "2026-10-29T09:54:52.384495+00:00",
+    "finishedAt": "2026-10-29T09:55:34.139088+00:00",
+    "exitCode": 1,
+    "log": "recovery-browser-green.log"
+  },
+  {
+    "id": "recovery-wire-unit",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-slice",
+      "--lib",
+      "--locked",
+      "--offline"
+    ],
+    "startedAt": "2026-10-29T09:56:32.360631+00:00",
+    "finishedAt": "2026-10-29T09:56:40.645285+00:00",
+    "exitCode": 0,
+    "log": "recovery-wire-unit.log"
+  },
+  {
+    "id": "recovery-release-build-03",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/rust/build-slice.mjs"
+    ],
+    "startedAt": "2026-10-29T09:57:17.277425+00:00",
+    "finishedAt": "2026-10-29T10:03:54.889047+00:00",
+    "exitCode": 0,
+    "log": "recovery-release-build-03.log"
+  },
+  {
+    "id": "native-package-03",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/rust/package-native.mjs",
+      "--out",
+      "dist/native-candidate-20261029-03"
+    ],
+    "startedAt": "2026-10-29T10:04:14.621941+00:00",
+    "finishedAt": "2026-10-29T10:04:15.040058+00:00",
+    "exitCode": 0,
+    "log": "native-package-03.log"
+  },
+  {
+    "id": "recovery-clippy-final",
+    "command": [
+      "cargo",
+      "clippy",
+      "-p",
+      "archava-slice",
+      "-p",
+      "archava-ops",
+      "--all-targets",
+      "--locked",
+      "--offline",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "startedAt": "2026-10-29T10:04:14.621941+00:00",
+    "finishedAt": "2026-10-29T10:04:17.705151+00:00",
+    "exitCode": 0,
+    "log": "recovery-clippy-final.log"
+  },
+  {
+    "id": "recovery-browser-green-02",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/e2e/verify.mjs",
+      "--output",
+      "docs/archive/audits/evidence/launch-2026-10-29/recovery-browser-green-02"
+    ],
+    "startedAt": "2026-10-29T10:04:14.621948+00:00",
+    "finishedAt": "2026-10-29T10:04:33.909554+00:00",
+    "exitCode": 0,
+    "log": "recovery-browser-green-02.log"
+  },
+  {
+    "id": "costing-compile",
+    "command": [
+      "cargo",
+      "check",
+      "-p",
+      "archava-host",
+      "--all-targets",
+      "--locked",
+      "--offline"
+    ],
+    "startedAt": "2026-10-29T10:14:03.485756+00:00",
+    "finishedAt": "2026-10-29T10:14:09.189782+00:00",
+    "exitCode": 101,
+    "log": "costing-compile.log"
+  },
+  {
+    "id": "costing-api-initial",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-host",
+      "--test",
+      "workspace_flows",
+      "--test",
+      "erp_commerce",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-29T10:16:56.464483+00:00",
+    "finishedAt": "2026-10-29T10:17:22.622159+00:00",
+    "exitCode": 0,
+    "log": "costing-api-initial.log"
+  },
+  {
+    "id": "costing-api-projections",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-host",
+      "--test",
+      "workspace_flows",
+      "--test",
+      "erp_commerce",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-29T10:20:03.030612+00:00",
+    "finishedAt": "2026-10-29T10:20:16.923452+00:00",
+    "exitCode": 101,
+    "log": "costing-api-projections.log"
+  },
+  {
+    "id": "costing-fifo-api",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-host",
+      "--test",
+      "workspace_flows",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-29T10:22:24.349334+00:00",
+    "finishedAt": "2026-10-29T10:22:30.834594+00:00",
+    "exitCode": 101,
+    "log": "costing-fifo-api.log"
+  },
+  {
+    "id": "costing-fifo-api-02",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-host",
+      "--test",
+      "workspace_flows",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-29T10:23:47.312687+00:00",
+    "finishedAt": "2026-10-29T10:23:55.669912+00:00",
+    "exitCode": 0,
+    "log": "costing-fifo-api-02.log"
+  },
+  {
+    "id": "costing-ui-compile",
+    "command": [
+      "cargo",
+      "check",
+      "-p",
+      "archava-slice",
+      "--all-targets",
+      "--locked",
+      "--offline"
+    ],
+    "startedAt": "2026-10-29T10:27:44.127903+00:00",
+    "finishedAt": "2026-10-29T10:27:59.912672+00:00",
+    "exitCode": 0,
+    "log": "costing-ui-compile.log"
+  },
+  {
+    "id": "costing-api-complete",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-host",
+      "--test",
+      "workspace_flows",
+      "--test",
+      "erp_commerce",
+      "--test",
+      "erp_purchasing",
+      "--test",
+      "erp_foodservice",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-29T10:32:23.625475+00:00",
+    "finishedAt": "2026-10-29T10:32:57.997595+00:00",
+    "exitCode": 0,
+    "log": "costing-api-complete.log"
+  },
+  {
+    "id": "costing-boundaries",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-host",
+      "--test",
+      "workspace_flows",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-29T10:35:42.169771+00:00",
+    "finishedAt": "2026-10-29T10:35:52.437900+00:00",
+    "exitCode": 0,
+    "log": "costing-boundaries.log"
+  },
+  {
+    "id": "costing-domain",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-domain",
+      "inventory_valuation",
+      "--locked",
+      "--offline"
+    ],
+    "startedAt": "2026-10-29T10:37:59.045072+00:00",
+    "finishedAt": "2026-10-29T10:38:04.749011+00:00",
+    "exitCode": 0,
+    "log": "costing-domain.log"
+  },
+  {
+    "id": "costing-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "-p",
+      "archava-slice",
+      "-p",
+      "archava-ops",
+      "--all-targets",
+      "--locked",
+      "--offline",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "startedAt": "2026-10-29T10:37:59.044819+00:00",
+    "finishedAt": "2026-10-29T10:38:23.913525+00:00",
+    "exitCode": 0,
+    "log": "costing-clippy.log"
+  },
+  {
+    "id": "costing-concurrency",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-host",
+      "--test",
+      "workspace_flows",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-29T10:39:31.794388+00:00",
+    "finishedAt": "2026-10-29T10:39:45.601955+00:00",
+    "exitCode": 0,
+    "log": "costing-concurrency.log"
+  },
+  {
+    "id": "costing-install-restore",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-ops",
+      "--test",
+      "native_install",
+      "--test",
+      "upgrade_restore",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-29T10:41:26.882726+00:00",
+    "finishedAt": "2026-10-29T10:41:53.651651+00:00",
+    "exitCode": 101,
+    "log": "costing-install-restore.log"
+  },
+  {
+    "id": "costing-upgrade-restore-02",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-ops",
+      "--test",
+      "native_install",
+      "--test",
+      "upgrade_restore",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-29T10:47:47.271359+00:00",
+    "finishedAt": "2026-10-29T10:47:58.150191+00:00",
+    "exitCode": 101,
+    "log": "costing-upgrade-restore-02.log"
+  },
+  {
+    "id": "costing-upgrade-restore-03",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-ops",
+      "--test",
+      "native_install",
+      "--test",
+      "upgrade_restore",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-29T10:48:17.357699+00:00",
+    "finishedAt": "2026-10-29T10:48:27.731936+00:00",
+    "exitCode": 101,
+    "log": "costing-upgrade-restore-03.log"
+  },
+  {
+    "id": "costing-upgrade-restore-04",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-ops",
+      "--test",
+      "native_install",
+      "--test",
+      "upgrade_restore",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-29T10:49:03.461325+00:00",
+    "finishedAt": "2026-10-29T10:49:14.192368+00:00",
+    "exitCode": 0,
+    "log": "costing-upgrade-restore-04.log"
+  },
+  {
+    "id": "costing-portable",
+    "command": [
+      "cargo",
+      "check",
+      "-p",
+      "archava-slice",
+      "--lib",
+      "--target",
+      "wasm32-unknown-unknown",
+      "--features",
+      "hydrate",
+      "--locked",
+      "--offline"
+    ],
+    "startedAt": "2026-10-29T10:49:09.055585+00:00",
+    "finishedAt": "2026-10-29T10:49:14.891106+00:00",
+    "exitCode": 0,
+    "log": "costing-portable.log"
+  },
+  {
+    "id": "costing-release-build",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/rust/build-slice.mjs"
+    ],
+    "startedAt": "2026-10-29T10:49:20.402031+00:00",
+    "finishedAt": "2026-10-29T10:57:45.648438+00:00",
+    "exitCode": 0,
+    "log": "costing-release-build.log"
+  },
+  {
+    "id": "costing-workspace-verify",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/rust/verify.mjs",
+      "--offline"
+    ],
+    "startedAt": "2026-10-29T10:49:09.055581+00:00",
+    "finishedAt": "2026-10-29T10:58:44.820353+00:00",
+    "exitCode": 0,
+    "log": "costing-workspace-verify.log"
+  },
+  {
+    "id": "costing-browser",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/e2e/verify.mjs",
+      "--output",
+      "docs/archive/audits/evidence/launch-2026-10-29/costing-browser"
+    ],
+    "startedAt": "2026-10-30T01:02:03.302344+00:00",
+    "finishedAt": "2026-10-30T01:02:24.197418+00:00",
+    "exitCode": 0,
+    "log": "costing-browser.log"
+  },
+  {
+    "id": "costing-native-package",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/rust/package-native.mjs",
+      "--out",
+      "dist/native-candidate-20261029-04"
+    ],
+    "startedAt": "2026-10-30T01:02:03.305322+00:00",
+    "finishedAt": "2026-10-30T01:02:29.244894+00:00",
+    "exitCode": 0,
+    "log": "costing-native-package.log"
+  },
+  {
+    "id": "recovery-queue-portable",
+    "command": [
+      "cargo",
+      "check",
+      "-p",
+      "archava-slice",
+      "--lib",
+      "--target",
+      "wasm32-unknown-unknown",
+      "--features",
+      "hydrate",
+      "--locked",
+      "--offline"
+    ],
+    "startedAt": "2026-10-30T01:04:20.208556+00:00",
+    "finishedAt": "2026-10-30T01:04:25.114571+00:00",
+    "exitCode": 0,
+    "log": "recovery-queue-portable.log"
+  },
+  {
+    "id": "recovery-queue-native",
+    "command": [
+      "cargo",
+      "clippy",
+      "-p",
+      "archava-slice",
+      "--all-targets",
+      "--locked",
+      "--offline",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "startedAt": "2026-10-30T01:04:20.208556+00:00",
+    "finishedAt": "2026-10-30T01:04:59.996609+00:00",
+    "exitCode": 0,
+    "log": "recovery-queue-native.log"
+  },
+  {
+    "id": "recovery-review-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "-p",
+      "archava-slice",
+      "--all-targets",
+      "--locked",
+      "--offline",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "startedAt": "2026-10-30T01:05:55.088889+00:00",
+    "finishedAt": "2026-10-30T01:06:02.717583+00:00",
+    "exitCode": 0,
+    "log": "recovery-review-clippy.log"
+  },
+  {
+    "id": "recovery-review-final-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "-p",
+      "archava-slice",
+      "--all-targets",
+      "--locked",
+      "--offline",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "startedAt": "2026-10-30T01:08:46.244344+00:00",
+    "finishedAt": "2026-10-30T01:08:49.528670+00:00",
+    "exitCode": 0,
+    "log": "recovery-review-final-clippy.log"
+  },
+  {
+    "id": "recovery-review-portable",
+    "command": [
+      "cargo",
+      "check",
+      "-p",
+      "archava-slice",
+      "--lib",
+      "--target",
+      "wasm32-unknown-unknown",
+      "--features",
+      "hydrate",
+      "--locked",
+      "--offline"
+    ],
+    "startedAt": "2026-10-30T01:08:46.246242+00:00",
+    "finishedAt": "2026-10-30T01:08:55.592175+00:00",
+    "exitCode": 0,
+    "log": "recovery-review-portable.log"
+  },
+  {
+    "id": "recovery-browser-queue-red",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/e2e/verify.mjs",
+      "--output",
+      "docs/archive/audits/evidence/launch-2026-10-29/recovery-browser-queue-red"
+    ],
+    "startedAt": "2026-10-30T01:08:27.164410+00:00",
+    "finishedAt": "2026-10-30T01:09:12.358884+00:00",
+    "exitCode": 1,
+    "log": "recovery-browser-queue-red.log"
+  },
+  {
+    "id": "recovery-review-unit",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-slice",
+      "--lib",
+      "--locked",
+      "--offline"
+    ],
+    "startedAt": "2026-10-30T01:08:46.244465+00:00",
+    "finishedAt": "2026-10-30T01:09:31.762553+00:00",
+    "exitCode": 0,
+    "log": "recovery-review-unit.log"
+  },
+  {
+    "id": "recovery-doc-links",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/check-docs.mjs"
+    ],
+    "startedAt": "2026-10-30T01:10:37.418818+00:00",
+    "finishedAt": "2026-10-30T01:10:37.570814+00:00",
+    "exitCode": 0,
+    "log": "recovery-doc-links.log"
+  },
+  {
+    "id": "recovery-queue-release-build",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/rust/build-slice.mjs"
+    ],
+    "startedAt": "2026-10-30T01:09:19.397598+00:00",
+    "finishedAt": "2026-10-30T01:17:34.802545+00:00",
+    "exitCode": 0,
+    "log": "recovery-queue-release-build.log"
+  },
+  {
+    "id": "recovery-queue-native-package",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/rust/package-native.mjs",
+      "--out",
+      "dist/native-candidate-20261030-05"
+    ],
+    "startedAt": "2026-10-30T01:18:58.564197+00:00",
+    "finishedAt": "2026-10-30T01:18:59.021101+00:00",
+    "exitCode": 0,
+    "log": "recovery-queue-native-package.log"
+  },
+  {
+    "id": "recovery-browser-queue-green",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/e2e/verify.mjs",
+      "--output",
+      "docs/archive/audits/evidence/launch-2026-10-29/recovery-browser-queue-green"
+    ],
+    "startedAt": "2026-10-30T01:18:58.553851+00:00",
+    "finishedAt": "2026-10-30T01:19:16.335969+00:00",
+    "exitCode": 1,
+    "log": "recovery-browser-queue-green.log"
+  },
+  {
+    "id": "recovery-browser-queue-green-02",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/e2e/verify.mjs",
+      "--output",
+      "docs/archive/audits/evidence/launch-2026-10-29/recovery-browser-queue-green-02"
+    ],
+    "startedAt": "2026-10-30T01:19:38.163849+00:00",
+    "finishedAt": "2026-10-30T01:20:02.819869+00:00",
+    "exitCode": 0,
+    "log": "recovery-browser-queue-green-02.log"
+  },
+  {
+    "id": "cost-trigger-privilege-red",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-host",
+      "--test",
+      "workspace_flows",
+      "runtime_cannot_attach_inventory_cost_writer_to_a_temporary_trigger",
+      "--locked",
+      "--offline",
+      "--",
+      "--exact",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-30T01:21:28.882370+00:00",
+    "finishedAt": "2026-10-30T01:21:36.991289+00:00",
+    "exitCode": 101,
+    "log": "cost-trigger-privilege-red.log"
+  },
+  {
+    "id": "cost-private-writer-restore",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-ops",
+      "--test",
+      "native_install",
+      "--test",
+      "upgrade_restore",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-30T01:22:37.212169+00:00",
+    "finishedAt": "2026-10-30T01:22:59.200272+00:00",
+    "exitCode": 0,
+    "log": "cost-private-writer-restore.log"
+  },
+  {
+    "id": "cost-trigger-privilege-green",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-host",
+      "--test",
+      "workspace_flows",
+      "--test",
+      "erp_commerce",
+      "--test",
+      "erp_purchasing",
+      "--test",
+      "erp_foodservice",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-30T01:22:37.211531+00:00",
+    "finishedAt": "2026-10-30T01:23:40.739138+00:00",
+    "exitCode": 0,
+    "log": "cost-trigger-privilege-green.log"
+  },
+  {
+    "id": "cost-private-writer-upgrade",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-ops",
+      "--test",
+      "upgrade_restore",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-30T01:23:36.599009+00:00",
+    "finishedAt": "2026-10-30T01:23:49.824073+00:00",
+    "exitCode": 0,
+    "log": "cost-private-writer-upgrade.log"
+  },
+  {
+    "id": "private-cost-workspace-verify",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/rust/verify.mjs",
+      "--offline"
+    ],
+    "startedAt": "2026-10-30T01:23:56.525256+00:00",
+    "finishedAt": "2026-10-30T01:36:17.459433+00:00",
+    "exitCode": 0,
+    "log": "private-cost-workspace-verify.log"
+  },
+  {
+    "id": "serving-writer-red",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-host",
+      "--test",
+      "workspace_flows",
+      "stale_serving_process_cannot_write_after_writer_takeover",
+      "--locked",
+      "--offline",
+      "--",
+      "--exact",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-30T01:39:05.724902+00:00",
+    "finishedAt": "2026-10-30T01:39:10.370470+00:00",
+    "exitCode": 101,
+    "log": "serving-writer-red.log"
+  },
+  {
+    "id": "serving-writer-first-green",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-host",
+      "--test",
+      "workspace_flows",
+      "stale_serving_process_cannot_write_after_writer_takeover",
+      "--locked",
+      "--offline",
+      "--",
+      "--exact",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-30T01:39:50.283657+00:00",
+    "finishedAt": "2026-10-30T01:40:02.126899+00:00",
+    "exitCode": 0,
+    "log": "serving-writer-first-green.log"
+  },
+  {
+    "id": "serving-writer-ops-first",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-ops",
+      "--test",
+      "native_install",
+      "--test",
+      "upgrade_restore",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-30T01:41:08.258247+00:00",
+    "finishedAt": "2026-10-30T01:41:23.981555+00:00",
+    "exitCode": 101,
+    "log": "serving-writer-ops-first.log"
+  },
+  {
+    "id": "serving-writer-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "-p",
+      "archava-slice",
+      "-p",
+      "archava-ops",
+      "--all-targets",
+      "--locked",
+      "--offline",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "startedAt": "2026-10-30T01:41:08.258242+00:00",
+    "finishedAt": "2026-10-30T01:41:48.104480+00:00",
+    "exitCode": 0,
+    "log": "serving-writer-clippy.log"
+  },
+  {
+    "id": "serving-writer-host-first",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-host",
+      "--test",
+      "workspace_flows",
+      "--test",
+      "cockpit",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-30T01:41:08.258239+00:00",
+    "finishedAt": "2026-10-30T01:41:52.722534+00:00",
+    "exitCode": 0,
+    "log": "serving-writer-host-first.log"
+  },
+  {
+    "id": "serving-writer-ops-02",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-ops",
+      "--test",
+      "native_install",
+      "--test",
+      "upgrade_restore",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-30T01:43:31.368497+00:00",
+    "finishedAt": "2026-10-30T01:43:45.011350+00:00",
+    "exitCode": 0,
+    "log": "serving-writer-ops-02.log"
+  },
+  {
+    "id": "serving-writer-authority",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-host",
+      "--test",
+      "authority",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-30T01:43:31.368399+00:00",
+    "finishedAt": "2026-10-30T01:43:55.393451+00:00",
+    "exitCode": 0,
+    "log": "serving-writer-authority.log"
+  },
+  {
+    "id": "serving-writer-boundaries",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-adapters",
+      "--test",
+      "writer",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-30T01:45:14.496038+00:00",
+    "finishedAt": "2026-10-30T01:45:25.216432+00:00",
+    "exitCode": 101,
+    "log": "serving-writer-boundaries.log"
+  },
+  {
+    "id": "serving-writer-boundaries-02",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-adapters",
+      "--test",
+      "writer",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-30T01:45:34.484545+00:00",
+    "finishedAt": "2026-10-30T01:45:37.719347+00:00",
+    "exitCode": 0,
+    "log": "serving-writer-boundaries-02.log"
+  },
+  {
+    "id": "restore-failure-atomic",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-ops",
+      "--test",
+      "upgrade_restore",
+      "failed_restore_keeps_the_existing_target_transactionally_intact",
+      "--locked",
+      "--offline",
+      "--",
+      "--exact",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-30T01:46:50.691095+00:00",
+    "finishedAt": "2026-10-30T01:46:55.888804+00:00",
+    "exitCode": 0,
+    "log": "restore-failure-atomic.log"
+  },
+  {
+    "id": "serving-writer-drain-cli",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-ops",
+      "--test",
+      "native_install",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-30T01:48:21.053053+00:00",
+    "finishedAt": "2026-10-30T01:48:25.874399+00:00",
+    "exitCode": 0,
+    "log": "serving-writer-drain-cli.log"
+  },
+  {
+    "id": "serving-writer-restored-token",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-ops",
+      "--test",
+      "upgrade_restore",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-30T01:49:04.310565+00:00",
+    "finishedAt": "2026-10-30T01:49:14.286877+00:00",
+    "exitCode": 0,
+    "log": "serving-writer-restored-token.log"
+  },
+  {
+    "id": "serving-writer-boundaries-03",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-adapters",
+      "--test",
+      "writer",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-30T01:50:33.251741+00:00",
+    "finishedAt": "2026-10-30T01:50:38.315156+00:00",
+    "exitCode": 0,
+    "log": "serving-writer-boundaries-03.log"
+  },
+  {
+    "id": "serving-writer-http-matrix",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-host",
+      "--test",
+      "workspace_flows",
+      "stale_serving_process_cannot_write_after_writer_takeover",
+      "--locked",
+      "--offline",
+      "--",
+      "--exact",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-30T01:51:31.375576+00:00",
+    "finishedAt": "2026-10-30T01:51:38.534717+00:00",
+    "exitCode": 0,
+    "log": "serving-writer-http-matrix.log"
+  },
+  {
+    "id": "serving-writer-docs",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/check-docs.mjs"
+    ],
+    "startedAt": "2026-10-30T01:54:03.560516+00:00",
+    "finishedAt": "2026-10-30T01:54:03.658709+00:00",
+    "exitCode": 0,
+    "log": "serving-writer-docs.log"
+  },
+  {
+    "id": "serving-writer-portable",
+    "command": [
+      "cargo",
+      "check",
+      "-p",
+      "archava-slice",
+      "--lib",
+      "--target",
+      "wasm32-unknown-unknown",
+      "--features",
+      "hydrate",
+      "--locked",
+      "--offline"
+    ],
+    "startedAt": "2026-10-30T01:54:03.557652+00:00",
+    "finishedAt": "2026-10-30T01:54:03.819996+00:00",
+    "exitCode": 0,
+    "log": "serving-writer-portable.log"
+  },
+  {
+    "id": "serving-writer-final-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--workspace",
+      "--all-targets",
+      "--locked",
+      "--offline",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "startedAt": "2026-10-30T01:54:03.559734+00:00",
+    "finishedAt": "2026-10-30T01:54:12.128605+00:00",
+    "exitCode": 0,
+    "log": "serving-writer-final-clippy.log"
+  },
+  {
+    "id": "serving-writer-restore-final",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-ops",
+      "--test",
+      "native_install",
+      "--test",
+      "upgrade_restore",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-30T01:56:52.160832+00:00",
+    "finishedAt": "2026-10-30T01:57:11.158155+00:00",
+    "exitCode": 0,
+    "log": "serving-writer-restore-final.log"
+  },
+  {
+    "id": "restore-cli-fail-closed",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-ops",
+      "--test",
+      "native_install",
+      "unconfirmed_cli_replay_keeps_the_target_closed_and_redacts_replay_details",
+      "--locked",
+      "--offline",
+      "--",
+      "--exact",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-30T01:58:14.360459+00:00",
+    "finishedAt": "2026-10-30T01:58:19.072928+00:00",
+    "exitCode": 0,
+    "log": "restore-cli-fail-closed.log"
+  },
+  {
+    "id": "serving-writer-release-build",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/rust/build-slice.mjs"
+    ],
+    "startedAt": "2026-10-30T02:01:49.518505+00:00",
+    "finishedAt": "2026-10-30T02:09:00.767320+00:00",
+    "exitCode": 0,
+    "log": "serving-writer-release-build.log"
+  },
+  {
+    "id": "serving-writer-workspace-verify",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/rust/verify.mjs",
+      "--offline"
+    ],
+    "startedAt": "2026-10-30T02:01:49.518415+00:00",
+    "finishedAt": "2026-10-30T02:11:20.102865+00:00",
+    "exitCode": 101,
+    "log": "serving-writer-workspace-verify.log"
+  },
+  {
+    "id": "serving-writer-release-build-02",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/rust/build-slice.mjs"
+    ],
+    "startedAt": "2026-10-30T02:12:43.268576+00:00",
+    "finishedAt": "2026-10-30T02:12:44.287157+00:00",
+    "exitCode": 0,
+    "log": "serving-writer-release-build-02.log"
+  },
+  {
+    "id": "serving-writer-persistent-restart",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-slice",
+      "--test",
+      "persistent_launcher",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-30T02:12:43.268576+00:00",
+    "finishedAt": "2026-10-30T02:13:31.116564+00:00",
+    "exitCode": 0,
+    "log": "serving-writer-persistent-restart.log"
+  },
+  {
+    "id": "serving-writer-browser",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/e2e/verify.mjs",
+      "--output",
+      "docs/archive/audits/evidence/launch-2026-10-29/serving-writer-browser"
+    ],
+    "startedAt": "2026-10-30T02:13:29.360087+00:00",
+    "finishedAt": "2026-10-30T02:13:51.948626+00:00",
+    "exitCode": 0,
+    "log": "serving-writer-browser.log"
+  },
+  {
+    "id": "serving-writer-native-package",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/rust/package-native.mjs",
+      "--out",
+      "dist/native-candidate-20261030-06"
+    ],
+    "startedAt": "2026-10-30T02:13:29.360086+00:00",
+    "finishedAt": "2026-10-30T02:13:54.276197+00:00",
+    "exitCode": 0,
+    "log": "serving-writer-native-package.log"
+  },
+  {
+    "id": "serving-writer-workspace-verify-02",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/rust/verify.mjs",
+      "--offline"
+    ],
+    "startedAt": "2026-10-30T02:13:29.358837+00:00",
+    "finishedAt": "2026-10-30T02:22:13.333486+00:00",
+    "exitCode": 0,
+    "log": "serving-writer-workspace-verify-02.log"
+  },
+  {
+    "id": "provider-http-dependency",
+    "command": [
+      "cargo",
+      "check",
+      "-p",
+      "archava-providers"
+    ],
+    "startedAt": "2026-10-30T02:25:09.170755+00:00",
+    "finishedAt": "2026-10-30T02:25:49.903905+00:00",
+    "exitCode": 0,
+    "log": "provider-http-dependency.log"
+  },
+  {
+    "id": "midtrans-transport-compile",
+    "command": [
+      "cargo",
+      "check",
+      "-p",
+      "archava-providers",
+      "--all-targets",
+      "--locked",
+      "--offline"
+    ],
+    "startedAt": "2026-10-30T02:31:00.770180+00:00",
+    "finishedAt": "2026-10-30T02:31:11.113948+00:00",
+    "exitCode": 0,
+    "log": "midtrans-transport-compile.log"
+  },
+  {
+    "id": "midtrans-local-transport",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-providers",
+      "--test",
+      "midtrans_transport",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-30T02:35:11.915892+00:00",
+    "finishedAt": "2026-10-30T02:35:44.038668+00:00",
+    "exitCode": 0,
+    "log": "midtrans-local-transport.log"
+  },
+  {
+    "id": "payment-exact-domain",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-domain",
+      "erp::payments",
+      "--lib",
+      "--locked",
+      "--offline"
+    ],
+    "startedAt": "2026-10-30T02:35:13.088248+00:00",
+    "finishedAt": "2026-10-30T02:35:47.037149+00:00",
+    "exitCode": 101,
+    "log": "payment-exact-domain.log"
+  },
+  {
+    "id": "payment-exact-domain-02",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-domain",
+      "erp::payments",
+      "--lib",
+      "--locked",
+      "--offline"
+    ],
+    "startedAt": "2026-10-30T02:37:43.438504+00:00",
+    "finishedAt": "2026-10-30T02:37:45.070478+00:00",
+    "exitCode": 0,
+    "log": "payment-exact-domain-02.log"
+  },
+  {
+    "id": "midtrans-local-transport-02",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-providers",
+      "--test",
+      "midtrans_transport",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-30T02:37:43.438502+00:00",
+    "finishedAt": "2026-10-30T02:37:52.075598+00:00",
+    "exitCode": 0,
+    "log": "midtrans-local-transport-02.log"
+  },
+  {
+    "id": "midtrans-transport-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "-p",
+      "archava-providers",
+      "--all-targets",
+      "--locked",
+      "--offline",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "startedAt": "2026-10-30T02:37:43.438431+00:00",
+    "finishedAt": "2026-10-30T02:38:01.678160+00:00",
+    "exitCode": 0,
+    "log": "midtrans-transport-clippy.log"
+  },
+  {
+    "id": "billing-assigned-scope-red",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-host",
+      "--test",
+      "workspace_flows",
+      "assigned_billing_cannot_mutate_or_recover_an_invoice_outside_its_current_scope",
+      "--locked",
+      "--offline",
+      "--",
+      "--exact",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-30T02:48:03.745275+00:00",
+    "finishedAt": "2026-10-30T02:48:26.556476+00:00",
+    "exitCode": 101,
+    "log": "billing-assigned-scope-red.log"
+  },
+  {
+    "id": "billing-assigned-scope-green",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-host",
+      "--test",
+      "workspace_flows",
+      "--test",
+      "erp_billing",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-30T02:49:34.892344+00:00",
+    "finishedAt": "2026-10-30T02:50:30.613271+00:00",
+    "exitCode": 0,
+    "log": "billing-assigned-scope-green.log"
+  },
+  {
+    "id": "gateway-domain-adapter-compile",
+    "command": [
+      "cargo",
+      "check",
+      "-p",
+      "archava-adapters",
+      "--locked",
+      "--offline"
+    ],
+    "startedAt": "2026-10-30T03:02:32.955113+00:00",
+    "finishedAt": "2026-10-30T03:02:39.239763+00:00",
+    "exitCode": 0,
+    "log": "gateway-domain-adapter-compile.log"
+  },
+  {
+    "id": "gateway-host-compile",
+    "command": [
+      "cargo",
+      "check",
+      "-p",
+      "archava-host",
+      "--offline"
+    ],
+    "startedAt": "2026-10-30T03:04:19.895108+00:00",
+    "finishedAt": "2026-10-30T03:04:19.919233+00:00",
+    "exitCode": 101,
+    "log": "gateway-host-compile.log"
+  },
+  {
+    "id": "gateway-host-compile-02",
+    "command": [
+      "cargo",
+      "check",
+      "-p",
+      "archava-host",
+      "--offline"
+    ],
+    "startedAt": "2026-10-30T03:04:35.688189+00:00",
+    "finishedAt": "2026-10-30T03:04:47.060283+00:00",
+    "exitCode": 0,
+    "log": "gateway-host-compile-02.log"
+  },
+  {
+    "id": "gateway-router-first",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-host",
+      "--test",
+      "gateway_payments",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-30T03:05:58.600361+00:00",
+    "finishedAt": "2026-10-30T03:06:22.338023+00:00",
+    "exitCode": 101,
+    "log": "gateway-router-first.log"
+  },
+  {
+    "id": "gateway-router-02",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-host",
+      "--test",
+      "gateway_payments",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-30T03:06:50.533625+00:00",
+    "finishedAt": "2026-10-30T03:06:54.910849+00:00",
+    "exitCode": 0,
+    "log": "gateway-router-02.log"
+  },
+  {
+    "id": "gateway-ui-compile",
+    "command": [
+      "cargo",
+      "check",
+      "-p",
+      "archava-slice",
+      "--features",
+      "ssr",
+      "--locked",
+      "--offline"
+    ],
+    "startedAt": "2026-10-30T03:08:42.755417+00:00",
+    "finishedAt": "2026-10-30T03:08:42.783709+00:00",
+    "exitCode": 101,
+    "log": "gateway-ui-compile.log"
+  },
+  {
+    "id": "gateway-ui-compile-02",
+    "command": [
+      "cargo",
+      "check",
+      "-p",
+      "archava-slice",
+      "--features",
+      "server",
+      "--locked",
+      "--offline"
+    ],
+    "startedAt": "2026-10-30T03:08:52.760481+00:00",
+    "finishedAt": "2026-10-30T03:08:52.785671+00:00",
+    "exitCode": 101,
+    "log": "gateway-ui-compile-02.log"
+  },
+  {
+    "id": "gateway-ui-compile-03",
+    "command": [
+      "cargo",
+      "check",
+      "-p",
+      "archava-slice",
+      "--locked",
+      "--offline"
+    ],
+    "startedAt": "2026-10-30T03:09:03.830104+00:00",
+    "finishedAt": "2026-10-30T03:09:22.128196+00:00",
+    "exitCode": 101,
+    "log": "gateway-ui-compile-03.log"
+  },
+  {
+    "id": "gateway-local-suite",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-domain",
+      "-p",
+      "archava-providers",
+      "-p",
+      "archava-host",
+      "--test",
+      "gateway_payments",
+      "--test",
+      "midtrans_transport",
+      "--lib",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-30T03:09:04.998994+00:00",
+    "finishedAt": "2026-10-30T03:09:33.959588+00:00",
+    "exitCode": 101,
+    "log": "gateway-local-suite.log"
+  },
+  {
+    "id": "gateway-ui-compile-04",
+    "command": [
+      "cargo",
+      "check",
+      "-p",
+      "archava-slice",
+      "--locked",
+      "--offline"
+    ],
+    "startedAt": "2026-10-30T03:10:04.948051+00:00",
+    "finishedAt": "2026-10-30T03:10:13.005206+00:00",
+    "exitCode": 101,
+    "log": "gateway-ui-compile-04.log"
+  },
+  {
+    "id": "gateway-ui-compile-05",
+    "command": [
+      "cargo",
+      "check",
+      "-p",
+      "archava-slice",
+      "--locked",
+      "--offline"
+    ],
+    "startedAt": "2026-10-30T03:10:50.561022+00:00",
+    "finishedAt": "2026-10-30T03:10:58.504624+00:00",
+    "exitCode": 0,
+    "log": "gateway-ui-compile-05.log"
+  },
+  {
+    "id": "gateway-scope-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "-p",
+      "archava-domain",
+      "-p",
+      "archava-adapters",
+      "-p",
+      "archava-host",
+      "-p",
+      "archava-slice",
+      "-p",
+      "archava-ops",
+      "--all-targets",
+      "--locked",
+      "--offline",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "startedAt": "2026-10-30T03:12:27.355168+00:00",
+    "finishedAt": "2026-10-30T03:12:51.528502+00:00",
+    "exitCode": 101,
+    "log": "gateway-scope-clippy.log"
+  },
+  {
+    "id": "gateway-scope-clippy-02",
+    "command": [
+      "cargo",
+      "clippy",
+      "-p",
+      "archava-domain",
+      "-p",
+      "archava-adapters",
+      "-p",
+      "archava-providers",
+      "-p",
+      "archava-host",
+      "-p",
+      "archava-slice",
+      "-p",
+      "archava-ops",
+      "--all-targets",
+      "--locked",
+      "--offline",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "startedAt": "2026-10-30T03:16:07.497636+00:00",
+    "finishedAt": "2026-10-30T03:16:23.761338+00:00",
+    "exitCode": 0,
+    "log": "gateway-scope-clippy-02.log"
+  },
+  {
+    "id": "gateway-financial-local-suite",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-domain",
+      "-p",
+      "archava-providers",
+      "-p",
+      "archava-host",
+      "-p",
+      "archava-ops",
+      "--test",
+      "gateway_payments",
+      "--test",
+      "midtrans_transport",
+      "--test",
+      "payment_service",
+      "--test",
+      "upgrade_restore",
+      "--test",
+      "erp_billing",
+      "--test",
+      "workspace_flows",
+      "--lib",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-30T03:14:39.902511+00:00",
+    "finishedAt": "2026-10-30T03:16:51.436339+00:00",
+    "exitCode": 0,
+    "log": "gateway-financial-local-suite.log"
+  },
+  {
+    "id": "gateway-workspace-verify",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/rust/verify.mjs",
+      "--offline"
+    ],
+    "startedAt": "2026-10-30T03:17:12.374665+00:00",
+    "finishedAt": "2026-10-30T03:17:16.739006+00:00",
+    "exitCode": 101,
+    "log": "gateway-workspace-verify.log"
+  },
+  {
+    "id": "gateway-write-only-red",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-host",
+      "--test",
+      "gateway_payments",
+      "a_write_only_human",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-30T03:21:48.121058+00:00",
+    "finishedAt": "2026-10-30T03:22:06.736464+00:00",
+    "exitCode": 101,
+    "log": "gateway-write-only-red.log"
+  },
+  {
+    "id": "gateway-current-green",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-host",
+      "--test",
+      "gateway_payments",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-30T03:22:30.097837+00:00",
+    "finishedAt": "2026-10-30T03:22:52.494009+00:00",
+    "exitCode": 0,
+    "log": "gateway-current-green.log"
+  },
+  {
+    "id": "gateway-workspace-verify-02",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/rust/verify.mjs",
+      "--offline"
+    ],
+    "startedAt": "2026-10-30T03:17:26.406559+00:00",
+    "finishedAt": "2026-10-30T03:29:18.691133+00:00",
+    "exitCode": 1,
+    "log": "gateway-workspace-verify-02.log"
+  },
+  {
+    "id": "gateway-release-build",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/rust/build-slice.mjs"
+    ],
+    "startedAt": "2026-10-30T03:17:32.202228+00:00",
+    "finishedAt": "2026-10-30T03:32:52.865446+00:00",
+    "exitCode": 1,
+    "log": "gateway-release-build.log"
+  },
+  {
+    "id": "gemini-presence-override-red",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-host",
+      "--test",
+      "review_gemini_presence_tmp",
+      "review_gemini_foreign_tenant_session_override",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "startedAt": "2026-10-30T06:07:32.471199+00:00",
+    "finishedAt": "2026-10-30T06:07:39.581651+00:00",
+    "exitCode": 101,
+    "log": "gemini-presence-override-red.log"
+  },
+  {
+    "id": "gemini-email-regressions-red",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-host",
+      "--test",
+      "review_gemini_email_tmp",
+      "review_gemini_",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "startedAt": "2026-10-30T06:08:54.037734+00:00",
+    "finishedAt": "2026-10-30T06:08:58.429196+00:00",
+    "exitCode": 101,
+    "log": "gemini-email-regressions-red.log"
+  },
+  {
+    "id": "gemini-existing-regressions",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-host",
+      "--test",
+      "presence_lifecycle",
+      "--test",
+      "invoice_email",
+      "--test",
+      "gateway_payments",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-30T06:09:59.596943+00:00",
+    "finishedAt": "2026-10-30T06:10:16.129486+00:00",
+    "exitCode": 0,
+    "log": "gemini-existing-regressions.log"
+  },
+  {
+    "id": "gemini-review-doc-links",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/check-docs.mjs"
+    ],
+    "startedAt": "2026-10-30T06:13:50.001052+00:00",
+    "finishedAt": "2026-10-30T06:13:50.066654+00:00",
+    "exitCode": 0,
+    "log": "gemini-review-doc-links.log"
+  },
+  {
+    "id": "candidate10-existing-regressions",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-host",
+      "--test",
+      "presence_lifecycle",
+      "--test",
+      "invoice_email",
+      "--test",
+      "cockpit_hold_resume",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-30T07:22:16.452982+00:00",
+    "finishedAt": "2026-10-30T07:22:32.182630+00:00",
+    "exitCode": 0,
+    "log": "candidate10-existing-regressions.log"
+  },
+  {
+    "id": "candidate10-adversarial-review",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-host",
+      "--test",
+      "candidate10_email_review_tmp",
+      "--test",
+      "candidate10_cockpit_review_tmp",
+      "--test",
+      "candidate10_presence_review_tmp",
+      "review_candidate10_",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "startedAt": "2026-10-30T07:25:54.707992+00:00",
+    "finishedAt": "2026-10-30T07:25:58.043491+00:00",
+    "exitCode": 101,
+    "log": "candidate10-adversarial-review.log"
+  },
+  {
+    "id": "candidate10-email-presence-adversarial",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-host",
+      "--test",
+      "candidate10_email_review_tmp",
+      "--test",
+      "candidate10_presence_review_tmp",
+      "--no-fail-fast",
+      "review_candidate10_",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "startedAt": "2026-10-30T07:26:18.733402+00:00",
+    "finishedAt": "2026-10-30T07:26:24.761318+00:00",
+    "exitCode": 101,
+    "log": "candidate10-email-presence-adversarial.log"
+  },
+  {
+    "id": "candidate10-existing-mission-privacy-red",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-host",
+      "--test",
+      "workspace_flows",
+      "mission_creation_replay_private_listing_real_tools_and_step_retry",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-30T07:26:53.158931+00:00",
+    "finishedAt": "2026-10-30T07:26:55.808280+00:00",
+    "exitCode": 101,
+    "log": "candidate10-existing-mission-privacy-red.log"
+  },
+  {
+    "id": "candidate10-review-doc-links",
+    "command": [
+      "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node",
+      "tools/check-docs.mjs"
+    ],
+    "startedAt": "2026-10-30T07:31:14.104757+00:00",
+    "finishedAt": "2026-10-30T07:31:14.176371+00:00",
+    "exitCode": 0,
+    "log": "candidate10-review-doc-links.log"
+  },
+  {
+    "id": "candidate12-submitted-regressions",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-host",
+      "--test",
+      "invoice_email",
+      "--test",
+      "presence_lifecycle",
+      "--test",
+      "cockpit_hold_resume",
+      "--test",
+      "workspace_flows",
+      "--no-fail-fast",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1"
+    ],
+    "startedAt": "2026-10-30T08:21:55.189925+00:00",
+    "finishedAt": "2026-10-30T08:22:32.862825+00:00",
+    "exitCode": 0,
+    "log": "candidate12-submitted-regressions.log"
+  },
+  {
+    "id": "candidate12-adversarial-review",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "archava-host",
+      "--test",
+      "candidate12_email_review_tmp",
+      "--test",
+      "candidate12_cockpit_review_tmp",
+      "--test",
+      "candidate12_presence_review_tmp",
+      "--no-fail-fast",
+      "review_candidate12_",
+      "--locked",
+      "--offline",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "startedAt": "2026-10-30T08:26:09.685207+00:00",
+    "finishedAt": "2026-10-30T08:26:23.833476+00:00",
+    "exitCode": 101,
+    "log": "candidate12-adversarial-review.log"
+  }
+]

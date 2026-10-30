@@ -1,0 +1,698 @@
+$ /usr/bin/node tools/check-structure.mjs --offline
+Structure: 22 crates; 0 problem(s)
+$ /usr/bin/node --test tools/test/structure.test.mjs tools/test/verify.test.mjs
+✔ core rejects an HTTP-layer dependency (2.26159ms)
+✔ dev-only fixtures are allowed; production fixtures are refused (0.987327ms)
+✔ missing embedded files and a second workspace are detected (0.715729ms)
+✔ historical tools are excluded, active broken imports are detected (0.738814ms)
+✔ the UI cannot pull the HTTP host into its WASM build (0.560673ms)
+✔ import examples inside ordinary strings are not treated as module imports (0.878854ms)
+$ first
+$ first
+✔ the default gate includes workspace integration tests and locked resolution (1.19783ms)
+✔ offline and library-only scope are explicit (0.161814ms)
+✔ a failed or interrupted child stops later checks (0.576488ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 61.807401
+$ cargo fmt --all --check
+$ cargo clippy --workspace --all-targets --locked --offline -- -D warnings
+    Checking archava-core v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/core)
+    Checking archava-own v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/own)
+    Checking archava-assistant v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/assistant)
+    Checking archava-assembly v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/assembly)
+   Compiling archava-native v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/native)
+    Checking archava-rates v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/rates)
+    Checking archava-providers v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/providers)
+    Checking archava-pricing v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/pricing)
+    Checking archava-capacity v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/capacity)
+    Checking archava-ops v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/ops)
+    Checking archava-domain v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/domain)
+    Checking archava-orbz v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/orbz)
+    Checking archava-context v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/context)
+    Checking archava-rpa v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/rpa)
+    Checking archava-cockpit v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/cockpit)
+    Checking archava-mcp v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/mcp)
+    Checking archava-adapters v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/adapters)
+    Checking archava-evals v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/evals)
+    Checking archava-campaigns v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/campaigns)
+    Checking archava-pg-fixture v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/pg-fixture)
+    Checking archava-host v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/host)
+    Checking archava-slice v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/slice)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 11.71s
+$ cargo test --workspace --locked --offline --lib -- --test-threads=1
+   Compiling archava-pg-fixture v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/pg-fixture)
+   Compiling archava-host v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/host)
+   Compiling archava-providers v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/providers)
+   Compiling archava-adapters v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/adapters)
+   Compiling archava-ops v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/ops)
+   Compiling archava-slice v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/slice)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 5.41s
+     Running unittests src/lib.rs (target/debug/deps/archava_adapters-c8aa86569b7610e2)
+
+running 13 tests
+test rls::tests::a_cross_tenant_setting_is_refused ... ok
+test rls::tests::a_superuser_runtime_is_refused ... ok
+test rls::tests::an_unprivileged_runtime_is_allowed ... ok
+test rls::tests::an_unset_setting_is_reported_differently_from_a_wrong_one ... ok
+test rls::tests::only_the_constant_setting_name_is_interpolated ... ok
+test rls::tests::the_migration_checksum_matches_nodes_sha256_hex ... ok
+test rls::tests::the_namespace_is_bound_rather_than_interpolated ... ok
+test rls::tests::the_namespace_validator_accepts_plain_identifiers_and_refuses_everything_else ... ok
+test rls::tests::the_policy_gate_requires_both_enabled_and_forced ... ok
+test rls::tests::the_set_config_statement_is_transaction_local ... ok
+test rls::tests::the_setting_name_matches_the_policy_reference ... ok
+test rls::tests::the_tenant_read_back_must_match_the_callers_tenant ... ok
+test rls::tests::the_tenant_read_back_tolerates_an_unset_setting ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/archava_assembly-3f478a89b451fdf1)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/archava_assistant-2b7276fbe7b25ccb)
+
+running 25 tests
+test contracts::tests::a_completed_task_or_an_unapproved_envelope_refuses ... ok
+test contracts::tests::a_long_contact_name_does_not_refuse_a_prepared_completion ... ok
+test contracts::tests::a_long_draft_summary_is_not_a_page_overflow ... ok
+test contracts::tests::a_page_over_twenty_items_still_refuses ... ok
+test conversation::tests::a_contact_query_exact_matches_choose_or_not_found ... ok
+test conversation::tests::an_inconsistent_overview_count_refuses ... ok
+test conversation::tests::an_overview_utterance_reports_the_scoped_counts ... ok
+test conversation::tests::an_unverifiable_plan_is_unavailable_not_executed ... ok
+test conversation::tests::chat_flow_and_direct_planner_resolve_the_same_plan ... ok
+test conversation::tests::pipeline_reads_refuse_without_the_pipeline_grant ... ok
+test conversation::tests::preparing_a_draft_needs_the_draft_and_pins_the_revision ... ok
+test conversation::tests::preparing_completion_gates_on_the_task_choice_and_lifecycle ... ok
+test conversation::tests::the_chosen_contact_id_short_circuits_a_new_search ... ok
+test conversation::tests::the_worklist_buckets_split_at_the_boundary ... ok
+test conversation::tests::unsupported_utterances_answer_with_help_and_source_none ... ok
+test conversation::tests::without_the_contact_read_grant_the_whole_turn_is_refused ... ok
+test conversation::tests::without_the_followup_write_grant_preparation_is_refused ... ok
+test planner::tests::an_over_bound_query_is_unsupported ... ok
+test planner::tests::anything_outside_the_vocabulary_is_unsupported ... ok
+test planner::tests::bucket_words_only_move_the_open_worklist ... ok
+test planner::tests::classification_matches_the_recorded_rows ... ok
+test planner::tests::planner_values_parse_into_plan_contract ... ok
+test planner::tests::the_local_planner_identity_is_deterministic ... ok
+test planner::tests::the_query_is_carried_not_resolved ... ok
+test planner::tests::the_worklist_rows_carry_their_bucket ... ok
+
+test result: ok. 25 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running unittests src/lib.rs (target/debug/deps/archava_campaigns-fbf1401722562527)
+
+running 2 tests
+test tests::test_ar_debt_collection_campaign ... ok
+test tests::test_high_value_ar_enters_holding_pattern ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/archava_capacity-aa5f259f8be6e5b1)
+
+running 38 tests
+test calendar::tests::a_reversed_span_floors_to_one_without_hanging ... ok
+test calendar::tests::a_weekend_step_that_leaves_the_domain_is_refused ... ok
+test calendar::tests::an_out_of_domain_endpoint_is_refused ... ok
+test calendar::tests::an_out_of_domain_input_is_refused_before_the_horizon_is_considered ... ok
+test calendar::tests::counts_working_days_across_a_pre_epoch_span ... ok
+test calendar::tests::counts_working_days_between_two_mondays ... ok
+test calendar::tests::keeps_the_time_of_day_when_no_weekend_is_crossed ... ok
+test calendar::tests::normalizes_the_time_only_when_a_weekend_is_crossed ... ok
+test calendar::tests::skips_a_weekend_to_the_following_monday_at_midnight ... ok
+test calendar::tests::the_floor_of_the_domain_resolves_inside_the_domain ... ok
+test calendar::tests::the_horizon_bounds_a_wide_span_on_both_sides ... ok
+test calendar::tests::the_overflow_reproducer_returns_a_controlled_error_instead_of_hanging ... ok
+test calendar::tests::try_plus_days_refuses_an_unrepresentable_step ... ok
+test calendar::tests::weekday_is_floored_for_pre_epoch_days ... ok
+test calendar::tests::weekday_of_epoch_days ... ok
+test error::tests::display_is_the_code_when_no_message_is_supplied ... ok
+test error::tests::is_a_std_error ... ok
+test schedule::tests::a_blocking_allocation_pushes_the_job_and_reports_the_queue ... ok
+test schedule::tests::a_huge_job_spans_calendar_days_not_working_days ... ok
+test schedule::tests::a_job_smaller_than_one_day_still_takes_one_working_day ... ok
+test schedule::tests::a_pool_that_cannot_burn_refuses_the_request ... ok
+test schedule::tests::a_sub_millisecond_desired_start_keeps_its_milliseconds ... ok
+test schedule::tests::a_time_of_day_survives_a_weekday_desired_start ... ok
+test schedule::tests::a_tiny_pool_burns_a_fractional_daily_rate ... ok
+test schedule::tests::a_weekend_desired_start_normalizes_to_the_next_monday ... ok
+test schedule::tests::a_weekend_spanning_allocation_blocks_the_working_days_after_it ... ok
+test schedule::tests::a_zero_concurrency_limit_exhausts_the_loop ... ok
+test schedule::tests::an_allocation_in_the_past_does_not_block ... ok
+test schedule::tests::an_idle_pool_starts_the_job_on_its_desired_monday ... ok
+test schedule::tests::an_indefinitely_blocking_allocation_resolves_in_one_jump ... ok
+test schedule::tests::math_max_1_floors_a_span_to_one ... ok
+test schedule::tests::math_min_agrees_with_javascript_on_the_values_the_baseline_uses ... ok
+test schedule::tests::math_round_rounds_halves_toward_positive_infinity ... ok
+test schedule::tests::remaining_units_of_zero_falls_back_to_required_units ... ok
+test schedule::tests::sequential_allocations_report_a_queue_without_a_single_blocker ... ok
+test schedule::tests::the_capacity_epsilon_admits_a_sum_one_ulp_over_the_budget ... ok
+test schedule::tests::the_capacity_epsilon_does_not_admit_a_real_overrun ... ok
+test schedule::tests::the_queue_position_counts_every_allocation_still_finishing ... ok
+
+test result: ok. 38 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running unittests src/lib.rs (target/debug/deps/archava_cockpit-a728d969a2c7924e)
+
+running 5 tests
+test flight_status::tests::test_legal_flight_transitions ... ok
+test mission::tests::test_dag_validation_catches_cycles_and_invalid_deps ... ok
+test mission::tests::test_mission_dag_dependency_resolution ... ok
+test tests::test_full_cockpit_mission_lifecycle ... ok
+test tests::test_terminal_step_cannot_be_overwritten_from_passed_to_failed ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/archava_context-bc176923e0e065a3)
+
+running 28 tests
+test consent::tests::a_missing_record_is_a_full_refusal ... ok
+test consent::tests::grant_touches_one_domain_the_record_stays_immutable ... ok
+test consent::tests::missing_reports_a_partial_grant_rather_than_throwing ... ok
+test consent::tests::only_explicit_true_is_a_grant ... ok
+test consent::tests::revoke_withdraws_one_domain ... ok
+test decision::provider::tests::counts_cues_and_never_claims_certainty ... ok
+test decision::provider::tests::coverage_is_damped_and_measured_from_facts ... ok
+test decision::provider::tests::laya_enforces_cardinality_and_act_vs_escalate ... ok
+test decision::provider::tests::refuses_when_no_cue_decides_it ... ok
+test decision::provider::tests::reports_are_honest_about_what_they_claim ... ok
+test decision::vocabulary::tests::every_task_with_cues_has_nonempty_toward_lists ... ok
+test decision::vocabulary::tests::mentions_fires_at_word_edges_only ... ok
+test decision::vocabulary::tests::normalization_folds_punctuation_to_single_spaces ... ok
+test knowledge::retrieval::tests::an_unknown_tenant_shape_refuses_before_the_store ... ok
+test knowledge::retrieval::tests::the_limit_defaults_to_eight ... ok
+test knowledge::schema::tests::dates_check_the_shape_not_the_calendar ... ok
+test knowledge::schema::tests::slugs_accept_their_shape_and_refuse_others ... ok
+test knowledge::text::tests::a_short_document_is_one_chunk ... ok
+test knowledge::text::tests::chunking_is_deterministic_and_bounds_hold ... ok
+test knowledge::text::tests::short_and_stripped_shapes_survive ... ok
+test knowledge::text::tests::the_cancellation_family_stems_together ... ok
+test knowledge::text::tests::tokenise_folds_case_and_drops_noise ... ok
+test mask::tests::a_password_is_redacted_and_renamed_shards_are_found ... ok
+test mask::tests::a_preserved_name_is_walked_not_refused ... ok
+test mask::tests::an_email_is_partially_visible_and_an_api_key_is_redacted ... ok
+test mask::tests::booleans_and_nulls_pass_through_numbers_do_not ... ok
+test mask::tests::resolve_defaults_list_the_platform_fields ... ok
+test mask::tests::tokenise_hashes_deterministically ... ok
+
+test result: ok. 28 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/archava_core-5949713c1ec79d2b)
+
+running 28 tests
+test actions::tests::actions_group_by_domain ... ok
+test actions::tests::an_l2_action_can_still_require_act_and_user_confirmation ... ok
+test actions::tests::an_unknown_action_id_is_an_error_not_a_miss ... ok
+test actions::tests::deprecations_reports_nothing_while_the_baseline_is_complete ... ok
+test actions::tests::every_action_id_is_unique ... ok
+test actions::tests::every_action_level_has_a_label ... ok
+test actions::tests::every_baseline_action_is_lookupable_by_id ... ok
+test actions::tests::every_declared_capability_and_confirmation_survives_the_port ... ok
+test actions::tests::money_and_account_actions_all_require_confirmation ... ok
+test actions::tests::no_admin_action_is_ungated ... ok
+test actions::tests::only_admin_actions_admit_non_assistant_roles ... ok
+test actions::tests::sensitive_fields_are_marked_on_every_action_that_touches_personal_data ... ok
+test actions::tests::the_registry_holds_exactly_the_baseline_actions ... ok
+test roles::tests::a_granted_tier_satisfies_itself_and_anything_weaker ... ok
+test roles::tests::all_five_baseline_roles_are_lookupable ... ok
+test roles::tests::an_unknown_role_name_is_not_a_role ... ok
+test roles::tests::assistant_only_reads_content ... ok
+test roles::tests::capability_ranking_matches_the_baseline ... ok
+test roles::tests::editor_cannot_reach_members_or_settings ... ok
+test roles::tests::owner_is_the_widest_role ... ok
+test roles::tests::role_name_round_trips_through_its_string_form ... ok
+test roles::tests::viewer_is_read_only ... ok
+test tenant::tests::a_cross_tenant_value_is_a_violation_not_a_miss ... ok
+test tenant::tests::a_missing_value_is_a_bug_not_empty_data ... ok
+test tenant::tests::accepts_lowercase_kebab_slugs ... ok
+test tenant::tests::deserialization_enforces_the_same_rule ... ok
+test tenant::tests::matching_tenant_passes ... ok
+test tenant::tests::rejects_every_form_the_baseline_regex_rejects ... ok
+
+test result: ok. 28 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/archava_domain-d465ac0f8166e0a8)
+
+running 167 tests
+test authority::tests::a_client_configuration_can_narrow_the_action_set ... ok
+test authority::tests::a_decline_does_not_soften_a_role_denial ... ok
+test authority::tests::a_decline_is_not_re_asked_but_a_confirmation_in_the_same_turn_wins ... ok
+test authority::tests::a_page_can_remove_an_action_but_never_add_one ... ok
+test authority::tests::a_transact_client_still_needs_confirmation_for_an_l4_action ... ok
+test authority::tests::an_l5_action_never_runs_autonomously_regardless_of_capability ... ok
+test authority::tests::an_under_capability_client_is_denied ... ok
+test authority::tests::an_unregistered_action_is_denied_rather_than_executed ... ok
+test authority::tests::authorize_carries_the_resolved_action_not_an_id_to_re_resolve ... ok
+test authority::tests::authorize_surfaces_the_confirmation_question_rather_than_allowing ... ok
+test authority::tests::every_denial_reason_has_a_distinct_wire_name ... ok
+test authority::tests::the_capability_ranking_cannot_be_widened_by_an_unrecognised_tier ... ok
+test authority::tests::the_permitted_list_ignores_a_single_visitors_decline ... ok
+test erp::accommodation::tests::calendar_dates_patrol_the_grammar_the_zod_regex_encodes ... ok
+test erp::accommodation::tests::calendar_nights_spans_count_1_to_31 ... ok
+test erp::accommodation::tests::calendar_times_are_daily_clocks_only ... ok
+test erp::accommodation::tests::effective_state_derives_expiry_from_the_observed_clock ... ok
+test erp::accommodation::tests::housekeeping_walks_only_the_legal_transitions ... ok
+test erp::accommodation::tests::mutation_parse_shapes_the_document_strictly ... ok
+test erp::accommodation::tests::permission_ladder_matches_the_ts_word_per_operation ... ok
+test erp::accommodation::tests::property_create_fills_the_daily_defaults_and_cares_about_checkout_order ... ok
+test erp::accommodation::tests::receipts_round_trip_the_three_kinds_and_refuse_strangers ... ok
+test erp::accommodation::tests::stay_hold_defaults_hold_seconds_and_demands_real_night_spans ... ok
+test erp::accommodation::tests::strict_refusals_honor_the_union ... ok
+test erp::attendance::tests::capacity_must_be_positive_when_present ... ok
+test erp::attendance::tests::create_session_defaults_follow_the_baseline ... ok
+test erp::attendance::tests::register_defaults_the_attendee_role ... ok
+test erp::attendance::tests::registration_gates_on_the_session_and_its_seats ... ok
+test erp::attendance::tests::the_a04_policy_binds_the_roster_to_the_supplied_session ... ok
+test erp::attendance::tests::the_closed_target_vocabularies_refuse_invention ... ok
+test erp::attendance::tests::the_receipt_and_status_documents_keep_their_wire_shape ... ok
+test erp::attendance::tests::the_session_window_must_advance ... ok
+test erp::attendance::tests::the_strict_grammar_refuses_an_extra_member ... ok
+test erp::auto_workshop::tests::workshop_spk_full_repair_lifecycle ... ok
+test erp::billing::tests::a_moved_decimal_place_refuses_a_minted_other_claim ... ok
+test erp::billing::tests::a_short_key_is_refused_and_the_compare_is_unobserved ... ok
+test erp::billing::tests::the_flat_union_parses_each_arm_of_the_ts_wire ... ok
+test erp::billing::tests::the_framed_digest_reproduces_the_ts_bytes ... ok
+test erp::billing::tests::the_nullable_optional_members_fold_absent_and_null ... ok
+test erp::billing::tests::the_receipt_parse_accepts_the_stored_document_strictly ... ok
+test erp::billing::tests::the_strict_sheets_refuse_members_outside_the_union ... ok
+test erp::billing::tests::the_transition_table_and_arithmetic_helpers_agree_with_the_ts_trueup ... ok
+test erp::clinical_records::tests::complete_encounter_requires_primary_diagnosis ... ok
+test erp::clinical_records::tests::vital_signs_physiological_bounds ... ok
+test erp::consignment::tests::consignment_agreement_lifecycle ... ok
+test erp::consignment::tests::consignment_item_and_settlement_split ... ok
+test erp::equipment_rental::tests::rental_lifecycle_and_settlement ... ok
+test erp::expenses::tests::expense_claim_workflow_and_segregation_of_duties ... ok
+test erp::field_services::tests::test_job_status_lifecycle ... ok
+test erp::field_services::tests::test_parse_commands ... ok
+test erp::fleet_management::tests::fuel_efficiency_computation ... ok
+test erp::fleet_management::tests::fuel_log_odometer_monotonic_check ... ok
+test erp::foodservice::tests::arrays_demand_unique_members ... ok
+test erp::foodservice::tests::authorize_ladder ... ok
+test erp::foodservice::tests::menu_create_station_default ... ok
+test erp::foodservice::tests::table_create_bounds ... ok
+test erp::foodservice::tests::table_create_parses ... ok
+test erp::foodservice::tests::ticket_create_table_binding ... ok
+test erp::formal_education::tests::command_parsing_score_bound ... ok
+test erp::formal_education::tests::transitions_admit_and_graduate ... ok
+test erp::fulfillment::tests::test_custody_stages ... ok
+test erp::fulfillment::tests::test_finding_disposition_exception ... ok
+test erp::fulfillment::tests::test_job_status_lifecycle ... ok
+test erp::fulfillment::tests::test_mutation_parsing ... ok
+test erp::general_ledger::tests::test_c06_reproduction_arithmetic_overflow_cannot_balance ... ok
+test erp::general_ledger::tests::test_complete_accounting_cycle_and_balance_sheet ... ok
+test erp::general_ledger::tests::test_unbalanced_entry_fails ... ok
+test erp::general_ledger::tests::test_valid_double_entry_balances ... ok
+test erp::inventory_costing::tests::test_c05_reproduction_no_negative_landed_cost ... ok
+test erp::inventory_costing::tests::test_fefo_expiry_sorting ... ok
+test erp::inventory_costing::tests::test_fifo_inventory_depletion_and_cogs ... ok
+test erp::inventory_costing::tests::test_invalid_goods_receipt_is_rejected ... ok
+test erp::inventory_costing::tests::test_landed_cost_allocation_by_value ... ok
+test erp::inventory_costing::tests::test_moving_average_cost_update ... ok
+test erp::inventory_costing::tests::test_negative_quantity_in_allocation_is_rejected ... ok
+test erp::laundry::tests::test_finding_disposition_exception ... ok
+test erp::laundry::tests::test_mutation_parsing ... ok
+test erp::laundry::tests::test_order_status_transitions ... ok
+test erp::laundry::tests::test_process_event_stages ... ok
+test erp::lms_digital::tests::lms_course_progress_and_certification ... ok
+test erp::marketplace::tests::marketplace_vendor_and_escrow_split ... ok
+test erp::mrp_discrete::tests::bom_component_allocation_calculation ... ok
+test erp::mrp_discrete::tests::production_order_valid_transitions ... ok
+test erp::organizations::tests::a_create_organization_parses_with_the_declared_members ... ok
+test erp::organizations::tests::an_unknown_data_member_or_arm_is_a_rejection ... ok
+test erp::organizations::tests::grants_and_scope_follow_the_access_rule ... ok
+test erp::organizations::tests::the_permission_rule_is_the_baseline_switch ... ok
+test erp::organizations::tests::the_receipts_round_trip_through_the_parse ... ok
+test erp::patient_queue::tests::patient_queue_workflow ... ok
+test erp::payroll::tests::indonesian_statutory_payroll_calculation ... ok
+test erp::pharmacy_dispense::tests::pharmacy_dispense_full_workflow ... ok
+test erp::pos_terminal::tests::pos_line_validation_rules ... ok
+test erp::pos_terminal::tests::pos_transaction_payment_equality ... ok
+test erp::pos_terminal::tests::shift_variance_calculation ... ok
+test erp::projects::tests::a_cancellation_without_reason_is_structurally_refused ... ok
+test erp::projects::tests::a_project_create_parses_with_its_default_fills ... ok
+test erp::projects::tests::an_unknown_member_or_arm_is_refused ... ok
+test erp::projects::tests::the_envelope_and_receipt_round_trip ... ok
+test erp::projects::tests::the_permission_rule_is_the_baseline_switch ... ok
+test erp::projects::tests::the_state_tables_reproduce_the_frozen_transitions ... ok
+test erp::property_lease::tests::deposit_settlement_calculation ... ok
+test erp::property_lease::tests::lease_contract_validation_rules ... ok
+test erp::proposals::tests::a_create_proposal_parses_with_its_default_fills ... ok
+test erp::proposals::tests::scope_items_are_strict_and_bounded ... ok
+test erp::proposals::tests::the_permission_rule_is_the_baseline_switch ... ok
+test erp::proposals::tests::the_receipt_round_trips_and_refuses_strangers ... ok
+test erp::proposals::tests::the_reject_arm_fills_an_absent_reason_with_null ... ok
+test erp::proposals::tests::the_state_tables_reproduce_the_frozen_transitions ... ok
+test erp::quality_control::tests::qc_critical_defect_rejects_and_quarantines ... ok
+test erp::quality_control::tests::qc_sample_order_pass ... ok
+test erp::salon_spa::tests::salon_spa_session_workflow_and_commission ... ok
+test erp::scheduling::tests::hold_seconds_defaults_to_900_and_interval_bounds_hold ... ok
+test erp::scheduling::tests::instant_accepts_canonical_z_and_normalizes_offsets ... ok
+test erp::scheduling::tests::instant_refuses_ambiguous_and_out_of_band_input ... ok
+test erp::scheduling::tests::interval_must_be_positive_and_at_most_31_days ... ok
+test erp::scheduling::tests::strict_members_refuse_unknown_and_missing_keys ... ok
+test erp::studio_canvas::tests::canvas_dag_construction ... ok
+test erp::subscriptions::tests::activation_needs_a_payment_record ... ok
+test erp::subscriptions::tests::an_unpaid_draft_grants_no_consumption_right ... ok
+test erp::subscriptions::tests::create_subscription_defaults_follow_the_baseline ... ok
+test erp::subscriptions::tests::the_bounds_hold ... ok
+test erp::subscriptions::tests::the_datetime_rule_is_the_baselines ... ok
+test erp::subscriptions::tests::the_strict_grammar_refuses_an_extra_member ... ok
+test erp::support::tests::a_reopen_is_clean ... ok
+test erp::support::tests::the_due_instant_is_canonical ... ok
+test erp::support::tests::the_grammar_is_strict ... ok
+test erp::support::tests::the_grant_ladder_holds ... ok
+test erp::support::tests::the_query_bounds_hold ... ok
+test erp::support::tests::the_receipt_round_trips ... ok
+test erp::support::tests::the_state_table_is_closed ... ok
+test erp::support::tests::the_support_id_shape_holds ... ok
+test erp::tax_indonesia::tests::test_bpjs_contributions_and_caps ... ok
+test erp::tax_indonesia::tests::test_efaktur_generation_and_vat_11_percent ... ok
+test erp::tax_indonesia::tests::test_pasal17_progressive_brackets ... ok
+test erp::tax_indonesia::tests::test_ter_category_b_and_c ... ok
+test erp::tax_indonesia::tests::test_ter_rate_and_monthly_withholding ... ok
+test erp::tests::a_fully_shaped_supplier_create_parses ... ok
+test erp::tests::a_mutation_envelope_parses_item_for_item ... ok
+test erp::tests::a_replayed_receipt_flips_only_the_replayed_flag ... ok
+test erp::tests::an_operation_runs_only_with_every_grant_its_branch_names ... ok
+test erp::tests::canonical_json_is_key_sorted_compact_and_integers_plain ... ok
+test erp::tests::codes_are_uppercase_with_the_documented_pattern ... ok
+test erp::tests::order_create_adds_supplier_and_offer_reads ... ok
+test erp::tests::order_receive_requires_a_nonempty_finding_within_the_line_bound ... ok
+test erp::tests::principal_ids_refuse_everything_the_slug_schema_refuses ... ok
+test erp::tests::receive_is_the_cross_ledger_gate ... ok
+test erp::tests::supplier_create_is_strict_about_its_member_shape ... ok
+test erp::tests::supplier_operations_need_their_grants_and_global_scope ... ok
+test erp::tests::the_typed_command_serializes_to_canonicalised_fingerprint_form ... ok
+test erp::tests::uuid_validation_is_the_8_4_4_4_12_hex_shape ... ok
+test erp::venue_booking::tests::venue_booking_capacity_and_pricing ... ok
+test feed::tests::test_action_feed_generation_and_sorting ... ok
+test hardware::escpos::tests::test_escpos_builder_init_and_formatting ... ok
+test hardware::escpos::tests::test_format_pos_receipt_complete_output ... ok
+test ingestion::tests::auto_reconciliation_catalog_products ... ok
+test messaging::whatsapp::tests::test_build_invoice_whatsapp_message ... ok
+test messaging::whatsapp::tests::test_parse_whatsapp_webhook_delivered ... ok
+test modality::tests::test_modality_parsing_and_flags ... ok
+test modality::tests::test_modality_serialization_roundtrip ... ok
+test presets::tests::test_industry_profile_parsing ... ok
+test presets::tests::test_profile_mask_isolation ... ok
+test preview::tests::generate_preview_handles_empty_or_whitespace_brand ... ok
+test preview::tests::generate_preview_produces_consistent_identities ... ok
+test preview::tests::sector_parse_and_string_representation_is_bijective ... ok
+test telematics::tests::test_c07_truncated_frame_is_rejected ... ok
+test telematics::tests::test_decode_teltonika_codec8_valid_frame ... ok
+test telematics::tests::test_r08_codex_probe_40_byte_zero_buffer_is_rejected ... ok
+
+test result: ok. 167 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running unittests src/lib.rs (target/debug/deps/archava_evals-d1eb96cfc0f484a8)
+
+running 3 tests
+test tests::test_c02_defective_target_fails_eval_and_detects_leakage ... ok
+test tests::test_c02_empty_suite_reports_zero_compliance ... ok
+test tests::test_eval_suite_execution_and_compliance ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/archava_host-886e57e40b8bba4d)
+
+running 71 tests
+test authority::tests::an_assigned_scope_is_refused_above_the_scope_gate ... ok
+test authority::tests::an_assigned_scope_keeps_the_surface_below_the_gate ... ok
+test authority::tests::the_fingerprint_binds_action_revision_and_input ... ok
+test authority::tests::the_request_carries_server_facts_and_never_a_body_grant ... ok
+test extractors::a_boundary_refusal_never_names_the_tenant ... ok
+test extractors::an_invalid_tenant_is_refused_at_the_entrypoint ... ok
+test extractors::an_unmatched_path_is_not_reflected ... ok
+test extractors::an_unparseable_body_is_not_reflected ... ok
+test extractors::legacy_authority_fields_are_dropped_not_deserialized ... ok
+test extractors::no_path_or_form_extractor_is_wired_without_a_refusal_handler ... ok
+test identity::tests::an_overloaded_server_is_busy_never_an_invalid_password ... ok
+test identity::tests::csrf_comparison_is_exact_and_hex ... ok
+test identity::tests::every_source_gets_its_own_bucket_and_the_registry_stops_growing ... ok
+test identity::tests::the_encoded_password_form_is_the_baseline_form ... ok
+test identity::tests::the_token_shape_matches_the_baseline_schema ... ok
+test identity::tests::the_username_gate_normalises_and_refuses ... ok
+test identity::tests::verification_pays_off_and_refuses_malformed_records ... ok
+test ingestion::tests::migration_reconcile_route_success ... ok
+test ingestion::tests::parse_reconcile_request_structure ... ok
+test metrics::tests::a_cold_process_renders_zeroed_counters ... ok
+test metrics::tests::counters_rendered_after_a_request ... ok
+test preview::tests::generate_preview_route_invalid_sector ... ok
+test preview::tests::generate_preview_route_success ... ok
+test router::tests::a_boundary_refusal_does_not_reflect_the_submission ... ok
+test router::tests::a_confirmation_question_is_not_a_refusal ... ok
+test router::tests::a_declined_confirmation_maps_to_forbidden ... ok
+test router::tests::a_ledger_must_declare_its_tenant_scoped_tables ... ok
+test router::tests::a_malformed_session_token_is_refused_without_touching_the_pool ... ok
+test router::tests::a_malformed_status_query_is_refused_without_reflection ... ok
+test router::tests::a_refusal_never_echoes_the_tenant ... ok
+test router::tests::a_status_read_is_refused_without_a_session ... ok
+test router::tests::a_store_failure_names_no_mechanism ... ok
+test router::tests::a_well_formed_session_that_cannot_be_verified_is_a_refusal ... ok
+test router::tests::a_wrong_role_maps_to_forbidden ... ok
+test router::tests::action_feed_returns_proactive_cards_without_authority ... ok
+test router::tests::an_allowed_command_maps_to_ok ... ok
+test router::tests::an_approval_request_is_refused_without_a_session ... ok
+test router::tests::an_approve_stamp_is_refused_without_a_session ... ok
+test router::tests::an_invalid_tenant_cannot_be_represented ... ok
+test router::tests::an_invalid_tenant_is_refused_at_the_entrypoint ... ok
+test router::tests::an_l5_action_without_human_approval_maps_to_forbidden ... ok
+test router::tests::an_overloaded_login_is_busy_never_invalid_credentials ... ok
+test router::tests::an_unauthenticated_command_is_refused ... ok
+test router::tests::an_under_capability_grant_maps_to_forbidden ... ok
+test router::tests::an_unknown_action_maps_to_not_found ... ok
+test router::tests::body_fields_that_used_to_be_authority_are_dropped_not_honoured ... ok
+test router::tests::cockpit_mission_creation_is_refused_without_a_session ... ok
+test router::tests::each_identity_failure_produces_its_own_login_status ... ok
+test router::tests::embed_checkout_answers_with_html_and_frame_ancestors_wildcard ... ok
+test router::tests::embed_checkout_neutralizes_xss_injection_attempts ... ok
+test router::tests::embed_script_answers_with_javascript_without_authority ... ok
+test router::tests::health_answers_without_any_authority_context ... ok
+test router::tests::metrics_exposes_counters_without_authority ... ok
+test router::tests::orbz_crystallize_is_refused_without_a_session ... ok
+test router::tests::presets_profiles_answers_without_authority ... ok
+test router::tests::readiness_reports_an_unreachable_database ... ok
+test router::tests::the_contact_list_refuses_rather_than_faking_an_empty_result ... ok
+test security::tests::a_logout_expires_both_cookie_names ... ok
+test security::tests::a_plain_http_session_mints_the_plain_cookie ... ok
+test security::tests::a_tls_session_mints_the_host_prefixed_cookie ... ok
+test security::tests::every_response_carries_the_shared_policy_and_hsts_only_over_tls ... ok
+test security::tests::only_a_trusted_hop_may_claim_tls ... ok
+test security::tests::the_api_policy_forbids_framing_and_base_uris ... ok
+test security::tests::the_body_token_needs_the_client_opt_in ... ok
+test security::tests::the_document_policy_admits_the_hydration_bundle ... ok
+test security::tests::the_embed_policy_allows_framing ... ok
+test security::tests::the_forwarded_scheme_and_the_origin_mark_a_request_secure ... ok
+test security::tests::the_resolver_reads_either_cookie_name ... ok
+test webhooks::tests::midtrans_signature_verification_succeeds ... ok
+test webhooks::tests::payment_webhook_unconfigured_and_signature_checks ... ok
+test webhooks::tests::privy_webhook_route_signed_event ... ok
+
+test result: ok. 71 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 35.53s
+
+     Running unittests src/lib.rs (target/debug/deps/archava_mcp-94a974a478957e3e)
+
+running 2 tests
+test tests::test_mcp_client_gateway ... ok
+test tests::test_mcp_server_tools_and_rpc ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/archava_native-3e0bbaabcc2d417a)
+
+running 16 tests
+test rates_tests::a_closed_night_reports_no_rooms_left ... ok
+test rates_tests::a_full_stay_prices_every_night_and_taxes_the_subtotal ... ok
+test rates_tests::a_predicate_op_answers_a_boolean ... ok
+test rates_tests::a_request_missing_its_argument_names_the_argument ... ok
+test rates_tests::a_request_that_is_not_json_is_rejected_explicitly ... ok
+test rates_tests::an_absent_answer_is_null_not_zero_and_not_an_empty_object ... ok
+test rates_tests::an_op_the_table_does_not_name_is_refused_rather_than_guessed ... ok
+test rates_tests::only_a_sellable_every_night_unit_is_bookable_and_cheapest_comes_first ... ok
+test rates_tests::the_rate_for_one_night_arrives_in_the_baselines_key_order ... ok
+test rates_tests::the_weekend_rate_is_added_then_stepped_across_the_boundary ... ok
+test rates_tests::the_window_end_is_exclusive_and_an_unstated_end_prices_nothing ... ok
+test tests::a_malformed_pricebook_is_rejected_before_the_request_is_read ... ok
+test tests::a_malformed_request_is_rejected_explicitly ... ok
+test tests::a_valid_request_produces_a_quote_string ... ok
+test tests::an_absent_tier_name_is_a_catchable_error_not_a_process_abort ... ok
+test tests::an_unknown_tier_surfaces_the_engines_own_message ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/archava_ops-87fb135bf7c9f609)
+
+running 7 tests
+test backup::tests::test_aes_256_gcm_encrypt_decrypt_roundtrip ... ok
+test backup::tests::test_aes_256_gcm_tamper_detection ... ok
+test backup::tests::test_base64_encode_decode_roundtrip ... ok
+test backup::tests::test_decode_key_hex_and_base64 ... ok
+test backup::tests::test_invalid_key_refusal ... ok
+test backup::tests::test_legacy_pgdmp_unencrypted_passes_transparently ... ok
+test backup::tests::test_wrong_key_fails_decryption ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/archava_orbz-191005cf11cba8d5)
+
+running 13 tests
+test progressive::tests::test_progressive_rendering_and_token_economy ... ok
+test reflection::tests::test_cashier_cannot_mutate_pricing_policy ... ok
+test reflection::tests::test_extract_vendor_preference_by_manager ... ok
+test reflection::tests::test_owner_pricing_mutation_triggers_l4_gate ... ok
+test security::tests::test_cashier_cannot_access_sovereign_memory ... ok
+test security::tests::test_department_isolation ... ok
+test security::tests::test_owner_super_access ... ok
+test temporal::tests::test_bi_temporal_invalidation_lifecycle ... ok
+test tests::test_store_rls_and_temporal_filtering ... ok
+test uri::tests::test_parse_department_uri ... ok
+test uri::tests::test_parse_entity_uri ... ok
+test uri::tests::test_parse_invalid_scheme ... ok
+test uri::tests::test_parse_public_uri ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/archava_own-40a5690afaf619ff)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/archava_pg_fixture-a67241365b5c6e1a)
+
+running 16 tests
+test tests::a_dead_fixture_is_reaped ... ok
+test tests::a_forced_long_socket_dir_is_reported_not_repaired ... ok
+test tests::a_live_fixture_older_than_the_age_gate_is_preserved ... ok
+test tests::a_live_postmaster_without_a_live_creator_is_preserved ... ok
+test tests::a_long_temp_dir_falls_back_to_a_bindable_base ... ok
+test tests::a_missing_creator_pid_is_not_proof_of_death ... ok
+test tests::a_short_temp_dir_is_still_preferred ... ok
+test tests::an_inflight_provision_is_preserved_regardless_of_pids ... ok
+test tests::no_pids_at_all_is_kept_not_deleted ... ok
+test tests::stop_server_targets_the_data_directory ... ok
+test tests::the_creator_pid_is_parsed_from_the_directory_name ... ok
+test tests::the_instance_name_keeps_the_creator_pid_contract ... ok
+test tests::the_limit_counts_bytes_not_characters ... ok
+test tests::the_limit_is_checked_against_the_real_socket_name ... ok
+test tests::the_postmaster_pid_is_read_from_the_data_directory ... ok
+test tests::the_reaper_sweeps_every_base_the_fixture_can_create_in ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/archava_pricing-881f9757b4831a0b)
+
+running 56 tests
+test classify::tests::a_missing_line_behaves_like_an_explicit_custom_one ... ok
+test classify::tests::an_empty_line_is_custom ... ok
+test classify::tests::capability_enterprise_is_custom ... ok
+test classify::tests::capability_paid_is_fixed_even_with_no_monthly ... ok
+test classify::tests::custom_true_beats_every_other_key ... ok
+test classify::tests::monthly_only_is_fixed_with_a_materialized_zero_setup ... ok
+test classify::tests::monthly_zero_and_monthly_absent_are_different_lines ... ok
+test classify::tests::presence_tiers_are_always_a_stated_price ... ok
+test classify::tests::setup_from_wins_over_setup_and_monthly ... ok
+test classify::tests::setup_makes_a_fixed_line_and_keeps_its_monthly ... ok
+test engine::tests::a_duplicated_driver_is_reported_once ... ok
+test engine::tests::a_from_environment_never_joins_the_bundle ... ok
+test engine::tests::a_priced_design_addon_joins_the_paid_total ... ok
+test engine::tests::a_single_component_never_earns_a_discount ... ok
+test engine::tests::a_single_included_integration_charges_nothing_at_all ... ok
+test engine::tests::a_zero_priced_environment_does_not_join_the_bundle ... ok
+test engine::tests::a_zero_request_count_emits_no_line_so_zero_and_one_differ ... ok
+test engine::tests::an_enterprise_capability_pushes_its_own_driver ... ok
+test engine::tests::an_unknown_design_addon_is_scoped_rather_than_rejected ... ok
+test engine::tests::custom_and_advanced_integrations_are_ordered_custom_then_advanced ... ok
+test engine::tests::dedicated_sla_support_blocks_the_total_without_blocking_the_base ... ok
+test engine::tests::enterprise_integrations_force_a_custom_quote_without_a_total ... ok
+test engine::tests::included_standard_integrations_reads_the_capability_allowance ... ok
+test engine::tests::indonesian_quotes_never_mix_with_global_figures ... ok
+test engine::tests::overage_is_zero_below_the_allowance_and_none_without_a_forecast ... ok
+test engine::tests::priority_support_adds_to_the_recurring_base ... ok
+test engine::tests::the_annual_option_discounts_twelve_months ... ok
+test engine::tests::the_annual_option_is_absent_without_prepay ... ok
+test engine::tests::the_capability_allowance_reduces_chargeable_standard_integrations ... ok
+test engine::tests::the_metadata_accessors_report_the_pricebook_verbatim ... ok
+test engine::tests::the_one_time_total_is_rounded_once_on_the_final_figure ... ok
+test engine::tests::the_three_unknown_tier_errors_are_checked_in_a_fixed_order ... ok
+test engine::tests::the_usage_allowance_and_overage_come_from_the_presence_tier ... ok
+test engine::tests::two_paid_components_take_the_two_component_rate ... ok
+test error::tests::an_empty_detail_still_produces_a_readable_message ... ok
+test error::tests::each_kind_renders_the_baseline_message_verbatim ... ok
+test error::tests::the_kind_survives_round_tripping_for_callers ... ok
+test jsmath::tests::math_max_propagates_nan_like_javascript ... ok
+test jsmath::tests::math_max_returns_the_first_argument_on_ties ... ok
+test jsmath::tests::math_round_passes_through_non_finite ... ok
+test jsmath::tests::math_round_rounds_halves_toward_positive_infinity ... ok
+test jsmath::tests::negative_and_non_finite_amounts_behave_like_the_baseline ... ok
+test jsmath::tests::rounds_global_amounts_to_the_nearest_fifty_half_up ... ok
+test jsmath::tests::rounds_indonesian_amounts_to_the_nearest_hundred_thousand ... ok
+test pricebook::tests::both_regions_load_and_stay_independent ... ok
+test pricebook::tests::capability_tiers_carry_their_inclusion_allowance ... ok
+test pricebook::tests::the_custom_web_app_line_keeps_every_key_the_file_has ... ok
+test pricebook::tests::the_two_rounding_sources_stay_modelled_separately ... ok
+test pricebook::tests::tier_tables_are_keyed_by_string_and_can_miss ... ok
+test request::tests::a_snake_case_spelling_is_rejected_rather_than_ignored ... ok
+test request::tests::explicit_values_pass_through_untouched ... ok
+test request::tests::json_field_names_are_the_baselines_camel_case ... ok
+test request::tests::negative_integration_counts_are_clamped_at_zero ... ok
+test request::tests::omitted_addons_support_and_prepay_default_to_their_baseline_values ... ok
+test request::tests::omitted_numerics_default_to_zero_not_to_absent ... ok
+test request::tests::usage_forecast_stays_distinguishable_from_zero ... ok
+
+test result: ok. 56 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running unittests src/lib.rs (target/debug/deps/archava_providers-82bbcc8ab77139cf)
+
+running 12 tests
+test contracts::tests::budget_id_follows_the_frozen_charset ... ok
+test contracts::tests::failure_codes_round_trip_in_the_fixed_order ... ok
+test contracts::tests::http_status_bounds_match_the_column_constraint ... ok
+test contracts::tests::policy_bounds_fall_on_the_frozen_edges ... ok
+test gemini::tests::a_forged_stage_is_invalid_response ... ok
+test gemini::tests::an_extra_wire_key_is_invalid_response ... ok
+test gemini::tests::an_invented_query_is_a_plan_mismatch ... ok
+test gemini::tests::config_refusals_match_the_strict_schema ... ok
+test gemini::tests::constructor_bounds_are_refusals_not_clamps ... ok
+test gemini::tests::every_pilot_case_plans_its_expected_plan ... ok
+test gemini::tests::the_wire_parse_trims_bounded_fields ... ok
+test runtime::tests::attempt_id_parses_strictly ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/archava_rates-2b72146e88085464)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/archava_rpa-e3f5a7bad24b8f63)
+
+running 4 tests
+test security::tests::test_credential_masking ... ok
+test security::tests::test_domain_allowlist_enforcement ... ok
+test tests::test_bank_statement_recipe_planning ... ok
+test tests::test_djp_efaktur_recipe_planning ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/archava_slice-11c9fd8f908ed5d6)
+
+running 5 tests
+test owner::tests::a_marker_from_another_account_is_never_adopted ... ok
+test owner::tests::an_intent_keeps_the_key_its_marker_recorded ... ok
+test pending::tests::marker_with_domain_preserves_scope_and_idempotency_key ... ok
+test pending::tests::unscoped_marker_defaults_to_empty_domain ... ok
+test server::tests::the_document_router_carries_the_shared_header_policy ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

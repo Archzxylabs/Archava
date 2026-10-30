@@ -1,0 +1,72 @@
+name: archava
+
+# Prerequisite: the database must already carry the release profile's exact
+# ledger history. The Rust runtime verifies checksums and forced RLS at boot
+# and refuses to serve on drift; it does not run migrations. Apply the
+# profile's migrations with the owner role before starting this stack.
+#
+#   cp deploy/archava.env.example deploy/archava.env
+#   cp deploy/postgres.env.example deploy/postgres.env
+#   # edit both files, then:
+#   docker compose -f deploy/compose.yaml up -d postgres
+#   # run migrations against postgres:5432 as archava_owner
+#   docker compose -f deploy/compose.yaml up -d archava caddy
+
+services:
+  postgres:
+    image: postgres:17-bookworm
+    env_file:
+      - postgres.env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  archava:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    env_file:
+      - archava.env
+    environment:
+      ARCHAVA_BIND_ADDR: 0.0.0.0:8347
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - '127.0.0.1:8347:8347'
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-bookworm
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    environment:
+      ARCHAVA_DOMAIN: ${ARCHAVA_DOMAIN:?set ARCHAVA_DOMAIN}
+      ARCHAVA_UPSTREAM: archava:8347
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - archava
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

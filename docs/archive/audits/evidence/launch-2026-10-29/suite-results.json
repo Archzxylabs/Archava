@@ -1,0 +1,422 @@
+[
+  {
+    "target": "unittests src/lib.rs (target/debug/deps/archava_adapters-c8aa86569b7610e2)",
+    "result": "ok",
+    "passed": 13,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "tests/tenant_context.rs (target/debug/deps/tenant_context-c15e0ec709d64d6d)",
+    "result": "ok",
+    "passed": 11,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "unittests src/lib.rs (target/debug/deps/archava_assembly-3f478a89b451fdf1)",
+    "result": "ok",
+    "passed": 0,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "tests/assembly.rs (target/debug/deps/assembly-e76e6c795f043031)",
+    "result": "ok",
+    "passed": 31,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "unittests src/lib.rs (target/debug/deps/archava_assistant-2b7276fbe7b25ccb)",
+    "result": "ok",
+    "passed": 25,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "unittests src/lib.rs (target/debug/deps/archava_campaigns-fbf1401722562527)",
+    "result": "ok",
+    "passed": 2,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "unittests src/lib.rs (target/debug/deps/archava_capacity-aa5f259f8be6e5b1)",
+    "result": "ok",
+    "passed": 38,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "tests/capacity.rs (target/debug/deps/capacity-43e7e230e3e71596)",
+    "result": "ok",
+    "passed": 15,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "unittests src/lib.rs (target/debug/deps/archava_cockpit-a728d969a2c7924e)",
+    "result": "ok",
+    "passed": 5,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "unittests src/lib.rs (target/debug/deps/archava_context-bc176923e0e065a3)",
+    "result": "ok",
+    "passed": 28,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "tests/context.rs (target/debug/deps/context-2bb95b00283381ac)",
+    "result": "ok",
+    "passed": 77,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "unittests src/lib.rs (target/debug/deps/archava_core-5949713c1ec79d2b)",
+    "result": "ok",
+    "passed": 28,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "unittests src/lib.rs (target/debug/deps/archava_domain-d465ac0f8166e0a8)",
+    "result": "ok",
+    "passed": 167,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "unittests src/lib.rs (target/debug/deps/archava_evals-d1eb96cfc0f484a8)",
+    "result": "ok",
+    "passed": 3,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "unittests src/lib.rs (target/debug/deps/archava_host-886e57e40b8bba4d)",
+    "result": "ok",
+    "passed": 71,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "tests/assistant.rs (target/debug/deps/assistant-399ff276cc1ba388)",
+    "result": "ok",
+    "passed": 14,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "tests/authority.rs (target/debug/deps/authority-1d82f3e5681374b5)",
+    "result": "ok",
+    "passed": 18,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "tests/cockpit.rs (target/debug/deps/cockpit-afb38ab727c4574c)",
+    "result": "ok",
+    "passed": 4,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "tests/crm.rs (target/debug/deps/crm-4a20b2b9bb50f9c4)",
+    "result": "ok",
+    "passed": 36,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "tests/erp_accommodation.rs (target/debug/deps/erp_accommodation-3bf99c53fdc21f79)",
+    "result": "ok",
+    "passed": 10,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "tests/erp_assets.rs (target/debug/deps/erp_assets-6a993e4cd48cb9e0)",
+    "result": "ok",
+    "passed": 10,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "tests/erp_attendance.rs (target/debug/deps/erp_attendance-db7248096766f32f)",
+    "result": "ok",
+    "passed": 16,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "tests/erp_billing.rs (target/debug/deps/erp_billing-01fa78ff6dee2661)",
+    "result": "ok",
+    "passed": 14,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "tests/erp_field_services.rs (target/debug/deps/erp_field_services-35164814719cdde9)",
+    "result": "ok",
+    "passed": 2,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "tests/erp_foodservice.rs (target/debug/deps/erp_foodservice-33604587f2b79838)",
+    "result": "ok",
+    "passed": 9,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "tests/erp_formal_education.rs (target/debug/deps/erp_formal_education-1991c8e46bc17073)",
+    "result": "ok",
+    "passed": 2,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "tests/erp_fulfillment.rs (target/debug/deps/erp_fulfillment-3358b71d96379d7e)",
+    "result": "ok",
+    "passed": 2,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "tests/erp_laundry.rs (target/debug/deps/erp_laundry-cf5580b10373d21e)",
+    "result": "ok",
+    "passed": 2,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "tests/erp_organizations.rs (target/debug/deps/erp_organizations-799826903ae0c683)",
+    "result": "ok",
+    "passed": 10,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "tests/erp_projects.rs (target/debug/deps/erp_projects-232150f240ec2294)",
+    "result": "ok",
+    "passed": 10,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "tests/erp_proposals.rs (target/debug/deps/erp_proposals-40bd8cc001c056fa)",
+    "result": "ok",
+    "passed": 10,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "tests/erp_purchasing.rs (target/debug/deps/erp_purchasing-fbc478fb5bbd54fc)",
+    "result": "ok",
+    "passed": 10,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "tests/erp_scheduling.rs (target/debug/deps/erp_scheduling-3c74d113180217d2)",
+    "result": "ok",
+    "passed": 10,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "tests/erp_subscriptions.rs (target/debug/deps/erp_subscriptions-0fbbbbc547dbbadd)",
+    "result": "ok",
+    "passed": 19,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "tests/erp_support.rs (target/debug/deps/erp_support-a5fabacf29fd385e)",
+    "result": "ok",
+    "passed": 12,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "tests/kdf_budget.rs (target/debug/deps/kdf_budget-658dd7f71dffba0f)",
+    "result": "ok",
+    "passed": 3,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "tests/own.rs (target/debug/deps/own-ed2714122ce0aa37)",
+    "result": "ok",
+    "passed": 16,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "tests/readiness.rs (target/debug/deps/readiness-71caf3b4530e74e4)",
+    "result": "ok",
+    "passed": 5,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "tests/session.rs (target/debug/deps/session-362e3b7290a8ce97)",
+    "result": "ok",
+    "passed": 12,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "unittests src/lib.rs (target/debug/deps/archava_mcp-94a974a478957e3e)",
+    "result": "ok",
+    "passed": 2,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "unittests src/lib.rs (target/debug/deps/archava_native-3e0bbaabcc2d417a)",
+    "result": "ok",
+    "passed": 16,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "unittests src/lib.rs (target/debug/deps/archava_ops-87fb135bf7c9f609)",
+    "result": "ok",
+    "passed": 7,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "unittests src/main.rs (target/debug/deps/archava_ops-a35e8919ec59ed23)",
+    "result": "ok",
+    "passed": 0,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "tests/upgrade_restore.rs (target/debug/deps/upgrade_restore-0ede5dce565664d1)",
+    "result": "ok",
+    "passed": 5,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "unittests src/lib.rs (target/debug/deps/archava_orbz-191005cf11cba8d5)",
+    "result": "ok",
+    "passed": 13,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "unittests src/lib.rs (target/debug/deps/archava_own-40a5690afaf619ff)",
+    "result": "ok",
+    "passed": 0,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "tests/engine.rs (target/debug/deps/engine-603381924d38f43d)",
+    "result": "ok",
+    "passed": 17,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "unittests src/lib.rs (target/debug/deps/archava_pg_fixture-a67241365b5c6e1a)",
+    "result": "ok",
+    "passed": 16,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "tests/socket_dir.rs (target/debug/deps/socket_dir-8280162e1a123f28)",
+    "result": "ok",
+    "passed": 1,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "tests/socket_dir_forced.rs (target/debug/deps/socket_dir_forced-872fc24ef6980d23)",
+    "result": "ok",
+    "passed": 1,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "unittests src/lib.rs (target/debug/deps/archava_pricing-881f9757b4831a0b)",
+    "result": "ok",
+    "passed": 56,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "unittests src/lib.rs (target/debug/deps/archava_providers-82bbcc8ab77139cf)",
+    "result": "ok",
+    "passed": 12,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "tests/provider_contracts.rs (target/debug/deps/provider_contracts-d1379419d30cc529)",
+    "result": "ok",
+    "passed": 27,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "tests/provider_runtime.rs (target/debug/deps/provider_runtime-7f0084886ffd052f)",
+    "result": "ok",
+    "passed": 25,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "unittests src/lib.rs (target/debug/deps/archava_rates-2b72146e88085464)",
+    "result": "ok",
+    "passed": 0,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "tests/rates.rs (target/debug/deps/rates-dfdd6381622cba1b)",
+    "result": "ok",
+    "passed": 11,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "unittests src/lib.rs (target/debug/deps/archava_rpa-e3f5a7bad24b8f63)",
+    "result": "ok",
+    "passed": 4,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "unittests src/lib.rs (target/debug/deps/archava_slice-11c9fd8f908ed5d6)",
+    "result": "ok",
+    "passed": 5,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "unittests src/bin/archava_server.rs (target/debug/deps/archava_server-ec2874efd0f53381)",
+    "result": "ok",
+    "passed": 0,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "target": "tests/persistent_launcher.rs (target/debug/deps/persistent_launcher-491d45485f6f8c47)",
+    "result": "ok",
+    "passed": 1,
+    "failed": 0,
+    "ignored": 0
+  }
+]

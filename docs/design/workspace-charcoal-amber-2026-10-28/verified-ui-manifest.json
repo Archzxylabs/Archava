@@ -1,0 +1,8 @@
+{
+  "crates/slice/src/workspace.rs": "14e1e3b27cb3ec38c5dd49ca9e75f76a507bbd5821e7101db421b96a5917fe82",
+  "crates/slice/src/home.rs": "8fbcf22f6301ab68733dc328aae1164019628d37fa200f4de2eaafe5d0e93443",
+  "crates/slice/src/lib.rs": "a6db5a0d8b292b2289e6e0a660073ade9eeb968f5291cfbbe371b568b8494edf",
+  "crates/slice/src/contact_context.rs": "51e614d0d8d46e72af123970045b4eac4f2eb6046b5ebcd67ac6979bb051f875",
+  "crates/slice/src/erp.rs": "5e601d4206bf0213aeb5cc0636b6b2002b469a6c340fbe4fc1488e875be6531a",
+  "static/workspace.css": "d7cbf718e97b4c984499a5b5893bdef0f7fda71f8a5e3975131898b05601221a"
+}

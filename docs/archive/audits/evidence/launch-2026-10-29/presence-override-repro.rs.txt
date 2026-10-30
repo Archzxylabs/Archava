@@ -1,0 +1,201 @@
+//! Real router + disposable Postgres regression tests for presence voice lifecycle.
+
+use archava_host::{router, AppState, Ledger};
+use archava_pg_fixture::{provision, Fixture};
+use axum::{
+    body::{to_bytes, Body},
+    http::{Request, StatusCode},
+    Router,
+};
+use serde_json::{json, Value};
+use tower::ServiceExt;
+
+const KEY: &[u8] = &[9u8; 32];
+const PASSWORD: &str = "correct horse battery staple";
+const HASH: &str =
+    "scrypt$32768$8$3$OZtInKxSaSZqbEptj2fvUg$jU_gx2rQW-69EYpbRoMKGSgclhV-mO7gXVF-QYvSXVo";
+
+fn ledger() -> Ledger {
+    Ledger {
+        namespace: "archava_commerce",
+        ledger: "Commerce",
+        tables: &["memberships"],
+    }
+}
+
+async fn state(f: &Fixture, pool: sqlx::PgPool) -> AppState {
+    AppState::try_new(pool, ledger(), &f.commerce_ledger, &f.identity_ledger, KEY)
+        .await
+        .unwrap()
+}
+
+async fn setup() -> (Fixture, AppState, Router, Value) {
+    let f = provision().await;
+    for (id, tenant, capability, scope) in [
+        ("alice", "acme", "enterprise", "all"),
+        ("mallory", "other", "enterprise", "all"),
+    ] {
+        sqlx::query("INSERT INTO archava_identity.users(id,username,password_hash,active,version) VALUES($1,$2,$3,true,1)")
+            .bind(id)
+            .bind(format!("{id}@archava.test"))
+            .bind(HASH)
+            .execute(&f.admin_pool)
+            .await
+            .unwrap();
+
+        sqlx::query("INSERT INTO archava_commerce.memberships(tenant_id,principal_id,kind,permissions,scope,active,role,capability) VALUES($1,$2,'human','{}',$3,true,'owner',$4)")
+            .bind(tenant)
+            .bind(id)
+            .bind(scope)
+            .bind(capability)
+            .execute(&f.admin_pool)
+            .await
+            .unwrap();
+    }
+
+    let state = state(&f, f.runtime_pool.clone()).await;
+    let app = router(state.clone());
+    let session = login(&app, "alice").await;
+    (f, state, app, session)
+}
+
+async fn login(app: &Router, user: &str) -> Value {
+    let response = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/login")
+                .header("content-type", "application/json")
+                .body(Body::from(
+                    json!({"username": format!("{user}@archava.test"), "password": PASSWORD})
+                        .to_string(),
+                ))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let cookie = response
+        .headers()
+        .get("set-cookie")
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .to_string();
+    let body = to_bytes(response.into_body(), 16 * 1024).await.unwrap();
+    let mut payload: Value = serde_json::from_slice(&body).unwrap();
+    payload["cookie"] = json!(cookie);
+    payload
+}
+
+#[tokio::test]
+async fn test_presence_session_lifecycle_and_turn_and_degrade() {
+    let (_f, _state, app, session) = setup().await;
+    let cookie = session["cookie"].as_str().unwrap();
+
+    // 1. Start presence session
+    let start_req = Request::builder()
+        .method("POST")
+        .uri("/presence/sessions")
+        .header("cookie", cookie)
+        .header("content-type", "application/json")
+        .body(Body::from(json!({ "mode": "voice" }).to_string()))
+        .unwrap();
+
+    let start_res = app.clone().oneshot(start_req).await.unwrap();
+    assert_eq!(start_res.status(), StatusCode::CREATED);
+
+    let start_bytes = to_bytes(start_res.into_body(), 16 * 1024).await.unwrap();
+    let start_json: Value = serde_json::from_slice(&start_bytes).unwrap();
+
+    let session_id = start_json["session"]["session_id"].as_str().unwrap();
+    let token = start_json["token"].as_str().unwrap();
+    assert_eq!(start_json["session"]["current_mode"], "voice");
+    assert!(!token.is_empty());
+
+    // 2. Query active session
+    let get_req = Request::builder()
+        .method("GET")
+        .uri(format!("/presence/sessions/{session_id}"))
+        .header("cookie", cookie)
+        .body(Body::empty())
+        .unwrap();
+    let get_res = app.clone().oneshot(get_req).await.unwrap();
+    assert_eq!(get_res.status(), StatusCode::OK);
+
+    // 3. Process transcript turn
+    let turn_req = Request::builder()
+        .method("POST")
+        .uri(format!("/presence/sessions/{session_id}/turn"))
+        .header("cookie", cookie)
+        .header("content-type", "application/json")
+        .body(Body::from(
+            json!({
+                "frame_id": "f-1",
+                "sequence_number": 1,
+                "speaker": "user",
+                "text": "Berapa total revenue bulan ini?",
+                "is_final": true
+            })
+            .to_string(),
+        ))
+        .unwrap();
+
+    let turn_res = app.clone().oneshot(turn_req).await.unwrap();
+    assert_eq!(turn_res.status(), StatusCode::OK);
+    let turn_bytes = to_bytes(turn_res.into_body(), 16 * 1024).await.unwrap();
+    let turn_json: Value = serde_json::from_slice(&turn_bytes).unwrap();
+
+    assert_eq!(turn_json["sequence_number"], 2);
+    assert_eq!(turn_json["speaker"], "ava");
+    assert!(turn_json["text"]
+        .as_str()
+        .unwrap()
+        .contains("Berapa total revenue bulan ini?"));
+
+    // 4. Degrade to Chat mode
+    let degrade_req = Request::builder()
+        .method("POST")
+        .uri(format!("/presence/sessions/{session_id}/degrade"))
+        .header("cookie", cookie)
+        .header("content-type", "application/json")
+        .body(Body::from(
+            json!({ "reason": "user muted audio" }).to_string(),
+        ))
+        .unwrap();
+
+    let degrade_res = app.clone().oneshot(degrade_req).await.unwrap();
+    assert_eq!(degrade_res.status(), StatusCode::OK);
+    let degrade_bytes = to_bytes(degrade_res.into_body(), 16 * 1024).await.unwrap();
+    let degrade_json: Value = serde_json::from_slice(&degrade_bytes).unwrap();
+
+    assert_eq!(degrade_json["current_mode"], "chat");
+    assert_eq!(degrade_json["degraded"], true);
+
+    // 5. Unauthenticated request refused
+    let unauth_req = Request::builder()
+        .method("GET")
+        .uri(format!("/presence/sessions/{session_id}"))
+        .body(Body::empty())
+        .unwrap();
+    let unauth_res = app.clone().oneshot(unauth_req).await.unwrap();
+    assert_eq!(unauth_res.status(), StatusCode::UNAUTHORIZED);
+}
+
+#[tokio::test]
+async fn review_gemini_foreign_tenant_session_override_is_refused() {
+    let (_f,_state,app,alice)=setup().await;
+    let mallory=login(&app,"mallory").await;
+    let start=|cookie:String|Request::builder().method("POST").uri("/presence/sessions").header("cookie",cookie).header("content-type","application/json").body(Body::from(json!({"tenant_id":"acme","session_id":"review-victim-session","mode":"voice"}).to_string())).unwrap();
+    let first=app.clone().oneshot(start(alice["cookie"].as_str().unwrap().into())).await.unwrap();assert_eq!(first.status(),StatusCode::CREATED);
+    let takeover=app.clone().oneshot(start(mallory["cookie"].as_str().unwrap().into())).await.unwrap();
+    let takeover_status=takeover.status();
+    let bytes=to_bytes(takeover.into_body(),16384).await.unwrap();let body:Value=serde_json::from_slice(&bytes).unwrap();
+    let get=|cookie:String|Request::builder().method("GET").uri("/presence/sessions/review-victim-session").header("cookie",cookie).body(Body::empty()).unwrap();
+    let alice_read=app.clone().oneshot(get(alice["cookie"].as_str().unwrap().into())).await.unwrap().status();
+    let mallory_read=app.clone().oneshot(get(mallory["cookie"].as_str().unwrap().into())).await.unwrap().status();
+    eprintln!("REVIEW_PROOF tenant={} owner={} foreign_start={} original_owner_read={} foreign_owner_read={}",body["session"]["tenant_id"],body["session"]["participant_id"],takeover_status,alice_read,mallory_read);
+    assert_ne!(takeover_status,StatusCode::CREATED,"an account belonging only to tenant other replaced an acme presence session");
+}

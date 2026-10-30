@@ -1,0 +1,323 @@
+# PACKET-010 — the fourth R07 cohort: support (case/notes/transition ledger, deferred complete history, bounded assignee picker and four read projections; P-ERP-R07 grows 40 → 52)
+
+**Archxy 2 → Archxy 1.** Successor to PACKET-009: its hunks are ASSUMED
+FOLDED before this diff is applied — the a/ side of every hunk below is
+literally "current main (2026-10-20, HEAD `0179c2a` — `ERP PACKET-003: fold
+the R04 ledgers (organizations, proposals, projects)`; PACKET-003 is already
+committed) with PACKET-004.diff, PACKET-005.diff, PACKET-006.diff,
+PACKET-007.diff, PACKET-008.diff and PACKET-009.diff applied". Built by
+cloning today's main, folding 004–009 onto `0179c2a` (004's P-MODULE-CONSUMERS producedBy paragraph is
+applied by hand after PACKET-003 shifted its context; every other hunk is
+zero-reject), committing that fold,
+applying this cohort's five shared-file hunks and diffing. This packet's own
+hunks apply onto that fold with `--fuzz=0` and ZERO rejects.
+
+**Additive-only.** No hunk removes a line main gained after this copy's
+base; the comments that grow (`verify.mjs`, `verify.test.mjs`) are rewritten
+in place, and `required-coverage.json` only grows the R07 proof. No Cargo
+change, no `packages/` change, and ZERO hunks on the four byte-locked library
+single-writer files. The new Rust modules, the host suite and the R07
+producer are Archxy 2-owned and travel in the candidate copy, not here; this
+packet only grows the shared fast-gate evidence map (`tools/rust/verify.mjs`)
+and the frozen manifest that name the new checks.
+
+**Files (5 shared single-writer):**
+- `rust/crates/host/src/router.rs` — the six support routes after the
+  attendance mount.
+- `rust/crates/pg-fixture/src/lib.rs` — `SUPPORT_MIGRATIONS`, the
+  `support_ledger` field, the nineteenth provision step (after attendance),
+  its runtime grants, the `migrations_package` and `ledger_expectations`
+  arms, and both constructors.
+- `tools/rust/verify.mjs` — the R07 fast-gate comment + the twelve support
+  check mappings.
+- `tools/rust/test/verify.test.mjs` — the R07 witness-map suite allowlist
+  (support) and the frozen `witnessTotal` comment (40 → 52).
+- `docs/rust/required-coverage.json` — `P-ERP-R07` grows to 52 checks,
+  `witnessTotal` 52, the support `sourcePaths` and the producedBy clause.
+
+**What the cohort is.** Twelve commands (`case.create`, `case.start`,
+`case.wait`, `case.resume`, `case.close`, `case.cancel`, `case.resolve`,
+`case.reopen`, `case.assign`, `case.set-priority`, `case.set-target`,
+`note.add`) against `archava_support`'s six tables. Every command lands one
+command row, one audit row, one transition row (where the arm moves the
+case) and a receipt; the deferred `case_complete` trigger refuses any commit
+whose audit count ≠ case revision or whose last transition/receipt disagree,
+so a partial history cannot exist. `case.create` writes revision 1 and does
+not take the common UPDATE; every later arm takes an optimistic revision
+check. A duplicate `(tenant, requestId)` replays its stored receipt, a
+changed payload conflicts (409), a stale revision conflicts, and the state
+table refuses illegal moves. Notes are append-only and separately gated
+(`notes.write` / `cases.read`); the audit read is its own grant. The
+assignee picker is tenant-wide, active-human-only, bounded and returns
+`cases.read` holders; assignment requires `cases.assign` AND
+`scope=all` AND an active human with `cases.read`. Four read projections
+(access, assignees, case worklist, case detail+history) narrow on
+`scope=assigned` exactly like the TS api. Twelve named witnesses grow the
+same `P-ERP-R07` proof from 40 to 52; the support schema's complete-history
+trigger is the deferred condition the host maps to the 409 conflict carrier
+at commit.
+
+**Apply:** `patch -p1 --forward --fuzz=0 < PACKET-010.diff` on
+main+004…009. The new source files
+(`domain|adapters|host/src/erp/support.rs`, `host/tests/erp_support.rs`, the
+three `mod.rs` lines, `tools/rust/erp/verify-r07.mjs`, `packages/support-pg/`
+and the `docs/rust/archxy2/` reports) are delivered by the candidate copy.
+diff --git a/docs/rust/required-coverage.json b/docs/rust/required-coverage.json
+index 80e1756..8eae800 100644
+--- a/docs/rust/required-coverage.json
++++ b/docs/rust/required-coverage.json
+@@ -1814,7 +1814,7 @@
+     },
+     "P-ERP-R07": {
+       "kind": "evidence",
+-      "producedBy": "pnpm rust:verify → erp R07 suites step (tools/rust/erp/verify-r07.mjs) grading named witness tests in rust/crates/host/tests/erp_billing.rs (billing cohort, PACKET-007) and rust/crates/host/tests/erp_subscriptions.rs (subscriptions cohort, PACKET-008) and rust/crates/host/tests/erp_attendance.rs (attendance cohort, PACKET-009) against the owned PostgreSQL fixture — the R07 ledgers' runtime halves, opened whole by the billing cohort (the R05 surface is closed at 29 checks and never grows again, so the R07 migration area opens its OWN growing evidence surface that later cohorts extend additively; the pure domain half is the frozen P-R07-DOMAIN). The subscriptions cohort carries the corrected paid-activation rule (audit A05 / RN-ERP-03) and the R07 read projections the TS api serves. The attendance cohort (PACKET-009) carries the corrected roster binding (audit A04 / RN-ERP-04), the seat/check-in concurrency witnesses and the attendance read projections the TS api serves (access, session list/detail, roster, check-in ledger)",
++      "producedBy": "pnpm rust:verify → erp R07 suites step (tools/rust/erp/verify-r07.mjs) grading named witness tests in rust/crates/host/tests/erp_billing.rs (billing cohort, PACKET-007) and rust/crates/host/tests/erp_subscriptions.rs (subscriptions cohort, PACKET-008) and rust/crates/host/tests/erp_attendance.rs (attendance cohort, PACKET-009) and rust/crates/host/tests/erp_support.rs (support cohort, PACKET-010) against the owned PostgreSQL fixture — the R07 ledgers' runtime halves, opened whole by the billing cohort (the R05 surface is closed at 29 checks and never grows again, so the R07 migration area opens its OWN growing evidence surface that later cohorts extend additively; the pure domain half is the frozen P-R07-DOMAIN). The subscriptions cohort carries the corrected paid-activation rule (audit A05 / RN-ERP-03) and the R07 read projections the TS api serves. The attendance cohort (PACKET-009) carries the corrected roster binding (audit A04 / RN-ERP-04), the seat/check-in concurrency witnesses and the attendance read projections the TS api serves (access, session list/detail, roster, check-in ledger). The support cohort (PACKET-010) carries the case/notes/transition ledger, the deferred complete-history invariant, the bounded tenant-wide assignee picker and the support read projections (access, assignees, case worklist/detail)",
+       "requiredChecks": [
+         "authorized billing life documents its settlement",
+         "a forged claim settles nothing",
+@@ -1855,10 +1855,22 @@
+         "cross tenant attendance callers refuse before any write",
+         "revoked attendance grant refused on recovery",
+         "narrow attendance grants refuse exactly the arms they lack",
+-        "the attendance wire boundary and read projections hold"
++        "the attendance wire boundary and read projections hold",
++        "authorized support life documents the case and history",
++        "a stale support revision conflicts and records nothing",
++        "the support state table refuses illegal moves",
++        "a reopen starts a clean cycle",
++        "assignment requires the grant the scope and a human reader",
++        "the assignee picker is tenant wide and bounded",
++        "the support scope narrows every read and cross tenant callers refuse",
++        "a duplicate support key replays and a changed payload conflicts",
++        "a revoked support grant loses the write and restores the replay",
++        "the support wire boundary and read bounds refuse",
++        "the support history is append only and complete",
++        "support notes and audit are permission gated"
+       ],
+       "expect": {
+-        "witnessTotal": 40,
++        "witnessTotal": 52,
+         "namedRegressions": {
+           "RN-ERP-01": "revoked billing grant refused on recovery",
+           "RN-ERP-02": "same billing key different command conflicts",
+@@ -1873,7 +1885,8 @@
+         "rust/crates/core",
+         "tools/rust/erp/verify-r07.mjs",
+         "packages/billing-pg/migrations",
+-        "packages/attendance-pg/migrations"
++        "packages/attendance-pg/migrations",
++        "packages/support-pg/migrations"
+       ],
+       "artifacts": [],
+       "referenced": [
+diff --git a/rust/crates/host/src/router.rs b/rust/crates/host/src/router.rs
+index d1c33ed..8bc54f1 100644
+--- a/rust/crates/host/src/router.rs
++++ b/rust/crates/host/src/router.rs
+@@ -534,6 +534,33 @@ pub fn router(state: AppState) -> Router {
+             "/erp/attendance/check-ins",
+             get(crate::erp::attendance::attendance_check_ins),
+         )
++        // Archxy 2's R07 support ledger (PACKET-010): the case lifecycle
++        // (start/wait/resume/close/cancel/resolve/reopen/assign/priority/
++        // target/note) and the four read projections.
++        .route(
++            "/erp/support/commands",
++            post(crate::erp::support::support_command),
++        )
++        .route(
++            "/erp/support/commands/status",
++            get(crate::erp::support::support_status),
++        )
++        .route(
++            "/erp/support/access",
++            get(crate::erp::support::support_access_route),
++        )
++        .route(
++            "/erp/support/assignees",
++            get(crate::erp::support::support_assignee_route),
++        )
++        .route(
++            "/erp/support/cases",
++            get(crate::erp::support::support_case_route),
++        )
++        .route(
++            "/erp/support/cases/detail",
++            get(crate::erp::support::support_detail_route),
++        )
+         .with_state(state)
+ }
+ 
+diff --git a/rust/crates/pg-fixture/src/lib.rs b/rust/crates/pg-fixture/src/lib.rs
+index d163c76..f24eb99 100644
+--- a/rust/crates/pg-fixture/src/lib.rs
++++ b/rust/crates/pg-fixture/src/lib.rs
+@@ -178,6 +178,14 @@ pub const SUBSCRIPTIONS_MIGRATIONS: &[&str] = &["001_subscriptions_entitlements_
+ /// package's frozen migration.
+ pub const ATTENDANCE_MIGRATIONS: &[&str] = &["001_attendance_sessions_rosters"];
+ 
++/// The support ledger's migration, in apply order —
++/// `packages/support-pg/migrations/001_cases_notes_resolution.sql`
++/// (Archxy 2's ERP namespace, R07 fourth cohort, PACKET-010):
++/// memberships/cases/commands/notes/transitions/audit + the history
++/// triggers + the forced tenant policies, byte-faithful to the TS
++/// package's frozen migration.
++pub const SUPPORT_MIGRATIONS: &[&str] = &["001_cases_notes_resolution"];
++
+ /// The provider attempt ledger's migration, in apply order —
+ /// `packages/provider-runtime/migrations/001_provider_attempts.sql` (the R09
+ /// provider slice): the budget buckets and the pending→finalized attempt rows
+@@ -292,6 +300,10 @@ pub struct Fixture {
+     /// UNIQUE constraints, the capacity CHECK and the immutability
+     /// triggers defend.
+     pub attendance_ledger: Vec<(String, String)>,
++    /// The same ledger for `archava_support` — the R07 support cohort
++    /// (PACKET-010), the six operational tables the deferred completeness
++    /// trigger and the history/command guards defend.
++    pub support_ledger: Vec<(String, String)>,
+     pub proposals_ledger: Vec<(String, String)>,
+     pub projects_ledger: Vec<(String, String)>,
+     /// The same ledger for `archava_owner` — the owner-configuration
+@@ -922,6 +934,10 @@ async fn provision_with_commerce_usize(commerce_through: usize) -> Fixture {
+         "archava_attendance_migrations",
+     )
+     .await;
++    // Archxy 2 ERP namespace (PACKET-010): the support ledger migrates under
++    // the same owner role, after the attendance sibling.
++    let support_ledger =
++        migrate_ledger(&owner_pool, "archava_support", "archava_support_migrations").await;
+     // R09's provider slice: the attempt ledger migrates under the same owner
+     // role, one UTC-anchored schema next to the domain ledgers. The runtime
+     // role must stay a NON-owner of `archava_provider` — `create`'s role
+@@ -1249,6 +1265,25 @@ async fn provision_with_commerce_usize(commerce_through: usize) -> Fixture {
+         format!(
+             "GRANT EXECUTE ON FUNCTION archava_attendance.lock_membership(text,text) TO {RUNTIME_USER}"
+         ),
++        // Archxy 2 ERP namespace (PACKET-010): the support grants — the port
++        // of grantSupportRuntime (`packages/support-pg/src/migrate.ts`),
++        // statement for statement.
++        format!("GRANT USAGE ON SCHEMA archava_support TO {RUNTIME_USER}"),
++        format!(
++            "GRANT SELECT ON archava_support.schema_migrations,\
++             archava_support.memberships TO {RUNTIME_USER}"
++        ),
++        format!(
++            "GRANT SELECT,INSERT,UPDATE ON archava_support.cases,\
++             archava_support.commands TO {RUNTIME_USER}"
++        ),
++        format!(
++            "GRANT SELECT,INSERT ON archava_support.notes,\
++             archava_support.transitions,archava_support.audit TO {RUNTIME_USER}"
++        ),
++        format!(
++            "GRANT EXECUTE ON FUNCTION archava_support.lock_membership(text,text) TO {RUNTIME_USER}"
++        ),
+         // R09 provider slice — the port of grantProviderRuntime
+         // (`packages/provider-runtime/src/postgres.ts`), statement for
+         // statement, mirrored by
+@@ -1317,6 +1352,7 @@ async fn provision_with_commerce_usize(commerce_through: usize) -> Fixture {
+         billing_ledger,
+         subscriptions_ledger,
+         attendance_ledger,
++        support_ledger,
+         provider_ledger,
+         owner_ledger,
+         dir,
+@@ -1501,6 +1537,9 @@ fn migrations_package(namespace: &str) -> &'static str {
+         // (PACKET-009) the R07 attendance ledger migrates from its own TS
+         // package, byte-faithful, one migration deep.
+         "archava_attendance" => "attendance-pg",
++        // (PACKET-010) the R07 support ledger migrates from its own TS
++        // package, byte-faithful, one migration deep.
++        "archava_support" => "support-pg",
+         // R09's provider ledger: the migration file the TS store reads too.
+         "archava_provider" => "provider-runtime",
+         _ => "commerce-pg",
+@@ -1531,6 +1570,7 @@ pub fn ledger_expectations(namespace: &str) -> Vec<(String, String)> {
+         "archava_billing" => BILLING_MIGRATIONS,
+         "archava_subscriptions" => SUBSCRIPTIONS_MIGRATIONS,
+         "archava_attendance" => ATTENDANCE_MIGRATIONS,
++        "archava_support" => SUPPORT_MIGRATIONS,
+         "archava_provider" => PROVIDER_MIGRATIONS,
+         "archava_owner" => OWNER_MIGRATIONS,
+         _ => COMMERCE_MIGRATIONS,
+@@ -1622,6 +1662,8 @@ pub async fn attach(data_dir: &Path, port: u16) -> Fixture {
+         subscriptions_ledger: ledger_expectations("archava_subscriptions"),
+         // (PACKET-009) the R07 attendance cohort's frozen pair list.
+         attendance_ledger: ledger_expectations("archava_attendance"),
++        // (PACKET-010) the R07 support cohort's frozen pair list.
++        support_ledger: ledger_expectations("archava_support"),
+         provider_ledger: ledger_expectations("archava_provider"),
+         owner_ledger: ledger_expectations("archava_owner"),
+         dir,
+diff --git a/tools/rust/test/verify.test.mjs b/tools/rust/test/verify.test.mjs
+index fb1ae5c..ebcf945 100644
+--- a/tools/rust/test/verify.test.mjs
++++ b/tools/rust/test/verify.test.mjs
+@@ -430,11 +430,11 @@ test('the P-ERP-R05 witness map and the frozen manifest cannot drift apart', ()
+ test('the P-ERP-R07 witness map and the frozen manifest cannot drift apart', () => {
+   // Same property as the kernel-ERP and R04 proofs, for the R07 surface:
+   // the cohorts' manifest checks over the named Rust test functions —
+-  // PACKET-007 lands billing whole and PACKET-008 grows the same map with
+-  // subscriptions and PACKET-009 grows it again with attendance, seeding the
+-  // map and the manifest TOGETHER (R07 opens its
++  // PACKET-007 lands billing whole, PACKET-008 grows the same map with
++  // subscriptions, PACKET-009 grows it again with attendance, and PACKET-010
++  // with support, seeding the map and the manifest TOGETHER (R07 opens its
+   // OWN proof; the closed 29-check R05 surface stays untouched). Both
+-  // directions, and the frozen `witnessTotal` (40, grown additively by any
++  // directions, and the frozen `witnessTotal` (52, grown additively by any
+   // later R07 cohort) too.
+   const manifest = loadManifest(repoRoot)
+   const spec = manifest.proofs['P-ERP-R07']
+@@ -453,7 +453,7 @@ test('the P-ERP-R07 witness map and the frozen manifest cannot drift apart', ()
+         `${check}: witness name ${JSON.stringify(name)} is not a test identifier`,
+       )
+       assert.ok(
+-        ['billing', 'subscriptions', 'attendance'].includes(suite),
++        ['billing', 'subscriptions', 'attendance', 'support'].includes(suite),
+         `${check}: witness ${JSON.stringify(name)} names unknown suite ${JSON.stringify(suite)}`,
+       )
+     }
+diff --git a/tools/rust/verify.mjs b/tools/rust/verify.mjs
+index 1bddb61..bb5a755 100644
+--- a/tools/rust/verify.mjs
++++ b/tools/rust/verify.mjs
+@@ -836,11 +836,12 @@ export function fastGateEvidenceMapping() {
+     },
+     {
+       // The Archxy 2 ERP namespace's R07 proof (PACKET-007, grown by
+-      // PACKET-008 and PACKET-009): the billing cohort's thirteen
+-      // witnesses, the subscriptions cohort's thirteen and the attendance
+-      // cohort's fourteen — the R07 surface's first three cohorts, any
+-      // later cohort growing this same block additively (the R05 surface
+-      // is closed and stays untouched; the proof never forks per cohort).
++      // PACKET-008, PACKET-009 and PACKET-010): the billing cohort's
++      // thirteen witnesses, the subscriptions cohort's thirteen, the
++      // attendance cohort's fourteen and the support cohort's twelve — the
++      // R07 surface's first four cohorts, any later cohort growing this
++      // same block additively (the R05 surface is closed and stays
++      // untouched; the proof never forks per cohort).
+       proof: 'P-ERP-R07',
+       checks: {
+         'authorized billing life documents its settlement': { step: 'erp R07 suites' },
+@@ -885,6 +886,19 @@ export function fastGateEvidenceMapping() {
+         'revoked attendance grant refused on recovery': { step: 'erp R07 suites' },
+         'narrow attendance grants refuse exactly the arms they lack': { step: 'erp R07 suites' },
+         'the attendance wire boundary and read projections hold': { step: 'erp R07 suites' },
++        // The support cohort (PACKET-010) grows the same proof.
++        'authorized support life documents the case and history': { step: 'erp R07 suites' },
++        'a stale support revision conflicts and records nothing': { step: 'erp R07 suites' },
++        'the support state table refuses illegal moves': { step: 'erp R07 suites' },
++        'a reopen starts a clean cycle': { step: 'erp R07 suites' },
++        'assignment requires the grant the scope and a human reader': { step: 'erp R07 suites' },
++        'the assignee picker is tenant wide and bounded': { step: 'erp R07 suites' },
++        'the support scope narrows every read and cross tenant callers refuse': { step: 'erp R07 suites' },
++        'a duplicate support key replays and a changed payload conflicts': { step: 'erp R07 suites' },
++        'a revoked support grant loses the write and restores the replay': { step: 'erp R07 suites' },
++        'the support wire boundary and read bounds refuse': { step: 'erp R07 suites' },
++        'the support history is append only and complete': { step: 'erp R07 suites' },
++        'support notes and audit are permission gated': { step: 'erp R07 suites' },
+       },
+       details: () => {
+         try {

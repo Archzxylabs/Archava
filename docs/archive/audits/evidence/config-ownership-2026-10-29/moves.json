@@ -1,0 +1,12 @@
+[
+  {
+    "from": "config/pricing.v1.json",
+    "to": "crates/pricing/tests/fixtures/pricing.v1.json",
+    "sha256": "2499bc82220188dad4daff276f73159ddcff9233944169fdf8f0dcc3f14f7831"
+  },
+  {
+    "from": "config/templates.v1.json",
+    "to": "docs/history/config/templates.v1.json",
+    "sha256": "8b7a9e0a75df5e6e871eb444196b143486afa6332e9a14e69819737d5c7abdeb"
+  }
+]

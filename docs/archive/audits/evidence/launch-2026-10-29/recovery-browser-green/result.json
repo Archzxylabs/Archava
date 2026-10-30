@@ -1,0 +1,40 @@
+{
+  "startedAt": "2026-10-29T09:54:52.413Z",
+  "scope": "Synthetic local fixture, real Chromium/SSR/WASM/HTTP/PostgreSQL; production binary restart. No live provider or public/TLS deployment acceptance.",
+  "checks": [
+    {
+      "id": "F01-authenticated-hydration",
+      "status": "passed",
+      "details": "Real login, session cookie, WASM handlers and contact query"
+    }
+  ],
+  "errors": [
+    "Error: Timed out: durable contact create\n    at until (file:///home/haikaru/Archverse/Lab/Archava/tools/e2e/verify.mjs:32:9)\n    at async file:///home/haikaru/Archverse/Lab/Archava/tools/e2e/verify.mjs:153:3"
+  ],
+  "browserExecutable": "/usr/bin/brave",
+  "browserSandboxDisabled": false,
+  "status": "failed",
+  "pageErrors": [],
+  "fixtureCleanup": {
+    "exitCode": 0,
+    "signal": null
+  },
+  "finishedAt": "2026-10-29T09:55:24.259Z",
+  "artifacts": [
+    {
+      "path": "target/release/examples/slice_server",
+      "bytes": 14711312,
+      "sha256": "3ba6f5d7daad7baae7e2c216437d55c83cc705f86cbda5e9cabe8eebee5e1d35"
+    },
+    {
+      "path": "target/release/archava-server",
+      "bytes": 15328384,
+      "sha256": "9e560dad96b589cbbee7d55eb4c7cf3336f5a4917bbd7d3eb5a79bbe0282408f"
+    },
+    {
+      "path": "target/site/pkg/archava-slice_bg.wasm",
+      "bytes": 2945106,
+      "sha256": "4a5063740fe1289dc13fc9634d136522bc1bc697b9d0cbc5a8b0aafeb82e0dc5"
+    }
+  ]
+}

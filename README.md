@@ -1,255 +1,67 @@
 # Archava
 
-A multi-tenant AI assistant platform where an assistant's behaviour is decided by
-**data** rather than by prompt text, and where every decision it makes is auditable
-against the policy that produced it.
+Archava is a Rust ERP/CRM workspace with an Axum HTTP host, PostgreSQL persistence, and a Leptos application rendered on the server and hydrated with WebAssembly.
 
-The product requirement is [PRD v2.1](PRD.md). The operational contract is `agent.md`.
-PRD §50 defines the active finite local release: supported versions, safe module
-composition, shared presence contracts, scoped security, measured capacity and
-upgrade/recovery acceptance. Profile `1.3.0` is the accepted baseline; `1.4.0`
-adds the kit planner and bounded internal project delivery; `1.5.0` adds
-exclusive resource reservations, `1.6.0` adds room-night stays and housekeeping,
-`1.7.0` adds shared catalog/orders/stock, `1.8.0` adds restaurant
-tables, recipes and kitchen tickets, `1.9.0` adds assigned support cases,
-internal findings and resolution cycles, `1.10.0` adds bounded purchasing,
-supplier offers, purchase orders and physical stock receipts under PRD §46.6,
-`1.11.0` adds reusable organizations, proposals with agreed scope baselines,
-and delivery capacity scheduling under PRD §46.7, §46.8, §46.9, `1.12.0` adds
-a serialized asset register with custody tracking and maintenance logging,
-`1.13.0` adds recurring subscriptions, entitlements and usage tracking,
-`1.14.0` adds attendance sessions and event check-in, `1.15.0` adds fulfillment
-dispatch and light production work orders, `1.16.0` adds immutable invoicing
-and provider-signed payment settlement under PRD §46.6.6, `1.17.0` adds laundry
-and dry cleaning processing with a quality-gated monotonic chain and
-appointment-bound technician dispatch with separated labour/part evidence and
-customer signoff; see [release acceptance](docs/LOCAL_LIBRARY_RELEASE.md) and the
-[cold-install/handoff guide](docs/LOCAL_LIBRARY_HANDOFF.md).
-ARCHZXY is the company; Archava is its flagship product. The target internal module
-library includes reusable assistant/presence contracts and deterministic CRM/ERP
-business modules, composed across business models. The ARCHZXY company website is
-a separate consumer project. Independent compiled core consumption and the first
-persistent CRM slice now have local verification; production hosting and broader
-business modules remain release work.
-The [research and decisions](docs/REUSABLE_PLATFORM_RESEARCH.md) distinguish source
-evidence, proposed architecture and staged acceptance; the [previous PRD](docs/history/PRD.v1.0.0.md)
-is preserved. Pricing v1 remains unchanged.
-The [business capability map](docs/BUSINESS_CAPABILITY_MATRIX.md), informed by
-[8 October research](docs/BUSINESS_MODEL_RESEARCH_2026-10-08.md), separates operating
-patterns, industry extensions and candidate modules from delivered capabilities.
-The [starter-kit coverage research](docs/STARTER_KIT_COVERAGE_RESEARCH_2026-10-10.md)
-proposes 40 kit families with source evidence, composition candidates and explicit
-sector gaps; it remains planning data, with no complete operational kit accepted.
-The [kit implementation ledger](docs/STARTER_KIT_IMPLEMENTATION.md) retains the
-full programme. The trusted `@archava/kits` catalogue and readiness planner now
-report missing requirements before assembly. The first additional business module
-is [project/task/milestone delivery](docs/PROJECT_DELIVERY_MODULE.md), reused by
-independent consumers and composed into the local owner host with explicit grants.
-The [resource reservation module](docs/RESOURCE_RESERVATIONS_MODULE.md) now shares
-timed holds, confirmation, moves and cancellation across appointment and asset-rental
-consumers, with an optional owner panel and independent permissions.
-The [commerce module](docs/COMMERCE_MODULE.md) shares catalog prices, immutable
-order quotes, stock reservations, fulfillment and partial returns across retail
-and wholesale consumers. The [food-service module](docs/FOODSERVICE_MODULE.md) composes restaurant/catering
-recipes, physical tables and kitchen/service tickets with that shared stock ledger.
-The [support module](docs/SUPPORT_CASES_MODULE.md) shares case assignment, findings and resolution cycles.
-The [purchasing module](docs/PURCHASING_MODULE.md) shares supplier quotes, purchase orders and physical goods receipt findings into the commerce stock ledger.
-The [asset register module](docs/ASSETS_MODULE.md) shares serialized items, custody handovers and maintenance logs across rental and repair consumers.
-The [subscriptions module](docs/SUBSCRIPTIONS_MODULE.md) shares recurring subscription lifecycles, entitlements and usage quotas across SaaS and membership consumers.
-The [attendance module](docs/ATTENDANCE_MODULE.md) shares bounded sessions, rosters and verified check-ins across course and event consumers.
-The [fulfillment module](docs/FULFILLMENT_MODULE.md) shares dispatch custody chains and made-to-order work orders across warehouse and production consumers.
-The [billing module](docs/BILLING_MODULE.md) shares immutable invoicing, customer correction chains and provider-signed payment settlement across rental and clinic consumers.
-The [laundry module](docs/LAUNDRY_MODULE.md) shares counted garment intake, frozen priced order intent and a quality-gated processing chain across kilo laundry and dry cleaning consumers.
-These bounded capabilities do not mark any of the 40 operating kits complete.
-The [10 October repository re-audit](docs/PROJECT_REAUDIT_2026-10-10.md) records
-current folder/runtime boundaries, fresh verification and the next work order.
-The [7 October pre-reuse audit](docs/PROJECT_AUDIT_2026-10-07.md) remains historical.
-The Decision Intelligence extension is described in [`docs/DECISION_INTELLIGENCE.md`](docs/DECISION_INTELLIGENCE.md).
-This file is what the repository _actually_ does, which is a smaller thing than
-either document, deliberately so. For the gap, see
-[`docs/BUILD_STATUS.md`](docs/BUILD_STATUS.md) — it classifies every PRD area as
-Implemented / Partially Implemented / Planned / Not Implemented and is the honest
-answer to "is this production ready".
+The Cargo workspace lives at the repository root. Business engines, HTTP APIs, and user interfaces have different completion boundaries: the CRM supports the contact → follow-up → receipt flow; the Operations screen currently presents explicitly labelled demo views. A domain implementation or a passing unit test does not establish that its complete product workflow is ready to launch.
 
-The reusable realtime voice/avatar starter is in [Archava Template](<Archava Template/README.md>).
-It is derived from Archava Onchain without wallet/contracts and runs as a standalone
-npm project, with its own frontend, API, Python worker, setup profiles, and deployment guide.
-Run its commands inside that directory; it is separate from the pnpm workspaces below.
+## Start here
 
-Decision Intelligence, the Act backend packages, the website/workspace frontend,
-and the portable realtime template are maintained together in this repository.
-The persistent [CRM module](docs/CRM_MODULE.md) now runs contacts, activities
-and follow-up tasks across hospitality and professional-service references.
-Use `pnpm crm:verify` for disposable PostgreSQL checks or `pnpm crm:dev` for
-the local dashboard. These reference sessions use fictional identities; a
-production host supplies its own verified authentication.
+- [Developer setup and commands](docs/DEVELOPER_GUIDE.md)
+- [Current architecture and ownership](docs/architecture/README.md)
+- [Documentation index](docs/README.md)
+- [Verification records](docs/README.md#verification-and-document-ownership)
+- [Deployment](deploy/README.md)
+- [Workspace design](docs/design/WORKSPACE_APPEARANCE.md)
+- [Contributing](CONTRIBUTING.md) and [security reporting](SECURITY.md)
 
-The [persistent authenticated CRM host](docs/CRM_RUNTIME.md) is a separate consumer
-of the same modules. `pnpm crm:setup` creates private persistent state and an owner
-credential; `pnpm crm:start` serves the local login/dashboard at port 4175.
-Owner/staff/viewer accounts, session revocation, backup and restoration are locally
-verified. `crm:dev` remains the disposable fictional-session reference.
+## Repository map
 
-The [reusable sales pipeline](docs/CRM_PIPELINE.md) adds contact-linked opportunities,
-guarded stages and immutable history to that same CRM domain. Hospitality and
-professional-service consumers share the compiled implementation. Existing accounts
-need explicit pipeline grants after upgrading; see the linked migration steps.
+| Path | Purpose |
+| --- | --- |
+| `crates/` | The 22 Cargo workspace members: contracts, business engines, adapters, host, UI, and operator tools |
+| `migrations/` | Canonical SQL ledgers, including the owner-configuration ledger |
+| `static/` | Served browser assets, embed script, stylesheet, and licensed fonts |
+| `config/` | Shared release/tooling catalogue; crate-owned fixtures and historical data live elsewhere |
+| `deploy/` | Reference runtime packaging, service, proxy, and PostgreSQL role setup |
+| `tools/` | Current checks, builds, launchers, and dependency inventory |
+| `tools/legacy/` | Preserved migration-era tools that require the removed TypeScript workspace |
+| `examples/legacy/` | Historical consumer templates and examples; dependencies are not installed at the root |
+| `docs/` | Current entry documents, specifications, plans, research, and dated evidence |
+| `target/`, `.local/` | Ignored generated artifacts and local state; outside the source architecture |
 
-The same host includes a [reusable CRM conversation adapter](docs/CRM_CONVERSATION.md):
-list/search contacts and opportunities, read summaries/history and prepare a
-follow-up draft for explicit human Save. Local commands remain available; an
-optional [Gemini pilot](docs/CRM_GEMINI_PILOT.md) processes only committed synthetic
-examples without sending CRM data to the free provider. General AI quality and
-machine writes remain release gates. Two independent consumers share the adapter.
+## Verify
 
-The host's [provider runtime](docs/PROVIDER_RUNTIME.md) preserves daily AI usage
-and safe outcome metadata across restart. Use `pnpm crm:ai-status` for its private
-operator view; prompts, records and keys are absent from diagnostic storage.
+Use the compiler pinned by [rust-toolchain.toml](rust-toolchain.toml). Node is only needed for repository helpers, not for the Rust libraries.
 
-[Reviewed Save recovery](docs/CRM_COMMAND_RECOVERY.md) now checks the original
-receipt after a lost response and reload. The panel keeps only a tab-scoped
-request ID and holds a new Save while the earlier outcome remains uncertain.
-
-The frontend demo and template have separate runtime boundaries; consolidating
-their source does not connect CRM/ERP, providers, or production Act workflows.
-
-For the new website at `/archava` and CRM/ERP workspace at `/workspace`, see
-[`docs/FRONTEND.md`](docs/FRONTEND.md). Both use fictional browser-local records.
-For the server-side booking/email packages and remaining deployment requirements,
-see [`docs/ACT_PILOT.md`](docs/ACT_PILOT.md).
-
-## What runs today
-
-The assistant reference runs end to end, offline, in a browser. The separate
-persistent CRM reference runs with `pnpm crm:dev`:
-
-```
-pnpm install
-pnpm dev            # http://127.0.0.1:4173 — reference tenant, chat surface
-                  # /studio at http://127.0.0.1:4173/studio
+```bash
+node tools/rust/verify.mjs             # structure, tool tests, fmt, Clippy, all Rust tests
+node tools/rust/verify.mjs --lib       # smaller library-only scope
 ```
 
-It serves the reference tenant `client-xyz` — a hospitality template resort in
-Indonesia, `commerce_booking` environment, `chat` presence, `act` capability,
-region `ID`, currency `IDR`, locale `id` (`packages/reference/src/tenant.ts`). You
-can talk to the assistant, it draws an `order_summary` and an `availability` card,
-it highlights a room on the page, it answers from knowledge and from structured
-truth, and it refuses a claim that neither source supports.
+Add `--offline` when the Rust dependencies are already cached. Integration tests need PostgreSQL tools and provision disposable databases; they do not use your application database. See [the developer guide](docs/DEVELOPER_GUIDE.md) for direct Cargo commands and troubleshooting.
 
-Both modes bind to `127.0.0.1:4173` — the host and port are `HOST`/`PORT` env
-(`apps/web/src/server/server.ts`), and `pnpm e2e:home` defaults to the same URL
-via `BASE`.
+## Build and run
 
-Production build and start:
-
-```
-pnpm build          # bundle the client into apps/web/dist
-pnpm start          # serve the bundle
-pnpm e2e:home       # 31 assertions against the served page
-pnpm decision:eval  # 51-case offline Rule provider and routing evaluation
+```bash
+node tools/rust/build-slice.mjs
 ```
 
-Optional Jev evaluation stays separate from those commands. After server-side
-credential and data-term review, see [Jev eval readiness](docs/JEV_EVAL_READINESS.md)
-for the explicit synthetic SHADOW command.
+This builds `target/release/archava-server`, the fixture preview example, and `target/site/pkg`. Install the pinned `wasm-bindgen-cli` version listed in the developer guide before building the browser bundle.
 
-## The one idea
+For an existing migrated database, set `DATABASE_URL` to a non-owner runtime role and configure `ARCHAVA_IDENTITY_KEY_HEX` using [deploy/archava.env.example](deploy/archava.env.example), then run:
 
-An assistant is only trustworthy if its answers are _checkable_. So the pipeline
-is a sequence of boundaries, each of which holds a port, and each port is an
-interface with implementations you can point at:
-
-| Boundary                        | Port                               | In-tree implementation                                |
-| ------------------------------- | ---------------------------------- | ----------------------------------------------------- |
-| Conversation                    | `BrainProvider`                    | `ScriptedBrain`, `ReferenceBrain` (deterministic)     |
-| Bounded judgment                | `DecisionProvider`                 | `RuleDecisionProvider`; Jev server adapter            |
-| Retrieval                       | `KnowledgePort` / `KnowledgeStore` | `@archava/knowledge`, wired by `buildKnowledgeStore`  |
-| Live facts                      | `StructuredTruthPort`              | `referenceTruth` (date-stated fixtures)               |
-| "Does this id exist?"           | `EntityResolver`                   | `pageEntityResolver` (page-scoped)                    |
-| "May I do it, and did it work?" | `ActionExecutor`                   | `pageExecutor` for UI; mocked Act booking/email ports |
-
-The offline reference does not contact a model, a PMS, or a payment provider. The
-new server-side Act executors have injected booking and email gateways and
-end-to-end tests with fakes; the browser still does not book or send email. Where
-a real system is absent, the browser returns a labelled non-execution rather
-than a plausible-looking success.
-
-Three rules the tests enforce, because each one is a failure mode that looks like
-a pass:
-
-1. **The absence of a resolver is a refusal, not a permission.** A check that can
-   be skipped while still reporting `ok` is worse than no check.
-2. **A stored price's scale comes from the currency contract, never from `Intl`.**
-   `formatMoney(1_438_000, 'IDR', …)` is Rp 1.438.000 on every machine; CI and a
-   laptop disagreed about this once, and the hundred-fold under-quote that
-   followed is why `packages/config/src/currency.ts` declares a
-   `CURRENCY_MINOR_UNIT_EXPONENTS` entry for every currency it accepts — IDR is
-   0, USD is 2 — and `minorUnitExponent` throws on one it does not.
-3. **An unreachable catalog is an answer of no.** A throw from the resolver fails
-   the action closed, not open.
-
-## Layout
-
-```
-packages/acl         query → intent → plan → response, and the ChatEvent vocabulary
-packages/act         tenant-bound booking/email composition and dispatch
-packages/act-booking authoritative booking gateway and executor port
-packages/act-confirmation server-side one-time confirmation challenge
-packages/act-confirmation-pg PostgreSQL challenge store and optional local verifier
-packages/act-email   approved-template email gateway and executor port
-packages/act-host    server-side visitor envelope, confirmation, and turn boundary
-packages/act-postmark Postmark template-mail gateway with injected transport
-packages/act-storage PostgreSQL attempt-store adapters and migration
-packages/assistant   turn assembly: capability gate, §9 input contract, action execution
-packages/adapters    BrainProvider implementations
-packages/decision    bounded task catalogue, Rule provider, orchestrator
-packages/chat        DOM renderers (shells, money, knowledge cards)
-packages/config      pricebook / template / currency contracts, all Zod-parsed
-packages/core        ChatEvent types shared by every surface
-packages/knowledge   retrieval store and ranking
-packages/pricing     deterministic quote engine
-packages/reference   the reference tenant: fixtures, rates, knowledge, brain
-packages/sdk         Archava Web SDK — page awareness graph for a host page
-apps/web             the runnable server and the browser slice
-tools/configurator   `pnpm configurator` — intake → config set, and `POST /api/quote`
-tools/decision-eval  offline Rule eval and optional synthetic Jev SHADOW eval
-tools/scripts        structure.mjs, verify.mjs (the honesty gate)
-tools/e2e            home.mjs
+```bash
+node tools/rust/run-persistent.mjs
 ```
 
-## Gates
+For an isolated preview instead:
 
-```
-pnpm typecheck     # every package + the web app
-pnpm lint          # eslint --max-warnings=0
-pnpm format        # prettier
-pnpm test          # vitest
-pnpm verify        # install + structure + format + lint + typecheck + test + build + reuse
-pnpm e2e:home      # 31 assertions against a served page
+```bash
+node tools/rust/dev-slice.mjs run
 ```
 
-`pnpm verify` mirrors the platform CI gates, including format and the two
-independent-consumer proof. Use Node **22.22.3** from `.tool-versions` and pnpm
-**10.15.1**. `pnpm structure` checks package boundaries and declared imports.
+The preview uses disposable fixture accounts and data. Start at `/app`, then use Home or Contacts. See [deployment instructions](deploy/README.md) before operating a persistent database.
 
-`pnpm library:pack` creates eleven compiled internal artifacts. `pnpm reuse:verify`
-installs them in two separate temporary projects, typechecks, builds browser/Node
-entries and verifies identical implementations with different knowledge,
-branding and allowed actions. See [library consumption](docs/LIBRARY_CONSUMPTION.md).
-Consumer installs may access the npm registry for pinned public tooling/Zod;
-fixture turns and builds never call AI or business providers.
+## Historical material
 
-Nothing here gates the _prose_. This file and
-[`docs/BUILD_STATUS.md`](docs/BUILD_STATUS.md) are maintained by hand, which is
-the one place an honesty claim can go stale — so when reading either, read what
-the gate output actually said rather than what the sentence claims.
-
-CI also checks `Archava Template` independently with `npm ci`, JavaScript tests,
-offline Python guardrails, and its production build. Those commands run inside
-the template directory; `pnpm verify` covers the platform workspace only.
-
-## Status
-
-Foundation complete; the commercial surface is not. Accepting a payment is the
-acceptance criterion (`PRD.md` §34) and no code here does it. Read
-[`docs/BUILD_STATUS.md`](docs/BUILD_STATUS.md) before quoting any of this.
+The former platform overview, architecture blueprint, and build log are preserved in [docs/archive/history/platform-2026-10-28](docs/archive/history/platform-2026-10-28/). Historical test counts, hashes, release profiles, and path names describe their original snapshots. They are not current verification results. The [cleanup report](docs/archive/audits/ARCHAVA_REPOSITORY_CLEANUP_2026-10-29.md) records relocations, checks, and remaining architectural work.

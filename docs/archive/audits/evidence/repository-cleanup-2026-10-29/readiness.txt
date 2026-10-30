@@ -1,0 +1,19 @@
+   Compiling archava-core v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/core)
+   Compiling archava-domain v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/domain)
+   Compiling archava-orbz v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/orbz)
+   Compiling archava-cockpit v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/cockpit)
+   Compiling archava-adapters v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/adapters)
+   Compiling archava-pg-fixture v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/pg-fixture)
+   Compiling archava-host v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/host)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 8.95s
+     Running tests/readiness.rs (target/debug/deps/readiness-004014afeeebd8d7)
+
+running 5 tests
+test missing_forced_policy_readiness_check_blocks_construction ... ok
+test modified_checksum_readiness_check_blocks_construction ... ok
+test owner_runtime_readiness_check_blocks_construction ... ok
+test readiness_refusal_is_the_named_gate ... ok
+test ready_fixture_constructs_state_and_router_serves ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.12s
+

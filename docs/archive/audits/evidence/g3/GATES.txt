@@ -1,0 +1,69 @@
+AUDIT t_be45b375 — gate log digest (evidence for Codex read-only audit)
+snapshot 2026-10-22T07:10:46+07:00 | HEAD 412f763e17f3a68a457fd76c7b929184c50c916a
+dirty 223 entries | git diff --stat: 170 files changed, 5575 insertions(+), 2864 deletions(-)
+SCOPE 0f98919ce5a3448c7f7d4f7896252ec04b254b97b9a2cac5abd3466ebd3fc43a
+RUST_SCOPE b325d301b89ce9cb3c48b61ce15004d813b6ab5c56fedc857dc43d93c58e9b99
+CONTENT_SCOPE 991b38fdb0b7997a0d38c97e8f8b8e6e93b7e9a48380fae6acf92f6ccf31808f (191 files)
+All commands run with TMPDIR=/tmp from /home/haikaru/Archverse/Lab/Archava_Platform.
+
+[1] pnpm format:check                                  EXIT=0
+    All matched files use Prettier code style!                                    (g3-fmt.log, g3-fmt2.log)
+
+[2] pnpm structure                                     EXIT=0
+    structure: 70 workspace projects, every @archava/* import declared.            (g3-structure.log)
+
+[3] pnpm typecheck                                     EXIT=0   66.6 s
+    (tsc --noEmit across every workspace project; empty diagnostics)               (g3-typecheck.log)
+
+[4] pnpm test                                          EXIT=0   14.5 s
+    Test Files  153 passed (153)
+         Tests  1931 passed (1931)                                                 (g3-jstest.log)
+
+[5] pnpm exec vitest run packages/{billing,subscriptions,attendance,laundry,
+    field-services,formal-education,fulfillment}-pg/test            EXIT=0
+    Test Files  23 passed (23)
+         Tests  239 passed (239)                                                   (g3-vitest7.log)
+
+[6] pnpm lint  (eslint . --max-warnings=0, heap 6144 MB in script)   EXIT=0  72.2 s
+    0 errors / 0 warnings — ESLint printed nothing at all                          (g3-lint.log)
+
+[7] pnpm library:pack                                  EXIT=0
+    Packed 62 compiled internal packages in dist/library/tarballs.                 (g3-pack.log)
+
+[8] node tools/library/verify-<domain>.mjs  (real PostgreSQL per harness)  EXIT=0 each
+    billing 30 | subscriptions 19 | attendance 18 | laundry 30 |
+    field-services 32 | formal-education 22 | fulfillment 27  =  178 PASS
+                                                                                   (g3-verify-*.log)
+
+[9] cd rust && cargo fmt --all --check                 EXIT=0   (0 bytes of output) (g3-cargofmt.log)
+
+[10] cargo clippy --all-targets --locked --offline -- -D warnings   EXIT=0
+     0 warnings, 0 errors; warm fingerprint so no recompile was needed (0.46 s)    (g3-clippy.log)
+
+[11] bash .audit-trio.sh  under systemd-run --user --collect --unit=audit-trio-g3
+     START=2026-10-22T07:10:55+07:00   END=2026-10-22T08:02:04+07:00   EXIT=0
+     test result: ok. 16 passed; 0 failed ... finished in 1165.35s   (erp_attendance)
+     test result: ok. 14 passed; 0 failed ... finished in  814.97s   (erp_billing)
+     test result: ok. 19 passed; 0 failed ... finished in 1083.14s   (erp_subscriptions)
+     49 passed / 0 failed   (--test-threads=1)
+                                                                                   (g3/trio-gate3.log,
+                                                                                    sha256 dd24e872a71f129321b0b6d5578b582bf7ba2428025f74a209c7e54187f51bfa)
+
+SCOPE RECONCILIATION (the trio wrapper hashes `git status --porcelain; git diff` before and after)
+
+  SCOPE_HASH_BEFORE  = 0f98919ce5a3448c7f7d4f7896252ec04b254b97b9a2cac5abd3466ebd3fc43a
+  SCOPE_HASH_AFTER   = 426bc67109dbc667830592babe24a7dc5d633e181fd7f98296a7bbe1118c46f4
+  RUST_SCOPE_BEFORE  = b325d301b89ce9cb3c48b61ce15004d813b6ab5c56fedc857dc43d93c58e9b99
+  RUST_SCOPE_AFTER   = b325d301b89ce9cb3c48b61ce15004d813b6ab5c56fedc857dc43d93c58e9b99   (identical)
+
+  SCOPE_HASH_AFTER differs by exactly one entry: the untracked audit document
+  `docs/audit/AUDIT_GATE_G3_2026-10-22.md`, which was authored while the suite ran.
+  Removing that single `??` line and re-hashing reproduces the before value bit for bit:
+
+    { git status --porcelain | grep -vF 'docs/audit/AUDIT_GATE_G3_2026-10-22.md'; git diff; } | sha256sum
+    => 0f98919ce5a3448c7f7d4f7896252ec04b254b97b9a2cac5abd3466ebd3fc43a   == SCOPE_HASH_BEFORE
+
+  Independently, worktree-byte hashing of every scoped code file (modified tracked + untracked
+  non-ignored, plus a git diff --binary digest) returns
+  991b38fdb0b7997a0d38c97e8f8b8e6e93b7e9a48380fae6acf92f6ccf31808f over 191 files
+  both before the trio and after it — no source file moved while the suite ran.

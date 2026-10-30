@@ -2,7 +2,7 @@
 #
 # It sits outside the product workspace on purpose, and the empty `[workspace]`
 # table below is what enforces that: without it cargo would walk up from this
-# directory, find `rust/Cargo.toml`, and try to adopt this package as a tenth
+# directory, find `Cargo.toml`, and try to adopt this package as a tenth
 # member. That would put a benchmark target inside the workspace `cargo test
 # --workspace` and the wasm gate both walk, and would also inherit the
 # workspace's `[profile.release]`, so the benchmark's build settings would drift
@@ -23,14 +23,14 @@ version = "0.1.0"
 edition = "2021"
 publish = false
 
-# Detached from `rust/`'s workspace. See the header.
+# Detached from the product workspace. See the header.
 [workspace]
 
 [dependencies]
 # The two engines this benchmark measures. Paths, so a cold consumer's resolution
 # is the one being exercised.
-archava-pricing = { path = "../../../../rust/crates/pricing" }
-archava-rates = { path = "../../../../rust/crates/rates" }
+archava-pricing = { path = "../../../../crates/pricing" }
+archava-rates = { path = "../../../../crates/rates" }
 
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

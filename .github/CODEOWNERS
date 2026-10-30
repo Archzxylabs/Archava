@@ -1,0 +1,12 @@
+# Default and path-specific ownership for the current root workspace.
+* @haikarure
+/.github/ @haikarure
+/crates/ @haikarure
+/migrations/ @haikarure
+/static/ @haikarure
+/tools/ @haikarure
+/docs/ @haikarure
+/deploy/ @haikarure
+/config/ @haikarure
+/Cargo.toml @haikarure
+/Cargo.lock @haikarure

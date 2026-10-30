@@ -1,0 +1,1 @@
+note: docs/rust/required-coverage.json is a HISTORICAL manifest (frozen 2026-10-16, superseded 2026-10-22) — this validator is a scoreboard of the pre-remediation program, not a passing gate. See docs/audit/A4FU_COVERAGE_MANIFEST_2026-10-22.md

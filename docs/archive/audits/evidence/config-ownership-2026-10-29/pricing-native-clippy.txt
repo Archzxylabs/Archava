@@ -1,0 +1,20 @@
+   Compiling syn v3.0.9
+    Checking futures-sink v0.3.34
+    Checking futures-core v0.3.34
+    Checking futures-io v0.3.34
+    Checking serde_core v1.0.229
+    Checking futures-channel v0.3.34
+    Checking serde_json v1.0.154
+   Compiling napi-derive-backend v6.1.5
+   Compiling futures-macro v0.3.34
+   Compiling serde_derive v1.0.229
+    Checking futures-util v0.3.34
+   Compiling napi-derive v3.6.12
+    Checking serde v1.0.229
+    Checking futures-executor v0.3.34
+    Checking futures v0.3.34
+    Checking napi v3.14.2
+    Checking archava-pricing v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/pricing)
+    Checking archava-rates v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/rates)
+    Checking archava-native v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/native)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 16.07s

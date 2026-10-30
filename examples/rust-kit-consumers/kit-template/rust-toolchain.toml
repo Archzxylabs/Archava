@@ -1,5 +1,0 @@
-[toolchain]
-# Same as the cold consumer: the proof pinning the toolchain is a checked fact
-# (RA05 toolchain row), not the machine's rustup default. This consumer runs
-# `cargo test`, never fmt/clippy.
-channel = "1.96.0"

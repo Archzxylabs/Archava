@@ -1,0 +1,15 @@
+[package]
+name = "archava-mcp"
+description = "Native Model Context Protocol (MCP) Server and Client for Archava Enterprise ERP/CRM"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+archava-core.workspace = true
+archava-cockpit.workspace = true
+archava-orbz.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+uuid.workspace = true

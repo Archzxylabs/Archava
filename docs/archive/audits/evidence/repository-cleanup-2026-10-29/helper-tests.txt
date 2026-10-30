@@ -1,0 +1,66 @@
+TAP version 13
+# Subtest: core rejects an HTTP-layer dependency
+ok 1 - core rejects an HTTP-layer dependency
+  ---
+  duration_ms: 2.665732
+  type: 'test'
+  ...
+# Subtest: dev-only fixtures are allowed; production fixtures are refused
+ok 2 - dev-only fixtures are allowed; production fixtures are refused
+  ---
+  duration_ms: 1.372431
+  type: 'test'
+  ...
+# Subtest: missing embedded files and a second workspace are detected
+ok 3 - missing embedded files and a second workspace are detected
+  ---
+  duration_ms: 0.945117
+  type: 'test'
+  ...
+# Subtest: historical tools are excluded, active broken imports are detected
+ok 4 - historical tools are excluded, active broken imports are detected
+  ---
+  duration_ms: 1.043731
+  type: 'test'
+  ...
+# Subtest: the UI cannot pull the HTTP host into its WASM build
+ok 5 - the UI cannot pull the HTTP host into its WASM build
+  ---
+  duration_ms: 1.663628
+  type: 'test'
+  ...
+# Subtest: import examples inside ordinary strings are not treated as module imports
+ok 6 - import examples inside ordinary strings are not treated as module imports
+  ---
+  duration_ms: 0.716715
+  type: 'test'
+  ...
+# $ first
+# $ first
+# Subtest: the default gate includes workspace integration tests and locked resolution
+ok 7 - the default gate includes workspace integration tests and locked resolution
+  ---
+  duration_ms: 0.747743
+  type: 'test'
+  ...
+# Subtest: offline and library-only scope are explicit
+ok 8 - offline and library-only scope are explicit
+  ---
+  duration_ms: 0.224301
+  type: 'test'
+  ...
+# Subtest: a failed or interrupted child stops later checks
+ok 9 - a failed or interrupted child stops later checks
+  ---
+  duration_ms: 0.546035
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 50.71611

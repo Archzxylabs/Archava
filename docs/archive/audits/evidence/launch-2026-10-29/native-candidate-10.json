@@ -1,0 +1,56 @@
+{
+  "distribution": "dist/native-candidate-20261030-10",
+  "sourceSha256": "b70a6f1b2bd3f7e13d0988796e4338ec33ee9d49a194ca5d0fdf53169bb3da8c",
+  "artifacts": 47,
+  "bytes": 26210660,
+  "runtimeVersion": "0.1.0",
+  "catalog": {
+    "id": "archava-local-library",
+    "version": "1.19.0"
+  },
+  "browser": "docs/archive/audits/evidence/launch-2026-10-29/candidate10-browser/result.json",
+  "browserChecks": 30,
+  "pageErrors": 0,
+  "cleanupExitCode": 0,
+  "remediation": {
+    "candidate": 10,
+    "findingsResolved": [
+      "G01",
+      "G02",
+      "G03",
+      "G04",
+      "G05",
+      "G06",
+      "G07",
+      "G08",
+      "G09",
+      "G10",
+      "G11",
+      "G12",
+      "G13"
+    ],
+    "presenceAuthorityCsrf": {
+      "csrfRequired": true,
+      "activeMembershipChecked": true,
+      "unconfiguredDefault503": true,
+      "globalCapacity16384": true,
+      "crossSessionCollisionRefused": true
+    },
+    "emailProductionOutbox": {
+      "registryLoadedFromEnv": true,
+      "idempotentPayloadSha256": true,
+      "restoreHoldRefusal": true,
+      "staleLeaseReinvocation": true,
+      "escapedHtmlMarkup": true,
+      "invoiceSummaryPayload": true,
+      "historyLimit50": true
+    },
+    "cockpitHoldingApproval": {
+      "honestAuthorityScope": "L1 read tools; L4/L5 separation enforced",
+      "selfResumeRefusalForL4L5": true,
+      "independentSupervisorRequired": true,
+      "operatorUiHoldingBanner": true,
+      "readyStepSuppressedDuringHold": true
+    }
+  }
+}

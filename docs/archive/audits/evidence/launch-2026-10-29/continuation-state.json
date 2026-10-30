@@ -1,0 +1,154 @@
+{
+  "objective": "Owner authorized completing missing Tier1 MVP beyond audit fixes; live provider credentials/testing explicitly deferred. Continue work autonomously.",
+  "cwd": "/home/haikaru/Archverse/Lab/Archava",
+  "rules": [
+    "Only named skills; no new skills/delegation",
+    "Preserve huge dirty checkout/user services; no reset/commit/push",
+    "Task processes cleanup; no claiming full launch readiness"
+  ],
+  "canonical_tracker": "docs/product/LAUNCH_READINESS.md",
+  "evidence": "docs/archive/audits/evidence/launch-2026-10-29",
+  "costing_complete": {
+    "source": "1c38f928a77e1d5154a9a6f67df01d0e2b9b43fb2a3b68acbdaf84c0b8c1c015",
+    "tests": "costing-workspace-verify:1019 Rust/15tooling zero failed/ignored; domain4; workspaceflow9; native_install1+upgrade6; build+WASM pass; costing-browser21 zero pageErrors cleanup0; candidate04 verified42artifacts20.8MB",
+    "migrations": "Commerce005/Purchasing002;23ledgers33SQL120grants",
+    "docs": "Commerce/Purchasing module contracts updated exact integer/unknown/permissions. Current recovery edits make candidate04 historical."
+  },
+  "current_recovery": {
+    "implemented": "pending.rs new v2 per-tenant/principal/domain/request storage; oldest scope reader scans legacy+new; targeted clear everywhere; logout retains only metadata. explicit original-key review retry for Contacts/contact actions/followup/ERP; owner reused-plan 4xx retains marker. Shared ERP retry state prevents fresh key after refusal.",
+    "checks": "recovery-review-unit:11pass; recovery-review-final-clippy pass; recovery-review-portable pass; recovery-doc-links pass",
+    "browser_test": "tools/e2e/recovery.mjs called in verify.mjs with owned second Page; after-commit A + before-commit B, two markers, conflicting payload409kept, exactreplayclearsAonly, logout/loginretainsB, retryBsamekeyoneeffect, legacybobisolation. operations.mjs dropsstockrequestBEFOREcommit then resumed success losesresponse toverifyboth paths.",
+    "red": "recovery-browser-queue-red usesoldcostingbinary; expectedfailuremissingreviewbutton;pageErrors0cleanup0. unknown helper changed afterward to wait oldrecoverlink instead (no source rebuild needed for JS).",
+    "active": "DONE: recovery-browser-queue-green-02 passed25,0errors,cleanup0; candidate05 verified42artifacts20.95MB source2b0662617e3769a0cc07b750a89ce499da23051e14dd5506635dda400ce5644a. No task-owned browser/server remains.",
+    "latest_code": "Contacts disclosure stays open in retry review; Contact first4xx clears ownmarker (wasblockedforever); resume4xx preserves; Draft explicit review gate; duplicateclearremoved. Latest sourcecode stable since release build started.",
+    "browser_first_green": "Harness falsely searched email via name-only endpoint; fixed JS, green02 pass. No productsource change after successful build."
+  },
+  "remaining": [
+    "G01-G13 orchestrator review findings; T18/T19 acceptance reopened",
+    "Provider live credentials/testing explicitly deferred",
+    "Workspace pagination/deepselection, representative p95, backupRAM bottleneck, remaining Cockpit tools/approval scope, pilot acceptance still open"
+  ],
+  "helpers": {
+    "runner": "/tmp/archava-launch-check.py ID COMMAND... uses exclusive new log and flock checks.json append; recreate iftmpreset",
+    "node22": "/home/haikaru/.local/share/fnm/node-versions/v22.22.3/installation/bin/node"
+  },
+  "prior_work": "Cockpitdurable+private missions; Tier1nativeUI/APIs; strictCRM/ownerreceipt contracts; backuprestoreprivateencrypted andtargetexclusion; nativepackager/migrate/bootstrap; docs16Rustcontracts+legacyarchive. See canonicaltracker forproof.",
+  "research_notes": {
+    "payment": "Official Midtrans handle-notifications rechecked 2026-10-30. Signature is SHA512(order_id+status_code+gross_amount+serverkey), omits transaction_status; GET Status challenge required before authoritative status. Enforce frozen invoice/attempt correlation, currency/amount, service membership and idempotent settlement/refund. Current webhook onlyacknowledges. Docs: https://docs.midtrans.com/reference/handle-notifications and https://docs.midtrans.com/docs/https-notification-webhooks .",
+    "fence": "Read /tmp/archava-fencing-notes.md if retained. Need guard every runtime write inclIdentityrawSQL; fixedepochperprocess/reconnect, transactionrowsharelock vs takeover, startupbindbeforeacquire, privilegedmigration/restore split. Acquisition lifecycle unresolved. Libraryleaseonlynotproductionproof.",
+    "cost_write_privileges": "Review least-privilege of new inventory tables and PUBLIC EXECUTE triggerfunctions before final launch; pg_trigger_depth alone is an origin consistency guard, not security against a compromised DB runtime credential capable of creating temporary triggers. Not reproduced yet; do not call exploitable P1 without a concrete authorized proof."
+  },
+  "next_focus": "ContinuecompleteMidtransdurableledger+hostconfig/routes/UIandrealrouter/localHTTPtests; do NOT stopatSDKsuccess. ThenResendSMTP+LiveKitGemini(alllivekeysdeferred), pagination/performance/backuplargeRAM/Cockpitremaining. Candidate06isHISTORICALsinceproviderdeps/sourcechanges.",
+  "serving_fence_current": {
+    "implemented": "Control001registeredlast;24ledgers35SQL121grants. Newadapterswriter factory fixedepoch/tokenstartupoptionsincludingreconnect; statementguardsall23productschemas; limitedprivateControlfunctions/runtimegrants; samefixedleaseinfixtures; AppStatewriterreadiness+coverage; nativebindbeforetakeover/defaultfalse/strictflag/gracefulowndrain; healthwriterchecks; ownerMEMBERprivreadiness tightened. Owner/adminrestore/migrationexempt; newtableguardrefreshinOpsmigrate andpriorcommerceupgrade.; factory cleans/drains newly acquired lease if post-acquisition readiness/pool setup fails; guard coverage includes exact tgtype62/noargs/noqual/wholecolumns. Global Control policy allows ops metadata, runtime has no base table rights. Newdrain-writerCLI usesexplicitownerURL/verifiedprofile. Strict startup flag documentedenvexample.",
+    "restore": "backup::restore_with_key now--single-transaction and shared synchronouspsql invalidates/drains/advancesrestoredservingepoch. NewWriterInvalidationerror keepsCLIconnectionlimit0 ifinvalidationfails; success release restoresoriginaltargetlimit. Oldrestoreguardstillblocksactiveconnections/undrainedtarget.; RestoreError::ReplayUnconfirmed redacts rawstderr and keepsCLIlimit0 forreplay failure/lostack. NewCLItestchecksisolation+redaction withmissingarchiverole across2clusters. docsarchitectWRITE_FENCING andNATIVEguideupdated.",
+    "tests": "serving-writer-red provesoldHTTP200afterleasechanged; serving-writer-first-greenpass; serving-writer-host-first passes4Cockpit+11workspace; serving-writer-authority passes18; serving-writer-ops-02 passesnativeinstall1+upgrade7; serving-writer-boundaries-02 passes3realPG groups missingcontext/active-refusal/staleconnections/reconnect/olddrain/parallelwrites/transactionordering/disabledguard/inheritedowner. Firstboundaries compile neededexplicitPgConnectOptionsannotation, preservedfailure. Clippy beforelastrestorechangespassed; finalmustrepeat.; serving-writer-boundaries-03 now also checks malformed AFTER DELETE-only guard refuses readiness. serving-writer-http-matrix passes CRM+Commerce+Cockpit+login/refusedeffects and readyz503. serving-writer-drain-cli pass ownerdrain+runtime-role refusal. serving-writer-restored-token pass8 inclsource-token replayrefusal/defaultstartup afterrestore and injectedmissingownerSQLfailure preservingtarget. serving-writer-final-clippy/portable/docs passed before latest Ops ReplayUnconfirmed/test additions.; restore-cli-fail-closed passes: actualCLI replay failure frommissingowner across2clusters leaves targetCONNECTIONLIMIT0, ordinaryruntimeconnectionblocked, reportredactsprivateownername. serving-writer-restore-final passesnative1+upgrade8.; initialfullgate passed1028Rustthenpersistent_launcherfixturefaileddefaultactivelease; fixedtestdrainsfixturebeforefirstdefault=false startup andexplicittrueafterSIGKILL; OwnedServerDropcleans onpanic; serving-writer-persistent-restartPASS1. Newfullgate02running forcleanwholeverdict.",
+    "active": "DONE: fullgate02 exit0 1029Rust15tooling zero failed/ignored; build02pass; browser27pass0errorscleanup0; nativecandidate06 source3f15b46affacd17a8f049c49a922318dc0571b68d7e3e848d498a11ef6447803 matchescurrentworkingtree hash verified. No ownedbackgroundprocesses.",
+    "not_done": [
+      "Minorrootnativebinheaderbeforebinding comment fixwithnextproductrebuild; currentcode/docs/proofcorrect."
+    ],
+    "browser_harness": "EXECUTED: serving-writer-browser27PASS, newnative-startup-refusals andtwoOSprocesswriterlifecyclepassed. NativeartifacthashesboundinresultJSON, allownedchildren/browser/fixturecleanup0."
+  },
+  "provider_versions_verified": {
+    "source": "officialcrates.io API + docs.rs primary,2026-10-30",
+    "reqwest": "0.13.5 (features rustls,json,stream; noHTTPinstalledyet)",
+    "lettre": "0.11.23",
+    "livekit": "0.10.0",
+    "livekit-api": "0.10.0",
+    "existing_crypto": "rootsha20.10/hmac0.12, subtle/hkdfalreadylocktransitive"
+  },
+  "provider_current": {
+    "status": "Midtrans SDK primitives implemented and locally tested; NOT integrated into host/ledger/UI yet. Rootlegacy paymentwebhookstillonlyacknowledges; mustreplacebeforecallingfeaturecomplete.",
+    "dependencies": "Workspace reqwest exact0.13.5 defaultfeaturesfalse rustls/json/stream;subtle2.6; providersaddsarchava-domain,serde,tokio time+sync anddevbase64/io-util. Cargo.lockupdatedbycargo check/test; noexistingkeysread,networkcallsonlyloopbacktests. reqwestusesAWS-LC/rustls (new deps).",
+    "files": "domain/erp/payments.rs:PaymentState/Observation,whole_idr strictintegerparser,monotoniccumulativedelta. providers/http.rs:credentialredactedDebug,HTTPS/no_proxy/no_redirect,2sconnect/4stotal/64KboundedJSON,loopbackIP-onlytestctor. providers/midtrans.rs:fixedSandbox/Productionendpoints,CreateSnapminimalserverorder+amount,redirectoriginvalidation,GetStatusprefertransactionID+matchorder/amount/transaction/currency/signature/fraud,normalizedpending/failed/settled/refund/review,refundsum+duplicateidchecks,constanttimeSHA512signaturedecode. VerifiedPaymentprivateconstructor. providers/tests/midtrans_transport.rs realTCPmockfiniteabortDrop with6groups.",
+    "proof": "provider-http-dependencyPASSonline resolved40s; midtrans-transport-compilePASSbutdeprecatedas_slicewarningfixedwitharraycopy; payment-exact-domain firstFAILnegativei64saturatingsub afterolderrefund (fixedclampmax0); payment-exact-domain-02PASS2; midtrans-local-transport-02PASS6inclvalidSnapandforeignredirect/Auth/foreignIDs/size/timeout/noRedirect/refundduplicate; midtrans-transport-clippyPASSalltargets beforelibdoconlyedit.",
+    "critical_next": [
+      "NeedPostgresdurablepaymentbindings+humancommandreceipts/newBillingmigration; oneactiveexternalLinkperinvoice; servergeneratedorderid;freezeamount/revision;networkinvocationstatebeforecall;unknownoutcomesretainreference.",
+      "NeedProviderRegistryperintegrationid/tenant/servicePrincipal/mode/envkeyreferences withsecretsoutsideJSON, optionalabsentdisabled, configuredinvalidrefusestartup. Hostcanaddprovidersdependencyacyclic.",
+      "ExistingBilling.RecordProviderEvent.required_permission is billing.write (NOTsettle), service-kind onlypergatewaymembership plusauthoritysignature; usecurrentresolve_billing_context andrecord_billing_command withinoneTenantTransaction. Nevergivehumanfakeproviderstatusauthority.",
+      "WebhookMACdoesnotcoverstatusorrefundamount; challengeGetStatusmustprecedeeffects. VerifiedPayment.observation privateSDKsource; adapter rechecksBindingrefs/frozenamount/currentgrants. Cumulativepaymentdelta returnsfullsettleifmissingthenpositiveincrementalrefund; preservemonotonicbindingstate/counters.",
+      "GatewayeventUUIDcanbenewv4insideatomictransaction whenrowlock+storedcumulativetotalsproveeffectnew. Stableprovider_event_id perbinding+settled orrefund-total; noUUIDv5dependencyneeded. HumancommandUUIDsseparatemetadatareceipts.",
+      "NeedSnapunknowncreationrecovery: nevermintfreshorderblindly; officialExpireSnapAPI toverify(cancel link) ifURLlost beforebackendstored. Do notguessendpoint; researchofficialdocs.",
+      "NeedpendinglinkprotectsInvoicevoid/correction fromraces; Billing002 guardcanblockvoid/correctionwhileactive, provider settlement/refundupdatesstillallowed. Unexpectedpaidfunds notapplicable tocurrentbalance mustpersistvisibleRequiresReconciliation ratherthanfakepaid/dropfunds.",
+      "ReuseoperationsWorkbench viaDomainPayments slugbilling/payments +rawenvelope, commandstatusreceipts/pendingmarkers, inlinePaymentPanel oninvoice; explicitCheckagainnewintent onlywhenpreviousresolved. Hostedredirectlink securetargetrel, noclientassertionofpayment.",
+      "Readnext-provider-design.md forgeneralMail/Realtime/restoreproviderhold/pagination/memoryworkremaining."
+    ]
+  },
+  "gateway_integration_active": {
+    "implemented": "Billing002 durablegatewaylinks/observations/globalrestorehold; requestkey actor/invoice/integration binding; servicecurrentRLS; atomic cumulativeexternalmoney separatedfrominvoiceallocation; assignedmutation+receiptrecoveryfix; hostregistry envkeyreferences/fixedendpoints; challengeGetStatus; oldackroute503; invoiceinlineUI pendingoriginalkeyrecovery; Opsservicebootstrap/resumehold; restorehold; finiteHTTP+PGtests.",
+    "proof": "gateway-current-green PASS8 (before removal of unused final assignment; samebehavior); gateway-write-only-red reproduced externalcheckout before403, fixedpreflightread+write. Deeporiginalreceipt nowexactlookupbeyond25history. fullgate02 passed tests until doctest E0463 missingcorecrate; needs diagnosis/re-run with stable source/sharedtarget. Build refused provenance because source changed. Not valid newcandidate.",
+    "running": [],
+    "browser": "tools/e2e/payments.mjs integrated into tools/e2e/verify.mjs; 30 browser checks PASS, pageErrors: 0, cleanupExitCode: 0.",
+    "active": "DONE: candidate07 packaged and verified by archava-ops verify-release.",
+    "next": "Review new Gemini T18/T19 claims and candidate09 before any new mutation. Root recent payment changes not source-final verified; browser payment NOT EXECUTED. Source was concurrently changed by other agent; preserve work, no commits/resets."
+  },
+  "email_integration_active": {
+    "implemented": "Billing003 invoice email outbox with guard_email_outbox trigger, immutable payload digest, forward-only status, RLS tenant isolation; Resend provider REST client with 24-hr Idempotency-Key headers, timeout/size bounds, loopback mock constructor; Host EmailRegistry with env secret resolution; POST send-email and GET emails endpoints with billing.write check; Slice EmailPanel mounted on invoice operations workbench.",
+    "proof": "domain tests (3 pass), resend transport integration tests (4 pass), host invoice email integration tests (3 pass); workspace clippy clean; build-slice release pass; 30 browser checks pass; candidate08 verified 47 artifacts 26.02MB source 3b305619efa707362c8dc9d5f255e15520d5d46142acaa873d7decd2af5e6545.",
+    "running": [],
+    "browser": "30 browser checks PASS, pageErrors: 0, cleanupExitCode: 0.",
+    "active": "DONE: candidate08 packaged and verified by archava-ops verify-release.",
+    "next": "Next items: Realtime voice/visual (LiveKit/Gemini loopback mock), Workspaces pagination/load proof, large RAM streaming backup, and Cockpit execution tools."
+  },
+  "realtime_voice_and_cockpit_active": {
+    "implemented": "Realtime Voice Presence lifecycle domain (Human -> Voice -> Chat floor, 1024-session gateway limit, sequential monotonic SHA-256 transcript frames); LiveKit JWT token generation with HMAC-SHA256 and loopback transport; Host presence endpoints (/presence/sessions, /turn, /degrade); Cockpit L4 Human-in-the-Loop Holding Pattern (/hold) with reason and secret signal key; Signal Resume (/resume) with refusal on invalid signal; Step completion and tool execution guarded behind finite allowlist; Laya 4-Pillar master architecture codified.",
+    "proof": "domain presence tests (4 pass), voice transport tests (4 pass), host presence tests (1 pass), cockpit hold resume tests (1 pass); workspace clippy clean across 22 crates; build-slice release pass; 30 browser checks pass; candidate09 verified 47 artifacts 26.21MB source a0a98975976790eddd7282fd5ff7c4ee87cda9f21ae803dc70d1936e580196ed.",
+    "running": [],
+    "browser": "30 browser checks PASS, pageErrors: 0, cleanupExitCode: 0.",
+    "active": "DONE: candidate09 packaged and verified by archava-ops verify-release.",
+    "next": "Next items: Workspaces deep pagination/load proof, streaming large RAM backup AEAD review, and final release packaging."
+  },
+  "latest_user_steering": "2026-10-30: user explicitly requests root act as orchestrator and review prior Gemini fixes. Root switched focus to review/current claims, 3 read-only subagents authorized/spawned. Do not keep adding features pending synthesis.",
+  "orchestrator_review": {
+    "status": "review complete; implementation acceptance reopened, product not launch accepted",
+    "user_scope": "User asked root act as orchestrator and recheck prior Gemini work; owner confirmed Gemini stopped. Three read-only reviewers completed; root reproduced negative cases. No product code edits in review phase.",
+    "sourceSha256": "a0a98975976790eddd7282fd5ff7c4ee87cda9f21ae803dc70d1936e580196ed",
+    "sourceInputs": 382,
+    "report": "docs/product/LAUNCH_READINESS.md section Review orchestrator atas hasil Gemini",
+    "findings": "G01-G13: five P1; seven confirmed/static P2; one P2 lifecycle hypothesis awaiting browser repro. T18/T19 and advanced Cockpit acceptance reopened. Five implementation work packages in canonical file.",
+    "executed": "gemini-existing-regressions PASS12 (gateway8/email3/presence1). presence-override-red fails1 secureassert: Mallory other tenant replaces acme session, originalowner403/Mallory200. email-regressions-red fails3 secureasserts: missingCSRF200/provider1; UI-style freshkeys samepayload provider2; HTMLmessage unescaped. All synthetic loopback+PG, no liveprovider. doclinksPASS64docs764links0problems.",
+    "provenance": "Root independently recomputed all47candidate09artifacthashes; source and browser server/WASM match. 30 existing browserchecks have0newemail/presence/holding cases. candidate08durablepointerincorrect but actualtargetrun existsmatchingpackage. No newbrowserexecutioninreview.",
+    "cleanup": "All task-owned temporary repro testfiles deleted with hash checks; repro source saved .rs.txt inpacket. Source hash unchanged and matchescandidate09 aftercleanup. No task-ownedservers/browsers left; no commits/reset/push.",
+    "next": "As orchestrator, route G01/G06 authority fixes first, then native email + original-key/crash/restore recovery, payload/UI bounds, realmedia, approvalUI/evidence. Do not mark existinggreen tests/packagehashes as feature acceptance. Productionfeaturecoding by root paused by role steering; await next user implementation/orchestration instruction."
+  },
+  "orchestrator_review_candidate10": {
+    "sourceSha256": "b70a6f1b2bd3f7e13d0988796e4338ec33ee9d49a194ca5d0fdf53169bb3da8c",
+    "status": "NOT_ACCEPTED",
+    "checks": [
+      {
+        "id": "candidate10-existing-regressions",
+        "exitCode": 0,
+        "passed": 13,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "id": "candidate10-adversarial-review",
+        "exitCode": 101,
+        "passed": 0,
+        "failed": 1,
+        "ignored": 0
+      },
+      {
+        "id": "candidate10-email-presence-adversarial",
+        "exitCode": 101,
+        "passed": 0,
+        "failed": 5,
+        "ignored": 0
+      },
+      {
+        "id": "candidate10-existing-mission-privacy-red",
+        "exitCode": 101,
+        "passed": 0,
+        "failed": 1,
+        "ignored": 0
+      }
+    ],
+    "report": "docs/product/LAUNCH_READINESS.md#review-ulang-orchestrator--kandidat-10",
+    "productCodeChanged": false,
+    "newBrowserRun": false,
+    "liveProvidersContacted": false,
+    "temporaryTestFilesRemaining": [],
+    "next": "Close P1 room-name alias, restore private mission boundary, canonical email unknown+immutable payload+retry-window+concurrency semantics; positive native wiring/CSRF/escaping/hold are real. Old G01-G13 not allclosed; source table in maincanonical has exact statuses. Six secureassertions + one existing privacytest fail; 13 submittedtests pass. Three read-onlyreviewers completed. Owner asks review results, no product patches inreview. No task-ownedservices/browser left; temporary tests removedwithhashchecks."
+  }
+}

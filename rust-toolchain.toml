@@ -1,0 +1,16 @@
+[toolchain]
+# The toolchain of record, matching `rust-version` in `Cargo.toml`.
+#
+# This file exists so that a local build and the CI build are the same build.
+# Every Rust proof in this repository — parity, the two cold consumers, the
+# benchmark — produces a number or a hash, and a number produced by a different
+# compiler than the one that produced the accepted value is evidence about the
+# compiler rather than about the port.
+#
+# `dtolnay/rust-toolchain@stable` reads this file and installs exactly what is
+# named here, so the workflow file stays declarative and cannot drift from the
+# manifest. `components` is declared here too, because `rust:verify` runs
+# `cargo fmt --check` and `cargo clippy -- -D warnings`, and a missing component
+# surfaces as a failure whose exit code is indistinguishable from a real one.
+channel = "1.96.0"
+components = ["rustfmt", "clippy"]

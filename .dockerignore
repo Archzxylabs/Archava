@@ -1,0 +1,10 @@
+# Keep the Docker build context to the two release artifacts. The image is a
+# runtime wrapper, not a builder; see deploy/Dockerfile.
+*
+!deploy
+!deploy/Dockerfile
+!target
+!target/release
+!target/release/archava-server
+!target/site
+!target/site/**

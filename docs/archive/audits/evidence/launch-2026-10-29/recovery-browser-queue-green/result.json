@@ -1,0 +1,109 @@
+{
+  "startedAt": "2026-10-30T01:18:58.637Z",
+  "scope": "Synthetic local fixture, real Chromium/SSR/WASM/HTTP/PostgreSQL; production binary restart. No live provider or public/TLS deployment acceptance.",
+  "checks": [
+    {
+      "id": "F01-authenticated-hydration",
+      "status": "passed",
+      "details": "Real login, session cookie, WASM handlers and contact query"
+    },
+    {
+      "id": "F02-contact-navigation-idempotency",
+      "status": "passed",
+      "details": "Opening the new record creates no second contact or other mutation"
+    },
+    {
+      "id": "F02-browser-to-database",
+      "status": "passed",
+      "details": {
+        "contact": "1d5194e1-f388-4d46-b12b-9534e970ec57",
+        "requestId": "5d8a5c8f-2736-4ce4-83c8-29dcad4430ff",
+        "proof": "Created via UI, reviewed/applied twice, exactly one follow-up and durable receipt via non-owner SQL"
+      }
+    },
+    {
+      "id": "F03-lost-response-recovery",
+      "status": "passed",
+      "details": {
+        "requestId": "6589f7c9-8c4a-48aa-94c2-5a49becd8de1",
+        "proof": "Response deliberately lost after real commit; UI shows uncertainty and recovers without resubmitting"
+      }
+    },
+    {
+      "id": "F04-csrf-refusal",
+      "status": "passed",
+      "details": "Valid mutation body without the CSRF header is refused"
+    },
+    {
+      "id": "F03-production-restart",
+      "status": "passed",
+      "details": "Fresh production process, same PostgreSQL and browser session, committed receipt survives"
+    },
+    {
+      "id": "CRM-http503-receipt-recovery",
+      "status": "passed",
+      "details": "A real committed write receives an unusable acknowledgement; UI retains the key and recovers exactly one effect"
+    },
+    {
+      "id": "CRM-mismatched200-receipt-recovery",
+      "status": "passed",
+      "details": "A real committed write receives an unusable acknowledgement; UI retains the key and recovers exactly one effect"
+    },
+    {
+      "id": "CRM-two-tabs-and-conflicting-retry",
+      "status": "passed",
+      "details": "Two independently opened contact forms retain separate keys; a conflicting retry is refused without losing either key; exact replay clears only its own marker"
+    }
+  ],
+  "errors": [
+    "AssertionError [ERR_ASSERTION]: one real contact effect per original request\n\n0 !== 1\n\n    at verifyPendingRecovery (file:///home/haikaru/Archverse/Lab/Archava/tools/e2e/recovery.mjs:45:11)\n    at async file:///home/haikaru/Archverse/Lab/Archava/tools/e2e/verify.mjs:199:3"
+  ],
+  "browserExecutable": "/usr/bin/brave",
+  "browserSandboxDisabled": false,
+  "acknowledgementFaults": [
+    {
+      "mode": "http503",
+      "requestId": "fc764ba8-18a8-47b9-88cc-5af9c7cd4e0e",
+      "sql": {
+        "same_email_rows": 1,
+        "contact_rows": 1,
+        "followups": 3,
+        "receipt_rows": 1
+      }
+    },
+    {
+      "mode": "mismatched200",
+      "requestId": "4c87f7d0-c21b-4594-a831-17d08866bb40",
+      "sql": {
+        "same_email_rows": 1,
+        "contact_rows": 1,
+        "followups": 4,
+        "receipt_rows": 1
+      }
+    }
+  ],
+  "status": "failed",
+  "pageErrors": [],
+  "fixtureCleanup": {
+    "exitCode": 0,
+    "signal": null
+  },
+  "finishedAt": "2026-10-30T01:19:06.476Z",
+  "artifacts": [
+    {
+      "path": "target/release/examples/slice_server",
+      "bytes": 14925952,
+      "sha256": "34c432e86ac93f5119c5930d27a5eb60795ec06e9c6ac6a98bbd3343b67fa6f0"
+    },
+    {
+      "path": "target/release/archava-server",
+      "bytes": 15559408,
+      "sha256": "e5d1dc89f312c957482fea03d0826aa6a6011673021b59df8da7d02cc996b824"
+    },
+    {
+      "path": "target/site/pkg/archava-slice_bg.wasm",
+      "bytes": 3060126,
+      "sha256": "ac3589e2f76306b1c000b915a0f2fd162bb44f4436e88fab61cadb0af999b889"
+    }
+  ]
+}

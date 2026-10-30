@@ -1,0 +1,82 @@
+[
+  {
+    "source": "docs/modules/CRM_MODULE.md",
+    "archive": "docs/archive/history/module-contracts-before-native-workspace-2026-10-29/CRM_MODULE.md",
+    "sha256": "669f66f5b8d97cda71eb1e821ab1b62ad760072fd32e9e6387d837ac7a3a7924"
+  },
+  {
+    "source": "docs/modules/COMMERCE_MODULE.md",
+    "archive": "docs/archive/history/module-contracts-before-native-workspace-2026-10-29/COMMERCE_MODULE.md",
+    "sha256": "e73d6fcc7dc3f31fc09964ea94ea0835ca991d0de60e223bf89a481aa73e90b3"
+  },
+  {
+    "source": "docs/modules/PURCHASING_MODULE.md",
+    "archive": "docs/archive/history/module-contracts-before-native-workspace-2026-10-29/PURCHASING_MODULE.md",
+    "sha256": "e4b1918063198076c4430a8ee5a818bd80348fbcb8fa2d5ef6e162766094d612"
+  },
+  {
+    "source": "docs/modules/BILLING_MODULE.md",
+    "archive": "docs/archive/history/module-contracts-before-native-workspace-2026-10-29/BILLING_MODULE.md",
+    "sha256": "ea5bad5d77b159a2e3c621279159d33e87b89f1163eec2b4fe72555f07cacd76"
+  },
+  {
+    "source": "docs/modules/SUPPORT_CASES_MODULE.md",
+    "archive": "docs/archive/history/module-contracts-before-native-workspace-2026-10-29/SUPPORT_CASES_MODULE.md",
+    "sha256": "5acfd8e7575c067b1217d5535b27bb156f04293c3a3879493f378f52e1b6167f"
+  },
+  {
+    "source": "docs/modules/FOODSERVICE_MODULE.md",
+    "archive": "docs/archive/history/module-contracts-before-native-workspace-2026-10-29/FOODSERVICE_MODULE.md",
+    "sha256": "cf5cb377f3c7a06b21004044cc130d3ce6bb26158aee3f9a580785a1d720a610"
+  },
+  {
+    "source": "docs/modules/PROJECT_DELIVERY_MODULE.md",
+    "archive": "docs/archive/history/module-contracts-before-native-workspace-2026-10-29/PROJECT_DELIVERY_MODULE.md",
+    "sha256": "1d4e2fb0c01249709417f7eb9c4a4ecf2c09cf57a6426c4e6ca03c1a36c933ac"
+  },
+  {
+    "source": "docs/modules/RESOURCE_RESERVATIONS_MODULE.md",
+    "archive": "docs/archive/history/module-contracts-before-native-workspace-2026-10-29/RESOURCE_RESERVATIONS_MODULE.md",
+    "sha256": "0ed390011ce95d4a20a0e55b8e6d6ebfec7a140cdbb1622d57bfdb89a1fcdafe"
+  },
+  {
+    "source": "docs/modules/ACCOMMODATION_MODULE.md",
+    "archive": "docs/archive/history/module-contracts-before-native-workspace-2026-10-29/ACCOMMODATION_MODULE.md",
+    "sha256": "bcd51f3a0f02967ca7aaa47f38d9cf1993ef13b4ae571de13b4dfabc1aa8f789"
+  },
+  {
+    "source": "docs/modules/ASSETS_MODULE.md",
+    "archive": "docs/archive/history/module-contracts-before-native-workspace-2026-10-29/ASSETS_MODULE.md",
+    "sha256": "3335a0216afcb730d787eba72561f8a5e1555cc06f2aeeb97ed767a577cfab86"
+  },
+  {
+    "source": "docs/modules/SUBSCRIPTIONS_MODULE.md",
+    "archive": "docs/archive/history/module-contracts-before-native-workspace-2026-10-29/SUBSCRIPTIONS_MODULE.md",
+    "sha256": "6aa33e19527a11e84bce5ed9988da5c8e5bf0cd4353aa5dc0edbfdbdcdc28be3"
+  },
+  {
+    "source": "docs/modules/ATTENDANCE_MODULE.md",
+    "archive": "docs/archive/history/module-contracts-before-native-workspace-2026-10-29/ATTENDANCE_MODULE.md",
+    "sha256": "447dab0ed36b094df599d6a68cda58c879e40f43fd858f17e0792faedfc90957"
+  },
+  {
+    "source": "docs/modules/FULFILLMENT_MODULE.md",
+    "archive": "docs/archive/history/module-contracts-before-native-workspace-2026-10-29/FULFILLMENT_MODULE.md",
+    "sha256": "4872a9210427cd7eadacf7022155fbc2321d2775f534ec7ffe876f25dfb50f91"
+  },
+  {
+    "source": "docs/modules/LAUNDRY_MODULE.md",
+    "archive": "docs/archive/history/module-contracts-before-native-workspace-2026-10-29/LAUNDRY_MODULE.md",
+    "sha256": "5dda3e81ade54197e17a220fe5f343c9b05407e3f015c8ee2272817b2ba9f7a8"
+  },
+  {
+    "source": "docs/modules/FIELD_SERVICES_MODULE.md",
+    "archive": "docs/archive/history/module-contracts-before-native-workspace-2026-10-29/FIELD_SERVICES_MODULE.md",
+    "sha256": "bc71ec04abb258473d9b2dd6226c420ee2290b840ba7bbc9a5ffe03bcadce1cd"
+  },
+  {
+    "source": "docs/modules/FORMAL_EDUCATION_MODULE.md",
+    "archive": "docs/archive/history/module-contracts-before-native-workspace-2026-10-29/FORMAL_EDUCATION_MODULE.md",
+    "sha256": "3eac893104c8a41bf97b74aadde8d03eee06c2f31049c03cb10a241589e0b3a8"
+  }
+]

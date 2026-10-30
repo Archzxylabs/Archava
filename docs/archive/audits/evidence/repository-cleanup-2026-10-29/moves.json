@@ -1,0 +1,2704 @@
+[
+  {
+    "from": "tools/act-integration/package.json",
+    "to": "tools/legacy/act-integration/package.json",
+    "sha256": "f9c2c7106d9bb3d9f6dc7e31caf38ceb2921f5092a16cb8b1ad2b8495ada24e4",
+    "bytes": 965,
+    "sha256AfterCleanup": "f9c2c7106d9bb3d9f6dc7e31caf38ceb2921f5092a16cb8b1ad2b8495ada24e4"
+  },
+  {
+    "from": "tools/act-integration/tsconfig.json",
+    "to": "tools/legacy/act-integration/tsconfig.json",
+    "sha256": "348ad638ea46ae67c5052f192b298dba72333e196a3beedf26f1ff789c691ba7",
+    "bytes": 157,
+    "sha256AfterCleanup": "348ad638ea46ae67c5052f192b298dba72333e196a3beedf26f1ff789c691ba7"
+  },
+  {
+    "from": "tools/act-integration/scripts/verify.mjs",
+    "to": "tools/legacy/act-integration/scripts/verify.mjs",
+    "sha256": "dbe4ffdef3450eb2c5035ce49d8a1c9d06a26f25eacf0dded8f9ed1e35cde15d",
+    "bytes": 21695,
+    "sha256AfterCleanup": "dbe4ffdef3450eb2c5035ce49d8a1c9d06a26f25eacf0dded8f9ed1e35cde15d"
+  },
+  {
+    "from": "tools/act-integration/scripts/native-proof.mjs",
+    "to": "tools/legacy/act-integration/scripts/native-proof.mjs",
+    "sha256": "4adc7c7ccfa5e0e4eb548d46b72c32da9d16a334b1221693ad722596c73934eb",
+    "bytes": 20427,
+    "sha256AfterCleanup": "4adc7c7ccfa5e0e4eb548d46b72c32da9d16a334b1221693ad722596c73934eb"
+  },
+  {
+    "from": "tools/act-integration/src/fixture.ts",
+    "to": "tools/legacy/act-integration/src/fixture.ts",
+    "sha256": "cbd9a83488e5e1b5a97619450d3334f24144d55d132332a6da1d337cbbcd0271",
+    "bytes": 11647,
+    "sha256AfterCleanup": "cbd9a83488e5e1b5a97619450d3334f24144d55d132332a6da1d337cbbcd0271"
+  },
+  {
+    "from": "tools/act-integration/test/composition.test.ts",
+    "to": "tools/legacy/act-integration/test/composition.test.ts",
+    "sha256": "dac58748c95cd6107a538a2f488b14379c358f7e59a6065a6216bb763129273a",
+    "bytes": 8982,
+    "sha256AfterCleanup": "dac58748c95cd6107a538a2f488b14379c358f7e59a6065a6216bb763129273a"
+  },
+  {
+    "from": "tools/act-integration/node_modules/.bin/tsserver",
+    "to": "tools/legacy/act-integration/node_modules/.bin/tsserver",
+    "sha256": "66d2171ec68a398abcf900aa9a5d0c830d2ba5636b5a97b7f57fc459794b8927",
+    "bytes": 1422,
+    "sha256AfterCleanup": "66d2171ec68a398abcf900aa9a5d0c830d2ba5636b5a97b7f57fc459794b8927"
+  },
+  {
+    "from": "tools/act-integration/node_modules/.bin/tsc",
+    "to": "tools/legacy/act-integration/node_modules/.bin/tsc",
+    "sha256": "9d3042a1649cf08493d7efe3ed3c0385769786a22225c5b3bdcd2e39d859fa41",
+    "bytes": 1412,
+    "sha256AfterCleanup": "9d3042a1649cf08493d7efe3ed3c0385769786a22225c5b3bdcd2e39d859fa41"
+  },
+  {
+    "from": "tools/act-integration/node_modules/.bin/esbuild",
+    "to": "tools/legacy/act-integration/node_modules/.bin/esbuild",
+    "sha256": "5d9fda61d7663c7c7185039ee0430dd617ad2fcfdc64b95c93db31123c2c5e6b",
+    "bytes": 1394,
+    "sha256AfterCleanup": "5d9fda61d7663c7c7185039ee0430dd617ad2fcfdc64b95c93db31123c2c5e6b"
+  },
+  {
+    "from": "tools/act-integration/node_modules/.bin/vitest",
+    "to": "tools/legacy/act-integration/node_modules/.bin/vitest",
+    "sha256": "1ae1c280614f12aab2fc872dfadaf28b196ffda1180ae41afc4c907b208c9876",
+    "bytes": 1668,
+    "sha256AfterCleanup": "1ae1c280614f12aab2fc872dfadaf28b196ffda1180ae41afc4c907b208c9876"
+  },
+  {
+    "from": "tools/act-integration/node_modules/.bin/tsx",
+    "to": "tools/legacy/act-integration/node_modules/.bin/tsx",
+    "sha256": "21f50ecfb1e4625d85c47aa4d4019d61a1a4820c1d79160cf96eea2a94d17496",
+    "bytes": 1334,
+    "sha256AfterCleanup": "21f50ecfb1e4625d85c47aa4d4019d61a1a4820c1d79160cf96eea2a94d17496"
+  },
+  {
+    "from": "tools/act-integration/node_modules/.bin/vite",
+    "to": "tools/legacy/act-integration/node_modules/.bin/vite",
+    "sha256": "b7f0fff47c221f3da3fbf272ee9acd4af3581b444d5a55781adc13cc69684a4b",
+    "bytes": 1576,
+    "sha256AfterCleanup": "b7f0fff47c221f3da3fbf272ee9acd4af3581b444d5a55781adc13cc69684a4b"
+  },
+  {
+    "from": "tools/configurator/tsconfig.json",
+    "to": "tools/legacy/configurator/tsconfig.json",
+    "sha256": "bab809bb047b3c59311e6abb40ff557d0ad7b65336ca8bd7d4ef24954413807d",
+    "bytes": 310,
+    "sha256AfterCleanup": "bab809bb047b3c59311e6abb40ff557d0ad7b65336ca8bd7d4ef24954413807d"
+  },
+  {
+    "from": "tools/configurator/package.json",
+    "to": "tools/legacy/configurator/package.json",
+    "sha256": "c5b7d0abe2816a1cd78559fabef9c0c6a9fe22e4faa89edf57896385c6ae7787",
+    "bytes": 766,
+    "sha256AfterCleanup": "c5b7d0abe2816a1cd78559fabef9c0c6a9fe22e4faa89edf57896385c6ae7787"
+  },
+  {
+    "from": "tools/configurator/examples/klinik.nusantara.intake.json",
+    "to": "tools/legacy/configurator/examples/klinik.nusantara.intake.json",
+    "sha256": "ae2167a62beff39040e0320cbc4932b3729443048cd84afc7877e2ebc44c775e",
+    "bytes": 1104,
+    "sha256AfterCleanup": "ae2167a62beff39040e0320cbc4932b3729443048cd84afc7877e2ebc44c775e"
+  },
+  {
+    "from": "tools/configurator/src/budget.ts",
+    "to": "tools/legacy/configurator/src/budget.ts",
+    "sha256": "bebbdfb7ac9b1cb3be0ccf56dfed710ece0c58f1ac60155daaba66a284ac4464",
+    "bytes": 4787,
+    "sha256AfterCleanup": "bebbdfb7ac9b1cb3be0ccf56dfed710ece0c58f1ac60155daaba66a284ac4464"
+  },
+  {
+    "from": "tools/configurator/src/build.ts",
+    "to": "tools/legacy/configurator/src/build.ts",
+    "sha256": "24e72f0f3c9ccfe4e9696f02732f1ea4516d0b6d31f43c957120d488ed5d4a3b",
+    "bytes": 6041,
+    "sha256AfterCleanup": "24e72f0f3c9ccfe4e9696f02732f1ea4516d0b6d31f43c957120d488ed5d4a3b"
+  },
+  {
+    "from": "tools/configurator/src/cli.ts",
+    "to": "tools/legacy/configurator/src/cli.ts",
+    "sha256": "5c44cc757aa0873f6da4045ce17c4848de7deda19eeea1307f32760cbfb2b286",
+    "bytes": 13704,
+    "sha256AfterCleanup": "5c44cc757aa0873f6da4045ce17c4848de7deda19eeea1307f32760cbfb2b286"
+  },
+  {
+    "from": "tools/configurator/src/client-config.ts",
+    "to": "tools/legacy/configurator/src/client-config.ts",
+    "sha256": "3ad418b6947a89cba534c3e2c4d668da802f134777e8864806eb4825b809e008",
+    "bytes": 4207,
+    "sha256AfterCleanup": "3ad418b6947a89cba534c3e2c4d668da802f134777e8864806eb4825b809e008"
+  },
+  {
+    "from": "tools/configurator/src/index.ts",
+    "to": "tools/legacy/configurator/src/index.ts",
+    "sha256": "41329bcdf1941bf158303b8cec4025d7add917b5e09c0ed0f46547c831a03320",
+    "bytes": 2484,
+    "sha256AfterCleanup": "41329bcdf1941bf158303b8cec4025d7add917b5e09c0ed0f46547c831a03320"
+  },
+  {
+    "from": "tools/configurator/src/intake.ts",
+    "to": "tools/legacy/configurator/src/intake.ts",
+    "sha256": "a553d77843d25d08adb63ae56fc032fef77e97640b6d54ef123844fe398a90ac",
+    "bytes": 7407,
+    "sha256AfterCleanup": "a553d77843d25d08adb63ae56fc032fef77e97640b6d54ef123844fe398a90ac"
+  },
+  {
+    "from": "tools/configurator/src/normalized.ts",
+    "to": "tools/legacy/configurator/src/normalized.ts",
+    "sha256": "7f1ec50b6e2a1dcac0f78b772226eeb50b01b8508f774172ed9d5f82b15bf7de",
+    "bytes": 4619,
+    "sha256AfterCleanup": "7f1ec50b6e2a1dcac0f78b772226eeb50b01b8508f774172ed9d5f82b15bf7de"
+  },
+  {
+    "from": "tools/configurator/src/quote.ts",
+    "to": "tools/legacy/configurator/src/quote.ts",
+    "sha256": "19e7f38f3ec42b12152ca011e6116e402474eb17cefa3165c689cf52346e1049",
+    "bytes": 1721,
+    "sha256AfterCleanup": "19e7f38f3ec42b12152ca011e6116e402474eb17cefa3165c689cf52346e1049"
+  },
+  {
+    "from": "tools/configurator/src/recommend.ts",
+    "to": "tools/legacy/configurator/src/recommend.ts",
+    "sha256": "801059e184213c6b794232a28e7a3f2e513e9f20e5b04aebb4c3a98ea8090d54",
+    "bytes": 9752,
+    "sha256AfterCleanup": "801059e184213c6b794232a28e7a3f2e513e9f20e5b04aebb4c3a98ea8090d54"
+  },
+  {
+    "from": "tools/configurator/src/variants.ts",
+    "to": "tools/legacy/configurator/src/variants.ts",
+    "sha256": "3ae24ea2a94fd4e360887552f09227a03178601ad1e09102fe8fe1ee87d65b8a",
+    "bytes": 5839,
+    "sha256AfterCleanup": "3ae24ea2a94fd4e360887552f09227a03178601ad1e09102fe8fe1ee87d65b8a"
+  },
+  {
+    "from": "tools/configurator/test/budget.test.ts",
+    "to": "tools/legacy/configurator/test/budget.test.ts",
+    "sha256": "8a8d432c48507b4e1cc13294c30f490e08f1db244d81000237d3214cf70f61f5",
+    "bytes": 4056,
+    "sha256AfterCleanup": "8a8d432c48507b4e1cc13294c30f490e08f1db244d81000237d3214cf70f61f5"
+  },
+  {
+    "from": "tools/configurator/test/cli.test.ts",
+    "to": "tools/legacy/configurator/test/cli.test.ts",
+    "sha256": "21b0cfeaafedc8817dc2f19b1a9255e3eda617a06e0d8f2546b3aecbc8f4d369",
+    "bytes": 7295,
+    "sha256AfterCleanup": "21b0cfeaafedc8817dc2f19b1a9255e3eda617a06e0d8f2546b3aecbc8f4d369"
+  },
+  {
+    "from": "tools/configurator/test/fixtures.ts",
+    "to": "tools/legacy/configurator/test/fixtures.ts",
+    "sha256": "a0185ed675a15a81781df6a70396026907d470b9a8c32c68ccba47faaae9f269",
+    "bytes": 3509,
+    "sha256AfterCleanup": "a0185ed675a15a81781df6a70396026907d470b9a8c32c68ccba47faaae9f269"
+  },
+  {
+    "from": "tools/configurator/test/intake.test.ts",
+    "to": "tools/legacy/configurator/test/intake.test.ts",
+    "sha256": "eeab4be363889c8619a41e1a9c39444abc0e2e387f66b11ee411ccdacb9eda47",
+    "bytes": 7973,
+    "sha256AfterCleanup": "eeab4be363889c8619a41e1a9c39444abc0e2e387f66b11ee411ccdacb9eda47"
+  },
+  {
+    "from": "tools/configurator/test/recommend.test.ts",
+    "to": "tools/legacy/configurator/test/recommend.test.ts",
+    "sha256": "e7989d9c3bf9c50ac01b8d22ec5262918388c7ac456e91ca5601ae2244924215",
+    "bytes": 10482,
+    "sha256AfterCleanup": "e7989d9c3bf9c50ac01b8d22ec5262918388c7ac456e91ca5601ae2244924215"
+  },
+  {
+    "from": "tools/configurator/test/variants.test.ts",
+    "to": "tools/legacy/configurator/test/variants.test.ts",
+    "sha256": "7b19968fbde8c00917c254aca74bdf8bfcc831daf2f60ddb36ea3f05aae46b51",
+    "bytes": 5138,
+    "sha256AfterCleanup": "7b19968fbde8c00917c254aca74bdf8bfcc831daf2f60ddb36ea3f05aae46b51"
+  },
+  {
+    "from": "tools/configurator/test/deployment-plan.test.ts",
+    "to": "tools/legacy/configurator/test/deployment-plan.test.ts",
+    "sha256": "b6664165c67676b0cff6a8a1e333a6a0dead3cc784113a4cfcd5974eab1723c9",
+    "bytes": 2129,
+    "sha256AfterCleanup": "b6664165c67676b0cff6a8a1e333a6a0dead3cc784113a4cfcd5974eab1723c9"
+  },
+  {
+    "from": "tools/configurator/node_modules/.bin/tsc",
+    "to": "tools/legacy/configurator/node_modules/.bin/tsc",
+    "sha256": "9d3042a1649cf08493d7efe3ed3c0385769786a22225c5b3bdcd2e39d859fa41",
+    "bytes": 1412,
+    "sha256AfterCleanup": "9d3042a1649cf08493d7efe3ed3c0385769786a22225c5b3bdcd2e39d859fa41"
+  },
+  {
+    "from": "tools/configurator/node_modules/.bin/tsserver",
+    "to": "tools/legacy/configurator/node_modules/.bin/tsserver",
+    "sha256": "66d2171ec68a398abcf900aa9a5d0c830d2ba5636b5a97b7f57fc459794b8927",
+    "bytes": 1422,
+    "sha256AfterCleanup": "66d2171ec68a398abcf900aa9a5d0c830d2ba5636b5a97b7f57fc459794b8927"
+  },
+  {
+    "from": "tools/configurator/node_modules/.bin/vitest",
+    "to": "tools/legacy/configurator/node_modules/.bin/vitest",
+    "sha256": "1ae1c280614f12aab2fc872dfadaf28b196ffda1180ae41afc4c907b208c9876",
+    "bytes": 1668,
+    "sha256AfterCleanup": "1ae1c280614f12aab2fc872dfadaf28b196ffda1180ae41afc4c907b208c9876"
+  },
+  {
+    "from": "tools/configurator/node_modules/.bin/vite",
+    "to": "tools/legacy/configurator/node_modules/.bin/vite",
+    "sha256": "b7f0fff47c221f3da3fbf272ee9acd4af3581b444d5a55781adc13cc69684a4b",
+    "bytes": 1576,
+    "sha256AfterCleanup": "b7f0fff47c221f3da3fbf272ee9acd4af3581b444d5a55781adc13cc69684a4b"
+  },
+  {
+    "from": "tools/configurator/node_modules/.bin/tsx",
+    "to": "tools/legacy/configurator/node_modules/.bin/tsx",
+    "sha256": "21f50ecfb1e4625d85c47aa4d4019d61a1a4820c1d79160cf96eea2a94d17496",
+    "bytes": 1334,
+    "sha256AfterCleanup": "21f50ecfb1e4625d85c47aa4d4019d61a1a4820c1d79160cf96eea2a94d17496"
+  },
+  {
+    "from": "tools/crm-reference/package.json",
+    "to": "tools/legacy/crm-reference/package.json",
+    "sha256": "db11ac9a7fb87a89e3f0d1ec372346e609b58c071feb4c77fc528882043a2069",
+    "bytes": 684,
+    "sha256AfterCleanup": "db11ac9a7fb87a89e3f0d1ec372346e609b58c071feb4c77fc528882043a2069"
+  },
+  {
+    "from": "tools/crm-reference/tsconfig.json",
+    "to": "tools/legacy/crm-reference/tsconfig.json",
+    "sha256": "8451f27179b73aaf3935056aaee966b63639e40c2cc6bca34c8ec27914c7cd19",
+    "bytes": 312,
+    "sha256AfterCleanup": "8451f27179b73aaf3935056aaee966b63639e40c2cc6bca34c8ec27914c7cd19"
+  },
+  {
+    "from": "tools/crm-reference/src/cluster.ts",
+    "to": "tools/legacy/crm-reference/src/cluster.ts",
+    "sha256": "7e45c54b1741ac03e37e7e7a3c3ec0cb35d4cb881f95e9a50fc8482e663cb5f2",
+    "bytes": 3081,
+    "sha256AfterCleanup": "7e45c54b1741ac03e37e7e7a3c3ec0cb35d4cb881f95e9a50fc8482e663cb5f2"
+  },
+  {
+    "from": "tools/crm-reference/src/server.ts",
+    "to": "tools/legacy/crm-reference/src/server.ts",
+    "sha256": "a99a9c9c6e230af7a85c647ee5d1cf721708d43e00f68acc676caa6830a163b7",
+    "bytes": 4501,
+    "sha256AfterCleanup": "a99a9c9c6e230af7a85c647ee5d1cf721708d43e00f68acc676caa6830a163b7"
+  },
+  {
+    "from": "tools/crm-reference/src/consumers.ts",
+    "to": "tools/legacy/crm-reference/src/consumers.ts",
+    "sha256": "463640027ab2f54322772380de383ce8c2cf0bdd861a1e4753c79d67ec129fb9",
+    "bytes": 9463,
+    "sha256AfterCleanup": "463640027ab2f54322772380de383ce8c2cf0bdd861a1e4753c79d67ec129fb9"
+  },
+  {
+    "from": "tools/crm-reference/src/verify.ts",
+    "to": "tools/legacy/crm-reference/src/verify.ts",
+    "sha256": "214cccb2b9e01f0ca5120da250ce819862da1170446657ba069fb9437f42d3a7",
+    "bytes": 17107,
+    "sha256AfterCleanup": "214cccb2b9e01f0ca5120da250ce819862da1170446657ba069fb9437f42d3a7"
+  },
+  {
+    "from": "tools/crm-reference/src/dev.ts",
+    "to": "tools/legacy/crm-reference/src/dev.ts",
+    "sha256": "bdc030582c75fc8879212f4a01514ee01d44cac13dae7d3bc24e73953b29eead",
+    "bytes": 1408,
+    "sha256AfterCleanup": "bdc030582c75fc8879212f4a01514ee01d44cac13dae7d3bc24e73953b29eead"
+  },
+  {
+    "from": "tools/crm-reference/src/shutdown.ts",
+    "to": "tools/legacy/crm-reference/src/shutdown.ts",
+    "sha256": "a042f15ec68eb6ceafa3635622fb0091b193d29028b0ede814754d62e1691449",
+    "bytes": 464,
+    "sha256AfterCleanup": "a042f15ec68eb6ceafa3635622fb0091b193d29028b0ede814754d62e1691449"
+  },
+  {
+    "from": "tools/crm-reference/src/pipeline-proof.ts",
+    "to": "tools/legacy/crm-reference/src/pipeline-proof.ts",
+    "sha256": "104c56c7956c5b5929c3e35d134f3a4dad58377a0a7c5cfbbbfdc97b89ff890f",
+    "bytes": 17565,
+    "sha256AfterCleanup": "104c56c7956c5b5929c3e35d134f3a4dad58377a0a7c5cfbbbfdc97b89ff890f"
+  },
+  {
+    "from": "tools/crm-reference/src/live-gemini.ts",
+    "to": "tools/legacy/crm-reference/src/live-gemini.ts",
+    "sha256": "f4e8f451705c55ad69cb104a8757efd9518c30ebd2075a0f4ecbd3124593595b",
+    "bytes": 12886,
+    "sha256AfterCleanup": "f4e8f451705c55ad69cb104a8757efd9518c30ebd2075a0f4ecbd3124593595b"
+  },
+  {
+    "from": "tools/crm-reference/src/provider-proof.ts",
+    "to": "tools/legacy/crm-reference/src/provider-proof.ts",
+    "sha256": "b24d308ce6bac35214cf591f838f24d147dab04eea804a3c878ee1c7c308e67d",
+    "bytes": 7940,
+    "sha256AfterCleanup": "b24d308ce6bac35214cf591f838f24d147dab04eea804a3c878ee1c7c308e67d"
+  },
+  {
+    "from": "tools/crm-reference/src/recovery-proof.ts",
+    "to": "tools/legacy/crm-reference/src/recovery-proof.ts",
+    "sha256": "24afbdee25676de7500988fdebfb69fbcd766e9c9406fe27c95ec3fb949acdcc",
+    "bytes": 7833,
+    "sha256AfterCleanup": "24afbdee25676de7500988fdebfb69fbcd766e9c9406fe27c95ec3fb949acdcc"
+  },
+  {
+    "from": "tools/crm-reference/src/worklist-proof.ts",
+    "to": "tools/legacy/crm-reference/src/worklist-proof.ts",
+    "sha256": "2d5aa8771c2d7ba70a78e4b3492bfd01259592020a8c342e7aa5b2db45196bd5",
+    "bytes": 9573,
+    "sha256AfterCleanup": "2d5aa8771c2d7ba70a78e4b3492bfd01259592020a8c342e7aa5b2db45196bd5"
+  },
+  {
+    "from": "tools/crm-reference/src/overview-proof.ts",
+    "to": "tools/legacy/crm-reference/src/overview-proof.ts",
+    "sha256": "49389f6ce4068c17c9d112d1a1a381fb9dcf33235515c9de7e78f63a309e3221",
+    "bytes": 9237,
+    "sha256AfterCleanup": "49389f6ce4068c17c9d112d1a1a381fb9dcf33235515c9de7e78f63a309e3221"
+  },
+  {
+    "from": "tools/crm-reference/scripts/run.mjs",
+    "to": "tools/legacy/crm-reference/scripts/run.mjs",
+    "sha256": "eb2f761f2006adf9ea1b56f534c5e20c34b4aec75f13bcea644d38dbc098a62b",
+    "bytes": 1152,
+    "sha256AfterCleanup": "eb2f761f2006adf9ea1b56f534c5e20c34b4aec75f13bcea644d38dbc098a62b"
+  },
+  {
+    "from": "tools/crm-reference/dist/verify.mjs",
+    "to": "tools/legacy/crm-reference/dist/verify.mjs",
+    "sha256": "ebd6ede5f353ef39cc66a473fbbb28e11a01896c63e86d83f2e042a947efc266",
+    "bytes": 81007,
+    "sha256AfterCleanup": "ebd6ede5f353ef39cc66a473fbbb28e11a01896c63e86d83f2e042a947efc266"
+  },
+  {
+    "from": "tools/crm-reference/dist/dev.mjs",
+    "to": "tools/legacy/crm-reference/dist/dev.mjs",
+    "sha256": "4e510f3407a95b6cb0dd4858dbf7621b3be23321d1977050ea2912f2765d4af8",
+    "bytes": 12184,
+    "sha256AfterCleanup": "4e510f3407a95b6cb0dd4858dbf7621b3be23321d1977050ea2912f2765d4af8"
+  },
+  {
+    "from": "tools/crm-reference/dist/live-gemini.mjs",
+    "to": "tools/legacy/crm-reference/dist/live-gemini.mjs",
+    "sha256": "bcfc78362353481fcede5ff6d221463c2464f54b42fde4a34f30ac6d0d953e17",
+    "bytes": 20352,
+    "sha256AfterCleanup": "bcfc78362353481fcede5ff6d221463c2464f54b42fde4a34f30ac6d0d953e17"
+  },
+  {
+    "from": "tools/crm-reference/node_modules/.bin/tsc",
+    "to": "tools/legacy/crm-reference/node_modules/.bin/tsc",
+    "sha256": "9d3042a1649cf08493d7efe3ed3c0385769786a22225c5b3bdcd2e39d859fa41",
+    "bytes": 1412,
+    "sha256AfterCleanup": "9d3042a1649cf08493d7efe3ed3c0385769786a22225c5b3bdcd2e39d859fa41"
+  },
+  {
+    "from": "tools/crm-reference/node_modules/.bin/esbuild",
+    "to": "tools/legacy/crm-reference/node_modules/.bin/esbuild",
+    "sha256": "5d9fda61d7663c7c7185039ee0430dd617ad2fcfdc64b95c93db31123c2c5e6b",
+    "bytes": 1394,
+    "sha256AfterCleanup": "5d9fda61d7663c7c7185039ee0430dd617ad2fcfdc64b95c93db31123c2c5e6b"
+  },
+  {
+    "from": "tools/crm-reference/node_modules/.bin/tsx",
+    "to": "tools/legacy/crm-reference/node_modules/.bin/tsx",
+    "sha256": "21f50ecfb1e4625d85c47aa4d4019d61a1a4820c1d79160cf96eea2a94d17496",
+    "bytes": 1334,
+    "sha256AfterCleanup": "21f50ecfb1e4625d85c47aa4d4019d61a1a4820c1d79160cf96eea2a94d17496"
+  },
+  {
+    "from": "tools/crm-reference/node_modules/.bin/tsserver",
+    "to": "tools/legacy/crm-reference/node_modules/.bin/tsserver",
+    "sha256": "66d2171ec68a398abcf900aa9a5d0c830d2ba5636b5a97b7f57fc459794b8927",
+    "bytes": 1422,
+    "sha256AfterCleanup": "66d2171ec68a398abcf900aa9a5d0c830d2ba5636b5a97b7f57fc459794b8927"
+  },
+  {
+    "from": "tools/decision-eval/corpus.ts",
+    "to": "tools/legacy/decision-eval/corpus.ts",
+    "sha256": "db0753f9809333a9f61dbcee725593cc020763c8427f6f22d3d80cde03830a96",
+    "bytes": 28731,
+    "sha256AfterCleanup": "db0753f9809333a9f61dbcee725593cc020763c8427f6f22d3d80cde03830a96"
+  },
+  {
+    "from": "tools/decision-eval/critical.ts",
+    "to": "tools/legacy/decision-eval/critical.ts",
+    "sha256": "4eeb2bc555a0bcc12c3475bc1c05f9a81d6f48daa5bc1d69f7100037783a8347",
+    "bytes": 4010,
+    "sha256AfterCleanup": "4eeb2bc555a0bcc12c3475bc1c05f9a81d6f48daa5bc1d69f7100037783a8347"
+  },
+  {
+    "from": "tools/decision-eval/evidence-metrics.ts",
+    "to": "tools/legacy/decision-eval/evidence-metrics.ts",
+    "sha256": "5c2517d334db45a5b5e95ad66d110e0a42979cb7a12a49b3e9bbdcd3901b458a",
+    "bytes": 13235,
+    "sha256AfterCleanup": "5c2517d334db45a5b5e95ad66d110e0a42979cb7a12a49b3e9bbdcd3901b458a"
+  },
+  {
+    "from": "tools/decision-eval/evidence-set.ts",
+    "to": "tools/legacy/decision-eval/evidence-set.ts",
+    "sha256": "2dd236ffa106df2b31b1777faeb426a2c6a2064c730d0ad844965441eb74f71e",
+    "bytes": 27204,
+    "sha256AfterCleanup": "2dd236ffa106df2b31b1777faeb426a2c6a2064c730d0ad844965441eb74f71e"
+  },
+  {
+    "from": "tools/decision-eval/evidence-shadow.ts",
+    "to": "tools/legacy/decision-eval/evidence-shadow.ts",
+    "sha256": "f6f54f58d452c8d840440606645b23dde41cc672dcc5e3200ddc578a33c9b044",
+    "bytes": 12081,
+    "sha256AfterCleanup": "f6f54f58d452c8d840440606645b23dde41cc672dcc5e3200ddc578a33c9b044"
+  },
+  {
+    "from": "tools/decision-eval/index.ts",
+    "to": "tools/legacy/decision-eval/index.ts",
+    "sha256": "b36cd1ddfe63dc233573e780b91af68c8777e717f97a09184271cca6fdac20e1",
+    "bytes": 2004,
+    "sha256AfterCleanup": "b36cd1ddfe63dc233573e780b91af68c8777e717f97a09184271cca6fdac20e1"
+  },
+  {
+    "from": "tools/decision-eval/live-gates.ts",
+    "to": "tools/legacy/decision-eval/live-gates.ts",
+    "sha256": "e5e540dae60451d3924cca32ce8a64c53b53798f14b2aad877381ee3ca44777e",
+    "bytes": 1895,
+    "sha256AfterCleanup": "e5e540dae60451d3924cca32ce8a64c53b53798f14b2aad877381ee3ca44777e"
+  },
+  {
+    "from": "tools/decision-eval/live-jev-eval.ts",
+    "to": "tools/legacy/decision-eval/live-jev-eval.ts",
+    "sha256": "e6ee8a7cb42f80ce5e58b1238eedf3423fc798388a29033c9b99e51442486268",
+    "bytes": 3981,
+    "sha256AfterCleanup": "e6ee8a7cb42f80ce5e58b1238eedf3423fc798388a29033c9b99e51442486268"
+  },
+  {
+    "from": "tools/decision-eval/live-jev.ts",
+    "to": "tools/legacy/decision-eval/live-jev.ts",
+    "sha256": "1fbda028b2b2920dcd4dc8c52c8da93fdbfbca664f07098c6e4fb4faaf8a2eac",
+    "bytes": 1290,
+    "sha256AfterCleanup": "1fbda028b2b2920dcd4dc8c52c8da93fdbfbca664f07098c6e4fb4faaf8a2eac"
+  },
+  {
+    "from": "tools/decision-eval/live-options.ts",
+    "to": "tools/legacy/decision-eval/live-options.ts",
+    "sha256": "1b8cecc1ac8da2eff49909267371cd57df580fec7ab7a30bc092cc5cde3a78ef",
+    "bytes": 1734,
+    "sha256AfterCleanup": "1b8cecc1ac8da2eff49909267371cd57df580fec7ab7a30bc092cc5cde3a78ef"
+  },
+  {
+    "from": "tools/decision-eval/metrics.ts",
+    "to": "tools/legacy/decision-eval/metrics.ts",
+    "sha256": "f7b222d04fdc08d797a495eeadc4801e95bf316a031d7a4892552dd5f413b762",
+    "bytes": 9932,
+    "sha256AfterCleanup": "f7b222d04fdc08d797a495eeadc4801e95bf316a031d7a4892552dd5f413b762"
+  },
+  {
+    "from": "tools/decision-eval/package.json",
+    "to": "tools/legacy/decision-eval/package.json",
+    "sha256": "241c4e98e8493bf6c0c4a6770faca309023739c71fe348228b8a9ae797b5c810",
+    "bytes": 392,
+    "sha256AfterCleanup": "241c4e98e8493bf6c0c4a6770faca309023739c71fe348228b8a9ae797b5c810"
+  },
+  {
+    "from": "tools/decision-eval/run-rule.ts",
+    "to": "tools/legacy/decision-eval/run-rule.ts",
+    "sha256": "59a900882edce4a8cfbfdd12b0c52e7d9285b5da8ee035121b4986240293b253",
+    "bytes": 2174,
+    "sha256AfterCleanup": "59a900882edce4a8cfbfdd12b0c52e7d9285b5da8ee035121b4986240293b253"
+  },
+  {
+    "from": "tools/decision-eval/shadow.ts",
+    "to": "tools/legacy/decision-eval/shadow.ts",
+    "sha256": "436fa18a2c2317392df498a42082048ee7caa37e3549072c1cd7d211f5e4fc70",
+    "bytes": 8005,
+    "sha256AfterCleanup": "436fa18a2c2317392df498a42082048ee7caa37e3549072c1cd7d211f5e4fc70"
+  },
+  {
+    "from": "tools/decision-eval/tasks.ts",
+    "to": "tools/legacy/decision-eval/tasks.ts",
+    "sha256": "c16ca8bddcab2b4ea233bef2b2f3fca9f2c9567a52793ee6d6d10783bea1215c",
+    "bytes": 3467,
+    "sha256AfterCleanup": "c16ca8bddcab2b4ea233bef2b2f3fca9f2c9567a52793ee6d6d10783bea1215c"
+  },
+  {
+    "from": "tools/decision-eval/tsconfig.json",
+    "to": "tools/legacy/decision-eval/tsconfig.json",
+    "sha256": "2b5593a91255d19424035581128345f922a48018001ea12765931ea2ceb5233b",
+    "bytes": 576,
+    "sha256AfterCleanup": "2b5593a91255d19424035581128345f922a48018001ea12765931ea2ceb5233b"
+  },
+  {
+    "from": "tools/decision-eval/test/corpus.test.ts",
+    "to": "tools/legacy/decision-eval/test/corpus.test.ts",
+    "sha256": "9cabab12f7adea48d3ce11f8ed72ca6d437a55c21a8ebb2e9ae5e1d3a81355e3",
+    "bytes": 8835,
+    "sha256AfterCleanup": "9cabab12f7adea48d3ce11f8ed72ca6d437a55c21a8ebb2e9ae5e1d3a81355e3"
+  },
+  {
+    "from": "tools/decision-eval/test/critical.test.ts",
+    "to": "tools/legacy/decision-eval/test/critical.test.ts",
+    "sha256": "6147916c1428aa7763a21559e50c5b53c7ee88adb715a79bd97456caf361ced6",
+    "bytes": 4325,
+    "sha256AfterCleanup": "6147916c1428aa7763a21559e50c5b53c7ee88adb715a79bd97456caf361ced6"
+  },
+  {
+    "from": "tools/decision-eval/test/evidence-metrics.test.ts",
+    "to": "tools/legacy/decision-eval/test/evidence-metrics.test.ts",
+    "sha256": "dd8a298382f408e3f39a009519cb820cb76685530dc66397de2a11fee2137f1b",
+    "bytes": 5025,
+    "sha256AfterCleanup": "dd8a298382f408e3f39a009519cb820cb76685530dc66397de2a11fee2137f1b"
+  },
+  {
+    "from": "tools/decision-eval/test/evidence-set.test.ts",
+    "to": "tools/legacy/decision-eval/test/evidence-set.test.ts",
+    "sha256": "99a987909341984ccf9f07acd5559a6c94208dd1d0407cda70c08645e7df5ad4",
+    "bytes": 4382,
+    "sha256AfterCleanup": "99a987909341984ccf9f07acd5559a6c94208dd1d0407cda70c08645e7df5ad4"
+  },
+  {
+    "from": "tools/decision-eval/test/evidence-shadow.test.ts",
+    "to": "tools/legacy/decision-eval/test/evidence-shadow.test.ts",
+    "sha256": "8cdb3f896532da26410bfe207e7c6113ec2d0b25532008c51543ffe25ac1967c",
+    "bytes": 9357,
+    "sha256AfterCleanup": "8cdb3f896532da26410bfe207e7c6113ec2d0b25532008c51543ffe25ac1967c"
+  },
+  {
+    "from": "tools/decision-eval/test/live-gates.test.ts",
+    "to": "tools/legacy/decision-eval/test/live-gates.test.ts",
+    "sha256": "dbecc955d297a7683c7e8b1ef01054e59493dbd60f40965cf610b36e64b13bfb",
+    "bytes": 2077,
+    "sha256AfterCleanup": "dbecc955d297a7683c7e8b1ef01054e59493dbd60f40965cf610b36e64b13bfb"
+  },
+  {
+    "from": "tools/decision-eval/test/metrics.test.ts",
+    "to": "tools/legacy/decision-eval/test/metrics.test.ts",
+    "sha256": "e5838ab65fb1c4b7ddab2f32f74b0f5cf8209ed73bf88949c2fda12270115bc5",
+    "bytes": 12856,
+    "sha256AfterCleanup": "e5838ab65fb1c4b7ddab2f32f74b0f5cf8209ed73bf88949c2fda12270115bc5"
+  },
+  {
+    "from": "tools/decision-eval/test/shadow.test.ts",
+    "to": "tools/legacy/decision-eval/test/shadow.test.ts",
+    "sha256": "7ebfe1df7b6096ed0c6be75dcccd46dc959621734029fb1c9e03334a36d61f76",
+    "bytes": 4673,
+    "sha256AfterCleanup": "7ebfe1df7b6096ed0c6be75dcccd46dc959621734029fb1c9e03334a36d61f76"
+  },
+  {
+    "from": "tools/decision-eval/node_modules/.bin/tsc",
+    "to": "tools/legacy/decision-eval/node_modules/.bin/tsc",
+    "sha256": "9d3042a1649cf08493d7efe3ed3c0385769786a22225c5b3bdcd2e39d859fa41",
+    "bytes": 1412,
+    "sha256AfterCleanup": "9d3042a1649cf08493d7efe3ed3c0385769786a22225c5b3bdcd2e39d859fa41"
+  },
+  {
+    "from": "tools/decision-eval/node_modules/.bin/vitest",
+    "to": "tools/legacy/decision-eval/node_modules/.bin/vitest",
+    "sha256": "1ae1c280614f12aab2fc872dfadaf28b196ffda1180ae41afc4c907b208c9876",
+    "bytes": 1668,
+    "sha256AfterCleanup": "1ae1c280614f12aab2fc872dfadaf28b196ffda1180ae41afc4c907b208c9876"
+  },
+  {
+    "from": "tools/decision-eval/node_modules/.bin/vite",
+    "to": "tools/legacy/decision-eval/node_modules/.bin/vite",
+    "sha256": "b7f0fff47c221f3da3fbf272ee9acd4af3581b444d5a55781adc13cc69684a4b",
+    "bytes": 1576,
+    "sha256AfterCleanup": "b7f0fff47c221f3da3fbf272ee9acd4af3581b444d5a55781adc13cc69684a4b"
+  },
+  {
+    "from": "tools/decision-eval/node_modules/.bin/tsserver",
+    "to": "tools/legacy/decision-eval/node_modules/.bin/tsserver",
+    "sha256": "66d2171ec68a398abcf900aa9a5d0c830d2ba5636b5a97b7f57fc459794b8927",
+    "bytes": 1422,
+    "sha256AfterCleanup": "66d2171ec68a398abcf900aa9a5d0c830d2ba5636b5a97b7f57fc459794b8927"
+  },
+  {
+    "from": "tools/decision-eval/node_modules/.bin/tsx",
+    "to": "tools/legacy/decision-eval/node_modules/.bin/tsx",
+    "sha256": "21f50ecfb1e4625d85c47aa4d4019d61a1a4820c1d79160cf96eea2a94d17496",
+    "bytes": 1334,
+    "sha256AfterCleanup": "21f50ecfb1e4625d85c47aa4d4019d61a1a4820c1d79160cf96eea2a94d17496"
+  },
+  {
+    "from": "tools/e2e/cdp.mjs",
+    "to": "tools/legacy/e2e/cdp.mjs",
+    "sha256": "f4deacada197f7d4f9fb170f145dac0fa3c7a4d9f13de58691c97ed2a3aad4a9",
+    "bytes": 8218,
+    "sha256AfterCleanup": "f4deacada197f7d4f9fb170f145dac0fa3c7a4d9f13de58691c97ed2a3aad4a9"
+  },
+  {
+    "from": "tools/e2e/home.mjs",
+    "to": "tools/legacy/e2e/home.mjs",
+    "sha256": "9d637aebffd5d82c148fff723d8dbe7a2dd76477e1ca12942ffaae3ae028b95b",
+    "bytes": 10099,
+    "sha256AfterCleanup": "9d637aebffd5d82c148fff723d8dbe7a2dd76477e1ca12942ffaae3ae028b95b"
+  },
+  {
+    "from": "tools/e2e/frontend.mjs",
+    "to": "tools/legacy/e2e/frontend.mjs",
+    "sha256": "6f14d8b0546ba706db9d470700317611572df86a7a210c32dc8f893b6886e246",
+    "bytes": 6229,
+    "sha256AfterCleanup": "6f14d8b0546ba706db9d470700317611572df86a7a210c32dc8f893b6886e246"
+  },
+  {
+    "from": "tools/e2e/crm.mjs",
+    "to": "tools/legacy/e2e/crm.mjs",
+    "sha256": "61ac3853fccde2fac5b4d44bc0b0a96d9d3f2c297a96c8b0d0b1b507dd41ba7e",
+    "bytes": 6012,
+    "sha256AfterCleanup": "61ac3853fccde2fac5b4d44bc0b0a96d9d3f2c297a96c8b0d0b1b507dd41ba7e"
+  },
+  {
+    "from": "tools/e2e/crm-runtime.mjs",
+    "to": "tools/legacy/e2e/crm-runtime.mjs",
+    "sha256": "60a8657c49eb9202dad70a84d7066f35af778bad00ed2c331b02d2287310b140",
+    "bytes": 43425,
+    "sha256AfterCleanup": "60a8657c49eb9202dad70a84d7066f35af778bad00ed2c331b02d2287310b140"
+  },
+  {
+    "from": "tools/e2e/crm-minimal.mjs",
+    "to": "tools/legacy/e2e/crm-minimal.mjs",
+    "sha256": "3edc77fa2bd070a580cc4094bea9e5f9c98ceaa0dfddcd227063e5bbffb844ee",
+    "bytes": 2324,
+    "sha256AfterCleanup": "3edc77fa2bd070a580cc4094bea9e5f9c98ceaa0dfddcd227063e5bbffb844ee"
+  },
+  {
+    "from": "tools/library/verify-consumers.mjs",
+    "to": "tools/legacy/library/verify-consumers.mjs",
+    "sha256": "121fc5ff862846f5d9c7e1e4d94f87ece4197288db3d0d31ad6f885a0e84bedf",
+    "bytes": 5715,
+    "sha256AfterCleanup": "121fc5ff862846f5d9c7e1e4d94f87ece4197288db3d0d31ad6f885a0e84bedf"
+  },
+  {
+    "from": "tools/library/assemble.mjs",
+    "to": "tools/legacy/library/assemble.mjs",
+    "sha256": "9d7340f52941d78683ada9e25f9a2010c1e59e53e86dad6871af34b26ae1859e",
+    "bytes": 4506,
+    "sha256AfterCleanup": "9d7340f52941d78683ada9e25f9a2010c1e59e53e86dad6871af34b26ae1859e"
+  },
+  {
+    "from": "tools/library/verify-assembly.mjs",
+    "to": "tools/legacy/library/verify-assembly.mjs",
+    "sha256": "dcf1a587dd6543d883e51bc97c3f3ea5a3de4b2fee456a5ce7f386c1b1bb6d6c",
+    "bytes": 3405,
+    "sha256AfterCleanup": "dcf1a587dd6543d883e51bc97c3f3ea5a3de4b2fee456a5ce7f386c1b1bb6d6c"
+  },
+  {
+    "from": "tools/library/plan-kits.mjs",
+    "to": "tools/legacy/library/plan-kits.mjs",
+    "sha256": "726c0bd5a48efa4504f1aa242e996c4a48c18f7555e0a63147e94d6d0373bf8d",
+    "bytes": 1590,
+    "sha256AfterCleanup": "726c0bd5a48efa4504f1aa242e996c4a48c18f7555e0a63147e94d6d0373bf8d"
+  },
+  {
+    "from": "tools/library/verify-kits.mjs",
+    "to": "tools/legacy/library/verify-kits.mjs",
+    "sha256": "20ea68444440856c15ea8e06eab6b8fb4b67d2eaf23852e437656cef848b0079",
+    "bytes": 14953,
+    "sha256AfterCleanup": "20ea68444440856c15ea8e06eab6b8fb4b67d2eaf23852e437656cef848b0079"
+  },
+  {
+    "from": "tools/library/verify-projects.mjs",
+    "to": "tools/legacy/library/verify-projects.mjs",
+    "sha256": "977e0e033fd6ba9cc5dab7e0299f57dc1d4ead3ab6cde07736802d65ed31f9f6",
+    "bytes": 20161,
+    "sha256AfterCleanup": "977e0e033fd6ba9cc5dab7e0299f57dc1d4ead3ab6cde07736802d65ed31f9f6"
+  },
+  {
+    "from": "tools/library/verify-project-host.mjs",
+    "to": "tools/legacy/library/verify-project-host.mjs",
+    "sha256": "8118c82c42c0b898d325a0545333ba07d5d1e2c887e9b6dba076e6e6b346572b",
+    "bytes": 16605,
+    "sha256AfterCleanup": "8118c82c42c0b898d325a0545333ba07d5d1e2c887e9b6dba076e6e6b346572b"
+  },
+  {
+    "from": "tools/library/verify-scheduling.mjs",
+    "to": "tools/legacy/library/verify-scheduling.mjs",
+    "sha256": "ca9c01e91d069817c650572fc2d7d8d6cca4f7e7be650e1727a34b577d67c29a",
+    "bytes": 25365,
+    "sha256AfterCleanup": "ca9c01e91d069817c650572fc2d7d8d6cca4f7e7be650e1727a34b577d67c29a"
+  },
+  {
+    "from": "tools/library/verify-scheduling-host.mjs",
+    "to": "tools/legacy/library/verify-scheduling-host.mjs",
+    "sha256": "747a0af2cd9c6bdbeb293b0a7b4064529ea3bbf3aff2198fb2321d207c5f9ce9",
+    "bytes": 18573,
+    "sha256AfterCleanup": "747a0af2cd9c6bdbeb293b0a7b4064529ea3bbf3aff2198fb2321d207c5f9ce9"
+  },
+  {
+    "from": "tools/library/verify-accommodation-host.mjs",
+    "to": "tools/legacy/library/verify-accommodation-host.mjs",
+    "sha256": "56bfae54ae4e5d9d830ddd2f18ac03625189db8550b1c1bed0ad8c5543b753d1",
+    "bytes": 18911,
+    "sha256AfterCleanup": "56bfae54ae4e5d9d830ddd2f18ac03625189db8550b1c1bed0ad8c5543b753d1"
+  },
+  {
+    "from": "tools/library/verify-commerce.mjs",
+    "to": "tools/legacy/library/verify-commerce.mjs",
+    "sha256": "f0020aae39cf45da24ff139318d0e7934b61ac266c10b7bf1649396d474b7a75",
+    "bytes": 29600,
+    "sha256AfterCleanup": "f0020aae39cf45da24ff139318d0e7934b61ac266c10b7bf1649396d474b7a75"
+  },
+  {
+    "from": "tools/library/verify-commerce-host.mjs",
+    "to": "tools/legacy/library/verify-commerce-host.mjs",
+    "sha256": "a4cbb4a92e984f88f1459046db80de6a945abb921e5a43e701b5f857a7219956",
+    "bytes": 19492,
+    "sha256AfterCleanup": "a4cbb4a92e984f88f1459046db80de6a945abb921e5a43e701b5f857a7219956"
+  },
+  {
+    "from": "tools/library/pg-proof.mjs",
+    "to": "tools/legacy/library/pg-proof.mjs",
+    "sha256": "8cc35c3959f14ef7f02ef6076fb5eacef0cc46731bdc6ae0fac33f168f8a7340",
+    "bytes": 549,
+    "sha256AfterCleanup": "8cc35c3959f14ef7f02ef6076fb5eacef0cc46731bdc6ae0fac33f168f8a7340"
+  },
+  {
+    "from": "tools/library/verify-foodservice.mjs",
+    "to": "tools/legacy/library/verify-foodservice.mjs",
+    "sha256": "8d7d9305f29949a92e5a010376cdb834faa866524082b89ea7fbfe509df0abe0",
+    "bytes": 36497,
+    "sha256AfterCleanup": "8d7d9305f29949a92e5a010376cdb834faa866524082b89ea7fbfe509df0abe0"
+  },
+  {
+    "from": "tools/library/verify-foodservice-host.mjs",
+    "to": "tools/legacy/library/verify-foodservice-host.mjs",
+    "sha256": "d4b27b224612aabad1a966b2c1b7654cb13d39dfe3856fda68496c05869e0c42",
+    "bytes": 20196,
+    "sha256AfterCleanup": "d4b27b224612aabad1a966b2c1b7654cb13d39dfe3856fda68496c05869e0c42"
+  },
+  {
+    "from": "tools/library/verify-support.mjs",
+    "to": "tools/legacy/library/verify-support.mjs",
+    "sha256": "b542882ed3275fee447b9c31484e9c32822427dc3a1ac6e5c946fe1b91e615cf",
+    "bytes": 29596,
+    "sha256AfterCleanup": "b542882ed3275fee447b9c31484e9c32822427dc3a1ac6e5c946fe1b91e615cf"
+  },
+  {
+    "from": "tools/library/verify-support-host.mjs",
+    "to": "tools/legacy/library/verify-support-host.mjs",
+    "sha256": "1f2d4eef21a7d60e592c9c2c72c8131c706f1ba7c65dd238bef53df4e3c0df96",
+    "bytes": 18591,
+    "sha256AfterCleanup": "1f2d4eef21a7d60e592c9c2c72c8131c706f1ba7c65dd238bef53df4e3c0df96"
+  },
+  {
+    "from": "tools/library/verify-purchasing.mjs",
+    "to": "tools/legacy/library/verify-purchasing.mjs",
+    "sha256": "0b0b1a2ac11a78403232f840699ccadd4953e0827e9ce7335fe835b165c61eba",
+    "bytes": 36047,
+    "sha256AfterCleanup": "0b0b1a2ac11a78403232f840699ccadd4953e0827e9ce7335fe835b165c61eba"
+  },
+  {
+    "from": "tools/library/verify-purchasing-host.mjs",
+    "to": "tools/legacy/library/verify-purchasing-host.mjs",
+    "sha256": "755a8856e0e0e4b8eaf476c305045f8fb2087199a067795e831cf4a46a6990c6",
+    "bytes": 20540,
+    "sha256AfterCleanup": "755a8856e0e0e4b8eaf476c305045f8fb2087199a067795e831cf4a46a6990c6"
+  },
+  {
+    "from": "tools/library/verify-organizations.mjs",
+    "to": "tools/legacy/library/verify-organizations.mjs",
+    "sha256": "2da619b8173640fe74ce07335b4ae9e667fb0128d70f1b0046c7fa6884ffdc48",
+    "bytes": 19603,
+    "sha256AfterCleanup": "2da619b8173640fe74ce07335b4ae9e667fb0128d70f1b0046c7fa6884ffdc48"
+  },
+  {
+    "from": "tools/library/verify-proposals.mjs",
+    "to": "tools/legacy/library/verify-proposals.mjs",
+    "sha256": "e4189f5f94013a3ef5d8300a5c645ebe55968d5f904f863d2dbc5f7872f496b9",
+    "bytes": 29570,
+    "sha256AfterCleanup": "e4189f5f94013a3ef5d8300a5c645ebe55968d5f904f863d2dbc5f7872f496b9"
+  },
+  {
+    "from": "tools/library/verify-capacity.mjs",
+    "to": "tools/legacy/library/verify-capacity.mjs",
+    "sha256": "4ed782d08e58cd2c634740e9b199d811656828375584a67d73cca4dc50668111",
+    "bytes": 29908,
+    "sha256AfterCleanup": "4ed782d08e58cd2c634740e9b199d811656828375584a67d73cca4dc50668111"
+  },
+  {
+    "from": "tools/library/verify-organizations-host.mjs",
+    "to": "tools/legacy/library/verify-organizations-host.mjs",
+    "sha256": "eb40a62fd7667acb28b4bb3b097dcaa7edab7c1e941af2b47c312876ce1e869c",
+    "bytes": 20363,
+    "sha256AfterCleanup": "eb40a62fd7667acb28b4bb3b097dcaa7edab7c1e941af2b47c312876ce1e869c"
+  },
+  {
+    "from": "tools/library/verify-proposals-host.mjs",
+    "to": "tools/legacy/library/verify-proposals-host.mjs",
+    "sha256": "c7b2f402ac1f2f6a508c91256894d598a8c11d5a5093479b53f7fb1efe5dd397",
+    "bytes": 21365,
+    "sha256AfterCleanup": "c7b2f402ac1f2f6a508c91256894d598a8c11d5a5093479b53f7fb1efe5dd397"
+  },
+  {
+    "from": "tools/library/verify-capacity-host.mjs",
+    "to": "tools/legacy/library/verify-capacity-host.mjs",
+    "sha256": "09f89d31d940f4bef01f7f6531231676adcc2db2ec5beedf098900e8efff91d9",
+    "bytes": 21172,
+    "sha256AfterCleanup": "09f89d31d940f4bef01f7f6531231676adcc2db2ec5beedf098900e8efff91d9"
+  },
+  {
+    "from": "tools/library/verify-assets.mjs",
+    "to": "tools/legacy/library/verify-assets.mjs",
+    "sha256": "658a5bb8243df2906925c68a45d833254440f4cc459b3dbbba0a8a2140e27f61",
+    "bytes": 16132,
+    "sha256AfterCleanup": "658a5bb8243df2906925c68a45d833254440f4cc459b3dbbba0a8a2140e27f61"
+  },
+  {
+    "from": "tools/library/verify-assets-host.mjs",
+    "to": "tools/legacy/library/verify-assets-host.mjs",
+    "sha256": "a1caca087a41a27c48cdaed1c19a9afb963a60dc8528e2ab25d087cda1670ec3",
+    "bytes": 16709,
+    "sha256AfterCleanup": "a1caca087a41a27c48cdaed1c19a9afb963a60dc8528e2ab25d087cda1670ec3"
+  },
+  {
+    "from": "tools/library/verify-subscriptions.mjs",
+    "to": "tools/legacy/library/verify-subscriptions.mjs",
+    "sha256": "fe81ed790695b379cad1139c30313fcef8ca79a83410a03e0b3248a077824e09",
+    "bytes": 22708,
+    "sha256AfterCleanup": "fe81ed790695b379cad1139c30313fcef8ca79a83410a03e0b3248a077824e09"
+  },
+  {
+    "from": "tools/library/verify-subscriptions-host.mjs",
+    "to": "tools/legacy/library/verify-subscriptions-host.mjs",
+    "sha256": "19ce9b23f4b5e0cee6daa49b88f7c894ae74ce1d809e754ff0363ec443317365",
+    "bytes": 17573,
+    "sha256AfterCleanup": "19ce9b23f4b5e0cee6daa49b88f7c894ae74ce1d809e754ff0363ec443317365"
+  },
+  {
+    "from": "tools/library/verify-attendance.mjs",
+    "to": "tools/legacy/library/verify-attendance.mjs",
+    "sha256": "b1cfb6297a720d936dcb25cfd1f7693b6c9183e2495b6f78818b910c58570035",
+    "bytes": 17560,
+    "sha256AfterCleanup": "b1cfb6297a720d936dcb25cfd1f7693b6c9183e2495b6f78818b910c58570035"
+  },
+  {
+    "from": "tools/library/verify-attendance-host.mjs",
+    "to": "tools/legacy/library/verify-attendance-host.mjs",
+    "sha256": "fa1eb1e65e9dd12f2799790ce33196d678a591eccb63060b0a58748fd92d2e17",
+    "bytes": 16778,
+    "sha256AfterCleanup": "fa1eb1e65e9dd12f2799790ce33196d678a591eccb63060b0a58748fd92d2e17"
+  },
+  {
+    "from": "tools/library/npm-env.mjs",
+    "to": "tools/legacy/library/npm-env.mjs",
+    "sha256": "21bb77aa73c905fbc7c32b7bba40c59647d2a124836dbd672ed2d1c47258a16e",
+    "bytes": 1026,
+    "sha256AfterCleanup": "21bb77aa73c905fbc7c32b7bba40c59647d2a124836dbd672ed2d1c47258a16e"
+  },
+  {
+    "from": "tools/library/verify-fulfillment.mjs",
+    "to": "tools/legacy/library/verify-fulfillment.mjs",
+    "sha256": "6a55c1dc14a756c9a80a452ded235fd168d2e6323fc1f1f795817cb26bda4dc0",
+    "bytes": 23686,
+    "sha256AfterCleanup": "6a55c1dc14a756c9a80a452ded235fd168d2e6323fc1f1f795817cb26bda4dc0"
+  },
+  {
+    "from": "tools/library/verify-fulfillment-host.mjs",
+    "to": "tools/legacy/library/verify-fulfillment-host.mjs",
+    "sha256": "763fc16e6eaeaefe8338426a0dc2cb11ba3e165157562a8b6e35d4b503d6b690",
+    "bytes": 16624,
+    "sha256AfterCleanup": "763fc16e6eaeaefe8338426a0dc2cb11ba3e165157562a8b6e35d4b503d6b690"
+  },
+  {
+    "from": "tools/library/verify-billing.mjs",
+    "to": "tools/legacy/library/verify-billing.mjs",
+    "sha256": "bca22f8bc663d86852e51d24657ef29799088a3bce5ef3b780279dbd2fc082fa",
+    "bytes": 26925,
+    "sha256AfterCleanup": "bca22f8bc663d86852e51d24657ef29799088a3bce5ef3b780279dbd2fc082fa"
+  },
+  {
+    "from": "tools/library/verify-billing-host.mjs",
+    "to": "tools/legacy/library/verify-billing-host.mjs",
+    "sha256": "097797c8b584bf32c75433cc83f6a3ed1cf6b5f71e94305f62f55d761e7380d3",
+    "bytes": 27050,
+    "sha256AfterCleanup": "097797c8b584bf32c75433cc83f6a3ed1cf6b5f71e94305f62f55d761e7380d3"
+  },
+  {
+    "from": "tools/library/verify-laundry.mjs",
+    "to": "tools/legacy/library/verify-laundry.mjs",
+    "sha256": "b660085ebee7c6f8e9c543a1f7893248d9243017515627ba012889d4434ca313",
+    "bytes": 25634,
+    "sha256AfterCleanup": "b660085ebee7c6f8e9c543a1f7893248d9243017515627ba012889d4434ca313"
+  },
+  {
+    "from": "tools/library/verify-laundry-host.mjs",
+    "to": "tools/legacy/library/verify-laundry-host.mjs",
+    "sha256": "701b6da73a892eeb807ea8f574909ffb6a29cc41a30500963fccba24b4bb9e29",
+    "bytes": 16377,
+    "sha256AfterCleanup": "701b6da73a892eeb807ea8f574909ffb6a29cc41a30500963fccba24b4bb9e29"
+  },
+  {
+    "from": "tools/library/verify-field-services.mjs",
+    "to": "tools/legacy/library/verify-field-services.mjs",
+    "sha256": "6224ddffba0163d982c63ccab773d126e2fc21b84cc8eebf4081b507cc2368cb",
+    "bytes": 30844,
+    "sha256AfterCleanup": "6224ddffba0163d982c63ccab773d126e2fc21b84cc8eebf4081b507cc2368cb"
+  },
+  {
+    "from": "tools/library/verify-field-services-host.mjs",
+    "to": "tools/legacy/library/verify-field-services-host.mjs",
+    "sha256": "95a8ffa4035efa0a1cec397c5f7ac13dbd0207f4f3eb27e34c21b3760b29e988",
+    "bytes": 17122,
+    "sha256AfterCleanup": "95a8ffa4035efa0a1cec397c5f7ac13dbd0207f4f3eb27e34c21b3760b29e988"
+  },
+  {
+    "from": "tools/library/verify-accommodation.mjs",
+    "to": "tools/legacy/library/verify-accommodation.mjs",
+    "sha256": "67ca50cfc8bbe2a6c4bde44fe7ac5fab48d5be226fac992e06a89d7c00e2a4f2",
+    "bytes": 34441,
+    "sha256AfterCleanup": "67ca50cfc8bbe2a6c4bde44fe7ac5fab48d5be226fac992e06a89d7c00e2a4f2"
+  },
+  {
+    "from": "tools/library/pack.mjs",
+    "to": "tools/legacy/library/pack.mjs",
+    "sha256": "f8c25fbb5c2cb460de9b6a8c66ab64eec3c2216b41d92fd1b51a7b2601220cea",
+    "bytes": 9533,
+    "sha256AfterCleanup": "f8c25fbb5c2cb460de9b6a8c66ab64eec3c2216b41d92fd1b51a7b2601220cea"
+  },
+  {
+    "from": "tools/library/verify-formal-education.mjs",
+    "to": "tools/legacy/library/verify-formal-education.mjs",
+    "sha256": "c7ee46b6716a83b99e4f39c8221029e3121cc254ec4c6712b65d3e86990686e5",
+    "bytes": 37597,
+    "sha256AfterCleanup": "c7ee46b6716a83b99e4f39c8221029e3121cc254ec4c6712b65d3e86990686e5"
+  },
+  {
+    "from": "tools/library/verify-formal-education-host.mjs",
+    "to": "tools/legacy/library/verify-formal-education-host.mjs",
+    "sha256": "1078440471f076e6adbe3809aba2d1078adf61ba5b917e636eca1839d3e626ee",
+    "bytes": 14253,
+    "sha256AfterCleanup": "1078440471f076e6adbe3809aba2d1078adf61ba5b917e636eca1839d3e626ee"
+  },
+  {
+    "from": "tools/library/manifest.mjs",
+    "to": "tools/legacy/library/manifest.mjs",
+    "sha256": "93523383420fb3457cba5523ea5ac58dbd04b5f22bdc9248a33632a21d32d4c8",
+    "bytes": 28435,
+    "sha256AfterCleanup": "93523383420fb3457cba5523ea5ac58dbd04b5f22bdc9248a33632a21d32d4c8"
+  },
+  {
+    "from": "tools/library/manifest-module.d.ts",
+    "to": "tools/legacy/library/manifest-module.d.ts",
+    "sha256": "9049731bfd208fe33d73eb4396904e3297f6c76333c83891ddfdf3de93f2408e",
+    "bytes": 5894,
+    "sha256AfterCleanup": "9049731bfd208fe33d73eb4396904e3297f6c76333c83891ddfdf3de93f2408e"
+  },
+  {
+    "from": "tools/library/verify-rust-consumers.mjs",
+    "to": "tools/legacy/library/verify-rust-consumers.mjs",
+    "sha256": "b572df64e16c03c6d8933ecfa499d707037b21b88bc8fab075b2d22897bd06d3",
+    "bytes": 24382,
+    "sha256AfterCleanup": "b572df64e16c03c6d8933ecfa499d707037b21b88bc8fab075b2d22897bd06d3"
+  },
+  {
+    "from": "tools/library/pg-fixture.mjs",
+    "to": "tools/legacy/library/pg-fixture.mjs",
+    "sha256": "db00a722f5652bd7fbe331e07b722daa00af2b21145e81f5242b902a5652b55e",
+    "bytes": 8228,
+    "sha256AfterCleanup": "db00a722f5652bd7fbe331e07b722daa00af2b21145e81f5242b902a5652b55e"
+  },
+  {
+    "from": "tools/library/pg-fixture-module.d.ts",
+    "to": "tools/legacy/library/pg-fixture-module.d.ts",
+    "sha256": "9ab4f140a301bd30f7eb5cbba07bf3b648b72c1e8bbe4b6170c77c7df87a9354",
+    "bytes": 2117,
+    "sha256AfterCleanup": "9ab4f140a301bd30f7eb5cbba07bf3b648b72c1e8bbe4b6170c77c7df87a9354"
+  },
+  {
+    "from": "tools/library/test/manifest.test.ts",
+    "to": "tools/legacy/library/test/manifest.test.ts",
+    "sha256": "ee77ec133de78e21a5b46bd2a58c5b8e839c44bcab3b6438a3c031b16d52cb76",
+    "bytes": 29614,
+    "sha256AfterCleanup": "ee77ec133de78e21a5b46bd2a58c5b8e839c44bcab3b6438a3c031b16d52cb76"
+  },
+  {
+    "from": "tools/library/test/pg-fixture.test.ts",
+    "to": "tools/legacy/library/test/pg-fixture.test.ts",
+    "sha256": "b5312d81ec529c74468ae6b16bf7e4258677f707ed265c93bff720ab509b3bb2",
+    "bytes": 3621,
+    "sha256AfterCleanup": "b5312d81ec529c74468ae6b16bf7e4258677f707ed265c93bff720ab509b3bb2"
+  },
+  {
+    "from": "tools/own/verify.mjs",
+    "to": "tools/legacy/own/verify.mjs",
+    "sha256": "f1eaf7d18abd581859f723b1b0a95ee88a72f886e067b6f51a6dae0e49366fa2",
+    "bytes": 22816,
+    "sha256AfterCleanup": "f1eaf7d18abd581859f723b1b0a95ee88a72f886e067b6f51a6dae0e49366fa2"
+  },
+  {
+    "from": "tools/scripts/structure.mjs",
+    "to": "tools/legacy/scripts/structure.mjs",
+    "sha256": "7d9795a01406c4cff8e467b804993715e20aebfc8984eec52857ffbac90dbb73",
+    "bytes": 10877,
+    "sha256AfterCleanup": "7d9795a01406c4cff8e467b804993715e20aebfc8984eec52857ffbac90dbb73"
+  },
+  {
+    "from": "tools/scripts/verify.mjs",
+    "to": "tools/legacy/scripts/verify.mjs",
+    "sha256": "4f75c13b9db3376e5ef80df1e4250d14cbae3ada9b0c293c3774fc86b7e38fbf",
+    "bytes": 4380,
+    "sha256AfterCleanup": "4f75c13b9db3376e5ef80df1e4250d14cbae3ada9b0c293c3774fc86b7e38fbf"
+  },
+  {
+    "from": "tools/scripts/audit-trio.sh",
+    "to": "tools/legacy/scripts/audit-trio.sh",
+    "sha256": "5a4d62224b5346313ffa29f39306e3778559007ece81a10db2f861addc9934b7",
+    "bytes": 1093,
+    "sha256AfterCleanup": "5a4d62224b5346313ffa29f39306e3778559007ece81a10db2f861addc9934b7"
+  },
+  {
+    "from": "tools/scripts/test/structure.test.ts",
+    "to": "tools/legacy/scripts/test/structure.test.ts",
+    "sha256": "7a0f48c45443a354522ae6e42404795e89d8b1c74b2f9b814753a2ea477a5448",
+    "bytes": 11209,
+    "sha256AfterCleanup": "7a0f48c45443a354522ae6e42404795e89d8b1c74b2f9b814753a2ea477a5448"
+  },
+  {
+    "from": "tools/security/verify.mjs",
+    "to": "tools/legacy/security/verify.mjs",
+    "sha256": "50b8d3b3abb20af132aebe949508e29204366a4e8e4e0498b3542e851b215d58",
+    "bytes": 39804,
+    "sha256AfterCleanup": "50b8d3b3abb20af132aebe949508e29204366a4e8e4e0498b3542e851b215d58"
+  },
+  {
+    "from": "tools/rust/assistant-context.mjs",
+    "to": "tools/legacy/rust/assistant-context.mjs",
+    "sha256": "a05dbad0a45829c12b3ac4982ee7a51b77aa1531f26b6199c0d4d324fd3312e3",
+    "bytes": 19447,
+    "sha256AfterCleanup": "a05dbad0a45829c12b3ac4982ee7a51b77aa1531f26b6199c0d4d324fd3312e3"
+  },
+  {
+    "from": "tools/rust/bootstrap.mjs",
+    "to": "tools/legacy/rust/bootstrap.mjs",
+    "sha256": "f15896735294ecc27f263c3a0862d06ad16a595e9e160b32adddced0fe5ffc69",
+    "bytes": 21116,
+    "sha256AfterCleanup": "f15896735294ecc27f263c3a0862d06ad16a595e9e160b32adddced0fe5ffc69"
+  },
+  {
+    "from": "tools/rust/browser-slice.mjs",
+    "to": "tools/legacy/rust/browser-slice.mjs",
+    "sha256": "3c9705698dedbad7b2aa8e28e136fa71ddf4d136b4e1b72f3bed6c059b596b3d",
+    "bytes": 91093,
+    "sha256AfterCleanup": "3c9705698dedbad7b2aa8e28e136fa71ddf4d136b4e1b72f3bed6c059b596b3d"
+  },
+  {
+    "from": "tools/rust/build-artifacts.mjs",
+    "to": "tools/legacy/rust/build-artifacts.mjs",
+    "sha256": "4fa2ac2a20595c2d1cbebbca6123a48b04e5f72030e5db800ef71a84938d2075",
+    "bytes": 4797,
+    "sha256AfterCleanup": "4fa2ac2a20595c2d1cbebbca6123a48b04e5f72030e5db800ef71a84938d2075"
+  },
+  {
+    "from": "tools/rust/capacity-conformance.mjs",
+    "to": "tools/legacy/rust/capacity-conformance.mjs",
+    "sha256": "a806f4b2d455ddc4c1881f35641f3ddee1f2bfb5e8d18d55d32f24646444f280",
+    "bytes": 10313,
+    "sha256AfterCleanup": "a806f4b2d455ddc4c1881f35641f3ddee1f2bfb5e8d18d55d32f24646444f280"
+  },
+  {
+    "from": "tools/rust/capacity-probe.mjs",
+    "to": "tools/legacy/rust/capacity-probe.mjs",
+    "sha256": "f3769d0a4b4e561aa6d4b44fb5f5f4ef54776441141e7b7ad62ad0593a4db513",
+    "bytes": 21350,
+    "sha256AfterCleanup": "f3769d0a4b4e561aa6d4b44fb5f5f4ef54776441141e7b7ad62ad0593a4db513"
+  },
+  {
+    "from": "tools/rust/count-lines.mjs",
+    "to": "tools/legacy/rust/count-lines.mjs",
+    "sha256": "cfa0b514b6ae823f1d4d078ffd7f08d41ebae6cce106dc9329926ed6b51d2fd4",
+    "bytes": 12571,
+    "sha256AfterCleanup": "cfa0b514b6ae823f1d4d078ffd7f08d41ebae6cce106dc9329926ed6b51d2fd4"
+  },
+  {
+    "from": "tools/rust/coverage.mjs",
+    "to": "tools/legacy/rust/coverage.mjs",
+    "sha256": "0421adf62f59c28c657c322d0c0b1283a99b5e4da5d2a9fa0924bcd05a6b5e9c",
+    "bytes": 15257,
+    "sha256AfterCleanup": "0421adf62f59c28c657c322d0c0b1283a99b5e4da5d2a9fa0924bcd05a6b5e9c"
+  },
+  {
+    "from": "tools/rust/erp/verify-purchasing.mjs",
+    "to": "tools/legacy/rust/erp/verify-purchasing.mjs",
+    "sha256": "b70b0476f996585ef94585dea225a6300a3ece998877a69350bdc58ea68eb3a7",
+    "bytes": 12151,
+    "sha256AfterCleanup": "b70b0476f996585ef94585dea225a6300a3ece998877a69350bdc58ea68eb3a7"
+  },
+  {
+    "from": "tools/rust/erp/verify-foodservice.mjs",
+    "to": "tools/legacy/rust/erp/verify-foodservice.mjs",
+    "sha256": "6f3b8f3ab8303f264ceaf2d6b365141057c82c33cdd3421ed27c3fbdedf5e286",
+    "bytes": 13406,
+    "sha256AfterCleanup": "6f3b8f3ab8303f264ceaf2d6b365141057c82c33cdd3421ed27c3fbdedf5e286"
+  },
+  {
+    "from": "tools/rust/erp/module-consumers.ts",
+    "to": "tools/legacy/rust/erp/module-consumers.ts",
+    "sha256": "9cebbee68a9b0115900d0d760336c348a3673ce10117ccbe43c4f70c0fea57e6",
+    "bytes": 9607,
+    "sha256AfterCleanup": "9cebbee68a9b0115900d0d760336c348a3673ce10117ccbe43c4f70c0fea57e6"
+  },
+  {
+    "from": "tools/rust/erp/module-consumers.witnesses.mjs",
+    "to": "tools/legacy/rust/erp/module-consumers.witnesses.mjs",
+    "sha256": "3cd33da37af1075a67e35e685c3123aee75c2fd09f5bdacc7b5c67fc80fd84ca",
+    "bytes": 1872,
+    "sha256AfterCleanup": "3cd33da37af1075a67e35e685c3123aee75c2fd09f5bdacc7b5c67fc80fd84ca"
+  },
+  {
+    "from": "tools/rust/erp/verify-r04.mjs",
+    "to": "tools/legacy/rust/erp/verify-r04.mjs",
+    "sha256": "0345fa20cbf1bfd131106919be25dcfc36f3561347236d6ed70f5461e20df51b",
+    "bytes": 16808,
+    "sha256AfterCleanup": "0345fa20cbf1bfd131106919be25dcfc36f3561347236d6ed70f5461e20df51b"
+  },
+  {
+    "from": "tools/rust/erp/verify-r05.mjs",
+    "to": "tools/legacy/rust/erp/verify-r05.mjs",
+    "sha256": "5a5fa576db2d735fbd155b8af5b3dcf125352c2a7d6fb47b5c96ec983faed5d5",
+    "bytes": 19500,
+    "sha256AfterCleanup": "5a5fa576db2d735fbd155b8af5b3dcf125352c2a7d6fb47b5c96ec983faed5d5"
+  },
+  {
+    "from": "tools/rust/erp/verify-r07.mjs",
+    "to": "tools/legacy/rust/erp/verify-r07.mjs",
+    "sha256": "6941a6fcad03244fbb600a08aef7dbe1407c0b5e389ed78592057346d160333d",
+    "bytes": 27947,
+    "sha256AfterCleanup": "6941a6fcad03244fbb600a08aef7dbe1407c0b5e389ed78592057346d160333d"
+  },
+  {
+    "from": "tools/rust/erp/module-consumers.witnesses.d.mts",
+    "to": "tools/legacy/rust/erp/module-consumers.witnesses.d.mts",
+    "sha256": "31113ca83236dc02260a33c465dd7af2d5805d5ba96a03b08752f97781eeb5ef",
+    "bytes": 997,
+    "sha256AfterCleanup": "31113ca83236dc02260a33c465dd7af2d5805d5ba96a03b08752f97781eeb5ef"
+  },
+  {
+    "from": "tools/rust/evidence.mjs",
+    "to": "tools/legacy/rust/evidence.mjs",
+    "sha256": "1d4d5c1d083585c63bb9b576fef0c175e55d9d93f333ad3c55b573633485d88d",
+    "bytes": 10120,
+    "sha256AfterCleanup": "1d4d5c1d083585c63bb9b576fef0c175e55d9d93f333ad3c55b573633485d88d"
+  },
+  {
+    "from": "tools/rust/integrated-coverage.mjs",
+    "to": "tools/legacy/rust/integrated-coverage.mjs",
+    "sha256": "61632f4583facdeeb5f3f1cbeef640baff33025b4f4fc4483171f14128746483",
+    "bytes": 2056,
+    "sha256AfterCleanup": "61632f4583facdeeb5f3f1cbeef640baff33025b4f4fc4483171f14128746483"
+  },
+  {
+    "from": "tools/rust/inventory.mjs",
+    "to": "tools/legacy/rust/inventory.mjs",
+    "sha256": "a994a09e7f52c63ec361b812a15197a4134ac3f7f2eb42c3cf76284c321ef34c",
+    "bytes": 9774,
+    "sha256AfterCleanup": "a994a09e7f52c63ec361b812a15197a4134ac3f7f2eb42c3cf76284c321ef34c"
+  },
+  {
+    "from": "tools/rust/k05-k04-consumers.mjs",
+    "to": "tools/legacy/rust/k05-k04-consumers.mjs",
+    "sha256": "e3932e04b48c8ab7fc56ed2d13d159de54d4a62bd44f13c392f1f326b32e98cc",
+    "bytes": 36031,
+    "sha256AfterCleanup": "e3932e04b48c8ab7fc56ed2d13d159de54d4a62bd44f13c392f1f326b32e98cc"
+  },
+  {
+    "from": "tools/rust/legacy-replacement.mjs",
+    "to": "tools/legacy/rust/legacy-replacement.mjs",
+    "sha256": "ed45c4658ba4ce6ac373579c998889bdd718abffd9a1d04f56f8541a70a73f09",
+    "bytes": 13610,
+    "sha256AfterCleanup": "ed45c4658ba4ce6ac373579c998889bdd718abffd9a1d04f56f8541a70a73f09"
+  },
+  {
+    "from": "tools/rust/parity/canonical.mjs",
+    "to": "tools/legacy/rust/parity/canonical.mjs",
+    "sha256": "e01427195b85ef149354bb2e1a75d28065272d5f8fdb8e6092a950e8d10b6fe1",
+    "bytes": 4044,
+    "sha256AfterCleanup": "e01427195b85ef149354bb2e1a75d28065272d5f8fdb8e6092a950e8d10b6fe1"
+  },
+  {
+    "from": "tools/rust/parity/gen-cases-rates.mjs",
+    "to": "tools/legacy/rust/parity/gen-cases-rates.mjs",
+    "sha256": "2440213227964e8d5f8be4cc8b46b98c7d1562ae65673984c099deadc1b8d130",
+    "bytes": 14101,
+    "sha256AfterCleanup": "2440213227964e8d5f8be4cc8b46b98c7d1562ae65673984c099deadc1b8d130"
+  },
+  {
+    "from": "tools/rust/parity/runtime.mjs",
+    "to": "tools/legacy/rust/parity/runtime.mjs",
+    "sha256": "67f705d87634c6caeb8a0fb4e3b7f9ac6ad59b99c5f02c4eee85b3e4554ce84f",
+    "bytes": 2727,
+    "sha256AfterCleanup": "67f705d87634c6caeb8a0fb4e3b7f9ac6ad59b99c5f02c4eee85b3e4554ce84f"
+  },
+  {
+    "from": "tools/rust/parity/gen-cases.mjs",
+    "to": "tools/legacy/rust/parity/gen-cases.mjs",
+    "sha256": "29fa27e9599c27ced9693ee7c89f19713343122daa102870e59077bae1ce66d9",
+    "bytes": 25370,
+    "sha256AfterCleanup": "29fa27e9599c27ced9693ee7c89f19713343122daa102870e59077bae1ce66d9"
+  },
+  {
+    "from": "tools/rust/parity/compare.mjs",
+    "to": "tools/legacy/rust/parity/compare.mjs",
+    "sha256": "e0bb9552767df84e700178569644d6911d18583e3e781b5904c9e690e053cada",
+    "bytes": 5929,
+    "sha256AfterCleanup": "e0bb9552767df84e700178569644d6911d18583e3e781b5904c9e690e053cada"
+  },
+  {
+    "from": "tools/rust/parity/run-parity.mjs",
+    "to": "tools/legacy/rust/parity/run-parity.mjs",
+    "sha256": "9610522424ae37c42a1204a288b290723f529b210d6649f2dafe4b8605ea9d72",
+    "bytes": 15672,
+    "sha256AfterCleanup": "9610522424ae37c42a1204a288b290723f529b210d6649f2dafe4b8605ea9d72"
+  },
+  {
+    "from": "tools/rust/parity/compare.test.mjs",
+    "to": "tools/legacy/rust/parity/compare.test.mjs",
+    "sha256": "0c4f28a0b0650ca9fa8cd16706e7c8b9537594867df3ebfd7ce4122a83ae4068",
+    "bytes": 7502,
+    "sha256AfterCleanup": "0c4f28a0b0650ca9fa8cd16706e7c8b9537594867df3ebfd7ce4122a83ae4068"
+  },
+  {
+    "from": "tools/rust/parity/run-parity-rates.mjs",
+    "to": "tools/legacy/rust/parity/run-parity-rates.mjs",
+    "sha256": "4006d96fd9cf0af339829f8e1272f559925f196adad82615b6ddd62da5936d84",
+    "bytes": 21999,
+    "sha256AfterCleanup": "4006d96fd9cf0af339829f8e1272f559925f196adad82615b6ddd62da5936d84"
+  },
+  {
+    "from": "tools/rust/parity/cases/pricing.json",
+    "to": "tools/legacy/rust/parity/cases/pricing.json",
+    "sha256": "e0529d7664f5886d8dc896da5ae1ffb3634b0ac9e7413bf6d6a66edf38f582ab",
+    "bytes": 111024,
+    "sha256AfterCleanup": "e0529d7664f5886d8dc896da5ae1ffb3634b0ac9e7413bf6d6a66edf38f582ab"
+  },
+  {
+    "from": "tools/rust/parity/cases/rates.json",
+    "to": "tools/legacy/rust/parity/cases/rates.json",
+    "sha256": "e90dbf7a5b0bb1178d3fcbe0f437de5ed14954476176bc24a6fcafd6a90448f6",
+    "bytes": 158273,
+    "sha256AfterCleanup": "e90dbf7a5b0bb1178d3fcbe0f437de5ed14954476176bc24a6fcafd6a90448f6"
+  },
+  {
+    "from": "tools/rust/parity/evidence/p1-parity.json",
+    "to": "tools/legacy/rust/parity/evidence/p1-parity.json",
+    "sha256": "13ddf548eb1f1a5327575c00a2cfc4ca8bba910b3cd3b24c95a9201e500c6190",
+    "bytes": 442,
+    "sha256AfterCleanup": "13ddf548eb1f1a5327575c00a2cfc4ca8bba910b3cd3b24c95a9201e500c6190"
+  },
+  {
+    "from": "tools/rust/parity/evidence/p2-parity.json",
+    "to": "tools/legacy/rust/parity/evidence/p2-parity.json",
+    "sha256": "301a23ab5a634724975c756f0277bdcbbdb86452361942ed3a9a910138df69e0",
+    "bytes": 2653,
+    "sha256AfterCleanup": "301a23ab5a634724975c756f0277bdcbbdb86452361942ed3a9a910138df69e0"
+  },
+  {
+    "from": "tools/rust/pg-authority.mjs",
+    "to": "tools/legacy/rust/pg-authority.mjs",
+    "sha256": "fff5516d94ea665307f8c04cad6f99d300ee84cd8c2e74383c27008551fb9f5c",
+    "bytes": 13586,
+    "sha256AfterCleanup": "fff5516d94ea665307f8c04cad6f99d300ee84cd8c2e74383c27008551fb9f5c"
+  },
+  {
+    "from": "tools/rust/pg-readiness.mjs",
+    "to": "tools/legacy/rust/pg-readiness.mjs",
+    "sha256": "8d3349d8ca20ac29a670e62050d4f022baefbd03b51711c3dfe4cd27589a4b92",
+    "bytes": 11030,
+    "sha256AfterCleanup": "8d3349d8ca20ac29a670e62050d4f022baefbd03b51711c3dfe4cd27589a4b92"
+  },
+  {
+    "from": "tools/rust/planning-conformance.mjs",
+    "to": "tools/legacy/rust/planning-conformance.mjs",
+    "sha256": "22e9e0da5e37af7b1f625aacdce2139752a4b96bd0cffa069c2f38e31a456882",
+    "bytes": 12701,
+    "sha256AfterCleanup": "22e9e0da5e37af7b1f625aacdce2139752a4b96bd0cffa069c2f38e31a456882"
+  },
+  {
+    "from": "tools/rust/provider-contracts.mjs",
+    "to": "tools/legacy/rust/provider-contracts.mjs",
+    "sha256": "6334c6c5617222c5f760eb9f4a2b47a8f05d3fe3a1b18b16071cfbf5d8b7bb1b",
+    "bytes": 14898,
+    "sha256AfterCleanup": "6334c6c5617222c5f760eb9f4a2b47a8f05d3fe3a1b18b16071cfbf5d8b7bb1b"
+  },
+  {
+    "from": "tools/rust/r03-domain.mjs",
+    "to": "tools/legacy/rust/r03-domain.mjs",
+    "sha256": "b4410c0bd7908078b3587d21d50e0fa2eae075f8e322668bdbfb3ee9e0bf59ac",
+    "bytes": 16959,
+    "sha256AfterCleanup": "b4410c0bd7908078b3587d21d50e0fa2eae075f8e322668bdbfb3ee9e0bf59ac"
+  },
+  {
+    "from": "tools/rust/realtime-voice.mjs",
+    "to": "tools/legacy/rust/realtime-voice.mjs",
+    "sha256": "9d2cfba544dd9c5a976836b3ee7860522da90bb786cd679b9cfc3698d6427375",
+    "bytes": 12893,
+    "sha256AfterCleanup": "9d2cfba544dd9c5a976836b3ee7860522da90bb786cd679b9cfc3698d6427375"
+  },
+  {
+    "from": "tools/rust/release-ops.mjs",
+    "to": "tools/legacy/rust/release-ops.mjs",
+    "sha256": "144c5a42b7c9054b8525b5fbcaced3dd90eb15e7c357bdb640448a03ec892e1b",
+    "bytes": 14088,
+    "sha256AfterCleanup": "144c5a42b7c9054b8525b5fbcaced3dd90eb15e7c357bdb640448a03ec892e1b"
+  },
+  {
+    "from": "tools/rust/sdk-widget.mjs",
+    "to": "tools/legacy/rust/sdk-widget.mjs",
+    "sha256": "d8dad86cebd38618822c65152473d7fa8d381dc59529f7135e4d15ab6ddc8a3b",
+    "bytes": 12425,
+    "sha256AfterCleanup": "d8dad86cebd38618822c65152473d7fa8d381dc59529f7135e4d15ab6ddc8a3b"
+  },
+  {
+    "from": "tools/rust/test/verify.test.mjs",
+    "to": "tools/legacy/rust/test/verify.test.mjs",
+    "sha256": "775f259ab86cc96be5ec810425d7e56f77f3bd332e110edb3ba40c9b2a758bec",
+    "bytes": 31509,
+    "sha256AfterCleanup": "775f259ab86cc96be5ec810425d7e56f77f3bd332e110edb3ba40c9b2a758bec"
+  },
+  {
+    "from": "tools/rust/test/error-contract.test.mjs",
+    "to": "tools/legacy/rust/test/error-contract.test.mjs",
+    "sha256": "97e4e181716de2e212d92e8bb9e18fa0174d029f73214ce125121a558512e4f8",
+    "bytes": 10139,
+    "sha256AfterCleanup": "97e4e181716de2e212d92e8bb9e18fa0174d029f73214ce125121a558512e4f8"
+  },
+  {
+    "from": "tools/rust/test/verify-release.test.mjs",
+    "to": "tools/legacy/rust/test/verify-release.test.mjs",
+    "sha256": "7bb30aba5ed4f067a270e89fc7c964820ee88e5dcdd1ad0adcc7d3c062203cb5",
+    "bytes": 22780,
+    "sha256AfterCleanup": "7bb30aba5ed4f067a270e89fc7c964820ee88e5dcdd1ad0adcc7d3c062203cb5"
+  },
+  {
+    "from": "tools/rust/test/bootstrap.test.mjs",
+    "to": "tools/legacy/rust/test/bootstrap.test.mjs",
+    "sha256": "fd6739898f19b9158a69b794dc15573ee76ebbb03f1bdb750655b6a00fab5a4b",
+    "bytes": 7701,
+    "sha256AfterCleanup": "fd6739898f19b9158a69b794dc15573ee76ebbb03f1bdb750655b6a00fab5a4b"
+  },
+  {
+    "from": "tools/rust/verify-release.mjs",
+    "to": "tools/legacy/rust/verify-release.mjs",
+    "sha256": "b8e37b8e1908fc8af4eb7d015b0354d325c8dcd8ecd30aefeaa7f0fdce46ff38",
+    "bytes": 35588,
+    "sha256AfterCleanup": "b8e37b8e1908fc8af4eb7d015b0354d325c8dcd8ecd30aefeaa7f0fdce46ff38"
+  },
+  {
+    "from": "tools/rust/verify.mjs",
+    "to": "tools/legacy/rust/verify.mjs",
+    "sha256": "b0c54f481fa0296e7caec99806a7e220fb61ca3a30526cc2fe98bd59b56836da",
+    "bytes": 49309,
+    "sha256AfterCleanup": "b0c54f481fa0296e7caec99806a7e220fb61ca3a30526cc2fe98bd59b56836da"
+  },
+  {
+    "from": "tools/rust/wasm-boundary.mjs",
+    "to": "tools/legacy/rust/wasm-boundary.mjs",
+    "sha256": "14a15c3b6cc6d9b47b4c493025086527bd20bd2cda7e919d491efc8e9e1ba3bc",
+    "bytes": 9701,
+    "sha256AfterCleanup": "14a15c3b6cc6d9b47b4c493025086527bd20bd2cda7e919d491efc8e9e1ba3bc"
+  },
+  {
+    "from": "tools/rust/benchmark/build/pricing-workload.json",
+    "to": "tools/legacy/rust/benchmark/build/pricing-workload.json",
+    "sha256": "1e28982aef45aa766c8e5604e271d83c0a7f5051adf6b14d20fd08cd43374816",
+    "bytes": 46059,
+    "sha256AfterCleanup": "1e28982aef45aa766c8e5604e271d83c0a7f5051adf6b14d20fd08cd43374816"
+  },
+  {
+    "from": "tools/rust/benchmark/build/rates-workload.json",
+    "to": "tools/legacy/rust/benchmark/build/rates-workload.json",
+    "sha256": "e85a6658ec84bf20c76bd214b831728e1969a60185b0911d67e14bd3e2872693",
+    "bytes": 117046,
+    "sha256AfterCleanup": "e85a6658ec84bf20c76bd214b831728e1969a60185b0911d67e14bd3e2872693"
+  },
+  {
+    "from": "tools/rust/benchmark/build/pricing-engine.mjs",
+    "to": "tools/legacy/rust/benchmark/build/pricing-engine.mjs",
+    "sha256": "290c6ed7fdbe9c7f912bb3f9560aa010dafa2025dcc7da3ddf4d7eb625b2e917",
+    "bytes": 486830,
+    "sha256AfterCleanup": "290c6ed7fdbe9c7f912bb3f9560aa010dafa2025dcc7da3ddf4d7eb625b2e917"
+  },
+  {
+    "from": "tools/rust/benchmark/build/reference-rates.mjs",
+    "to": "tools/legacy/rust/benchmark/build/reference-rates.mjs",
+    "sha256": "ae41bc197c25beb24e48d6afed527f5391bffad9be3cb9d15ccbcc25ba667b74",
+    "bytes": 492021,
+    "sha256AfterCleanup": "ae41bc197c25beb24e48d6afed527f5391bffad9be3cb9d15ccbcc25ba667b74"
+  },
+  {
+    "from": "tools/rust/benchmark/evidence/benchmark.json",
+    "to": "tools/legacy/rust/benchmark/evidence/benchmark.json",
+    "sha256": "3b2ec34a86f9763b30338e802e6eb2957c2eac938d7af9e43ba114c52c61f633",
+    "bytes": 6660,
+    "sha256AfterCleanup": "3b2ec34a86f9763b30338e802e6eb2957c2eac938d7af9e43ba114c52c61f633"
+  },
+  {
+    "from": "tools/rust/benchmark/run-benchmark.mjs",
+    "to": "tools/legacy/rust/benchmark/run-benchmark.mjs",
+    "sha256": "11a21952868dbbcd7a4893ac6ff6c416380efb77e00f7277e7ae44e06ea622ad",
+    "bytes": 39387,
+    "sha256AfterCleanup": "11a21952868dbbcd7a4893ac6ff6c416380efb77e00f7277e7ae44e06ea622ad"
+  },
+  {
+    "from": "tools/rust/benchmark/stats.d.ts",
+    "to": "tools/legacy/rust/benchmark/stats.d.ts",
+    "sha256": "b12a329ade61d3b9983e419f6030252879e360257fc412653c0d407c74da23e9",
+    "bytes": 4825,
+    "sha256AfterCleanup": "b12a329ade61d3b9983e419f6030252879e360257fc412653c0d407c74da23e9"
+  },
+  {
+    "from": "tools/rust/benchmark/stats.mjs",
+    "to": "tools/legacy/rust/benchmark/stats.mjs",
+    "sha256": "80ae0044b7eb74a71c594f6e42f41a93116d199e013596e2f3d23eefbfe85931",
+    "bytes": 11431,
+    "sha256AfterCleanup": "80ae0044b7eb74a71c594f6e42f41a93116d199e013596e2f3d23eefbfe85931"
+  },
+  {
+    "from": "tools/rust/benchmark/test/benchmark.test.ts",
+    "to": "tools/legacy/rust/benchmark/test/benchmark.test.ts",
+    "sha256": "08a1e0e8b4cf4eff5cc841cc6ff5795c66cfb26add314dd9eb33b4274527752f",
+    "bytes": 7447,
+    "sha256AfterCleanup": "08a1e0e8b4cf4eff5cc841cc6ff5795c66cfb26add314dd9eb33b4274527752f"
+  },
+  {
+    "from": "tools/rust/benchmark/test/coverage.test.ts",
+    "to": "tools/legacy/rust/benchmark/test/coverage.test.ts",
+    "sha256": "fd40225ce82d74e902a820afa12e8aa85d7020fe95764ad1ea251574a4a4d777",
+    "bytes": 10614,
+    "sha256AfterCleanup": "fd40225ce82d74e902a820afa12e8aa85d7020fe95764ad1ea251574a4a4d777"
+  },
+  {
+    "from": "tools/rust/benchmark/test/pricing-coverage.test.ts",
+    "to": "tools/legacy/rust/benchmark/test/pricing-coverage.test.ts",
+    "sha256": "24343157e058d18b128b4d8c5b289e757af7ea5e871a8af60ef5bc3b8bcfbf81",
+    "bytes": 14431,
+    "sha256AfterCleanup": "24343157e058d18b128b4d8c5b289e757af7ea5e871a8af60ef5bc3b8bcfbf81"
+  },
+  {
+    "from": "tools/rust/benchmark/test/pricing-coverage.artifact.test.ts",
+    "to": "tools/legacy/rust/benchmark/test/pricing-coverage.artifact.test.ts",
+    "sha256": "88210aac9548e8e154703dba9239a81b52250afcde72af402d4a7030207b7ce6",
+    "bytes": 8058,
+    "sha256AfterCleanup": "88210aac9548e8e154703dba9239a81b52250afcde72af402d4a7030207b7ce6"
+  },
+  {
+    "from": "tools/release/check-identity.mjs",
+    "to": "tools/legacy/release/check-identity.mjs",
+    "sha256": "2f79851665366102e7e7a73e2fe1920e7de9d5decd18292548fe38956d641213",
+    "bytes": 4555,
+    "sha256AfterCleanup": "2f79851665366102e7e7a73e2fe1920e7de9d5decd18292548fe38956d641213"
+  },
+  {
+    "from": "examples/consumers/hospitality/package.json",
+    "to": "examples/legacy/consumers/hospitality/package.json",
+    "sha256": "91a824ea6c7f6855110480823d1947b621bd97c0d657dc38b1c79f51c8e67f0f",
+    "bytes": 614,
+    "sha256AfterCleanup": "91a824ea6c7f6855110480823d1947b621bd97c0d657dc38b1c79f51c8e67f0f"
+  },
+  {
+    "from": "examples/consumers/hospitality/client.json",
+    "to": "examples/legacy/consumers/hospitality/client.json",
+    "sha256": "6867750a80ef6d52abb3c88f9a39db9254b7abe4baf1a58c27ca0519e86336eb",
+    "bytes": 1012,
+    "sha256AfterCleanup": "6867750a80ef6d52abb3c88f9a39db9254b7abe4baf1a58c27ca0519e86336eb"
+  },
+  {
+    "from": "examples/consumers/hospitality/tsconfig.json",
+    "to": "examples/legacy/consumers/hospitality/tsconfig.json",
+    "sha256": "86ed0f33e92e6ccbec5c978e538c0bab86e2bdfcd04f62386c37972e2717cc8a",
+    "bytes": 286,
+    "sha256AfterCleanup": "86ed0f33e92e6ccbec5c978e538c0bab86e2bdfcd04f62386c37972e2717cc8a"
+  },
+  {
+    "from": "examples/consumers/hospitality/build.mjs",
+    "to": "examples/legacy/consumers/hospitality/build.mjs",
+    "sha256": "54967321b0f90527f8e879138c3576d748722581ee949471abeaa3d4c4b528ab",
+    "bytes": 559,
+    "sha256AfterCleanup": "54967321b0f90527f8e879138c3576d748722581ee949471abeaa3d4c4b528ab"
+  },
+  {
+    "from": "examples/consumers/hospitality/verify.mjs",
+    "to": "examples/legacy/consumers/hospitality/verify.mjs",
+    "sha256": "7ee614b55aa319a463e6b69d5ca8ac80f9d23b5db80b0183e3442798d5280ddb",
+    "bytes": 2280,
+    "sha256AfterCleanup": "7ee614b55aa319a463e6b69d5ca8ac80f9d23b5db80b0183e3442798d5280ddb"
+  },
+  {
+    "from": "examples/consumers/hospitality/index.html",
+    "to": "examples/legacy/consumers/hospitality/index.html",
+    "sha256": "63eaca14c33c5f975f3bd21524845e8f1993b855c404f4f27ca133f981bdae4f",
+    "bytes": 452,
+    "sha256AfterCleanup": "63eaca14c33c5f975f3bd21524845e8f1993b855c404f4f27ca133f981bdae4f"
+  },
+  {
+    "from": "examples/consumers/retail/package.json",
+    "to": "examples/legacy/consumers/retail/package.json",
+    "sha256": "63cb0f87214a14d0849c98436f4168613254548c338dc67e6ea10c15d26ede50",
+    "bytes": 609,
+    "sha256AfterCleanup": "63cb0f87214a14d0849c98436f4168613254548c338dc67e6ea10c15d26ede50"
+  },
+  {
+    "from": "examples/consumers/retail/client.json",
+    "to": "examples/legacy/consumers/retail/client.json",
+    "sha256": "6b08b5fb7913def37f6684adff480b7ebc0f4a36016b089ac1ab150e7593884c",
+    "bytes": 1016,
+    "sha256AfterCleanup": "6b08b5fb7913def37f6684adff480b7ebc0f4a36016b089ac1ab150e7593884c"
+  },
+  {
+    "from": "examples/consumers/retail/tsconfig.json",
+    "to": "examples/legacy/consumers/retail/tsconfig.json",
+    "sha256": "86ed0f33e92e6ccbec5c978e538c0bab86e2bdfcd04f62386c37972e2717cc8a",
+    "bytes": 286,
+    "sha256AfterCleanup": "86ed0f33e92e6ccbec5c978e538c0bab86e2bdfcd04f62386c37972e2717cc8a"
+  },
+  {
+    "from": "examples/consumers/retail/build.mjs",
+    "to": "examples/legacy/consumers/retail/build.mjs",
+    "sha256": "54967321b0f90527f8e879138c3576d748722581ee949471abeaa3d4c4b528ab",
+    "bytes": 559,
+    "sha256AfterCleanup": "54967321b0f90527f8e879138c3576d748722581ee949471abeaa3d4c4b528ab"
+  },
+  {
+    "from": "examples/consumers/retail/verify.mjs",
+    "to": "examples/legacy/consumers/retail/verify.mjs",
+    "sha256": "7ee614b55aa319a463e6b69d5ca8ac80f9d23b5db80b0183e3442798d5280ddb",
+    "bytes": 2280,
+    "sha256AfterCleanup": "7ee614b55aa319a463e6b69d5ca8ac80f9d23b5db80b0183e3442798d5280ddb"
+  },
+  {
+    "from": "examples/consumers/retail/index.html",
+    "to": "examples/legacy/consumers/retail/index.html",
+    "sha256": "d735674d6fe1f9a097eb161ce21f6bbf653e9d1e5bc5cb168d7d749e1e3e40ef",
+    "bytes": 450,
+    "sha256AfterCleanup": "d735674d6fe1f9a097eb161ce21f6bbf653e9d1e5bc5cb168d7d749e1e3e40ef"
+  },
+  {
+    "from": "examples/consumers/retail/src/main.ts",
+    "to": "examples/legacy/consumers/retail/src/main.ts",
+    "sha256": "ca88a2e4f30e69f6847b9bf3fdd996e1a4b847152bfdeeb1077c0b1df1ddd8c1",
+    "bytes": 2035,
+    "sha256AfterCleanup": "ca88a2e4f30e69f6847b9bf3fdd996e1a4b847152bfdeeb1077c0b1df1ddd8c1"
+  },
+  {
+    "from": "examples/consumers/retail/src/browser.ts",
+    "to": "examples/legacy/consumers/retail/src/browser.ts",
+    "sha256": "1edb51efa689eb3eed8bf87f96c5d3bf69e1d9ebbb6af798c449394c9d580083",
+    "bytes": 326,
+    "sha256AfterCleanup": "1edb51efa689eb3eed8bf87f96c5d3bf69e1d9ebbb6af798c449394c9d580083"
+  },
+  {
+    "from": "examples/consumers/retail/dist/main.js",
+    "to": "examples/legacy/consumers/retail/dist/main.js",
+    "sha256": "47fb7ec51c0fb3f3f842d055dee4f90c2ac8a837018edd8ccf8217b26cc1559d",
+    "bytes": 2855,
+    "sha256AfterCleanup": "47fb7ec51c0fb3f3f842d055dee4f90c2ac8a837018edd8ccf8217b26cc1559d"
+  },
+  {
+    "from": "examples/consumers/hospitality/src/main.ts",
+    "to": "examples/legacy/consumers/hospitality/src/main.ts",
+    "sha256": "2f57087191642c79e3bbc479fcbe6d465596d74ef75d6f508d05d83f8401e833",
+    "bytes": 2036,
+    "sha256AfterCleanup": "2f57087191642c79e3bbc479fcbe6d465596d74ef75d6f508d05d83f8401e833"
+  },
+  {
+    "from": "examples/consumers/hospitality/src/browser.ts",
+    "to": "examples/legacy/consumers/hospitality/src/browser.ts",
+    "sha256": "1edb51efa689eb3eed8bf87f96c5d3bf69e1d9ebbb6af798c449394c9d580083",
+    "bytes": 326,
+    "sha256AfterCleanup": "1edb51efa689eb3eed8bf87f96c5d3bf69e1d9ebbb6af798c449394c9d580083"
+  },
+  {
+    "from": "examples/crm-consumers/hospitality/package.json",
+    "to": "examples/legacy/crm-consumers/hospitality/package.json",
+    "sha256": "8fa5cb17f023f097bd31eb47f8aae32f8f7de10a0bac5be7e432ae29a338cf97",
+    "bytes": 422,
+    "sha256AfterCleanup": "8fa5cb17f023f097bd31eb47f8aae32f8f7de10a0bac5be7e432ae29a338cf97"
+  },
+  {
+    "from": "examples/crm-consumers/hospitality/tsconfig.json",
+    "to": "examples/legacy/crm-consumers/hospitality/tsconfig.json",
+    "sha256": "0ec08d93d7f475f65dfe324084e5c096cd56de5099c5cc8f790fa14939e31443",
+    "bytes": 252,
+    "sha256AfterCleanup": "0ec08d93d7f475f65dfe324084e5c096cd56de5099c5cc8f790fa14939e31443"
+  },
+  {
+    "from": "examples/crm-consumers/hospitality/client.json",
+    "to": "examples/legacy/crm-consumers/hospitality/client.json",
+    "sha256": "9ac9bd8929fbc01179b40f70dc7c82097ab7edd4e00cf3ea5f7311f65e74706b",
+    "bytes": 353,
+    "sha256AfterCleanup": "9ac9bd8929fbc01179b40f70dc7c82097ab7edd4e00cf3ea5f7311f65e74706b"
+  },
+  {
+    "from": "examples/crm-consumers/hospitality/build.mjs",
+    "to": "examples/legacy/crm-consumers/hospitality/build.mjs",
+    "sha256": "cf05848ef1bd82b281d5c8b2af3e2e529b7191bc15b47be73543b9c1f34a0130",
+    "bytes": 348,
+    "sha256AfterCleanup": "cf05848ef1bd82b281d5c8b2af3e2e529b7191bc15b47be73543b9c1f34a0130"
+  },
+  {
+    "from": "examples/crm-consumers/hospitality/verify.mjs",
+    "to": "examples/legacy/crm-consumers/hospitality/verify.mjs",
+    "sha256": "d96e5a1784ca49f1820a13670cccef2f5551d428774f364b722c46523a4c1a39",
+    "bytes": 1161,
+    "sha256AfterCleanup": "d96e5a1784ca49f1820a13670cccef2f5551d428774f364b722c46523a4c1a39"
+  },
+  {
+    "from": "examples/crm-consumers/hospitality/index.html",
+    "to": "examples/legacy/crm-consumers/hospitality/index.html",
+    "sha256": "0f41a62a8e02a7d161df6eebc729c32ab50e7b39b6a9fe09dceb7738c50e3f0f",
+    "bytes": 1126,
+    "sha256AfterCleanup": "0f41a62a8e02a7d161df6eebc729c32ab50e7b39b6a9fe09dceb7738c50e3f0f"
+  },
+  {
+    "from": "examples/crm-consumers/professional-services/package.json",
+    "to": "examples/legacy/crm-consumers/professional-services/package.json",
+    "sha256": "d1381ce27d4c107775abd76a157025d68ef74d7bccd3a0ce2f695651b9f41aa6",
+    "bytes": 432,
+    "sha256AfterCleanup": "d1381ce27d4c107775abd76a157025d68ef74d7bccd3a0ce2f695651b9f41aa6"
+  },
+  {
+    "from": "examples/crm-consumers/professional-services/tsconfig.json",
+    "to": "examples/legacy/crm-consumers/professional-services/tsconfig.json",
+    "sha256": "0ec08d93d7f475f65dfe324084e5c096cd56de5099c5cc8f790fa14939e31443",
+    "bytes": 252,
+    "sha256AfterCleanup": "0ec08d93d7f475f65dfe324084e5c096cd56de5099c5cc8f790fa14939e31443"
+  },
+  {
+    "from": "examples/crm-consumers/professional-services/client.json",
+    "to": "examples/legacy/crm-consumers/professional-services/client.json",
+    "sha256": "12b5e0d3c33ab499c23aa2c545a3fab56daf0e348dc54b6d58d85b6855a6aee0",
+    "bytes": 360,
+    "sha256AfterCleanup": "12b5e0d3c33ab499c23aa2c545a3fab56daf0e348dc54b6d58d85b6855a6aee0"
+  },
+  {
+    "from": "examples/crm-consumers/professional-services/build.mjs",
+    "to": "examples/legacy/crm-consumers/professional-services/build.mjs",
+    "sha256": "cf05848ef1bd82b281d5c8b2af3e2e529b7191bc15b47be73543b9c1f34a0130",
+    "bytes": 348,
+    "sha256AfterCleanup": "cf05848ef1bd82b281d5c8b2af3e2e529b7191bc15b47be73543b9c1f34a0130"
+  },
+  {
+    "from": "examples/crm-consumers/professional-services/verify.mjs",
+    "to": "examples/legacy/crm-consumers/professional-services/verify.mjs",
+    "sha256": "d96e5a1784ca49f1820a13670cccef2f5551d428774f364b722c46523a4c1a39",
+    "bytes": 1161,
+    "sha256AfterCleanup": "d96e5a1784ca49f1820a13670cccef2f5551d428774f364b722c46523a4c1a39"
+  },
+  {
+    "from": "examples/crm-consumers/professional-services/index.html",
+    "to": "examples/legacy/crm-consumers/professional-services/index.html",
+    "sha256": "d351394b23c512e06df043b641ac0c7978ef35f506f070b060d615485654e19b",
+    "bytes": 1134,
+    "sha256AfterCleanup": "d351394b23c512e06df043b641ac0c7978ef35f506f070b060d615485654e19b"
+  },
+  {
+    "from": "examples/crm-consumers/professional-services/src/browser.ts",
+    "to": "examples/legacy/crm-consumers/professional-services/src/browser.ts",
+    "sha256": "1c64991842fa70b7599d9a7aefb469d0b312c306c3b4715d5d138f0e8a048ed5",
+    "bytes": 1666,
+    "sha256AfterCleanup": "1c64991842fa70b7599d9a7aefb469d0b312c306c3b4715d5d138f0e8a048ed5"
+  },
+  {
+    "from": "examples/crm-consumers/professional-services/src/server-contract.ts",
+    "to": "examples/legacy/crm-consumers/professional-services/src/server-contract.ts",
+    "sha256": "ef9f165c016dce73ff9ea815eac4a296117cd36ba284a2fd57673d124efa7a7a",
+    "bytes": 460,
+    "sha256AfterCleanup": "ef9f165c016dce73ff9ea815eac4a296117cd36ba284a2fd57673d124efa7a7a"
+  },
+  {
+    "from": "examples/crm-consumers/hospitality/src/browser.ts",
+    "to": "examples/legacy/crm-consumers/hospitality/src/browser.ts",
+    "sha256": "1c64991842fa70b7599d9a7aefb469d0b312c306c3b4715d5d138f0e8a048ed5",
+    "bytes": 1666,
+    "sha256AfterCleanup": "1c64991842fa70b7599d9a7aefb469d0b312c306c3b4715d5d138f0e8a048ed5"
+  },
+  {
+    "from": "examples/crm-consumers/hospitality/src/server-contract.ts",
+    "to": "examples/legacy/crm-consumers/hospitality/src/server-contract.ts",
+    "sha256": "ef9f165c016dce73ff9ea815eac4a296117cd36ba284a2fd57673d124efa7a7a",
+    "bytes": 460,
+    "sha256AfterCleanup": "ef9f165c016dce73ff9ea815eac4a296117cd36ba284a2fd57673d124efa7a7a"
+  },
+  {
+    "from": "examples/presence-consumers/voice_transcript.py",
+    "to": "examples/legacy/presence-consumers/voice_transcript.py",
+    "sha256": "a2b39be11e32b35ba91dace77e1de3da4bc7c9747294c066881ab37a85959aa6",
+    "bytes": 1262,
+    "sha256AfterCleanup": "a2b39be11e32b35ba91dace77e1de3da4bc7c9747294c066881ab37a85959aa6"
+  },
+  {
+    "from": "examples/rust-consumers/crate/.gitignore",
+    "to": "examples/legacy/rust-consumers/crate/.gitignore",
+    "sha256": "937391038123f421cc9d99b3d883449166aac25ec4b4ea581c1bc0ed32afc290",
+    "bytes": 960,
+    "sha256AfterCleanup": "937391038123f421cc9d99b3d883449166aac25ec4b4ea581c1bc0ed32afc290"
+  },
+  {
+    "from": "examples/rust-consumers/crate/Cargo.toml",
+    "to": "examples/legacy/rust-consumers/crate/Cargo.toml",
+    "sha256": "4a7a2696859f61cd3672f9a38559c93e578756f59e225746b820230136fe2913",
+    "bytes": 3121,
+    "sha256AfterCleanup": "4a7a2696859f61cd3672f9a38559c93e578756f59e225746b820230136fe2913"
+  },
+  {
+    "from": "examples/rust-consumers/crate/rust-toolchain.toml",
+    "to": "examples/legacy/rust-consumers/crate/rust-toolchain.toml",
+    "sha256": "95f71dd6b398d7a1367a188dcb173ffc157bb3e39000e17904af55776e2d26bf",
+    "bytes": 520,
+    "sha256AfterCleanup": "95f71dd6b398d7a1367a188dcb173ffc157bb3e39000e17904af55776e2d26bf"
+  },
+  {
+    "from": "examples/rust-consumers/crate/Cargo.lock",
+    "to": "examples/legacy/rust-consumers/crate/Cargo.lock",
+    "sha256": "27c17f03e93a9ea3fcac2827487093ce4f2a92cadd80e0613b4361a67546998b",
+    "bytes": 3876,
+    "sha256AfterCleanup": "27c17f03e93a9ea3fcac2827487093ce4f2a92cadd80e0613b4361a67546998b"
+  },
+  {
+    "from": "examples/rust-consumers/erp/hospitality/package.json",
+    "to": "examples/legacy/rust-consumers/erp/hospitality/package.json",
+    "sha256": "867f203ed1fb031ccfee717bf8d9d504c3d474d068bfe28972741e43fdfef1fc",
+    "bytes": 474,
+    "sha256AfterCleanup": "867f203ed1fb031ccfee717bf8d9d504c3d474d068bfe28972741e43fdfef1fc"
+  },
+  {
+    "from": "examples/rust-consumers/erp/hospitality/tsconfig.json",
+    "to": "examples/legacy/rust-consumers/erp/hospitality/tsconfig.json",
+    "sha256": "0ec08d93d7f475f65dfe324084e5c096cd56de5099c5cc8f790fa14939e31443",
+    "bytes": 252,
+    "sha256AfterCleanup": "0ec08d93d7f475f65dfe324084e5c096cd56de5099c5cc8f790fa14939e31443"
+  },
+  {
+    "from": "examples/rust-consumers/erp/hospitality/client.json",
+    "to": "examples/legacy/rust-consumers/erp/hospitality/client.json",
+    "sha256": "90b34a24f78d7fdb8838ee7dc2927432e35cf1460d4da3755798fdc628fa7b28",
+    "bytes": 170,
+    "sha256AfterCleanup": "90b34a24f78d7fdb8838ee7dc2927432e35cf1460d4da3755798fdc628fa7b28"
+  },
+  {
+    "from": "examples/rust-consumers/erp/hospitality/build.mjs",
+    "to": "examples/legacy/rust-consumers/erp/hospitality/build.mjs",
+    "sha256": "cf05848ef1bd82b281d5c8b2af3e2e529b7191bc15b47be73543b9c1f34a0130",
+    "bytes": 348,
+    "sha256AfterCleanup": "cf05848ef1bd82b281d5c8b2af3e2e529b7191bc15b47be73543b9c1f34a0130"
+  },
+  {
+    "from": "examples/rust-consumers/erp/hospitality/index.html",
+    "to": "examples/legacy/rust-consumers/erp/hospitality/index.html",
+    "sha256": "e6dd645afc59823456a86119106586f8b21e0c2808e0e2bd9b1967305fd1f294",
+    "bytes": 769,
+    "sha256AfterCleanup": "e6dd645afc59823456a86119106586f8b21e0c2808e0e2bd9b1967305fd1f294"
+  },
+  {
+    "from": "examples/rust-consumers/erp/hospitality/verify.mjs",
+    "to": "examples/legacy/rust-consumers/erp/hospitality/verify.mjs",
+    "sha256": "710aee1681094747217e872fdc38f62ff03c1e8b0583dc0c5e616214633312d0",
+    "bytes": 4617,
+    "sha256AfterCleanup": "710aee1681094747217e872fdc38f62ff03c1e8b0583dc0c5e616214633312d0"
+  },
+  {
+    "from": "examples/rust-consumers/erp/professional-services/tsconfig.json",
+    "to": "examples/legacy/rust-consumers/erp/professional-services/tsconfig.json",
+    "sha256": "0ec08d93d7f475f65dfe324084e5c096cd56de5099c5cc8f790fa14939e31443",
+    "bytes": 252,
+    "sha256AfterCleanup": "0ec08d93d7f475f65dfe324084e5c096cd56de5099c5cc8f790fa14939e31443"
+  },
+  {
+    "from": "examples/rust-consumers/erp/professional-services/package.json",
+    "to": "examples/legacy/rust-consumers/erp/professional-services/package.json",
+    "sha256": "53673c65b1d3d657919666d268cbfafb85d38c04a1efb1523d2a64a1f568b576",
+    "bytes": 484,
+    "sha256AfterCleanup": "53673c65b1d3d657919666d268cbfafb85d38c04a1efb1523d2a64a1f568b576"
+  },
+  {
+    "from": "examples/rust-consumers/erp/professional-services/client.json",
+    "to": "examples/legacy/rust-consumers/erp/professional-services/client.json",
+    "sha256": "22266e3e216d042e6ef4b9c0de9d27160274abcad5158af3617c0381fd21043c",
+    "bytes": 144,
+    "sha256AfterCleanup": "22266e3e216d042e6ef4b9c0de9d27160274abcad5158af3617c0381fd21043c"
+  },
+  {
+    "from": "examples/rust-consumers/erp/professional-services/index.html",
+    "to": "examples/legacy/rust-consumers/erp/professional-services/index.html",
+    "sha256": "7ec4f5ed8fea6d37b2888de5b6624c1b1126c2e3bff10c0b20aeea7c33cd0186",
+    "bytes": 749,
+    "sha256AfterCleanup": "7ec4f5ed8fea6d37b2888de5b6624c1b1126c2e3bff10c0b20aeea7c33cd0186"
+  },
+  {
+    "from": "examples/rust-consumers/erp/professional-services/build.mjs",
+    "to": "examples/legacy/rust-consumers/erp/professional-services/build.mjs",
+    "sha256": "cf05848ef1bd82b281d5c8b2af3e2e529b7191bc15b47be73543b9c1f34a0130",
+    "bytes": 348,
+    "sha256AfterCleanup": "cf05848ef1bd82b281d5c8b2af3e2e529b7191bc15b47be73543b9c1f34a0130"
+  },
+  {
+    "from": "examples/rust-consumers/erp/professional-services/verify.mjs",
+    "to": "examples/legacy/rust-consumers/erp/professional-services/verify.mjs",
+    "sha256": "a5af71c748fdc8ccc145b0aeb66b979a763c933cac08c068dc0317bfe23f1d31",
+    "bytes": 3564,
+    "sha256AfterCleanup": "a5af71c748fdc8ccc145b0aeb66b979a763c933cac08c068dc0317bfe23f1d31"
+  },
+  {
+    "from": "examples/rust-consumers/erp/professional-services/src/browser.ts",
+    "to": "examples/legacy/rust-consumers/erp/professional-services/src/browser.ts",
+    "sha256": "e3c24c880945314f56d318fe4fa10c95cc910dafba6d4d05cb20e80b174644af",
+    "bytes": 925,
+    "sha256AfterCleanup": "e3c24c880945314f56d318fe4fa10c95cc910dafba6d4d05cb20e80b174644af"
+  },
+  {
+    "from": "examples/rust-consumers/erp/professional-services/src/server-contract.ts",
+    "to": "examples/legacy/rust-consumers/erp/professional-services/src/server-contract.ts",
+    "sha256": "b7d8332bd67a06d3719a9a884dfc44b746f7f96103a6cd924b681bad62990dbe",
+    "bytes": 1325,
+    "sha256AfterCleanup": "b7d8332bd67a06d3719a9a884dfc44b746f7f96103a6cd924b681bad62990dbe"
+  },
+  {
+    "from": "examples/rust-consumers/erp/hospitality/src/browser.ts",
+    "to": "examples/legacy/rust-consumers/erp/hospitality/src/browser.ts",
+    "sha256": "355efe1d016b7e23c363004f7f87ec26f538359cc40137f41a6571605a4f6998",
+    "bytes": 830,
+    "sha256AfterCleanup": "355efe1d016b7e23c363004f7f87ec26f538359cc40137f41a6571605a4f6998"
+  },
+  {
+    "from": "examples/rust-consumers/erp/hospitality/src/server-contract.ts",
+    "to": "examples/legacy/rust-consumers/erp/hospitality/src/server-contract.ts",
+    "sha256": "097fcf90c6d5bf8eeadb50d59156b2efa168630d2928eb80440f27db4cf11a9e",
+    "bytes": 1643,
+    "sha256AfterCleanup": "097fcf90c6d5bf8eeadb50d59156b2efa168630d2928eb80440f27db4cf11a9e"
+  },
+  {
+    "from": "examples/rust-consumers/addon/host/verify.mjs",
+    "to": "examples/legacy/rust-consumers/addon/host/verify.mjs",
+    "sha256": "19a9ced13f0f55d88b8176dd505bf819da52a81acf532fae64c8d63fc98cd414",
+    "bytes": 9024,
+    "sha256AfterCleanup": "19a9ced13f0f55d88b8176dd505bf819da52a81acf532fae64c8d63fc98cd414"
+  },
+  {
+    "from": "examples/rust-consumers/crate/tests/consumer.rs",
+    "to": "examples/legacy/rust-consumers/crate/tests/consumer.rs",
+    "sha256": "79e2aba87348692e4cca0ad30bdf802b984f6e1e372f263ce3d140c0bfb7f419",
+    "bytes": 11981,
+    "sha256AfterCleanup": "79e2aba87348692e4cca0ad30bdf802b984f6e1e372f263ce3d140c0bfb7f419"
+  },
+  {
+    "from": "examples/rust-consumers/crate/deps/archava-pricing-0.1.0/.cargo_vcs_info.json",
+    "to": "examples/legacy/rust-consumers/crate/deps/archava-pricing-0.1.0/.cargo_vcs_info.json",
+    "sha256": "2b5f35b233431bf759903e2e765970a17468fd18037eccdfc8d6915d2ca0ec41",
+    "bytes": 132,
+    "sha256AfterCleanup": "2b5f35b233431bf759903e2e765970a17468fd18037eccdfc8d6915d2ca0ec41"
+  },
+  {
+    "from": "examples/rust-consumers/crate/deps/archava-pricing-0.1.0/Cargo.lock",
+    "to": "examples/legacy/rust-consumers/crate/deps/archava-pricing-0.1.0/Cargo.lock",
+    "sha256": "b0e95b2fa86ef9e8feaaa63e729215d67e0811b43f59eb420f2638f6f2751c3f",
+    "bytes": 2672,
+    "sha256AfterCleanup": "b0e95b2fa86ef9e8feaaa63e729215d67e0811b43f59eb420f2638f6f2751c3f"
+  },
+  {
+    "from": "examples/rust-consumers/crate/deps/archava-pricing-0.1.0/Cargo.toml",
+    "to": "examples/legacy/rust-consumers/crate/deps/archava-pricing-0.1.0/Cargo.toml",
+    "sha256": "d13d42a669dafd19b0eb2af7f621d9057565288bd6a2e9cda0667c519b3a4fef",
+    "bytes": 946,
+    "sha256AfterCleanup": "d13d42a669dafd19b0eb2af7f621d9057565288bd6a2e9cda0667c519b3a4fef"
+  },
+  {
+    "from": "examples/rust-consumers/crate/deps/archava-pricing-0.1.0/Cargo.toml.orig",
+    "to": "examples/legacy/rust-consumers/crate/deps/archava-pricing-0.1.0/Cargo.toml.orig",
+    "sha256": "27823e3872ebd3e85c2877573a835416212670516efddddb1d5ac502d81050fd",
+    "bytes": 1002,
+    "sha256AfterCleanup": "27823e3872ebd3e85c2877573a835416212670516efddddb1d5ac502d81050fd"
+  },
+  {
+    "from": "examples/rust-consumers/crate/deps/archava-rates-0.1.0/.cargo_vcs_info.json",
+    "to": "examples/legacy/rust-consumers/crate/deps/archava-rates-0.1.0/.cargo_vcs_info.json",
+    "sha256": "40da6688825f16a358fd29ffa9a46de9b3d601e53f5c9c0ee7582681b78afedc",
+    "bytes": 130,
+    "sha256AfterCleanup": "40da6688825f16a358fd29ffa9a46de9b3d601e53f5c9c0ee7582681b78afedc"
+  },
+  {
+    "from": "examples/rust-consumers/crate/deps/archava-rates-0.1.0/Cargo.lock",
+    "to": "examples/legacy/rust-consumers/crate/deps/archava-rates-0.1.0/Cargo.lock",
+    "sha256": "5f5ffce9693ad596a855e00ac11eb619aed28731151dc1086e8df96ccf629ad9",
+    "bytes": 2670,
+    "sha256AfterCleanup": "5f5ffce9693ad596a855e00ac11eb619aed28731151dc1086e8df96ccf629ad9"
+  },
+  {
+    "from": "examples/rust-consumers/crate/deps/archava-rates-0.1.0/Cargo.toml",
+    "to": "examples/legacy/rust-consumers/crate/deps/archava-rates-0.1.0/Cargo.toml",
+    "sha256": "1c6b95601ef4a1adffba3776e44cb5b2e84fc57d3390cf2435b6ee99ce4b9b09",
+    "bytes": 978,
+    "sha256AfterCleanup": "1c6b95601ef4a1adffba3776e44cb5b2e84fc57d3390cf2435b6ee99ce4b9b09"
+  },
+  {
+    "from": "examples/rust-consumers/crate/deps/archava-rates-0.1.0/Cargo.toml.orig",
+    "to": "examples/legacy/rust-consumers/crate/deps/archava-rates-0.1.0/Cargo.toml.orig",
+    "sha256": "f25d1c16af95f4e832a65bc9291e7b7268da5a57935948dd61ff7c4b47a3d424",
+    "bytes": 1267,
+    "sha256AfterCleanup": "f25d1c16af95f4e832a65bc9291e7b7268da5a57935948dd61ff7c4b47a3d424"
+  },
+  {
+    "from": "examples/rust-consumers/crate/deps/archava-assembly-0.1.0/.cargo_vcs_info.json",
+    "to": "examples/legacy/rust-consumers/crate/deps/archava-assembly-0.1.0/.cargo_vcs_info.json",
+    "sha256": "da743f932a2098ee8ddd79cc0324489bad5da19e44f0fd73bc0ac180fcf6b127",
+    "bytes": 133,
+    "sha256AfterCleanup": "da743f932a2098ee8ddd79cc0324489bad5da19e44f0fd73bc0ac180fcf6b127"
+  },
+  {
+    "from": "examples/rust-consumers/crate/deps/archava-assembly-0.1.0/Cargo.lock",
+    "to": "examples/legacy/rust-consumers/crate/deps/archava-assembly-0.1.0/Cargo.lock",
+    "sha256": "e38e384087cfed107db011caf1bdf2ab6d2b5031e86f47053412f6925187582d",
+    "bytes": 2673,
+    "sha256AfterCleanup": "e38e384087cfed107db011caf1bdf2ab6d2b5031e86f47053412f6925187582d"
+  },
+  {
+    "from": "examples/rust-consumers/crate/deps/archava-assembly-0.1.0/Cargo.toml",
+    "to": "examples/legacy/rust-consumers/crate/deps/archava-assembly-0.1.0/Cargo.toml",
+    "sha256": "561b2f186a1528aacdb08262bcf005bcc5fab5fe6738518fa87df71ea1bd1296",
+    "bytes": 1016,
+    "sha256AfterCleanup": "561b2f186a1528aacdb08262bcf005bcc5fab5fe6738518fa87df71ea1bd1296"
+  },
+  {
+    "from": "examples/rust-consumers/crate/deps/archava-assembly-0.1.0/Cargo.toml.orig",
+    "to": "examples/legacy/rust-consumers/crate/deps/archava-assembly-0.1.0/Cargo.toml.orig",
+    "sha256": "1f7bc264ed91e96b5c540dccd96015b1745690924ad7578014c259edf93e7862",
+    "bytes": 1527,
+    "sha256AfterCleanup": "1f7bc264ed91e96b5c540dccd96015b1745690924ad7578014c259edf93e7862"
+  },
+  {
+    "from": "examples/rust-consumers/crate/deps/archava-assembly-0.1.0/src/catalog.rs",
+    "to": "examples/legacy/rust-consumers/crate/deps/archava-assembly-0.1.0/src/catalog.rs",
+    "sha256": "c7a5950a07a793f875c2fe144f4b3aace86d2acf318b80a20c09d909d388d60d",
+    "bytes": 7152,
+    "sha256AfterCleanup": "c7a5950a07a793f875c2fe144f4b3aace86d2acf318b80a20c09d909d388d60d"
+  },
+  {
+    "from": "examples/rust-consumers/crate/deps/archava-assembly-0.1.0/src/contracts.rs",
+    "to": "examples/legacy/rust-consumers/crate/deps/archava-assembly-0.1.0/src/contracts.rs",
+    "sha256": "cd2ea8bc8bc36c217cc748c9b7c30471a18b54ff217a607a83a4a7751a260a39",
+    "bytes": 16897,
+    "sha256AfterCleanup": "cd2ea8bc8bc36c217cc748c9b7c30471a18b54ff217a607a83a4a7751a260a39"
+  },
+  {
+    "from": "examples/rust-consumers/crate/deps/archava-assembly-0.1.0/src/error.rs",
+    "to": "examples/legacy/rust-consumers/crate/deps/archava-assembly-0.1.0/src/error.rs",
+    "sha256": "2f30bc4afafa451395b59edc489ab8638f084e59da34d19270e392f2bdba7142",
+    "bytes": 8979,
+    "sha256AfterCleanup": "2f30bc4afafa451395b59edc489ab8638f084e59da34d19270e392f2bdba7142"
+  },
+  {
+    "from": "examples/rust-consumers/crate/deps/archava-assembly-0.1.0/src/lib.rs",
+    "to": "examples/legacy/rust-consumers/crate/deps/archava-assembly-0.1.0/src/lib.rs",
+    "sha256": "e4e015df822d74bb267362fdce52812692076a89a793444dbd0ea03e12f0f847",
+    "bytes": 4482,
+    "sha256AfterCleanup": "e4e015df822d74bb267362fdce52812692076a89a793444dbd0ea03e12f0f847"
+  },
+  {
+    "from": "examples/rust-consumers/crate/deps/archava-assembly-0.1.0/src/module_contracts.rs",
+    "to": "examples/legacy/rust-consumers/crate/deps/archava-assembly-0.1.0/src/module_contracts.rs",
+    "sha256": "9491e3d0798207017c3ea3d5b4800ae4b563c65ddc6271b09386cebb2e4a083d",
+    "bytes": 8805,
+    "sha256AfterCleanup": "9491e3d0798207017c3ea3d5b4800ae4b563c65ddc6271b09386cebb2e4a083d"
+  },
+  {
+    "from": "examples/rust-consumers/crate/deps/archava-assembly-0.1.0/src/plan.rs",
+    "to": "examples/legacy/rust-consumers/crate/deps/archava-assembly-0.1.0/src/plan.rs",
+    "sha256": "4a4583e82bd487ae35a4d3504c27276b881ec86ac1280a38b02e064fc7abd660",
+    "bytes": 15922,
+    "sha256AfterCleanup": "4a4583e82bd487ae35a4d3504c27276b881ec86ac1280a38b02e064fc7abd660"
+  },
+  {
+    "from": "examples/rust-consumers/crate/deps/archava-assembly-0.1.0/src/request.rs",
+    "to": "examples/legacy/rust-consumers/crate/deps/archava-assembly-0.1.0/src/request.rs",
+    "sha256": "4725a1a8cfb366f7b3464e1fe8242fe246e5a92643aefcb92f05f4ce76e527ad",
+    "bytes": 13560,
+    "sha256AfterCleanup": "4725a1a8cfb366f7b3464e1fe8242fe246e5a92643aefcb92f05f4ce76e527ad"
+  },
+  {
+    "from": "examples/rust-consumers/crate/deps/archava-assembly-0.1.0/tests/assembly.rs",
+    "to": "examples/legacy/rust-consumers/crate/deps/archava-assembly-0.1.0/tests/assembly.rs",
+    "sha256": "f6e9db85691a54aa2a4e10f2eb6f21eb4bfcad785279aea2dcbe57a8774836f7",
+    "bytes": 43332,
+    "sha256AfterCleanup": "f6e9db85691a54aa2a4e10f2eb6f21eb4bfcad785279aea2dcbe57a8774836f7"
+  },
+  {
+    "from": "examples/rust-consumers/crate/deps/archava-rates-0.1.0/src/lib.rs",
+    "to": "examples/legacy/rust-consumers/crate/deps/archava-rates-0.1.0/src/lib.rs",
+    "sha256": "43d3aac1444d4549a993cbfee5d6330d05f3bcfc6479f34732cd9f86e9988ea8",
+    "bytes": 17082,
+    "sha256AfterCleanup": "43d3aac1444d4549a993cbfee5d6330d05f3bcfc6479f34732cd9f86e9988ea8"
+  },
+  {
+    "from": "examples/rust-consumers/crate/deps/archava-rates-0.1.0/tests/rates.rs",
+    "to": "examples/legacy/rust-consumers/crate/deps/archava-rates-0.1.0/tests/rates.rs",
+    "sha256": "a3b2aaa8eb4ff88ce67643d634bc6646f9f18bb45c275fd3a9143d1bd8d4484d",
+    "bytes": 8785,
+    "sha256AfterCleanup": "a3b2aaa8eb4ff88ce67643d634bc6646f9f18bb45c275fd3a9143d1bd8d4484d"
+  },
+  {
+    "from": "examples/rust-consumers/crate/deps/archava-pricing-0.1.0/src/classify.rs",
+    "to": "examples/legacy/rust-consumers/crate/deps/archava-pricing-0.1.0/src/classify.rs",
+    "sha256": "69198d8f71410460e0ecd0ffb103dd0998399fde089ee970addeed9000a13796",
+    "bytes": 12003,
+    "sha256AfterCleanup": "69198d8f71410460e0ecd0ffb103dd0998399fde089ee970addeed9000a13796"
+  },
+  {
+    "from": "examples/rust-consumers/crate/deps/archava-pricing-0.1.0/src/engine.rs",
+    "to": "examples/legacy/rust-consumers/crate/deps/archava-pricing-0.1.0/src/engine.rs",
+    "sha256": "aae3bac7eb553f0d8f55243f3715dc04b63288bd8232d37e563a7e7128282e20",
+    "bytes": 48199,
+    "sha256AfterCleanup": "aae3bac7eb553f0d8f55243f3715dc04b63288bd8232d37e563a7e7128282e20"
+  },
+  {
+    "from": "examples/rust-consumers/crate/deps/archava-pricing-0.1.0/src/error.rs",
+    "to": "examples/legacy/rust-consumers/crate/deps/archava-pricing-0.1.0/src/error.rs",
+    "sha256": "7f87eb408d7a0e03e43cd974e59757a38fb113b5d1800a3776332eb4bfcc1b15",
+    "bytes": 4596,
+    "sha256AfterCleanup": "7f87eb408d7a0e03e43cd974e59757a38fb113b5d1800a3776332eb4bfcc1b15"
+  },
+  {
+    "from": "examples/rust-consumers/crate/deps/archava-pricing-0.1.0/src/jsmath.rs",
+    "to": "examples/legacy/rust-consumers/crate/deps/archava-pricing-0.1.0/src/jsmath.rs",
+    "sha256": "fdacfae92bcf3aab49eb33f80d8bb9588eb3f03947b39365cf06fe7ba76d43cc",
+    "bytes": 6987,
+    "sha256AfterCleanup": "fdacfae92bcf3aab49eb33f80d8bb9588eb3f03947b39365cf06fe7ba76d43cc"
+  },
+  {
+    "from": "examples/rust-consumers/crate/deps/archava-pricing-0.1.0/src/lib.rs",
+    "to": "examples/legacy/rust-consumers/crate/deps/archava-pricing-0.1.0/src/lib.rs",
+    "sha256": "2da328bd028e4f486cd3b965741e33e37eb4bd5fbb8d9db0ce313b0e75cc0816",
+    "bytes": 2396,
+    "sha256AfterCleanup": "2da328bd028e4f486cd3b965741e33e37eb4bd5fbb8d9db0ce313b0e75cc0816"
+  },
+  {
+    "from": "examples/rust-consumers/crate/deps/archava-pricing-0.1.0/src/pricebook.rs",
+    "to": "examples/legacy/rust-consumers/crate/deps/archava-pricing-0.1.0/src/pricebook.rs",
+    "sha256": "6d970611c13b0f0b676164c2b9e14c5de843da3640eeab5e1ed3bdb5716d8404",
+    "bytes": 14558,
+    "sha256AfterCleanup": "6d970611c13b0f0b676164c2b9e14c5de843da3640eeab5e1ed3bdb5716d8404"
+  },
+  {
+    "from": "examples/rust-consumers/crate/deps/archava-pricing-0.1.0/src/request.rs",
+    "to": "examples/legacy/rust-consumers/crate/deps/archava-pricing-0.1.0/src/request.rs",
+    "sha256": "45582dfd0b7628f95cdd6ce7b099eb3a19f607201598c570dce0bb2487a7ac23",
+    "bytes": 13445,
+    "sha256AfterCleanup": "45582dfd0b7628f95cdd6ce7b099eb3a19f607201598c570dce0bb2487a7ac23"
+  },
+  {
+    "from": "examples/rust-kit-consumers/kit-template/Cargo.toml",
+    "to": "examples/legacy/rust-kit-consumers/kit-template/Cargo.toml",
+    "sha256": "7fb59ccb0d56325f88ad80a039c248c6c3a5a444763fded1e60fa7af12cd6517",
+    "bytes": 5901,
+    "sha256AfterCleanup": "7fb59ccb0d56325f88ad80a039c248c6c3a5a444763fded1e60fa7af12cd6517"
+  },
+  {
+    "from": "examples/rust-kit-consumers/kit-template/.gitignore",
+    "to": "examples/legacy/rust-kit-consumers/kit-template/.gitignore",
+    "sha256": "edf95556af591cf6e4d68a65a527f2805a064df604cc44f1387053a187a09afc",
+    "bytes": 353,
+    "sha256AfterCleanup": "edf95556af591cf6e4d68a65a527f2805a064df604cc44f1387053a187a09afc"
+  },
+  {
+    "from": "examples/rust-kit-consumers/kit-template/rust-toolchain.toml",
+    "to": "examples/legacy/rust-kit-consumers/kit-template/rust-toolchain.toml",
+    "sha256": "26be2b1d3500f27d4afa44fd1ad00ee98395f41692c67a1c6b811ff8028dc014",
+    "bytes": 221,
+    "sha256AfterCleanup": "26be2b1d3500f27d4afa44fd1ad00ee98395f41692c67a1c6b811ff8028dc014"
+  },
+  {
+    "from": "examples/rust-kit-consumers/kit-template/tests/kit_witness.rs",
+    "to": "examples/legacy/rust-kit-consumers/kit-template/tests/kit_witness.rs",
+    "sha256": "1ed28f85e5ada62f1298149e6cff4a73926b67cf1dd81245e3ad50f0aa55e721",
+    "bytes": 11672,
+    "sha256AfterCleanup": "1ed28f85e5ada62f1298149e6cff4a73926b67cf1dd81245e3ad50f0aa55e721"
+  },
+  {
+    "from": "examples/rust-kit-consumers/kit-template/tests/crm_witness.rs",
+    "to": "examples/legacy/rust-kit-consumers/kit-template/tests/crm_witness.rs",
+    "sha256": "6d1fa6af62dc607b51753d9cc8bceaf88aa42250efd54446d5decc1d89eb82c7",
+    "bytes": 20132,
+    "sha256AfterCleanup": "6d1fa6af62dc607b51753d9cc8bceaf88aa42250efd54446d5decc1d89eb82c7"
+  },
+  {
+    "from": "docs/ACCOMMODATION_MODULE.md",
+    "to": "docs/modules/ACCOMMODATION_MODULE.md",
+    "sha256": "5f3e6d45f9f90b4c32e5811c3f127ce182c6db7eecfa224abefb1797cf2ff8db",
+    "bytes": 12975,
+    "sha256AfterCleanup": "538d034abc2b62c770c5305eabd51855094cfdbe4d2f545923dcae0125825c6e"
+  },
+  {
+    "from": "docs/ASSETS_MODULE.md",
+    "to": "docs/modules/ASSETS_MODULE.md",
+    "sha256": "2201ce20838fa5860724bd864a26f1f531b30bf664b0c2531664d50042a421b0",
+    "bytes": 3723,
+    "sha256AfterCleanup": "059ac2467d110c5540c6174f05fbfce32386a5ef4bfd37662be673686d9540ba"
+  },
+  {
+    "from": "docs/ATTENDANCE_MODULE.md",
+    "to": "docs/modules/ATTENDANCE_MODULE.md",
+    "sha256": "532f2781493dbd481ca040da3c3c7f3e03df2c0a32043c5b39a6f26e3cb3c3d7",
+    "bytes": 5402,
+    "sha256AfterCleanup": "8106fe46c093211629dcd2630553b6e343453151d5711f6e59f035391cfcce7f"
+  },
+  {
+    "from": "docs/BILLING_MODULE.md",
+    "to": "docs/modules/BILLING_MODULE.md",
+    "sha256": "42ed98b63177f8aaff536b6b54a2e291a19be3129615272aa39e232993516d97",
+    "bytes": 8437,
+    "sha256AfterCleanup": "0a552a17bbed481c7d038ecc1fd555ba1d5eed56b995f87ecb5f3c10144c6878"
+  },
+  {
+    "from": "docs/COMMERCE_MODULE.md",
+    "to": "docs/modules/COMMERCE_MODULE.md",
+    "sha256": "a7ff75db5f7020e754dfa7e4331a44d9e40cefad6b63275b97441a6ad629304b",
+    "bytes": 12025,
+    "sha256AfterCleanup": "bdcce8bec153d8584c18ce81b0e79860a05249b2bdb4c0bce191e7cf26dfebef"
+  },
+  {
+    "from": "docs/CRM_MODULE.md",
+    "to": "docs/modules/CRM_MODULE.md",
+    "sha256": "370755a17aa054746dcaf32c7092e9d2e5f4027bc23565143dad63b4a47f47a6",
+    "bytes": 7466,
+    "sha256AfterCleanup": "d7ff36fbee7dd4290c3bacd24450f2af7b75854bbdc95439d4cb329bfd9b4c71"
+  },
+  {
+    "from": "docs/FIELD_SERVICES_MODULE.md",
+    "to": "docs/modules/FIELD_SERVICES_MODULE.md",
+    "sha256": "3699e17e209cbbc5b16e003b23f1710513d389cad714dc55fc530ff473db39ba",
+    "bytes": 3946,
+    "sha256AfterCleanup": "3699e17e209cbbc5b16e003b23f1710513d389cad714dc55fc530ff473db39ba"
+  },
+  {
+    "from": "docs/FOODSERVICE_MODULE.md",
+    "to": "docs/modules/FOODSERVICE_MODULE.md",
+    "sha256": "d34acdfdfb5403af2654cc25a716aaeeef809fa39e9af69840d670248c43a587",
+    "bytes": 8818,
+    "sha256AfterCleanup": "4b1bc4a50a8301b3b2948c2e99858df52bb976d2d12d262136b4bf18378ef364"
+  },
+  {
+    "from": "docs/FORMAL_EDUCATION_MODULE.md",
+    "to": "docs/modules/FORMAL_EDUCATION_MODULE.md",
+    "sha256": "52ff44d0bd0f7c494f265f01299612e506f938064d421ca81f3e61c3656382cf",
+    "bytes": 10380,
+    "sha256AfterCleanup": "52ff44d0bd0f7c494f265f01299612e506f938064d421ca81f3e61c3656382cf"
+  },
+  {
+    "from": "docs/FULFILLMENT_MODULE.md",
+    "to": "docs/modules/FULFILLMENT_MODULE.md",
+    "sha256": "66384e9a4ad767f491647868f636913567efe145844a3af4d2c10792f2d4b873",
+    "bytes": 7191,
+    "sha256AfterCleanup": "7aa5baba43db3b89b3736b17ef5def39cd93d75cdac38e5a9cb344279f86a275"
+  },
+  {
+    "from": "docs/LAUNDRY_MODULE.md",
+    "to": "docs/modules/LAUNDRY_MODULE.md",
+    "sha256": "e8cc16361490785a6bbfb6a390d0a8d19d0c057e80187b8702a6c7890ef06680",
+    "bytes": 8219,
+    "sha256AfterCleanup": "77fcb322cfdc8e38708e7034e80cad26f99261f75830e12259970368cba2be62"
+  },
+  {
+    "from": "docs/PROJECT_DELIVERY_MODULE.md",
+    "to": "docs/modules/PROJECT_DELIVERY_MODULE.md",
+    "sha256": "2a55d23927c38095a55223c0d138a0b6d82f993809adb59a1242bead479ff00b",
+    "bytes": 7988,
+    "sha256AfterCleanup": "2a55d23927c38095a55223c0d138a0b6d82f993809adb59a1242bead479ff00b"
+  },
+  {
+    "from": "docs/PURCHASING_MODULE.md",
+    "to": "docs/modules/PURCHASING_MODULE.md",
+    "sha256": "a621f639be7edc9345b445b3805700853fbdffc3ba1c08fc174dece8a293b27b",
+    "bytes": 9579,
+    "sha256AfterCleanup": "1314961f730a2812cab4c816dde6fc65eba897d540f18c609263453f1597abae"
+  },
+  {
+    "from": "docs/RESOURCE_RESERVATIONS_MODULE.md",
+    "to": "docs/modules/RESOURCE_RESERVATIONS_MODULE.md",
+    "sha256": "0b47ce79f86e249f938d54cc1921cae189eba2d060a6638fb332341bca5b59e8",
+    "bytes": 12281,
+    "sha256AfterCleanup": "a6b8389b82b062efce1795891b8123e08e17dbf1ccae6a19126f6b4b64fe1b81"
+  },
+  {
+    "from": "docs/SUBSCRIPTIONS_MODULE.md",
+    "to": "docs/modules/SUBSCRIPTIONS_MODULE.md",
+    "sha256": "f3ecedaadb660148114c36a62f3795196f20db259f6f54455b6a73060de859d5",
+    "bytes": 4208,
+    "sha256AfterCleanup": "d1d769f71618684ac4cc9be261a6525c29266b986861e262d72bb280dfd64ae2"
+  },
+  {
+    "from": "docs/SUPPORT_CASES_MODULE.md",
+    "to": "docs/modules/SUPPORT_CASES_MODULE.md",
+    "sha256": "f99cfd702e29d915856b7f14e9db9856d6182e438ce061250033f98eca233a5f",
+    "bytes": 8971,
+    "sha256AfterCleanup": "f003a293694e44f0873f8ca53486ae88c87172f85af72001d881297d58dca5a2"
+  },
+  {
+    "from": "docs/ARCHXY_1_CRM_AUDIT_2026-10-19.md",
+    "to": "docs/audit/ARCHXY_1_CRM_AUDIT_2026-10-19.md",
+    "sha256": "bd45081f3baff4230d84a9df7eded8a7daaea1f60c9e8cc596556fe7e2298fd4",
+    "bytes": 15084,
+    "sha256AfterCleanup": "bd45081f3baff4230d84a9df7eded8a7daaea1f60c9e8cc596556fe7e2298fd4"
+  },
+  {
+    "from": "docs/ARCHXY_BOTH_REAUDIT_2026-10-20.md",
+    "to": "docs/audit/ARCHXY_BOTH_REAUDIT_2026-10-20.md",
+    "sha256": "9fff054bcac5a486637ebfb1e2a8347e7175f5db6acfaa6f00b517725757412f",
+    "bytes": 17186,
+    "sha256AfterCleanup": "9fff054bcac5a486637ebfb1e2a8347e7175f5db6acfaa6f00b517725757412f"
+  },
+  {
+    "from": "docs/ARCHXY_KIT09_REVIEW_2026-10-14.md",
+    "to": "docs/audit/ARCHXY_KIT09_REVIEW_2026-10-14.md",
+    "sha256": "5397650303e6047cb32bcee8ed8a362ec2149e4b5ac0baee1f9a7420ee2f5a9f",
+    "bytes": 20775,
+    "sha256AfterCleanup": "5397650303e6047cb32bcee8ed8a362ec2149e4b5ac0baee1f9a7420ee2f5a9f"
+  },
+  {
+    "from": "docs/ARCHXY_KIT09_REVIEW_2026-10-15.md",
+    "to": "docs/audit/ARCHXY_KIT09_REVIEW_2026-10-15.md",
+    "sha256": "0b8b400e99a5f7843406715c9a2866a96b7a4e34eb2e2ddedd2e39b62ea00921",
+    "bytes": 8102,
+    "sha256AfterCleanup": "0b8b400e99a5f7843406715c9a2866a96b7a4e34eb2e2ddedd2e39b62ea00921"
+  },
+  {
+    "from": "docs/ARCHXY_RUST_AUDIT_2026-10-16.md",
+    "to": "docs/audit/ARCHXY_RUST_AUDIT_2026-10-16.md",
+    "sha256": "8c9206207e615c28ba05fa34b8befa9a6126029fd8e64db623dce337224e2b81",
+    "bytes": 24819,
+    "sha256AfterCleanup": "8c9206207e615c28ba05fa34b8befa9a6126029fd8e64db623dce337224e2b81"
+  },
+  {
+    "from": "docs/ARCHXY_RUST_AUDIT_2026-10-16_EVENING.md",
+    "to": "docs/audit/ARCHXY_RUST_AUDIT_2026-10-16_EVENING.md",
+    "sha256": "dd163769cbe46b8d9a434905817f68fd4c7ba9c804646a3229b731011bbadb8c",
+    "bytes": 12463,
+    "sha256AfterCleanup": "dd163769cbe46b8d9a434905817f68fd4c7ba9c804646a3229b731011bbadb8c"
+  },
+  {
+    "from": "docs/ARCHXY_RUST_AUDIT_2026-10-17.md",
+    "to": "docs/audit/ARCHXY_RUST_AUDIT_2026-10-17.md",
+    "sha256": "613cf4e040c3b508995ded05ff53ea389bc20c6b4c45bf778ca544204c71c7a4",
+    "bytes": 10794,
+    "sha256AfterCleanup": "613cf4e040c3b508995ded05ff53ea389bc20c6b4c45bf778ca544204c71c7a4"
+  },
+  {
+    "from": "docs/ARCHXY_RUST_PROGRESS_REVIEW_2026-10-15.md",
+    "to": "docs/audit/ARCHXY_RUST_PROGRESS_REVIEW_2026-10-15.md",
+    "sha256": "0674e0db3583308c1fbb06ca656c3d37511495c19659d2122e141697487b9ae1",
+    "bytes": 11955,
+    "sha256AfterCleanup": "0674e0db3583308c1fbb06ca656c3d37511495c19659d2122e141697487b9ae1"
+  },
+  {
+    "from": "docs/ARCHXY_RUST_REAUDIT_2026-10-16.md",
+    "to": "docs/audit/ARCHXY_RUST_REAUDIT_2026-10-16.md",
+    "sha256": "f8c4c49277b47f9d0953918b60483d93c3f86fa599367220af3937b22f74d316",
+    "bytes": 17018,
+    "sha256AfterCleanup": "f8c4c49277b47f9d0953918b60483d93c3f86fa599367220af3937b22f74d316"
+  },
+  {
+    "from": "docs/ARCHXY_RUST_REAUDIT_2026-10-16_LATE.md",
+    "to": "docs/audit/ARCHXY_RUST_REAUDIT_2026-10-16_LATE.md",
+    "sha256": "66ee5462820443555d4f38d60fed1ed27406c6063268e9e9801f2b267fa968fb",
+    "bytes": 14102,
+    "sha256AfterCleanup": "66ee5462820443555d4f38d60fed1ed27406c6063268e9e9801f2b267fa968fb"
+  },
+  {
+    "from": "docs/BUSINESS_MODEL_RESEARCH_2026-10-08.md",
+    "to": "docs/research/BUSINESS_MODEL_RESEARCH_2026-10-08.md",
+    "sha256": "01b9fdb49d45804ce605fe79684e83935a8eff7d4e2fb3918ab5a6c018d3e503",
+    "bytes": 12028,
+    "sha256AfterCleanup": "0eea8f9ba7fbf9e856d1c905f977ef43f7eb38419f32755c40cf81a355568fe7"
+  },
+  {
+    "from": "docs/CLEANUP_AND_REUSE_2026-10-08.md",
+    "to": "docs/audit/CLEANUP_AND_REUSE_2026-10-08.md",
+    "sha256": "10129171576f3521c7ca6fcc6eb98bd88a0c9747c9248159760df2932d9cba87",
+    "bytes": 5661,
+    "sha256AfterCleanup": "10129171576f3521c7ca6fcc6eb98bd88a0c9747c9248159760df2932d9cba87"
+  },
+  {
+    "from": "docs/CRM_COMMAND_RECOVERY_2026-10-09.md",
+    "to": "docs/audit/CRM_COMMAND_RECOVERY_2026-10-09.md",
+    "sha256": "e9d3b974406813567db0ca4dc4bd7a939bbe67a8c69244626b9b87cc8f3e9aab",
+    "bytes": 4882,
+    "sha256AfterCleanup": "e9d3b974406813567db0ca4dc4bd7a939bbe67a8c69244626b9b87cc8f3e9aab"
+  },
+  {
+    "from": "docs/CRM_CONVERSATION_2026-10-08.md",
+    "to": "docs/audit/CRM_CONVERSATION_2026-10-08.md",
+    "sha256": "c84fc21940f3adcdb48ab1b1bcf483e02fbb05197b6a32f5853cd374175435d0",
+    "bytes": 4581,
+    "sha256AfterCleanup": "c84fc21940f3adcdb48ab1b1bcf483e02fbb05197b6a32f5853cd374175435d0"
+  },
+  {
+    "from": "docs/CRM_GEMINI_2026-10-09.md",
+    "to": "docs/audit/CRM_GEMINI_2026-10-09.md",
+    "sha256": "57701ea69aeb1378f20815c5168077da7a71f56bf60f4318e380210cef52924c",
+    "bytes": 5785,
+    "sha256AfterCleanup": "57701ea69aeb1378f20815c5168077da7a71f56bf60f4318e380210cef52924c"
+  },
+  {
+    "from": "docs/CRM_M2_2026-10-08.md",
+    "to": "docs/audit/CRM_M2_2026-10-08.md",
+    "sha256": "d20bcb6473dbfff722337584a9d8ecb978e6e9efb41bea98927d57e75d5456ed",
+    "bytes": 5219,
+    "sha256AfterCleanup": "d20bcb6473dbfff722337584a9d8ecb978e6e9efb41bea98927d57e75d5456ed"
+  },
+  {
+    "from": "docs/CRM_M3_LOCAL_2026-10-08.md",
+    "to": "docs/audit/CRM_M3_LOCAL_2026-10-08.md",
+    "sha256": "63507462b915025ca841c8f2c499c8ab28d7eba7b358051cd0b71fcf623cb609",
+    "bytes": 5949,
+    "sha256AfterCleanup": "63507462b915025ca841c8f2c499c8ab28d7eba7b358051cd0b71fcf623cb609"
+  },
+  {
+    "from": "docs/CRM_PIPELINE_2026-10-09.md",
+    "to": "docs/audit/CRM_PIPELINE_2026-10-09.md",
+    "sha256": "6d4b64405f2c0a757bbb85753b9556d40eb4e0e584ada3167da4f1e9b9804f99",
+    "bytes": 5704,
+    "sha256AfterCleanup": "6d4b64405f2c0a757bbb85753b9556d40eb4e0e584ada3167da4f1e9b9804f99"
+  },
+  {
+    "from": "docs/PROJECT_AUDIT_2026-10-07.md",
+    "to": "docs/audit/PROJECT_AUDIT_2026-10-07.md",
+    "sha256": "1c057b0ecea019fb0575a4c4957fd2ee4594145eee6801dd5e22d1172aa6818a",
+    "bytes": 23263,
+    "sha256AfterCleanup": "1c057b0ecea019fb0575a4c4957fd2ee4594145eee6801dd5e22d1172aa6818a"
+  },
+  {
+    "from": "docs/PROJECT_AUDIT_2026-10-14.md",
+    "to": "docs/audit/PROJECT_AUDIT_2026-10-14.md",
+    "sha256": "be122308049629e67e6708f3f63a7388a9bcfe206afa724f3a38361d04a82267",
+    "bytes": 16325,
+    "sha256AfterCleanup": "be122308049629e67e6708f3f63a7388a9bcfe206afa724f3a38361d04a82267"
+  },
+  {
+    "from": "docs/PROJECT_REAUDIT_2026-10-10.md",
+    "to": "docs/audit/PROJECT_REAUDIT_2026-10-10.md",
+    "sha256": "67b0574759dfd6a89f055da69f8b4a218158d39702cc92b5e7180b5d19026b1d",
+    "bytes": 24494,
+    "sha256AfterCleanup": "67b0574759dfd6a89f055da69f8b4a218158d39702cc92b5e7180b5d19026b1d"
+  },
+  {
+    "from": "docs/PROVIDER_RUNTIME_2026-10-09.md",
+    "to": "docs/audit/PROVIDER_RUNTIME_2026-10-09.md",
+    "sha256": "9c41da96740f927ac3667536a298d38fdcc358f45d1b0064db3c8a86b54c18a1",
+    "bytes": 5341,
+    "sha256AfterCleanup": "9c41da96740f927ac3667536a298d38fdcc358f45d1b0064db3c8a86b54c18a1"
+  },
+  {
+    "from": "docs/RUST_MIGRATION_RESEARCH_2026-10-14.md",
+    "to": "docs/research/RUST_MIGRATION_RESEARCH_2026-10-14.md",
+    "sha256": "8ff7bf4fbaddabdc0dfcfafdc51d04e2fda6948e85ed131504cd73932cde063f",
+    "bytes": 13255,
+    "sha256AfterCleanup": "c14248832f260a743ef057d39d37990abd7fbb9286ea89031a673337b3da36d6"
+  },
+  {
+    "from": "docs/STARTER_KIT_COVERAGE_RESEARCH_2026-10-10.md",
+    "to": "docs/research/STARTER_KIT_COVERAGE_RESEARCH_2026-10-10.md",
+    "sha256": "e4ff6c762676462e309dc8747d90ef77ef27ee7327eb25196656111b25e29360",
+    "bytes": 54526,
+    "sha256AfterCleanup": "9dee7ba6981745899e1e514ddbc3db0f2555eb008eac06e7668b4533103dc833"
+  },
+  {
+    "from": "docs/ARCHAVA_REUSABLE_PLATFORM_PROPOSAL.md",
+    "to": "docs/research/ARCHAVA_REUSABLE_PLATFORM_PROPOSAL.md",
+    "sha256": "d2546c9340250b2a6da1cb7876cbe02c5050e1c15d651fd71e1da23ef34b5765",
+    "bytes": 44839,
+    "sha256AfterCleanup": "6e3b0aebf4198326ca81a74a9a1fa834fdec4fe9966012277c830c44aed2e305"
+  },
+  {
+    "from": "docs/ARCHAVA_STRATEGY_AND_EVOLUTION.md",
+    "to": "docs/research/ARCHAVA_STRATEGY_AND_EVOLUTION.md",
+    "sha256": "08c67598bc6e1dae84136bd5f7cb8cb59bccd508be03d575f7ac91c731d80e53",
+    "bytes": 8777,
+    "sha256AfterCleanup": "08c67598bc6e1dae84136bd5f7cb8cb59bccd508be03d575f7ac91c731d80e53"
+  },
+  {
+    "from": "docs/REUSABLE_PLATFORM_RESEARCH.md",
+    "to": "docs/research/REUSABLE_PLATFORM_RESEARCH.md",
+    "sha256": "67af51e3bf3d563a68e70e60441b9166a61cac57f11b908a9e88180eca9c8acb",
+    "bytes": 31856,
+    "sha256AfterCleanup": "a93aeda74bca62a2b472931ff3e76eb507b86e60c77444bcc1f699f4e3119382"
+  },
+  {
+    "from": "docs/JEV_EVAL_READINESS.md",
+    "to": "docs/research/JEV_EVAL_READINESS.md",
+    "sha256": "6be7b265028e359a5733e37bff9e8142e26c161a4343e4a19b1cf5c352f27111",
+    "bytes": 5581,
+    "sha256AfterCleanup": "6be7b265028e359a5733e37bff9e8142e26c161a4343e4a19b1cf5c352f27111"
+  },
+  {
+    "from": "docs/JEV_PROVIDER_RESEARCH.md",
+    "to": "docs/research/JEV_PROVIDER_RESEARCH.md",
+    "sha256": "459b4208ece82998695fc5a1bb91ceffa9d4efaf4927679987c057ff0ed1443e",
+    "bytes": 4174,
+    "sha256AfterCleanup": "459b4208ece82998695fc5a1bb91ceffa9d4efaf4927679987c057ff0ed1443e"
+  },
+  {
+    "from": "docs/PRD_FULL_RUST.md",
+    "to": "docs/plans/PRD_FULL_RUST.md",
+    "sha256": "0567c95a1461527a36272dd79efb8f91c30617b54838c320cf96494205735d93",
+    "bytes": 102693,
+    "sha256AfterCleanup": "87f81d275f0376376a3ae445f3ffe1b57768b10fd03b0af68f0fd5724273ac14"
+  },
+  {
+    "from": "docs/OWNER_CONFIGURATION_PRD.md",
+    "to": "docs/plans/OWNER_CONFIGURATION_PRD.md",
+    "sha256": "0ca3babf6d007f0031691bb7163e08409dbaa8ff9b50d54f1c7ddc710ce51b25",
+    "bytes": 16473,
+    "sha256AfterCleanup": "0ca3babf6d007f0031691bb7163e08409dbaa8ff9b50d54f1c7ddc710ce51b25"
+  },
+  {
+    "from": "docs/FOODSERVICE_MODULE_PLAN.md",
+    "to": "docs/plans/FOODSERVICE_MODULE_PLAN.md",
+    "sha256": "921785eacf51f528efdbb7549c5f2fdb31eed005085ad20b0b91702ebbbd684d",
+    "bytes": 4236,
+    "sha256AfterCleanup": "6783824c31c55b3fd1f0316a85524b66b674bf1e9c5d7189f88bfb519db6d5e2"
+  },
+  {
+    "from": "docs/PURCHASING_MODULE_PLAN.md",
+    "to": "docs/plans/PURCHASING_MODULE_PLAN.md",
+    "sha256": "b9efd567885823fef96065e94eb17fbdcebca2ead3e771da5a452f172c6b83df",
+    "bytes": 2980,
+    "sha256AfterCleanup": "b9efd567885823fef96065e94eb17fbdcebca2ead3e771da5a452f172c6b83df"
+  },
+  {
+    "from": "docs/SUPPORT_CASES_MODULE_PLAN.md",
+    "to": "docs/plans/SUPPORT_CASES_MODULE_PLAN.md",
+    "sha256": "6c6d64e1cfa1e5e1856ec8059785da043c2249a53dfb6358e0c5081567778078",
+    "bytes": 3096,
+    "sha256AfterCleanup": "f62e868d56abfbecef2d4ce1621fabc2a64cebb1921e218b056bff93dfdd8305"
+  },
+  {
+    "from": "crates/host/migrations/owner/001_owner_config.sql",
+    "to": "migrations/owner-pg/001_owner_config.sql",
+    "sha256": "120b7e82d059b9c56531ab2310136ecb2232b5b40f8b29442684df80ba642df7",
+    "bytes": 3877,
+    "sha256AfterCleanup": "120b7e82d059b9c56531ab2310136ecb2232b5b40f8b29442684df80ba642df7"
+  },
+  {
+    "from": "docs/COCKPIT_TASK_ARCHITECTURE.md",
+    "to": "docs/architecture/COCKPIT_TASK_ARCHITECTURE.md",
+    "sha256": "5890276a6fa0d6d639fe7c9ed216fd6b23ee4425703e4e4ef17267b9f2d97183",
+    "bytes": 12047,
+    "sha256AfterCleanup": "5890276a6fa0d6d639fe7c9ed216fd6b23ee4425703e4e4ef17267b9f2d97183"
+  },
+  {
+    "from": "docs/ORBZ_MEMORY_ARCHITECTURE.md",
+    "to": "docs/architecture/ORBZ_MEMORY_ARCHITECTURE.md",
+    "sha256": "9459ff43c3c32a8444fdcafe01858f11cddc720848e0e65274ec813b8db01fc0",
+    "bytes": 8663,
+    "sha256AfterCleanup": "9459ff43c3c32a8444fdcafe01858f11cddc720848e0e65274ec813b8db01fc0"
+  },
+  {
+    "from": "docs/FRONTIER_AGENTIC_CRATES.md",
+    "to": "docs/architecture/FRONTIER_AGENTIC_CRATES.md",
+    "sha256": "e2ba2d4a6fb6ba1de3da760dce2ec2e55401b3d7dc938be0d1da3ea01d979006",
+    "bytes": 5477,
+    "sha256AfterCleanup": "e2ba2d4a6fb6ba1de3da760dce2ec2e55401b3d7dc938be0d1da3ea01d979006"
+  },
+  {
+    "from": "docs/DECISION_INTELLIGENCE.md",
+    "to": "docs/architecture/DECISION_INTELLIGENCE.md",
+    "sha256": "76f210f9dee618c765ebea8c7c8bb31c1b146f022cf4a6bf648889bae1e06148",
+    "bytes": 6761,
+    "sha256AfterCleanup": "ba7c6cfa6394e699b18cb9d0b2cbd87db9c4ddac82a534f8453030221ab3a36b"
+  },
+  {
+    "from": "docs/DURABLE_ACT_OPERATIONS.md",
+    "to": "docs/architecture/DURABLE_ACT_OPERATIONS.md",
+    "sha256": "1a4970900726afc0c34eeb26c1f85cab3ecb27d71a7e4077821763b80bfe5f3b",
+    "bytes": 7467,
+    "sha256AfterCleanup": "6d416a7cc1dea46a406f4a39ddc8db339141ee4dee9934212926b3a4a41ce01c"
+  },
+  {
+    "from": "docs/ENTERPRISE_ENGINES.md",
+    "to": "docs/architecture/ENTERPRISE_ENGINES.md",
+    "sha256": "000205c9bacbde03bf3f3ab5970775b61c1a881db792a72a784e340537c90e1e",
+    "bytes": 8702,
+    "sha256AfterCleanup": "000205c9bacbde03bf3f3ab5970775b61c1a881db792a72a784e340537c90e1e"
+  },
+  {
+    "from": "docs/INTEGRATION_GUIDE.md",
+    "to": "docs/integration/INTEGRATION_GUIDE.md",
+    "sha256": "7b88d726293aa1d825a313c7eac73581d0989bbf29fccaab8e97203f78a733b2",
+    "bytes": 5219,
+    "sha256AfterCleanup": "7b88d726293aa1d825a313c7eac73581d0989bbf29fccaab8e97203f78a733b2"
+  },
+  {
+    "from": "docs/EMBED_INTEGRATION_GUIDE.md",
+    "to": "docs/integration/EMBED_INTEGRATION_GUIDE.md",
+    "sha256": "a51a040f4dbae4d4e71d45205eb400a068354b6229a76b6d70a1332415697e19",
+    "bytes": 4860,
+    "sha256AfterCleanup": "a51a040f4dbae4d4e71d45205eb400a068354b6229a76b6d70a1332415697e19"
+  },
+  {
+    "from": "docs/CRM_BACKUPS.md",
+    "to": "docs/reference/CRM_BACKUPS.md",
+    "sha256": "b933ab4c8ae99ceb49dad4b4784d079a0af3f71e1107fd96a76e41cf766e1152",
+    "bytes": 6834,
+    "sha256AfterCleanup": "67b8c67751e6d0887bf57136bb998ea7c9cb6d4733c12def66d0f0499d5cd5fc"
+  },
+  {
+    "from": "docs/CRM_COMMAND_RECOVERY.md",
+    "to": "docs/reference/CRM_COMMAND_RECOVERY.md",
+    "sha256": "af0f1ac57cb47b0703a8d1a470cf0c203825bdd6571484e1e39cb5f6fd9d201c",
+    "bytes": 5353,
+    "sha256AfterCleanup": "c41efd59130ab13afda4f43f21b9696f84ea6e47cebb4835fcebc280831e8366"
+  },
+  {
+    "from": "docs/CRM_CONVERSATION.md",
+    "to": "docs/reference/CRM_CONVERSATION.md",
+    "sha256": "892288be23bb3929600b4dce9494cb1a419b2db8da8dfdc6e09155d54cff2a7b",
+    "bytes": 6783,
+    "sha256AfterCleanup": "f6f9e34cf6bf11471d380e80ed276c8de41381e79a65de86bcb9622763ce29c6"
+  },
+  {
+    "from": "docs/CRM_GEMINI_PILOT.md",
+    "to": "docs/reference/CRM_GEMINI_PILOT.md",
+    "sha256": "e942c2e73e9751e387709d0651346a400f7698525a8a8e7595cdd90ab9860f4b",
+    "bytes": 7632,
+    "sha256AfterCleanup": "99b0111824b568577bba1adf8505207de86c830aaaadf2bb07ea0c08f9d6c9e2"
+  },
+  {
+    "from": "docs/CRM_OVERVIEW.md",
+    "to": "docs/reference/CRM_OVERVIEW.md",
+    "sha256": "532c8db8b56b1053a09c726cf2fb778f1c1a03d4b64968654689857a9af13a25",
+    "bytes": 5820,
+    "sha256AfterCleanup": "e554e186f8d4c8f359d7c201ce6dbfc170aa1a1edf3f981c9cf55e004bd112a6"
+  },
+  {
+    "from": "docs/CRM_PIPELINE.md",
+    "to": "docs/reference/CRM_PIPELINE.md",
+    "sha256": "f4446bc22d217d95d41cc7ee0064f3c2048ee62d21bf5556c700dc7b8df9857e",
+    "bytes": 8403,
+    "sha256AfterCleanup": "0b646b014881f54410029a58f32a7ced5635684a7c85d698099b19189648c326"
+  },
+  {
+    "from": "docs/CRM_RUNTIME.md",
+    "to": "docs/reference/CRM_RUNTIME.md",
+    "sha256": "ec95ab82cb127a36ce62a28fdcb276da2bb8d35c1bb509aca3e1e634c06b017d",
+    "bytes": 10222,
+    "sha256AfterCleanup": "41a284e905580707ee8c5e2a39665892e6aa8210619ee53d38cade16c30bc0e5"
+  },
+  {
+    "from": "docs/CRM_WORKLIST.md",
+    "to": "docs/reference/CRM_WORKLIST.md",
+    "sha256": "e155eaf0a329e4c00f58e946a3671ef70a99e4c0248c2fea5a847d1407f17e2d",
+    "bytes": 5896,
+    "sha256AfterCleanup": "6c1358ea9df9fc245618a19e5b2642627cf95cc39e0504062fc51d214fdc599f"
+  },
+  {
+    "from": "docs/LIBRARY_CONSUMPTION.md",
+    "to": "docs/reference/LIBRARY_CONSUMPTION.md",
+    "sha256": "9580860fdba7d42e73d9033db76e4dc90d26ba2772fed07fae2e5a7cd4af17f0",
+    "bytes": 9441,
+    "sha256AfterCleanup": "a69140e0cb77e6b01eb5bc8ffa46d7061bfdea9abd7b68203bd8f7e626c4522a"
+  },
+  {
+    "from": "docs/PROVIDER_RUNTIME.md",
+    "to": "docs/reference/PROVIDER_RUNTIME.md",
+    "sha256": "3d043693680dbce0e25df6a78895f111942ab11bb42351efef2d45cd7693895f",
+    "bytes": 5723,
+    "sha256AfterCleanup": "1754cbfc86c27c4e8d01ed304106fca10b726b31c4a2c76bbe54ee2b289391c9"
+  },
+  {
+    "from": "docs/STARTER_KIT_IMPLEMENTATION.md",
+    "to": "docs/reference/STARTER_KIT_IMPLEMENTATION.md",
+    "sha256": "a86db6761579a193dcb2c655438b6a54c45f7517142c3295da495ebf3680272b",
+    "bytes": 32689,
+    "sha256AfterCleanup": "e15689d40c9924bb26a6150ac96e3620da875579d6632f94a7aadb691bbb7d74"
+  },
+  {
+    "from": "docs/UNIVERSAL_BUSINESS_LIBRARY.md",
+    "to": "docs/reference/UNIVERSAL_BUSINESS_LIBRARY.md",
+    "sha256": "e89991cd92642fd993837a1e5149b2f9ad44ea488f2499a881d24b8f000b75ef",
+    "bytes": 10451,
+    "sha256AfterCleanup": "e89991cd92642fd993837a1e5149b2f9ad44ea488f2499a881d24b8f000b75ef"
+  },
+  {
+    "from": "docs/ACT_PILOT.md",
+    "to": "docs/history/progress/ACT_PILOT.md",
+    "sha256": "c05737c0a0ea5b0ee01a8cb78473001f20913177076eeae20f7470855791873f",
+    "bytes": 9056,
+    "sha256AfterCleanup": "c05737c0a0ea5b0ee01a8cb78473001f20913177076eeae20f7470855791873f"
+  },
+  {
+    "from": "docs/CRM_COMPLETION.md",
+    "to": "docs/history/progress/CRM_COMPLETION.md",
+    "sha256": "f56a531540b5171c8b6a1056d233f29ee3c3aaaca3c29bd36d6e06c490a04660",
+    "bytes": 5943,
+    "sha256AfterCleanup": "f56a531540b5171c8b6a1056d233f29ee3c3aaaca3c29bd36d6e06c490a04660"
+  },
+  {
+    "from": "docs/DELIVERY_PROGRESS.md",
+    "to": "docs/history/progress/DELIVERY_PROGRESS.md",
+    "sha256": "c7d26389968b363f087e62d5ea3851b0e3d54eea4eb2d547cb34701da94c473e",
+    "bytes": 20453,
+    "sha256AfterCleanup": "c7d26389968b363f087e62d5ea3851b0e3d54eea4eb2d547cb34701da94c473e"
+  },
+  {
+    "from": "docs/INTERNAL_OWNER_PROGRESS.md",
+    "to": "docs/history/progress/INTERNAL_OWNER_PROGRESS.md",
+    "sha256": "48366c537790e6ae78d64e40217de7cef54ee13351aa5c8f0a4c17fc0de0f7f4",
+    "bytes": 7087,
+    "sha256AfterCleanup": "48366c537790e6ae78d64e40217de7cef54ee13351aa5c8f0a4c17fc0de0f7f4"
+  },
+  {
+    "from": "docs/LOCAL_LIBRARY_CHANGELOG.md",
+    "to": "docs/history/progress/LOCAL_LIBRARY_CHANGELOG.md",
+    "sha256": "aa83dbc3773865a5a136b2a8efa39e17692a7b029a7a3075019ed4050a2c11b3",
+    "bytes": 2271,
+    "sha256AfterCleanup": "aa83dbc3773865a5a136b2a8efa39e17692a7b029a7a3075019ed4050a2c11b3"
+  },
+  {
+    "from": "docs/LOCAL_LIBRARY_HANDOFF.md",
+    "to": "docs/history/progress/LOCAL_LIBRARY_HANDOFF.md",
+    "sha256": "e52c061a6524a152e47b59e67952612c11d1d3c5bf49b64a41e26c2dbf7c256c",
+    "bytes": 14671,
+    "sha256AfterCleanup": "e52c061a6524a152e47b59e67952612c11d1d3c5bf49b64a41e26c2dbf7c256c"
+  },
+  {
+    "from": "docs/LOCAL_LIBRARY_RELEASE.md",
+    "to": "docs/history/progress/LOCAL_LIBRARY_RELEASE.md",
+    "sha256": "0d5ebf66ebba2c0a91ef150d9db46bacfdc1ac86df92d70fe3e4249b739ae7af",
+    "bytes": 79507,
+    "sha256AfterCleanup": "0d5ebf66ebba2c0a91ef150d9db46bacfdc1ac86df92d70fe3e4249b739ae7af"
+  },
+  {
+    "from": "docs/LOCAL_OWNER_PILOT.md",
+    "to": "docs/history/progress/LOCAL_OWNER_PILOT.md",
+    "sha256": "c3c1a668ff5c096e7a72059400a4327a9084dcba849d274f60d6362fe86f177f",
+    "bytes": 7948,
+    "sha256AfterCleanup": "c3c1a668ff5c096e7a72059400a4327a9084dcba849d274f60d6362fe86f177f"
+  },
+  {
+    "from": "docs/REVIEW_REPORT.md",
+    "to": "docs/history/progress/REVIEW_REPORT.md",
+    "sha256": "767a5987c328b3cc591db4f5d2f9de798e6c230223c1bc80d71ace0c61ae4f0f",
+    "bytes": 4195,
+    "sha256AfterCleanup": "767a5987c328b3cc591db4f5d2f9de798e6c230223c1bc80d71ace0c61ae4f0f"
+  },
+  {
+    "from": "docs/BUSINESS_CAPABILITY_MATRIX.md",
+    "to": "docs/modules/BUSINESS_CAPABILITY_MATRIX.md",
+    "sha256": "ebf19496b81c6460e7291acadcd07f4e17adafb5a5f8bf2cd3279fb62b288098",
+    "bytes": 31598,
+    "sha256AfterCleanup": "4a7f491a607c8e024f40835616789a5c2573a2a34b689efb8a307663ee517b90"
+  },
+  {
+    "from": "docs/FRONTEND.md",
+    "to": "docs/design/FRONTEND.md",
+    "sha256": "1af6808324cef762580b0778f50e918fbbc6cf633d33a757a7a8578cd3967564",
+    "bytes": 6872,
+    "sha256AfterCleanup": "1af6808324cef762580b0778f50e918fbbc6cf633d33a757a7a8578cd3967564"
+  },
+  {
+    "from": "docs/design-preview.html",
+    "to": "docs/design/design-preview.html",
+    "sha256": "f956aa01be4f25ea9dab3bcac33dc29237928d123eff11ad04ab56b80e5885c2",
+    "bytes": 66039,
+    "sha256AfterCleanup": "f956aa01be4f25ea9dab3bcac33dc29237928d123eff11ad04ab56b80e5885c2"
+  },
+  {
+    "from": "docs/design-research.md",
+    "to": "docs/design/design-research.md",
+    "sha256": "b3f3e17c4e85b0084afe8e49823f0df509b020f1f7517eebe5300dbb56f52929",
+    "bytes": 10514,
+    "sha256AfterCleanup": "198565583d02a7e867b8cbf5e5136a841d1d608e691b34d326d323da81e1be41"
+  }
+]

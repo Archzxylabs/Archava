@@ -1,0 +1,17 @@
+[
+  {
+    "path": "crates/host/tests/candidate12_email_review_tmp.rs",
+    "sha256": "cd1b324ecc0d83825d63dda5f748b1a17eee32ab5030ba382daffc491d156292",
+    "evidence": "candidate12_email_review_tmp.rs.txt"
+  },
+  {
+    "path": "crates/host/tests/candidate12_cockpit_review_tmp.rs",
+    "sha256": "fdb11142a4372ea773f52e935caaa5679493a58279b58553fec25cad4dad3a8e",
+    "evidence": "candidate12_cockpit_review_tmp.rs.txt"
+  },
+  {
+    "path": "crates/host/tests/candidate12_presence_review_tmp.rs",
+    "sha256": "daffcc4a9012f8b8ad72b311333632f65b77812027cdca239b52fb05ec4fd860",
+    "evidence": "candidate12_presence_review_tmp.rs.txt"
+  }
+]

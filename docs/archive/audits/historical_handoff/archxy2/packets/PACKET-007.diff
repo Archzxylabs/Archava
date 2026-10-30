@@ -1,0 +1,444 @@
+# PACKET-007 — the first R07 cohort: billing (immutable invoicing + provider-authoritative settlement; P-ERP-R07 OPENS)
+
+**Archxy 2 → Archxy 1.** Successor to PACKET-006: its hunks are ASSUMED
+FOLDED before this diff is applied — the a/ side of every hunk below is
+literally "current main (2026-10-19, HEAD `409eab9…` at cut — `94307ed`
+reaps orphan postmasters at gate start and `409eab9` is the terminal
+17/17-full-gate record; NEITHER commit touches any packet surface, so
+the PACKET-006 fold claim re-verifies unchanged) with PACKET-003.diff,
+PACKET-004.diff, PACKET-005.diff and PACKET-006.diff applied", built by
+actually patching today's files in a staging copy (`patch -p1 --forward
+--fuzz=3`; all four prior packets fold with ZERO rejects — the known
+fuzz-1/fuzz-2 offsets on the PACKET-003-era hunks unchanged, and the
+patched five shared files are then byte-identical to the candidate
+copy's pre-PACKET-007 state). This packet's own hunks were cut by
+overlaying the candidate copy's current files over that fold and diffing
+(they apply onto the folded baseline with ZERO rejects and ZERO fuzz of
+their own). Apply order: PACKET-003, PACKET-004, PACKET-005, PACKET-006,
+then this packet as `patch -p1 --directory=<main> < PACKET-007.diff`,
+confirming `git status` on the listed files.
+
+**This packet adds NO hunks to the four LIBRARY single-writer files**
+(tools/library/pack.mjs, tools/library/manifest.mjs, package.json,
+docs/LOCAL_LIBRARY_HANDOFF.md): `@archava/billing-pg` already rides the
+COMMITTED library catalogue and its tarball list, and `@archava/billing`
+ships TRANSITIVELY as its workspace dependency through the pack's
+dependency closure — the 18-module consumers run PROVED it
+(`pnpm library:pack` → 62 tarballs incl. `@archava/billing` +
+`@archava/billing-pg`; `pnpm erp:verify-consumers` PASS across both
+verticals' billing batteries). The formal-education pack-list stub story
+is UNCHANGED from PACKET-006's note (main's committed HEAD state is
+internally inconsistent about it; the uncommitted worktree carries the
+fix — recorded, no action).
+
+**R07 opens its OWN proof surface.** The R05 surface is CLOSED at 29
+checks and the billing ledger is a separate migration area, so its
+runtime evidence starts a NEW growing surface: the fast gate gains the
+ONE step `erp R07 suites` (tools/rust/erp/verify-r07.mjs grades the 13
+named witnesses of `erp_billing.rs` check-by-check and writes
+`dist/rust-erp-r07-proof.json`), the manifest gains the `P-ERP-R07`
+block, P-FAST-GATE's requiredChecks grow 20 → 21, and the drift-test
+family gains its member. Later R07 cohorts (subscriptions, attendance,
+support, fulfillment) grow this SAME producer/step/block additively —
+never by forking per cohort. The pure domain half stays the frozen
+`P-R07-DOMAIN` slot (Archxy 1's; untouched, as always).
+
+**The rest of the cohort rides the candidate copy** (readable
+checkpoints, same as every earlier packet): `rust/crates/domain/src/
+erp/billing.rs`, `rust/crates/adapters/src/erp/billing.rs`,
+`rust/crates/host/src/erp/billing.rs`,
+`rust/crates/host/tests/erp_billing.rs` (13 named witnesses, all green),
+the adapters/host module registrations, `tools/rust/erp/module-consumers.ts`
++ `module-consumers.witnesses.mjs` (battery scope 16 → 18), both
+verticals' billing surfaces
+(`examples/rust-consumers/erp/**`: deps, `mountBillingDashboard` mounts +
+`#billing` hosts, typed server-contract exports, a billing battery each,
+`billing-pg` leak checks), and the trio `docs/rust/archxy2/**` +
+`docs/rust/KNOWN_DIFFERENCES.md` (D16–D18: the carrier label folds, the
+derived provider key, the one-sample clock). See
+`INTEGRATION_REQUESTS.md` §PACKET-007 for the full request.
+
+## Shared single-writer files — the hunks below, ONE paragraph each
+
+1. `rust/crates/host/src/router.rs` — two billing routes beside the
+   assets mounts: `POST /erp/billing/commands` (CSRF true) and
+   `GET /erp/billing/commands/status` (CSRF false), mounted after the
+   assets routes.
+2. `rust/crates/pg-fixture/src/lib.rs` — `BILLING_MIGRATIONS` (the ONE
+   frozen migration `001_billing_invoices_settlement` whose sha256 the
+   fixture recomputes), the `billing_ledger` field, the provision
+   `migrate_ledger` call + instantiation + both constructor sites, the
+   `grantBillingRuntime` port, and BOTH the `migrations_package` and
+   `ledger_expectations` arms. Both commerce rehearsal provisions stay
+   untouched (additive, as always).
+3. `tools/rust/verify.mjs` — the `erp R07 suites` step entry + comment
+   (after the R05 step's entry) and the `P-ERP-R07` evidence-mapping
+   block (13 checks → the one step; `details` reads
+   `dist/rust-erp-r07-proof.json`).
+4. `tools/rust/test/verify.test.mjs` — the `R07_WITNESSES` sidecar
+   import and the P-ERP-R07 drift test: manifest ↔ witness map both
+   directions, `witnessTotal` ≡ 13 + the frozen sum, identifier shape,
+   and the suite whitelist `['billing']`.
+5. `docs/rust/required-coverage.json` — **scope edit, submitted for
+   review**: P-FAST-GATE's `requiredChecks` grows `erp R07 suites`
+   (20 → 21); the NEW `P-ERP-R07` proof block (13 `requiredChecks`,
+   `expect.witnessTotal` 13 + the `RN-ERP-01`/`RN-ERP-02` anchors keyed
+   to the billing cohort's revoked-recovery and same-key-conflict
+   checks, `sourcePaths` incl. `packages/billing-pg/migrations`,
+   `referenced` = the proof json); and P-MODULE-CONSUMERS' `producedBy`
+   sentence records the EIGHTEEN-module battery scope. P-ERP-R05 stays
+   byte-untouched at its closed 29-check shape.
+6. `rust/crates/domain/Cargo.toml` — `hmac` + `sha2` (workspace deps,
+   already resolved): the provider-event digest is pure crypto
+   arithmetic computed in the domain under a deployment key — the wasm
+   boundary holds (both are pure-Rust, socket-free).
+7. `rust/Cargo.lock` — EXACTLY the two dependency lines in the
+   `archava-domain` block (`hmac 0.12.1`, `sha2 0.10.9`); no other lock
+   change and NO new crates (billing lives inside the existing four
+   Archxy 2 crates).
+
+diff --git a/docs/rust/required-coverage.json b/docs/rust/required-coverage.json
+index 4b4f890..00ef58a 100644
+--- a/docs/rust/required-coverage.json
++++ b/docs/rust/required-coverage.json
+@@ -820,7 +820,8 @@
+         "planning conformance suite",
+         "wasm portable boundary",
+         "R09 provider contracts",
+-        "erp R05 suites"
++        "erp R05 suites",
++        "erp R07 suites"
+       ],
+       "sourcePaths": [
+         "rust/crates",
+@@ -1394,7 +1395,7 @@
+     },
+     "P-MODULE-CONSUMERS": {
+       "kind": "evidence",
+-      "producedBy": "pnpm erp:verify-consumers (tools/rust/erp/module-consumers.ts installs two product verticals from the compiled library tarballs and grades each consumer's verify battery + installed-module resolution) — the battery scope covers the accepted R06 pair, the R04 ledgers added with PACKET-003, the R05 scheduling ledger added with PACKET-004, the R05 accommodation ledger added with PACKET-005, and the R05 assets ledger added with PACKET-006 (the tally's own expect.witnessTotal counts WITNESS PAIRS — checks × consumers — and stays 4; the proof JSON's witnessTotal/witnesses members now compute from the WITNESSES sidecar)",
++      "producedBy": "pnpm erp:verify-consumers (tools/rust/erp/module-consumers.ts installs two product verticals from the compiled library tarballs and grades each consumer's verify battery + installed-module resolution) — the battery scope covers the accepted R06 pair, the R04 ledgers added with PACKET-003, the R05 scheduling ledger added with PACKET-004, the R05 accommodation ledger added with PACKET-005, the R05 assets ledger added with PACKET-006, and the R07 billing ledger added with PACKET-007 (the tally's own expect.witnessTotal counts WITNESS PAIRS — checks × consumers — and stays 4; the proof JSON's witnessTotal/witnesses members now compute from the WITNESSES sidecar)",
+       "requiredChecks": [
+         "every accepted module has two independently installed consumers",
+         "no workspace/path dependency in either consumer"
+@@ -1804,6 +1805,44 @@
+       "referenced": [
+         "dist/rust-erp-r05-proof.json"
+       ]
++    },
++    "P-ERP-R07": {
++      "kind": "evidence",
++      "producedBy": "pnpm rust:verify → erp R07 suites step (tools/rust/erp/verify-r07.mjs) grading named witness tests in rust/crates/host/tests/erp_billing.rs against the owned PostgreSQL fixture — the R07 billing ledger's runtime half, opened whole by the billing cohort with PACKET-007 (the R05 surface is closed at 29 checks and never grows again, so the R07 migration area opens its OWN growing evidence surface that later cohorts extend additively; the pure domain half is the frozen P-R07-DOMAIN)",
++      "requiredChecks": [
++        "authorized billing life documents its settlement",
++        "a forged claim settles nothing",
++        "correction reversal respects its invoice",
++        "voiding holds on recorded settlement",
++        "settlement beyond the balance holds nothing",
++        "a failed outcome moves no money and no revision",
++        "the attempt arm asserts no result",
++        "revoked billing grant refused on recovery",
++        "cross-tenant billing caller refused before any write",
++        "same billing key different command conflicts",
++        "lost response replays without a second row",
++        "narrow billing grants refuse the arms they lack",
++        "transition state and wire boundaries refuse the movement"
++      ],
++      "expect": {
++        "witnessTotal": 13,
++        "namedRegressions": {
++          "RN-ERP-01": "revoked billing grant refused on recovery",
++          "RN-ERP-02": "same billing key different command conflicts"
++        }
++      },
++      "sourcePaths": [
++        "rust/crates/host",
++        "rust/crates/adapters/src/erp",
++        "rust/crates/domain/src/erp",
++        "rust/crates/core",
++        "tools/rust/erp/verify-r07.mjs",
++        "packages/billing-pg/migrations"
++      ],
++      "artifacts": [],
++      "referenced": [
++        "dist/rust-erp-r07-proof.json"
++      ]
+     }
+   }
+ }
+diff --git a/rust/Cargo.lock b/rust/Cargo.lock
+index 9909561..43448d9 100644
+--- a/rust/Cargo.lock
++++ b/rust/Cargo.lock
+@@ -100,8 +100,10 @@ name = "archava-domain"
+ version = "0.1.0"
+ dependencies = [
+  "archava-core",
++ "hmac 0.12.1",
+  "serde",
+  "serde_json",
++ "sha2 0.10.9",
+  "thiserror 2.0.21",
+  "tokio",
+ ]
+diff --git a/rust/crates/domain/Cargo.toml b/rust/crates/domain/Cargo.toml
+index 6aa93c3..4cb70c2 100644
+--- a/rust/crates/domain/Cargo.toml
++++ b/rust/crates/domain/Cargo.toml
+@@ -30,6 +30,14 @@ serde.workspace = true
+ # ERP fingerprint canonicalization needs a JSON value traversal (archxy2 ERP
+ # namespace; integration packet PACKET-000 records this shared-file diff).
+ serde_json.workspace = true
++# R07's billing cohort (PACKET-007): the provider-event digest is pure
++# crypto arithmetic — `HMAC-SHA256(domain ‖ framed parts)` under a
++# deployment key — and a digest computed anywhere else is not the
++# settlement's authority. hmac/sha2 are already workspace crates (the
++# provider crate hashes migration files; the host digests sessions); the
++# wasm boundary holds because both are pure-Rust, socket-free.
++hmac.workspace = true
++sha2.workspace = true
+ 
+ [dev-dependencies]
+ tokio.workspace = true
+diff --git a/rust/crates/host/src/router.rs b/rust/crates/host/src/router.rs
+index dda7bb7..5b35e9c 100644
+--- a/rust/crates/host/src/router.rs
++++ b/rust/crates/host/src/router.rs
+@@ -415,6 +415,19 @@ pub fn router(state: AppState) -> Router {
+             "/erp/assets/commands/status",
+             get(crate::erp::assets::asset_status),
+         )
++        // Archxy 2's R07 billing ledger (PACKET-007): the settlement
++        // cohort, the R07 area's first subject — its own ledger; the
++        // provider-event arm is authorised by a signature the gate
++        // verifies BEFORE the transaction, so an under-signed claim
++        // claims nothing.
++        .route(
++            "/erp/billing/commands",
++            post(crate::erp::billing::billing_command),
++        )
++        .route(
++            "/erp/billing/commands/status",
++            get(crate::erp::billing::billing_status),
++        )
+         .with_state(state)
+ }
+ 
+diff --git a/rust/crates/pg-fixture/src/lib.rs b/rust/crates/pg-fixture/src/lib.rs
+index 4580fd2..b62bac0 100644
+--- a/rust/crates/pg-fixture/src/lib.rs
++++ b/rust/crates/pg-fixture/src/lib.rs
+@@ -156,6 +156,14 @@ pub const ACCOMMODATION_MIGRATIONS: &[&str] = &["001_room_night_stays"];
+ /// tenant policies, byte-faithful to the TS package's frozen migration.
+ pub const ASSETS_MIGRATIONS: &[&str] = &["001_assets_custody_maintenance"];
+ 
++/// The billing ledger's migration, in apply order —
++/// `packages/billing-pg/migrations/001_billing_invoices_settlement.sql`
++/// (Archxy 2's ERP namespace, R07 first cohort, PACKET-007):
++/// memberships/invoices (with the priced-line sheets, corrections,
++/// attempts and settlement events) + the guard triggers + the forced
++/// tenant policies, byte-faithful to the TS package's frozen migration.
++pub const BILLING_MIGRATIONS: &[&str] = &["001_billing_invoices_settlement"];
++
+ /// The provider attempt ledger's migration, in apply order —
+ /// `packages/provider-runtime/migrations/001_provider_attempts.sql` (the R09
+ /// provider slice): the budget buckets and the pending→finalized attempt rows
+@@ -256,6 +264,10 @@ pub struct Fixture {
+     /// (PACKET-006), the six operational tables the immutability triggers
+     /// defend.
+     pub assets_ledger: Vec<(String, String)>,
++    /// The same ledger for `archava_billing` — the R07 settlement cohort
++    /// (PACKET-007), the eight operational tables the balance CHECK and
++    /// the guard triggers defend.
++    pub billing_ledger: Vec<(String, String)>,
+     /// The same ledger for `archava_provider` — the R09 provider attempt
+     /// ledger (buckets, pending→finalized attempts, restore holds), through
+     /// whose forced-RLS scope the provider budget is a real PostgreSQL
+@@ -857,6 +869,12 @@ async fn provision_with_commerce_usize(commerce_through: usize) -> Fixture {
+     // namespace's one printed apply order holds.
+     let assets_ledger =
+         migrate_ledger(&owner_pool, "archava_assets", "archava_assets_migrations").await;
++    // Archxy 2 ERP namespace (PACKET-007): the billing ledger migrates
++    // under the same owner role, after the R05 family — no cross-schema
++    // FOREIGN KEY exists, but the namespace's one printed apply order
++    // holds (the R07 area's first subject).
++    let billing_ledger =
++        migrate_ledger(&owner_pool, "archava_billing", "archava_billing_migrations").await;
+     // R09's provider slice: the attempt ledger migrates under the same owner
+     // role, one UTC-anchored schema next to the domain ledgers. The runtime
+     // role must stay a NON-owner of `archava_provider` — `create`'s role
+@@ -1124,6 +1142,29 @@ async fn provision_with_commerce_usize(commerce_through: usize) -> Fixture {
+         format!(
+             "GRANT EXECUTE ON FUNCTION archava_assets.lock_membership(text,text) TO {RUNTIME_USER}"
+         ),
++        // Archxy 2 ERP namespace (PACKET-007): the billing grants — the port
++        // of grantBillingRuntime (`packages/billing-pg/src/migrate.ts`),
++        // statement for statement: schema usage, the history+membership
++        // read, the invoice/command writes (the mutation surface's UPDATE
++        // + INSERT tables), the append-only child inserts, the audit
++        // insert, and the membership lock's SECURITY DEFINER function.
++        format!("GRANT USAGE ON SCHEMA archava_billing TO {RUNTIME_USER}"),
++        format!(
++            "GRANT SELECT ON archava_billing.schema_migrations,\
++             archava_billing.memberships TO {RUNTIME_USER}"
++        ),
++        format!(
++            "GRANT SELECT,INSERT,UPDATE ON archava_billing.invoices,\
++             archava_billing.commands TO {RUNTIME_USER}"
++        ),
++        format!(
++            "GRANT SELECT,INSERT ON archava_billing.invoice_lines,\
++             archava_billing.invoice_corrections,archava_billing.payment_attempts,\
++             archava_billing.payment_events,archava_billing.audit TO {RUNTIME_USER}"
++        ),
++        format!(
++            "GRANT EXECUTE ON FUNCTION archava_billing.lock_membership(text,text) TO {RUNTIME_USER}"
++        ),
+         // R09 provider slice — the port of grantProviderRuntime
+         // (`packages/provider-runtime/src/postgres.ts`), statement for
+         // statement, mirrored by
+@@ -1179,6 +1220,7 @@ async fn provision_with_commerce_usize(commerce_through: usize) -> Fixture {
+         scheduling_ledger,
+         accommodation_ledger,
+         assets_ledger,
++        billing_ledger,
+         provider_ledger,
+         dir,
+     }
+@@ -1355,6 +1397,9 @@ fn migrations_package(namespace: &str) -> &'static str {
+         // (PACKET-006) the R05 custody ledger migrates from its own TS
+         // package, byte-faithful, one migration deep.
+         "archava_assets" => "assets-pg",
++        // (PACKET-007) the R07 settlement ledger migrates from its own TS
++        // package, byte-faithful, one migration deep.
++        "archava_billing" => "billing-pg",
+         // R09's provider ledger: the migration file the TS store reads too.
+         "archava_provider" => "provider-runtime",
+         _ => "commerce-pg",
+@@ -1382,6 +1427,7 @@ pub fn ledger_expectations(namespace: &str) -> Vec<(String, String)> {
+         "archava_scheduling" => SCHEDULING_MIGRATIONS,
+         "archava_accommodation" => ACCOMMODATION_MIGRATIONS,
+         "archava_assets" => ASSETS_MIGRATIONS,
++        "archava_billing" => BILLING_MIGRATIONS,
+         "archava_provider" => PROVIDER_MIGRATIONS,
+         _ => COMMERCE_MIGRATIONS,
+     };
+@@ -1468,6 +1514,8 @@ pub async fn attach(data_dir: &Path, port: u16) -> Fixture {
+         accommodation_ledger: ledger_expectations("archava_accommodation"),
+         // (PACKET-006) the R05 custody cohort's frozen pair list.
+         assets_ledger: ledger_expectations("archava_assets"),
++        // (PACKET-007) the R07 settlement cohort's frozen pair list.
++        billing_ledger: ledger_expectations("archava_billing"),
+         provider_ledger: ledger_expectations("archava_provider"),
+         dir,
+     }
+diff --git a/tools/rust/test/verify.test.mjs b/tools/rust/test/verify.test.mjs
+index a1ea868..801801e 100644
+--- a/tools/rust/test/verify.test.mjs
++++ b/tools/rust/test/verify.test.mjs
+@@ -20,6 +20,7 @@ import { WITNESSES as PURCHASING_WITNESSES } from '../erp/verify-purchasing.mjs'
+ import { WITNESSES as FOODSERVICE_WITNESSES } from '../erp/verify-foodservice.mjs'
+ import { WITNESSES as R04_WITNESSES } from '../erp/verify-r04.mjs'
+ import { WITNESSES as R05_WITNESSES } from '../erp/verify-r05.mjs'
++import { WITNESSES as R07_WITNESSES } from '../erp/verify-r07.mjs'
+ import { WITNESSES as CAPACITY_WITNESSES } from '../capacity-conformance.mjs'
+ import {
+   WITNESSES as PLANNING_WITNESSES,
+@@ -426,6 +427,37 @@ test('the P-ERP-R05 witness map and the frozen manifest cannot drift apart', ()
+   }
+ })
+ 
++test('the P-ERP-R07 witness map and the frozen manifest cannot drift apart', () => {
++  // Same property as the kernel-ERP and R04 proofs, for the R07 surface:
++  // the billing cohort's manifest checks over the named Rust test
++  // functions — PACKET-007 lands the cohort whole, seeding the map and the
++  // manifest TOGETHER (R07 opens its OWN proof; the closed 29-check R05
++  // surface stays untouched). Both directions, and the frozen
++  // `witnessTotal` (13, grown additively by any later R07 cohort) too.
++  const manifest = loadManifest(repoRoot)
++  const spec = manifest.proofs['P-ERP-R07']
++  assert.deepEqual([...Object.keys(R07_WITNESSES)].sort(), [...spec.requiredChecks].sort())
++  const witnessTotal = Object.values(R07_WITNESSES).reduce(
++    (sum, list) => sum + list.length,
++    0,
++  )
++  assert.equal(witnessTotal, spec.expect.witnessTotal)
++  for (const [check, witnesses] of Object.entries(R07_WITNESSES)) {
++    assert.ok(witnesses.length > 0, `${check} has no witness tests`)
++    for (const [suite, name] of witnesses) {
++      assert.match(
++        name,
++        /^[a-z0-9_]+$/,
++        `${check}: witness name ${JSON.stringify(name)} is not a test identifier`,
++      )
++      assert.ok(
++        ['billing'].includes(suite),
++        `${check}: witness ${JSON.stringify(name)} names unknown suite ${JSON.stringify(suite)}`,
++      )
++    }
++  }
++})
++
+ test('the P-ERP-R04 witness map and the frozen manifest cannot drift apart', () => {
+   // Same three-lists-equal property as the two kernel-ERP proofs, for the
+   // R04 ledgers: 23 manifest checks over the three `erp_*` suites' named
+diff --git a/tools/rust/verify.mjs b/tools/rust/verify.mjs
+index 4043ad8..d07672e 100644
+--- a/tools/rust/verify.mjs
++++ b/tools/rust/verify.mjs
+@@ -318,6 +318,20 @@ export function gateSteps() {
+       'erp R05 suites',
+       () => step('erp R05 suites', ['node', 'tools/rust/erp/verify-r05.mjs']),
+     ],
++    // Same pattern for P-ERP-R07: the R07 migration area's FIRST cohort —
++    // the billing ledger (PACKET-007). The workspace step cannot prove the
++    // named witnesses the cohort's checks need, so this producer re-runs
++    // `--test erp_billing` and grades each check against its named
++    // witness. R07 opens its OWN proof instead of growing P-ERP-R05: the
++    // R05 surface closed with the assets cohort at 29 checks and billing
++    // is a separate migration area, so the billing ledger starts a new
++    // growing evidence surface that later R07 cohorts extend additively.
++    // It sits with the kernel-ERP steps because it rebuilds a disposable
++    // PostgreSQL fixture.
++    [
++      'erp R07 suites',
++      () => step('erp R07 suites', ['node', 'tools/rust/erp/verify-r07.mjs']),
++    ],
+     // Same pattern for P-R03-DOMAIN: the R03 CRM domain lane spans three
+     // suites (the command lane repository, the conversation route over HTTP,
+     // and the assistant crate's injected-host flow tests). The workspace step
+@@ -821,6 +835,35 @@ export function fastGateEvidenceMapping() {
+         }
+       },
+     },
++    {
++      // The Archxy 2 ERP namespace's R07 proof (PACKET-007): the billing
++      // cohort's thirteen witnesses — the R07 surface's FIRST cohort, any
++      // later cohort growing this same block additively (the R05 surface
++      // is closed and stays untouched; the proof never forks per cohort).
++      proof: 'P-ERP-R07',
++      checks: {
++        'authorized billing life documents its settlement': { step: 'erp R07 suites' },
++        'a forged claim settles nothing': { step: 'erp R07 suites' },
++        'correction reversal respects its invoice': { step: 'erp R07 suites' },
++        'voiding holds on recorded settlement': { step: 'erp R07 suites' },
++        'settlement beyond the balance holds nothing': { step: 'erp R07 suites' },
++        'a failed outcome moves no money and no revision': { step: 'erp R07 suites' },
++        'the attempt arm asserts no result': { step: 'erp R07 suites' },
++        'revoked billing grant refused on recovery': { step: 'erp R07 suites' },
++        'cross-tenant billing caller refused before any write': { step: 'erp R07 suites' },
++        'same billing key different command conflicts': { step: 'erp R07 suites' },
++        'lost response replays without a second row': { step: 'erp R07 suites' },
++        'narrow billing grants refuse the arms they lack': { step: 'erp R07 suites' },
++        'transition state and wire boundaries refuse the movement': { step: 'erp R07 suites' },
++      },
++      details: () => {
++        try {
++          return JSON.parse(readFileSync(join(root, 'dist/rust-erp-r07-proof.json'), 'utf8'))
++        } catch (error) {
++          throw new Error(`erp R07 witness proof unreadable: ${error.message}`)
++        }
++      },
++    },
+     {
+       proof: 'P-COLD-CONSUMERS',
+       checks: {

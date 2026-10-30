@@ -1,0 +1,29 @@
+{
+  "groups": [
+    [
+      "docs/audit/evidence/a11/gate-fmt.log",
+      "docs/audit/evidence/a2f06/gate3-fmt.log",
+      "docs/audit/evidence/a2f06/superseded/final-fmt.log",
+      "docs/audit/evidence/a4fu/negproof-rf01-ra06-closed.log",
+      "docs/audit/evidence/g3/g3-cargofmt.log"
+    ],
+    [
+      "docs/audit/evidence/a2f06/gate5-repo-format.log",
+      "docs/audit/evidence/a4fu/format-check.log",
+      "docs/audit/evidence/g3/g3-fmt2.log"
+    ],
+    [
+      "docs/audit/evidence/a4fu/coverage-final.stderr.txt",
+      "docs/audit/evidence/a4fu/coverage-stderr.txt"
+    ],
+    [
+      "docs/audit/evidence/audit-trio-gate3.log",
+      "docs/audit/evidence/g3/trio-gate3.log"
+    ],
+    [
+      "docs/design/workspace-charcoal-amber-2026-10-28/contrast.json",
+      "docs/design/workspace-layout-2026-10-28/contrast.json"
+    ]
+  ],
+  "decision": "Preserve original bytes and provenance; duplicate output alone does not establish redundant execution or a current pass."
+}

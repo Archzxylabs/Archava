@@ -1,0 +1,33 @@
+{
+  "structure": {
+    "crates": 22,
+    "problems": 0
+  },
+  "node_helpers": {
+    "version": "v22.22.3",
+    "helper-tests": 0,
+    "structure": 0,
+    "verify-plan": 0,
+    "build-help": 0,
+    "preview-help": 0,
+    "persistent-help": 0,
+    "sbom": 0
+  },
+  "helper_tests_passed": 9,
+  "rust_library_tests_passed": 511,
+  "rust_library_suites": 22,
+  "workspace_clippy_exit": 0,
+  "workspace_fmt_exit": 0,
+  "database_readiness_tests_passed": 5,
+  "portable_wasm_check_exit": 0,
+  "ui_wasm_check_exit": 0,
+  "standalone_benchmark_check_exit": 0,
+  "migration_hashes_preserved": 38,
+  "sbom_components": 352,
+  "full_integration_suite_rerun": false,
+  "deployment_performed": false,
+  "entry_document_links_checked": 97,
+  "entry_document_broken_links": 0,
+  "active_javascript_syntax": "passed on Node 22.22.3",
+  "cargo_manifest_semantics_unchanged": true
+}
