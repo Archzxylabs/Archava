@@ -5,6 +5,8 @@ This directory holds maintained configuration/catalogues consumed across the rep
 | File | Owner and consumer |
 | --- | --- |
 | `library-release.v1.json` | Release/assembly catalogue read by `archava-ops` and `tools/release/sbom.mjs` |
+| `payment-providers.example.json` | Deployment example copied by `tools/rust/package-native.mjs`; consumed by the optional native payment registry. Keys stay in environment variables. |
+| `email-providers.example.json` | Deployment example copied by `tools/rust/package-native.mjs`; consumed by the optional native email registry. The Resend key stays in an environment variable named by `apiKeyEnv`. |
 
 The release catalogue still carries the earlier library identity contract. Its alignment with native binary/site packaging remains a separate [release task](../docs/architecture/README.md); active consumers are the reason it stays here.
 

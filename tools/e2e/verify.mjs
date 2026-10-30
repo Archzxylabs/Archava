@@ -1,6 +1,8 @@
 /** Real-browser acceptance against a task-owned fixture, followed by the production binary. */
 import assert from 'node:assert/strict'
 import { startPaymentFixture, verifyPayments } from './payments.mjs'
+import { startEmailFixture, verifyEmail } from './email.mjs'
+import { verifyPresence, verifyPresenceIsolation } from './presence.mjs'
 import { verifyOperations } from './operations.mjs'
 import { verifyPendingRecovery } from './recovery.mjs'
 import { readWriterLease, verifyStartupRefusals, verifyWriterLifecycle } from './writer.mjs'
@@ -105,7 +107,7 @@ class Page {
   async text(selector) { return this.evaluate(`document.querySelector(${JSON.stringify(selector)})?.textContent ?? ''`) }
   async screenshot(name) { const r=await this.send('Page.captureScreenshot', { format:'png', captureBeyondViewport:false }); writeFileSync(join(output,name),Buffer.from(r.data,'base64')) }
 }
-const evidence = { startedAt:new Date().toISOString(), scope:'Synthetic local fixture, real Chromium/SSR/WASM/HTTP/PostgreSQL; production binary restart. No live provider or public/TLS deployment acceptance.', checks:[], errors:[] }
+const evidence = { startedAt:new Date().toISOString(), scope:'Synthetic local fixture, real Chromium/SSR/WASM/HTTP/PostgreSQL; production binary restart; owned loopback email/presence transports. No live provider or public/TLS deployment acceptance.', checks:[], errors:[] }
 let server, browser, page, facts, serverText = ''
 const logs = []
 const ownedServers = []
@@ -124,12 +126,13 @@ function databaseCounts(port, contact, requestId) {
   const r=spawnSync('psql',['-X','-q','-A','-t','-v','ON_ERROR_STOP=1'], { input:sql, encoding:'utf8', env:{...process.env,PGHOST:'127.0.0.1',PGPORT:String(port),PGDATABASE:'archava_test',PGUSER:'archava_runtime',PGPASSWORD:'archava'} })
   assert.equal(r.status,0,r.stderr); return JSON.parse(r.stdout.trim())
 }
-let paymentFixture
+let paymentFixture, emailFixture
 try {
   paymentFixture=await startPaymentFixture()
+  emailFixture=await startEmailFixture()
   const port = await freePort(); const origin=`http://127.0.0.1:${port}`
   const pidfile=join(scratch,'preview.pid')
-  server=startServer(preview,{SLICE_PORT:String(port),ARCHAVA_SLICE_PIDFILE:pidfile,ARCHAVA_SLICE_PAYMENT_ORIGIN:paymentFixture.origin},'preview.log')
+  server=startServer(preview,{SLICE_PORT:String(port),ARCHAVA_SLICE_PIDFILE:pidfile,ARCHAVA_SLICE_PAYMENT_ORIGIN:paymentFixture.origin,ARCHAVA_SLICE_EMAIL_ORIGIN:emailFixture.origin,ARCHAVA_SLICE_PRESENCE_LOOPBACK:'1'},'preview.log')
   await until(() => { const m=/restart facts: ARCHAVA_SLICE_ATTACH=(\{[^\n]+\})/.exec(serverText); if (m) return facts=JSON.parse(m[1]); if(server.exitCode!==null) throw Error('Preview exited'); return false },'fixture startup',60000)
   await until(async()=> (await fetch(`${origin}/readyz`)).ok,'preview readiness')
   const executable=browserPath(); evidence.browserExecutable=executable; evidence.browserSandboxDisabled=process.env.E2E_BROWSER_NO_SANDBOX==='1'
@@ -183,6 +186,12 @@ try {
   const csrfStatus=await page.evaluate(`fetch('/crm/commands',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(${JSON.stringify(validBody)})}).then(r=>r.status)`)
   assert.equal(csrfStatus,403);pass('F04-csrf-refusal','Valid mutation body without the CSRF header is refused')
   evidence.payments=await verifyPayments({page,origin,until,pass,suffix,provider:paymentFixture})
+  evidence.email=await verifyEmail({page,origin,until,pass,suffix,provider:emailFixture})
+  const presence=await verifyPresence({page,pass,suffix})
+  evidence.presence=presence
+  await page.send('Network.clearBrowserCookies');await page.evaluate('localStorage.clear()');await login('bob')
+  await verifyPresenceIsolation({page,pass,sessionId:presence.sessionId})
+  await page.send('Network.clearBrowserCookies');await page.evaluate('localStorage.clear()');await login('alice')
   // Restart the actual production executable on the same migrated fixture and session.
   server.kill('SIGKILL');await new Promise((r)=>server.once('exit',r))
   const productionEnvironment={DATABASE_URL:`postgres://archava_runtime:archava@127.0.0.1:${facts.port}/archava_test`,ARCHAVA_IDENTITY_KEY_HEX:'07'.repeat(32),ARCHAVA_BIND_ADDR:`127.0.0.1:${port}`,ARCHAVA_SITE_ROOT:join(root,'target/site')}
@@ -250,6 +259,7 @@ try {
     if(cleanup.status!==0){evidence.status='failed';process.exitCode=1}
   }
   if(paymentFixture)await paymentFixture.close()
+  if(emailFixture)await emailFixture.close()
   for(const log of logs) await new Promise((r)=>log.end(r))
   rmSync(scratch,{recursive:true,force:true})
   evidence.finishedAt=new Date().toISOString()

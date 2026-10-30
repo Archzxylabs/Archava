@@ -359,6 +359,38 @@ async fn run() {
         Err(_) => state,
     };
 
+    // Owned loopback email transport for the disposable browser proof. The
+    // production executable only accepts the administrator-managed registry.
+    let state = match std::env::var("ARCHAVA_SLICE_EMAIL_ORIGIN") {
+        Ok(origin) => {
+            let registry = archava_host::mail::EmailRegistry::new(vec![
+                archava_host::mail::EmailIntegration {
+                    id: "fixture-resend".into(),
+                    tenant: serde_json::from_value(serde_json::json!("acme-retail")).unwrap(),
+                    from_address: "Archava Fixture <billing@archava.test>".into(),
+                    client: archava_providers::resend::ResendClient::for_loopback(
+                        &origin,
+                        "synthetic-browser-email-key".into(),
+                    )
+                    .expect("owned loopback email"),
+                },
+            ])
+            .expect("fixture email registry");
+            state.with_email_registry(registry)
+        }
+        Err(_) => state,
+    };
+
+    // Owned in-memory presence for the same proof; no LiveKit network call.
+    let state = if matches!(
+        std::env::var("ARCHAVA_SLICE_PRESENCE_LOOPBACK").as_deref(),
+        Ok("1")
+    ) {
+        state.with_presence_registry(archava_host::presence::PresenceRegistry::for_loopback())
+    } else {
+        state
+    };
+
     // The pkg assets must EXIST before the routes that reference them serve:
     // an operator starting this without the bindgen step gets the loud
     // refusal and the one command that fixes it.

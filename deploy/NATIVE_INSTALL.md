@@ -114,3 +114,23 @@ until its transport, authorization and live acceptance have been completed.
 ## Optional invoice payments
 
 See `docs/architecture/PAYMENTS.md` in the source repository for payment configuration and restore recovery. The distribution includes `config/payment-providers.example.json` with secret environment variable references. Provision a dedicated Billing service with `archava-ops bootstrap-payment-service --tenant T --principal P` using the explicit owner connection, then set `ARCHAVA_PAYMENT_CONFIG` for the serving service. Do not put key values in the JSON. After restore, payment creation stays held until merchant reconciliation and `archava-ops resume-payment-creation --confirm-reconciled`.
+
+## Optional invoice email
+
+The distribution includes `config/email-providers.example.json`. Set
+`ARCHAVA_EMAIL_CONFIG` to that administrator-managed file (normally
+`/etc/archava/email-providers.json`). The `apiKeyEnv` field names the
+environment variable that holds the Resend key; supply that variable through
+the service secret environment and never put the key in the JSON. An absent
+registry leaves email unconfigured and send requests fail closed with
+`email_provider_unconfigured`; an explicitly invalid registry refuses startup.
+Configuration does not prove delivery, and live email acceptance is tracked
+separately.
+
+## Optional realtime presence
+
+Set `LIVEKIT_URL`, `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET` to enable
+realtime presence. If any value is absent, presence is unconfigured and
+session creation fails closed with `presence_unconfigured`; no provider is
+contacted at startup. The loopback transport used by local tests does not
+prove live voice or video.
