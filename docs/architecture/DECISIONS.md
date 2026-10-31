@@ -16,13 +16,13 @@ This document succeeds the [Historical Rust Decisions](../archive/rust/DECISIONS
 
 ## [ADR-014] Deepen CRM Seam & Extract `archava-adapters::crm`
 
-- **Status**: Accepted / Active
+- **Status**: Completed
 - **Date**: 2026-10-31
 - **Domain**: CRM & Core Persistence Layer
 - **Impacted Files**:
   - [`crates/host/src/crm.rs`](../../crates/host/src/crm.rs)
   - [`crates/adapters/src/lib.rs`](../../crates/adapters/src/lib.rs)
-  - New target: `crates/adapters/src/crm.rs`
+  - [`crates/adapters/src/crm.rs`](../../crates/adapters/src/crm.rs)
   - Documentation: [`docs/modules/CRM_MODULE.md`](../modules/CRM_MODULE.md) and [`docs/architecture/README.md`](README.md)
 
 ### Context & Friction
@@ -74,16 +74,16 @@ Extract the complete CRM persistence engine from [`crates/host/src/crm.rs`](../.
 
 ### Execution Checklist
 
-- [ ] **Phase 1: Adapter Module Scaffolding**
+- [x] **Phase 1: Adapter Module Scaffolding**
   - Create `crates/adapters/src/crm.rs` and register `pub mod crm;` in [`crates/adapters/src/lib.rs`](../../crates/adapters/src/lib.rs).
   - Define `CrmPersistenceError`, `CrmCommand`, and domain receipt structures in `adapters::crm`.
-- [ ] **Phase 2: SQL & Transaction Extraction**
+- [x] **Phase 2: SQL & Transaction Extraction**
   - Migrate contact creation, update, activity logging, follow-up tracking, and pipeline opportunity transition queries.
   - Implement atomic idempotency claim and audit logging within transaction scope.
-- [ ] **Phase 3: Host Coordinator Refactor**
+- [x] **Phase 3: Host Coordinator Refactor**
   - Rewire [`crates/host/src/crm.rs`](../../crates/host/src/crm.rs) to call `archava_adapters::crm`.
   - Strip redundant SQL strings and direct pool operations from `crates/host`.
-- [ ] **Phase 4: Verification & Docs Alignment**
+- [x] **Phase 4: Verification & Docs Alignment**
   - Run `cargo test -p archava-host --test crm --locked -- --test-threads=1`.
   - Update [`docs/modules/CRM_MODULE.md`](../modules/CRM_MODULE.md) boundary table to list `crates/adapters/src/crm.rs`.
   - Run full gate: `node tools/rust/verify.mjs`.

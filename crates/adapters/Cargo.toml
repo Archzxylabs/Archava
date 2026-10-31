@@ -37,6 +37,7 @@ uuid = { version = "1", features = ["v4", "serde"] }
 sqlx.workspace = true
 tokio.workspace = true
 thiserror.workspace = true
+tracing.workspace = true
 # The migration-ledger digest (`migration_checksum`). Same locked version the
 # workspace declares — the port must hash migration files exactly as
 # `packages/commerce-pg/src/migrate.ts:13` does, so the algorithm is a

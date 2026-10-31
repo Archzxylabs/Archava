@@ -6,8 +6,9 @@ The working journey is **Contacts → activity → follow-up → durable receipt
 
 | Boundary | Current source |
 | --- | --- |
-| HTTP boundary | [crates/host/src/crm.rs](../../crates/host/src/crm.rs) |
-| HTTP boundary | [crates/host/src/router.rs](../../crates/host/src/router.rs) |
+| HTTP boundary & dispatch | [crates/host/src/crm.rs](../../crates/host/src/crm.rs) |
+| Host router | [crates/host/src/router.rs](../../crates/host/src/router.rs) |
+| Transactional adapter & RLS | [crates/adapters/src/crm.rs](../../crates/adapters/src/crm.rs) |
 | Integration tests | [crates/host/tests/crm.rs](../../crates/host/tests/crm.rs) |
 
 The native UI is `/app/contacts`. It reads current database projections, submits authorized commands, and shows a saved result only after a matching receipt. The server resolves tenant membership and permissions; browser controls do not grant authority. Unknown transport outcomes retain their request reference for status recovery. Each pending request has a separate browser storage key scoped to tenant, account and workflow; acknowledging one request removes only that reference. Legacy markers are still recognized. Signing out removes session facts while retaining unresolved request metadata, which contains no business payload or credential and is read only for the original account.
