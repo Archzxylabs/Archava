@@ -169,7 +169,12 @@ async fn an_unmatched_path_is_not_reflected() {
 /// from this list, so a new module cannot escape the rules below by not being
 /// named here. `extractors.rs` is excluded because it is this file.
 const MODULES: &[(&str, &str)] = &[
-    ("assistant.rs", include_str!("assistant.rs")),
+    ("assistant/bridge.rs", include_str!("assistant/bridge.rs")),
+    ("assistant/mod.rs", include_str!("assistant/mod.rs")),
+    (
+        "assistant/sql_host.rs",
+        include_str!("assistant/sql_host.rs"),
+    ),
     ("authority.rs", include_str!("authority.rs")),
     ("cockpit.rs", include_str!("cockpit.rs")),
     ("crm.rs", include_str!("crm.rs")),

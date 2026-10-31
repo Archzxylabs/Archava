@@ -200,18 +200,27 @@ Deepen `crates/cockpit/src/mission.rs` by introducing a first-class `ApprovalGat
 
 ## [ADR-017] Deepen Assistant Conversation Flow & Session Extraction
 
-- **Status**: Proposed / Queued
+- **Status**: Completed
 - **Date**: 2026-10-31
-- **Domain**: AI Assistant & Host Integration Seam
+- **Domain**: CRM Assistant & Host Integration Seam
 - **Impacted Files**:
-  - `crates/host/src/assistant.rs`
-  - `crates/assistant/src/conversation.rs`
-  - `crates/assistant/src/planner.rs`
+  - [`crates/host/src/assistant/mod.rs`](../../crates/host/src/assistant/mod.rs)
+  - [`crates/host/src/assistant/sql_host.rs`](../../crates/host/src/assistant/sql_host.rs)
+  - [`crates/host/src/assistant/bridge.rs`](../../crates/host/src/assistant/bridge.rs)
+  - [`crates/host/src/extractors.rs`](../../crates/host/src/extractors.rs)
 
 ### Context & Friction
 
-[`crates/host/src/assistant.rs`](../../crates/host/src/assistant.rs) (970 lines) currently interweaves Axum session extraction, CSRF enforcement, SQL queries for CRM context, and LLM turn orchestrations into a single monolithic coordinator.
+The legacy `crates/host/src/assistant.rs` (1,107 lines) combined three distinct architectural concerns into a single god-module:
+1. **HTTP Extraction & Wire Protocol**: Tenant path validation, session/CSRF authentication, utterance intake, System 1 shadow decision logging, and masked house JSON envelope mapping.
+2. **Type & Vocabulary Translation Bridge**: Mapping CRM domain vocabulary (`Scope`, `PipelineStage`, `ActivityKind`, `FollowUpStatus`) and database errors into typed `AssistantError` envelopes without leaking sensitive query text or internal identifiers.
+3. **`SqlHost` Persistence Engine**: 800 lines implementing `HostCrm` over real PostgreSQL transactions, running scoped queries with `FORCE RLS` for contacts, follow-up queues, completion drafts, and opportunity pipelines with `FOR SHARE` concurrency control.
 
 ### Decision
 
-Extract the conversation turn lifecycle and CRM context building into clean domain adapters within `crates/assistant`, keeping `crates/host/src/assistant.rs` strictly focused on HTTP routing, streaming SSE events, and error mapping.
+Decompose `crates/host/src/assistant.rs` into modular subtrees under [`crates/host/src/assistant/`](../../crates/host/src/assistant/):
+- **[`mod.rs`](../../crates/host/src/assistant/mod.rs)**: Houses the Axum HTTP handler `POST /api/crm/{tenant}/conversation`, session extraction, System 1 shadow pass, and wire error response masking. Re-exports `bridge` and `sql_host`.
+- **[`bridge.rs`](../../crates/host/src/assistant/bridge.rs)**: Pure translation layer bridging authority errors, database errors, and CRM storage strings into `archava_assistant` vocabulary (`bridged_stage`, `bridged_access`, `bridged_scope`, `as_uuid`, `escaped_search`).
+- **[`sql_host.rs`](../../crates/host/src/assistant/sql_host.rs)**: Dedicated `SqlHost<'c>` engine implementing `HostCrm` against the `archava_crm` schema with transaction-level isolation and RLS executor re-checks.
+
+Updated compile-time tripwire [`crates/host/src/extractors.rs`](../../crates/host/src/extractors.rs) to audit all 3 modular files in `MODULES`. All 14 integration tests in `tests/assistant.rs` and 81 host unit tests remain 100% green.
