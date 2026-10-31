@@ -8,6 +8,7 @@ test('the default gate includes workspace integration tests and locked resolutio
   assert.ok(commands.every((c) => !c.join(' ').includes('pnpm')))
   assert.ok(commands.some((c) => c.includes('tools/check-docs.mjs')))
   assert.ok(commands.some((c) => c.includes('tools/test/docs.test.mjs')))
+  assert.ok(commands.some((c) => c.includes('tools/test/native-provenance.test.mjs')))
 })
 test('offline and library-only scope are explicit', () => {
   const commands = gateCommands({ offline: true, lib: true })
