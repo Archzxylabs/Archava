@@ -13,6 +13,7 @@ Current helpers use Node built-ins and the root Cargo workspace; no root npm/pnp
 | `node tools/rust/package-native.mjs --out NEW_DIRECTORY` | Native server/Ops/site/migrations package; refuses stale inputs and verifies the resulting profile |
 | `node tools/rust/dev-slice.mjs run` | Build and launch a disposable PostgreSQL preview |
 | `node tools/rust/run-persistent.mjs` | Build and launch against an existing migrated database |
+| `node tools/rust/load-benchmark.mjs` | Concurrency & p50/p95/p99 latency benchmark under concurrent loads |
 | `node tools/release/sbom.mjs` | Inventory the Cargo dependency graph |
 
 The standalone Rust benchmark is in `tools/rust/benchmark/rust`. Removed TypeScript-era baseline comparisons, package builders, security matrices, and proof producers are recoverable from git history; their evidence is historical and is not replaced by Cargo test success.

@@ -44,7 +44,7 @@ jobs:
         run: |
           node tools/check-structure.mjs
           node tools/check-docs.mjs
-          node --test tools/test/structure.test.mjs tools/test/docs.test.mjs tools/test/verify.test.mjs
+          node --test tools/test/*.test.mjs
 
       - name: Format Check
         run: cargo fmt --all --check
