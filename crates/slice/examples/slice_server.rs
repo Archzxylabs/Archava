@@ -336,6 +336,21 @@ async fn run() {
     .await
     .expect("a servable fixture must verify every mounted ledger");
 
+    // The disposable preview reads the same two startup knobs as the native
+    // server, so an embed origin or scrape token can be exercised without a
+    // second launcher. Absent means deny framing and loopback-only metrics.
+    let state = match std::env::var("ARCHAVA_METRICS_TOKEN") {
+        Ok(token) if !token.trim().is_empty() => state.with_metrics_token(token),
+        _ => state,
+    };
+    let state = match std::env::var("ARCHAVA_EMBED_FRAME_ANCESTORS") {
+        Ok(raw) if !raw.trim().is_empty() => state.with_embed_frame_ancestors(
+            archava_host::parse_frame_ancestors(&raw)
+                .expect("ARCHAVA_EMBED_FRAME_ANCESTORS must list http(s) origins"),
+        ),
+        _ => state,
+    };
+
     // Explicit owned loopback transport only in this disposable fixture binary.
     // The production executable has no arbitrary endpoint configuration.
     let state = match std::env::var("ARCHAVA_SLICE_PAYMENT_ORIGIN") {

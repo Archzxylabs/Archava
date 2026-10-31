@@ -67,6 +67,12 @@ pub struct MissionScope {
     pub tenant: Option<String>,
 }
 type Response = (StatusCode, Json<Value>);
+
+/// A path extractor whose rejection this module handles instead of axum's
+/// default, which can name the caller's own segment.
+type GuardedPath<T> = std::result::Result<Path<T>, axum::extract::rejection::PathRejection>;
+/// A query extractor under the same rule.
+type GuardedQuery<T> = std::result::Result<Query<T>, axum::extract::rejection::QueryRejection>;
 type Result<T> = std::result::Result<T, Response>;
 fn masked(status: StatusCode, message: &'static str) -> Response {
     (status, Json(json!({"error":{"message":message}})))
@@ -648,41 +654,52 @@ pub async fn create_mission(
 }
 pub async fn get_mission(
     State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-    Query(scope): Query<MissionScope>,
+    path: GuardedPath<Uuid>,
+    query: GuardedQuery<MissionScope>,
     headers: HeaderMap,
 ) -> Response {
+    let (Ok(Path(id)), Ok(Query(scope))) = (path, query) else {
+        return masked(StatusCode::BAD_REQUEST, "Invalid request payload.");
+    };
     read(&state, id, scope, &headers)
         .await
         .unwrap_or_else(|e| e)
 }
 pub async fn complete_step(
     State(state): State<AppState>,
-    Path((id, index)): Path<(Uuid, usize)>,
-    Query(scope): Query<MissionScope>,
+    path: GuardedPath<(Uuid, usize)>,
+    query: GuardedQuery<MissionScope>,
     headers: HeaderMap,
     body: std::result::Result<Json<CompleteStepRequest>, JsonRejection>,
 ) -> Response {
-    match body {
-        Ok(Json(req)) => complete(&state, id, index, scope, &headers, req)
-            .await
-            .unwrap_or_else(|e| e),
-        Err(_) => masked(StatusCode::BAD_REQUEST, "Invalid request payload."),
-    }
+    let (Ok(Path((id, index))), Ok(Query(scope))) = (path, query) else {
+        return masked(StatusCode::BAD_REQUEST, "Invalid request payload.");
+    };
+    let req = match body {
+        Ok(Json(req)) => req,
+        Err(rejection) => return masked(rejection.status(), "Invalid request payload."),
+    };
+    complete(&state, id, index, scope, &headers, req)
+        .await
+        .unwrap_or_else(|e| e)
 }
 pub async fn abort_mission(
     State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-    Query(scope): Query<MissionScope>,
+    path: GuardedPath<Uuid>,
+    query: GuardedQuery<MissionScope>,
     headers: HeaderMap,
     body: std::result::Result<Json<AbortMissionRequest>, JsonRejection>,
 ) -> Response {
-    match body {
-        Ok(Json(req)) => abort(&state, id, scope, &headers, req)
-            .await
-            .unwrap_or_else(|e| e),
-        Err(_) => masked(StatusCode::BAD_REQUEST, "Invalid request payload."),
-    }
+    let (Ok(Path(id)), Ok(Query(scope))) = (path, query) else {
+        return masked(StatusCode::BAD_REQUEST, "Invalid request payload.");
+    };
+    let req = match body {
+        Ok(Json(req)) => req,
+        Err(rejection) => return masked(rejection.status(), "Invalid request payload."),
+    };
+    abort(&state, id, scope, &headers, req)
+        .await
+        .unwrap_or_else(|e| e)
 }
 
 #[derive(Debug, Deserialize)]
@@ -700,32 +717,40 @@ pub struct ResumeMissionRequest {
 
 pub async fn hold_mission(
     State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-    Query(scope): Query<MissionScope>,
+    path: GuardedPath<Uuid>,
+    query: GuardedQuery<MissionScope>,
     headers: HeaderMap,
     body: std::result::Result<Json<HoldMissionRequest>, JsonRejection>,
 ) -> Response {
-    match body {
-        Ok(Json(req)) => hold(&state, id, scope, &headers, req)
-            .await
-            .unwrap_or_else(|e| e),
-        Err(_) => masked(StatusCode::BAD_REQUEST, "Invalid request payload."),
-    }
+    let (Ok(Path(id)), Ok(Query(scope))) = (path, query) else {
+        return masked(StatusCode::BAD_REQUEST, "Invalid request payload.");
+    };
+    let req = match body {
+        Ok(Json(req)) => req,
+        Err(rejection) => return masked(rejection.status(), "Invalid request payload."),
+    };
+    hold(&state, id, scope, &headers, req)
+        .await
+        .unwrap_or_else(|e| e)
 }
 
 pub async fn resume_mission(
     State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-    Query(scope): Query<MissionScope>,
+    path: GuardedPath<Uuid>,
+    query: GuardedQuery<MissionScope>,
     headers: HeaderMap,
     body: std::result::Result<Json<ResumeMissionRequest>, JsonRejection>,
 ) -> Response {
-    match body {
-        Ok(Json(req)) => resume(&state, id, scope, &headers, req)
-            .await
-            .unwrap_or_else(|e| e),
-        Err(_) => masked(StatusCode::BAD_REQUEST, "Invalid request payload."),
-    }
+    let (Ok(Path(id)), Ok(Query(scope))) = (path, query) else {
+        return masked(StatusCode::BAD_REQUEST, "Invalid request payload.");
+    };
+    let req = match body {
+        Ok(Json(req)) => req,
+        Err(rejection) => return masked(rejection.status(), "Invalid request payload."),
+    };
+    resume(&state, id, scope, &headers, req)
+        .await
+        .unwrap_or_else(|e| e)
 }
 
 #[derive(Deserialize)]
@@ -737,8 +762,11 @@ pub struct MissionListQuery {
 pub async fn list_missions(
     State(state): State<AppState>,
     headers: HeaderMap,
-    Query(query): Query<MissionListQuery>,
+    query: GuardedQuery<MissionListQuery>,
 ) -> Response {
+    let Ok(Query(query)) = query else {
+        return masked(StatusCode::BAD_REQUEST, "Invalid request payload.");
+    };
     async fn execute(state: &AppState, headers: &HeaderMap, tenant: TenantId) -> Result<Response> {
         let actor = principal(state, headers, false).await?;
         let (mut tx, membership) = begin(state, &tenant, &actor, false).await?;
@@ -769,11 +797,18 @@ pub struct RunStepRequest {
 }
 pub async fn run_next(
     State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-    Query(scope): Query<MissionScope>,
+    path: GuardedPath<Uuid>,
+    query: GuardedQuery<MissionScope>,
     headers: HeaderMap,
-    Json(request): Json<RunStepRequest>,
+    request: std::result::Result<Json<RunStepRequest>, JsonRejection>,
 ) -> Response {
+    let (Ok(Path(id)), Ok(Query(scope))) = (path, query) else {
+        return masked(StatusCode::BAD_REQUEST, "Invalid request payload.");
+    };
+    let request = match request {
+        Ok(Json(request)) => request,
+        Err(rejection) => return masked(rejection.status(), "Invalid request payload."),
+    };
     async fn execute(
         state: &AppState,
         id: Uuid,
@@ -827,10 +862,10 @@ pub async fn run_next(
                 crate::erp::commerce::workspace(
                     State(state.clone()),
                     headers.clone(),
-                    Query(crate::erp::commerce::WorkspaceQuery {
+                    Ok(Query(crate::erp::commerce::WorkspaceQuery {
                         tenant: tenant.clone(),
                         search: String::new(),
-                    }),
+                    })),
                 )
                 .await
             }
@@ -838,10 +873,10 @@ pub async fn run_next(
                 crate::erp::workspace::purchasing(
                     State(state.clone()),
                     headers.clone(),
-                    Query(crate::erp::workspace::WorkspaceQuery {
+                    Ok(Query(crate::erp::workspace::WorkspaceQuery {
                         tenant: tenant.clone(),
                         search: String::new(),
-                    }),
+                    })),
                 )
                 .await
             }
@@ -849,10 +884,10 @@ pub async fn run_next(
                 crate::erp::workspace::billing(
                     State(state.clone()),
                     headers.clone(),
-                    Query(crate::erp::workspace::WorkspaceQuery {
+                    Ok(Query(crate::erp::workspace::WorkspaceQuery {
                         tenant: tenant.clone(),
                         search: String::new(),
-                    }),
+                    })),
                 )
                 .await
             }

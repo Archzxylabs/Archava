@@ -67,6 +67,11 @@ archava-domain = { path = "crates/domain" }
 # host implements the flow's `HostCrm` seam; the dependency stays one-way
 # (the assistant crate must never import the host).
 archava-assistant = { path = "crates/assistant" }
+# R09's decision layer — the closed task catalogue, the orchestrator, and the
+# Laya System 1 provider the conversation route measures each turn with. The
+# host composes it the way it composes cockpit and orbz: one local path,
+# consumed as `archava-context.workspace = true`.
+archava-context = { path = "crates/context", version = "0.1.0" }
 archava-own = { path = "crates/own" }
 # The HTTP surface, declared so `crates/slice` (§1.4B) can consume it as
 # `archava-host.workspace = true`. Nothing else depends on it — the host is the

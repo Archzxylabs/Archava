@@ -20,7 +20,7 @@
 
 use std::net::{IpAddr, SocketAddr};
 
-use axum::extract::{ConnectInfo, Request};
+use axum::extract::{ConnectInfo, Request, State};
 use axum::http::{header, HeaderMap, HeaderValue};
 use axum::middleware::Next;
 use axum::response::Response;
@@ -64,14 +64,67 @@ pub(crate) const DOCUMENT_CONTENT_SECURITY_POLICY: &str = "default-src 'self'; \
      connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; \
      form-action 'self'; object-src 'none'";
 
-/// The policy for embedded modals/widgets (e.g. `/embed/checkout`).
-/// U01 FIX: Allows framing via `frame-ancestors *` so merchant websites can
-/// embed checkout modal iframes without browser CSP violations.
-pub(crate) const EMBED_CONTENT_SECURITY_POLICY: &str = "default-src 'self'; \
-     script-src 'self' 'unsafe-inline'; \
-     style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; \
-     connect-src 'self'; base-uri 'none'; frame-ancestors *; \
-     form-action 'self'; object-src 'none'";
+/// The embed document's policy, with framing limited to named merchant
+/// origins.
+///
+/// This was `frame-ancestors *`, which let any site frame a checkout document
+/// this host renders — a clickjacking and payment-phishing surface on the
+/// application's own origin. Framing is now denied by default and allowed only
+/// for origins an operator names at startup through
+/// `ARCHAVA_EMBED_FRAME_ANCESTORS`; the signature on the document is the other
+/// half of the same fix.
+pub(crate) fn embed_content_security_policy(ancestors: &[String]) -> String {
+    let frame_ancestors = if ancestors.is_empty() {
+        "'none'".to_string()
+    } else {
+        ancestors.join(" ")
+    };
+    format!(
+        "default-src 'self'; script-src 'self' 'unsafe-inline'; \
+         style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; \
+         connect-src 'self'; base-uri 'none'; frame-ancestors {frame_ancestors}; \
+         form-action 'self'; object-src 'none'"
+    )
+}
+
+/// Parses `ARCHAVA_EMBED_FRAME_ANCESTORS`: a comma-separated list of
+/// `scheme://host[:port]` origins.
+///
+/// `*` is refused rather than forwarded, because a wildcard is exactly the
+/// policy this replaces. Empty input is an empty list — denied framing — and
+/// anything that is not a plain https/http origin is an error, so a typo fails
+/// startup instead of silently widening what may frame the checkout.
+pub fn parse_frame_ancestors(raw: &str) -> Result<Vec<String>, String> {
+    let mut origins = Vec::new();
+    for candidate in raw.split(',') {
+        let origin = candidate.trim();
+        if origin.is_empty() {
+            continue;
+        }
+        if origin == "*" {
+            return Err("ARCHAVA_EMBED_FRAME_ANCESTORS may not contain a wildcard".to_string());
+        }
+        let Some((scheme, authority)) = origin.split_once("://") else {
+            return Err(format!(
+                "ARCHAVA_EMBED_FRAME_ANCESTORS entry {origin:?} is not an origin"
+            ));
+        };
+        let scheme_ok = scheme.eq_ignore_ascii_case("https") || scheme.eq_ignore_ascii_case("http");
+        let authority_ok = !authority.is_empty()
+            && !authority.contains('/')
+            && !authority.contains(' ')
+            && authority
+                .chars()
+                .all(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '-' | ':' | '[' | ']'));
+        if !scheme_ok || !authority_ok {
+            return Err(format!(
+                "ARCHAVA_EMBED_FRAME_ANCESTORS entry {origin:?} is not an http(s) origin"
+            ));
+        }
+        origins.push(origin.to_string());
+    }
+    Ok(origins)
+}
 
 /// One year, the CRM's value — long enough that a client that ever reaches TLS
 /// stops being downgradable, short enough to expire in a browser's lifetime.
@@ -208,7 +261,7 @@ pub(crate) fn apply(headers: &mut HeaderMap, secure: bool) {
     apply_policy(headers, secure, CONTENT_SECURITY_POLICY);
 }
 
-fn apply_policy(headers: &mut HeaderMap, secure: bool, policy: &'static str) {
+fn apply_policy(headers: &mut HeaderMap, secure: bool, policy: &str) {
     headers.insert(
         header::X_CONTENT_TYPE_OPTIONS,
         HeaderValue::from_static("nosniff"),
@@ -218,10 +271,9 @@ fn apply_policy(headers: &mut HeaderMap, secure: bool, policy: &'static str) {
         HeaderValue::from_static("no-referrer"),
     );
     headers.insert(header::CACHE_CONTROL, HeaderValue::from_static("no-store"));
-    headers.insert(
-        header::CONTENT_SECURITY_POLICY,
-        HeaderValue::from_static(policy),
-    );
+    if let Ok(value) = HeaderValue::try_from(policy) {
+        headers.insert(header::CONTENT_SECURITY_POLICY, value);
+    }
     if secure {
         headers.insert(
             header::STRICT_TRANSPORT_SECURITY,
@@ -235,17 +287,20 @@ fn apply_policy(headers: &mut HeaderMap, secure: bool, policy: &'static str) {
 /// Inside the handler would be one `insert` per return site — and the refusals,
 /// the ones a browser is most likely to render as bare text, would be the ones
 /// that got missed.
-pub async fn security_headers(request: Request, next: Next) -> Response {
-    let path = request.uri().path();
-    let is_embed = path == "/embed/checkout" || path.starts_with("/embed/");
+pub async fn security_headers(
+    State(state): State<crate::router::AppState>,
+    request: Request,
+    next: Next,
+) -> Response {
+    let is_embed = {
+        let path = request.uri().path();
+        path == "/embed/checkout" || path.starts_with("/embed/")
+    };
     let secure = is_secure_from_peer(peer_ip(&request), request.headers());
     let mut response = next.run(request).await;
     if is_embed {
-        apply_policy(
-            response.headers_mut(),
-            secure,
-            EMBED_CONTENT_SECURITY_POLICY,
-        );
+        let policy = embed_content_security_policy(state.embed_frame_ancestors());
+        apply_policy(response.headers_mut(), secure, &policy);
     } else {
         apply(response.headers_mut(), secure);
     }
@@ -378,14 +433,53 @@ mod tests {
         assert!(CONTENT_SECURITY_POLICY.contains("default-src 'none'"));
     }
 
-    /// U01: the embed policy must allow framing via `frame-ancestors *` so merchant websites
-    /// can embed checkout modals without browser CSP blocks, while API and document policies
-    /// strictly retain `frame-ancestors 'none'`.
+    /// The embed policy denies framing unless an operator names an origin, and
+    /// never falls back to the wildcard it replaced.
     #[test]
-    fn the_embed_policy_allows_framing() {
-        assert!(EMBED_CONTENT_SECURITY_POLICY.contains("frame-ancestors *"));
+    fn the_embed_policy_denies_framing_unless_an_origin_is_configured() {
+        let denied = embed_content_security_policy(&[]);
+        assert!(denied.contains("frame-ancestors 'none'"), "{denied}");
+        assert!(!denied.contains("frame-ancestors *"), "{denied}");
+
+        let allowed = embed_content_security_policy(&["https://shop.example".to_string()]);
+        assert!(
+            allowed.contains("frame-ancestors https://shop.example"),
+            "{allowed}"
+        );
+        assert!(!allowed.contains('*'), "{allowed}");
+
         assert!(CONTENT_SECURITY_POLICY.contains("frame-ancestors 'none'"));
         assert!(DOCUMENT_CONTENT_SECURITY_POLICY.contains("frame-ancestors 'none'"));
+    }
+
+    /// A wildcard cannot be configured back in, and a typo fails startup
+    /// instead of silently widening what may frame the checkout.
+    #[test]
+    fn frame_ancestors_are_validated_not_trusted() {
+        assert_eq!(
+            parse_frame_ancestors("").expect("empty is allowed"),
+            Vec::<String>::new()
+        );
+        assert_eq!(
+            parse_frame_ancestors(" https://a.example , http://b.example:8443 ")
+                .expect("origins parse"),
+            vec![
+                "https://a.example".to_string(),
+                "http://b.example:8443".to_string()
+            ]
+        );
+        for rejected in [
+            "*",
+            "https://a.example/path",
+            "javascript:alert(1)",
+            "a.example",
+            "https://exa mple.com",
+        ] {
+            assert!(
+                parse_frame_ancestors(rejected).is_err(),
+                "{rejected:?} must not be accepted as a frame ancestor"
+            );
+        }
     }
 
     /// F-07: the request's scheme decides the cookie, and only the hop that

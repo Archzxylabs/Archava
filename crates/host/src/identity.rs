@@ -32,7 +32,7 @@
 //! `ConnectInfo`, and [`source_bucket`] bounds how many distinct sources keep
 //! their own bucket.
 
-use std::collections::HashSet;
+use std::collections::HashMap;
 use std::sync::{Mutex, OnceLock};
 
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
@@ -69,40 +69,69 @@ const SCRYPT_MAXMEM: usize = 48 * 1024 * 1024;
 /// derivation is refused *because* the default is 2.
 const MAX_ACTIVE_DERIVATIONS: usize = 2;
 
-/// How many distinct login sources get a bucket of their own. Past this, a new
-/// source shares one overflow bucket: an attacker minting addresses can grow
-/// neither process memory nor the `login_buckets` table without bound.
+/// How many distinct login sources keep a bucket of their own.
+///
+/// This is a memory bound, not a correctness trade. Past the cap the least
+/// recently seen source is evicted, so every live source keeps its own budget.
+/// That is what an earlier shared `peer:overflow` bucket got wrong: it capped
+/// the registry by herding every new source into one budget, which reproduces
+/// the F-09 global lockout for an attacker willing to rotate 1,025 addresses.
 const MAX_LOGIN_SOURCES: usize = 1024;
 
 /// The registry that decides which sources still own a bucket. Process-wide on
 /// purpose — the host serves one router per process, and a per-state registry
 /// would hand a restarted process a fresh budget for every source.
-static LOGIN_SOURCES: OnceLock<Mutex<HashSet<String>>> = OnceLock::new();
+static LOGIN_SOURCES: OnceLock<Mutex<SourceRegistry>> = OnceLock::new();
+
+/// A bounded set of login sources remembering when each was last seen.
+///
+/// The stamp is a monotonic counter rather than a clock: ordering is the only
+/// thing eviction needs, and a counter cannot be moved by a wall-clock change
+/// or made ambiguous by two sources arriving in the same millisecond.
+#[derive(Default)]
+struct SourceRegistry {
+    seen: HashMap<String, u64>,
+    tick: u64,
+}
+
+impl SourceRegistry {
+    /// Names the bucket for `source`, evicting the least recently seen source
+    /// when the registry is full. Every source keeps its own budget; there is
+    /// no shared bucket for an attacker to herd other peers into.
+    fn bucket(&mut self, source: &str) -> String {
+        self.tick += 1;
+        if let Some(stamp) = self.seen.get_mut(source) {
+            *stamp = self.tick;
+            return format!("peer:{source}");
+        }
+        if self.seen.len() >= MAX_LOGIN_SOURCES {
+            let oldest = self
+                .seen
+                .iter()
+                .min_by_key(|(_, stamp)| **stamp)
+                .map(|(source, _)| source.clone());
+            if let Some(oldest) = oldest {
+                self.seen.remove(&oldest);
+            }
+        }
+        self.seen.insert(source.to_string(), self.tick);
+        format!("peer:{source}")
+    }
+}
 
 /// Names the rate-limit bucket for `source` (F-09).
 ///
 /// Distinct sources get distinct buckets: one peer burning its own 60 failures
 /// no longer refuses sign-in for everyone else, which is what a single constant
-/// source did. The registry is capped by [`MAX_LOGIN_SOURCES`], so the fix
-/// cannot be turned into a memory- or table-growth vector by an attacker who
-/// rotates addresses; sources past the cap share one overflow bucket, coarser
-/// for them and never silently unlimited.
+/// source did. The registry is capped by [`MAX_LOGIN_SOURCES`], and the cap is
+/// enforced by eviction rather than by a shared overflow bucket, so the bound
+/// cannot be turned into the global lockout it was meant to remove.
 fn source_bucket(source: &str) -> String {
-    let mut seen = LOGIN_SOURCES
-        .get_or_init(|| Mutex::new(HashSet::new()))
+    let mut registry = LOGIN_SOURCES
+        .get_or_init(|| Mutex::new(SourceRegistry::default()))
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner);
-    bucket_for(&mut seen, source)
-}
-
-/// [`source_bucket`]'s decision, split out so the cap can be proven against a
-/// local registry instead of consuming the process-wide one.
-fn bucket_for(seen: &mut HashSet<String>, source: &str) -> String {
-    if seen.contains(source) || seen.len() < MAX_LOGIN_SOURCES {
-        seen.insert(source.to_string());
-        return format!("peer:{source}");
-    }
-    "peer:overflow".to_string()
+    registry.bucket(source)
 }
 
 /// The value a `(account, peer)` failure bucket is keyed on (H01).
@@ -308,6 +337,31 @@ impl Identity {
     /// The CSRF header value bound to `token` — derived, never stored.
     pub(crate) fn csrf(&self, token: &str) -> String {
         self.digest("csrf", token)
+    }
+
+    /// The signature binding one embedded-checkout document to exactly the
+    /// values it renders.
+    ///
+    /// The page used to trust its query string, so any caller could frame a
+    /// checkout naming its own tenant, order and amount on this origin. The
+    /// signature is `HMAC(key, "embed\0" + canonical)` and is minted only by
+    /// `POST /embed/checkout/sign` behind a session and CSRF header; a page
+    /// that cannot produce it cannot make this host render a checkout.
+    pub(crate) fn embed_signature(&self, canonical: &str) -> String {
+        self.digest("embed", canonical)
+    }
+
+    /// Timing-safe check of [`embed_signature`], refusing a wrong shape before
+    /// any comparison for the same reason [`valid_csrf`] does.
+    pub(crate) fn valid_embed_signature(&self, canonical: &str, presented: Option<&str>) -> bool {
+        let Some(presented) = presented else {
+            return false;
+        };
+        let Ok(provided) = decode_hex(presented) else {
+            return false;
+        };
+        let expected = decode_hex(&self.embed_signature(canonical)).expect("our own digest is hex");
+        ct_eq(&expected, &provided)
     }
 
     /// Timing-safe CSRF check. A wrong SHAPE (not 64 hex chars) is refused
@@ -794,32 +848,41 @@ mod tests {
     }
 
     #[test]
-    fn every_source_gets_its_own_bucket_and_the_registry_stops_growing() {
-        let mut seen = HashSet::new();
-        assert_eq!(bucket_for(&mut seen, "203.0.113.7"), "peer:203.0.113.7");
-        assert_eq!(bucket_for(&mut seen, "198.51.100.9"), "peer:198.51.100.9");
+    fn every_source_keeps_its_own_bucket_and_the_registry_evicts_instead_of_sharing() {
+        let mut registry = SourceRegistry::default();
+        assert_eq!(registry.bucket("203.0.113.7"), "peer:203.0.113.7");
+        assert_eq!(registry.bucket("198.51.100.9"), "peer:198.51.100.9");
         assert_ne!(
-            bucket_for(&mut seen, "203.0.113.7"),
-            bucket_for(&mut seen, "198.51.100.9"),
+            registry.bucket("203.0.113.7"),
+            registry.bucket("198.51.100.9"),
             "one source's bucket is not another source's bucket"
         );
         for index in 0..MAX_LOGIN_SOURCES {
-            bucket_for(&mut seen, &format!("peer-{index}.archava.test"));
+            registry.bucket(&format!("peer-{index}.archava.test"));
         }
         assert_eq!(
-            seen.len(),
+            registry.seen.len(),
             MAX_LOGIN_SOURCES,
             "the registry stops growing at the cap"
         );
         assert_eq!(
-            bucket_for(&mut seen, "one-more.archava.test"),
-            "peer:overflow",
-            "a source past the cap shares the overflow bucket"
+            registry.bucket("one-more.archava.test"),
+            "peer:one-more.archava.test",
+            "a source past the cap still gets a bucket of its own, never a shared one"
         );
         assert_eq!(
-            seen.len(),
+            registry.seen.len(),
             MAX_LOGIN_SOURCES,
-            "the overflow source is not stored"
+            "eviction keeps the registry at the cap"
+        );
+        assert!(
+            !registry.seen.contains_key("203.0.113.7"),
+            "the least recently seen source is the one evicted"
+        );
+        assert_eq!(
+            registry.bucket("198.51.100.9"),
+            "peer:198.51.100.9",
+            "a source that is still tracked keeps its own budget"
         );
     }
 

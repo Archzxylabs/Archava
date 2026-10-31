@@ -90,8 +90,14 @@ async fn read(
 pub async fn purchasing(
     State(state): State<AppState>,
     headers: HeaderMap,
-    Query(input): Query<WorkspaceQuery>,
+    query: std::result::Result<Query<WorkspaceQuery>, axum::extract::rejection::QueryRejection>,
 ) -> Response {
+    let Ok(Query(input)) = query else {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({"error":"malformed_query"})),
+        );
+    };
     match read(&state, &headers, input, false).await {
         Ok(v) => (StatusCode::OK, Json(v)),
         Err(r) => r,
@@ -100,8 +106,14 @@ pub async fn purchasing(
 pub async fn billing(
     State(state): State<AppState>,
     headers: HeaderMap,
-    Query(input): Query<WorkspaceQuery>,
+    query: std::result::Result<Query<WorkspaceQuery>, axum::extract::rejection::QueryRejection>,
 ) -> Response {
+    let Ok(Query(input)) = query else {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({"error":"malformed_query"})),
+        );
+    };
     match read(&state, &headers, input, true).await {
         Ok(v) => (StatusCode::OK, Json(v)),
         Err(r) => r,

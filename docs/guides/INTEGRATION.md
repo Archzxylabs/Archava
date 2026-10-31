@@ -70,7 +70,7 @@ The tenant argument is client-side selection, not authorization. A session, gran
 
 | Interface | What the current client does |
 | --- | --- |
-| `openCheckout(params)` | Creates an iframe targeting `/embed/checkout` with order/amount query values |
+| `openCheckout(params)` | Creates an iframe targeting a signed `/embed/checkout` URL; the `sig` must come from `POST /embed/checkout/sign` (session + CSRF) |
 | `mount(selector, options)` | Creates an iframe targeting `/app/<view>`; it does not create an unimplemented view |
 | `mountAssistant(options)` | Renders assistant client UI according to mode/profile options |
 | `data-tenant` / `data-mode` attributes | Support declarative initialization in the client script |
@@ -82,6 +82,8 @@ Mode names and visible controls do not prove a complete live voice/avatar/provid
 The client checks message origin, iframe source, and order identity. It distinguishes `ARCHAVA_PAYMENT_SIMULATED` from `ARCHAVA_PAYMENT_SUCCESS`; simulated events use `onSimulated`, or the explicitly opted-in sandbox path. A simulated result must not be described as verified production payment.
 
 Even a success callback is a browser message, not independent proof of a signed provider settlement. Amounts placed in iframe query parameters are caller-supplied display input; they are not authoritative server pricing. Follow the actual server-side receipt/provider contract for business effects.
+
+The checkout document itself carries an HMAC over the values it renders. A URL without a matching `sig` answers `403 checkout_signature_required`, so a merchant must obtain the URL from `POST /embed/checkout/sign` rather than assembling query parameters by hand. Framing is limited to the origins listed in `ARCHAVA_EMBED_FRAME_ANCESTORS`; with that variable unset the document sends `frame-ancestors 'none'` and cannot be embedded at all.
 
 ### Implementation and proof
 

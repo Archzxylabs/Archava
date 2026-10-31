@@ -216,8 +216,18 @@ pub(crate) struct StatusQuery {
 pub(crate) async fn status(
     State(state): State<AppState>,
     headers: HeaderMap,
-    Query(query): Query<StatusQuery>,
+    query: std::result::Result<Query<StatusQuery>, axum::extract::rejection::QueryRejection>,
 ) -> Response {
+    let query = match query {
+        Ok(Query(query)) => query,
+        Err(rejection) => {
+            return (
+                rejection.status(),
+                Json(serde_json::json!({"error":"malformed_query"})),
+            )
+                .into_response()
+        }
+    };
     let presented = match authenticate(&state, &headers, false).await {
         Ok(p) => p,
         Err(e) => return e.into_response(),
@@ -242,8 +252,18 @@ pub(crate) async fn status(
 pub(crate) async fn list(
     State(state): State<AppState>,
     headers: HeaderMap,
-    Query(query): Query<InvoiceQuery>,
+    query: std::result::Result<Query<InvoiceQuery>, axum::extract::rejection::QueryRejection>,
 ) -> Response {
+    let query = match query {
+        Ok(Query(query)) => query,
+        Err(rejection) => {
+            return (
+                rejection.status(),
+                Json(serde_json::json!({"error":"malformed_query"})),
+            )
+                .into_response()
+        }
+    };
     let presented = match authenticate(&state, &headers, false).await {
         Ok(p) => p,
         Err(e) => return e.into_response(),
@@ -270,8 +290,18 @@ pub(crate) struct CreateSubmission {
 pub(crate) async fn create(
     State(state): State<AppState>,
     headers: HeaderMap,
-    Json(body): Json<CreateSubmission>,
+    body: std::result::Result<Json<CreateSubmission>, axum::extract::rejection::JsonRejection>,
 ) -> Response {
+    let body = match body {
+        Ok(Json(body)) => body,
+        Err(rejection) => {
+            return (
+                rejection.status(),
+                Json(serde_json::json!({"error":"malformed_submission"})),
+            )
+                .into_response()
+        }
+    };
     let presented = match authenticate(&state, &headers, true).await {
         Ok(p) => p,
         Err(e) => return e.into_response(),
@@ -360,8 +390,18 @@ pub(crate) struct CheckSubmission {
 pub(crate) async fn check(
     State(state): State<AppState>,
     headers: HeaderMap,
-    Json(body): Json<CheckSubmission>,
+    body: std::result::Result<Json<CheckSubmission>, axum::extract::rejection::JsonRejection>,
 ) -> Response {
+    let body = match body {
+        Ok(Json(body)) => body,
+        Err(rejection) => {
+            return (
+                rejection.status(),
+                Json(serde_json::json!({"error":"malformed_submission"})),
+            )
+                .into_response()
+        }
+    };
     let presented = match authenticate(&state, &headers, true).await {
         Ok(p) => p,
         Err(e) => return e.into_response(),
@@ -465,8 +505,18 @@ pub(crate) struct Notification {
 pub(crate) async fn webhook(
     State(state): State<AppState>,
     RoutePath(id): RoutePath<String>,
-    Json(body): Json<Notification>,
+    body: std::result::Result<Json<Notification>, axum::extract::rejection::JsonRejection>,
 ) -> Response {
+    let body = match body {
+        Ok(Json(body)) => body,
+        Err(rejection) => {
+            return (
+                rejection.status(),
+                Json(serde_json::json!({"error":"malformed_submission"})),
+            )
+                .into_response()
+        }
+    };
     async {
         let integration=state.payments().get(&id)?;
         if body.order_id.len()>120||body.status_code.len()>8||body.gross_amount.len()>32||body.signature_key.len()!=128

@@ -483,12 +483,32 @@ fn refuse_blocked(plan: &Plan) -> Result<(), OwnRefusal> {
     Ok(())
 }
 
+/// A fixed refusal for a body or query that never reached the authority checks.
+///
+/// The extractor rejections are handled here rather than by axum's default,
+/// whose message can name the caller's own field or value; the detail is not
+/// repeated anywhere in the response.
+fn malformed(status: StatusCode) -> (StatusCode, Json<Value>) {
+    OwnRefusal::new(
+        status,
+        "malformed_submission",
+        "The request could not be processed.",
+    )
+    .response()
+}
+
+/// A query extractor whose rejection this module handles.
+type GuardedQuery<T> = std::result::Result<Query<T>, axum::extract::rejection::QueryRejection>;
+/// A JSON body extractor under the same rule.
+type GuardedJson<T> = std::result::Result<Json<T>, axum::extract::rejection::JsonRejection>;
+
 /// `GET /own/config` — inspect.
 pub async fn config(
     State(state): State<AppState>,
     headers: HeaderMap,
-    Query(query): Query<TenantQuery>,
+    query: GuardedQuery<TenantQuery>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    let Query(query) = query.map_err(|rejection| malformed(rejection.status()))?;
     inspect(&state, &headers, query.tenant)
         .await
         .map(Json)
@@ -545,8 +565,9 @@ async fn inspect(
 pub async fn plan(
     State(state): State<AppState>,
     headers: HeaderMap,
-    Json(body): Json<PlanBody>,
+    body: GuardedJson<PlanBody>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    let Json(body) = body.map_err(|rejection| malformed(rejection.status()))?;
     preview(&state, &headers, body.tenant, body.request)
         .await
         .map(Json)
@@ -563,8 +584,9 @@ pub async fn plan(
 pub async fn chat(
     State(state): State<AppState>,
     headers: HeaderMap,
-    Json(body): Json<ChatBody>,
+    body: GuardedJson<ChatBody>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    let Json(body) = body.map_err(|rejection| malformed(rejection.status()))?;
     let request = parse_chat(&body.message).map_err(OwnRefusal::response)?;
     preview_at(&state, &headers, body.tenant, request, true)
         .await
@@ -717,8 +739,9 @@ fn split_relabel(rest: &str) -> Option<(&str, &str)> {
 pub async fn apply(
     State(state): State<AppState>,
     headers: HeaderMap,
-    Json(body): Json<ApplyBody>,
+    body: GuardedJson<ApplyBody>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    let Json(body) = body.map_err(|rejection| malformed(rejection.status()))?;
     submit(&state, &headers, body)
         .await
         .map(Json)
@@ -831,8 +854,9 @@ async fn restore_request(
 pub async fn restore_plan(
     State(state): State<AppState>,
     headers: HeaderMap,
-    Json(body): Json<RestorePlanBody>,
+    body: GuardedJson<RestorePlanBody>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    let Json(body) = body.map_err(|rejection| malformed(rejection.status()))?;
     restore_preview(&state, &headers, body)
         .await
         .map(Json)
@@ -866,8 +890,9 @@ async fn restore_preview(
 pub async fn restore(
     State(state): State<AppState>,
     headers: HeaderMap,
-    Json(body): Json<RestoreBody>,
+    body: GuardedJson<RestoreBody>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    let Json(body) = body.map_err(|rejection| malformed(rejection.status()))?;
     restore_inner(&state, &headers, body)
         .await
         .map(Json)
@@ -942,8 +967,9 @@ async fn restore_inner(
 pub async fn status(
     State(state): State<AppState>,
     headers: HeaderMap,
-    Query(query): Query<StatusQuery>,
+    query: GuardedQuery<StatusQuery>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    let Query(query) = query.map_err(|rejection| malformed(rejection.status()))?;
     status_inner(&state, &headers, query)
         .await
         .map(Json)
@@ -983,8 +1009,9 @@ type HistoryRow = (i64, String, String, String, String, i64, String, String);
 pub async fn history(
     State(state): State<AppState>,
     headers: HeaderMap,
-    Query(query): Query<TenantQuery>,
+    query: GuardedQuery<TenantQuery>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    let Query(query) = query.map_err(|rejection| malformed(rejection.status()))?;
     history_inner(&state, &headers, query.tenant)
         .await
         .map(Json)

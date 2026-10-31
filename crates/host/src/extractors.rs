@@ -16,9 +16,13 @@
 //! `Query<` extractor — the reflection-prone spelling — still cannot land
 //! unnoticed.
 //!
-//! `Path` and `Form` remain unwired, and the routes remain static, so that gap
-//! is still closed **vacuously** rather than fixed — which is why the tripwire
-//! for the person adding the first `/tenants/{tenant}/...` route stays.
+//! `Path` and `Form` are no longer unwired: `cockpit.rs` takes typed path ids
+//! and `feed.rs` takes a profile slug. So the rule is no longer "forbidden" but
+//! "guarded" — every extractor must be the `Result<…, Rejection>` spelling,
+//! because axum's default rejection for `Path`, `Query` and `Json` can name the
+//! caller's own input. The tripwire below covers the whole crate, records the
+//! modules that still carry bare extractors, and fails when that debt grows —
+//! or when it shrinks without the row being deleted.
 //!
 //! Two kinds of assertion live here, and they are deliberately different in kind:
 //!
@@ -159,57 +163,124 @@ async fn an_unmatched_path_is_not_reflected() {
     }
 }
 
-/// The next path or form extractor must not be wired until its rejection path
-/// is written — and a `Query` extractor may not be wired *without* one.
+/// Every module in this crate, as source text.
 ///
-/// This reads the router's own source at compile time. That is the point: it
-/// cannot drift from what the router actually declares.
+/// `check-structure.mjs` fails when a `crates/host/src/**/*.rs` file is missing
+/// from this list, so a new module cannot escape the rules below by not being
+/// named here. `extractors.rs` is excluded because it is this file.
+const MODULES: &[(&str, &str)] = &[
+    ("assistant.rs", include_str!("assistant.rs")),
+    ("authority.rs", include_str!("authority.rs")),
+    ("cockpit.rs", include_str!("cockpit.rs")),
+    ("crm.rs", include_str!("crm.rs")),
+    ("decision.rs", include_str!("decision.rs")),
+    ("feed.rs", include_str!("feed.rs")),
+    ("identity.rs", include_str!("identity.rs")),
+    ("ingestion.rs", include_str!("ingestion.rs")),
+    ("lib.rs", include_str!("lib.rs")),
+    ("mail.rs", include_str!("mail.rs")),
+    ("metrics.rs", include_str!("metrics.rs")),
+    ("orbz.rs", include_str!("orbz.rs")),
+    ("own.rs", include_str!("own.rs")),
+    ("payments.rs", include_str!("payments.rs")),
+    ("presence.rs", include_str!("presence.rs")),
+    ("preview.rs", include_str!("preview.rs")),
+    ("router.rs", include_str!("router.rs")),
+    ("security.rs", include_str!("security.rs")),
+    ("webhooks.rs", include_str!("webhooks.rs")),
+    ("erp/accommodation.rs", include_str!("erp/accommodation.rs")),
+    ("erp/assets.rs", include_str!("erp/assets.rs")),
+    ("erp/attendance.rs", include_str!("erp/attendance.rs")),
+    ("erp/billing.rs", include_str!("erp/billing.rs")),
+    ("erp/commerce.rs", include_str!("erp/commerce.rs")),
+    (
+        "erp/field_services.rs",
+        include_str!("erp/field_services.rs"),
+    ),
+    ("erp/foodservice.rs", include_str!("erp/foodservice.rs")),
+    (
+        "erp/formal_education.rs",
+        include_str!("erp/formal_education.rs"),
+    ),
+    ("erp/fulfillment.rs", include_str!("erp/fulfillment.rs")),
+    ("erp/laundry.rs", include_str!("erp/laundry.rs")),
+    ("erp/mod.rs", include_str!("erp/mod.rs")),
+    ("erp/organizations.rs", include_str!("erp/organizations.rs")),
+    ("erp/projects.rs", include_str!("erp/projects.rs")),
+    ("erp/proposals.rs", include_str!("erp/proposals.rs")),
+    ("erp/purchasing.rs", include_str!("erp/purchasing.rs")),
+    ("erp/scheduling.rs", include_str!("erp/scheduling.rs")),
+    ("erp/subscriptions.rs", include_str!("erp/subscriptions.rs")),
+    ("erp/support.rs", include_str!("erp/support.rs")),
+    ("erp/workspace.rs", include_str!("erp/workspace.rs")),
+];
+
+/// Modules that still wire a bare — reflection-prone — extractor, and how many
+/// of each spelling they carry: `(module, Path, Query, Json)`.
 ///
-/// For `Path` and `Form` the rule is absolute (both spellings, bare and fully
-/// qualified, because matching only one is how a grep-shaped test gets walked
-/// past). For `Query` the extractor is now sanctioned — `GET /commands/status`
-/// uses it — so the rule becomes structural: every `Query<` must be the `Result`
-/// spelling that carries a `QueryRejection`, which is the only shape
-/// `query_rejection()` can map. A bare `Query<` in a handler signature would
-/// fall back to axum's reflective default, and this assertion is what says so.
+/// The recorded numbers must match exactly in both directions. A module that
+/// grows a bare extractor fails this test, and a module that reaches zero fails
+/// until its row is deleted. That is the ratchet: no new bare extractor can
+/// land anywhere in this crate, and the remaining debt is enumerated rather than
+/// implied. The modules listed here are the extraction backlog, in the order a
+/// security pass should take them.
+const EXTRACTOR_DEBT: &[(&str, usize, usize, usize)] = &[];
+
+/// Counts the bare and guarded spellings of the three extractors that reflect.
+///
+/// A guarded occurrence (`Result<Query<…>, QueryRejection>`) never matches the
+/// bare pattern, because the colon is followed by `Result`, so the counts are
+/// disjoint and exact.
+fn extractor_counts(source: &str) -> (usize, usize, usize) {
+    (
+        source.matches(": Path<").count(),
+        source.matches(": Query<").count(),
+        source.matches(": Json<").count(),
+    )
+}
+
+/// No module may wire an extractor whose default rejection can name the
+/// caller's own input, except the recorded debt — which can only shrink.
+///
+/// This reads every module's source at compile time, so it cannot drift from
+/// what the crate actually declares. `Form` stays absolutely forbidden: no
+/// module takes a form body, and a shipping handler would need its rejection
+/// path written first.
 #[test]
-fn no_path_or_form_extractor_is_wired_without_a_refusal_handler() {
-    const SOURCE: &str = include_str!("router.rs");
-
-    let unwired = [
-        ("Path<", "`axum::extract::Path`"),
-        ("extract::Path", "`axum::extract::Path`, fully qualified"),
-        ("Form<", "`axum::extract::Form`"),
-        ("extract::Form", "`axum::extract::Form`, fully qualified"),
-    ];
-
-    for (needle, named) in unwired {
+fn no_new_bare_extractor_is_wired_anywhere_in_the_crate() {
+    for (name, source) in MODULES {
         assert!(
-            !SOURCE.contains(needle),
-            "{named} now appears in router.rs. D09's R02 follow-up is live: axum's \
-             default rejection for this extractor reflects the caller's own input \
-             back at it, and this host's routes are unauthenticated. Route the \
-             rejection through the same `rejection()` shape the `Json` extractor \
-             uses — fixed message, detail logged server-side, no part of the input \
-             in the response — and delete this assertion only once that handler \
-             has a negative test of its own."
+            !source.contains(": Form<") && !source.contains("Form("),
+            "{name} wires axum's `Form` extractor. Its default rejection reflects \
+             the caller's submission back at it. Type it as \
+             `Result<Form<T>, FormRejection>` and map the error to a fixed \
+             message and status first."
+        );
+
+        let counted = extractor_counts(source);
+        let expected = EXTRACTOR_DEBT
+            .iter()
+            .find(|(module, ..)| module == name)
+            .map(|(_, path, query, json)| (*path, *query, *json))
+            .unwrap_or((0, 0, 0));
+        assert_eq!(
+            counted, expected,
+            "{name} changed its bare-extractor count. Expected \
+             (Path, Query, Json) = {expected:?}, found {counted:?}. A new bare \
+             extractor must be written as `Result<Extractor<T>, Rejection>` with \
+             a fixed refusal instead. A module that reached (0, 0, 0) must have \
+             its `EXTRACTOR_DEBT` row deleted, so the debt cannot outlive the \
+             fix."
         );
     }
 
-    // `Query` may appear only as `Result<Query<…>, QueryRejection>` — never the
-    // bare extractor, whose default rejection echoes the query string. Counting
-    // the spellings is exact: any bare `Query<` makes the total exceed the
-    // guarded ones, and the message names the handler to reach for.
-    let all = SOURCE.matches("Query<").count();
-    let guarded = SOURCE.matches("Result<Query<").count();
-    assert_eq!(
-        all, guarded,
-        "a bare `Query<` extractor is wired in router.rs. Its default rejection \
-         reflects the caller's own query string back at it. Type it as \
-         `Result<Query<T>, QueryRejection>` and map the error through \
-         `query_rejection()` — fixed message, detail logged server-side — the \
-         way `GET /commands/status` does."
-    );
+    for (module, ..) in EXTRACTOR_DEBT {
+        assert!(
+            MODULES.iter().any(|(name, _)| name == module),
+            "{module} is recorded as extractor debt but is not in MODULES, so the \
+             debt row is not measuring anything."
+        );
+    }
 }
 
 // --- Extraction ordering without a database ------------------------------------

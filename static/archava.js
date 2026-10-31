@@ -100,6 +100,16 @@
        */
       openCheckout: function (params) {
         params = params || {};
+        // The checkout document renders only for a URL signed by
+        // POST /embed/checkout/sign, which needs a session and the CSRF header.
+        // Minting that signature is a server call, so this client passes the
+        // signed URL (or its `sig`) instead of assembling one the host refuses.
+        if (!params.url && !params.sig) {
+          if (typeof params.onError === 'function') {
+            params.onError({ reason: 'checkout_signature_required' });
+          }
+          return;
+        }
         var overlay = document.createElement('div');
         overlay.id = 'archava-modal-overlay';
         overlay.style.cssText =
@@ -112,7 +122,10 @@
           amount: params.amountCents || 0,
           embed: 'true',
         });
-        iframe.src = baseUrl + '/embed/checkout?' + query.toString();
+        if (params.sig) {
+          query.set('sig', params.sig);
+        }
+        iframe.src = params.url || baseUrl + '/embed/checkout?' + query.toString();
         iframe.style.cssText =
           'width:92%;max-width:580px;height:88vh;max-height:820px;border:1px solid rgba(255,255,255,0.12);border-radius:24px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.6);background:#090d16;';
 

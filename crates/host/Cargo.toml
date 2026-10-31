@@ -11,6 +11,7 @@ archava-core.workspace = true
 archava-adapters.workspace = true
 archava-domain.workspace = true
 archava-assistant.workspace = true
+archava-context.workspace = true
 archava-own.workspace = true
 archava-cockpit.workspace = true
 archava-orbz.workspace = true
@@ -31,6 +32,10 @@ tracing.workspace = true
 # length 64.
 hmac.workspace = true
 sha2.workspace = true
+# Constant-time secret comparison for the webhook bearer token. Already a
+# workspace dependency; decoding a webhook token with `==` made the comparison
+# time a function of the common prefix.
+subtle.workspace = true
 scrypt.workspace = true
 base64.workspace = true
 uuid.workspace = true

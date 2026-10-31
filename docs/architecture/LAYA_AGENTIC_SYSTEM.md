@@ -72,6 +72,7 @@ flowchart TD
   * Menegakkan tingkat otonomi sistem dari **L1** (Read Only / Observation) sampai **L5** (High-Risk Financial Mutation).
   * Setiap aksi mutatif memerlukan otorisasi berbasis membership session di PostgreSQL, bukan klaim payload request.
   * Mencegah jailbreak prompt injection dengan memperlakukan semua input user sebagai *untrusted text data*, bukan executable instructions.
+  * **System 1 gate terpasang (shadow):** `crates/host/src/decision.rs` menjalankan `LayaDecisionProvider` + `DefaultOrchestrator` sekali per giliran `POST /api/crm/{tenant}/conversation` dalam `AssistMode::Shadow`. Ambang tindak **0.85** dan batas **25 opsi** ditegakkan oleh layer decision; setiap trace mencatat `would_apply`/`agreement` per task, dan jawaban yang berlaku tetap baseline — jadi gerbang ini mengukur dan tidak mengubah balasan. Promosi ke `Assist` adalah keputusan otoritas (task mana, floor berapa, tenant mana), bukan perubahan kode.
 
 ---
 
@@ -115,6 +116,11 @@ flowchart TD
   cargo test -p archava-domain --lib presence::tests
   cargo test -p archava-providers --test voice_transport
   cargo test -p archava-host --test presence_lifecycle --locked -- --test-threads=1
+  ```
+* System 1 decision gate (shadow) & layer decision:
+  ```bash
+  cargo test -p archava-context --lib
+  cargo test -p archava-host --lib decision --locked -- --test-threads=1
   ```
 * Cockpit durable execution & human gate:
   ```bash

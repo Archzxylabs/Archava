@@ -1,5 +1,6 @@
 /** Current-workspace boundaries. Historical tooling under tools/legacy is excluded. */
 import { execFileSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { dirname, isAbsolute, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -26,6 +27,111 @@ function filesIn(directory, excluded = new Set(['target', 'node_modules', 'legac
     if (entry.isDirectory()) return excluded.has(entry.name) ? [] : filesIn(path, excluded)
     return entry.isFile() ? [path] : []
   })
+}
+
+/**
+ * SQL ledgers that exist in the tree but that no installer applies.
+ *
+ * They are named here rather than deleted (applied SQL is append-only, and a
+ * file whose history is unknown is not safe to remove) and rather than added to
+ * the manifest (that would change what the Ops installer verifies and applies).
+ * The gate is that this list stays explicit: a new unmounted ledger, or one of
+ * these files disappearing, fails the structure check instead of drifting.
+ *
+ * Exported because the helper test's fixture has to materialize exactly these
+ * paths: a fixture that spelled them out itself would go stale the next time
+ * the list changes, which is the drift this list exists to prevent.
+ */
+export const UNMOUNTED_MIGRATIONS = new Set([
+  'migrations/act-confirmation-pg/001_confirmation_challenges.sql',
+  'migrations/act-host-pg/001_host_intents.sql',
+  'migrations/act-host-pg/002_host_scope_binding.sql',
+  'migrations/act-storage/001_act_attempts.sql',
+  'migrations/capacity-pg/001_delivery_capacity_pools.sql',
+  'migrations/crm-act/001_native_confirmations.sql',
+  'migrations/universal-pg/001_universal_enterprise_ledgers.sql',
+])
+
+/**
+ * Every SQL file is either applied from the manifest or explicitly unmounted,
+ * every manifest entry exists, and every recorded checksum still matches.
+ * Without this, a ledger can look shipped while no installer verifies it (the
+ * audit found seven such files).
+ */
+function migrationProblems(root) {
+  const problems = []
+  const manifestPath = join(root, 'migrations', 'manifest.v1.json')
+  if (!existsSync(manifestPath)) return ['Missing migrations/manifest.v1.json']
+  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'))
+  const listed = new Map()
+  for (const ledger of Object.values(manifest.ledgers ?? {})) {
+    for (const entry of ledger.migrations ?? []) {
+      if (entry.path) listed.set(entry.path, entry.sha256)
+    }
+  }
+
+  const files = []
+  const migrationsRoot = join(root, 'migrations')
+  for (const entry of readdirSync(migrationsRoot, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue
+    for (const file of readdirSync(join(migrationsRoot, entry.name))) {
+      if (file.endsWith('.sql')) files.push(`migrations/${entry.name}/${file}`)
+    }
+  }
+
+  for (const file of files) {
+    if (listed.has(file)) {
+      const expected = listed.get(file)
+      const actual = createHash('sha256')
+        .update(readFileSync(join(root, file)))
+        .digest('hex')
+      if (expected && expected !== actual) {
+        problems.push(`${file}: manifest checksum does not match the file`)
+      }
+      continue
+    }
+    if (!UNMOUNTED_MIGRATIONS.has(file)) {
+      problems.push(
+        `${file}: not in migrations/manifest.v1.json and not on the unmounted list`,
+      )
+    }
+  }
+
+  for (const file of listed.keys()) {
+    if (!existsSync(join(root, file))) problems.push(`${file}: manifest entry has no file`)
+  }
+  for (const file of UNMOUNTED_MIGRATIONS) {
+    if (!existsSync(join(root, file))) problems.push(`${file}: stale unmounted-list entry`)
+    if (listed.has(file)) problems.push(`${file}: unmounted list and manifest disagree`)
+  }
+  return problems
+}
+
+/**
+ * Every host source file must be declared in `extractors.rs`, because that is
+ * where the crate's extractor rules live. A module that is not declared is a
+ * module the rules do not cover — which is exactly how `feed.rs` kept a bare
+ * `Query<` while the tripwire only read `router.rs`.
+ */
+function extractorCoverageProblems(root) {
+  const problems = []
+  const extractors = join(root, 'crates', 'host', 'src', 'extractors.rs')
+  if (!existsSync(extractors)) return ['Missing crates/host/src/extractors.rs']
+  const source = readFileSync(extractors, 'utf8')
+  const declared = new Set(
+    [...source.matchAll(/include_str!\("([^"]+)"\)/g)].map((match) => match[1]),
+  )
+  for (const path of filesIn(join(root, 'crates', 'host', 'src'))) {
+    if (!path.endsWith('.rs')) continue
+    const name = relative(join(root, 'crates', 'host', 'src'), path).split('\\').join('/')
+    if (name === 'extractors.rs') continue
+    if (!declared.has(name)) {
+      problems.push(
+        `crates/host/src/${name}: not declared in extractors.rs, so the extractor rules do not cover it`,
+      )
+    }
+  }
+  return problems
 }
 
 export function validateStructure(root, metadata) {
@@ -68,6 +174,8 @@ export function validateStructure(root, metadata) {
       if (specifier.startsWith('.') && !existsSync(resolve(dirname(path), specifier))) problems.push(`${relative(root, path)}: missing import ${specifier}`)
     }
   }
+  problems.push(...migrationProblems(root))
+  problems.push(...extractorCoverageProblems(root))
   return { packages: packages.length, problems }
 }
 

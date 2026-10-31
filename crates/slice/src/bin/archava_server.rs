@@ -390,6 +390,21 @@ async fn serve() -> Result<(), Box<dyn Error>> {
         .with_payment_registry(payment_registry)
         .with_email_registry(email_registry)
         .with_presence_registry(presence_registry);
+    // Both are startup configuration, like the registries above: a scrape
+    // credential and a frame-ancestor allowlist cannot be widened by a request,
+    // and a malformed list is a startup failure rather than a silent default.
+    let state = match env::var("ARCHAVA_METRICS_TOKEN") {
+        Ok(token) if !token.trim().is_empty() => state.with_metrics_token(token),
+        Ok(_) => return Err("ARCHAVA_METRICS_TOKEN must not be empty".into()),
+        Err(env::VarError::NotPresent) => state,
+        Err(_) => return Err("ARCHAVA_METRICS_TOKEN is not valid UTF-8".into()),
+    };
+    let state = match env::var("ARCHAVA_EMBED_FRAME_ANCESTORS") {
+        Ok(raw) if raw.trim().is_empty() => state,
+        Ok(raw) => state.with_embed_frame_ancestors(archava_host::parse_frame_ancestors(&raw)?),
+        Err(env::VarError::NotPresent) => state,
+        Err(_) => return Err("ARCHAVA_EMBED_FRAME_ANCESTORS is not valid UTF-8".into()),
+    };
     let app: Router = build_app(state, site_addr, &pkg_dir);
     tracing::info!(
         bind = %site_addr,

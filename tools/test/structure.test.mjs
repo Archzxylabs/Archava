@@ -2,14 +2,28 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
-import { validateStructure } from '../check-structure.mjs'
+import { dirname, join } from 'node:path'
+import { UNMOUNTED_MIGRATIONS, validateStructure } from '../check-structure.mjs'
 
 function fixture(t) {
   const root = mkdtempSync(join(tmpdir(), 'archava-structure-test-'))
   t.after(() => rmSync(root, { recursive: true, force: true }))
   for (const name of ['Cargo.toml', 'Cargo.lock', 'rust-toolchain.toml']) writeFileSync(join(root, name), '')
   mkdirSync(join(root, 'crates/core/src'), { recursive: true })
+  // The two repository-wide checks read the tree's real shape: the migration
+  // manifest plus its explicit unmounted list, and the host's extractor
+  // registry. A fixture that omits them reports "missing", which is a
+  // different problem from the one each test below is about — so the fixture
+  // supplies a minimal valid instance of both, taking the unmounted paths from
+  // the list itself so it cannot go stale.
+  mkdirSync(join(root, 'migrations'), { recursive: true })
+  writeFileSync(join(root, 'migrations/manifest.v1.json'), JSON.stringify({ schemaVersion: 1, ledgers: {} }))
+  for (const file of UNMOUNTED_MIGRATIONS) {
+    mkdirSync(join(root, dirname(file)), { recursive: true })
+    writeFileSync(join(root, file), '')
+  }
+  mkdirSync(join(root, 'crates/host/src'), { recursive: true })
+  writeFileSync(join(root, 'crates/host/src/extractors.rs'), '')
   const pkg = { id: 'core-id', name: 'archava-core', manifest_path: join(root, 'crates/core/Cargo.toml'), dependencies: [] }
   return { root, pkg, metadata: { packages: [pkg], workspace_members: [pkg.id] } }
 }

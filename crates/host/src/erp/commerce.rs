@@ -176,8 +176,14 @@ async fn read_workspace(
 pub async fn workspace(
     State(state): State<AppState>,
     headers: HeaderMap,
-    Query(input): Query<WorkspaceQuery>,
+    query: std::result::Result<Query<WorkspaceQuery>, axum::extract::rejection::QueryRejection>,
 ) -> Response {
+    let Ok(Query(input)) = query else {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({"error":"malformed_query"})),
+        );
+    };
     match read_workspace(&state, &headers, input).await {
         Ok(value) => (StatusCode::OK, Json(value)),
         Err(response) => response,
@@ -205,8 +211,14 @@ async fn read_status(state: &AppState, headers: &HeaderMap, input: StatusQuery) 
 pub async fn status(
     State(state): State<AppState>,
     headers: HeaderMap,
-    Query(input): Query<StatusQuery>,
+    query: std::result::Result<Query<StatusQuery>, axum::extract::rejection::QueryRejection>,
 ) -> Response {
+    let Ok(Query(input)) = query else {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({"error":"malformed_query"})),
+        );
+    };
     match read_status(&state, &headers, input).await {
         Ok(value) => (StatusCode::OK, Json(value)),
         Err(response) => response,

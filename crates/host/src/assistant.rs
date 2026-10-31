@@ -74,10 +74,14 @@ use crate::router::{authenticate, AppState};
 /// authority question.
 pub(crate) async fn conversation(
     State(state): State<AppState>,
-    Path(tenant): Path<String>,
+    path: Result<Path<String>, axum::extract::rejection::PathRejection>,
     headers: HeaderMap,
     body: Result<Json<serde_json::Value>, JsonRejection>,
 ) -> (StatusCode, Json<serde_json::Value>) {
+    let Ok(Path(tenant)) = path else {
+        tracing::info!("conversation path refused at extraction");
+        return masked(StatusCode::BAD_REQUEST, "Invalid request.");
+    };
     let Ok(Json(raw)) = body else {
         tracing::info!("conversation body rejected at extraction");
         return masked(StatusCode::BAD_REQUEST, "Invalid request.");
@@ -107,6 +111,10 @@ pub(crate) async fn conversation(
             return masked(StatusCode::BAD_REQUEST, "Invalid request.");
         }
     };
+    // System 1 measures the turn before the flow answers it. Shadow: the gate
+    // runs, its judgment is logged, and nothing about the reply below can move
+    // — see `crate::decision` for why that is structural rather than hoped for.
+    crate::decision::shadow_pass(tenant.as_str(), &input.utterance);
     let occurred_at = match serving_instant(&state).await {
         Ok(instant) => instant,
         Err(source) => {

@@ -253,9 +253,29 @@ pub(crate) async fn send_invoice_email(
     State(state): State<AppState>,
     headers: HeaderMap,
     RoutePath(invoice_id): RoutePath<Uuid>,
-    Query(query): Query<EmailQuery>,
-    Json(payload): Json<SendEmailRequest>,
+    query: std::result::Result<Query<EmailQuery>, axum::extract::rejection::QueryRejection>,
+    payload: std::result::Result<Json<SendEmailRequest>, axum::extract::rejection::JsonRejection>,
 ) -> Response {
+    let query = match query {
+        Ok(Query(query)) => query,
+        Err(rejection) => {
+            return (
+                rejection.status(),
+                Json(serde_json::json!({"error":"malformed_query"})),
+            )
+                .into_response()
+        }
+    };
+    let payload = match payload {
+        Ok(Json(payload)) => payload,
+        Err(rejection) => {
+            return (
+                rejection.status(),
+                Json(serde_json::json!({"error":"malformed_submission"})),
+            )
+                .into_response()
+        }
+    };
     let presented = match authenticate(&state, &headers, true).await {
         Ok(p) => p,
         Err(e) => return e.into_response(),
@@ -518,8 +538,18 @@ pub(crate) async fn list_invoice_emails(
     State(state): State<AppState>,
     headers: HeaderMap,
     RoutePath(invoice_id): RoutePath<Uuid>,
-    Query(query): Query<EmailQuery>,
+    query: std::result::Result<Query<EmailQuery>, axum::extract::rejection::QueryRejection>,
 ) -> Response {
+    let query = match query {
+        Ok(Query(query)) => query,
+        Err(rejection) => {
+            return (
+                rejection.status(),
+                Json(serde_json::json!({"error":"malformed_query"})),
+            )
+                .into_response()
+        }
+    };
     let presented = match authenticate(&state, &headers, false).await {
         Ok(p) => p,
         Err(e) => return e.into_response(),

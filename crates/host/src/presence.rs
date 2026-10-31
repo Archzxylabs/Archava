@@ -184,8 +184,21 @@ fn get_voice_client(state: &AppState) -> Result<&Arc<VoiceClient>, Box<Response>
 pub async fn start_presence_session(
     State(state): State<AppState>,
     headers: HeaderMap,
-    Json(payload): Json<StartSessionRequest>,
+    payload: std::result::Result<
+        Json<StartSessionRequest>,
+        axum::extract::rejection::JsonRejection,
+    >,
 ) -> Response {
+    let payload = match payload {
+        Ok(Json(payload)) => payload,
+        Err(rejection) => {
+            return (
+                rejection.status(),
+                Json(json!({"error":"malformed_submission"})),
+            )
+                .into_response()
+        }
+    };
     let session = match authenticate(&state, &headers, true).await {
         Ok(session) => session,
         Err(err_response) => return err_response.into_response(),
@@ -316,8 +329,18 @@ pub async fn process_presence_turn(
     State(state): State<AppState>,
     headers: HeaderMap,
     RoutePath(id): RoutePath<String>,
-    Json(turn): Json<TranscriptTurnRequest>,
+    turn: std::result::Result<Json<TranscriptTurnRequest>, axum::extract::rejection::JsonRejection>,
 ) -> Response {
+    let turn = match turn {
+        Ok(Json(turn)) => turn,
+        Err(rejection) => {
+            return (
+                rejection.status(),
+                Json(json!({"error":"malformed_submission"})),
+            )
+                .into_response()
+        }
+    };
     let session = match authenticate(&state, &headers, true).await {
         Ok(session) => session,
         Err(err_response) => return err_response.into_response(),
@@ -398,8 +421,21 @@ pub async fn degrade_presence_session(
     State(state): State<AppState>,
     headers: HeaderMap,
     RoutePath(id): RoutePath<String>,
-    Json(payload): Json<DegradeSessionRequest>,
+    payload: std::result::Result<
+        Json<DegradeSessionRequest>,
+        axum::extract::rejection::JsonRejection,
+    >,
 ) -> Response {
+    let payload = match payload {
+        Ok(Json(payload)) => payload,
+        Err(rejection) => {
+            return (
+                rejection.status(),
+                Json(json!({"error":"malformed_submission"})),
+            )
+                .into_response()
+        }
+    };
     let session = match authenticate(&state, &headers, true).await {
         Ok(session) => session,
         Err(err_response) => return err_response.into_response(),

@@ -1,11 +1,27 @@
 //! The HTTP router.
 //!
-//! Seven routes, each one a link in the authority chain the mandate requires
-//! (audit RA01): `POST /login` issues a server-side session; `POST /commands`
-//! executes an authorized command or idempotently replays a recorded one;
-//! `GET /commands/status` recovers a receipt; `POST /approvals` requests a
-//! bound human approval and `POST /approvals/approve` stamps it; `GET
-//! /contacts` is the R01 placeholder read; `/healthz` is liveness.
+//! This file mounts the whole host surface — the authority chain below, the CRM
+//! reads and commands, the owner-configuration lifecycle, the assistant
+//! conversation, the ERP ledger cohorts, cockpit and orbz, the payment/email/
+//! presence integrations, and a small set of explicitly public routes. It used
+//! to describe seven routes; the surface is now grouped into route families,
+//! and a family is only authorized if it actually runs the chain. Do not read
+//! the chain below as something the router applies to every route for you.
+//!
+//! ## Route families
+//!
+//! | Family | Gate |
+//! | --- | --- |
+//! | `/login`, `/logout` | session lifecycle only |
+//! | `/commands`, `/approvals`, `/crm/*`, `/own/*`, `/api/crm/*` | extraction → session → grant → gate → write |
+//! | `/erp/*/commands`, `/erp/*/*` reads | session + CSRF, then the ledger's own grant and RLS |
+//! | `/api/v1/cockpit/*`, `/api/v1/orbz/*` | session + CSRF; mission/memory scope from the session |
+//! | `/api/v1/presets/*`, `/api/v1/feed/*` | session (mutations also CSRF); the feed is synthesized demo data |
+//! | `/api/preview/generate`, `/api/migration/*` | session + CSRF; `/api/migration/commit` answers 501 |
+//! | `/api/webhooks/privy` | provider shared secret, timing-safe |
+//! | `/api/webhooks/payment/*` | provider signature before any transaction |
+//! | `/embed/checkout` | HMAC signature over the rendered values, minted by `POST /embed/checkout/sign` behind session + CSRF |
+//! | `/healthz`, `/readyz`, `/metrics`, `/v1/archava.js`, `/*.css` | public; `/metrics` needs a loopback peer or `ARCHAVA_METRICS_TOKEN` |
 //!
 //! ## The order the code enforces
 //!
@@ -62,10 +78,12 @@ use axum::extract::{ConnectInfo, FromRequestParts, Query, State};
 use axum::http::request::Parts;
 use axum::http::{header, HeaderMap, StatusCode};
 use axum::middleware::Next;
+use axum::response::IntoResponse;
 use axum::routing::{get, post};
 use axum::{Json, Router};
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPool;
+use subtle::ConstantTimeEq;
 use uuid::Uuid;
 
 use archava_adapters::rls::assert_startup_readiness;
@@ -187,6 +205,12 @@ pub struct AppState {
     payments: Arc<crate::payments::PaymentRegistry>,
     email: Arc<crate::mail::EmailRegistry>,
     pub presence: Arc<crate::presence::PresenceRegistry>,
+    /// The merchant origins allowed to frame `/embed/checkout`. Empty means
+    /// `frame-ancestors 'none'`. Configured at startup, never per request.
+    embed_frame_ancestors: Arc<Vec<String>>,
+    /// The credential `/metrics` requires from a non-loopback peer. `None`
+    /// means only a loopback peer may scrape it.
+    metrics_token: Option<Arc<str>>,
 }
 
 #[derive(Debug)]
@@ -248,6 +272,8 @@ impl AppState {
             payments: Arc::new(crate::payments::PaymentRegistry::default()),
             email: Arc::new(crate::mail::EmailRegistry::default()),
             presence: Arc::new(crate::presence::PresenceRegistry::default()),
+            embed_frame_ancestors: Arc::new(Vec::new()),
+            metrics_token: None,
             inner: Arc::new(AppStateInner {
                 pool,
                 ledger,
@@ -481,6 +507,8 @@ impl AppState {
             payments: Arc::new(crate::payments::PaymentRegistry::default()),
             email: Arc::new(crate::mail::EmailRegistry::default()),
             presence: Arc::new(crate::presence::PresenceRegistry::default()),
+            embed_frame_ancestors: Arc::new(Vec::new()),
+            metrics_token: None,
             inner: Arc::new(AppStateInner {
                 pool,
                 ledger,
@@ -510,6 +538,53 @@ impl AppState {
     pub(crate) fn metrics(&self) -> &Metrics {
         &self.inner.metrics
     }
+
+    /// The merchant origins permitted to frame `/embed/checkout`.
+    ///
+    /// Startup configuration, the same way the payment and email registries
+    /// are: an origin cannot be widened by a request, and an empty list denies
+    /// framing rather than allowing it.
+    pub fn with_embed_frame_ancestors(mut self, origins: Vec<String>) -> Self {
+        self.embed_frame_ancestors = Arc::new(origins);
+        self
+    }
+
+    pub(crate) fn embed_frame_ancestors(&self) -> &[String] {
+        &self.embed_frame_ancestors
+    }
+
+    /// The scrape credential `/metrics` requires from a non-loopback peer.
+    pub fn with_metrics_token(mut self, token: impl Into<Arc<str>>) -> Self {
+        self.metrics_token = Some(token.into());
+        self
+    }
+
+    pub(crate) fn metrics_token(&self) -> Option<&str> {
+        self.metrics_token.as_deref()
+    }
+}
+
+/// A ledger descriptor for in-crate tests in *other* modules: the preview case
+/// lives outside this file and cannot reach `mod tests::ledger`.
+#[cfg(test)]
+pub(crate) fn test_ledger() -> Ledger {
+    Ledger {
+        namespace: "archava_commerce",
+        ledger: "Commerce",
+        tables: &[
+            "memberships",
+            "products",
+            "stock_balances",
+            "orders",
+            "order_lines",
+            "allocations",
+            "commands",
+            "movements",
+            "returns",
+            "audit",
+            "approvals",
+        ],
+    }
 }
 
 /// Builds the router.
@@ -522,6 +597,9 @@ pub fn router(state: AppState) -> Router {
         .route("/archava.css", get(serve_archava_css))
         .route("/workspace.css", get(serve_workspace_css))
         .route("/embed/checkout", get(serve_embed_checkout))
+        // The mint for that signature: session + CSRF first, then the host's
+        // own identity key signs exactly the values the document renders.
+        .route("/embed/checkout/sign", post(sign_embed_checkout))
         .route(
             "/api/preview/generate",
             post(crate::preview::generate_preview_route),
@@ -987,7 +1065,10 @@ pub fn router(state: AppState) -> Router {
             state.clone(),
             observe_request,
         ))
-        .layer(axum::middleware::from_fn(crate::security::security_headers))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            crate::security::security_headers,
+        ))
         .with_state(state)
 }
 
@@ -1054,6 +1135,9 @@ pub(crate) struct EmbedCheckoutQuery {
     pub currency: Option<String>,
     #[serde(default)]
     pub item: Option<String>,
+    /// The HMAC over the rendered values, minted by `/embed/checkout/sign`.
+    #[serde(default)]
+    pub sig: Option<String>,
 }
 
 fn escape_html(input: &str) -> String {
@@ -1078,33 +1162,55 @@ fn sanitize_identifier(input: &str, fallback: &str) -> String {
     }
 }
 
-/// Universal Embedded Checkout Modal Handler.
-/// U01 FIX: Serves responsive checkout document with `frame-ancestors *` CSP
-/// so merchant sites can embed checkout modals without frame blocking.
-/// Adversarial hardening: strict sanitization of identifiers and HTML escaping of item names to prevent XSS.
-async fn serve_embed_checkout(
-    query: Result<Query<EmbedCheckoutQuery>, axum::extract::rejection::QueryRejection>,
-) -> ([(axum::http::HeaderName, &'static str); 2], String) {
-    let Query(params) = match query {
-        Ok(q) => q,
-        Err(_) => Query(EmbedCheckoutQuery {
-            tenant: None,
-            order_id: None,
-            amount: None,
-            currency: None,
-            item: None,
-        }),
-    };
-    let raw_tenant = params.tenant.unwrap_or_else(|| "default".to_string());
-    let tenant_id = sanitize_identifier(&raw_tenant, "default");
+/// The canonical string an embedded-checkout signature binds.
+///
+/// It is built from the *sanitised* values, because those are what the document
+/// renders: signing the raw query would let a caller change a character that
+/// sanitisation drops and still present the same signature.
+fn canonical_checkout(
+    tenant: &str,
+    order: &str,
+    amount: u64,
+    currency: &str,
+    item: &str,
+) -> String {
+    format!("{tenant}|{order}|{amount}|{currency}|{item}")
+}
 
-    let raw_order = params.order_id.unwrap_or_else(|| "ord_pending".to_string());
-    let order_id = sanitize_identifier(&raw_order, "ord_pending");
+/// Percent-encodes a value for the signed checkout URL, so a display name with
+/// spaces or punctuation survives the round trip without changing meaning.
+fn percent_encode(input: &str) -> String {
+    let mut encoded = String::with_capacity(input.len());
+    for byte in input.bytes() {
+        if byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_' | b'.' | b'~') {
+            encoded.push(byte as char);
+        } else {
+            encoded.push_str(&format!("%{byte:02X}"));
+        }
+    }
+    encoded
+}
 
-    let amount = params.amount.unwrap_or(0);
+/// The fields a checkout document renders, after sanitisation.
+struct CheckoutParams {
+    tenant: String,
+    order: String,
+    amount: u64,
+    currency: String,
+    item: String,
+    sig: Option<String>,
+}
 
-    let raw_currency = params.currency.unwrap_or_else(|| "IDR".to_string());
-    let currency: String = raw_currency
+fn checkout_params(raw: EmbedCheckoutQuery) -> CheckoutParams {
+    let tenant = sanitize_identifier(raw.tenant.as_deref().unwrap_or("default"), "default");
+    let order = sanitize_identifier(
+        raw.order_id.as_deref().unwrap_or("ord_pending"),
+        "ord_pending",
+    );
+    let amount = raw.amount.unwrap_or(0);
+    let currency: String = raw
+        .currency
+        .unwrap_or_else(|| "IDR".to_string())
         .chars()
         .filter(|c| c.is_ascii_alphabetic())
         .take(6)
@@ -1114,11 +1220,72 @@ async fn serve_embed_checkout(
     } else {
         currency.to_uppercase()
     };
-
-    let raw_item = params
+    let item = raw
         .item
         .unwrap_or_else(|| "Archava Verified Checkout".to_string());
-    let item_name = escape_html(&raw_item);
+    CheckoutParams {
+        tenant,
+        order,
+        amount,
+        currency,
+        item,
+        sig: raw.sig,
+    }
+}
+
+/// A fixed refusal for the checkout document: no part of the caller's input is
+/// repeated, matching the refusal shape the rest of the host uses.
+fn checkout_refusal(status: StatusCode, reason: &'static str) -> axum::response::Response {
+    (
+        status,
+        [
+            (axum::http::header::CONTENT_TYPE, "application/json"),
+            (axum::http::header::CACHE_CONTROL, "no-store"),
+        ],
+        serde_json::json!({ "error": reason }).to_string(),
+    )
+        .into_response()
+}
+
+/// The embedded checkout document.
+///
+/// This was an anonymous page that trusted its query string, so any caller
+/// could frame a checkout naming its own tenant, order and amount on this
+/// origin. It now renders only for a document whose `sig` matches the HMAC over
+/// exactly the sanitised values below; the mint is `POST /embed/checkout/sign`,
+/// which needs a session and the CSRF header. Identifiers are still sanitised
+/// and the item name is still HTML-escaped, so a *signed* document cannot smuggle
+/// markup either.
+async fn serve_embed_checkout(
+    State(state): State<AppState>,
+    query: Result<Query<EmbedCheckoutQuery>, axum::extract::rejection::QueryRejection>,
+) -> axum::response::Response {
+    let raw = match query {
+        Ok(Query(raw)) => raw,
+        Err(rejection) => {
+            return checkout_refusal(rejection.status(), "malformed_checkout");
+        }
+    };
+    let params = checkout_params(raw);
+    let canonical = canonical_checkout(
+        &params.tenant,
+        &params.order,
+        params.amount,
+        &params.currency,
+        &params.item,
+    );
+    if !state
+        .identity()
+        .valid_embed_signature(&canonical, params.sig.as_deref())
+    {
+        return checkout_refusal(StatusCode::FORBIDDEN, "checkout_signature_required");
+    }
+
+    let tenant_id = params.tenant;
+    let order_id = params.order;
+    let amount = params.amount;
+    let currency = params.currency;
+    let item_name = escape_html(&params.item);
 
     let formatted_amount = if currency == "IDR" {
         format!("Rp {}", amount)
@@ -1360,12 +1527,88 @@ async fn serve_embed_checkout(
     );
 
     (
+        StatusCode::OK,
         [
             (axum::http::header::CONTENT_TYPE, "text/html; charset=utf-8"),
             (axum::http::header::CACHE_CONTROL, "no-store"),
         ],
         html,
     )
+        .into_response()
+}
+
+// --- Embedding ---------------------------------------------------------------
+
+/// The signed-checkout mint request.
+#[derive(serde::Deserialize)]
+struct SignCheckoutRequest {
+    #[serde(default)]
+    tenant: Option<String>,
+    #[serde(rename = "orderId", default)]
+    order_id: Option<String>,
+    #[serde(default)]
+    amount: Option<u64>,
+    #[serde(default)]
+    currency: Option<String>,
+    #[serde(default)]
+    item: Option<String>,
+}
+
+/// `POST /embed/checkout/sign` — exchanges a session for one signed checkout
+/// URL.
+///
+/// This is the only way to obtain a `sig`, which is what makes the document
+/// unforgeable by a caller that can reach the page directly. It signs exactly
+/// what the page will render, sanitisation included, so the two sides cannot
+/// disagree about what was approved.
+async fn sign_embed_checkout(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    submission: Result<Json<SignCheckoutRequest>, JsonRejection>,
+) -> (StatusCode, Json<serde_json::Value>) {
+    if let Err((status, _)) = authenticate(&state, &headers, true).await {
+        let reason = if status == StatusCode::FORBIDDEN {
+            "csrf_required"
+        } else {
+            "unauthenticated"
+        };
+        return (status, Json(serde_json::json!({ "error": reason })));
+    }
+    let Json(submission) = match submission {
+        Ok(submission) => submission,
+        Err(rejected) => {
+            tracing::warn!(error = %rejected, "refused an embed signature request at the boundary");
+            return (
+                rejected.status(),
+                Json(serde_json::json!({ "error": "malformed_submission" })),
+            );
+        }
+    };
+
+    let params = checkout_params(EmbedCheckoutQuery {
+        tenant: submission.tenant,
+        order_id: submission.order_id,
+        amount: submission.amount,
+        currency: submission.currency,
+        item: submission.item,
+        sig: None,
+    });
+    let signature = state.identity().embed_signature(&canonical_checkout(
+        &params.tenant,
+        &params.order,
+        params.amount,
+        &params.currency,
+        &params.item,
+    ));
+    let url = format!(
+        "/embed/checkout?tenant={}&orderId={}&amount={}&currency={}&item={}&sig={signature}",
+        percent_encode(&params.tenant),
+        percent_encode(&params.order),
+        params.amount,
+        percent_encode(&params.currency),
+        percent_encode(&params.item),
+    );
+    (StatusCode::OK, Json(serde_json::json!({ "url": url })))
 }
 
 /// Liveness. Carries no tenant and reads no tenant data, which is why it is one
@@ -1387,9 +1630,41 @@ async fn ready(State(state): State<AppState>) -> (StatusCode, &'static str) {
     }
 }
 
+/// Whether this scrape may read the counters.
+///
+/// A loopback peer is trusted without a credential (the local scrape agent),
+/// and every other peer must present the configured token. An embedder that
+/// serves without `ConnectInfo` has no peer at all, which is `None` and is
+/// therefore *not* trusted — the opposite of the login-bucket fallback, because
+/// here the fallback would be an open door rather than a coarse bucket.
+fn metrics_authorized(token: Option<&str>, source: &LoginSource, headers: &HeaderMap) -> bool {
+    if source.peer.is_some_and(|peer| peer.is_loopback()) {
+        return true;
+    }
+    let (Some(expected), Some(presented)) = (
+        token,
+        headers
+            .get("x-archava-metrics-token")
+            .and_then(|value| value.to_str().ok()),
+    ) else {
+        return false;
+    };
+    expected.as_bytes().ct_eq(presented.as_bytes()).into()
+}
+
 /// Prometheus text exposition. `db_ready` is sampled per scrape rather than
 /// cached, so a database restart is visible on the next collection.
-async fn metrics_endpoint(State(state): State<AppState>) -> impl axum::response::IntoResponse {
+///
+/// The gate is in front of the sample: an unauthenticated scrape must not be
+/// able to turn a public route into a database probe.
+async fn metrics_endpoint(
+    State(state): State<AppState>,
+    source: LoginSource,
+    headers: HeaderMap,
+) -> axum::response::Response {
+    if !metrics_authorized(state.metrics_token(), &source, &headers) {
+        return (StatusCode::FORBIDDEN, "metrics_forbidden").into_response();
+    }
     let ready = database_ready(&state).await;
     (
         [(
@@ -1398,6 +1673,7 @@ async fn metrics_endpoint(State(state): State<AppState>) -> impl axum::response:
         )],
         state.metrics().render(ready),
     )
+        .into_response()
 }
 
 /// A short, bounded probe. The timeout matters: a pool whose connections are
@@ -1857,6 +2133,26 @@ pub(crate) async fn authenticate(
             tracing::error!(error = %error, "identity store unavailable while authenticating");
             Err(unavailable("identity"))
         }
+    }
+}
+
+/// The front gate for the route families that live in their own modules.
+///
+/// [`authenticate`] speaks the command surface's `CommandOutcome`; the feed,
+/// preview and ingestion routes answer their own JSON shapes. This wrapper keeps
+/// the same decision — and the same two stable reasons — without forcing those
+/// modules to name a type they do not own. `csrf_required` is reported apart
+/// from `unauthenticated` because a caller that holds a valid session but lost
+/// its CSRF header needs a different fix than one that never signed in.
+pub(crate) async fn require_session(
+    state: &AppState,
+    headers: &HeaderMap,
+    csrf_required: bool,
+) -> Result<(), (StatusCode, &'static str)> {
+    match authenticate(state, headers, csrf_required).await {
+        Ok(_) => Ok(()),
+        Err((status, _)) if status == StatusCode::FORBIDDEN => Err((status, "csrf_required")),
+        Err((status, _)) => Err((status, "unauthenticated")),
     }
 }
 
@@ -3140,22 +3436,59 @@ mod tests {
         assert!(response.contains("unauthenticated"), "got: {response}");
     }
 
-    /// Presets profiles list is public and requires no authority.
+    /// The preset catalogue is session-scoped. It was mounted anonymously,
+    /// which made a packaging catalogue readable without authority; the feed
+    /// below is the same story with fabricated tenant-shaped data on top.
     #[tokio::test]
-    async fn presets_profiles_answers_without_authority() {
+    async fn the_preset_catalogue_refuses_without_a_session() {
         let (status, response) = call("/api/v1/presets/profiles", None).await;
-        assert_eq!(status, StatusCode::OK, "got: {response}");
-        assert!(response.contains("fnb_cafe"), "got: {response}");
-        assert!(response.contains("clinic_healthcare"), "got: {response}");
+        assert_eq!(status, StatusCode::UNAUTHORIZED, "got: {response}");
+        assert!(response.contains("unauthenticated"), "got: {response}");
+        assert!(
+            !response.contains("fnb_cafe"),
+            "a refusal must not hand back the catalogue: {response}"
+        );
     }
 
-    /// Proactive action feed generates cards without requiring a session.
+    /// The action feed refuses before it synthesizes anything, so an anonymous
+    /// caller cannot read cards it might mistake for a tenant overview.
     #[tokio::test]
-    async fn action_feed_returns_proactive_cards_without_authority() {
+    async fn the_action_feed_refuses_without_a_session() {
         let (status, response) = call("/api/v1/feed/action-cards?profile=fnb_cafe", None).await;
-        assert_eq!(status, StatusCode::OK, "got: {response}");
-        assert!(response.contains("card_ar_"), "got: {response}");
-        assert!(response.contains("print_shift_summary"), "got: {response}");
+        assert_eq!(status, StatusCode::UNAUTHORIZED, "got: {response}");
+        assert!(response.contains("unauthenticated"), "got: {response}");
+        assert!(
+            !response.contains("card_ar_"),
+            "a refusal must not include feed cards: {response}"
+        );
+    }
+
+    /// The commit route never reports a commit. It used to answer
+    /// `committed_atomic` from the caller's own preview; the only truthful
+    /// answers are a refusal or "not implemented".
+    #[tokio::test]
+    async fn the_migration_commit_refuses_before_it_could_claim_a_commit() {
+        let body = serde_json::json!({
+            "batch_id": "00000000-0000-4000-8000-000000000001",
+            "preview": {
+                "entity_kind": "catalog_products",
+                "total_rows": 1,
+                "valid_rows": 1,
+                "invalid_rows": 0,
+                "resolved_mappings": {},
+                "unmapped_columns": [],
+                "sample_mapped_records": [],
+                "warnings": [],
+                "batch_fingerprint": "synthetic"
+            }
+        })
+        .to_string();
+        let (status, response) = call("/api/migration/commit", Some(&body)).await;
+        assert_eq!(status, StatusCode::UNAUTHORIZED, "got: {response}");
+        assert!(
+            !response.contains("committed_atomic"),
+            "an unauthorized commit must not report a commit: {response}"
+        );
     }
 
     /// And so is stamping one — an unauthenticated caller cannot approve what
@@ -3190,34 +3523,81 @@ mod tests {
         assert!(body.contains("openCheckout"));
     }
 
-    /// U01: `/embed/checkout` serves responsive HTML checkout document without session requirement,
-    /// and `security_headers` supplies `frame-ancestors *` so merchant websites can embed it.
+    /// Signs a checkout URL exactly the way `POST /embed/checkout/sign` does,
+    /// with the same identity key the test router is built from.
+    fn signed_checkout_uri(
+        raw_tenant: &str,
+        raw_order: &str,
+        amount: u64,
+        currency: &str,
+        item: &str,
+    ) -> String {
+        let pool = sqlx::postgres::PgPoolOptions::new()
+            .connect_lazy("postgres://archava:archava@127.0.0.1:1/archava_test")
+            .expect("a lazy pool must construct without connecting");
+        let identity = test_identity(pool);
+        let tenant = sanitize_identifier(raw_tenant, "default");
+        let order = sanitize_identifier(raw_order, "ord_pending");
+        let signature =
+            identity.embed_signature(&canonical_checkout(&tenant, &order, amount, currency, item));
+        format!(
+            "/embed/checkout?tenant={tenant}&orderId={order}&amount={amount}&currency={currency}&item={}&sig={signature}",
+            percent_encode(item)
+        )
+    }
+
+    /// The checkout document renders only for a signed URL. An unsigned request
+    /// is the caller naming its own tenant, order and amount, which is exactly
+    /// the page the audit found framed on merchant sites.
     #[tokio::test]
-    async fn embed_checkout_answers_with_html_and_frame_ancestors_wildcard() {
+    async fn embed_checkout_requires_a_signature_before_it_renders() {
         let (status, body) = call(
             "/embed/checkout?orderId=ord_test_99&amount=150000&tenant=tenant_acme",
             None,
         )
         .await;
-        assert_eq!(status, StatusCode::OK);
+        assert_eq!(status, StatusCode::FORBIDDEN);
+        assert_eq!(body, r#"{"error":"checkout_signature_required"}"#);
+
+        let signed = signed_checkout_uri(
+            "tenant_acme",
+            "ord_test_99",
+            150_000,
+            "IDR",
+            "Archava Verified Checkout",
+        );
+        let (status, body) = call(&signed, None).await;
+        assert_eq!(status, StatusCode::OK, "{body}");
         assert!(body.contains("Archava Checkout - ord_test_99"));
         assert!(body.contains("tenant_acme"));
         assert!(body.contains("150000"));
         assert!(body.contains("ARCHAVA_PAYMENT_SIMULATED"));
     }
 
+    /// The signature is minted only for a session holding the CSRF header.
     #[tokio::test]
-    async fn embed_checkout_neutralizes_xss_injection_attempts() {
-        let (status, body) = call(
-            "/embed/checkout?orderId=%22;alert(1);//&tenant=acme%3Cscript%3E&item=%3Cimg%20src=x%20onerror=alert(1)%3E",
-            None,
-        )
-        .await;
-        assert_eq!(status, StatusCode::OK);
-        // HTML tags in item name must be escaped
+    async fn the_embed_signature_mint_requires_a_session() {
+        let (status, body) = call("/embed/checkout/sign", Some("{}")).await;
+        assert_eq!(status, StatusCode::UNAUTHORIZED);
+        assert!(body.contains("unauthenticated"));
+    }
+
+    /// Even a signed document cannot smuggle markup: identifiers are still
+    /// sanitized and the item name is still HTML-escaped, because the signature
+    /// binds the sanitised values rather than the raw query.
+    #[tokio::test]
+    async fn a_signed_checkout_still_neutralizes_xss_injection_attempts() {
+        let uri = signed_checkout_uri(
+            "acme<script>",
+            "\";alert(1);//",
+            0,
+            "IDR",
+            "<img src=x onerror=alert(1)>",
+        );
+        let (status, body) = call(&uri, None).await;
+        assert_eq!(status, StatusCode::OK, "{body}");
         assert!(!body.contains("<img src=x onerror=alert(1)>"));
         assert!(body.contains("&lt;img src=x onerror=alert(1)&gt;"));
-        // Script injection in identifiers must be sanitized
         assert!(!body.contains("\";alert(1);//"));
         assert!(!body.contains("acme<script>"));
         assert!(body.contains("Tenant: acmescript"));
@@ -3233,17 +3613,45 @@ mod tests {
         assert_eq!(body, "not ready");
     }
 
-    /// The metrics surface is unauthenticated on purpose — a scraper has no
-    /// session — and still exposes nothing tenant-shaped: only counters and a
-    /// database-up gauge.
+    /// Metrics is no longer an anonymous database probe: a scrape with no
+    /// credential is refused before `database_ready` runs.
     #[tokio::test]
-    async fn metrics_exposes_counters_without_authority() {
+    async fn metrics_refuses_a_scrape_without_a_credential() {
         let (status, body) = call("/metrics", None).await;
-        assert_eq!(status, StatusCode::OK);
-        assert!(body.contains("archava_http_requests_total"));
-        assert!(body.contains("archava_http_request_duration_seconds_count"));
-        assert!(body.contains("archava_db_ready 0"));
-        assert!(!body.contains("tenant"));
+        assert_eq!(status, StatusCode::FORBIDDEN);
+        assert_eq!(body, "metrics_forbidden");
+    }
+
+    /// The gate itself. Loopback is trusted without a token; every other peer
+    /// needs one; and an absent peer (an embedder without `ConnectInfo`) is NOT
+    /// trusted — the fallback here would be an open door, not a coarse bucket.
+    #[test]
+    fn metrics_authorization_prefers_loopback_and_otherwise_requires_the_token() {
+        let loopback = LoginSource {
+            bucket: "peer:127.0.0.1".to_string(),
+            peer: Some("127.0.0.1".parse().expect("an address")),
+        };
+        let public = LoginSource {
+            bucket: "peer:203.0.113.9".to_string(),
+            peer: Some("203.0.113.9".parse().expect("an address")),
+        };
+        let no_peer = LoginSource {
+            bucket: "no-connect-info".to_string(),
+            peer: None,
+        };
+        let mut headers = HeaderMap::new();
+
+        assert!(metrics_authorized(None, &loopback, &headers));
+        assert!(!metrics_authorized(None, &public, &headers));
+        assert!(!metrics_authorized(None, &no_peer, &headers));
+
+        headers.insert(
+            "x-archava-metrics-token",
+            "scrape-secret".parse().expect("a header value"),
+        );
+        assert!(metrics_authorized(Some("scrape-secret"), &public, &headers));
+        assert!(!metrics_authorized(Some("other-secret"), &public, &headers));
+        assert!(!metrics_authorized(None, &public, &headers));
     }
 
     /// The contact list refuses rather than returning an empty list, because an
