@@ -87,3 +87,19 @@ The Operations screen remains an explicitly labelled demonstration. This visual 
 [Browser evidence](workspace-layout-2026-10-28/verification.json), [build/check results](workspace-layout-2026-10-28/checks.json), and [verified UI source hashes](workspace-layout-2026-10-28/verified-ui-manifest.json).
 
 Task-owned browsers, preview servers, and fixture databases are stopped after verification. No deployment, external provider calls, or production data changes are involved.
+
+---
+
+## Historical Visual Studies (Directions A/B/C)
+
+Before the current Charcoal & Amber theme was established, an interactive comparison evaluated three candidate visual directions:
+
+- [Interactive comparison study](ARCHAVA_VISUAL_DIRECTIONS.html) (standalone offline study with fictional records).
+
+| Direction | Character | What changes | Desktop |
+| --- | --- | --- | --- |
+| A: Editorial | Open, restrained, mineral green | Broad table, horizontal navigation, lighter visual structure | [Preview](visual-directions/editorial.png) |
+| B: Presisi | Precise, sturdy, cool grey with muted copper | Compact rail, closer data grouping, geometric typography, anchored record pane | [Preview](visual-directions/presisi.png) |
+| C: Percakapan | Personal, spacious, quiet ink blue | People index, larger names, more prominent conversation context | [Preview](visual-directions/percakapan.png) |
+
+Direction C provided the relationship-centric layout basis, which was subsequently synthesized with dark enterprise dashboard requirements to create the production Charcoal & Amber workspace.

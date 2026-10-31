@@ -1,25 +1,61 @@
-# Archava documentation
+# Archava Documentation Hub
 
-Start with [developer setup and commands](DEVELOPER_GUIDE.md), [current architecture](architecture/README.md), [domain glossary](GLOSSARY.md), or [host/browser integration](guides/INTEGRATION.md). These are maintained references for the root Rust workspace.
+Comprehensive engineering, architectural, and operational documentation for the Archava Rust modular monolith (22 Cargo workspace crates, Axum host, PostgreSQL `FORCE RLS` multi-tenancy, and Leptos SSR/WASM UI).
 
-Work toward E2E and release readiness follows the [launch readiness plan](product/LAUNCH_READINESS.md): scope, ordered phases, module/user-flow acceptance, evidence, and handoff.
+---
 
-| Collection | Use it for |
-| --- | --- |
-| [Glossary](GLOSSARY.md) | Canonical definitions for Ava, Orbz, Cockpit, FORCE RLS, Tier 1 pillars, and core invariants |
-| [Architecture](architecture/README.md) | Crate boundaries, runtime composition, subsystem source maps and implementation limits |
-| [Guides](guides/INTEGRATION.md) | Host authentication/request contracts and browser embedding |
-| [Modules](modules/README.md) | Separate business-module contracts with current Rust source pointers and dated acceptance context |
-| [Product](product/README.md) | Requirements, roadmaps and dated research; proposed scope is distinct from implementation |
-| [Design](design/README.md) | Implemented ERP/CRM appearance, visual studies and UI snapshots |
-| [Archive](archive/README.md) | Earlier contracts, audits, evidence, superseded guides and Rust migration records |
+## 🧭 Curated Reading Paths
 
-## Verification and document ownership
+Navigate directly to what you need based on your role or objective:
 
-The [consolidation record](archive/DOCS_CONSOLIDATION_2026-10-29.md) reports checks run for the documentation reorganization. The [preceding verification checkpoint](archive/audits/BUILD_STATUS_2026-10-29.md) retains its actual Rust, database, UI and docs test scopes; those application checks were not rerun merely because a document moved.
+### 1. 🚀 New Developer Onboarding (Get Started in 5 Minutes)
+1. **[Developer Guide](DEVELOPER_GUIDE.md)**: Toolchain requirements (Rust 1.96, Node 22, wasm-bindgen 0.2.129), fast gate commands (`verify.mjs`), build scripts, and tests.
+2. **[Domain Glossary](GLOSSARY.md)**: Master definitions for Ava, Orbz, Cockpit, FORCE RLS, Idempotency, and the 7 Tier 1 Core Pillars.
+3. **[Contributing Guide](../CONTRIBUTING.md)**: Workspace rules, commit hygiene, and pull request requirements.
 
-Use [deployment](../deploy/README.md) for persistent host packaging and [configuration ownership](../config/README.md) for shared tooling settings versus crate fixtures. The current [workspace appearance](design/WORKSPACE_APPEARANCE.md) owns the ERP/CRM visual implementation.
+### 2. 🧠 Sovereign AI & Cognitive Architecture
+1. **[Architecture Master Overview](architecture/README.md)**: Workspace dependency hierarchy, layer isolation rules, and runtime composition.
+2. **[Ava Cognitive Architecture](architecture/LAYA_AGENTIC_SYSTEM.md)**: The 4-pillar agentic architecture (Sensory Modalities, Authority Ladder, Memory, and Execution).
+3. **[Orbz Agentic Memory](architecture/ORBZ_MEMORY_ARCHITECTURE.md)**: Bi-temporal knowledge graph, semantic nodes, and progressive context disclosure (L0/L1/L2).
+4. **[Cockpit Flight Engine](architecture/COCKPIT_TASK_ARCHITECTURE.md)**: Flight Plan DAG, durable execution state machines, and L4/L5 Human Supervisor Gate.
+5. **[Architecture Decisions (ADR Ledger)](architecture/DECISIONS.md)**: Living ledger of architectural decisions (ADR-014 through ADR-019).
 
-Keep one canonical page for each topic. Update source references with code, and record implementation/verification separately from plans. Preserve dated evidence rather than editing old pass/fail results. The archive's [relocation manifest](archive/relocations-2026-10-29.json) maps former documentation paths to their current location.
+### 3. 💼 ERP & CRM Business Modules
+1. **[Business Modules Overview](modules/README.md)**: Master index of all 16 business domain contracts.
+2. **[CRM Module](modules/CRM_MODULE.md)**: Contacts, sales pipeline stages, follow-up drafting, and durable receipt recovery.
+3. **[Commerce Module](modules/COMMERCE_MODULE.md)**: Catalog items, customer orders, inventory stock, and landed cost layers.
+4. **[Billing Module](modules/BILLING_MODULE.md)**: Invoicing, gateway payment attempts, webhooks, and email outbox dispatch.
+5. **[Purchasing Module](modules/PURCHASING_MODULE.md)**: Supplier relationships, purchase orders (POs), and warehouse receipt vouchers.
 
-Run `node tools/check-docs.mjs` for maintained Markdown file/heading links. Frozen archive bodies are excluded; their maintained navigation indexes are checked. This gate does not test external sites or certify product completeness.
+### 4. 🔌 External Integration & UI Design
+1. **[Host & Browser Integration](guides/INTEGRATION.md)**: Session-scoped HTTP API contracts and zero-NPM 3rd-party embedding (`/v1/archava.js`).
+2. **[Workspace Appearance](design/WORKSPACE_APPEARANCE.md)**: Charcoal & Amber visual design system, token palette, light/dark behavior, and layout evidence.
+
+### 5. 🚢 Production Deployment & Release Gates
+1. **[Launch Readiness Plan](product/LAUNCH_READINESS.md)**: Canonical 13-gate release tracker (G01–G13), acceptance criteria, and audit evidence.
+2. **[Deployment SOP](../deploy/README.md)**: Production reference deployment, non-owner runtime roles, and hardened Docker/Systemd configurations.
+
+---
+
+## 📁 Repository Documentation Layout
+
+| Directory / File | Description | Status |
+| :--- | :--- | :--- |
+| [`DEVELOPER_GUIDE.md`](DEVELOPER_GUIDE.md) | Local development setup, CLI commands, and test suites | Living Reference |
+| [`GLOSSARY.md`](GLOSSARY.md) | Authoritative domain dictionary and invariant terminology | Living Reference |
+| [`architecture/`](architecture/README.md) | Technical system design, crate boundaries, and ADR ledger | Living Reference |
+| [`modules/`](modules/README.md) | Specifications for all 16 ERP business domains | Living Reference |
+| [`product/`](product/README.md) | Product PRDs, roadmap, launch readiness, and market research | Living Reference |
+| [`guides/`](guides/INTEGRATION.md) | Host API authentication contracts and browser embed SDK | Living Reference |
+| [`design/`](design/README.md) | Workspace visual specifications, tokens, and UI captures | Living Reference |
+| [`archive/`](archive/README.md) | Immutable audit trails, historical research, and pre-Rust records | Frozen Archive |
+
+---
+
+<a id="verification-and-document-ownership"></a>
+## 🛡️ Documentation Integrity & Verification
+
+All maintained documentation is governed by automated verification gates:
+- Run `node tools/check-docs.mjs` to verify that every internal Markdown link and heading anchor resolves.
+- Run `node tools/check-structure.mjs` to ensure module boundaries and migration manifests remain intact.
+- Historical evidence in `archive/` is frozen; never edit historical pass/fail records or retroactively rewrite past audit findings.

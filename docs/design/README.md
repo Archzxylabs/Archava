@@ -2,10 +2,9 @@
 
 | Material | Status and use |
 | --- | --- |
-| [Workspace appearance](WORKSPACE_APPEARANCE.md) | Current ERP/CRM Charcoal & Amber direction, light/dark behavior and source ownership |
+| [Workspace appearance](WORKSPACE_APPEARANCE.md) | Single canonical reference: current ERP/CRM Charcoal & Amber direction, token palette, light/dark behavior, and candidate study history |
 | [Layout evidence](workspace-layout-2026-10-28) | Dated screenshots, viewport checks, contrast and flow results; current guide's supporting snapshot |
 | [Palette evidence](workspace-charcoal-amber-2026-10-28) | Earlier palette/theme check snapshot |
-| [Visual directions](VISUAL_DIRECTIONS.md) | A/B/C design exploration; user preference and later implementation are documented separately |
 | [Interactive comparison](ARCHAVA_VISUAL_DIRECTIONS.html) | Standalone study using fictional records, not the production workspace |
 | [Study screenshots](visual-directions) | Screenshots accompanying the comparison |
 | [Earlier design material](../archive/history/design/README.md) | Superseded frontend guidance, preview, ERP screenshots and research |
