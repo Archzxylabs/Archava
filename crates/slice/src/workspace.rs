@@ -34,13 +34,18 @@ pub(crate) fn WorkspaceIcon(#[prop(into)] name: String) -> impl IntoView {
 fn WorkspaceNavigation(close_menu: Callback<()>) -> impl IntoView {
     let pathname = use_location().pathname;
     let groups = [
-        ("Workspace", vec![("/app/home", "Home", "home")]),
-        ("CRM", vec![("/app/contacts", "Contacts", "contacts")]),
-        ("ERP", vec![("/app/erp", "Operations", "erp")]),
+        ("Overview", vec![("/app/home", "Home", "home")]),
         (
-            "Tools",
+            "Enterprise Suite",
             vec![
-                ("/app/desk", "Assistant", "desk"),
+                ("/app/contacts", "CRM & Contacts", "contacts"),
+                ("/app/erp", "Operations", "erp"),
+            ],
+        ),
+        (
+            "Intelligence & Tools",
+            vec![
+                ("/app/desk", "AI Assistant", "desk"),
                 ("/app/owner", "Settings", "owner"),
             ],
         ),
