@@ -1,11 +1,12 @@
 # Archava documentation
 
-Start with [developer setup and commands](DEVELOPER_GUIDE.md), [current architecture](architecture/README.md), or [host/browser integration](guides/INTEGRATION.md). These are maintained references for the root Rust workspace.
+Start with [developer setup and commands](DEVELOPER_GUIDE.md), [current architecture](architecture/README.md), [domain glossary](GLOSSARY.md), or [host/browser integration](guides/INTEGRATION.md). These are maintained references for the root Rust workspace.
 
 Work toward E2E and release readiness follows the [launch readiness plan](product/LAUNCH_READINESS.md): scope, ordered phases, module/user-flow acceptance, evidence, and handoff.
 
 | Collection | Use it for |
 | --- | --- |
+| [Glossary](GLOSSARY.md) | Canonical definitions for Ava, Orbz, Cockpit, FORCE RLS, Tier 1 pillars, and core invariants |
 | [Architecture](architecture/README.md) | Crate boundaries, runtime composition, subsystem source maps and implementation limits |
 | [Guides](guides/INTEGRATION.md) | Host authentication/request contracts and browser embedding |
 | [Modules](modules/README.md) | Separate business-module contracts with current Rust source pointers and dated acceptance context |

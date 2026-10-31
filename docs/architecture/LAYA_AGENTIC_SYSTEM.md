@@ -1,7 +1,7 @@
-# Laya Agentic System: 4-Pillar Master Architecture
+# Ava Agentic Cognitive Architecture (formerly Laya)
 
 > **Status: authoritative architecture reference — October 2026.**
-> Codifies the 4-pillar agentic cognitive architecture of Laya across the Archava Rust modular monolith.
+> Codifies the 4-pillar agentic cognitive architecture of Ava (internally researched under the "Laya" cognitive codename) across the Archava Rust modular monolith. Consult the [domain glossary](../GLOSSARY.md) for canonical definitions.
 
 ---
 

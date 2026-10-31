@@ -34,7 +34,7 @@ The underlying commands are also available directly:
 ```bash
 node tools/check-structure.mjs
 node tools/check-docs.mjs
-node --test tools/test/structure.test.mjs tools/test/docs.test.mjs tools/test/verify.test.mjs
+node --test tools/test/structure.test.mjs tools/test/docs.test.mjs tools/test/verify.test.mjs tools/test/native-provenance.test.mjs
 cargo fmt --all --check
 cargo clippy --workspace --all-targets --locked -- -D warnings
 cargo test --workspace --locked -- --test-threads=1

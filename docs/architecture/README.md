@@ -2,7 +2,7 @@
 
 <a id="current-architecture"></a>
 
-Archava is a modular Rust monolith: the root Cargo workspace contains 22 crates, and the application is assembled into the `archava-server` binary from `crates/slice`. Keeping the current code in these boundaries is more useful than splitting it into additional services for cosmetic reasons.
+Archava is a modular Rust monolith: the root Cargo workspace contains 22 crates, and the application is assembled into the `archava-server` binary from `crates/slice`. Keeping the current code in these boundaries is more useful than splitting it into additional services for cosmetic reasons. Consult the [domain glossary](../GLOSSARY.md) for canonical definitions of Ava, Orbz, Cockpit, and the 7 Tier 1 pillars.
 
 This document describes the source and entry points. It does not establish launch readiness, regulatory compliance, production latency, or completion of every domain's user workflow. The older aspirational blueprint is retained in [history](../archive/history/platform-2026-10-28/ARCHITECTURE.md).
 
@@ -54,7 +54,7 @@ The native server embeds migrations, shared styles, and selected assets. `target
 
 ## SQL ownership
 
-All 38 SQL files are under `migrations/`, grouped by ledger. The owner migration is now `migrations/owner-pg/001_owner_config.sql`. Its migration ID, namespace, bytes, and checksum were preserved when its path changed.
+All 44 checked-in SQL files are under `migrations/`, grouped into 30 ledger directories (37 mounted ledgers in `migrations/manifest.v1.json` applied to production, and 7 unmounted reserved specs). The owner migration is now `migrations/owner-pg/001_owner_config.sql`. Its migration ID, namespace, bytes, and checksum were preserved when its path changed.
 
 The persistent bootstrap embeds its mounted files and the test fixture reads the same canonical directories. Migration files are append-only. Folder cleanup must not rename ledger identities, rewrite applied SQL, or imply that every ledger is mounted and every domain has a completed UI.
 

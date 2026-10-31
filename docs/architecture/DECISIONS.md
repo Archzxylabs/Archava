@@ -13,6 +13,7 @@ This document succeeds the [Historical Rust Decisions](../archive/rust/DECISIONS
 - [ADR-016: Formalize Cockpit L4/L5 Autonomous Mission Supervisor Gate](#adr-016-formalize-cockpit-l4l5-autonomous-mission-supervisor-gate)
 - [ADR-017: Deepen Assistant Conversation Flow & Session Extraction](#adr-017-deepen-assistant-conversation-flow--session-extraction)
 - [ADR-018: Normalize CRM as First-Class ERP Business Domain & Harmonize Seams](#adr-018-normalize-crm-as-first-class-erp-business-domain--harmonize-seams)
+- [ADR-019: Documentation Harmonization, Canonical Domain Glossary & Zero-Redundancy Tooling Gate](#adr-019-documentation-harmonization-canonical-domain-glossary--zero-redundancy-tooling-gate)
 
 ---
 
@@ -265,3 +266,40 @@ Normalize CRM as a first-class business module of the Archava ERP suite across a
    Mounted canonical `/erp/crm/commands`, `/erp/crm/commands/status`, `/erp/crm/records`, and `/erp/crm/contacts` routes under the ERP router tree, while retaining `/crm/*` and `/contacts` in `routes/crm.rs` as front-office client aliases.
 5. **Documentation Harmony**:
    Updated `docs/architecture/README.md` and `docs/modules/CRM_MODULE.md` to define Archava unequivocally as a Modular ERP Monolith with CRM as its native front-office pillar.
+
+---
+
+## [ADR-019] Documentation Harmonization, Canonical Domain Glossary & Zero-Redundancy Tooling Gate
+
+- **Status**: Completed
+- **Date**: 2026-10-31
+- **Domain**: Documentation, Static Assets & Tooling Quality Gate
+- **Impacted Files**:
+  - [`docs/GLOSSARY.md`](../GLOSSARY.md)
+  - [`docs/README.md`](../README.md)
+  - [`AGENTS.md`](../../AGENTS.md)
+  - [`docs/architecture/README.md`](README.md)
+  - [`docs/architecture/LAYA_AGENTIC_SYSTEM.md`](LAYA_AGENTIC_SYSTEM.md)
+  - [`docs/DEVELOPER_GUIDE.md`](../DEVELOPER_GUIDE.md)
+  - `static/v1/archava.js` (Deleted)
+  - [`crates/slice/src/server.rs`](../../crates/slice/src/server.rs)
+  - [`tools/rust/verify.mjs`](../../tools/rust/verify.mjs)
+  - [`tools/test/verify.test.mjs`](../../tools/test/verify.test.mjs)
+
+### Context & Friction
+
+1. **Cognitive Load & Domain Ambiguity**: Key domain terms (Ava, Orbz, Cockpit, FORCE RLS, L0/L1/L2 memory disclosure, flight plan DAG, Tier 1 pillars) were dispersed across multiple design docs, PRDs, and ADRs without a single authoritative glossary.
+2. **Static Asset Redundancy & Missing Font**: A duplicate clone directory `static/v1/archava.js` (609 lines) existed alongside `static/archava.js` while the server already served the root file directly. Meanwhile, `static/archava.css` imported `/assets/fonts/space-grotesk.woff2`, but the SSR slice router only mounted DM Sans and JetBrains Mono, returning a 404 for Space Grotesk.
+3. **Factual Metric Drift**: `docs/architecture/README.md` recorded "38 SQL files", out-of-date compared to the 44 checked-in SQL files across 30 ledgers in `migrations/README.md`.
+4. **Unwired Test in Tooling**: `tools/test/native-provenance.test.mjs` was fully functional but omitted from `tools/rust/verify.mjs`.
+
+### Decision
+
+1. **Canonical Domain Glossary (`docs/GLOSSARY.md`)**:
+   Created a single source of truth for all domain concepts: Ava Sovereign AI, Orbz agentic memory, Cockpit durable flight execution, Modular Monolith layer boundaries, FORCE RLS multi-tenancy, and Tier 1 pillars. Linked across `docs/README.md`, `AGENTS.md`, and `docs/architecture/README.md`.
+2. **Static Asset Cleanliness & Font Mount (`crates/slice/src/server.rs`)**:
+   Deleted the redundant `static/v1/` clone. Mounted `/assets/fonts/space-grotesk.woff2` into the Axum slice router alongside DM Sans and JetBrains Mono, completing the offline font trinity and adding test coverage in `the_font_routes_serve_woff2_bytes`.
+3. **Documentation Factual Alignment**:
+   Synchronized SQL migration counts to 44 files across 30 ledgers (37 mounted, 7 unmounted) in `docs/architecture/README.md`. Clarified Ava as the sovereign persona in `docs/architecture/LAYA_AGENTIC_SYSTEM.md`.
+4. **Tooling Gate Completion (`tools/rust/verify.mjs`)**:
+   Wired `native-provenance.test.mjs` into `verify.mjs` and guarded it with an assertion in `tools/test/verify.test.mjs`, elevating the internal Node test suite from 16 to 17 green tests.

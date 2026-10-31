@@ -76,4 +76,4 @@ Apply migrations with the owner role and serve with a non-owner role. The runtim
 - `.local/`, `target/`, and `dist/` are local state/build output; don't delete another checkout's state or stage these paths.
 - `config/` holds shared catalogues with named consumers; keep crate-specific fixtures under that crate's `tests/fixtures/`.
 
-Start with `docs/DEVELOPER_GUIDE.md`, `docs/architecture/README.md`, `CONTRIBUTING.md`, `deploy/README.md`, and `migrations/README.md` for detail.
+Start with `docs/DEVELOPER_GUIDE.md`, `docs/architecture/README.md`, `docs/GLOSSARY.md`, `CONTRIBUTING.md`, `deploy/README.md`, and `migrations/README.md` for detail.
