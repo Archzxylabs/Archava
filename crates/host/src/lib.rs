@@ -54,6 +54,7 @@ pub mod payments;
 pub mod presence;
 pub mod preview;
 pub mod router;
+pub mod routes;
 mod security;
 pub mod webhooks;
 

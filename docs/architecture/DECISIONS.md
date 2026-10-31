@@ -92,28 +92,61 @@ Extract the complete CRM persistence engine from [`crates/host/src/crm.rs`](../.
 
 ## [ADR-015] Decompose Host Router God-Module
 
-- **Status**: Proposed / Queued
+- **Status**: Completed
 - **Date**: 2026-10-31
 - **Domain**: HTTP Host Routing & Boundary Enforcement
 - **Impacted Files**:
-  - [`crates/host/src/router.rs`](../../crates/host/src/router.rs) (3,913 lines)
-  - Target: `crates/host/src/routes/` (`auth.rs`, `crm.rs`, `erp.rs`, `cockpit.rs`, `webhooks.rs`, `system.rs`)
+  - [`crates/host/src/router.rs`](../../crates/host/src/router.rs) (reduced from 3,913 LOC to 1,738 LOC, handler logic extracted)
+  - [`crates/host/src/lib.rs`](../../crates/host/src/lib.rs) (registered `pub mod routes;`)
+  - [`crates/host/src/extractors.rs`](../../crates/host/src/extractors.rs) (registered all route files in compile-time tripwire)
+  - Created subtrees under `crates/host/src/routes/`:
+    - [`crates/host/src/routes/mod.rs`](../../crates/host/src/routes/mod.rs) (`mount_routes`)
+    - [`crates/host/src/routes/auth.rs`](../../crates/host/src/routes/auth.rs) (`/login`, `/logout`, cookie lifecycle)
+    - [`crates/host/src/routes/commands.rs`](../../crates/host/src/routes/commands.rs) (`/commands`, `/commands/status`, `/approvals`, `/approvals/approve`)
+    - [`crates/host/src/routes/crm.rs`](../../crates/host/src/routes/crm.rs) (`/contacts`, `/crm/records`, `/crm/commands`, `/crm/commands/status`, `/own/*`, `/api/crm/{tenant}/conversation`)
+    - [`crates/host/src/routes/erp.rs`](../../crates/host/src/routes/erp.rs) (`/erp/*` command and read endpoints across 17 ERP ledgers)
+    - [`crates/host/src/routes/cockpit.rs`](../../crates/host/src/routes/cockpit.rs) (`/api/v1/cockpit/*`, `/api/v1/orbz/*`, feeds, presets, presence, preview, ingestion)
+    - [`crates/host/src/routes/webhooks.rs`](../../crates/host/src/routes/webhooks.rs) (`/api/webhooks/privy`, `/api/webhooks/payment`)
+    - [`crates/host/src/routes/system.rs`](../../crates/host/src/routes/system.rs) (`/healthz`, `/readyz`, `/metrics`, static assets, embed checkout)
 
 ### Context & Friction
 
-[`crates/host/src/router.rs`](../../crates/host/src/router.rs) is the largest single file in the workspace (3,913 LOC). It mounts 10 distinct route families, handles extractor rejection enforcement, implements route handlers, and contains ~1,500 lines of test fixtures. This creates significant cognitive friction for both human maintainers and AI contexts.
+[`crates/host/src/router.rs`](../../crates/host/src/router.rs) was the largest single god-module in the workspace (3,913 LOC). It mounted 10 distinct route families, handled extractor rejection enforcement, implemented hundreds of lines of request handler functions, and contained ~1,000 lines of test fixtures. This created significant cognitive friction and context exhaustion for both human maintainers and AI contexts.
 
 ### Decision
 
 Decompose `router.rs` into modular route subtrees under `crates/host/src/routes/`:
-- `routes/auth.rs`: `/login`, `/logout`, session lifecycle.
-- `routes/crm.rs`: `/commands`, `/approvals`, `/crm/*`.
-- `routes/erp.rs`: `/erp/*/commands`, `/erp/*/*` reads across all cohorts.
-- `routes/cockpit.rs`: `/api/v1/cockpit/*`, `/api/v1/orbz/*`.
-- `routes/webhooks.rs`: `/api/webhooks/privy`, `/api/webhooks/payment/*`.
-- `routes/system.rs`: `/healthz`, `/readyz`, `/metrics`.
+- `routes/auth.rs`: `/login`, `/logout`, session cookie expiration.
+- `routes/commands.rs`: `/commands`, `/commands/status`, `/approvals`, `/approvals/approve`.
+- `routes/crm.rs`: `/contacts`, `/crm/records`, `/crm/commands`, `/crm/commands/status`, `/own/*`, CRM conversation.
+- `routes/erp.rs`: `/erp/*/commands`, `/erp/*/*` workspace and read routes across all 17 ERP ledgers.
+- `routes/cockpit.rs`: `/api/v1/cockpit/*`, `/api/v1/orbz/*`, feeds, presets, presence, preview, ingestion.
+- `routes/webhooks.rs`: `/api/webhooks/privy`, `/api/webhooks/payment`.
+- `routes/system.rs`: `/healthz`, `/readyz`, `/metrics`, static assets (`archava.js`, `archava.css`, `workspace.css`), embed checkout.
 
-The root `router.rs` becomes a thin composition root (~150 LOC) that combines these routers.
+The root `router.rs` retains the thin composition root (`pub fn router(state: AppState) -> Router`), shared authorization & error response helpers (`authenticate`, `authority_refusal`, `forbidden`, `unavailable`, `query_rejection`, etc.), and 100% backward-compatible re-exports.
+
+### Execution Checklist
+
+- [x] **Phase 1: Route Subtree Structure & Module Registration**
+  - Create `crates/host/src/routes/` and declare `pub mod routes;` in `crates/host/src/lib.rs`.
+  - Register all new route files in `crates/host/src/extractors.rs` `MODULES` compile-time tripwire.
+- [x] **Phase 2: Handlers & Sub-routers Migration**
+  - Extract auth endpoints to `routes/auth.rs`.
+  - Extract generic command & approval endpoints to `routes/commands.rs`.
+  - Extract CRM & owner endpoints to `routes/crm.rs`.
+  - Extract ERP command & workspace endpoints across all 17 ledgers to `routes/erp.rs`.
+  - Extract Cockpit missions, Orbz, feed, preset, presence, preview, and ingestion to `routes/cockpit.rs`.
+  - Extract webhook handlers to `routes/webhooks.rs`.
+  - Extract system health, metrics, assets, and embed checkout to `routes/system.rs`.
+- [x] **Phase 3: Root Composition & Backward Compatibility**
+  - Simplify `router.rs::router()` to mount sub-routers via `routes::mount_routes(state.clone())`.
+  - Re-export all moved public types, constants, and helper functions from `router.rs`.
+- [x] **Phase 4: Verification & Link Validation**
+  - Validate structure: `node tools/check-structure.mjs`.
+  - Validate doc links: `node tools/check-docs.mjs`.
+  - Verify workspace clippy with `-D warnings`.
+  - Pass all unit and integration test suites with `--test-threads=1`.
 
 ---
 

@@ -213,6 +213,14 @@ const MODULES: &[(&str, &str)] = &[
     ("erp/subscriptions.rs", include_str!("erp/subscriptions.rs")),
     ("erp/support.rs", include_str!("erp/support.rs")),
     ("erp/workspace.rs", include_str!("erp/workspace.rs")),
+    ("routes/auth.rs", include_str!("routes/auth.rs")),
+    ("routes/cockpit.rs", include_str!("routes/cockpit.rs")),
+    ("routes/commands.rs", include_str!("routes/commands.rs")),
+    ("routes/crm.rs", include_str!("routes/crm.rs")),
+    ("routes/erp.rs", include_str!("routes/erp.rs")),
+    ("routes/mod.rs", include_str!("routes/mod.rs")),
+    ("routes/system.rs", include_str!("routes/system.rs")),
+    ("routes/webhooks.rs", include_str!("routes/webhooks.rs")),
 ];
 
 /// Modules that still wire a bare — reflection-prone — extractor, and how many
