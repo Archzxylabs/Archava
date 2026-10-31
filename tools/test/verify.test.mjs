@@ -14,6 +14,13 @@ test('offline and library-only scope are explicit', () => {
   for (const c of commands.filter((c) => c[0] === 'cargo' && ['test', 'clippy'].includes(c[1]))) assert.ok(c.includes('--offline'))
   assert.ok(commands.find((c) => c[1] === 'test').includes('--lib'))
 })
+test('wasm option includes wasm32 boundary checks', () => {
+  const commands = gateCommands({ wasm: true })
+  const wasmCommands = commands.filter((c) => c.includes('wasm32-unknown-unknown'))
+  assert.equal(wasmCommands.length, 2)
+  assert.ok(wasmCommands[0].includes('archava-core'))
+  assert.ok(wasmCommands[1].includes('archava-slice'))
+})
 test('a failed or interrupted child stops later checks', () => {
   for (const failed of [{ status: 2 }, { status: null, signal: 'SIGTERM' }]) {
     let called = 0;const result = runChecks([['first'], ['second']], () => { called += 1; return failed })

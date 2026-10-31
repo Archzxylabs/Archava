@@ -1,11 +1,11 @@
 # AGENTS.md
 
-Archava is a Rust modular monolith: 22 Cargo workspace members, an Axum/PostgreSQL host, and a Leptos UI rendered on the server and hydrated with WebAssembly. The production binary is `crates/slice/src/bin/archava_server.rs`, the HTTP/authority surface is `crates/host/src/router.rs`, and `crates/slice/src/server.rs` joins the host router to the SSR shell. Read `docs/architecture/README.md` before moving code across layers.
+Archava is a Rust modular monolith: 22 Cargo workspace members, an Axum/PostgreSQL host, and a Leptos UI rendered on the server and hydrated with WebAssembly. The production binary is `crates/slice/src/bin/archava_server.rs`, the HTTP/authority surface is `crates/host/src/router.rs` (with modular route trees under `crates/host/src/routes/`), and `crates/slice/src/server.rs` joins the host router to the SSR shell. Read `docs/architecture/README.md` before moving code across layers.
 
 ## Commands
 
 - `node tools/rust/verify.mjs` — the real gate: structure, docs links, helper tests, `cargo fmt --check`, workspace Clippy with `-D warnings`, then all tests with `--test-threads=1`.
-- `node tools/rust/verify.mjs --lib --offline` — fast library-only loop when dependencies are cached. Add `--plan` to print the underlying commands without running them.
+- `node tools/rust/verify.mjs --lib --offline --wasm` — fast complete gate (structure, docs, tool tests, fmt, Clippy, WASM boundary, and library tests). Add `--plan` to inspect commands.
 - `node tools/check-structure.mjs` — run after changing dependencies, migrations, or repository tooling. CI enforces it.
 - `node tools/check-docs.mjs` — link gate for maintained Markdown.
 - One suite or test: `cargo test -p archava-host --test crm the_contact_list_reads_real_rows_for_a_granted_reader --locked -- --test-threads=1`.
@@ -32,7 +32,7 @@ Toolchain is pinned: Rust 1.96.0 (`rust-toolchain.toml`), Node 22.22.3 (`.tool-v
 - `include_bytes!` and `include_str!` paths must exist.
 - `tools/*.mjs` must not import the removed `@archava/*` TypeScript workspace.
 
-`verify.mjs` does not cover the WASM boundary. Run these when touching `core`, `domain`, or `slice`:
+Pass `--wasm` to `verify.mjs` to include the WASM boundary gate, or run the checks directly when touching `core`, `domain`, or `slice`:
 
 ```bash
 cargo check --target wasm32-unknown-unknown -p archava-core -p archava-domain
@@ -41,7 +41,7 @@ cargo check --target wasm32-unknown-unknown -p archava-slice --lib --features hy
 
 `crates/host/src/extractors.rs` reads `router.rs` as a string at compile time and asserts that no `Path<`, `Form<`, or bare `Query<` extractor is wired. A new query extractor must be `Result<Query<T>, QueryRejection>` and map through `query_rejection()`; adding the bare form fails a test whose message contains the fix.
 
-`sqlx` is intentionally built without `macros`: do not add `sqlx::query!`/`query_as!` or any build-time database connection. Use runtime `sqlx::query` and explicit transactions. Resolve actor, tenant, grant, and role from the session and database, never from request-body claims. CRM still executes SQL directly in `crates/host/src/crm.rs`; most ERP persistence goes through `crates/adapters`, so don't assume every repository is extracted.
+`sqlx` is intentionally built without `macros`: do not add `sqlx::query!`/`query_as!` or any build-time database connection. Use runtime `sqlx::query` and explicit transactions. Resolve actor, tenant, grant, and role from the session and database, never from request-body claims. All CRM and ERP persistence is unified inside `crates/adapters` under atomic `FORCE RLS` transactions (ADR-014, ADR-018). HTTP routes are modularized in `crates/host/src/routes/` (ADR-015), and assistant turn flow is in `crates/host/src/assistant/` (ADR-017).
 
 A crate or migration existing does not mean the host mounts it. Check `crates/host/src/router.rs` and the ledger constants in `crates/slice/src/bin/archava_server.rs` for the actual surface.
 

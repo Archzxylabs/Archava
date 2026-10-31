@@ -23,11 +23,11 @@ cargo install wasm-bindgen-cli --version 0.2.129 --locked
 
 ```bash
 node tools/rust/verify.mjs
-node tools/rust/verify.mjs --offline --lib
+node tools/rust/verify.mjs --offline --lib --wasm
 node tools/rust/verify.mjs --plan
 ```
 
-The default checks structure, maintained documentation links, the helper regression tests, formatting, workspace Clippy with warnings denied, and all Rust tests with serial integration execution. `--lib` runs only library tests. `--plan` prints commands without running them. The helper stops on the first failed or interrupted child.
+The default checks structure, maintained documentation links, the helper regression tests, formatting, workspace Clippy with warnings denied, and all Rust tests with serial integration execution. `--lib` runs only library tests; `--wasm` includes the `wasm32-unknown-unknown` boundary gates for core, domain, and slice hydration. `--plan` prints commands without running them. The helper stops on the first failed or interrupted child.
 
 The underlying commands are also available directly:
 
