@@ -1,4 +1,8 @@
-//! CRM read/write routes, owner configuration lifecycle, and conversation assistant.
+//! CRM front-office routes, owner configuration lifecycle, and conversation assistant.
+//!
+//! Note (ADR-018): CRM is a first-class business module of the Archava ERP Monolith.
+//! The routes mounted here (`/crm/*`, `/contacts`) serve as canonical front-office
+//! client aliases preserving browser contracts, alongside the normalized `/erp/crm/*` routes.
 
 use axum::routing::{get, post};
 use axum::Router;

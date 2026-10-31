@@ -18,6 +18,9 @@
 //! `KNOWN_DIFFERENCES.md`; a divergence is recorded there, never silently
 //! absorbed.
 
+// Core CRM Customer Relationship Management domain contracts (ADR-018).
+pub mod crm;
+
 pub mod foodservice;
 // R04 cohorts (PACKET-003).
 pub mod organizations;

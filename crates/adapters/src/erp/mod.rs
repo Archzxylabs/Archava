@@ -31,6 +31,8 @@
 //! packet and is deliberately NOT half-faked here.
 
 pub mod commerce_kernel;
+/// The CRM transactional persistence adapter (ADR-018: normalized under ERP adapters).
+pub use crate::crm;
 pub mod foodservice;
 pub mod organizations;
 pub mod projects;

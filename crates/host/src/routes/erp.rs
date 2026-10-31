@@ -8,6 +8,11 @@ use crate::router::AppState;
 /// Mounts all ERP ledger routes.
 pub fn router() -> Router<AppState> {
     Router::new()
+        // CRM customer relationship management cohort (ADR-018: normalized enterprise routes)
+        .route("/erp/crm/commands", post(crate::crm::crm_command))
+        .route("/erp/crm/commands/status", get(crate::crm::command_status))
+        .route("/erp/crm/records", get(crate::crm::record))
+        .route("/erp/crm/contacts", get(crate::crm::contacts))
         // Billing payments & invoice email integrations
         .route(
             "/erp/billing/payments",

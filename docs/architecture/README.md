@@ -46,7 +46,7 @@ A crate's existence does not mean the persistent host mounts all of its behavior
 
 ## Runtime and UI
 
-The Leptos server renders the document and the browser hydrates the same view tree. The browser reads session-scoped HTTP APIs; it does not decide authorization. The host resolves session/grants and validates commands before tenant-bound transactions. ERP persistence largely uses adapters, while CRM still executes SQL directly in the host; this is an explicit extraction target rather than a fully enforced separation. Existing receipt, idempotency, stale-revision, and uncertain-outcome contracts remain at those boundaries.
+The Leptos server renders the document and the browser hydrates the same view tree. The browser reads session-scoped HTTP APIs; it does not decide authorization. The host resolves session/grants and validates commands before tenant-bound transactions. All ERP and CRM persistence is unified inside `archava-adapters` under atomic `FORCE RLS` transactions (ADR-014, ADR-018). Existing receipt, idempotency, stale-revision, and uncertain-outcome contracts remain at those boundaries.
 
 The current application includes sign-in, Home, Contacts, contact records, follow-up drafting, receipt recovery, Assistant, Settings, and a labelled Operations demo. Home derives a bounded first-page contact overview; it does not fabricate workspace-wide financial totals. See [the appearance guide](../design/WORKSPACE_APPEARANCE.md) for current composition and browser evidence.
 
@@ -69,9 +69,7 @@ The persistent bootstrap embeds its mounted files and the test fixture reads the
 
 ## Maintenance priorities
 
-The repository has clearer boundaries than its previous mixed TypeScript/Rust layout, but two large HTTP files remain useful refactoring candidates: `host/src/router.rs` (3,404 total lines in the inspected snapshot) and `host/src/crm.rs` (2,612). File length is a navigation signal, not proof of a defect; preserve shared authority checks when extracting routes, reads, and command handling.
-
-The CRM host also mixes permission checks, SQL reads/writes, command receipts, and HTTP handling in one module. Extracting its repositories and application service requires preserving the negative authority and recovery cases, not merely moving functions into new folders.
+Historical large coordinator files have been systematically decomposed into clean modular subtrees: `crates/host/src/router.rs` is decomposed into modular route trees under `crates/host/src/routes/` (ADR-015), `crates/host/src/crm.rs` persistence is extracted into `crates/adapters/src/crm.rs` (ADR-014), and CRM is normalized as a first-class domain of the ERP Monolith (ADR-018). The compile-time tripwire in `crates/host/src/extractors.rs` ensures all route extractions maintain strict extractor guarding.
 
 The server bootstrap and fixture also carry parallel ledger-registration knowledge. Canonical file placement removes one path exception; it does not remove that registration duplication. A future shared typed ledger catalogue should be tested against migration IDs/checksums before replacing either reader.
 

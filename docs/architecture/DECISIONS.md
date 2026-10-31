@@ -12,6 +12,7 @@ This document succeeds the [Historical Rust Decisions](../archive/rust/DECISIONS
 - [ADR-015: Decompose Host Router God-Module](#adr-015-decompose-host-router-god-module)
 - [ADR-016: Formalize Cockpit L4/L5 Autonomous Mission Supervisor Gate](#adr-016-formalize-cockpit-l4l5-autonomous-mission-supervisor-gate)
 - [ADR-017: Deepen Assistant Conversation Flow & Session Extraction](#adr-017-deepen-assistant-conversation-flow--session-extraction)
+- [ADR-018: Normalize CRM as First-Class ERP Business Domain & Harmonize Seams](#adr-018-normalize-crm-as-first-class-erp-business-domain--harmonize-seams)
 
 ---
 
@@ -224,3 +225,43 @@ Decompose `crates/host/src/assistant.rs` into modular subtrees under [`crates/ho
 - **[`sql_host.rs`](../../crates/host/src/assistant/sql_host.rs)**: Dedicated `SqlHost<'c>` engine implementing `HostCrm` against the `archava_crm` schema with transaction-level isolation and RLS executor re-checks.
 
 Updated compile-time tripwire [`crates/host/src/extractors.rs`](../../crates/host/src/extractors.rs) to audit all 3 modular files in `MODULES`. All 14 integration tests in `tests/assistant.rs` and 81 host unit tests remain 100% green.
+
+---
+
+## [ADR-018] Normalize CRM as First-Class ERP Business Domain & Harmonize Seams
+
+- **Status**: Completed
+- **Date**: 2026-10-31
+- **Domain**: Enterprise Architecture & Domain Normalization
+- **Impacted Files**:
+  - [`crates/domain/src/erp/crm.rs`](../../crates/domain/src/erp/crm.rs)
+  - [`crates/domain/src/erp/mod.rs`](../../crates/domain/src/erp/mod.rs)
+  - [`crates/adapters/src/erp/mod.rs`](../../crates/adapters/src/erp/mod.rs)
+  - [`crates/adapters/src/crm.rs`](../../crates/adapters/src/crm.rs)
+  - [`crates/host/src/routes/erp.rs`](../../crates/host/src/routes/erp.rs)
+  - [`crates/host/src/routes/crm.rs`](../../crates/host/src/routes/crm.rs)
+  - [`docs/architecture/README.md`](README.md)
+  - [`docs/modules/CRM_MODULE.md`](../modules/CRM_MODULE.md)
+
+### Context & Friction
+
+Historical evolution generated a false conceptual dichotomy ("ERP vs CRM") across codebase terminology and placement:
+1. **Isolated Domain Vocabulary**: Pure domain contracts for all other 15 business capabilities lived cleanly under `crates/domain/src/erp/*`, but CRM types (`ActivityKind`, `PipelineStage`, `ContactFields`, `ContactPatch`) were stranded directly in `archava-adapters`.
+2. **Missing Adapter Hierarchy**: All 16 ERP repositories were organized under `archava_adapters::erp::*`, whereas CRM sat alone as `archava_adapters::crm`.
+3. **Route Inconsistency**: ERP exposed unified command and query endpoints under `/erp/{module}/*`, while CRM only had `/crm/*` and `/contacts`.
+4. **Architectural Confusion**: Documentation and code comments frequently referred to "ERP and CRM" as if they were peer architectures, rather than recognizing CRM as the front-office Customer Relationship Management pillar of the Archava ERP Monolith.
+
+### Decision
+
+Normalize CRM as a first-class business module of the Archava ERP suite across all layers while preserving 100% backwards compatibility:
+
+1. **Domain Layer (`crates/domain/src/erp/crm.rs`)**:
+   Created `archava_domain::erp::crm` containing pure, WASM32-safe domain types, permission vocabularies, pipeline transition machines, contact fields/patches, and validation predicates. Registered `pub mod crm;` in `crates/domain/src/erp/mod.rs`.
+2. **Adapter Layer (`crates/adapters/src/erp/mod.rs`)**:
+   Exposed `pub use crate::crm;` under `archava_adapters::erp::crm`, formally grouping CRM persistence alongside the rest of the ERP cohorts while preserving `archava_adapters::crm` for backward compatibility.
+3. **Persistence Refactor (`crates/adapters/src/crm.rs`)**:
+   Refactored `archava_adapters::crm` to consume and re-export domain types directly from `archava_domain::erp::crm::*`, eliminating redundant duplicate definitions.
+4. **Host Route Alignment (`crates/host/src/routes/erp.rs`)**:
+   Mounted canonical `/erp/crm/commands`, `/erp/crm/commands/status`, `/erp/crm/records`, and `/erp/crm/contacts` routes under the ERP router tree, while retaining `/crm/*` and `/contacts` in `routes/crm.rs` as front-office client aliases.
+5. **Documentation Harmony**:
+   Updated `docs/architecture/README.md` and `docs/modules/CRM_MODULE.md` to define Archava unequivocally as a Modular ERP Monolith with CRM as its native front-office pillar.
