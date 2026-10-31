@@ -11,6 +11,7 @@ This document succeeds the [Historical Rust Decisions](../archive/rust/DECISIONS
 - [ADR-014: Deepen CRM Seam & Extract `archava-adapters::crm`](#adr-014-deepen-crm-seam--extract-archava-adapterscrm)
 - [ADR-015: Decompose Host Router God-Module](#adr-015-decompose-host-router-god-module)
 - [ADR-016: Formalize Cockpit L4/L5 Autonomous Mission Supervisor Gate](#adr-016-formalize-cockpit-l4l5-autonomous-mission-supervisor-gate)
+- [ADR-017: Deepen Assistant Conversation Flow & Session Extraction](#adr-017-deepen-assistant-conversation-flow--session-extraction)
 
 ---
 
@@ -152,18 +153,65 @@ The root `router.rs` retains the thin composition root (`pub fn router(state: Ap
 
 ## [ADR-016] Formalize Cockpit L4/L5 Autonomous Mission Supervisor Gate
 
-- **Status**: Proposed / Queued
+- **Status**: Completed
 - **Date**: 2026-10-31
 - **Domain**: Cockpit Agentic Orchestration & Safety
 - **Impacted Files**:
-  - `crates/cockpit/src/mission.rs`
-  - `crates/cockpit/src/flight_status.rs`
-  - `crates/slice/src/operations/missions.rs`
+  - [`crates/cockpit/src/mission.rs`](../../crates/cockpit/src/mission.rs) (`ApprovalGate`, `GateStatus`, `SupervisorStamp`, `ApprovalGateError`, `StepStatus::RequiresApproval`)
+  - [`crates/cockpit/src/lib.rs`](../../crates/cockpit/src/lib.rs) (`approve_step_gate`, engine gate enforcement)
+  - [`crates/core/src/roles.rs`](../../crates/core/src/roles.rs) (`CapabilityTier::as_str`)
+  - [`crates/host/src/cockpit.rs`](../../crates/host/src/cockpit.rs) (step creation gate configuration, `approve_step` handler)
+  - [`crates/host/src/routes/cockpit.rs`](../../crates/host/src/routes/cockpit.rs) (`/api/v1/cockpit/missions/{id}/steps/{step_index}/approve`)
+  - [`crates/slice/src/operations/missions.rs`](../../crates/slice/src/operations/missions.rs) (`ui.approve_step`, step approval UI badge)
+  - [`crates/host/tests/cockpit_hold_resume.rs`](../../crates/host/tests/cockpit_hold_resume.rs) (`test_cockpit_step_approval_gate_lifecycle_and_non_self_approval`)
 
 ### Context & Friction
 
-Autonomous subagents executing L4/L5 missions in Ava Cockpit can perform high-impact side effects (e.g. invoice emission, large stock adjustments, external webhook dispatches). Currently, human supervisor approvals are coordinated partially through client-side UI signals (`MissionUi`) and unverified JSON states.
+Autonomous subagents executing L4/L5 missions in Ava Cockpit can perform high-impact side effects (e.g. invoice emission, large stock adjustments, external webhook dispatches). Previously, human supervisor approvals were coordinated partially through client-side UI signals (`MissionUi`) and unverified JSON states.
 
 ### Decision
 
 Deepen `crates/cockpit/src/mission.rs` by introducing a first-class `ApprovalGate` state machine within `FlightStep`. High-impact steps cannot transition from `RequiresApproval` to `Running` without a cryptographically verified supervisor approval token and role capability check enforced directly by the domain engine.
+
+### Invariants & Guarantees
+
+1. **Non-Self-Approval**: Initiators cannot self-approve steps or missions requiring L4 or L5 authority. Independent supervisor signoff is mandatory.
+2. **Cryptographic Token Verification**: Approval tokens are generated via HMAC-SHA256 bound to `(tenant, mission_id, step_index, supervisor_id, role, capability, timestamp)` and verified using constant-time comparison (`subtle::ConstantTimeEq`).
+3. **Execution Block**: Handlers `run-next` and `complete` strictly refuse unapproved steps with 409 Conflict.
+4. **Zero Migration Footprint**: Approval gates serialize cleanly within `flight_steps.payload_input` JSONB and map to `status = 'requires_approval'` without schema changes.
+
+### Execution Checklist
+
+- [x] **Phase 1: Domain State Machine**
+  - Implement `ApprovalGate`, `GateStatus`, `SupervisorStamp`, and `ApprovalGateError` in `crates/cockpit/src/mission.rs`.
+  - Add `StepStatus::RequiresApproval`.
+  - Implement token generation and constant-time verification.
+- [x] **Phase 2: Host Router & Persistence Gate**
+  - Add `POST /api/v1/cockpit/missions/{id}/steps/{step_index}/approve` in `crates/host/src/routes/cockpit.rs` and `cockpit.rs`.
+  - Enforce non-self-approval and supervisor role checks in `cockpit.rs::approve`.
+  - Block execution of `RequiresApproval` steps in `run_next` and `complete`.
+- [x] **Phase 3: Leptos UI Operations**
+  - Add `approve_step` action and supervisor approval button in `crates/slice/src/operations/missions.rs`.
+- [x] **Phase 4: Verification & Link Validation**
+  - Add integration test `test_cockpit_step_approval_gate_lifecycle_and_non_self_approval`.
+  - Verify workspace Clippy, WASM target, docs links, and all tests.
+
+---
+
+## [ADR-017] Deepen Assistant Conversation Flow & Session Extraction
+
+- **Status**: Proposed / Queued
+- **Date**: 2026-10-31
+- **Domain**: AI Assistant & Host Integration Seam
+- **Impacted Files**:
+  - `crates/host/src/assistant.rs`
+  - `crates/assistant/src/conversation.rs`
+  - `crates/assistant/src/planner.rs`
+
+### Context & Friction
+
+[`crates/host/src/assistant.rs`](../../crates/host/src/assistant.rs) (970 lines) currently interweaves Axum session extraction, CSRF enforcement, SQL queries for CRM context, and LLM turn orchestrations into a single monolithic coordinator.
+
+### Decision
+
+Extract the conversation turn lifecycle and CRM context building into clean domain adapters within `crates/assistant`, keeping `crates/host/src/assistant.rs` strictly focused on HTTP routing, streaming SSE events, and error mapping.

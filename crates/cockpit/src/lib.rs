@@ -16,7 +16,9 @@ use uuid::Uuid;
 pub use durable::FlightCheckpoint;
 pub use event_stream::{FlightEvent, FlightEventType};
 pub use flight_status::FlightStatus;
-pub use mission::{FlightStep, Mission, StepStatus};
+pub use mission::{
+    ApprovalGate, ApprovalGateError, FlightStep, GateStatus, Mission, StepStatus, SupervisorStamp,
+};
 pub use subagent::{SubagentWorkerContext, WorkerReport};
 pub use tools::CockpitCommand;
 
@@ -85,6 +87,10 @@ impl CockpitEngine {
             return Err("Cannot mutate already finalized terminal step");
         }
 
+        if step_ref.status == StepStatus::RequiresApproval {
+            return Err("Cannot complete step that requires supervisor approval");
+        }
+
         for dep_idx in &step_ref.depends_on_steps {
             let dep_ok = mission
                 .steps
@@ -121,6 +127,41 @@ impl CockpitEngine {
         }
 
         Ok(())
+    }
+
+    /// Approves an L4/L5 approval gate on an individual flight step.
+    #[allow(clippy::too_many_arguments)]
+    pub fn approve_step_gate(
+        &self,
+        mission_id: Uuid,
+        step_index: usize,
+        secret_key: &[u8],
+        supervisor_id: &str,
+        role: &str,
+        capability: &str,
+        approved_at_millis: i64,
+        initiator_id: &str,
+    ) -> Result<String, ApprovalGateError> {
+        let mut guard = self.missions.write().expect("lock");
+        let mission = guard
+            .get_mut(&mission_id)
+            .ok_or(ApprovalGateError::NoGateConfigured)?;
+        let tenant = mission.tenant_id.clone();
+        let step = mission
+            .steps
+            .iter_mut()
+            .find(|s| s.step_index == step_index)
+            .ok_or(ApprovalGateError::NoGateConfigured)?;
+        step.approve_gate(
+            secret_key,
+            &tenant,
+            mission_id,
+            supervisor_id,
+            role,
+            capability,
+            approved_at_millis,
+            initiator_id,
+        )
     }
 
     /// Lands a mission into Touchdown once all steps have passed and invariants verified.

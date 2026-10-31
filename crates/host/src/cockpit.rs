@@ -33,6 +33,8 @@ pub struct CreateStepRequest {
     pub payload_input: Value,
     #[serde(default)]
     pub depends_on: Vec<usize>,
+    #[serde(default)]
+    pub required_authority: Option<String>,
 }
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CreateMissionRequest {
@@ -183,11 +185,15 @@ async fn load(
     let mut steps = Vec::with_capacity(step_rows.len());
     for step in step_rows {
         let deps: Option<Vec<i32>> = step.try_get("depends_on_steps")?;
+        let payload_input: Value = step.try_get("payload_input")?;
+        let approval_gate: Option<archava_cockpit::ApprovalGate> = payload_input
+            .get("approval_gate")
+            .and_then(|g| serde_json::from_value(g.clone()).ok());
         steps.push(FlightStep {
             step_index: index(step.try_get("step_index")?)?,
             step_name: step.try_get("step_name")?,
             tool_target: step.try_get("tool_target")?,
-            payload_input: step.try_get("payload_input")?,
+            payload_input,
             payload_output: step.try_get("payload_output")?,
             status: decode(step.try_get("status")?)?,
             depends_on_steps: deps
@@ -198,6 +204,7 @@ async fn load(
             subagent_role: step.try_get("subagent_role")?,
             isolated_context_summary: step.try_get("isolated_context_summary")?,
             error_message: step.try_get("error_message")?,
+            approval_gate,
         });
     }
     Ok(Some((
@@ -267,13 +274,24 @@ async fn create(
         .steps
         .into_iter()
         .map(|s| {
-            FlightStep::new(
+            let mut step = FlightStep::new(
                 s.step_index,
                 s.step_name,
                 s.tool_name,
                 s.payload_input,
                 s.depends_on,
-            )
+            );
+            if let Some(ref auth) = s.required_authority {
+                let auth_upper = auth.to_uppercase();
+                if auth_upper == "L4" || auth_upper == "L5" {
+                    let gate = archava_cockpit::ApprovalGate::new(&auth_upper, "owner");
+                    if let Some(obj) = step.payload_input.as_object_mut() {
+                        obj.insert("approval_gate".into(), json!(gate));
+                    }
+                    step = step.with_approval_gate(gate);
+                }
+            }
+            step
         })
         .collect();
     let mut mission = Mission::new(
@@ -332,8 +350,8 @@ async fn create(
         .bind(mission.id).bind(&mission.tenant_id).bind(&mission.mission_code).bind(&mission.title).bind(&mission.objective).bind(mission.status.as_str()).bind(&actor).bind(authority).execute(&mut *tx).await.map_err(unavailable)?;
     for step in &mission.steps {
         let deps: Vec<i32> = step.depends_on_steps.iter().map(|&i| i as i32).collect();
-        sqlx::query("INSERT INTO archava_cockpit.flight_steps(id,mission_id,tenant_id,step_index,step_name,tool_target,payload_input,status,depends_on_steps,subagent_role) VALUES($1,$2,$3,$4,$5,$6,$7,'pending',$8,$9)")
-            .bind(Uuid::new_v4()).bind(mission.id).bind(&mission.tenant_id).bind(step.step_index as i32).bind(&step.step_name).bind(&step.tool_target).bind(&step.payload_input).bind(deps).bind(&step.subagent_role).execute(&mut *tx).await.map_err(unavailable)?;
+        sqlx::query("INSERT INTO archava_cockpit.flight_steps(id,mission_id,tenant_id,step_index,step_name,tool_target,payload_input,status,depends_on_steps,subagent_role) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)")
+            .bind(Uuid::new_v4()).bind(mission.id).bind(&mission.tenant_id).bind(step.step_index as i32).bind(&step.step_name).bind(&step.tool_target).bind(&step.payload_input).bind(step.status.as_str()).bind(deps).bind(&step.subagent_role).execute(&mut *tx).await.map_err(unavailable)?;
     }
     event(
         &mut tx,
@@ -399,6 +417,11 @@ async fn complete(
         .iter()
         .find(|s| s.step_index == step_index)
         .ok_or_else(|| masked(StatusCode::NOT_FOUND, "Step not found."))?;
+    if step.status == StepStatus::RequiresApproval {
+        return Err(conflict(
+            "Cannot complete a step that requires supervisor approval.",
+        ));
+    }
     if matches!(step.status, StepStatus::Passed | StepStatus::Failed) {
         let prior:Option<Value>=sqlx::query_scalar("SELECT COALESCE(event_payload->'report','null'::jsonb) FROM archava_cockpit.flight_events WHERE mission_id=$1 AND event_type='step_completed' AND event_payload->>'step_index'=$2 ORDER BY id DESC LIMIT 1")
             .bind(id).bind(step_index.to_string()).fetch_optional(&mut *tx).await.map_err(unavailable)?;
@@ -753,6 +776,138 @@ pub async fn resume_mission(
         .unwrap_or_else(|e| e)
 }
 
+async fn approve(
+    state: &AppState,
+    id: Uuid,
+    step_index: usize,
+    scope: MissionScope,
+    headers: &HeaderMap,
+    req: ApproveStepRequest,
+) -> Result<Response> {
+    let actor = principal(state, headers, true).await?;
+    let tenant = tenant_hint(state, id, scope)?;
+    let (mut tx, membership) = begin(state, &tenant, &actor, true).await?;
+    let (mut mission, initiator, _) = load(&mut tx, id, true)
+        .await
+        .map_err(unavailable)?
+        .ok_or_else(|| masked(StatusCode::NOT_FOUND, "Mission not found."))?;
+
+    let step = mission
+        .steps
+        .iter_mut()
+        .find(|s| s.step_index == step_index)
+        .ok_or_else(|| masked(StatusCode::NOT_FOUND, "Step not found."))?;
+
+    if !step.requires_approval() {
+        return Err(conflict("Step does not require supervisor approval."));
+    }
+
+    if !matches!(membership.role, RoleName::Owner | RoleName::Admin) {
+        return Err(masked(
+            StatusCode::FORBIDDEN,
+            "Supervisor authority required.",
+        ));
+    }
+
+    if membership.capability == CapabilityTier::Assist {
+        return Err(masked(
+            StatusCode::FORBIDDEN,
+            "Supervisor capability insufficient.",
+        ));
+    }
+
+    let now_millis = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis() as i64;
+
+    let token = step
+        .approve_gate(
+            state.identity_key(),
+            tenant.as_str(),
+            id,
+            &actor,
+            membership.role.as_str(),
+            membership.capability.as_str(),
+            now_millis,
+            &initiator,
+        )
+        .map_err(|e| match e {
+            archava_cockpit::ApprovalGateError::SelfApprovalForbidden(_) => conflict(
+                "Missions requiring L4 or L5 authority cannot be resumed or approved by the initiator; independent supervisor approval is required.",
+            ),
+            archava_cockpit::ApprovalGateError::InsufficientRole { .. } => {
+                masked(StatusCode::FORBIDDEN, "Supervisor authority required.")
+            }
+            archava_cockpit::ApprovalGateError::InsufficientCapability { .. } => {
+                masked(StatusCode::FORBIDDEN, "Supervisor capability insufficient.")
+            }
+            _ => conflict("Approval gate refused."),
+        })?;
+
+    if let Some(ref gate) = step.approval_gate {
+        if let Some(obj) = step.payload_input.as_object_mut() {
+            obj.insert("approval_gate".into(), json!(gate));
+        }
+    }
+
+    sqlx::query(
+        "UPDATE archava_cockpit.flight_steps SET status=$1,payload_input=$2 WHERE mission_id=$3 AND step_index=$4",
+    )
+    .bind(step.status.as_str())
+    .bind(&step.payload_input)
+    .bind(id)
+    .bind(step_index as i32)
+    .execute(&mut *tx)
+    .await
+    .map_err(unavailable)?;
+
+    event(
+        &mut tx,
+        &mission,
+        "step_approved",
+        json!({
+            "step_index": step_index,
+            "supervisor": actor,
+            "role": membership.role.as_str(),
+            "token": token,
+            "reason": req.reason,
+        }),
+    )
+    .await
+    .map_err(unavailable)?;
+
+    tx.commit().await.map_err(unavailable)?;
+    state.cockpit().register_mission(mission.clone());
+    Ok(ok(&mission))
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ApproveStepRequest {
+    #[serde(default)]
+    pub reason: Option<String>,
+}
+
+pub async fn approve_step(
+    State(state): State<AppState>,
+    path: GuardedPath<(Uuid, usize)>,
+    query: GuardedQuery<MissionScope>,
+    headers: HeaderMap,
+    body: std::result::Result<Json<ApproveStepRequest>, JsonRejection>,
+) -> Response {
+    let (Ok(Path((id, index))), Ok(Query(scope))) = (path, query) else {
+        return masked(StatusCode::BAD_REQUEST, "Invalid request payload.");
+    };
+    let req = match body {
+        Ok(Json(req)) => req,
+        Err(rejection) => return masked(rejection.status(), "Invalid request payload."),
+    };
+    approve(&state, id, index, scope, &headers, req)
+        .await
+        .unwrap_or_else(|e| e)
+}
+
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct MissionListQuery {
@@ -834,6 +989,11 @@ pub async fn run_next(
             tx.commit().await.map_err(unavailable)?;
             return Ok(ok(&mission));
         }
+        if step.status == StepStatus::RequiresApproval {
+            return Err(conflict(
+                "This step requires supervisor approval before execution.",
+            ));
+        }
         if mission.status != FlightStatus::InFlight
             || step.status != StepStatus::Pending
             || !step.depends_on_steps.iter().all(|index| {
@@ -849,7 +1009,7 @@ pub async fn run_next(
             || step
                 .payload_input
                 .as_object()
-                .is_some_and(|o| !o.is_empty())
+                .is_some_and(|o| o.iter().any(|(k, _)| k != "approval_gate"))
         {
             return Err(masked(
                 StatusCode::BAD_REQUEST,

@@ -167,6 +167,16 @@ pub enum CapabilityTier {
 }
 
 impl CapabilityTier {
+    /// The canonical wire string of the tier.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            CapabilityTier::Assist => "assist",
+            CapabilityTier::Act => "act",
+            CapabilityTier::Transact => "transact",
+            CapabilityTier::Enterprise => "enterprise",
+        }
+    }
+
     /// The numeric weight of a tier, matching `CAPABILITY_RANK`.
     pub fn rank(self) -> u8 {
         match self {
@@ -180,13 +190,7 @@ impl CapabilityTier {
 
 impl fmt::Display for CapabilityTier {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let name = match self {
-            CapabilityTier::Assist => "assist",
-            CapabilityTier::Act => "act",
-            CapabilityTier::Transact => "transact",
-            CapabilityTier::Enterprise => "enterprise",
-        };
-        formatter.write_str(name)
+        formatter.write_str(self.as_str())
     }
 }
 impl TryFrom<String> for CapabilityTier {

@@ -323,6 +323,10 @@ impl Identity {
         }
     }
 
+    pub(crate) fn key(&self) -> &[u8] {
+        &self.key
+    }
+
     /// `HMAC-SHA256(key, label + "\0" + value)`, hex — the baseline's
     /// `digest`, used for session hashes, csrf digests and bucket keys alike.
     pub(crate) fn digest(&self, label: &str, value: &str) -> String {

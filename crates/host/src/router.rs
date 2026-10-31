@@ -478,6 +478,10 @@ impl AppState {
         &self.inner.authorizer
     }
 
+    pub(crate) fn identity_key(&self) -> &[u8] {
+        self.inner.identity.key()
+    }
+
     pub fn cockpit(&self) -> &archava_cockpit::CockpitEngine {
         &self.inner.cockpit
     }

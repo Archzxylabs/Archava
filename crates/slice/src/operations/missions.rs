@@ -164,6 +164,33 @@ impl MissionUi {
             self.refresh.update_if_alive(|n| *n += 1);
         });
     }
+    fn approve_step(self, id: String, index: i64) {
+        if self.busy.get_untracked() {
+            return;
+        }
+        let Some(held) = session::held() else { return };
+        self.busy.set_if_alive(true);
+        let path = format!(
+            "/api/v1/cockpit/missions/{id}/steps/{index}/approve?tenant={}",
+            crate::contacts::query_encode(&held.tenant)
+        );
+        spawn_local(async move {
+            match session::api_fetch("POST", &path, Some(json!({}).to_string())).await {
+                Ok(answer) if answer.status == 200 && answer.body["id"].is_string() => {
+                    self.mission.set_if_alive(answer.body);
+                    self.notice.set_if_alive(
+                        "Step approved by supervisor. Step is now ready to run.".into(),
+                    );
+                }
+                Ok(answer) => self.notice.set_if_alive(message(&answer)),
+                Err(_) => self
+                    .notice
+                    .set_if_alive("Approval outcome unconfirmed. Refresh to verify.".into()),
+            }
+            self.busy.set_if_alive(false);
+            self.refresh.update_if_alive(|n| *n += 1);
+        });
+    }
 }
 #[component]
 pub fn Missions() -> impl IntoView {
@@ -226,9 +253,13 @@ fn MissionDetail(ui: MissionUi, data: Value) -> impl IntoView {
     let mission_id = text(&data, "id");
     let rows=steps.into_iter().map(|step|{
   let id=text(&data,"id");let index=integer(&step,"step_index");let state=text(&step,"status");
+  let needs_approval = state == "requires_approval";
   let ready=!is_holding && state=="pending"&&step["depends_on_steps"].as_array().into_iter().flatten().all(|dep|data["steps"].as_array().into_iter().flatten().any(|s|s["step_index"]==*dep&&s["status"]=="passed"));
+  let approve_id = id.clone();
+  let run_id = id;
   view!{<li><strong>{text(&step,"step_name")}</strong><span>{state}</span>
-   {ready.then(||view!{<button type="button" class="btn secondary" data-testid="mission-run" disabled=move||ui.busy.get()||!ui.can_write.get() on:click=move|_|ui.run(id.clone(),index)>"Run step"</button>})}
+   {needs_approval.then(move||view!{<button type="button" class="btn secondary warning" data-testid="mission-step-approve" disabled=move||ui.busy.get()||!ui.can_write.get() on:click=move|_|ui.approve_step(approve_id.clone(),index)>"Approve step"</button>})}
+   {ready.then(move||view!{<button type="button" class="btn secondary" data-testid="mission-run" disabled=move||ui.busy.get()||!ui.can_write.get() on:click=move|_|ui.run(run_id.clone(),index)>"Run step"</button>})}
    <p class="hint">{text(&step,"isolated_context_summary")}</p></li>}
  }).collect::<Vec<_>>();
     view! {

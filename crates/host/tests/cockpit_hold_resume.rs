@@ -316,3 +316,126 @@ async fn test_cockpit_l4_self_resume_refusal_and_independent_approval() {
     );
     assert_eq!(body_bob["status"], "in_flight");
 }
+
+#[tokio::test]
+async fn test_cockpit_step_approval_gate_lifecycle_and_non_self_approval() {
+    let (_f, _state, app, alice) = setup().await;
+    let bob = login(&app, "bob").await;
+
+    // 1. Create a mission as Alice with step 1 requiring L4 authority
+    let (status, create_json) = call(
+        &app,
+        "POST",
+        "/api/v1/cockpit/missions",
+        json!({
+            "tenant_id": "acme",
+            "mission_code": "MSN-STEP-L4-01",
+            "title": "Autonomous Supplier Settlement",
+            "description": "Settlement step requires independent supervisor approval",
+            "auto_launch": true,
+            "steps": [
+                {
+                    "step_index": 1,
+                    "step_name": "Read Workspace",
+                    "tool_name": "commerce.workspace.read",
+                    "payload_input": {},
+                    "depends_on": [],
+                    "required_authority": "L4"
+                }
+            ]
+        }),
+        Some(&alice),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CREATED);
+    let mission_id = create_json["id"].as_str().unwrap();
+    assert_eq!(create_json["steps"][0]["status"], "requires_approval");
+
+    // 2. Calling run-next before approval is REFUSED (409 Conflict)
+    let (status_run, run_refused) = call(
+        &app,
+        "POST",
+        &format!("/api/v1/cockpit/missions/{mission_id}/run-next?tenant=acme"),
+        json!({ "stepIndex": 1 }),
+        Some(&alice),
+    )
+    .await;
+    assert_eq!(
+        status_run,
+        StatusCode::CONFLICT,
+        "Execution before approval must be refused: {run_refused}"
+    );
+
+    // 3. Calling complete before approval is REFUSED (409 Conflict)
+    let (status_comp, comp_refused) = call(
+        &app,
+        "POST",
+        &format!("/api/v1/cockpit/missions/{mission_id}/steps/1/complete?tenant=acme"),
+        json!({
+            "agent_role": "settlement_agent",
+            "success": true,
+            "high_signal_summary": "attempting unauthorized completion",
+            "output_payload": {},
+            "token_cost": 100
+        }),
+        Some(&alice),
+    )
+    .await;
+    assert_eq!(
+        status_comp,
+        StatusCode::CONFLICT,
+        "Step completion before approval must be refused: {comp_refused}"
+    );
+
+    // 4. Initiator (Alice) attempting self-approval on L4 step is REFUSED (409 Conflict)
+    let (status_self_app, self_app_body) = call(
+        &app,
+        "POST",
+        &format!("/api/v1/cockpit/missions/{mission_id}/steps/1/approve?tenant=acme"),
+        json!({ "reason": "Self-authorizing payout" }),
+        Some(&alice),
+    )
+    .await;
+    assert_eq!(
+        status_self_app,
+        StatusCode::CONFLICT,
+        "Initiator self-approval must be refused on L4 step: {self_app_body}"
+    );
+
+    // 5. Independent supervisor (Bob) approves step 1 -> SUCCEEDS (200 OK)
+    let (status_bob_app, bob_app_body) = call(
+        &app,
+        "POST",
+        &format!("/api/v1/cockpit/missions/{mission_id}/steps/1/approve?tenant=acme"),
+        json!({ "reason": "Verified invoice and signed off" }),
+        Some(&bob),
+    )
+    .await;
+    assert_eq!(
+        status_bob_app,
+        StatusCode::OK,
+        "Supervisor approval must succeed: {bob_app_body}"
+    );
+    assert_eq!(bob_app_body["steps"][0]["status"], "pending");
+    assert_eq!(
+        bob_app_body["steps"][0]["approval_gate"]["status"],
+        "approved"
+    );
+
+    // 6. Now step 1 is pending and can be executed via run-next -> SUCCEEDS
+    let (status_run_ok, run_ok_body) = call(
+        &app,
+        "POST",
+        &format!("/api/v1/cockpit/missions/{mission_id}/run-next?tenant=acme"),
+        json!({ "stepIndex": 1 }),
+        Some(&alice),
+    )
+    .await;
+    assert_eq!(
+        status_run_ok,
+        StatusCode::OK,
+        "Execution after approval must succeed: {run_ok_body}"
+    );
+    assert_eq!(run_ok_body["status"], "touchdown");
+    assert_eq!(run_ok_body["steps"][0]["status"], "passed");
+}

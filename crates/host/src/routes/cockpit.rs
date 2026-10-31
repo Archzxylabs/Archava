@@ -52,6 +52,10 @@ pub fn router() -> Router<AppState> {
             post(crate::cockpit::complete_step),
         )
         .route(
+            "/api/v1/cockpit/missions/{id}/steps/{step_index}/approve",
+            post(crate::cockpit::approve_step),
+        )
+        .route(
             "/api/v1/cockpit/missions/{id}/abort",
             post(crate::cockpit::abort_mission),
         )
