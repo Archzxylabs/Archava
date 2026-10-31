@@ -70,6 +70,15 @@ pub fn build_app(state: AppState, site_addr: SocketAddr, pkg_dir: &Path) -> Rout
                 )
             }),
         )
+        .route(
+            "/assets/fonts/space-grotesk.woff2",
+            axum::routing::get(|| async {
+                (
+                    [(axum::http::header::CONTENT_TYPE, "font/woff2")],
+                    include_bytes!("../../../static/assets/fonts/space-grotesk.woff2").as_slice(),
+                )
+            }),
+        )
         .leptos_routes(&options, routes, move || shell(shell_options.clone()));
 
     with_security_headers(slice_router)
@@ -187,5 +196,58 @@ mod tests {
             policy.contains("'wasm-unsafe-eval'"),
             "the wasm bundle needs the eval allowance: {policy}"
         );
+    }
+
+    #[tokio::test]
+    async fn the_font_routes_serve_woff2_bytes() {
+        let app = Router::new()
+            .route(
+                "/assets/fonts/dm-sans.woff2",
+                get(|| async {
+                    (
+                        [(axum::http::header::CONTENT_TYPE, "font/woff2")],
+                        include_bytes!("../../../static/assets/fonts/dm-sans.woff2").as_slice(),
+                    )
+                }),
+            )
+            .route(
+                "/assets/fonts/jetbrains-mono.woff2",
+                get(|| async {
+                    (
+                        [(axum::http::header::CONTENT_TYPE, "font/woff2")],
+                        include_bytes!("../../../static/assets/fonts/jetbrains-mono.woff2")
+                            .as_slice(),
+                    )
+                }),
+            )
+            .route(
+                "/assets/fonts/space-grotesk.woff2",
+                get(|| async {
+                    (
+                        [(axum::http::header::CONTENT_TYPE, "font/woff2")],
+                        include_bytes!("../../../static/assets/fonts/space-grotesk.woff2")
+                            .as_slice(),
+                    )
+                }),
+            );
+
+        for font in [
+            "/assets/fonts/dm-sans.woff2",
+            "/assets/fonts/jetbrains-mono.woff2",
+            "/assets/fonts/space-grotesk.woff2",
+        ] {
+            let response = app
+                .clone()
+                .oneshot(
+                    Request::builder()
+                        .uri(font)
+                        .body(Body::empty())
+                        .expect("build request"),
+                )
+                .await
+                .expect("font route answers");
+            assert_eq!(response.status(), axum::http::StatusCode::OK);
+            assert_eq!(response.headers()["content-type"], "font/woff2");
+        }
     }
 }
