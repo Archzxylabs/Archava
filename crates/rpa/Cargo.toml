@@ -3,6 +3,7 @@ name = "archava-rpa"
 description = "Computer Use & Vision Headless RPA Bridge for Legacy Banking & Government Portals"
 version.workspace = true
 edition.workspace = true
+publish.workspace = true
 rust-version.workspace = true
 
 [dependencies]

@@ -1,0 +1,16 @@
+# Configuration for cargo-nextest (cargo nextest run)
+# Provides process-isolated test execution, parallel pure/unit tests,
+# and serial confinement for ephemeral PostgreSQL cluster fixtures.
+
+[profile.default]
+failure-output = "immediate-final"
+fail-fast = false
+
+[test-groups]
+# Archava ephemeral PostgreSQL fixture integration suites require serial execution
+# to prevent KDF budget exhaustion, port collisions, and OS process contention.
+serial-pg = { max-threads = 1 }
+
+[[profile.default.overrides]]
+filter = 'kind(test) & (package(archava-host) | package(archava-adapters) | package(archava-ops) | package(archava-slice) | package(archava-pg-fixture))'
+test-group = 'serial-pg'

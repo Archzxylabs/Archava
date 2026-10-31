@@ -68,7 +68,7 @@ Apply migrations with the owner role and serve with a non-owner role. The runtim
 
 ## Runtime and repository conventions
 
-- Use `deploy/archava.env.example` for the Rust runtime. The root `.env.example` is mostly the older TS-era template; only `ARCHAVA_BACKUP_KEY` currently overlaps with the Rust runtime.
+- Use `.env.example` (local dev) or `deploy/archava.env.example` (production/systemd) for the Rust runtime environment template.
 - `DATABASE_URL` must name the migrated non-owner runtime role. `ARCHAVA_IDENTITY_KEY_HEX` must contain at least 32 hex-encoded bytes. Startup also verifies mounted ledger checksums.
 - There is no root npm/pnpm install. `tools/` helpers use Node built-ins only.
 - The TypeScript-era tools and consumers are removed from the tree; recover a specific file from git history if an old comparison is needed, and don't wire it back into the current gate.

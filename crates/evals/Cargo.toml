@@ -3,6 +3,7 @@ name = "archava-evals"
 description = "Autonomous Agentic Evals & Synthetic Red-Teaming Harness for Archava"
 version.workspace = true
 edition.workspace = true
+publish.workspace = true
 rust-version.workspace = true
 
 [dependencies]

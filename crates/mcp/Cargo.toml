@@ -3,6 +3,7 @@ name = "archava-mcp"
 description = "Native Model Context Protocol (MCP) Server and Client for Archava Enterprise ERP/CRM"
 version.workspace = true
 edition.workspace = true
+publish.workspace = true
 rust-version.workspace = true
 
 [dependencies]
