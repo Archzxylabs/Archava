@@ -1,6 +1,6 @@
 # Design history
 
-Superseded design material. The current ERP/CRM direction and evidence are in [workspace design](../../../design/README.md).
+Superseded design material. The current ERP/CRM direction and evidence are in [workspace design](../../../product/design/README.md).
 
 | Document | Purpose |
 | --- | --- |

@@ -48,7 +48,7 @@ A crate's existence does not mean the persistent host mounts all of its behavior
 
 The Leptos server renders the document and the browser hydrates the same view tree. The browser reads session-scoped HTTP APIs; it does not decide authorization. The host resolves session/grants and validates commands before tenant-bound transactions. All ERP and CRM persistence is unified inside `archava-adapters` under atomic `FORCE RLS` transactions (ADR-014, ADR-018). Existing receipt, idempotency, stale-revision, and uncertain-outcome contracts remain at those boundaries.
 
-The current application includes sign-in, Home, Contacts, contact records, follow-up drafting, receipt recovery, Assistant, Settings, and a labelled Operations demo. Home derives a bounded first-page contact overview; it does not fabricate workspace-wide financial totals. See [the appearance guide](../design/WORKSPACE_APPEARANCE.md) for current composition and browser evidence.
+The current application includes sign-in, Home, Contacts, contact records, follow-up drafting, receipt recovery, Assistant, Settings, and a labelled Operations demo. Home derives a bounded first-page contact overview; it does not fabricate workspace-wide financial totals. See [the appearance guide](../product/design/WORKSPACE_APPEARANCE.md) for current composition and browser evidence.
 
 The native server embeds migrations, shared styles, and selected assets. `target/site/pkg` holds the separately generated JS/WASM browser package. Changes to embedded assets or SQL require a native rebuild; changes to view markup require rebuilding both native and WASM targets.
 
@@ -64,7 +64,7 @@ The persistent bootstrap embeds its mounted files and the test fixture reads the
 - Configuration ownership: `config/` holds the shared release/tooling catalogue; the pricing reference JSON lives in `crates/pricing/tests/fixtures/`; the retired template catalogue is in `docs/archive/history/config/`. The pricing engine accepts caller-supplied data rather than loading product prices from the repository.
 - Current helpers: `tools/check-structure.mjs`, `tools/rust/{verify,build-slice,dev-slice,run-persistent}.mjs`, and `tools/release/sbom.mjs`.
 - Removed TypeScript-era tooling and consumers: recoverable from git history, not part of the current gates.
-- Current documentation entry points: `docs/README.md` and `docs/DEVELOPER_GUIDE.md`. Architecture, guides, modules, product planning, design, and archived records have six named subdirectories.
+- Current documentation entry points: `docs/README.md` and `docs/DEVELOPER_GUIDE.md`. Technical architecture (including host/embed [integration](INTEGRATION.md)), modules, product planning & design, and archived records have four dedicated directories.
 - Local database state/backups: ignored `.local/`. Generated compilation artifacts: ignored `target/`. These are not duplicate product layers and are not deleted as source cleanup.
 
 ## Maintenance priorities
@@ -90,6 +90,7 @@ These source maps distinguish implemented library behavior, host wiring and rema
 | [DURABLE_ACT_OPERATIONS.md](DURABLE_ACT_OPERATIONS.md) | Command receipts, pending state, recovery and provider composition |
 | [ENTERPRISE_ENGINES.md](ENTERPRISE_ENGINES.md) | Ledger, tax, inventory, hardware, telematics and messaging components |
 | [FRONTIER_AGENTIC_CRATES.md](FRONTIER_AGENTIC_CRATES.md) | MCP, evaluation, campaigns and RPA implementation boundaries |
+| [INTEGRATION.md](INTEGRATION.md) | Host API authentication contracts, CSRF headers, and browser embedding |
 | [ORBZ_MEMORY_ARCHITECTURE.md](ORBZ_MEMORY_ARCHITECTURE.md) | Memory tiers, access policy, reflection and persistence limits |
 
 Earlier drafts are preserved byte for byte in [subsystem draft history](../archive/history/subsystem-drafts-2026-10-29/README.md). Current wording must follow source and dated evidence, rather than guarantees inferred from a crate or type name.

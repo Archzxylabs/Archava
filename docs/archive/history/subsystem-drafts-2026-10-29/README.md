@@ -10,7 +10,7 @@ These eight files preserve the exact pre-review bytes from 29 October 2026. They
 | [ENTERPRISE_ENGINES.md](architecture/ENTERPRISE_ENGINES.md) | [Current reference](../../../architecture/ENTERPRISE_ENGINES.md) |
 | [FRONTIER_AGENTIC_CRATES.md](architecture/FRONTIER_AGENTIC_CRATES.md) | [Current reference](../../../architecture/FRONTIER_AGENTIC_CRATES.md) |
 | [ORBZ_MEMORY_ARCHITECTURE.md](architecture/ORBZ_MEMORY_ARCHITECTURE.md) | [Current reference](../../../architecture/ORBZ_MEMORY_ARCHITECTURE.md) |
-| [EMBED_INTEGRATION_GUIDE.md](integration/EMBED_INTEGRATION_GUIDE.md) | [Current reference](../../../guides/INTEGRATION.md#browser-embedding) |
-| [INTEGRATION_GUIDE.md](integration/INTEGRATION_GUIDE.md) | [Current reference](../../../guides/INTEGRATION.md#host-integration) |
+| [EMBED_INTEGRATION_GUIDE.md](integration/EMBED_INTEGRATION_GUIDE.md) | [Current reference](../../../architecture/INTEGRATION.md#browser-embedding) |
+| [INTEGRATION_GUIDE.md](integration/INTEGRATION_GUIDE.md) | [Current reference](../../../architecture/INTEGRATION.md#host-integration) |
 
 The documentation audit's preserved-draft manifest binds every original path to its copy and SHA-256. No old guarantee becomes accepted merely because its draft remains in history.

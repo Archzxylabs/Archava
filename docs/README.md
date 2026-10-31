@@ -28,8 +28,8 @@ Navigate directly to what you need based on your role or objective:
 5. **[Purchasing Module](modules/PURCHASING_MODULE.md)**: Supplier relationships, purchase orders (POs), and warehouse receipt vouchers.
 
 ### 4. 🔌 External Integration & UI Design
-1. **[Host & Browser Integration](guides/INTEGRATION.md)**: Session-scoped HTTP API contracts and zero-NPM 3rd-party embedding (`/v1/archava.js`).
-2. **[Workspace Appearance](design/WORKSPACE_APPEARANCE.md)**: Charcoal & Amber visual design system, token palette, light/dark behavior, and layout evidence.
+1. **[Host & Browser Integration](architecture/INTEGRATION.md)**: Session-scoped HTTP API contracts and zero-NPM 3rd-party embedding (`/v1/archava.js`).
+2. **[Workspace Appearance](product/design/WORKSPACE_APPEARANCE.md)**: Charcoal & Amber visual design system, token palette, light/dark behavior, and layout evidence.
 
 ### 5. 🚢 Production Deployment & Release Gates
 1. **[Launch Readiness Plan](product/LAUNCH_READINESS.md)**: Canonical 13-gate release tracker (G01–G13), acceptance criteria, and audit evidence.
@@ -43,11 +43,9 @@ Navigate directly to what you need based on your role or objective:
 | :--- | :--- | :--- |
 | [`DEVELOPER_GUIDE.md`](DEVELOPER_GUIDE.md) | Local development setup, CLI commands, and test suites | Living Reference |
 | [`GLOSSARY.md`](GLOSSARY.md) | Authoritative domain dictionary and invariant terminology | Living Reference |
-| [`architecture/`](architecture/README.md) | Technical system design, crate boundaries, and ADR ledger | Living Reference |
+| [`architecture/`](architecture/README.md) | Technical system design, crate boundaries, ADR ledger, and integration contracts | Living Reference |
 | [`modules/`](modules/README.md) | Specifications for all 16 ERP business domains | Living Reference |
-| [`product/`](product/README.md) | Product PRDs, roadmap, launch readiness, and market research | Living Reference |
-| [`guides/`](guides/INTEGRATION.md) | Host API authentication contracts and browser embed SDK | Living Reference |
-| [`design/`](design/README.md) | Workspace visual specifications, tokens, and UI captures | Living Reference |
+| [`product/`](product/README.md) | Product PRDs, roadmap, launch readiness, and Charcoal & Amber design system | Living Reference |
 | [`archive/`](archive/README.md) | Immutable audit trails, historical research, and pre-Rust records | Frozen Archive |
 
 ---

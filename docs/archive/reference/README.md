@@ -15,4 +15,4 @@ These references predate the root Rust cutover in whole or in part. They remain 
 | [LIBRARY_CONSUMPTION.md](LIBRARY_CONSUMPTION.md) | Internal library consumption — M1/M2 and local host |
 | [PROVIDER_RUNTIME.md](PROVIDER_RUNTIME.md) | Durable provider budget and diagnostic metadata |
 
-Current replacements: [durable commands](../../architecture/DURABLE_ACT_OPERATIONS.md), [host integration](../../guides/INTEGRATION.md#host-integration), and [browser embedding](../../guides/INTEGRATION.md#browser-embedding). Old operating procedures are not acceptance evidence for the Rust runtime.
+Current replacements: [durable commands](../../architecture/DURABLE_ACT_OPERATIONS.md), [host integration](../../architecture/INTEGRATION.md#host-integration), and [browser embedding](../../architecture/INTEGRATION.md#browser-embedding). Old operating procedures are not acceptance evidence for the Rust runtime.

@@ -6,6 +6,7 @@ This is the home for immutable review evidence, migration records and superseded
 | --- | --- |
 | [Audits](audits/README.md) | Dated findings, remediation and execution evidence |
 | [Historical guides and drafts](history/README.md) | Superseded product/architecture/design material, task prompts and progress ledgers |
+| [Product and market research](product-research/README.md) | Early business models, kit taxonomy, and migration tradeoff research |
 | [Rust migration](rust/README.md) | Frozen cutover decisions, coverage contracts and handoff records |
 | [Earlier platform contracts](reference/README.md) | Legacy CRM/provider/library procedures from before the root Rust cutover |
 

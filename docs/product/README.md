@@ -1,8 +1,8 @@
-# Product requirements and research
+# Product requirements, design, and roadmap
 
-This collection separates desired behavior, earlier proposals and dated research. A requirement is not implementation evidence. Start with [current architecture](../architecture/README.md) and [verification records](../archive/README.md) for what is implemented and what was actually checked.
+This collection houses active product requirements, user interface specifications, domain roadmap definitions, and design tokens. A requirement or design study is not runtime implementation evidence. Start with [current architecture](../architecture/README.md) and [verification records](../archive/README.md) for what is implemented and what was actually checked.
 
-For ongoing delivery, use the [E2E and launch readiness plan](LAUNCH_READINESS.md) as the canonical scope, phase, acceptance and evidence tracker. The requirements and research below supply context; their historical status does not replace that tracker.
+For ongoing delivery, use the [E2E and launch readiness plan](LAUNCH_READINESS.md) as the canonical scope, phase, acceptance and evidence tracker.
 
 ## Requirements and planning
 
@@ -15,14 +15,13 @@ For ongoing delivery, use the [E2E and launch readiness plan](LAUNCH_READINESS.m
 | [Platform reuse proposal](ARCHAVA_REUSABLE_PLATFORM_PROPOSAL.md) | Earlier package/workspace proposal, retained as planning input |
 | [Strategy and evolution](ARCHAVA_STRATEGY_AND_EVOLUTION.md) | Historical strategy/vision, not current runtime authority |
 
-## Dated research
+## Workspace design system
 
-| Document | Research scope |
+| Resource | Purpose |
 | --- | --- |
-| [Business models](BUSINESS_MODEL_RESEARCH_2026-10-08.md) | Business patterns and capability composition |
-| [Starter-kit coverage](STARTER_KIT_COVERAGE_RESEARCH_2026-10-10.md) | Kit taxonomy, coverage and reusable boundaries |
-| [Reusable platform](REUSABLE_PLATFORM_RESEARCH.md) | Earlier ownership/distribution research |
-| [Rust migration](RUST_MIGRATION_RESEARCH_2026-10-14.md) | Dated migration tradeoffs; not a fresh benchmark |
-| [Jev provider and evaluation](JEV_RESEARCH.md) | Consolidated historical provider contract, SHADOW metrics and promotion limits |
+| [Workspace appearance](design/WORKSPACE_APPEARANCE.md) | Single canonical reference: current Charcoal & Amber design tokens, light/dark modes, and layout evidence |
+| [Design overview & studies](design/README.md) | Design index, interactive visual direction studies, and reference captures |
 
-[Source catalogues](evidence/README.md) preserve the original research JSON. Provider availability, pricing, advisories, licences and legal assumptions need fresh primary-source verification when making a new decision; this consolidation did not revalidate them. Superseded implementation plans remain in [history](../archive/history/plans/README.md).
+## Historical research
+
+Early market research, starter-kit coverage audits, and initial migration evaluations from October 2026 are archived in [historical product research](../archive/product-research/README.md). Superseded implementation plans remain in [history](../archive/history/plans/README.md).

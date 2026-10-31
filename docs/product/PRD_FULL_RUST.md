@@ -821,7 +821,7 @@ folder kit kosong sebagai pengganti implemented behavior.
 
 - [Master PRD](../archive/history/PRD.md), [agent rules](../archive/history/agent.md), [architecture](../architecture/README.md).
 - [Source audit 14 Oktober](../archive/audits/PROJECT_AUDIT_2026-10-14.md), [KIT-09 review 14 Oktober](../archive/audits/ARCHXY_KIT09_REVIEW_2026-10-14.md), [review 15 Oktober](../archive/audits/ARCHXY_KIT09_REVIEW_2026-10-15.md).
-- [Prior Rust tradeoff research](RUST_MIGRATION_RESEARCH_2026-10-14.md), [Archxy pilot task](../archive/history/tasks/ARCHXY_RUST_PILOT_TASK.md), [active implementation task](../archive/history/tasks/ARCHXY_IMPLEMENTATION_TASK.md).
+- [Prior Rust tradeoff research](../archive/product-research/RUST_MIGRATION_RESEARCH_2026-10-14.md), [Archxy pilot task](../archive/history/tasks/ARCHXY_RUST_PILOT_TASK.md), [active implementation task](../archive/history/tasks/ARCHXY_IMPLEMENTATION_TASK.md).
 - [Kit implementation ledger](../archive/history/progress/STARTER_KIT_IMPLEMENTATION.md), [capability matrix](BUSINESS_CAPABILITY_MATRIX.md), typed kit catalogue (historical source: `packages/kits/src/catalogue.ts`).
 - [Current source release catalogue](../../config/library-release.v1.json), assembly contract (historical source: `packages/config/src/assembly.ts`), [release verifier](../../crates/ops/src/release.rs).
 - Identity hashing (historical source: `packages/identity-pg/src/password.ts`), Act composition boundary (historical source: `packages/act/src/index.ts`), provider runtime (historical source: `packages/provider-runtime/src/index.ts`).

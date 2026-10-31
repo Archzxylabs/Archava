@@ -153,6 +153,6 @@ Start with the [documentation audit](ARCHAVA_DOCS_AUDIT_2026-10-29.md), [reposit
 - [Evidence packets](evidence/): command logs, structured results, screenshots and producer snapshots. Scripts here are frozen evidence, not current repository tooling.
 - [Historical handoffs](historical_handoff/): integration packets and diffs. Do not apply them to the current tree merely because they are preserved.
 - [ERP/CRM design audit](ARCHAVA_ERP_CRM_DESIGN_AUDIT_2026-10-28.html): dated visual and workflow review.
-- [Research sources](../../product/evidence/README.md): research catalogues relocated out of audit because they are not executed software checks.
+- [Research sources](../product-research/evidence/README.md): research catalogues relocated out of audit because they are not executed software checks.
 
 Do not relabel old failures or historical source hashes as current passes. Add a new dated result when a check is rerun.

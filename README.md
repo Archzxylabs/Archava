@@ -11,7 +11,7 @@ The Cargo workspace lives at the repository root. Business engines, HTTP APIs, a
 - [Documentation index](docs/README.md)
 - [Verification records](docs/README.md#verification-and-document-ownership)
 - [Deployment](deploy/README.md)
-- [Workspace design](docs/design/WORKSPACE_APPEARANCE.md)
+- [Workspace design](docs/product/design/WORKSPACE_APPEARANCE.md)
 - [Contributing](CONTRIBUTING.md) and [security reporting](SECURITY.md)
 
 ## Repository map

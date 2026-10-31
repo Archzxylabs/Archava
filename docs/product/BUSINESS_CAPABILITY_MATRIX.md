@@ -4,14 +4,14 @@
 > **Status: requirements/proposal reference; implementation acceptance is separate.** Reviewed for documentation ownership on 29 October 2026. Use the [current architecture](../architecture/README.md) and [developer guide](../DEVELOPER_GUIDE.md) for the active workspace. Original versions, commands, and acceptance statements below describe their recorded context; this page is not fresh release evidence.
 
 **Versi perencanaan:** 1, 8 Oktober 2026. **Baseline kode:** `1fad26a`.
-**Dasar:** [riset dan keputusan](BUSINESS_MODEL_RESEARCH_2026-10-08.md),
-[sumber primer](evidence/2026-10-08-business-model-sources.json), PRD §§41–49.
+**Dasar:** [riset dan keputusan](../archive/product-research/BUSINESS_MODEL_RESEARCH_2026-10-08.md),
+[sumber primer](../archive/product-research/evidence/2026-10-08-business-model-sources.json), PRD §§41–49.
 
 Peta ini mencakup 13 pola operasi, 20 contoh konteks industri, dan 25 kapabilitas
 bisnis. Ini katalog discovery yang dapat berkembang. Baris kandidat belum menjadi
 implementasi, harga, runtime module id, dependency graph, atau janji delivery.
 
-[Riset starter kit 10 Oktober](STARTER_KIT_COVERAGE_RESEARCH_2026-10-10.md) menambahkan
+[Riset starter kit 10 Oktober](../archive/product-research/STARTER_KIT_COVERAGE_RESEARCH_2026-10-10.md) menambahkan
 katalog kandidat 40 keluarga kit (24 bisnis umum + 16 sektor khusus), komposisi,
 status dan celah terhadap 22 kategori KBLI 2025. Peta pola di bawah tetap menjadi
 dasar discovery; jumlah pola, kapabilitas, kit dan template mempunyai denominator

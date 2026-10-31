@@ -19,9 +19,9 @@ docs/
 | Previous documents | Current home |
 | --- | --- |
 | Root architecture overview + architecture index | [Architecture](../architecture/README.md) |
-| Host guide + embed guide + integration index | [Host and browser integration](../guides/INTEGRATION.md) |
+| Host guide + embed guide + integration index | [Host and browser integration](../architecture/INTEGRATION.md) |
 | Plans/research indexes and their collections | [Product requirements and research](../product/README.md) |
-| Jev provider research + SHADOW evaluation readiness | [Jev research](../product/JEV_RESEARCH.md) |
+| Jev provider research + SHADOW evaluation readiness | [Jev research](product-research/JEV_RESEARCH.md) |
 | Root build status | [Frozen verification checkpoint](audits/BUILD_STATUS_2026-10-29.md); the current docs index links the latest consolidation checks |
 | Audit, history, migration and earlier contracts | [Archive index](README.md) |
 

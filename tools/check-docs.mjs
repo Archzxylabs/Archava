@@ -10,6 +10,7 @@ const archiveIndexes = new Set([
   'archive/history/design/README.md', 'archive/history/plans/README.md',
   'archive/history/progress/README.md',
   'archive/history/subsystem-drafts-2026-10-29/README.md',
+  'archive/product-research/README.md',
 ])
 const entryGuides = [
   'README.md', 'CONTRIBUTING.md', 'SECURITY.md', 'config/README.md',

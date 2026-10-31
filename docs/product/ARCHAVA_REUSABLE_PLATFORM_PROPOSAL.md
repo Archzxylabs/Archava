@@ -5,7 +5,7 @@
 
 Tanggal: 7 Oktober 2026. Baseline source: `main`, commit `63b221b`.
 
-Status: **supporting audit/proposal; product scope sekarang mengikuti [PRD v2](../archive/history/PRD.md) dan [riset](REUSABLE_PLATFORM_RESEARCH.md). Dokumen ini bukan bukti implementasi.**
+Status: **supporting audit/proposal; product scope sekarang mengikuti [PRD v2](../archive/history/PRD.md) dan [riset](../archive/product-research/REUSABLE_PLATFORM_RESEARCH.md). Dokumen ini bukan bukti implementasi.**
 
 **ARCHZXY adalah company. Archava adalah produk unggulan ARCHZXY.** Fokus repository ini adalah core, SDK, adapter, action modules, configuration dan reference implementations yang dapat digunakan kembali di proyek berbeda. Website ARCHZXY akan dibangun di luar folder/repo Archava dan menjadi konsumen produk melalui SDK/API.
 
