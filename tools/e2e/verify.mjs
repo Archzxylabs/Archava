@@ -203,6 +203,11 @@ try {
   const cdpPort=await until(()=> { const f=join(profile,'DevToolsActivePort');return existsSync(f)&&Number(readFileSync(f,'utf8').split('\n')[0]) },'Chromium DevTools endpoint')
   page=await Page.open(cdpPort)
   await page.send('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false})
+  // Reference pickers load their options on a real `focus` event, which a
+  // headless page only fires while it holds focus. Without this the page was
+  // focused only as a side effect of the media segment's mouse input, so the
+  // product probes passed with ARCHAVA_E2E_MEDIA=1 and timed out without it.
+  await page.send('Emulation.setFocusEmulationEnabled',{enabled:true})
   async function login(user) {
     await page.navigate(`${origin}/app`)
     await page.fill(testId('login-username'),`${user}@archava.test`);await page.fill(testId('login-password'),'correct horse battery staple');await page.fill(testId('login-tenant'),'acme-retail');await page.click(testId('login-submit'))
