@@ -72,7 +72,7 @@ The persistent bootstrap embeds its mounted files and the test fixture reads the
 
 - Current code: root Cargo files, `crates/`, `migrations/`, `static/`, `config/`, and `deploy/`.
 - Configuration ownership: `config/` holds the shared release/tooling catalogue; the pricing reference JSON lives in `crates/pricing/tests/fixtures/`; the retired template catalogue is in `docs/archive/history/config/`. The pricing engine accepts caller-supplied data rather than loading product prices from the repository.
-- Current helpers: `tools/check-structure.mjs`, `tools/rust/{verify,build-slice,dev-slice,run-persistent}.mjs`, and `tools/release/sbom.mjs`.
+- Current helpers: `tools/check-structure.mjs`, `tools/check-modules.mjs`, `tools/rust/{verify,build-slice,dev-slice,run-persistent}.mjs`, and `tools/release/sbom.mjs`.
 - Removed TypeScript-era tooling and consumers: recoverable from git history, not part of the current gates.
 - Current documentation entry points: `docs/README.md` and `docs/DEVELOPER_GUIDE.md`. Technical architecture (including host/embed [integration](INTEGRATION.md)), modules, product planning & design, and archived records have four dedicated directories.
 - Local database state/backups: ignored `.local/`. Generated compilation artifacts: ignored `target/`. These are not duplicate product layers and are not deleted as source cleanup.
@@ -95,6 +95,7 @@ These source maps distinguish implemented library behavior, host wiring and rema
 
 | Document | Purpose |
 | --- | --- |
+| [Module registry](MODULE_REGISTRY.md) | One descriptor per business module, its consumers, the registration gate and what is not yet covered |
 | [Agent runtime](../modules/AGENT_RUNTIME.md) | Durable conversations, reviewed goals, current-authority continuation and receipt reports |
 | [Native operations](../modules/NATIVE_OPERATIONS.md) | Installed form contracts, scoped reads, Owner configuration and receipt recovery |
 | [Reviewed workflows](../modules/REVIEWED_WORKFLOWS.md) | Atomic imports, real proactive actions and approved mission execution |

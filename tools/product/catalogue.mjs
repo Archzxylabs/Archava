@@ -1,22 +1,8 @@
-/** Current business boundaries. This inventory does not grant product acceptance. */
-export const modules = [
-  ['crm','CRM','crm','crm','/contacts','/app/contacts','contact-create'],
-  ['commerce','Commerce','commerce','erp_commerce','/erp/commerce/workspace','/app/erp?module=catalog','product-save'],
-  ['purchasing','Purchasing','purchasing','erp_purchasing','/erp/purchasing/workspace','/app/erp?module=purchasing','purchase-save'],
-  ['billing','Billing','billing','erp_billing','/erp/billing/workspace','/app/erp?module=invoices','invoice-save'],
-  ['support','Support','support','erp_support','/erp/support/cases','/app/erp?module=support','case-save'],
-  ['organizations','Organizations','organizations','erp_organizations',null,null,null],
-  ['accounting','Accounting','accounting','erp_accounting','/erp/accounting/workspace',null,null],
-  ['proposals','Proposals/change requests','proposals','erp_proposals',null,null,null],
-  ['projects','Projects','projects','erp_projects',null,null,null],
-  ['foodservice','Foodservice','foodservice','erp_foodservice',null,null,null],
-  ['scheduling','Resource reservations','scheduling','erp_scheduling',null,null,null],
-  ['accommodation','Accommodation','accommodation','erp_accommodation',null,null,null],
-  ['assets','Assets','assets','erp_assets',null,null,null],
-  ['subscriptions','Subscriptions','subscriptions','erp_subscriptions','/erp/subscriptions/subscriptions',null,null],
-  ['attendance','Attendance','attendance','erp_attendance','/erp/attendance/sessions',null,null],
-  ['laundry','Laundry','laundry','erp_laundry','/erp/laundry/orders',null,null],
-  ['field','Field services','field_services','erp_field_services','/erp/field/jobs',null,null],
-  ['fulfillment','Fulfillment','fulfillment','erp_fulfillment','/erp/fulfillment/jobs',null,null],
-  ['education','Formal education','formal_education','erp_formal_education','/erp/education/enrollments',null,null],
-].map(([id,label,domain,suite,readPath,uiPath,control])=>({id,label,domain,suite,readPath:readPath??`/erp/${id}/workspace`,uiPath:uiPath??`/app/erp?module=${id}`,control:control??`module-${id}-create`}))
+/** Current business boundaries, read from the module registry. This inventory does not grant product acceptance. */
+import { readFileSync } from 'node:fs'
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const registry = JSON.parse(readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '../../config/modules.v1.json'), 'utf8'))
+
+export const modules = registry.modules.map(({ id, label, source, suite, readPath, uiPath, control }) => ({ id, label, domain: source, suite, readPath, uiPath, control }))

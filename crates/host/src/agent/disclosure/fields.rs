@@ -2,51 +2,10 @@
 use archava_own::{DataClass, DisclosurePolicy};
 use serde_json::{Map, Value};
 
+/// The collections a module may project to the provider, from the module
+/// registry (`config/modules.v1.json`). Unknown modules project nothing.
 pub(super) fn collections(module: &str) -> &'static [&'static str] {
-    match module {
-        "crm" => &["items", "contacts"],
-        "commerce" => &["products", "orders"],
-        "purchasing" => &["suppliers", "offers", "orders", "documents"],
-        "billing" => &["invoices"],
-        "support" => &["items", "cases"],
-        "organizations" => &["companies", "parties", "organizations", "affiliations"],
-        "projects" => &["projects", "tasks", "milestones"],
-        "proposals" => &[
-            "proposals",
-            "scope_items",
-            "scope_versions",
-            "change_requests",
-        ],
-        "foodservice" => &[
-            "tables",
-            "menu_items",
-            "recipe_versions",
-            "recipe_components",
-            "tickets",
-            "ticket_lines",
-        ],
-        "scheduling" => &["resources", "reservations"],
-        "accommodation" => &["properties", "room_types", "rooms", "stays"],
-        "assets" => &["assets", "custody_events", "maintenance_records"],
-        "subscriptions" => &["subscriptions"],
-        "attendance" => &["sessions"],
-        "laundry" => &["orders"],
-        "field" | "fulfillment" => &["jobs"],
-        "education" => &["enrollments"],
-        "accounting" => &[
-            "books",
-            "accounts",
-            "periods",
-            "journals",
-            "invoice_policies",
-            "invoice_sources",
-            "purchase_policies",
-            "purchase_sources",
-            "stock_policies",
-            "stock_sources",
-        ],
-        _ => &[],
-    }
+    archava_domain::modules::get(module).map_or(&[], |module| module.collections)
 }
 fn key(field: &str) -> String {
     field

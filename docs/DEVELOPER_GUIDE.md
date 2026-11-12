@@ -27,12 +27,13 @@ node tools/rust/verify.mjs --offline --lib --wasm
 node tools/rust/verify.mjs --plan
 ```
 
-The default checks structure, maintained documentation links, the helper regression tests, formatting, workspace Clippy with warnings denied, and all Rust tests with serial integration execution. `--lib` runs only library tests; `--wasm` includes the `wasm32-unknown-unknown` boundary gates for core, domain, and slice hydration. `--plan` prints commands without running them. The helper stops on the first failed or interrupted child.
+The default checks structure, module registration, maintained documentation links, the helper regression tests, formatting, workspace Clippy with warnings denied, and all Rust tests with serial integration execution. `--lib` runs only library tests; `--wasm` includes the `wasm32-unknown-unknown` boundary gates for core, domain, and slice hydration. `--plan` prints commands without running them. The helper stops on the first failed or interrupted child.
 
 The underlying commands are also available directly:
 
 ```bash
 node tools/check-structure.mjs
+node tools/check-modules.mjs
 node tools/check-docs.mjs
 node --test tools/test/structure.test.mjs tools/test/docs.test.mjs tools/test/verify.test.mjs tools/test/native-provenance.test.mjs
 cargo fmt --all --check
@@ -44,12 +45,13 @@ Use PostgreSQL tooling for full integration coverage. Tests provision owned disp
 
 ## Public Domain catalogues
 
-`config/operator-actions.v1.json` and `config/accounting-currencies.v1.json` are
+`config/operator-actions.v1.json`, `config/accounting-currencies.v1.json` and
+`config/modules.v1.json` (the [module registry](architecture/MODULE_REGISTRY.md)) are
 canonical shared inputs. Run `node tools/rust/domain-assets.mjs --write` after
 editing them, then verify normally. Their exact generated copies live inside
 `crates/domain/embedded/` so a packaged Domain crate does not require the parent
 checkout. `node tools/rust/domain-assets.mjs --check` is read-only; structure
-verification and build provenance refuse missing or stale copies. Only the two
+verification and build provenance refuse missing or stale copies. Only these three
 public catalogues are copied, never deployment credentials.
 
 ## Build the application

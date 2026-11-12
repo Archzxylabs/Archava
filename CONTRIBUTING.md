@@ -27,6 +27,8 @@ Run `node tools/check-structure.mjs` when changing dependencies, migration paths
 
 ## Adding a module
 
+Start with a descriptor in `config/modules.v1.json` and follow [the module registry procedure](docs/architecture/MODULE_REGISTRY.md#adding-a-module); `node tools/check-modules.mjs --explain <id>` lists every registration point that is still missing.
+
 Define the domain invariant, transactional adapter, authorized HTTP contract, and UI behavior separately. Add migrations with the corresponding release/readiness registration, positive and negative integration coverage, and a module specification under `docs/modules/`. A usable end-to-end flow needs its own proof beyond domain tests.
 
 ## Reviews

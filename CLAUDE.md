@@ -18,7 +18,8 @@ cargo test -p archava-host --test erp_billing --locked -- --test-threads=1
 cargo test -p archava-host --test crm <test_name> --locked -- --test-threads=1
 
 cargo check -p archava-host                         # cheapest feedback; release builds use LTO and are slow
-node tools/rust/domain-assets.mjs --write           # after editing config/operator-actions.v1.json or accounting-currencies.v1.json
+node tools/rust/domain-assets.mjs --write           # after editing config/{modules,operator-actions,accounting-currencies}.v1.json
+node tools/check-modules.mjs --explain laundry      # registration points for one business module
 node tools/rust/dev-slice.mjs run                   # disposable-PostgreSQL preview at /app
 ```
 
@@ -48,11 +49,14 @@ How one feature spans the layers (e.g. an ERP domain such as billing):
 | SQL + tenant-bound transaction | `crates/adapters/src/erp/<domain>.rs` |
 | HTTP handler, authority checks | `crates/host/src/erp/<domain>.rs`, wired in `crates/host/src/routes/` |
 | UI | `crates/slice/src/operations/`, `static/workspace.css` |
+| Declaration | one descriptor in `config/modules.v1.json` (the module registry) |
 | Schema | `migrations/<domain>-pg/NNN_*.sql` + manifest + embed + fixture (four-step registration in `AGENTS.md`) |
 | Integration test | `crates/host/tests/erp_<domain>.rs` (owns a disposable PostgreSQL cluster) |
 | Spec | `docs/modules/<DOMAIN>_MODULE.md` |
 
 Things that are not obvious from any single file:
+
+- **Module registry.** `config/modules.v1.json` declares each business module once; agent routing keywords, the provider-readable collections and the product catalogue read it, and `node tools/check-modules.mjs` checks every Rust registration point against it. When adding or moving a module, run `node tools/check-modules.mjs --explain <id>` — it lists what is missing and where. `docs/architecture/MODULE_REGISTRY.md` has the procedure and the per-module tables that are still hand-maintained.
 
 - **Mounted ≠ present.** The actual surface is `crates/host/src/router.rs` + `routes/` and the ledger constants in `crates/slice/src/bin/archava_server.rs`. Seven SQL files are deliberately unmounted and allowlisted in `check-structure.mjs`.
 - **Two roles, two phases.** `archava_owner` applies migrations (via `archava-ops`); the server runs as non-owner `archava_runtime`, sets a transaction-local tenant, and refuses to boot on an owner/superuser/`BYPASSRLS` URL or when DB migration history differs from the embedded checksums. RLS gives tenant isolation only — grants/scope/role are still checked in the host from session + database, never from request bodies.

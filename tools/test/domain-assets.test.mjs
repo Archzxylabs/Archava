@@ -7,11 +7,11 @@ import {DOMAIN_ASSETS,domainAssets} from '../rust/domain-assets.mjs'
 function fixture(){const root=mkdtempSync(join(tmpdir(),'archava-domain-assets-'));mkdirSync(join(root,'config'));mkdirSync(join(root,'crates/domain'),{recursive:true});for(const[path]of DOMAIN_ASSETS)writeFileSync(join(root,path),JSON.stringify({schemaVersion:1,name:path})+'\n');return root}
 test('standalone domain embeds preserve exact canonical bytes and declared public inputs only',()=>{
  const root=fixture()
- try{writeFileSync(join(root,'config/private.env'),'DO_NOT_COPY=synthetic\n');const result=domainAssets(root,{write:true});assert.equal(result.length,2);for(const r of result)assert.deepEqual(readFileSync(join(root,r.embedded)),readFileSync(join(root,r.canonical)));assert.equal(readdirSync(join(root,'crates/domain/embedded')).length,2);assert.deepEqual(domainAssets(root),result)}finally{rmSync(root,{recursive:true,force:true})}
+ try{writeFileSync(join(root,'config/private.env'),'DO_NOT_COPY=synthetic\n');const result=domainAssets(root,{write:true});assert.equal(result.length,DOMAIN_ASSETS.length);for(const r of result)assert.deepEqual(readFileSync(join(root,r.embedded)),readFileSync(join(root,r.canonical)));assert.equal(readdirSync(join(root,'crates/domain/embedded')).length,DOMAIN_ASSETS.length);assert.deepEqual(domainAssets(root),result)}finally{rmSync(root,{recursive:true,force:true})}
 })
 test('missing or stale public data fails instead of packaging an old catalogue',()=>{
  const root=fixture()
- try{assert.throws(()=>domainAssets(root),/missing or stale/);assert.equal(existsSync(join(root,'crates/domain/embedded')),false);domainAssets(root,{write:true});writeFileSync(join(root,DOMAIN_ASSETS[0][0]),'{"schemaVersion":2}\n');assert.throws(()=>domainAssets(root),/missing or stale/);domainAssets(root,{write:true});assert.equal(domainAssets(root).length,2)}finally{rmSync(root,{recursive:true,force:true})}
+ try{assert.throws(()=>domainAssets(root),/missing or stale/);assert.equal(existsSync(join(root,'crates/domain/embedded')),false);domainAssets(root,{write:true});writeFileSync(join(root,DOMAIN_ASSETS[0][0]),'{"schemaVersion":2}\n');assert.throws(()=>domainAssets(root),/missing or stale/);domainAssets(root,{write:true});assert.equal(domainAssets(root).length,DOMAIN_ASSETS.length)}finally{rmSync(root,{recursive:true,force:true})}
 })
 test('an embedded data symlink cannot redirect a catalogue synchronization',()=>{
  const root=fixture(),outside=mkdtempSync(join(tmpdir(),'archava-domain-assets-outside-'))

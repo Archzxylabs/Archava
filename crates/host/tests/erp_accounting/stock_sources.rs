@@ -240,7 +240,7 @@ async fn actual_stock_costs_restock_original_accounts_after_policy_change_and_po
             first_journal = journal.clone();
         }
     }
-    let totals:Vec<(String,String)>=sqlx::query_as("SELECT a.code,sum(l.debit_minor-l.credit_minor)::text FROM archava_accounting.journal_lines l JOIN archava_accounting.journals j ON j.tenant_id=l.tenant_id AND j.id=l.journal_id JOIN archava_accounting.accounts a ON a.tenant_id=l.tenant_id AND a.id=l.account_id WHERE j.state='posted' GROUP BY a.code ORDER BY a.code").fetch_all(&s.p.f.admin_pool).await.unwrap();
+    let totals:Vec<(String,String)>=sqlx::query_as("SELECT a.code,sum(l.debit_minor-l.credit_minor)::text FROM archava_accounting.journal_lines l JOIN archava_accounting.journals j ON j.tenant_id=l.tenant_id AND j.id=l.journal_id JOIN archava_accounting.accounts a ON a.tenant_id=l.tenant_id AND a.id=l.account_id WHERE j.state='posted' GROUP BY a.code ORDER BY a.code COLLATE \"C\"").fetch_all(&s.p.f.admin_pool).await.unwrap();
     assert_eq!(
         totals,
         vec![

@@ -43,6 +43,7 @@ jobs:
       - name: Repository boundaries and helper regressions
         run: |
           node tools/check-structure.mjs
+          node tools/check-modules.mjs
           node tools/check-docs.mjs
           node --test tools/test/*.test.mjs
 

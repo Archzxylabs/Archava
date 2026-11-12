@@ -7,6 +7,7 @@ Archava is a Rust modular monolith: 22 Cargo workspace members, an Axum/PostgreS
 - `node tools/rust/verify.mjs` — the real gate: structure, docs links, helper tests, `cargo fmt --check`, workspace Clippy with `-D warnings`, then all tests with `--test-threads=1`.
 - `node tools/rust/verify.mjs --lib --offline --wasm` — fast complete gate (structure, docs, tool tests, fmt, Clippy, WASM boundary, and library tests). Add `--plan` to inspect commands.
 - `node tools/check-structure.mjs` — run after changing dependencies, migrations, or repository tooling. CI enforces it.
+- `node tools/check-modules.mjs` — every business module in `config/modules.v1.json` is completely registered. `--explain <id>` lists each registration point and what to add where; use it when adding or moving a module.
 - `node tools/check-docs.mjs` — link gate for maintained Markdown.
 - One suite or test: `cargo test -p archava-host --test crm the_contact_list_reads_real_rows_for_a_granted_reader --locked -- --test-threads=1`.
 - `node tools/rust/build-slice.mjs` — release server, fixture preview, WASM/bindgen payload, and provenance manifest.
@@ -44,6 +45,10 @@ cargo check --target wasm32-unknown-unknown -p archava-slice --lib --features hy
 `sqlx` is intentionally built without `macros`: do not add `sqlx::query!`/`query_as!` or any build-time database connection. Use runtime `sqlx::query` and explicit transactions. Resolve actor, tenant, grant, and role from the session and database, never from request-body claims. All CRM and ERP persistence is unified inside `crates/adapters` under atomic `FORCE RLS` transactions (ADR-014, ADR-018). HTTP routes are modularized in `crates/host/src/routes/` (ADR-015), and assistant turn flow is in `crates/host/src/assistant/` (ADR-017).
 
 A crate or migration existing does not mean the host mounts it. Check `crates/host/src/router.rs` and the ledger constants in `crates/slice/src/bin/archava_server.rs` for the actual surface.
+
+## Business modules
+
+`config/modules.v1.json` is the single declaration of each installed module: schema, ledger, source stem, test suite, and what the agent may route to and read. Agent keyword routing, the provider projection's readable collections and the product catalogue read it; do not reintroduce per-module tables for those. After editing it or the form catalogue, run `node tools/rust/domain-assets.mjs --write`. Registration points that are Rust code (module declarations, routes, dispatch, embedded migrations, fixture mapping) are verified by `tools/check-modules.mjs`. See `docs/architecture/MODULE_REGISTRY.md` for the descriptor, the add-a-module procedure and what is not yet covered.
 
 ## Migrations and embedded assets
 

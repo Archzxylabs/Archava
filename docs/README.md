@@ -22,7 +22,7 @@ Navigate directly to what you need based on your role or objective:
 2. **[Ava Cognitive Architecture](architecture/LAYA_AGENTIC_SYSTEM.md)**: The 4-pillar agentic architecture (Sensory Modalities, Authority Ladder, Memory, and Execution).
 3. **[Orbz Agentic Memory](architecture/ORBZ_MEMORY_ARCHITECTURE.md)**: Bi-temporal knowledge graph, semantic nodes, and progressive context disclosure (L0/L1/L2).
 4. **[Cockpit Flight Engine](architecture/COCKPIT_TASK_ARCHITECTURE.md)**: Flight Plan DAG, durable execution state machines, and L4/L5 Human Supervisor Gate.
-5. **[Architecture Decisions (ADR Ledger)](architecture/DECISIONS.md)**: Living ledger of architectural decisions (ADR-014 through ADR-019).
+5. **[Architecture Decisions (ADR Ledger)](architecture/DECISIONS.md)**: Living ledger of architectural decisions (ADR-014 through ADR-020).
 
 ### 3. 💼 ERP & CRM Business Modules
 1. **[Business Modules Overview](modules/README.md)**: Domain contracts and evidence for the 18 mounted business domains.

@@ -14,6 +14,7 @@ This document succeeds the [Historical Rust Decisions](../archive/rust/DECISIONS
 - [ADR-017: Deepen Assistant Conversation Flow & Session Extraction](#adr-017-deepen-assistant-conversation-flow--session-extraction)
 - [ADR-018: Normalize CRM as First-Class ERP Business Domain & Harmonize Seams](#adr-018-normalize-crm-as-first-class-erp-business-domain--harmonize-seams)
 - [ADR-019: Documentation Harmonization, Canonical Domain Glossary & Zero-Redundancy Tooling Gate](#adr-019-documentation-harmonization-canonical-domain-glossary--zero-redundancy-tooling-gate)
+- [ADR-020: Module Registry as the Single Module Declaration](#adr-020-module-registry-as-the-single-module-declaration)
 
 ---
 
@@ -307,3 +308,34 @@ The compatibility re-export is gone. The adapter now lives at `crates/adapters/s
    Synchronized SQL migration counts to 44 files across 30 ledgers (37 mounted, 7 unmounted) in `docs/architecture/README.md`. Clarified Ava as the sovereign persona in `docs/architecture/LAYA_AGENTIC_SYSTEM.md`.
 4. **Tooling Gate Completion (`tools/rust/verify.mjs`)**:
    Wired `native-provenance.test.mjs` into `verify.mjs` and guarded it with an assertion in `tools/test/verify.test.mjs`, elevating the internal Node test suite from 16 to 17 green tests.
+
+---
+
+## [ADR-020] Module Registry as the Single Module Declaration
+
+- **Status**: Completed (first increment)
+- **Date**: 2026-11-12
+- **Domain**: Modularity & Tooling Quality Gate
+- **Impacted Files**:
+  - [`config/modules.v1.json`](../../config/modules.v1.json)
+  - [`crates/domain/src/modules.rs`](../../crates/domain/src/modules.rs)
+  - [`crates/host/src/agent/planner.rs`](../../crates/host/src/agent/planner.rs)
+  - [`crates/host/src/agent/disclosure/fields.rs`](../../crates/host/src/agent/disclosure/fields.rs)
+  - [`tools/product/catalogue.mjs`](../../tools/product/catalogue.mjs)
+  - [`tools/check-modules.mjs`](../../tools/check-modules.mjs)
+  - [`tools/rust/domain-assets.mjs`](../../tools/rust/domain-assets.mjs)
+  - [`docs/architecture/MODULE_REGISTRY.md`](MODULE_REGISTRY.md)
+
+### Context & Friction
+
+A business module was modular to use and monolithic to create. One module (`laundry`) was named in 38 non-test files, and the same facts about it were held in separate hand-maintained tables: the product catalogue in `tools/product/catalogue.mjs`, the agent keyword table in `planner.rs`, the provider projection allowlist in `disclosure/fields.rs`, the form catalogue, the migration manifest, the server bootstrap and the fixture. Nothing verified that those tables agreed, and nothing told a contributor, human or agent, which registration points a new module still lacked.
+
+### Decision
+
+1. **One descriptor per module** in `config/modules.v1.json`: id, label, schema, ledger directory, source stem, integration suite, specification, read/UI paths, and the agent's routing keywords and readable collections. The initial 19 descriptors were extracted from the existing tables and compared against them; no routing order, keyword or readable collection changed.
+2. **Derive what is data.** `archava_domain::modules` compiles the embedded snapshot. Agent keyword routing, the provider projection's collection allowlist and the product catalogue now read it; their private tables are removed. Unknown modules still project nothing.
+3. **Check what is code.** `tools/check-modules.mjs` verifies the remaining registration points per module (form catalogue, manifest, embedded migrations, fixture mapping, source and `mod` declarations per layer, routes, extractor coverage, agent dispatch, suite, specification), refuses a module wired without a descriptor, and `--explain <id>` reports each point with the file to change. It runs in `tools/rust/verify.mjs` and CI.
+
+### Consequences
+
+Adding a module starts from a descriptor and a gate that states exactly what is missing. The number of hand-wired Rust registration points is not yet reduced beyond the three derived tables; the remaining ones, and the per-module tables the registry does not yet drive, are listed under "Not yet covered" in [the module registry](MODULE_REGISTRY.md).
