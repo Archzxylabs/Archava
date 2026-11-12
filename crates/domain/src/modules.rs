@@ -25,6 +25,12 @@ pub struct Module {
     pub ledger: &'static str,
     /// File stem under `erp/` in the domain, adapters and host crates.
     pub source: &'static str,
+    /// Label of the module's tab in the Operations workspace, for modules
+    /// served by the generic operator workspace. Modules with a dedicated
+    /// view have none.
+    pub tab: Option<&'static str>,
+    /// Whether the workspace read accepts a record id for a typed detail view.
+    pub typed_detail: bool,
     /// Position in agent keyword routing; lower ranks are matched first.
     pub rank: u32,
     /// Lower-case phrases that route an utterance to this module.
@@ -70,6 +76,8 @@ pub fn all() -> &'static [Module] {
                 namespace: leak(&m["namespace"], "namespace"),
                 ledger: leak(&m["ledger"], "ledger"),
                 source: leak(&m["source"], "source"),
+                tab: (!m["tab"].is_null()).then(|| leak(&m["tab"], "tab")),
+                typed_detail: m["typedDetail"].as_bool().unwrap_or(false),
                 rank: m["agent"]["rank"]
                     .as_u64()
                     .and_then(|rank| u32::try_from(rank).ok())
@@ -125,6 +133,16 @@ mod tests {
             assert_eq!(get(module.id).map(|m| m.namespace), Some(module.namespace));
         }
         assert!(get("unknown").is_none());
+    }
+
+    #[test]
+    fn workspace_tabs_are_optional_labels_in_catalogue_order() {
+        let tabs: Vec<_> = all().iter().filter_map(|m| m.tab).collect();
+        assert!(!tabs.is_empty());
+        assert!(tabs.iter().all(|label| !label.is_empty()));
+        assert!(all().iter().any(|m| m.tab.is_none()));
+        assert!(all().iter().any(|m| m.typed_detail));
+        assert!(all().iter().any(|m| !m.typed_detail));
     }
 
     #[test]

@@ -154,6 +154,7 @@
       "readPath": "/erp/organizations/workspace",
       "uiPath": "/app/erp?module=organizations",
       "control": "module-organizations-create",
+      "tab": "Organizations",
       "agent": {
         "rank": 14,
         "keywords": [
@@ -181,6 +182,7 @@
       "readPath": "/erp/accounting/workspace",
       "uiPath": "/app/erp?module=accounting",
       "control": "module-accounting-create",
+      "typedDetail": true,
       "agent": {
         "rank": 1,
         "keywords": [
@@ -217,6 +219,7 @@
       "readPath": "/erp/proposals/workspace",
       "uiPath": "/app/erp?module=proposals",
       "control": "module-proposals-create",
+      "tab": "Proposals",
       "agent": {
         "rank": 13,
         "keywords": [
@@ -243,6 +246,7 @@
       "readPath": "/erp/projects/workspace",
       "uiPath": "/app/erp?module=projects",
       "control": "module-projects-create",
+      "tab": "Projects",
       "agent": {
         "rank": 12,
         "keywords": [
@@ -268,6 +272,7 @@
       "readPath": "/erp/foodservice/workspace",
       "uiPath": "/app/erp?module=foodservice",
       "control": "module-foodservice-create",
+      "tab": "Food service",
       "agent": {
         "rank": 4,
         "keywords": [
@@ -301,6 +306,7 @@
       "readPath": "/erp/scheduling/workspace",
       "uiPath": "/app/erp?module=scheduling",
       "control": "module-scheduling-create",
+      "tab": "Scheduling",
       "agent": {
         "rank": 3,
         "keywords": [
@@ -329,6 +335,7 @@
       "readPath": "/erp/accommodation/workspace",
       "uiPath": "/app/erp?module=accommodation",
       "control": "module-accommodation-create",
+      "tab": "Accommodation",
       "agent": {
         "rank": 2,
         "keywords": [
@@ -358,6 +365,7 @@
       "readPath": "/erp/assets/workspace",
       "uiPath": "/app/erp?module=assets",
       "control": "module-assets-create",
+      "tab": "Assets",
       "agent": {
         "rank": 11,
         "keywords": [
@@ -385,6 +393,8 @@
       "readPath": "/erp/subscriptions/subscriptions",
       "uiPath": "/app/erp?module=subscriptions",
       "control": "module-subscriptions-create",
+      "tab": "Subscriptions",
+      "typedDetail": true,
       "agent": {
         "rank": 6,
         "keywords": [
@@ -409,6 +419,8 @@
       "readPath": "/erp/attendance/sessions",
       "uiPath": "/app/erp?module=attendance",
       "control": "module-attendance-create",
+      "tab": "Attendance",
+      "typedDetail": true,
       "agent": {
         "rank": 7,
         "keywords": [
@@ -434,6 +446,8 @@
       "readPath": "/erp/laundry/orders",
       "uiPath": "/app/erp?module=laundry",
       "control": "module-laundry-create",
+      "tab": "Laundry",
+      "typedDetail": true,
       "agent": {
         "rank": 5,
         "keywords": [
@@ -457,6 +471,8 @@
       "readPath": "/erp/field/jobs",
       "uiPath": "/app/erp?module=field",
       "control": "module-field-create",
+      "tab": "Field service",
+      "typedDetail": true,
       "agent": {
         "rank": 9,
         "keywords": [
@@ -481,6 +497,8 @@
       "readPath": "/erp/fulfillment/jobs",
       "uiPath": "/app/erp?module=fulfillment",
       "control": "module-fulfillment-create",
+      "tab": "Fulfillment",
+      "typedDetail": true,
       "agent": {
         "rank": 10,
         "keywords": [
@@ -505,6 +523,8 @@
       "readPath": "/erp/education/enrollments",
       "uiPath": "/app/erp?module=education",
       "control": "module-education-create",
+      "tab": "Education",
+      "typedDetail": true,
       "agent": {
         "rank": 8,
         "keywords": [

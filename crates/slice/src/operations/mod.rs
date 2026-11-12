@@ -707,7 +707,10 @@ pub fn Operations() -> impl IntoView {
                 .unwrap_or_else(|| "catalog".into()),
         );
     });
-    let tabs = [
+    // Tabs with a dedicated view, then one tab per module the generic operator
+    // workspace serves. The second group comes from the module registry
+    // (`config/modules.v1.json`), so a new module's tab is its descriptor.
+    let mut tabs = vec![
         ("catalog", "Catalog"),
         ("sales", "Sales orders"),
         ("purchasing", "Purchasing"),
@@ -718,20 +721,12 @@ pub fn Operations() -> impl IntoView {
         ("feed", "Suggestions"),
         ("import", "Import data"),
         ("voice", "Voice"),
-        ("organizations", "Organizations"),
-        ("proposals", "Proposals"),
-        ("projects", "Projects"),
-        ("foodservice", "Food service"),
-        ("scheduling", "Scheduling"),
-        ("accommodation", "Accommodation"),
-        ("assets", "Assets"),
-        ("subscriptions", "Subscriptions"),
-        ("attendance", "Attendance"),
-        ("laundry", "Laundry"),
-        ("field", "Field service"),
-        ("fulfillment", "Fulfillment"),
-        ("education", "Education"),
     ];
+    tabs.extend(
+        archava_domain::modules::all()
+            .iter()
+            .filter_map(|module| module.tab.map(|label| (module.id, label))),
+    );
     view! {<section class="operations-page" data-testid="operations-workspace"><header class="page-heading"><p class="eyebrow">"BUSINESS WORKSPACE"</p><h1>"Operations"</h1><p>"Manage the records behind your daily work."</p></header><nav class="ops-tabs" aria-label="Operations modules">{tabs.into_iter().map(|(id,label)|{let navigate=navigate.clone();view!{<button type="button" class:active=move||active.get()==id data-testid=format!("ops-tab-{id}") on:click=move|_|navigate(&format!("/app/erp?module={id}"),Default::default())>{label}</button>}}).collect::<Vec<_>>()}</nav>
         {move||match active.get().as_str(){
             "voice"=>view!{<voice::Voice/>}.into_any(),"feed"=>view!{<workflows::Feed/>}.into_any(),"import"=>view!{<workflows::Import/>}.into_any(),

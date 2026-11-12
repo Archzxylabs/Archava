@@ -18,6 +18,8 @@ The registry describes wiring. It is not a grant and not acceptance: domain tran
   "readPath": "/erp/laundry/orders",
   "uiPath": "/app/erp?module=laundry",
   "control": "module-laundry-create",
+  "tab": "Laundry",
+  "typedDetail": true,
   "agent": { "rank": 5, "keywords": ["laundry", "linen", "cucian"], "collections": ["orders"] }
 }
 ```
@@ -31,6 +33,8 @@ The registry describes wiring. It is not a grant and not acceptance: domain tran
 | `suite` | Integration suite in `crates/host/tests/`. |
 | `spec` | The module's maintained specification. |
 | `readPath`, `uiPath`, `control` | The read route, workspace URL and create control the product audit and browser gates exercise. |
+| `tab` | Optional. Label of the module's tab in the Operations workspace, for modules served by the generic operator workspace. Modules with a dedicated view omit it. Tabs appear in registry order. |
+| `typedDetail` | Optional. `true` when the workspace read accepts a record id for a typed detail view. |
 | `agent.rank` | Position in keyword routing; lower ranks match first. Unique. |
 | `agent.keywords` | Lower-case phrases that route an utterance to the module. |
 | `agent.collections` | Response collections the provider projection may read. Anything not listed stays withheld. |
@@ -43,6 +47,7 @@ The registry describes wiring. It is not a grant and not acceptance: domain tran
 | [Agent keyword routing](../../crates/host/src/agent/planner.rs) | `agent.rank`, `agent.keywords` |
 | [Provider projection](../../crates/host/src/agent/disclosure/fields.rs) | `agent.collections` |
 | [Product catalogue](../../tools/product/catalogue.mjs) | Module list for the product audit and browser gates |
+| [Operations tabs](../../crates/slice/src/operations/mod.rs) and [detail loading](../../crates/slice/src/operations/operator.rs) | `tab`, `typedDetail` |
 | [Workspace domains](../../crates/adapters/src/erp/projections.rs) | `namespace` for each workspace's tenant transaction and module-enabled check |
 
 The domain crate compiles a byte-identical snapshot from `crates/domain/embedded/`. After editing the registry run `node tools/rust/domain-assets.mjs --write`; the structure gate and build provenance refuse a stale snapshot.
@@ -77,7 +82,7 @@ The gate also refuses the reverse case: a module that has forms or an agent disp
 The registry does not yet drive, and the gate does not yet check, these per-module points. They remain hand-maintained:
 
 - The `WorkspaceDomain` variants, their collection tables and access resolvers in `crates/adapters/src/erp/projections.rs`, and the typed operator workspace in `crates/adapters/src/erp/operator.rs`. The host mounts `/erp/<id>/workspace` for every entry of `WorkspaceDomain::ALL`, so the variant list is the only place a workspace domain is enumerated.
-- Operations tabs and typed-detail lists in `crates/slice/src/operations/`.
+- The ten Operations tabs with dedicated views (catalog, sales, purchasing, invoices, accounting, support, missions, suggestions, import, voice) and their view dispatch in `crates/slice/src/operations/mod.rs`. Tabs for modules served by the generic operator workspace come from the registry.
 - Owner-chat module aliases in `crates/host/src/own.rs` and the assembly contracts in `crates/assembly`, which use the assembly vocabulary (`crm-contacts`, `fieldServices`) rather than these ids.
 - Typed form references in `crates/domain/src/operator.rs`.
 - Fixture migration lists and runtime grants beyond the schema-to-directory mapping.

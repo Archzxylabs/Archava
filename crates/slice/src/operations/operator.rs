@@ -918,16 +918,8 @@ fn load_page(
     cursor: Option<String>,
     id: Option<String>,
 ) {
-    let typed = matches!(
-        work.domain.slug(),
-        "subscriptions"
-            | "attendance"
-            | "laundry"
-            | "field"
-            | "education"
-            | "fulfillment"
-            | "accounting"
-    );
+    let typed =
+        archava_domain::modules::get(work.domain.slug()).is_some_and(|module| module.typed_detail);
     if id.is_some() && !typed {
         return;
     }

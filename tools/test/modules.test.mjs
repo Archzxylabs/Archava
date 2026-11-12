@@ -36,6 +36,7 @@ function fixture(t, modules = [descriptor()]) {
 }
 
 test('a completely registered module passes every registration point', (t) => {
+  assert.deepEqual(registryProblems({ schemaVersion: 1, modules: [{ ...descriptor(), tab: 'Kiosk', typedDetail: true }] }), [])
   const { root } = fixture(t)
   const result = checkModules(root)
   assert.deepEqual(result.problems, [])
@@ -98,10 +99,10 @@ test('the registry refuses ambiguous or malformed descriptors before comparing w
   const twin = { ...descriptor(), label: 'Twin' }
   const duplicate = registryProblems({ schemaVersion: 1, modules: [descriptor(), twin] })
   for (const key of ['id', 'namespace', 'rank']) assert.ok(duplicate.some((problem) => problem.includes(`repeats ${key}`)), key)
-  const bad = { ...descriptor(), id: 'Kiosk-1', namespace: 'kiosk', source: 'kiosk-sales', agent: { rank: 0, keywords: ['Kiosk'], collections: [] } }
+  const bad = { ...descriptor(), id: 'Kiosk-1', namespace: 'kiosk', source: 'kiosk-sales', tab: '', typedDetail: 'yes', agent: { rank: 0, keywords: ['Kiosk'], collections: [] } }
   delete bad.spec
   const problems = registryProblems({ schemaVersion: 1, modules: [bad] }).join('\n')
-  for (const expected of [/id must be lower-case alphanumeric/, /namespace must start with archava_/, /source must be a Rust module name/, /spec must be a non-empty string/, /agent\.rank must be a positive integer/, /agent\.keywords must be lower-case/, /agent\.collections must be a non-empty list/]) assert.match(problems, expected)
+  for (const expected of [/id must be lower-case alphanumeric/, /namespace must start with archava_/, /source must be a Rust module name/, /spec must be a non-empty string/, /agent\.rank must be a positive integer/, /agent\.keywords must be lower-case/, /agent\.collections must be a non-empty list/, /tab must be a non-empty string when present/, /typedDetail must be true or false when present/]) assert.match(problems, expected)
   const f = fixture(t, [bad])
   assert.equal(checkModules(f.root).modules.length, 0)
   assert.throws(() => assert.deepEqual(checkModules(f.root).problems, []))
