@@ -43,6 +43,7 @@ The registry describes wiring. It is not a grant and not acceptance: domain tran
 | [Agent keyword routing](../../crates/host/src/agent/planner.rs) | `agent.rank`, `agent.keywords` |
 | [Provider projection](../../crates/host/src/agent/disclosure/fields.rs) | `agent.collections` |
 | [Product catalogue](../../tools/product/catalogue.mjs) | Module list for the product audit and browser gates |
+| [Workspace domains](../../crates/adapters/src/erp/projections.rs) | `namespace` for each workspace's tenant transaction and module-enabled check |
 
 The domain crate compiles a byte-identical snapshot from `crates/domain/embedded/`. After editing the registry run `node tools/rust/domain-assets.mjs --write`; the structure gate and build provenance refuse a stale snapshot.
 
@@ -75,7 +76,7 @@ The gate also refuses the reverse case: a module that has forms or an agent disp
 
 The registry does not yet drive, and the gate does not yet check, these per-module points. They remain hand-maintained:
 
-- Workspace projections (`WorkspaceDomain` in `crates/adapters/src/erp/projections.rs` and `crates/host/src/erp/projections.rs`) and the generic operator workspace in `crates/adapters/src/erp/operator.rs`.
+- The `WorkspaceDomain` variants, their collection tables and access resolvers in `crates/adapters/src/erp/projections.rs`, and the typed operator workspace in `crates/adapters/src/erp/operator.rs`. The host mounts `/erp/<id>/workspace` for every entry of `WorkspaceDomain::ALL`, so the variant list is the only place a workspace domain is enumerated.
 - Operations tabs and typed-detail lists in `crates/slice/src/operations/`.
 - Owner-chat module aliases in `crates/host/src/own.rs` and the assembly contracts in `crates/assembly`, which use the assembly vocabulary (`crm-contacts`, `fieldServices`) rather than these ids.
 - Typed form references in `crates/domain/src/operator.rs`.

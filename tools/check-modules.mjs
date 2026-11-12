@@ -22,6 +22,7 @@ const FORMS = 'config/operator-actions.v1.json'
 const MANIFEST = 'migrations/manifest.v1.json'
 /** Files whose route literals may serve a module's `readPath`. */
 const READ_SOURCES = ['crates/host/src/routes/erp.rs', 'crates/host/src/routes/crm.rs', 'crates/host/src/erp/projections.rs']
+const WORKSPACES = 'crates/adapters/src/erp/projections.rs'
 const LAYERS = ['domain', 'adapters', 'host']
 
 const STRINGS = ['id', 'label', 'namespace', 'ledger', 'source', 'suite', 'spec', 'readPath', 'uiPath', 'control']
@@ -98,7 +99,11 @@ export function moduleChecks(root, module, shared = loadShared(root)) {
     `${EXTRACTORS}: add ("erp/${source}.rs", include_str!("erp/${source}.rs")) so the extractor rules cover it`)
   add('agent dispatch', new RegExp(`"${escape(id)}"\\s*=>`).test(shared.dispatch),
     `${DISPATCH}: add \`"${id}" => call!(crate::erp::${source}::<command handler>)\` so approved agent plans can execute`)
-  add('read route', shared.reads.includes(`"${readPath}"`), `declare the route "${readPath}" (${READ_SOURCES.join(', ')}) or correct readPath`)
+  // Workspace read routes are mounted from `WorkspaceDomain::ALL`, so their
+  // evidence is the domain's slug arm rather than a route literal.
+  const workspace = readPath === `/erp/${id}/workspace` && new RegExp(`Self::\\w+\\s*=>\\s*"${escape(id)}"`).test(shared.workspaces)
+  add('read route', shared.reads.includes(`"${readPath}"`) || workspace,
+    `declare the route "${readPath}" (${READ_SOURCES.join(', ')}), add the module to WorkspaceDomain in ${WORKSPACES}, or correct readPath`)
 
   add('integration suite', isFile(root, `crates/host/tests/${suite}.rs`), `create crates/host/tests/${suite}.rs with positive and negative coverage`)
   add('specification', isFile(root, spec), `write ${spec}`)
@@ -116,6 +121,7 @@ function loadShared(root) {
     extractors: text(root, EXTRACTORS),
     dispatch: text(root, DISPATCH),
     reads: READ_SOURCES.map((path) => text(root, path)).join('\n'),
+    workspaces: text(root, WORKSPACES),
     mods: Object.fromEntries(LAYERS.map((layer) => [layer, text(root, `crates/${layer}/src/erp/mod.rs`)])),
   }
 }

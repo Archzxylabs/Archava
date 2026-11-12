@@ -106,43 +106,22 @@ async fn read(
         Err(e) => unavailable(e),
     }
 }
-macro_rules! endpoint {
-    ($name:ident,$domain:ident) => {
-        pub async fn $name(
-            State(state): State<AppState>,
-            headers: HeaderMap,
-            query: Result<Query<ProjectionQuery>, QueryRejection>,
-        ) -> Response {
-            read(state, headers, query, WorkspaceDomain::$domain).await
-        }
-    };
-}
-endpoint!(subscriptions, Subscriptions);
-endpoint!(attendance, Attendance);
-endpoint!(laundry, Laundry);
-endpoint!(field, Field);
-endpoint!(education, Education);
-endpoint!(fulfillment, Fulfillment);
-endpoint!(organizations, Organizations);
-endpoint!(proposals, Proposals);
-endpoint!(projects, Projects);
-endpoint!(foodservice, Foodservice);
-endpoint!(scheduling, Scheduling);
-endpoint!(accommodation, Accommodation);
-endpoint!(assets, Assets);
+/// One authenticated read route per workspace domain: `/erp/<id>/workspace`.
+/// The list is `WorkspaceDomain::ALL`, so a new workspace domain is mounted
+/// by adding its variant there, not by editing this router.
 pub fn router() -> Router<AppState> {
-    Router::new()
-        .route("/erp/organizations/workspace", get(organizations))
-        .route("/erp/proposals/workspace", get(proposals))
-        .route("/erp/projects/workspace", get(projects))
-        .route("/erp/foodservice/workspace", get(foodservice))
-        .route("/erp/scheduling/workspace", get(scheduling))
-        .route("/erp/accommodation/workspace", get(accommodation))
-        .route("/erp/assets/workspace", get(assets))
-        .route("/erp/subscriptions/workspace", get(subscriptions))
-        .route("/erp/attendance/workspace", get(attendance))
-        .route("/erp/laundry/workspace", get(laundry))
-        .route("/erp/field/workspace", get(field))
-        .route("/erp/education/workspace", get(education))
-        .route("/erp/fulfillment/workspace", get(fulfillment))
+    WorkspaceDomain::ALL
+        .into_iter()
+        .fold(Router::new(), |router, domain| {
+            router.route(
+                &format!("/erp/{}/workspace", domain.slug()),
+                get(
+                    move |State(state): State<AppState>,
+                          headers: HeaderMap,
+                          query: Result<Query<ProjectionQuery>, QueryRejection>| {
+                        read(state, headers, query, domain)
+                    },
+                ),
+            )
+        })
 }

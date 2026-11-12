@@ -25,6 +25,22 @@ pub enum WorkspaceDomain {
     Fulfillment,
 }
 impl WorkspaceDomain {
+    /// Every workspace domain; the host mounts one read route per entry.
+    pub const ALL: [Self; 13] = [
+        Self::Organizations,
+        Self::Proposals,
+        Self::Projects,
+        Self::Foodservice,
+        Self::Scheduling,
+        Self::Accommodation,
+        Self::Assets,
+        Self::Subscriptions,
+        Self::Attendance,
+        Self::Laundry,
+        Self::Field,
+        Self::Education,
+        Self::Fulfillment,
+    ];
     pub fn slug(self) -> &'static str {
         match self {
             Self::Organizations => "organizations",
@@ -42,22 +58,13 @@ impl WorkspaceDomain {
             Self::Fulfillment => "fulfillment",
         }
     }
+    /// The schema that owns this workspace's tables, from the module
+    /// registry (`config/modules.v1.json`) — the same value the form
+    /// catalogue and the migration manifest carry for the module.
     pub fn namespace(self) -> &'static str {
-        match self {
-            Self::Organizations => "archava_organizations",
-            Self::Proposals => "archava_proposals",
-            Self::Projects => "archava_projects",
-            Self::Foodservice => "archava_foodservice",
-            Self::Scheduling => "archava_scheduling",
-            Self::Accommodation => "archava_accommodation",
-            Self::Assets => "archava_assets",
-            Self::Subscriptions => "archava_subscriptions",
-            Self::Attendance => "archava_attendance",
-            Self::Laundry => "archava_laundry",
-            Self::Field => "archava_field",
-            Self::Education => "archava_edu",
-            Self::Fulfillment => "archava_fulfillment",
-        }
+        archava_domain::modules::get(self.slug())
+            .expect("every workspace domain is a registered module")
+            .namespace
     }
 }
 struct Collection {
@@ -315,4 +322,22 @@ pub async fn workspace_view(
         }),
     );
     Ok(Value::Object(result))
+}
+
+#[cfg(test)]
+mod registry_tests {
+    use super::WorkspaceDomain;
+    use std::collections::BTreeSet;
+
+    #[test]
+    fn every_workspace_domain_is_a_distinct_registered_module() {
+        let slugs: BTreeSet<_> = WorkspaceDomain::ALL.iter().map(|d| d.slug()).collect();
+        assert_eq!(slugs.len(), WorkspaceDomain::ALL.len());
+        for domain in WorkspaceDomain::ALL {
+            let module = archava_domain::modules::get(domain.slug())
+                .unwrap_or_else(|| panic!("{} is not in the module registry", domain.slug()));
+            assert_eq!(domain.namespace(), module.namespace);
+            assert!(domain.namespace().starts_with("archava_"));
+        }
+    }
 }

@@ -68,6 +68,15 @@ test('each missing registration point is named with the file to change', async (
   }
 })
 
+test('a workspace read path is satisfied by the workspace domain list, not a route literal', (t) => {
+  const f = fixture(t, [{ ...descriptor(), readPath: '/erp/kiosk/workspace' }])
+  assert.ok(checkModules(f.root).problems.some((problem) => /kiosk: read route — .*WorkspaceDomain/.test(problem)))
+  f.write('crates/adapters/src/erp/projections.rs', 'match self {\n    Self::Kiosk => "kiosk",\n}\n')
+  assert.deepEqual(checkModules(f.root).problems, [])
+  f.write('crates/adapters/src/erp/projections.rs', 'match self {\n    Self::Kiosks => "kiosks",\n}\n')
+  assert.equal(checkModules(f.root).problems.length, 1)
+})
+
 test('missing source, suite and specification files are reported separately', (t) => {
   const f = fixture(t)
   for (const path of ['crates/domain/src/erp/kiosk_sales.rs', 'crates/host/tests/erp_kiosk.rs', 'docs/modules/KIOSK_MODULE.md']) rmSync(join(f.root, path))
