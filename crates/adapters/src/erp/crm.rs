@@ -1,5 +1,5 @@
 //! The CRM SQL transactional adapter — ported from `packages/crm-pg/src/repository.ts`
-//! and extracted from `crates/host/src/crm.rs` (ADR-014).
+//! and extracted from `crates/host/src/crm.rs` (ADR-014); moved under `erp/` per ADR-018.
 //!
 //! Enforces:
 //! - Row-level security on `archava_crm` tables through `TenantTransaction`.
@@ -401,6 +401,11 @@ pub struct CrmTransition {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CrmRecordValue {
+    /// Current public presentation only; no Owner management data or grants.
+    #[serde(default)]
+    pub pipeline_labels: std::collections::BTreeMap<String, String>,
+    #[serde(default)]
+    pub configuration_revision: i64,
     pub contact: CrmContact,
     pub activities: Vec<CrmActivity>,
     pub followups: Vec<CrmFollowup>,
@@ -1689,6 +1694,8 @@ pub async fn read_record(
     }
 
     Ok(CrmRecordValue {
+        pipeline_labels: Default::default(),
+        configuration_revision: 0,
         pipeline_enabled,
         contact: CrmContact {
             id: id.to_string(),

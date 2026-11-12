@@ -9,7 +9,10 @@
 **Research/snapshot date:** 15 Oktober 2026  
 **Status:** Target migrasi ditugaskan owner untuk implementasi lokal end-to-end; belum diimplementasikan atau diterima sebagai release.  
 **Implementator:** Archxy. **Orchestrator/reviewer:** Codex saat diminta owner.  
-**Product/commercial authority:** [Master PRD](../archive/history/PRD.md), `agent.md`, dan pricebook existing. Versi dokumen ini tidak mengubah versi produk atau harga.
+**Product authority:** [PRD produk aktif](PRD.md). [Master PRD historis](../archive/history/PRD.md)
+menyimpan asal kebutuhan dan baseline komersial; requirement komersial/pricebook
+existing tetap berlaku. Konteks migrasi bertanggal di bawah dipertahankan.
+Versi dokumen ini tidak mengubah versi produk atau harga.
 
 **Execution mandate:** [Archxy Full Rust execution task](../archive/history/tasks/ARCHXY_FULL_RUST_EXECUTION_TASK.md).
 Owner meminta seluruh R00–R11 dikerjakan berkelanjutan; Codex mengaudit setelah

@@ -1,3 +1,5 @@
+/* Preserve HTML visibility semantics even on grid/flex form controls. */
+[hidden] { display: none !important; }
 /* Archava's product workspace. Shared by the Rust SSR and hydrated views. */
 @font-face {
   font-family: 'DM Sans';
@@ -267,6 +269,14 @@ body { margin: 0; }
 .module-description p { color: var(--muted); font-size: 12px; margin: 5px 0 0; }
 .module-state { font-size: 11px; color: var(--muted); }
 .settings-section > button { margin-right: 12px; }
+.settings-sharing-options { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; min-width: 0; border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin: 20px 0; }
+.settings-sharing-options legend { padding: 0 6px; font-weight: 600; }
+.archava-app label.sharing-option { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: start; gap: 6px 12px; min-width: 0; padding: 10px 0; font-size: 13px; cursor: pointer; }
+.sharing-option > span { overflow-wrap: anywhere; }
+.sharing-option > .hint { grid-column: 1 / -1; }
+.archava-app .sharing-option input[type="checkbox"] { width: 18px; height: 18px; min-height: 0; margin: 1px 0 0; padding: 0; }
+#settings-ai > fieldset { min-width: 0; margin: 20px 0; border-color: var(--border); border-radius: 8px; }
+@media (max-width: 640px) { .settings-sharing-options { grid-template-columns: minmax(0,1fr); padding: 12px; } #settings-ai > button { margin-bottom: 12px; } }
 .archava-app .owner h3 { margin: 22px 0 10px; }
 .archava-app .owner :is(.status,.refusal) { max-width: 85ch; }
 .archava-app .login { max-width: 480px; margin: 5vh auto; padding: 32px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
@@ -564,3 +574,62 @@ body { margin: 0; }
 .ops-payment-record > .btn { margin: 8px 8px 0 0; }
 .ops-payment-record > .hint { overflow-wrap: anywhere; }
 .ops-payment .ops-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+/* Installed operator modules share the existing workspace rhythm. */
+.operator-actions { display: grid; gap: 16px; margin-block: 16px; }
+.operator-actions h2 { font-size: 18px; margin: 0; }
+.operator-actions .ops-form > fieldset, .operator-group { display: grid; gap: 14px; min-width: 0; border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin: 0; }
+.operator-group legend, .operator-actions legend { font-size: 13px; font-weight: 600; padding-inline: 6px; }
+.operator-array-item { display: grid; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+.operator-reference { display: grid; gap: 8px; min-width: 0; }
+.operator-reference .ops-search { max-width: 100%; }
+.operator-reference .ops-search input { width: 100%; min-width: 0; }
+.operator-records { display: grid; gap: 8px; list-style: none; margin: 16px 0; padding: 0; }
+.operator-records li { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid var(--border); padding-block: 12px; }
+.operator-records li h3, .operator-records li p { margin: 0; }
+.operator-details { display: grid; grid-template-columns: minmax(90px,1fr) minmax(0,2fr); gap: 8px 16px; margin: 0; font-size: 13px; }
+.operator-details dt { color: var(--muted); }
+.operator-details dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.operator-details .operator-details { grid-template-columns: 1fr; }
+.operator-details .ops-lines { margin: 0; }
+.operator-review { display: grid; gap: 16px; margin-block: 24px; padding: 20px; border: 1px solid var(--border); border-top: 3px solid var(--accent-visual); border-radius: 8px; }
+.operator-review h3, .operator-review p { margin: 0; }
+.operator-review [data-testid="purchase-source-summary"] h4 { margin: 0 0 12px; }
+.operator-review [data-testid="purchase-source-summary"] p { margin-top: 12px; }
+.operator-review .ops-table caption { padding: 12px; text-align: left; color: var(--muted); }
+.operator-review > details > summary { cursor: pointer; margin-bottom: 12px; }
+.source-mobile-label { display: none; }
+.source-money { white-space: nowrap; overflow-wrap: normal; }
+@media (max-width: 650px) {
+  .source-journal-wrap { overflow-x: visible; }
+  .source-journal { display: block; min-width: 0; }
+  .source-journal caption { display: block; }
+  .source-journal thead { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); }
+  .source-journal tbody { display: grid; gap: 12px; padding: 10px; }
+  .source-journal tbody tr { display: block; border: 1px solid var(--border); border-radius: 6px; padding: 6px; }
+  .source-journal tbody td { display: flex; flex-direction: column; gap: 4px; min-width: 0; padding: 8px; border: 0; }
+  .source-journal .source-mobile-label { display: block; color: var(--muted); font-size: 12px; font-weight: 500; }
+  .source-journal tbody .source-journal-money { flex-direction: row; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; }
+}
+
+/* A reviewed action needs room for source amounts and account mappings. Keep
+   the worklist alongside it while giving the review most of the desktop width. */
+@media (min-width: 1101px) {
+  .operator-workspace .ops-layout:has(.operator-review) { grid-template-columns: minmax(180px,.55fr) minmax(0,1.45fr); }
+}
+.operator-review > .operator-details { grid-template-columns: minmax(0,1fr); gap: 6px; }
+.operator-review > .operator-details > dd { margin-bottom: 10px; }
+[data-testid="voice-preview"] { display: block; width: min(100%,640px); max-height: 360px; border-radius: 10px; background: var(--subtle); margin-block: 20px; }
+.voice-transcript { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 360px; overflow-y: auto; font: inherit; line-height: 1.6; }
+@media (max-width: 600px) { .operator-details { grid-template-columns: 1fr; gap: 4px; } .operator-details dd { margin-bottom: 12px; } .operator-review { padding: 14px; } }
+/* Ava's native goal, review and result surfaces. */
+.agent-entry,.agent-panel,.agent-goal-card{border:1px solid var(--line,#ded8cf);border-radius:14px;padding:1.25rem;margin:1rem 0;background:var(--panel,#fbfaf7);min-width:0}.agent-entry textarea,.agent-goal-form textarea{width:100%;min-height:92px;resize:vertical;box-sizing:border-box;font:inherit}.agent-conversation{padding-left:1.25rem}.agent-conversation li{margin:1rem 0}.agent-user-message{font-weight:600}.agent-goal-card h3{overflow-wrap:anywhere}.agent-facts{display:grid;grid-template-columns:minmax(90px,1fr) minmax(0,3fr);gap:.4rem .8rem;margin:.5rem 0}.agent-facts dt{font-weight:600}.agent-facts dd{margin:0;overflow-wrap:anywhere;min-width:0}.agent-sources,.agent-action-details{margin:1rem 0}.agent-facts ul{padding-left:1rem}.agent-panel .ops-actions{flex-wrap:wrap}.agent-action-editor fieldset{min-width:0}@media(max-width:640px){.agent-facts{grid-template-columns:1fr}.agent-goal-card .panel-heading{display:block}.agent-goal-card{padding:.9rem}}
+
+/* Keep business-agent facts independent of legacy Desk record panels. */
+.archava-app .agent-panel dl.agent-facts { grid-template-columns: minmax(90px,1fr) minmax(0,3fr); gap: .4rem .8rem; padding: 0; margin: .5rem 0; background: transparent; border: 0; border-radius: 0; }
+.archava-app .agent-panel .agent-facts dl.agent-facts { grid-template-columns: minmax(0,1fr); }
+@media (max-width: 640px) {
+  .archava-app .agent-panel dl.agent-facts { grid-template-columns: minmax(0,1fr); }
+  .agent-panel { padding: .8rem; }
+  .agent-goal-card .agent-plan-steps { padding-left: 1rem; }
+}

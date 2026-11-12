@@ -12,12 +12,17 @@ use crate::router::AppState;
 /// Mounts the CRM, owner-configuration, and assistant route family.
 pub fn router() -> Router<AppState> {
     Router::new()
+        .route("/api/agent/turns", post(crate::agent::turn))
+        .route("/api/agent/state", get(crate::agent::inspect))
+        .route("/api/agent/approve", post(crate::agent::approve))
+        .route("/api/agent/cancel", post(crate::agent::control))
+        .route("/api/agent/control", post(crate::agent::control))
         // The §1.4B slice: the real, session-scoped contact read (crm.rs)
         // replaces the pre-slice placeholder denial that lived on this path.
-        .route("/contacts", get(crate::crm::contacts))
-        .route("/crm/records", get(crate::crm::record))
-        .route("/crm/commands", post(crate::crm::crm_command))
-        .route("/crm/commands/status", get(crate::crm::command_status))
+        .route("/contacts", get(crate::erp::crm::contacts))
+        .route("/crm/records", get(crate::erp::crm::record))
+        .route("/crm/commands", post(crate::erp::crm::crm_command))
+        .route("/crm/commands/status", get(crate::erp::crm::command_status))
         // C03: the persisted owner-configuration lifecycle. Session + CSRF
         // first; the archava_owner grant and RLS tenant are checked inside.
         .route("/own/config", get(crate::own::config))

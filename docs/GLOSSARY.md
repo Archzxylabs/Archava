@@ -6,12 +6,19 @@ This glossary acts as the single source of truth for architectural and business 
 
 ---
 
+Product terms such as autonomous operator describe the intended capability.
+Current runtime acceptance is recorded separately: the [5 November agentic audit](product/AGENTIC_AUDIT_2026-11-05.md)
+recorded gaps in the earlier goal-to-plan-to-execution journey. The subsequent
+[agent runtime](modules/AGENT_RUNTIME.md) connects that journey; its
+[implementation record](product/AGENTIC_IMPLEMENTATION_WORK.md) distinguishes
+verified local behavior from provider-live and public-deployment acceptance.
+
 ## 1. Sovereign AI & Agentic Core
 
 ### Ava
 The sovereign AI persona and unified multi-modal interface of Archava. Ava acts as an autonomous digital concierge and enterprise operator. Ava is not a standalone binary or monolithic crate, but an emergent capability composed of:
 - **Sensory Perception**: Presentation modalities (`chat_only`, `voice_only`, `avatar_voice`, `full`, `avatar_chat`), live media streaming via LiveKit, and the universal embed SDK ([`static/archava.js`](../static/archava.js)).
-- **Authority & Deliberation**: Deterministic L1–L5 autonomy ladder, intent parsing, structured JSON schema enforcement, and assistant flow ([`crates/assistant`](../crates/assistant), [`crates/host/src/assistant`](../crates/host/src/assistant)).
+- **Authority & Deliberation**: Deterministic L1–L5 autonomy ladder, intent parsing, structured JSON schema enforcement, and assistant flow ([`crates/assistant`](../crates/assistant), [`crates/host/src/assistant`](../crates/host/src/assistant), [`crates/host/src/agent`](../crates/host/src/agent)).
 - **Sovereign Memory**: Bi-temporal knowledge graph and progressive disclosure via [Orbz](#orbz) ([`crates/orbz`](../crates/orbz)).
 - **Autonomous Execution**: Flight DAG state machine and durable task completion via [Cockpit](#cockpit) ([`crates/cockpit`](../crates/cockpit)).
 
@@ -50,11 +57,11 @@ The architectural design of Archava: a single root Cargo workspace containing 22
 An isolated database schema namespace in PostgreSQL (e.g. `archava_commerce`, `archava_orbz`, `archava_crm`, `archava_billing`) representing an independent domain ledger. Each ledger owns its tables, sequential migrations, and runtime privilege grants.
 
 ### Mounted vs. Unmounted Ledgers
-- **Mounted Ledgers**: 37 SQL migrations across 24 ledger directories verified by [`migrations/manifest.v1.json`](../migrations/manifest.v1.json) and embedded directly into the server binary via `include_bytes!`. These are applied to the active production database.
+- **Mounted Ledgers**: 69 SQL migrations across 25 ledger directories verified by [`migrations/manifest.v1.json`](../migrations/manifest.v1.json) and embedded directly into the server binary via `include_bytes!`. These are applied to the active production database.
 - **Unmounted Ledgers**: 7 SQL files across 6 reserved directories kept in the repository as authoritative future architectural designs. Strictly allowlisted in [`tools/check-structure.mjs`](../tools/check-structure.mjs) to prevent stray SQL drift.
 
 ### FORCE RLS (Row-Level Security)
-PostgreSQL row-level isolation enforced via `ALTER TABLE ... FORCE ROW LEVEL SECURITY`. Every multi-tenant table carries a `tenant_id` column. The runtime role (`archava_runtime`) is a non-owner role that sets transaction-local tenant context (`SET LOCAL archava.current_tenant = ...`), making cross-tenant data leaks mathematically impossible at the database engine level.
+PostgreSQL row-level isolation enforced via `ALTER TABLE ... FORCE ROW LEVEL SECURITY`. Every multi-tenant table carries a `tenant_id` column. The runtime role (`archava_runtime`) is a non-owner role that sets transaction-local tenant context (`SET LOCAL archava.current_tenant = ...`), enforcing tenant row isolation when the runtime role and transaction context are correct. Per-user membership, scope and operation permissions must still be checked by the host; RLS alone does not establish complete authorization.
 
 ### Privilege Separation (Owner vs. Runtime)
 - **`archava_owner`**: DDL role used exclusively by operator CLI tooling ([`archava-ops`](../crates/ops)) to execute migrations and schema updates.
@@ -66,7 +73,7 @@ PostgreSQL row-level isolation enforced via `ALTER TABLE ... FORCE ROW LEVEL SEC
 
 Archava formalizes 7 foundational Tier 1 operational surfaces:
 
-1. **CRM**: Customer relationship management, contact lifecycles, activity feeds, sales pipeline stages, and follow-up review ([`crates/domain/src/erp/crm.rs`](../crates/domain/src/erp/crm.rs), [`crates/adapters/src/crm.rs`](../crates/adapters/src/crm.rs)).
+1. **CRM**: Customer relationship management, contact lifecycles, activity feeds, sales pipeline stages, and follow-up review ([`crates/domain/src/erp/crm.rs`](../crates/domain/src/erp/crm.rs), [`crates/adapters/src/erp/crm.rs`](../crates/adapters/src/erp/crm.rs)).
 2. **Commerce**: Product catalog, order lifecycles, inventory stock tracking, and landed cost layers ([`crates/adapters/src/erp/commerce.rs`](../crates/adapters/src/erp/commerce.rs)).
 3. **Purchasing**: Supplier management, purchase orders (POs), and warehouse receipt vouchers ([`crates/adapters/src/erp/purchasing.rs`](../crates/adapters/src/erp/purchasing.rs)).
 4. **Billing**: Invoices, payment gateway settlements, webhook processing, and email outbox dispatch ([`crates/adapters/src/erp/billing.rs`](../crates/adapters/src/erp/billing.rs)).

@@ -63,7 +63,57 @@ pub struct EmailTransmissionRequest<'a> {
     pub recipient: &'a EmailRecipient,
     pub subject: &'a EmailSubject,
     pub payload_sha256: &'a str,
+    pub payload_text: &'a str,
+    pub payload_html: Option<&'a str>,
+    pub from_address: &'a str,
     pub provider: &'a str,
+}
+
+/// The immutable bytes and sender captured before an external invocation.
+/// Retries use this snapshot rather than re-rendering a mutable invoice.
+pub struct EmailInvocation {
+    pub from_address: String,
+    pub payload_text: String,
+    pub payload_html: Option<String>,
+}
+
+/// Check the current human grant and invoice scope before reading or changing
+/// an outbox intent, including terminal replay and expired-invocation holds.
+/// The membership and invoice locks live until the caller commits its TX.
+pub async fn authorize_transmission(
+    connection: &mut PgConnection,
+    tenant: &str,
+    principal: &PurchasePrincipal,
+    invoice_id: Uuid,
+) -> Result<(), PurchaseError> {
+    let access = resolve_billing_context(connection, tenant, principal).await?;
+    if principal.kind != PrincipalKind::Human
+        || !access.holds("billing.write")
+        || !access.holds("billing.read")
+    {
+        return Err(forbidden());
+    }
+    super::company_trade::authorize(
+        connection,
+        tenant,
+        principal,
+        super::company_trade::Record::Invoice,
+        invoice_id,
+    )
+    .await?;
+    sqlx::query(
+        "SELECT id FROM archava_billing.invoices \
+         WHERE tenant_id=$1 AND id=$2 AND ($3 OR owner_id=$4) FOR SHARE",
+    )
+    .bind(tenant)
+    .bind(invoice_id)
+    .bind(access.scope == ErpScope::All)
+    .bind(&access.owner_id)
+    .fetch_optional(connection)
+    .await
+    .map_err(db)?
+    .ok_or_else(missing)?;
+    Ok(())
 }
 
 /// Pre-commit email transmission intent before invoking the provider.
@@ -196,7 +246,7 @@ pub async fn prepare_email_transmission(
     let existing_by_invoice = sqlx::query(
         "SELECT id, request_id, invoice_id, recipient, subject, payload_sha256, state, provider, provider_message_id, error_reason \
          FROM archava_billing.email_outbox \
-         WHERE tenant_id = $1 AND invoice_id = $2 AND payload_sha256 = $3 AND state IN ('accepted', 'invoking') \
+          WHERE tenant_id = $1 AND invoice_id = $2 AND payload_sha256 = $3 AND state IN ('accepted', 'invoking', 'unknown') \
          ORDER BY created_at DESC LIMIT 1 FOR SHARE",
     )
     .bind(tenant)
@@ -214,9 +264,9 @@ pub async fn prepare_email_transmission(
     let initial_state = EmailState::Invoking.as_str();
 
     let inserted = sqlx::query(
-        "INSERT INTO archava_billing.email_outbox \
-         (tenant_id, id, invoice_id, actor_id, request_id, recipient, subject, payload_sha256, state, provider) \
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) \
+         "INSERT INTO archava_billing.email_outbox \
+          (tenant_id, id, invoice_id, actor_id, request_id, recipient, subject, payload_sha256, payload_text, payload_html, from_address, state, provider) \
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) \
          RETURNING id, request_id, invoice_id, recipient, subject, payload_sha256, state, provider, provider_message_id, error_reason",
     )
     .bind(tenant)
@@ -224,16 +274,44 @@ pub async fn prepare_email_transmission(
     .bind(request.invoice_id)
     .bind(&principal.id)
     .bind(request.request_id)
-    .bind(request.recipient.as_str())
-    .bind(request.subject.as_str())
-    .bind(request.payload_sha256)
-    .bind(initial_state)
-    .bind(request.provider)
+        .bind(request.recipient.as_str())
+        .bind(request.subject.as_str())
+        .bind(request.payload_sha256)
+        .bind(request.payload_text)
+        .bind(request.payload_html)
+        .bind(request.from_address)
+        .bind(initial_state)
+        .bind(request.provider)
     .fetch_one(&mut *connection)
     .await
     .map_err(db)?;
 
     Ok((receipt_from_row(&inserted)?, true))
+}
+
+/// Read the immutable provider payload for an existing uncertain invocation.
+pub async fn load_email_invocation(
+    connection: &mut PgConnection,
+    tenant: &str,
+    request_id: Uuid,
+) -> Result<EmailInvocation, PurchaseError> {
+    let row = sqlx::query(
+        "SELECT from_address, payload_text, payload_html \
+         FROM archava_billing.email_outbox \
+         WHERE tenant_id = $1 AND request_id = $2",
+    )
+    .bind(tenant)
+    .bind(request_id)
+    .fetch_optional(&mut *connection)
+    .await
+    .map_err(db)?
+    .ok_or_else(missing)?;
+
+    Ok(EmailInvocation {
+        from_address: row.try_get("from_address").map_err(db)?,
+        payload_text: row.try_get("payload_text").map_err(db)?,
+        payload_html: row.try_get("payload_html").map_err(db)?,
+    })
 }
 
 /// Authoritative outcome from the provider invocation.
@@ -276,6 +354,14 @@ pub async fn list_invoice_emails(
         return Err(forbidden());
     }
 
+    super::company_trade::authorize_human(
+        connection,
+        tenant,
+        &access.owner_id,
+        super::company_trade::Record::Invoice,
+        invoice_id,
+    )
+    .await?;
     let rows = sqlx::query(
         "SELECT o.id, o.request_id, o.invoice_id, o.recipient, o.subject, o.payload_sha256, o.state, o.provider, o.provider_message_id, o.error_reason \
          FROM archava_billing.email_outbox o \

@@ -159,6 +159,23 @@ async fn empty_install_owner_bootstrap_replay_refusal_and_cli_disaster_recovery(
         .unwrap();
     let n:i64=sqlx::query_scalar("SELECT count(*) FROM archava_commerce.memberships WHERE principal_id='owner' AND 'orders.write'=ANY(permissions)").fetch_one(&mut *tx).await.unwrap();
     assert_eq!(n, 1);
+    // Explicit initial provisioning includes the mounted customer/supplier
+    // identity routes. Runtime Owner configuration never mints these grants.
+    let permissions: Vec<String> = sqlx::query_scalar("SELECT permissions FROM archava_organizations.memberships WHERE tenant_id='acme' AND principal_id='owner'").fetch_one(&mut *tx).await.unwrap();
+    for required in [
+        "organizations.read",
+        "organizations.write",
+        "companies.read",
+        "companies.write",
+        "parties.read",
+        "parties.write",
+    ] {
+        assert!(
+            permissions.iter().any(|p| p == required),
+            "Initial owner lacks mounted business identity permission {required}"
+        );
+    }
+
     assert!(
         sqlx::query("UPDATE archava_identity.users SET active=false WHERE id='owner'")
             .execute(&mut *tx)

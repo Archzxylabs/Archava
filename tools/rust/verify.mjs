@@ -9,7 +9,8 @@ export function gateCommands({ offline = false, lib = false, wasm = false } = {}
   const commands = [
     [process.execPath, 'tools/check-structure.mjs', ...(offline ? ['--offline'] : [])],
     [process.execPath, 'tools/check-docs.mjs'],
-    [process.execPath, '--test', 'tools/test/structure.test.mjs', 'tools/test/docs.test.mjs', 'tools/test/verify.test.mjs', 'tools/test/native-provenance.test.mjs', 'tools/test/load-benchmark.test.mjs'],
+    [process.execPath, 'tools/product/check-delivery.mjs'],
+    [process.execPath, '--test', 'tools/test/structure.test.mjs', 'tools/test/docs.test.mjs', 'tools/test/verify.test.mjs', 'tools/test/native-provenance.test.mjs', 'tools/test/domain-assets.test.mjs', 'tools/test/load-benchmark.test.mjs', 'tools/test/agent-live.test.mjs', 'tools/test/product-delivery.test.mjs'],
     ['cargo', 'fmt', '--all', '--check'],
     ['cargo', 'clippy', '--workspace', '--all-targets', ...cargoFlags, '--', '-D', 'warnings'],
   ]

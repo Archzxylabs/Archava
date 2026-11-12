@@ -20,3 +20,8 @@ Goods receipts distinguish accepted and rejected units and add only accepted uni
 Run the module's actual tests from the root workspace (see the source table), plus the [repository verification commands](../DEVELOPER_GUIDE.md). For Tier 1 cross-module/browser acceptance, see [workspace flow tests](../../crates/host/tests/workspace_flows.rs) and [browser acceptance](../../tools/e2e/verify.mjs). Test availability is distinct from an executed passing result.
 
 The [previous module contract](../archive/history/module-contracts-before-native-workspace-2026-10-29/PURCHASING_MODULE.md) is frozen for migration provenance. Its old package commands and acceptance statements are historical context.
+
+Suppliers can be registered from a selected CRM contact and explicitly refreshed
+after reviewing a newer CRM revision. PO names and contact references remain
+frozen through receiving. See the [supplier identity contract](SUPPLIER_IDENTITY.md)
+for permissions, concurrent updates, manual-record compatibility and scope.

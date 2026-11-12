@@ -46,6 +46,22 @@ const COMMERCE_MIGRATIONS: &[(&str, &[u8])] = &[
         "006_private_cost_writers",
         include_bytes!("../../../../migrations/commerce-pg/006_private_cost_writers.sql"),
     ),
+    (
+        "007_customer_contact_identity",
+        include_bytes!("../../../../migrations/commerce-pg/007_customer_contact_identity.sql"),
+    ),
+    (
+        "008_customer_party_identity",
+        include_bytes!("../../../../migrations/commerce-pg/008_customer_party_identity.sql"),
+    ),
+    (
+        "009_company_owned_trade",
+        include_bytes!("../../../../migrations/commerce-pg/009_company_owned_trade.sql"),
+    ),
+    (
+        "010_return_layer_provenance",
+        include_bytes!("../../../../migrations/commerce-pg/010_return_layer_provenance.sql"),
+    ),
 ];
 
 const IDENTITY_MIGRATIONS: &[(&str, &[u8])] = &[(
@@ -68,10 +84,24 @@ const CRM_MIGRATIONS: &[(&str, &[u8])] = &[
     ),
 ];
 
-const OWNER_MIGRATIONS: &[(&str, &[u8])] = &[(
-    "001_owner_config",
-    include_bytes!("../../../../migrations/owner-pg/001_owner_config.sql"),
-)];
+const OWNER_MIGRATIONS: &[(&str, &[u8])] = &[
+    (
+        "001_owner_config",
+        include_bytes!("../../../../migrations/owner-pg/001_owner_config.sql"),
+    ),
+    (
+        "002_reviewed_workflows",
+        include_bytes!("../../../../migrations/owner-pg/002_reviewed_workflows.sql"),
+    ),
+    (
+        "003_agent_runtime",
+        include_bytes!("../../../../migrations/owner-pg/003_agent_runtime.sql"),
+    ),
+    (
+        "004_ai_disclosure_boundary",
+        include_bytes!("../../../../migrations/owner-pg/004_ai_disclosure_boundary.sql"),
+    ),
+];
 
 const PURCHASING_MIGRATIONS: &[(&str, &[u8])] = &[
     (
@@ -82,6 +112,22 @@ const PURCHASING_MIGRATIONS: &[(&str, &[u8])] = &[
         "002_landed_cost_receipts",
         include_bytes!("../../../../migrations/purchasing-pg/002_landed_cost_receipts.sql"),
     ),
+    (
+        "003_supplier_contact_identity",
+        include_bytes!("../../../../migrations/purchasing-pg/003_supplier_contact_identity.sql"),
+    ),
+    (
+        "004_supplier_party_identity",
+        include_bytes!("../../../../migrations/purchasing-pg/004_supplier_party_identity.sql"),
+    ),
+    (
+        "005_company_owned_trade",
+        include_bytes!("../../../../migrations/purchasing-pg/005_company_owned_trade.sql"),
+    ),
+    (
+        "006_unposted_supplier_documents",
+        include_bytes!("../../../../migrations/purchasing-pg/006_unposted_supplier_documents.sql"),
+    ),
 ];
 
 const FOODSERVICE_MIGRATIONS: &[(&str, &[u8])] = &[(
@@ -89,15 +135,84 @@ const FOODSERVICE_MIGRATIONS: &[(&str, &[u8])] = &[(
     include_bytes!("../../../../migrations/foodservice-pg/001_tables_recipes_tickets.sql"),
 )];
 
-const ORGANIZATIONS_MIGRATIONS: &[(&str, &[u8])] = &[(
-    "001_organizations_affiliations",
-    include_bytes!("../../../../migrations/organizations-pg/001_organizations_affiliations.sql"),
-)];
+const ORGANIZATIONS_MIGRATIONS: &[(&str, &[u8])] = &[
+    (
+        "001_organizations_affiliations",
+        include_bytes!(
+            "../../../../migrations/organizations-pg/001_organizations_affiliations.sql"
+        ),
+    ),
+    (
+        "002_verified_contact_affiliations",
+        include_bytes!(
+            "../../../../migrations/organizations-pg/002_verified_contact_affiliations.sql"
+        ),
+    ),
+    (
+        "003_business_parties",
+        include_bytes!("../../../../migrations/organizations-pg/003_business_parties.sql"),
+    ),
+    (
+        "004_managed_companies",
+        include_bytes!("../../../../migrations/organizations-pg/004_managed_companies.sql"),
+    ),
+];
 
 const PROPOSALS_MIGRATIONS: &[(&str, &[u8])] = &[(
     "001_proposals_scope_amendments",
     include_bytes!("../../../../migrations/proposals-pg/001_proposals_scope_amendments.sql"),
 )];
+
+const ACCOUNTING_MIGRATIONS: &[(&str, &[u8])] = &[
+    (
+        "001_company_books",
+        include_bytes!("../../../../migrations/accounting-pg/001_company_books.sql"),
+    ),
+    (
+        "002_invoice_source_posting",
+        include_bytes!("../../../../migrations/accounting-pg/002_invoice_source_posting.sql"),
+    ),
+    (
+        "003_invoice_source_integrity",
+        include_bytes!("../../../../migrations/accounting-pg/003_invoice_source_integrity.sql"),
+    ),
+    (
+        "004_purchase_source_posting",
+        include_bytes!("../../../../migrations/accounting-pg/004_purchase_source_posting.sql"),
+    ),
+    (
+        "005_stock_source_posting",
+        include_bytes!("../../../../migrations/accounting-pg/005_stock_source_posting.sql"),
+    ),
+    (
+        "006_manual_bank_evidence",
+        include_bytes!("../../../../migrations/accounting-pg/006_manual_bank_evidence.sql"),
+    ),
+    (
+        "007_bank_cash_matching",
+        include_bytes!("../../../../migrations/accounting-pg/007_bank_cash_matching.sql"),
+    ),
+    (
+        "008_reviewed_bank_periods",
+        include_bytes!("../../../../migrations/accounting-pg/008_reviewed_bank_periods.sql"),
+    ),
+    (
+        "009_supplier_bank_settlements",
+        include_bytes!("../../../../migrations/accounting-pg/009_supplier_bank_settlements.sql"),
+    ),
+    (
+        "010_gateway_bank_settlements",
+        include_bytes!("../../../../migrations/accounting-pg/010_gateway_bank_settlements.sql"),
+    ),
+    (
+        "011_reviewed_document_terms",
+        include_bytes!("../../../../migrations/accounting-pg/011_reviewed_document_terms.sql"),
+    ),
+    (
+        "012_document_terms_audit_kind",
+        include_bytes!("../../../../migrations/accounting-pg/012_document_terms_audit_kind.sql"),
+    ),
+];
 
 const PROJECTS_MIGRATIONS: &[(&str, &[u8])] = &[(
     "001_project_delivery",
@@ -137,6 +252,26 @@ const BILLING_MIGRATIONS: &[(&str, &[u8])] = &[
     (
         "003_invoice_email_outbox",
         include_bytes!("../../../../migrations/billing-pg/003_invoice_email_outbox.sql"),
+    ),
+    (
+        "004_email_payload_snapshot",
+        include_bytes!("../../../../migrations/billing-pg/004_email_payload_snapshot.sql"),
+    ),
+    (
+        "005_order_invoice_provenance",
+        include_bytes!("../../../../migrations/billing-pg/005_order_invoice_provenance.sql"),
+    ),
+    (
+        "006_customer_contact_identity",
+        include_bytes!("../../../../migrations/billing-pg/006_customer_contact_identity.sql"),
+    ),
+    (
+        "007_customer_party_identity",
+        include_bytes!("../../../../migrations/billing-pg/007_customer_party_identity.sql"),
+    ),
+    (
+        "008_company_owned_trade",
+        include_bytes!("../../../../migrations/billing-pg/008_company_owned_trade.sql"),
     ),
 ];
 
@@ -295,6 +430,11 @@ async fn serve() -> Result<(), Box<dyn Error>> {
         identity_key().map_err(|error| format!("identity configuration: {error}"))?;
     let site_addr = bind_addr().map_err(|error| format!("bind configuration: {error}"))?;
     let pkg_dir = wasm_package_dir().map_err(|error| format!("browser assets: {error}"))?;
+    let trusted_proxies = match env::var("ARCHAVA_TRUSTED_PROXIES") {
+        Ok(raw) => archava_host::TrustedProxies::parse(&raw)?,
+        Err(env::VarError::NotPresent) => archava_host::TrustedProxies::default(),
+        Err(_) => return Err("ARCHAVA_TRUSTED_PROXIES is not valid UTF-8".into()),
+    };
 
     let commerce = expected(COMMERCE_MIGRATIONS);
     let identity = expected(IDENTITY_MIGRATIONS);
@@ -303,6 +443,7 @@ async fn serve() -> Result<(), Box<dyn Error>> {
     let purchasing = expected(PURCHASING_MIGRATIONS);
     let foodservice = expected(FOODSERVICE_MIGRATIONS);
     let organizations = expected(ORGANIZATIONS_MIGRATIONS);
+    let accounting = expected(ACCOUNTING_MIGRATIONS);
     let proposals = expected(PROPOSALS_MIGRATIONS);
     let projects = expected(PROJECTS_MIGRATIONS);
     let scheduling = expected(SCHEDULING_MIGRATIONS);
@@ -321,6 +462,7 @@ async fn serve() -> Result<(), Box<dyn Error>> {
     let additional_erp = [
         ("archava_foodservice", foodservice.as_slice()),
         ("archava_organizations", organizations.as_slice()),
+        ("archava_accounting", accounting.as_slice()),
         ("archava_proposals", proposals.as_slice()),
         ("archava_projects", projects.as_slice()),
         ("archava_scheduling", scheduling.as_slice()),
@@ -389,7 +531,9 @@ async fn serve() -> Result<(), Box<dyn Error>> {
     let state = state
         .with_payment_registry(payment_registry)
         .with_email_registry(email_registry)
-        .with_presence_registry(presence_registry);
+        .with_presence_registry(presence_registry)
+        .with_trusted_proxies(trusted_proxies)
+        .with_agent_config(archava_host::agent::AgentConfig::from_env()?);
     // Both are startup configuration, like the registries above: a scrape
     // credential and a frame-ancestor allowlist cannot be widened by a request,
     // and a malformed list is a startup failure rather than a silent default.
@@ -405,6 +549,7 @@ async fn serve() -> Result<(), Box<dyn Error>> {
         Err(env::VarError::NotPresent) => state,
         Err(_) => return Err("ARCHAVA_EMBED_FRAME_ANCESTORS is not valid UTF-8".into()),
     };
+    let agent_worker = archava_host::agent::AgentWorker::start(state.clone());
     let app: Router = build_app(state, site_addr, &pkg_dir);
     tracing::info!(
         bind = %site_addr,
@@ -417,6 +562,7 @@ async fn serve() -> Result<(), Box<dyn Error>> {
     )
     .with_graceful_shutdown(shutdown_signal())
     .await;
+    agent_worker.shutdown().await;
     if writer.drain(&pool).await.is_err() {
         tracing::warn!("writer drain failed; inspect lease before restarting")
     }

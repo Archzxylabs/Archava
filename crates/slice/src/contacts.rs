@@ -10,6 +10,7 @@ use leptos::prelude::*;
 use leptos::task::spawn_local;
 use leptos_router::hooks::use_navigate;
 
+use crate::alive::AliveSignal;
 use crate::contact_context::{initials, ContactContext};
 use crate::draft::uuid_string;
 use crate::pending::{self, PendingMarker};
@@ -93,6 +94,25 @@ enum CreateState {
     Blocked { request_id: String },
 }
 
+fn same_session(session: session::SessionSignal, expected: &session::Held) -> bool {
+    session
+        .try_get_untracked()
+        .flatten()
+        .is_some_and(|current| {
+            current.tenant == expected.tenant
+                && current.principal == expected.principal
+                && current.csrf == expected.csrf
+        })
+}
+fn list_response_is_current(
+    generation: RwSignal<u64>,
+    ticket: u64,
+    session: session::SessionSignal,
+    expected: &session::Held,
+) -> bool {
+    generation.try_get_untracked() == Some(ticket) && same_session(session, expected)
+}
+
 /// The `/contacts` route.
 #[component]
 pub fn Contacts() -> impl IntoView {
@@ -108,6 +128,7 @@ pub fn Contacts() -> impl IntoView {
     // the first, the first-page action needs the second.
     let next_cursor = RwSignal::new(None::<String>);
     let page_cursor = RwSignal::new(None::<String>);
+    let load_generation = RwSignal::new(0_u64);
 
     // One loader, shared by hydration, the Refresh button and the page
     // actions. The filter is a VALUE the list query carries verbatim — the
@@ -116,11 +137,20 @@ pub fn Contacts() -> impl IntoView {
     // parameters, so the UI showed a contact the encoded API search never
     // returned (the audit's C06 repro).
     let load = move |search_term: String, after: Option<String>, set_hiatus: bool| {
+        // A create acknowledgement may invoke this after navigation. Responses
+        // also arrive out of order: keep the last request of this live session.
+        let Some(previous) = load_generation.try_get_untracked() else {
+            return;
+        };
+        let Some(held) = session.try_get_untracked().flatten() else {
+            return;
+        };
+        let ticket = previous.wrapping_add(1);
+        load_generation.set_if_alive(ticket);
         if set_hiatus {
             set_state.set(ContactsState::Loading);
         }
-        let tenant = session::held().map(|held| held.tenant).unwrap_or_default();
-        let mut target = format!("/contacts?tenant={}", query_encode(&tenant));
+        let mut target = format!("/contacts?tenant={}", query_encode(&held.tenant));
         if !search_term.is_empty() {
             target.push_str(&format!("&search={}", query_encode(&search_term)));
         }
@@ -128,7 +158,14 @@ pub fn Contacts() -> impl IntoView {
             target.push_str(&format!("&after={}", query_encode(cursor)));
         }
         spawn_local(async move {
-            match session::api_fetch("GET", &target, None).await {
+            if !list_response_is_current(load_generation, ticket, session, &held) {
+                return;
+            }
+            let answer = session::api_fetch("GET", &target, None).await;
+            if !list_response_is_current(load_generation, ticket, session, &held) {
+                return;
+            }
+            match answer {
                 Ok(Answer { status: 200, body }) => {
                     let Some(items) = body["items"].as_array() else {
                         selected_id.set(None);
@@ -297,25 +334,38 @@ pub fn Contacts() -> impl IntoView {
         let principal = held.principal.clone();
         let resuming = create_retry.get_untracked();
         spawn_local(async move {
-            match session::api_fetch("POST", "/crm/commands", Some(body)).await {
+            if !same_session(session, &held) {
+                return;
+            }
+            let answer = session::api_fetch("POST", "/crm/commands", Some(body)).await;
+            // A verified commit clears the original scoped pending marker even
+            // when its page is gone. It must not paint another session's page.
+            if matches!(&answer, Ok(Answer {status: 200, body}) if crate::receipt::crm(body,&key,Some("contact")))
+            {
+                pending::clear_by_request_id(&tenant, &principal, &key);
+            }
+            if create_state.try_get_untracked().is_none() || !same_session(session, &held) {
+                return;
+            }
+            match answer {
                 Ok(Answer { status: 200, body }) if crate::receipt::crm(&body,&key,Some("contact")) => {
-                    pending::clear_by_request_id(&tenant, &principal, &key);
-                    create_key.set(None);
-                    create_retry.set(false);
+
+                    create_key.set_if_alive(None);
+                    create_retry.set_if_alive(false);
                     let id = body["receipt"]["id"]
                         .as_str()
                         .unwrap_or_default()
                         .to_string();
-                    set_create_state.set(CreateState::Recorded { id });
+                    set_create_state.set_if_alive(CreateState::Recorded { id });
                     load(String::new(), None, false);
                 }
                 Ok(Answer { status, .. }) if (400..500).contains(&status) && resuming => {
-                    set_create_state.set(CreateState::Unknown("The retry was refused. The original request may still have committed; review its original details or check its receipt. Its reference has been kept.".into()));
+                    set_create_state.set_if_alive(CreateState::Unknown("The retry was refused. The original request may still have committed; review its original details or check its receipt. Its reference has been kept.".into()));
                 }
                 Ok(Answer { status, body }) if (400..500).contains(&status) => {
-                    pending::clear_by_request_id(&tenant, &principal, &key);
-                    create_key.set(None);
-                    set_create_state.set(CreateState::Refused {
+
+                    create_key.set_if_alive(None);
+                    set_create_state.set_if_alive(CreateState::Refused {
                         reason: body["reason"]
                             .as_str()
                             .unwrap_or(&format!("http {status}"))
@@ -326,11 +376,11 @@ pub fn Contacts() -> impl IntoView {
                             .to_string(),
                     });
                 }
-                Ok(_) => set_create_state.set(CreateState::Unknown("A matching receipt was not received. Keep this request reference and recover its status before starting another action.".into())),
+                Ok(_) => set_create_state.set_if_alive(CreateState::Unknown("A matching receipt was not received. Keep this request reference and recover its status before starting another action.".into())),
                 Err(FetchError::NoAnswer(why)) => {
                     // The command may have committed. Keep the key AND the
                     // marker: a retry must be the SAME command.
-                    set_create_state.set(CreateState::Unknown(why));
+                    set_create_state.set_if_alive(CreateState::Unknown(why));
                 }
             }
         });
@@ -611,5 +661,39 @@ pub fn Contacts() -> impl IntoView {
             <ContactContext selected=selected_id reveal=reveal_context />
             </div>
         </section>
+    }
+}
+
+#[cfg(test)]
+mod lifetime_tests {
+    use super::*;
+    #[test]
+    fn old_contact_responses_cannot_read_disposed_routes_or_replace_newer_session_results() {
+        let root = Owner::new();
+        let held = session::Held {
+            csrf: "original-session".into(),
+            tenant: "acme".into(),
+            principal: "alice".into(),
+        };
+        let (session, route, generation) = root.with(|| {
+            let session = RwSignal::new(Some(held.clone()));
+            let route = Owner::new();
+            let generation = route.with(|| RwSignal::new(1_u64));
+            (session, route, generation)
+        });
+        assert!(list_response_is_current(generation, 1, session, &held));
+        generation.set(2);
+        assert!(!list_response_is_current(generation, 1, session, &held));
+        assert!(list_response_is_current(generation, 2, session, &held));
+        session.set(Some(session::Held {
+            csrf: "new-session".into(),
+            ..held.clone()
+        }));
+        assert!(!list_response_is_current(generation, 2, session, &held));
+        session.set(Some(held.clone()));
+        route.cleanup();
+        assert!(!list_response_is_current(generation, 2, session, &held));
+        root.cleanup();
+        assert!(!same_session(session, &held));
     }
 }

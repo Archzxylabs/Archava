@@ -1,4 +1,4 @@
-//! ERP cohort command, query, and workspace routes across all 17 ledgers.
+//! ERP cohort command, query, and workspace routes across all 18 ERP ledgers.
 
 use axum::routing::{get, post};
 use axum::Router;
@@ -8,11 +8,39 @@ use crate::router::AppState;
 /// Mounts all ERP ledger routes.
 pub fn router() -> Router<AppState> {
     Router::new()
+        .merge(crate::erp::projections::router())
+        .route(
+            "/erp/accounting/commands",
+            post(crate::erp::accounting::command),
+        )
+        .route(
+            "/erp/accounting/commands/status",
+            get(crate::erp::accounting::status),
+        )
+        .route(
+            "/erp/accounting/workspace",
+            get(crate::erp::accounting::workspace),
+        )
+        .route(
+            "/erp/accounting/reports",
+            get(crate::erp::accounting::reports),
+        )
+        .route(
+            "/erp/accounting/subledger-report",
+            get(crate::erp::accounting::subledger_report),
+        )
+        .route(
+            "/erp/accounting/bank-reconciliation",
+            get(crate::erp::accounting::bank_reconciliation),
+        )
         // CRM customer relationship management cohort (ADR-018: normalized enterprise routes)
-        .route("/erp/crm/commands", post(crate::crm::crm_command))
-        .route("/erp/crm/commands/status", get(crate::crm::command_status))
-        .route("/erp/crm/records", get(crate::crm::record))
-        .route("/erp/crm/contacts", get(crate::crm::contacts))
+        .route("/erp/crm/commands", post(crate::erp::crm::crm_command))
+        .route(
+            "/erp/crm/commands/status",
+            get(crate::erp::crm::command_status),
+        )
+        .route("/erp/crm/records", get(crate::erp::crm::record))
+        .route("/erp/crm/contacts", get(crate::erp::crm::contacts))
         // Billing payments & invoice email integrations
         .route(
             "/erp/billing/payments",

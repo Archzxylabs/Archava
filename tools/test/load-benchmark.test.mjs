@@ -39,3 +39,29 @@ test('load-benchmark executes concurrent requests and computes percentile distri
     await new Promise((resolve) => server.close(resolve))
   }
 })
+
+test('failed HTTP responses are not a passing latency proof',async()=>{
+ const server=http.createServer((req,res)=>{res.writeHead(503);res.end('unavailable')})
+ await new Promise(r=>server.listen(0,'127.0.0.1',r))
+ try{
+  const result=await runBenchmark({target:`http://127.0.0.1:${server.address().port}`,requests:4,concurrency:2})
+  assert.equal(result.unexpectedStatuses,4)
+  assert.equal(result.statusCodes['503'],4)
+ }finally{await new Promise(r=>server.close(r))}
+})
+
+test('mutation load uses separate request bodies and bounded valid options',async()=>{
+ const seen=new Set()
+ const server=http.createServer(async(req,res)=>{let text='';for await(const chunk of req)text+=chunk;seen.add(JSON.parse(text).requestId);res.end('{}')})
+ await new Promise(r=>server.listen(0,'127.0.0.1',r))
+ try{
+  let next=0
+  const target=`http://127.0.0.1:${server.address().port}`
+  const result=await runBenchmark({target,method:'POST',requests:12,concurrency:3,body:()=>JSON.stringify({requestId:++next})})
+  assert.equal(seen.size,12)
+  assert.equal(result.unexpectedStatuses,0)
+  for(const invalid of [{requests:0},{requests:NaN},{concurrency:-1},{concurrency:Infinity},{concurrency:257},{timeoutMs:0},{path:'https://example.invalid/'}]) {
+   await assert.rejects(runBenchmark({target,...invalid}),TypeError)
+  }
+ }finally{await new Promise(r=>server.close(r))}
+})

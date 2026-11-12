@@ -945,6 +945,7 @@ pub struct AssigneePage {
 /// The case page query — the TS `casePageSchema`.
 #[derive(Debug, Clone, PartialEq)]
 pub struct CasePageQuery {
+    pub search: String,
     pub limit: i64,
     pub after: Option<String>,
     pub state: Option<String>,
@@ -963,7 +964,7 @@ pub struct AssigneePageQuery {
 /// vocabularies. The host maps a refusal to its invalid-submission class.
 pub fn parse_case_page(raw: &Value) -> Result<CasePageQuery, ValidationError> {
     let object = raw.as_object().ok_or(ValidationError("query"))?;
-    let allowed = ["limit", "after", "state", "priority", "overdue"];
+    let allowed = ["limit", "after", "state", "priority", "overdue", "search"];
     if object.keys().any(|key| !allowed.contains(&key.as_str())) {
         return Err(ValidationError("query"));
     }
@@ -997,7 +998,13 @@ pub fn parse_case_page(raw: &Value) -> Result<CasePageQuery, ValidationError> {
         Some(Value::Bool(value)) => Some(*value),
         _ => return Err(ValidationError("overdue")),
     };
+    let search = match object.get("search") {
+        None => String::new(),
+        Some(Value::String(s)) if s.chars().count() <= 160 => s.trim().to_owned(),
+        _ => return Err(ValidationError("search")),
+    };
     Ok(CasePageQuery {
+        search,
         limit,
         after,
         state,

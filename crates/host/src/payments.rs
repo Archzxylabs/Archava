@@ -150,6 +150,9 @@ impl From<archava_adapters::rls::TenantContextError> for Failure {
 impl IntoResponse for Failure {
     fn into_response(self) -> Response {
         let (status, reason) = match self {
+            Self::Gate(ErpGateError::Configuration(error)) => {
+                return error.response().into_response()
+            }
             Self::Store(PurchaseError::Domain(ErpError::Forbidden)) => {
                 (StatusCode::FORBIDDEN, "forbidden")
             }

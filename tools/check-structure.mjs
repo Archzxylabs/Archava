@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto'
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { dirname, isAbsolute, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import {domainAssets} from './rust/domain-assets.mjs'
 
 export const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const LAYERS = {
@@ -176,6 +177,9 @@ export function validateStructure(root, metadata) {
   }
   problems.push(...migrationProblems(root))
   problems.push(...extractorCoverageProblems(root))
+  if (existsSync(join(root,'crates/domain/Cargo.toml'))) {
+    try { domainAssets(root) } catch(error) { problems.push(error.message) }
+  }
   return { packages: packages.length, problems }
 }
 

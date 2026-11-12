@@ -33,6 +33,7 @@ pub mod hardware;
 pub mod ingestion;
 pub mod messaging;
 pub mod modality;
+pub mod operator;
 pub mod presence;
 pub mod presets;
 pub mod preview;

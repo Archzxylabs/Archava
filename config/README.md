@@ -4,6 +4,8 @@ This directory holds maintained configuration/catalogues consumed across the rep
 
 | File | Owner and consumer |
 | --- | --- |
+| `operator-actions.v1.json` | Installed business form metadata and permission vocabularies; consumed by `archava-domain::operator`, the Leptos native forms, Owner catalogue and explicit Ops owner bootstrap. Domain transactions remain the authorization boundary. |
+| `accounting-currencies.v1.json` | Fixed SIX ISO 4217 currency/minor-unit snapshot; consumed by the financial domain parser, native book setup and form display. The accounting migration independently enforces the same version. Payment-provider units need their own explicit mapping. |
 | `library-release.v1.json` | Release/assembly catalogue read by `archava-ops` and `tools/release/sbom.mjs` |
 | `payment-providers.example.json` | Deployment example copied by `tools/rust/package-native.mjs`; consumed by the optional native payment registry. Keys stay in environment variables. |
 | `email-providers.example.json` | Deployment example copied by `tools/rust/package-native.mjs`; consumed by the optional native email registry. The Resend key stays in an environment variable named by `apiKeyEnv`. |
@@ -17,3 +19,10 @@ Other data has explicit owners:
 - Environment-specific credentials and database URLs belong in deployment environment variables, using `deploy/*.env.example` as the documented reference. Never place filled secrets here.
 
 Only add a file here when its current cross-component consumers and owner can be named. Keep single-crate test fixtures beside their tests and historical catalogues in the archive.
+
+The two public Domain catalogues also have generated package-local snapshots in
+[crates/domain/embedded](../crates/domain/embedded/README.md). After editing their
+canonical files here, run `node tools/rust/domain-assets.mjs --write`. The
+structure gate and build provenance require byte equality. This explicit helper
+copies only those two public JSON files; it never copies filled environment files
+or provider credentials into a Cargo package.

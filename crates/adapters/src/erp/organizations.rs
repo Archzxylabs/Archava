@@ -268,6 +268,53 @@ pub async fn record_organization_command(
     if !access.holds(&[mutation.data.kind().permission()]) {
         return Err(forbidden());
     }
+    if matches!(
+        mutation.data,
+        OrganizationData::CreateReviewedAffiliation { .. }
+            | OrganizationData::VerifyAffiliationContact { .. }
+    ) && !access.holds(&["organizations.read", "affiliations.read"])
+    {
+        return Err(forbidden());
+    }
+    let contact_id = match &mutation.data {
+        OrganizationData::CreateAffiliation { contact_id, .. }
+        | OrganizationData::CreateReviewedAffiliation { contact_id, .. } => {
+            Some(parse_uuid_value(contact_id)?)
+        }
+        OrganizationData::VerifyAffiliationContact {
+            id,
+            organization_id,
+            ..
+        }
+        | OrganizationData::UpdateAffiliation {
+            id,
+            organization_id,
+            status: Some(_),
+            ..
+        } => {
+            let needs_source = match &mutation.data {
+                OrganizationData::UpdateAffiliation { status, .. } => {
+                    status.as_deref() == Some("active")
+                }
+                _ => true,
+            };
+            if needs_source {
+                Some(sqlx::query_scalar::<_,Uuid>("SELECT contact_id FROM archava_organizations.affiliations WHERE tenant_id=$1 AND id=$2 AND organization_id=$3")
+                    .bind(tenant).bind(parse_uuid_value(id)?).bind(parse_uuid_value(organization_id)?)
+                    .fetch_optional(&mut *connection).await.map_err(refuses)?.ok_or_else(not_found)?)
+            } else {
+                None
+            }
+        }
+        _ => None,
+    };
+    // Source lock first. Organization locks follow only after current CRM scope
+    // has been checked; replay deliberately rechecks this authority too.
+    let contact = if let Some(id) = contact_id {
+        Some(super::customer::resolve(connection, tenant, principal, id).await?)
+    } else {
+        None
+    };
     let request_id = parse_uuid_value(&mutation.request_id)?;
     let actor_id = principal.id.as_str();
 
@@ -295,6 +342,22 @@ pub async fn record_organization_command(
         return Ok(replayed_receipt(&stored));
     }
 
+    if let OrganizationData::CreateReviewedAffiliation {
+        expected_contact_revision,
+        ..
+    }
+    | OrganizationData::VerifyAffiliationContact {
+        expected_contact_revision,
+        ..
+    } = &mutation.data
+    {
+        if contact
+            .as_ref()
+            .is_none_or(|row| i64::from(row.revision) != *expected_contact_revision)
+        {
+            return Err(conflict());
+        }
+    }
     let now = committed_at(connection).await?;
     let (organization_id, affiliation_id, revision, reason) =
         execute_organization_arm(connection, tenant, actor_id, access, mutation).await?;
@@ -561,12 +624,28 @@ async fn execute_organization_arm(
             title,
             department,
             is_primary,
+        }
+        | OrganizationData::CreateReviewedAffiliation {
+            organization_id,
+            contact_id,
+            role,
+            title,
+            department,
+            is_primary,
+            ..
         } => {
             let organization_id = parse_uuid_value(organization_id)?;
             let contact_id = parse_uuid_value(contact_id)?;
             let row = load_organization(connection, tenant, organization_id).await?;
             scope_gate(access, &row)?;
             archived_gate(&row)?;
+            if let OrganizationData::CreateReviewedAffiliation {
+                expected_organization_revision,
+                ..
+            } = &mutation.data
+            {
+                revision_gate(&row, *expected_organization_revision)?;
+            }
             let is_primary = is_primary.unwrap_or(false);
             primary_conflict_gate(connection, tenant, organization_id, is_primary, true, None)
                 .await?;
@@ -601,6 +680,31 @@ async fn execute_organization_arm(
             .await
             .map_err(refuses)?;
             Ok((organization_id, Some(affiliation_id), next_revision, None))
+        }
+        OrganizationData::VerifyAffiliationContact {
+            id,
+            organization_id,
+            expected_organization_revision,
+            reason,
+            ..
+        } => {
+            let organization_id = parse_uuid_value(organization_id)?;
+            let id = parse_uuid_value(id)?;
+            let row = load_organization(connection, tenant, organization_id).await?;
+            scope_gate(access, &row)?;
+            archived_gate(&row)?;
+            revision_gate(&row, *expected_organization_revision)?;
+            let source = sqlx::query_as::<_,(Uuid,Option<i32>)>("SELECT contact_id,contact_revision FROM archava_organizations.affiliations WHERE tenant_id=$1 AND id=$2 AND organization_id=$3 FOR UPDATE")
+                .bind(tenant).bind(id).bind(organization_id).fetch_optional(&mut *connection).await.map_err(refuses)?.ok_or_else(not_found)?;
+            if source.1.is_some() {
+                return Err(conflict());
+            }
+            sqlx::query("UPDATE archava_organizations.affiliations a SET contact_name=c.full_name,contact_revision=c.revision,updated_at=clock_timestamp() FROM archava_crm.contacts c WHERE a.tenant_id=$1 AND a.id=$2 AND c.tenant_id=a.tenant_id AND c.id=a.contact_id")
+                .bind(tenant).bind(id).execute(&mut *connection).await.map_err(refuses)?;
+            let revision = row.revision + 1;
+            sqlx::query("UPDATE archava_organizations.organizations SET revision=$3,updated_at=clock_timestamp() WHERE tenant_id=$1 AND id=$2")
+                .bind(tenant).bind(organization_id).bind(int4(revision)?).execute(&mut *connection).await.map_err(refuses)?;
+            Ok((organization_id, Some(id), revision, Some(reason.clone())))
         }
         OrganizationData::UpdateAffiliation {
             id,

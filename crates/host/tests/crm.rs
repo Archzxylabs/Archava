@@ -29,7 +29,7 @@
 //!   `pg_locks`-observed waiters, the same harness `authority.rs` uses).
 //!
 //! The service-on-behalf-of witnesses (grant intersection, initiator
-//! recording, scope containment) drive [`archava_host::crm::submit_followup`]
+//! recording, scope containment) drive [`archava_host::erp::crm::submit_followup`]
 //! directly — the same core the HTTP route calls with a session-resolved human
 //! — because the TS baseline reaches native actions through the operator's
 //! epoch-controlled daemon, not through a public HTTP route.
@@ -40,7 +40,7 @@
 //! the browser half then proves the same flow through the visible UI.
 
 use archava_core::tenant::TenantId;
-use archava_host::crm::{
+use archava_host::erp::crm::{
     ActivityKind, ContactFields, ContactPatch, CrmActor, CrmCommand, CrmSubmission, PipelineStage,
 };
 use archava_host::{AppState, Ledger};
@@ -474,9 +474,10 @@ async fn core_submit(
             due_at: "2027-03-04T10:15:00Z".to_string(),
         },
     };
-    let (status, body) = archava_host::crm::submit_followup(&app_state, actor, submission).await?;
+    let (status, body) =
+        archava_host::erp::crm::submit_followup(&app_state, actor, submission).await?;
     let body = match body {
-        archava_host::crm::CrmBody::Outcome(value) => {
+        archava_host::erp::crm::CrmBody::Outcome(value) => {
             serde_json::to_value(value).expect("the command outcome serializes")
         }
         _ => panic!("submit_followup answers with the command outcome"),
@@ -1743,9 +1744,10 @@ async fn core_send(
         request_id: Uuid::parse_str(request_id).expect("a test uuid"),
         command,
     };
-    let (status, body) = archava_host::crm::submit_command(&app_state, actor, submission).await?;
+    let (status, body) =
+        archava_host::erp::crm::submit_command(&app_state, actor, submission).await?;
     let body = match body {
-        archava_host::crm::CrmBody::Outcome(value) => {
+        archava_host::erp::crm::CrmBody::Outcome(value) => {
             serde_json::to_value(value).expect("the command outcome serializes")
         }
         _ => panic!("submit_command answers with the command outcome"),

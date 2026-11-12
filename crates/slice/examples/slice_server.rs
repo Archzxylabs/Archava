@@ -506,6 +506,10 @@ async fn seed(fixture: &Fixture) {
         for (principal, read_only) in [("alice", false), ("bob", true)] {
             for (namespace, all) in [
                 (
+                    "archava_accounting",
+                    archava_domain::erp::accounting::PERMISSIONS.to_vec(),
+                ),
+                (
                     "archava_commerce",
                     vec![
                         "catalog.read",
@@ -531,6 +535,8 @@ async fn seed(fixture: &Fixture) {
                         "orders.write",
                         "receipts.read",
                         "receipts.write",
+                        "documents.read",
+                        "documents.write",
                         "audit.read",
                     ],
                 ),

@@ -24,6 +24,26 @@ use serde_json::{json, Value};
 use uuid::Uuid;
 type Response = (StatusCode, Json<Value>);
 type Result<T> = std::result::Result<T, Response>;
+pub(crate) async fn assert_return_provenance_readiness(
+    pool: &sqlx::PgPool,
+) -> std::result::Result<(), archava_adapters::rls::TenantContextError> {
+    use archava_adapters::rls::TenantContextError;
+    let complete: bool =
+        sqlx::query_scalar("SELECT archava_commerce.return_layer_guards_complete()")
+            .fetch_one(pool)
+            .await
+            .map_err(|source| TenantContextError::Database {
+                ledger: "Commerce original return cost",
+                source,
+            })?;
+    if !complete {
+        return Err(TenantContextError::Database {
+            ledger: "Commerce original return cost",
+            source: sqlx::Error::Protocol("Return-layer provenance guards are incomplete".into()),
+        });
+    }
+    Ok(())
+}
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Submission {
@@ -37,6 +57,8 @@ pub struct WorkspaceQuery {
     pub tenant: TenantId,
     #[serde(default)]
     pub search: String,
+    pub company_id: Option<Uuid>,
+    pub id: Option<Uuid>,
 }
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -100,6 +122,9 @@ async fn begin<'a>(
     )
     .await
     .map_err(unavailable)?;
+    crate::own::require_erp_module(&mut tx, COMMERCE_NAMESPACE)
+        .await
+        .map_err(crate::own::OwnRefusal::response)?;
     let context = resolve_commerce_context(
         tx.checked_executor().await.map_err(unavailable)?,
         tenant.as_str(),
@@ -115,6 +140,21 @@ async fn submit(state: &AppState, headers: &HeaderMap, input: Submission) -> Res
         .validate()
         .map_err(|message| refused(StatusCode::BAD_REQUEST, "invalid_submission", message))?;
     let (mut tx, principal, context) = begin(state, headers, &input.tenant, true).await?;
+    if input.command.company_selection().is_some()
+        || matches!(input.command, CommerceCommand::OrderCreateFromParty { .. })
+    {
+        crate::own::require_erp_module(&mut tx, "organizations")
+            .await
+            .map_err(crate::own::OwnRefusal::response)?;
+    }
+    if matches!(
+        input.command,
+        CommerceCommand::OrderCreateFromContact { .. }
+    ) {
+        crate::own::require_erp_module(&mut tx, "crm-contacts")
+            .await
+            .map_err(crate::own::OwnRefusal::response)?;
+    }
     let fingerprint=state.identity().digest("erp-commerce-fingerprint",&json!({"domain":"commerce","tenant":input.tenant.as_str(),"principal":principal,"command":input.command}).to_string());
     let receipt = store::record(
         tx.checked_executor().await.map_err(unavailable)?,
@@ -161,12 +201,24 @@ async fn read_workspace(
             "Search is too long.",
         ));
     }
-    let (mut tx, _principal, context) = begin(state, headers, &input.tenant, false).await?;
-    let value = store::workspace(
+    let (mut tx, principal, context) = begin(state, headers, &input.tenant, false).await?;
+    if let Some(id) = input.company_id {
+        archava_adapters::erp::company_trade::resolve(
+            tx.checked_executor().await.map_err(unavailable)?,
+            input.tenant.as_str(),
+            &principal,
+            id,
+        )
+        .await
+        .map_err(error)?;
+    }
+    let value = store::workspace_filtered(
         tx.checked_executor().await.map_err(unavailable)?,
         input.tenant.as_str(),
         &context,
         &input.search,
+        input.company_id,
+        input.id,
     )
     .await
     .map_err(error)?;

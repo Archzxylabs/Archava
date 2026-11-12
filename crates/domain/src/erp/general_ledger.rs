@@ -1,6 +1,6 @@
 //! Double-Entry General Ledger (GL) & Financial Reporting Engine.
 //!
-//! Provides strict double-entry bookkeeping adhering to standard IFRS / Indonesian PSAK.
+//! Pure arithmetic helpers; these alone do not establish statutory IFRS / PSAK compliance.
 //! Invariant: `Sum(Debits) == Sum(Credits)` down to minor integer cents.
 //! Computes Trial Balance, Balance Sheet (Assets = Liabilities + Equity), and Profit & Loss.
 

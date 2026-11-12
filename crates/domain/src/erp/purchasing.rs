@@ -15,7 +15,8 @@
 //! - the command union discriminates on `operation` with EXACT member shapes.
 //!
 //! Known divergence, recorded rather than silent: JS string length counts
-//! UTF-16 code units; this port counts characters (`str::len`). A long
+//! UTF-16 code units; most legacy text fields here count UTF-8 bytes. Supplier
+//! names use Unicode scalar counts to match PostgreSQL length(). A long
 //! multi-code-unit name could pass TS and refuse here — expected to never
 //! matter at these bounds, and the refusal direction is safe.
 
@@ -38,6 +39,8 @@ pub const PERMISSION_VOCABULARY: &[&str] = &[
     "orders.write",
     "receipts.read",
     "receipts.write",
+    "documents.read",
+    "documents.write",
     "audit.read",
 ];
 
@@ -198,12 +201,66 @@ pub struct ReceiptFinding {
 #[derive(Debug, Clone, PartialEq, Serialize)]
 #[serde(tag = "operation")]
 pub enum PurchaseCommand {
+    #[serde(rename = "document.capture")]
+    DocumentCapture {
+        #[serde(flatten)]
+        input: super::purchasing_documents::Capture,
+    },
+    #[serde(rename = "document.revise")]
+    DocumentRevise {
+        #[serde(flatten)]
+        input: super::purchasing_documents::Revise,
+    },
+    #[serde(rename = "document.match")]
+    DocumentMatch {
+        #[serde(flatten)]
+        input: super::purchasing_documents::Match,
+    },
+    #[serde(rename = "document.void")]
+    DocumentVoid {
+        #[serde(flatten)]
+        input: super::purchasing_documents::Void,
+    },
     #[serde(rename = "supplier.create")]
     SupplierCreate {
         #[serde(rename = "code")]
         code: String,
         #[serde(rename = "name")]
         name: String,
+    },
+    #[serde(rename = "supplier.create-from-contact")]
+    SupplierCreateFromContact {
+        code: String,
+        #[serde(rename = "contactId")]
+        contact_id: String,
+        #[serde(rename = "expectedContactRevision")]
+        expected_contact_revision: i64,
+    },
+    #[serde(rename = "supplier.refresh-contact")]
+    SupplierRefreshContact {
+        id: String,
+        #[serde(rename = "expectedRevision")]
+        expected_revision: i64,
+        #[serde(rename = "expectedContactRevision")]
+        expected_contact_revision: i64,
+        reason: String,
+    },
+    #[serde(rename = "supplier.create-from-party")]
+    SupplierCreateFromParty {
+        code: String,
+        #[serde(rename = "partyId")]
+        party_id: String,
+        #[serde(rename = "expectedPartyRevision")]
+        expected_party_revision: i64,
+    },
+    #[serde(rename = "supplier.refresh-party")]
+    SupplierRefreshParty {
+        id: String,
+        #[serde(rename = "expectedRevision")]
+        expected_revision: i64,
+        #[serde(rename = "expectedPartyRevision")]
+        expected_party_revision: i64,
+        reason: String,
     },
     #[serde(rename = "supplier.set-active")]
     SupplierSetActive {
@@ -246,6 +303,16 @@ pub enum PurchaseCommand {
         reason: String,
         #[serde(rename = "active")]
         active: bool,
+    },
+    #[serde(rename = "order.create-for-company")]
+    OrderCreateForCompany {
+        #[serde(rename = "companyId")]
+        company_id: String,
+        #[serde(rename = "expectedCompanyRevision")]
+        expected_company_revision: i64,
+        #[serde(rename = "supplierId")]
+        supplier_id: String,
+        lines: Vec<LineInput>,
     },
     #[serde(rename = "order.create")]
     OrderCreate {
@@ -322,12 +389,21 @@ impl PurchaseCommand {
     /// `operation` value.
     pub fn operation(&self) -> &'static str {
         match self {
+            Self::DocumentCapture { .. } => "document.capture",
+            Self::DocumentRevise { .. } => "document.revise",
+            Self::DocumentMatch { .. } => "document.match",
+            Self::DocumentVoid { .. } => "document.void",
             Self::SupplierCreate { .. } => "supplier.create",
+            Self::SupplierCreateFromParty { .. } => "supplier.create-from-party",
+            Self::SupplierRefreshParty { .. } => "supplier.refresh-party",
+            Self::SupplierCreateFromContact { .. } => "supplier.create-from-contact",
+            Self::SupplierRefreshContact { .. } => "supplier.refresh-contact",
             Self::SupplierSetActive { .. } => "supplier.set-active",
             Self::OfferCreate { .. } => "offer.create",
             Self::OfferSetCost { .. } => "offer.set-cost",
             Self::OfferSetActive { .. } => "offer.set-active",
             Self::OrderCreate { .. } => "order.create",
+            Self::OrderCreateForCompany { .. } => "order.create-for-company",
             Self::OrderReplaceLines { .. } => "order.replace-lines",
             Self::OrderConfirm { .. } => "order.confirm",
             Self::OrderCancel { .. } => "order.cancel",
@@ -339,7 +415,13 @@ impl PurchaseCommand {
     /// The command's reason, when its member caries one.
     pub fn reason(&self) -> Option<&str> {
         match self {
-            Self::SupplierSetActive { reason, .. }
+            Self::DocumentCapture { .. } => None,
+            Self::DocumentRevise { input } => Some(&input.reason),
+            Self::DocumentMatch { input } => Some(&input.reason),
+            Self::DocumentVoid { input } => Some(&input.reason),
+            Self::SupplierRefreshParty { reason, .. }
+            | Self::SupplierRefreshContact { reason, .. }
+            | Self::SupplierSetActive { reason, .. }
             | Self::OfferSetCost { reason, .. }
             | Self::OfferSetActive { reason, .. }
             | Self::OrderReplaceLines { reason, .. }
@@ -347,9 +429,12 @@ impl PurchaseCommand {
             | Self::OrderCancel { reason, .. }
             | Self::OrderShortClose { reason, .. }
             | Self::OrderReceive { reason, .. } => Some(reason),
-            Self::SupplierCreate { .. } | Self::OfferCreate { .. } | Self::OrderCreate { .. } => {
-                None
-            }
+            Self::SupplierCreateFromParty { .. }
+            | Self::SupplierCreate { .. }
+            | Self::SupplierCreateFromContact { .. }
+            | Self::OfferCreate { .. }
+            | Self::OrderCreate { .. }
+            | Self::OrderCreateForCompany { .. } => None,
         }
     }
 
@@ -522,6 +607,18 @@ pub fn parse_command(raw: &Value) -> Result<PurchaseCommand, ValidationError> {
         .filter(|(key, _)| key.as_str() != "operation")
         .count();
     match operation {
+        "document.capture" => Ok(PurchaseCommand::DocumentCapture {
+            input: super::purchasing_documents::Capture::parse(raw)?,
+        }),
+        "document.revise" => Ok(PurchaseCommand::DocumentRevise {
+            input: super::purchasing_documents::Revise::parse(raw)?,
+        }),
+        "document.match" => Ok(PurchaseCommand::DocumentMatch {
+            input: super::purchasing_documents::Match::parse(raw)?,
+        }),
+        "document.void" => Ok(PurchaseCommand::DocumentVoid {
+            input: super::purchasing_documents::Void::parse(raw)?,
+        }),
         "supplier.create" => {
             if rest != 2 {
                 return Err(ValidationError("operation"));
@@ -531,14 +628,115 @@ pub fn parse_command(raw: &Value) -> Result<PurchaseCommand, ValidationError> {
                 .and_then(Value::as_str)
                 .filter(|code| valid_code(code))
                 .ok_or(ValidationError("code"))?;
-            let name = bounded_title(
-                object.get("name").and_then(Value::as_str).unwrap_or(""),
-                160,
-            )
-            .ok_or(ValidationError("name"))?;
+            let name = object
+                .get("name")
+                .and_then(Value::as_str)
+                .unwrap_or("")
+                .trim();
+            if name.is_empty() || name.chars().count() > 160 {
+                return Err(ValidationError("name"));
+            }
+            let name = name.to_owned();
             Ok(PurchaseCommand::SupplierCreate {
                 code: code.to_string(),
                 name,
+            })
+        }
+        "supplier.create-from-contact" => {
+            if rest != 3 {
+                return Err(ValidationError("operation"));
+            }
+            let code = object
+                .get("code")
+                .and_then(Value::as_str)
+                .filter(|code| valid_code(code))
+                .ok_or(ValidationError("code"))?;
+            let contact_id = as_uuid(
+                object
+                    .get("contactId")
+                    .ok_or(ValidationError("contactId"))?,
+                "contactId",
+            )?;
+            let expected_contact_revision = as_i64(
+                object
+                    .get("expectedContactRevision")
+                    .ok_or(ValidationError("expectedContactRevision"))?,
+                "expectedContactRevision",
+                1,
+                REVISION_MAX,
+            )?;
+            Ok(PurchaseCommand::SupplierCreateFromContact {
+                code: code.to_owned(),
+                contact_id,
+                expected_contact_revision,
+            })
+        }
+        "supplier.refresh-contact" => {
+            if rest != 4 {
+                return Err(ValidationError("operation"));
+            }
+            let (id, expected_revision, reason) = parse_update(object)?;
+            let expected_contact_revision = as_i64(
+                object
+                    .get("expectedContactRevision")
+                    .ok_or(ValidationError("expectedContactRevision"))?,
+                "expectedContactRevision",
+                1,
+                REVISION_MAX,
+            )?;
+            Ok(PurchaseCommand::SupplierRefreshContact {
+                id,
+                expected_revision,
+                expected_contact_revision,
+                reason,
+            })
+        }
+        "supplier.create-from-party" => {
+            if rest != 3 {
+                return Err(ValidationError("operation"));
+            }
+            let code = object
+                .get("code")
+                .and_then(Value::as_str)
+                .filter(|s| valid_code(s))
+                .ok_or(ValidationError("code"))?
+                .to_owned();
+            let party_id = as_uuid(
+                object.get("partyId").ok_or(ValidationError("partyId"))?,
+                "partyId",
+            )?;
+            let expected_party_revision = as_i64(
+                object
+                    .get("expectedPartyRevision")
+                    .ok_or(ValidationError("expectedPartyRevision"))?,
+                "expectedPartyRevision",
+                1,
+                REVISION_MAX,
+            )?;
+            Ok(PurchaseCommand::SupplierCreateFromParty {
+                code,
+                party_id,
+                expected_party_revision,
+            })
+        }
+        "supplier.refresh-party" => {
+            if rest != 4 {
+                return Err(ValidationError("operation"));
+            }
+            let (id, expected_revision, reason) = parse_update(object)?;
+            let expected_party_revision = as_i64(
+                object
+                    .get("expectedPartyRevision")
+                    .ok_or(ValidationError("expectedPartyRevision"))?,
+                "expectedPartyRevision",
+                1,
+                REVISION_MAX,
+            )?;
+            Ok(PurchaseCommand::SupplierRefreshParty {
+                id,
+                expected_revision,
+                expected_party_revision,
+                reason,
             })
         }
         "supplier.set-active" => {
@@ -631,6 +829,38 @@ pub fn parse_command(raw: &Value) -> Result<PurchaseCommand, ValidationError> {
             )?;
             let lines = parse_line_inputs(object.get("lines").ok_or(ValidationError("lines"))?)?;
             Ok(PurchaseCommand::OrderCreate { supplier_id, lines })
+        }
+        "order.create-for-company" => {
+            if rest != 4 {
+                return Err(ValidationError("operation"));
+            }
+            let company_id = as_uuid(
+                object
+                    .get("companyId")
+                    .ok_or(ValidationError("companyId"))?,
+                "companyId",
+            )?;
+            let expected_company_revision = as_i64(
+                object
+                    .get("expectedCompanyRevision")
+                    .ok_or(ValidationError("expectedCompanyRevision"))?,
+                "expectedCompanyRevision",
+                1,
+                REVISION_MAX,
+            )?;
+            let supplier_id = as_uuid(
+                object
+                    .get("supplierId")
+                    .ok_or(ValidationError("supplierId"))?,
+                "supplierId",
+            )?;
+            let lines = parse_line_inputs(object.get("lines").ok_or(ValidationError("lines"))?)?;
+            Ok(PurchaseCommand::OrderCreateForCompany {
+                company_id,
+                expected_company_revision,
+                supplier_id,
+                lines,
+            })
         }
         "order.replace-lines" => {
             if rest != 4 {
@@ -882,6 +1112,18 @@ pub fn authorize_operation(context: &PurchaseContext, operation: &str) -> Result
             Err(ErpError::Forbidden)
         }
     };
+    if operation.starts_with("document.") {
+        return if purchaser.grants(&[
+            "documents.read",
+            "documents.write",
+            "orders.read",
+            "receipts.read",
+        ]) {
+            Ok(())
+        } else {
+            Err(ErpError::Forbidden)
+        };
+    }
     if operation.starts_with("supplier.") {
         if !purchaser.grants(&["suppliers.read", "suppliers.write"]) {
             return Err(ErpError::Forbidden);
@@ -899,7 +1141,7 @@ pub fn authorize_operation(context: &PurchaseContext, operation: &str) -> Result
     }
     if matches!(
         operation,
-        "order.create" | "order.replace-lines" | "order.confirm"
+        "order.create" | "order.create-for-company" | "order.replace-lines" | "order.confirm"
     ) && !purchaser.grants(&["suppliers.read", "offers.read"])
     {
         return Err(ErpError::Forbidden);
@@ -928,4 +1170,36 @@ pub fn authorize_recovery(
     receipt: &PurchaseReceipt,
 ) -> Result<(), ErpError> {
     authorize_operation(context, receipt.operation.as_str())
+}
+
+#[cfg(test)]
+mod party_grammar_tests {
+    use super::*;
+    use serde_json::json;
+    #[test]
+    fn party_supplier_grammar_checks_both_versions_and_disallows_identity_claims() {
+        let id = "01933df1-8d5e-783f-9b1e-1d3f9a2b3c4d";
+        for body in [
+            json!({"operation":"supplier.create-from-party","code":"PARTY","partyId":id,"expectedPartyRevision":1}),
+            json!({"operation":"supplier.refresh-party","id":id,"expectedRevision":1,"expectedPartyRevision":2,"reason":"Reviewed current source"}),
+        ] {
+            assert!(parse_command(&body).is_ok());
+            for value in [
+                json!(0),
+                json!(-1),
+                json!(1.5),
+                json!(2147483648i64),
+                json!("1"),
+            ] {
+                let mut b = body.clone();
+                b["expectedPartyRevision"] = value;
+                assert!(parse_command(&b).is_err());
+            }
+            for key in ["name", "contactId", "ownerId", "supplierPartyRevision"] {
+                let mut b = body.clone();
+                b[key] = json!(id);
+                assert!(parse_command(&b).is_err());
+            }
+        }
+    }
 }

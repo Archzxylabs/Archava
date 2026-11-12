@@ -43,9 +43,7 @@ use sqlx::types::Uuid;
 use sqlx::PgConnection;
 use sqlx::Row;
 
-use super::commerce_kernel::{
-    load_locked_membership, lock_commerce_products, receive_purchase_stock, ReceiveStockInput,
-};
+use super::commerce_kernel::{load_locked_membership, receive_purchase_stock, ReceiveStockInput};
 use super::{
     purchase_database_error, PurchaseError, COMMERCE_LEDGER, COMMERCE_NAMESPACE,
     COMMERCE_PERMISSION_VOCABULARY, PURCHASING_LEDGER, PURCHASING_NAMESPACE,
@@ -61,6 +59,9 @@ pub const TABLES: &[&str] = &[
     "lines",
     "receipts",
     "receipt_lines",
+    "supplier_documents",
+    "supplier_document_versions",
+    "supplier_document_allocations",
     "commands",
     "audit",
 ];
@@ -112,7 +113,7 @@ fn parse_supplier_row(
         return Err(PurchaseError::Domain(ErpError::Conflict));
     }
     let name: String = row.try_get("name").map_err(refuses)?;
-    if name.trim_matches(|c: char| c.is_whitespace()).is_empty() || name.len() > 160 {
+    if name.trim_matches(|c: char| c.is_whitespace()).is_empty() || name.chars().count() > 160 {
         return Err(PurchaseError::Domain(ErpError::Conflict));
     }
     Ok(SupplierRow {
@@ -236,7 +237,7 @@ fn parse_order_row(
     if supplier_name
         .trim_matches(|c: char| c.is_whitespace())
         .is_empty()
-        || supplier_name.len() > 160
+        || supplier_name.chars().count() > 160
     {
         return Err(PurchaseError::Domain(ErpError::Conflict));
     }
@@ -495,7 +496,7 @@ pub async fn resolve_purchasing_context(
 /// and the assignment scope rule (`a.scope==='all' OR owner_id=a.ownerId`),
 /// under `FOR UPDATE` when a mutation will follow, `FOR SHARE` for
 /// recovery's re-read.
-async fn owned_order(
+pub(super) async fn owned_order(
     connection: &mut PgConnection,
     tenant: &str,
     purchasing: &archava_domain::erp::purchasing::PurchaseAccess,
@@ -556,6 +557,7 @@ async fn quote(
     tenant: &str,
     supplier_id: Uuid,
     lines: &[LineInput],
+    company: Option<Uuid>,
 ) -> Result<Quote, PurchaseError> {
     let supplier_row = sqlx::query(
         "SELECT * FROM archava_purchasing.suppliers WHERE tenant_id=$1 AND id=$2 FOR SHARE",
@@ -598,13 +600,15 @@ async fn quote(
         return Err(PurchaseError::Domain(ErpError::Conflict));
     }
 
-    let products = lock_commerce_products(
+    let products = super::commerce_kernel::lock_commerce_products_scoped(
         connection,
         tenant,
         &offers
             .iter()
             .map(|offer| offer.product_id)
             .collect::<Vec<_>>(),
+        "commerce",
+        company,
     )
     .await?;
     if products
@@ -765,6 +769,12 @@ async fn insert_purchase_audit(
 /// identity store's keyed digest is a host concern); everything from the
 /// authorization ladder to the receipt-binding UPDATE happens here, in the
 /// TS statement order.
+struct CommandSources {
+    company: Option<super::company_trade::CompanyStamp>,
+    stock_company: Option<Uuid>,
+    contact: Option<crate::erp::crm::LockedContact>,
+    party: Option<super::parties::TransactionParty>,
+}
 pub async fn record_purchase_command(
     connection: &mut PgConnection,
     tenant: &str,
@@ -780,6 +790,127 @@ pub async fn record_purchase_command(
     }
     authorize_operation(&context.context(), mutation.command.operation())
         .map_err(PurchaseError::Domain)?;
+    // Current CRM authority is required even on a replay. Lock the source
+    // before the supplier; the immutable UUID makes the unlocked lookup safe.
+    let company = if let PurchaseCommand::OrderCreateForCompany { company_id, .. } =
+        &mutation.command
+    {
+        Some(
+            super::company_trade::resolve(connection, tenant, principal, parse_uuid(company_id)?)
+                .await?,
+        )
+    } else {
+        None
+    };
+    let target = match &mutation.command {
+        PurchaseCommand::DocumentCapture { input } => Some((
+            super::company_trade::Record::Purchase,
+            input.order_id.as_str(),
+        )),
+        PurchaseCommand::DocumentRevise { input } => Some((
+            super::company_trade::Record::SupplierDocument,
+            input.id.as_str(),
+        )),
+        PurchaseCommand::DocumentMatch { input } => Some((
+            super::company_trade::Record::SupplierDocument,
+            input.id.as_str(),
+        )),
+        PurchaseCommand::DocumentVoid { input } => Some((
+            super::company_trade::Record::SupplierDocument,
+            input.id.as_str(),
+        )),
+        PurchaseCommand::OfferCreate { product_id, .. } => {
+            Some((super::company_trade::Record::Product, product_id.as_str()))
+        }
+        PurchaseCommand::OfferSetCost { id, .. } | PurchaseCommand::OfferSetActive { id, .. } => {
+            Some((super::company_trade::Record::Offer, id.as_str()))
+        }
+        PurchaseCommand::OrderReplaceLines { id, .. }
+        | PurchaseCommand::OrderConfirm { id, .. }
+        | PurchaseCommand::OrderCancel { id, .. }
+        | PurchaseCommand::OrderShortClose { id, .. }
+        | PurchaseCommand::OrderReceive { id, .. } => {
+            Some((super::company_trade::Record::Purchase, id.as_str()))
+        }
+        _ => None,
+    };
+    let stock_company = if let Some((kind, id)) = target {
+        super::company_trade::authorize(connection, tenant, principal, kind, parse_uuid(id)?)
+            .await?
+    } else {
+        company.as_ref().map(|c| c.id)
+    };
+    let offer_company = if matches!(
+        mutation.command,
+        PurchaseCommand::OfferCreate { .. }
+            | PurchaseCommand::OfferSetCost { .. }
+            | PurchaseCommand::OfferSetActive { active: true, .. }
+    ) {
+        if let Some(id) = stock_company {
+            Some(super::company_trade::resolve(connection, tenant, principal, id).await?)
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+    let source_id = match &mutation.command {
+        PurchaseCommand::SupplierCreateFromContact { contact_id, .. } => {
+            Some(parse_uuid(contact_id)?)
+        }
+        PurchaseCommand::SupplierRefreshContact { id, .. } => {
+            let source = sqlx::query_scalar::<_, Option<Uuid>>(
+                "SELECT supplier_contact_id FROM archava_purchasing.suppliers WHERE tenant_id=$1 AND id=$2",
+            ).bind(tenant).bind(parse_uuid(id)?).fetch_optional(&mut *connection).await.map_err(refuses)?
+                .ok_or(ErpError::NotFound)?.ok_or(ErpError::Conflict)?;
+            Some(source)
+        }
+        _ => None,
+    };
+    let contact_source = if let Some(id) = source_id {
+        Some(super::customer::resolve(connection, tenant, principal, id).await?)
+    } else {
+        None
+    };
+    let supplier_id = match &mutation.command {
+        PurchaseCommand::SupplierRefreshParty { id, .. }
+        | PurchaseCommand::SupplierSetActive {
+            id, active: true, ..
+        } => Some(parse_uuid(id)?),
+        PurchaseCommand::OfferCreate { supplier_id, .. }
+        | PurchaseCommand::OrderCreate { supplier_id, .. }
+        | PurchaseCommand::OrderCreateForCompany { supplier_id, .. } => {
+            Some(parse_uuid(supplier_id)?)
+        }
+        _ => None,
+    };
+    let party_id = if let PurchaseCommand::SupplierCreateFromParty { party_id, .. } =
+        &mutation.command
+    {
+        Some(parse_uuid(party_id)?)
+    } else if let Some(id) = supplier_id {
+        sqlx::query_scalar::<_,Option<Uuid>>("SELECT supplier_party_id FROM archava_purchasing.suppliers WHERE tenant_id=$1 AND id=$2").bind(tenant).bind(id).fetch_optional(&mut *connection).await.map_err(refuses)?.ok_or(ErpError::NotFound)?
+    } else {
+        None
+    };
+    if matches!(
+        mutation.command,
+        PurchaseCommand::SupplierRefreshParty { .. }
+    ) && party_id.is_none()
+    {
+        return Err(ErpError::Conflict.into());
+    }
+    let party_source = if let Some(id) = party_id {
+        Some(super::parties::resolve_transaction(connection, tenant, principal, id).await?)
+    } else {
+        None
+    };
+    let source = CommandSources {
+        company,
+        stock_company,
+        contact: contact_source,
+        party: party_source,
+    };
     let request_id = parse_uuid(&mutation.request_id)?;
 
     let claimed = claim_purchase_command(
@@ -803,12 +934,54 @@ pub async fn record_purchase_command(
             return Err(PurchaseError::Domain(ErpError::Conflict));
         }
         let receipt_value = row_receipt.expect("checked is_some above");
-        let stored = recover_from_row(connection, tenant, context, &receipt_value).await?;
+        let stored =
+            recover_from_row(connection, tenant, context, principal, &receipt_value).await?;
         // The replayed receipt is served WITHOUT re-mentioning the original:
         // the commands row's stored receipt is untouched.
         return Ok(stored);
     }
 
+    if let Some(company) = &source.company {
+        if let PurchaseCommand::OrderCreateForCompany {
+            expected_company_revision,
+            ..
+        } = mutation.command
+        {
+            company.validate_new(expected_company_revision)?;
+        }
+    }
+    if offer_company.is_some_and(|c| !c.active) {
+        return Err(ErpError::Conflict.into());
+    }
+    if let Some(party) = &source.party {
+        if !party.supplier {
+            return Err(ErpError::Conflict.into());
+        }
+        if let PurchaseCommand::SupplierCreateFromParty {
+            expected_party_revision,
+            ..
+        }
+        | PurchaseCommand::SupplierRefreshParty {
+            expected_party_revision,
+            ..
+        } = &mutation.command
+        {
+            if i64::from(party.revision) != *expected_party_revision {
+                return Err(ErpError::Conflict.into());
+            }
+        }
+        if let Some(id) = supplier_id.filter(|_| {
+            !matches!(
+                mutation.command,
+                PurchaseCommand::SupplierRefreshParty { .. }
+            )
+        }) {
+            let revision:Option<i32>=sqlx::query_scalar("SELECT supplier_party_revision FROM archava_purchasing.suppliers WHERE tenant_id=$1 AND id=$2").bind(tenant).bind(id).fetch_one(&mut *connection).await.map_err(refuses)?;
+            if revision != Some(party.revision) {
+                return Err(ErpError::Conflict.into());
+            }
+        }
+    }
     let (id, revision) = execute_command(
         connection,
         tenant,
@@ -816,6 +989,7 @@ pub async fn record_purchase_command(
         context,
         mutation,
         fingerprint,
+        &source,
     )
     .await?;
     let receipt = PurchaseReceipt {
@@ -858,6 +1032,7 @@ async fn recover_from_row(
     connection: &mut PgConnection,
     tenant: &str,
     context: &ResolvedPurchaseContext,
+    principal: &PurchasePrincipal,
     receipt_value: &serde_json::Value,
 ) -> Result<PurchaseReceipt, PurchaseError> {
     let stored: PurchaseReceipt = serde_json::from_value(receipt_value.clone())
@@ -870,9 +1045,34 @@ async fn recover_from_row(
     if stored.revision < 1 {
         return Err(PurchaseError::Domain(ErpError::Conflict));
     }
+    let target = if stored.operation.starts_with("document.") {
+        Some(super::company_trade::Record::SupplierDocument)
+    } else if stored.operation.starts_with("order.") {
+        Some(super::company_trade::Record::Purchase)
+    } else if stored.operation.starts_with("offer.") {
+        Some(super::company_trade::Record::Offer)
+    } else {
+        None
+    };
+    if let Some(kind) = target {
+        super::company_trade::authorize(
+            connection,
+            tenant,
+            principal,
+            kind,
+            parse_uuid(&stored.id)?,
+        )
+        .await?;
+    }
     authorize_recovery(&context.context(), &stored).map_err(PurchaseError::Domain)?;
     // The typed union leaves only order-prefixed operations for this branch;
     // the TS check is `isOrderOperation(op)` with the same prefix.
+    if stored.operation.starts_with("document.") {
+        let source =
+            super::supplier_documents::order_id(connection, tenant, parse_uuid(&stored.id)?)
+                .await?;
+        owned_order(connection, tenant, &context.purchasing, source, false).await?;
+    }
     if stored.operation.starts_with("order.") {
         let order_id = parse_uuid(&stored.id)?;
         owned_order(connection, tenant, &context.purchasing, order_id, false).await?;
@@ -906,7 +1106,7 @@ pub async fn command_status(
         return Err(PurchaseError::Domain(ErpError::Forbidden));
     }
     let receipt_value = row_receipt.ok_or(PurchaseError::Domain(ErpError::Conflict))?;
-    let receipt = recover_from_row(connection, tenant, context, &receipt_value).await?;
+    let receipt = recover_from_row(connection, tenant, context, principal, &receipt_value).await?;
     Ok(archava_domain::erp::purchasing::PurchaseCommandStatus::Committed { receipt })
 }
 
@@ -921,8 +1121,16 @@ async fn execute_command(
     context: &ResolvedPurchaseContext,
     mutation: &PurchaseMutation,
     fingerprint: &str,
+    sources: &CommandSources,
 ) -> Result<(Uuid, i64), PurchaseError> {
+    let source = sources.contact.as_ref();
     match &mutation.command {
+        PurchaseCommand::DocumentCapture { .. }
+        | PurchaseCommand::DocumentRevise { .. }
+        | PurchaseCommand::DocumentMatch { .. }
+        | PurchaseCommand::DocumentVoid { .. } => {
+            super::supplier_documents::execute(connection, tenant, context, mutation).await
+        }
         PurchaseCommand::SupplierCreate { code, name } => {
             let id = Uuid::new_v4();
             sqlx::query(
@@ -936,6 +1144,76 @@ async fn execute_command(
             .await
             .map_err(refuses)?;
             Ok((id, 1))
+        }
+        PurchaseCommand::SupplierCreateFromContact {
+            code,
+            contact_id,
+            expected_contact_revision,
+        } => {
+            let source = source.ok_or(ErpError::Conflict)?;
+            if i64::from(source.revision) != *expected_contact_revision
+                || source.full_name.trim().is_empty()
+                || source.full_name.chars().count() > 160
+            {
+                return Err(ErpError::Conflict.into());
+            }
+            let id = Uuid::new_v4();
+            sqlx::query("INSERT INTO archava_purchasing.suppliers(tenant_id,id,code,name,supplier_contact_id,supplier_contact_revision) VALUES($1,$2,$3,$4,$5,$6)")
+                .bind(tenant).bind(id).bind(code).bind(&source.full_name)
+                .bind(parse_uuid(contact_id)?).bind(source.revision)
+                .execute(&mut *connection).await.map_err(refuses)?;
+            Ok((id, 1))
+        }
+        PurchaseCommand::SupplierRefreshContact {
+            id,
+            expected_revision,
+            expected_contact_revision,
+            ..
+        } => {
+            let source = source.ok_or(ErpError::Conflict)?;
+            let id = parse_uuid(id)?;
+            let row = sqlx::query("SELECT * FROM archava_purchasing.suppliers WHERE tenant_id=$1 AND id=$2 FOR UPDATE")
+                .bind(tenant).bind(id).fetch_optional(&mut *connection).await.map_err(refuses)?.ok_or(ErpError::NotFound)?;
+            let supplier = parse_supplier_row(&row, tenant)?;
+            let stored: Option<i32> = row.try_get("supplier_contact_revision").map_err(refuses)?;
+            if supplier.revision != *expected_revision
+                || *expected_revision >= REVISION_MAX
+                || i64::from(source.revision) != *expected_contact_revision
+                || stored.is_none_or(|revision| source.revision <= revision)
+                || source.full_name.trim().is_empty()
+                || source.full_name.chars().count() > 160
+            {
+                return Err(ErpError::Conflict.into());
+            }
+            sqlx::query("UPDATE archava_purchasing.suppliers SET name=$3,supplier_contact_revision=$4,revision=revision+1,updated_at=clock_timestamp() WHERE tenant_id=$1 AND id=$2")
+                .bind(tenant).bind(id).bind(&source.full_name).bind(source.revision)
+                .execute(&mut *connection).await.map_err(refuses)?;
+            Ok((id, expected_revision + 1))
+        }
+        PurchaseCommand::SupplierCreateFromParty { code, party_id, .. } => {
+            let party = sources.party.as_ref().ok_or(ErpError::Conflict)?;
+            let id = Uuid::new_v4();
+            sqlx::query("INSERT INTO archava_purchasing.suppliers(tenant_id,id,code,name,supplier_party_id,supplier_party_revision) VALUES($1,$2,$3,$4,$5,$6)").bind(tenant).bind(id).bind(code).bind(&party.name).bind(parse_uuid(party_id)?).bind(party.revision).execute(&mut *connection).await.map_err(refuses)?;
+            Ok((id, 1))
+        }
+        PurchaseCommand::SupplierRefreshParty {
+            id,
+            expected_revision,
+            ..
+        } => {
+            let party = sources.party.as_ref().ok_or(ErpError::Conflict)?;
+            let id = parse_uuid(id)?;
+            let row=sqlx::query("SELECT * FROM archava_purchasing.suppliers WHERE tenant_id=$1 AND id=$2 FOR UPDATE").bind(tenant).bind(id).fetch_optional(&mut *connection).await.map_err(refuses)?.ok_or(ErpError::NotFound)?;
+            let supplier = parse_supplier_row(&row, tenant)?;
+            let stored: Option<i32> = row.try_get("supplier_party_revision").map_err(refuses)?;
+            if supplier.revision != *expected_revision
+                || *expected_revision >= REVISION_MAX
+                || stored.is_none_or(|revision| party.revision <= revision)
+            {
+                return Err(ErpError::Conflict.into());
+            }
+            sqlx::query("UPDATE archava_purchasing.suppliers SET name=$3,supplier_party_revision=$4,revision=revision+1,updated_at=clock_timestamp() WHERE tenant_id=$1 AND id=$2").bind(tenant).bind(id).bind(&party.name).bind(party.revision).execute(&mut *connection).await.map_err(refuses)?;
+            Ok((id, expected_revision + 1))
         }
         PurchaseCommand::SupplierSetActive {
             id,
@@ -992,7 +1270,14 @@ async fn execute_command(
             if !supplier.active {
                 return Err(PurchaseError::Domain(ErpError::Conflict));
             }
-            let products = lock_commerce_products(connection, tenant, &[product_id]).await?;
+            let products = super::commerce_kernel::lock_commerce_products_scoped(
+                connection,
+                tenant,
+                &[product_id],
+                "commerce",
+                sources.stock_company,
+            )
+            .await?;
             if products
                 .first()
                 .map(|product| !product.active || !product.track_stock)
@@ -1088,26 +1373,43 @@ async fn execute_command(
                     .map_err(refuses)?;
             Ok((id, *expected_revision + 1))
         }
-        PurchaseCommand::OrderCreate { supplier_id, lines } => {
+        PurchaseCommand::OrderCreate { supplier_id, lines }
+        | PurchaseCommand::OrderCreateForCompany {
+            supplier_id, lines, ..
+        } => {
             let supplier_id = parse_uuid(supplier_id)?;
-            let quote = quote(connection, tenant, supplier_id, lines).await?;
-            let id = Uuid::new_v4();
-            sqlx::query(
-                "INSERT INTO archava_purchasing.orders(tenant_id,id,owner_id,supplier_id,supplier_code,supplier_name,total_estimate) \
-                 VALUES($1,$2,$3,$4,$5,$6,$7)",
+            let quote = quote(
+                connection,
+                tenant,
+                supplier_id,
+                lines,
+                sources.stock_company,
             )
-            .bind(tenant)
-            .bind(id)
-            // `a.ownerId` — the service narrow means the ORDER's owner is
-            // the named human, not the acting service.
-            .bind(&context.purchasing.owner_id)
-            .bind(supplier_id)
-            .bind(quote.supplier.code.as_str())
-            .bind(quote.supplier.name.as_str())
-            .bind(quote.total)
-            .execute(&mut *connection)
-            .await
-            .map_err(refuses)?;
+            .await?;
+            let id = Uuid::new_v4();
+            let statement = if sources.company.is_some() {
+                "INSERT INTO archava_purchasing.orders(tenant_id,id,owner_id,supplier_id,supplier_code,supplier_name,total_estimate,company_id,company_revision,company_code,company_name) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)"
+            } else {
+                "INSERT INTO archava_purchasing.orders(tenant_id,id,owner_id,supplier_id,supplier_code,supplier_name,total_estimate) VALUES($1,$2,$3,$4,$5,$6,$7)"
+            };
+            let query = sqlx::query(statement)
+                .bind(tenant)
+                .bind(id)
+                .bind(&context.purchasing.owner_id)
+                .bind(supplier_id)
+                .bind(&quote.supplier.code)
+                .bind(&quote.supplier.name)
+                .bind(quote.total);
+            let query = if let Some(company) = &sources.company {
+                query
+                    .bind(company.id)
+                    .bind(company.revision)
+                    .bind(&company.code)
+                    .bind(&company.name)
+            } else {
+                query
+            };
+            query.execute(&mut *connection).await.map_err(refuses)?;
             write_lines(connection, tenant, id, &quote.lines).await?;
             Ok((id, 1))
         }
@@ -1125,7 +1427,14 @@ async fn execute_command(
             if order.state != "draft" {
                 return Err(PurchaseError::Domain(ErpError::Conflict));
             }
-            let quote = quote(connection, tenant, order.supplier_id, lines).await?;
+            let quote = quote(
+                connection,
+                tenant,
+                order.supplier_id,
+                lines,
+                sources.stock_company,
+            )
+            .await?;
             sqlx::query("DELETE FROM archava_purchasing.lines WHERE tenant_id=$1 AND order_id=$2")
                 .bind(tenant)
                 .bind(order.id)
@@ -1202,6 +1511,7 @@ async fn execute_command(
                                 quantity: line.quantity,
                             })
                             .collect::<Vec<_>>(),
+                        sources.stock_company,
                     )
                     .await?;
                     if requote.lines.iter().any(|quoted| {
@@ -1424,27 +1734,49 @@ pub async fn workspace_view(
     context: &ResolvedPurchaseContext,
     search: &str,
 ) -> Result<serde_json::Value, PurchaseError> {
+    workspace_view_scoped(connection, tenant, context, search, None).await
+}
+pub async fn workspace_view_scoped(
+    connection: &mut PgConnection,
+    tenant: &str,
+    context: &ResolvedPurchaseContext,
+    search: &str,
+    company: Option<Uuid>,
+) -> Result<serde_json::Value, PurchaseError> {
+    workspace_view_filtered(connection, tenant, context, search, company, None).await
+}
+pub async fn workspace_view_filtered(
+    connection: &mut PgConnection,
+    tenant: &str,
+    context: &ResolvedPurchaseContext,
+    search: &str,
+    company: Option<Uuid>,
+    id: Option<Uuid>,
+) -> Result<serde_json::Value, PurchaseError> {
     let access = context.context().narrowed();
     let holds = |p: &str| access.purchasing.permissions.iter().any(|v| v == p);
     if !holds("suppliers.read") && !holds("offers.read") && !holds("orders.read") {
         return Err(ErpError::Forbidden.into());
     }
     let suppliers = if holds("suppliers.read") {
-        sqlx::query_scalar::<_,serde_json::Value>("SELECT json_build_object('id',id,'code',code,'name',name,'active',active,'revision',revision) FROM archava_purchasing.suppliers WHERE tenant_id=$1 AND ($2='' OR strpos(lower(name||' '||code),lower($2))>0) ORDER BY created_at DESC,id LIMIT 100").bind(tenant).bind(search).fetch_all(&mut *connection).await.map_err(|e|purchase_database_error(PURCHASING_LEDGER,e))?
+        sqlx::query_scalar::<_,serde_json::Value>("SELECT json_build_object('id',id,'code',code,'name',name,'active',active,'revision',revision,'supplierContactId',supplier_contact_id,'supplierContactRevision',supplier_contact_revision,'supplierPartyId',supplier_party_id,'supplierPartyRevision',supplier_party_revision) FROM archava_purchasing.suppliers WHERE tenant_id=$1 AND ($3::uuid IS NULL OR id=$3) AND ($2='' OR strpos(lower(name||' '||code),lower($2))>0) ORDER BY created_at DESC,id LIMIT 100").bind(tenant).bind(search).bind(id).fetch_all(&mut *connection).await.map_err(|e|purchase_database_error(PURCHASING_LEDGER,e))?
     } else {
         vec![]
     };
     let offers = if holds("offers.read") {
-        sqlx::query_scalar::<_,serde_json::Value>("SELECT json_build_object('id',o.id,'supplierId',o.supplier_id,'supplierName',s.name,'productId',o.product_id,'productTitle',p.title,'unitCost',o.unit_cost,'active',o.active,'revision',o.revision) FROM archava_purchasing.offers o JOIN archava_purchasing.suppliers s ON s.tenant_id=o.tenant_id AND s.id=o.supplier_id JOIN archava_commerce.products p ON p.tenant_id=o.tenant_id AND p.id=o.product_id WHERE o.tenant_id=$1 AND ($2='' OR strpos(lower(s.name||' '||p.title),lower($2))>0) ORDER BY o.created_at DESC,o.id LIMIT 100").bind(tenant).bind(search).fetch_all(&mut *connection).await.map_err(|e|purchase_database_error(PURCHASING_LEDGER,e))?
+        sqlx::query_scalar::<_,serde_json::Value>("SELECT json_build_object('id',o.id,'supplierId',o.supplier_id,'supplierName',s.name,'productId',o.product_id,'productTitle',p.title,'companyId',to_jsonb(p)->'company_id','unitCost',o.unit_cost,'active',o.active,'revision',o.revision) FROM archava_purchasing.offers o JOIN archava_purchasing.suppliers s ON s.tenant_id=o.tenant_id AND s.id=o.supplier_id JOIN archava_commerce.products p ON p.tenant_id=o.tenant_id AND p.id=o.product_id WHERE o.tenant_id=$1 AND (to_jsonb(p)->>'company_id')::uuid IS NOT DISTINCT FROM $3::uuid AND ($4::uuid IS NULL OR o.id=$4) AND ($2='' OR strpos(lower(s.name||' '||p.title),lower($2))>0) ORDER BY o.created_at DESC,o.id LIMIT 100").bind(tenant).bind(search).bind(company).bind(id).fetch_all(&mut *connection).await.map_err(|e|purchase_database_error(PURCHASING_LEDGER,e))?
     } else {
         vec![]
     };
     let orders = if holds("orders.read") {
-        sqlx::query_scalar::<_,serde_json::Value>("SELECT json_build_object('id',o.id,'supplierName',o.supplier_name,'state',o.state,'total',o.total_estimate,'currency',o.currency,'revision',o.revision,'ownerId',o.owner_id,'lines',coalesce((SELECT json_agg(json_build_object('id',l.id,'offerId',l.offer_id,'productId',l.product_id,'title',l.title,'quantity',l.quantity,'acceptedQuantity',l.accepted_quantity,'rejectedQuantity',l.rejected_quantity,'unitCost',l.unit_cost) ORDER BY l.id) FROM archava_purchasing.lines l WHERE l.tenant_id=o.tenant_id AND l.order_id=o.id),'[]'::json)) FROM archava_purchasing.orders o WHERE o.tenant_id=$1 AND ($2 OR o.owner_id=$3) AND ($4='' OR strpos(lower(o.supplier_name),lower($4))>0) ORDER BY o.created_at DESC,o.id LIMIT 100").bind(tenant).bind(access.purchasing.scope==archava_domain::erp::ErpScope::All).bind(&access.purchasing.owner_id).bind(search).fetch_all(connection).await.map_err(|e|purchase_database_error(PURCHASING_LEDGER,e))?
+        sqlx::query_scalar::<_,serde_json::Value>("SELECT json_build_object('id',o.id,'supplierId',o.supplier_id,'supplierContactId',o.supplier_contact_id,'supplierContactRevision',o.supplier_contact_revision,'supplierPartyId',o.supplier_party_id,'supplierPartyRevision',o.supplier_party_revision,'supplierName',o.supplier_name,'companyId',to_jsonb(o)->'company_id','companyRevision',to_jsonb(o)->'company_revision','companyCode',to_jsonb(o)->'company_code','companyName',to_jsonb(o)->'company_name','state',o.state,'total',o.total_estimate,'currency',o.currency,'revision',o.revision,'ownerId',o.owner_id,'lines',coalesce((SELECT json_agg(json_build_object('id',l.id,'offerId',l.offer_id,'productId',l.product_id,'title',l.title,'quantity',l.quantity,'acceptedQuantity',l.accepted_quantity,'rejectedQuantity',l.rejected_quantity,'unitCost',l.unit_cost) ORDER BY l.id) FROM archava_purchasing.lines l WHERE l.tenant_id=o.tenant_id AND l.order_id=o.id),'[]'::json)) FROM archava_purchasing.orders o WHERE o.tenant_id=$1 AND (to_jsonb(o)->>'company_id')::uuid IS NOT DISTINCT FROM $5::uuid AND ($2 OR o.owner_id=$3) AND ($6::uuid IS NULL OR o.id=$6) AND ($4='' OR strpos(lower(o.supplier_name),lower($4))>0) ORDER BY o.created_at DESC,o.id LIMIT 100").bind(tenant).bind(access.purchasing.scope==archava_domain::erp::ErpScope::All).bind(&access.purchasing.owner_id).bind(search).bind(company).bind(id).fetch_all(&mut *connection).await.map_err(|e|purchase_database_error(PURCHASING_LEDGER,e))?
     } else {
         vec![]
     };
+    let documents =
+        super::supplier_documents::workspace(connection, tenant, context, search, company, id)
+            .await?;
     Ok(
-        serde_json::json!({"suppliers":suppliers,"offers":offers,"orders":orders,"pageLimit":100,"permissions":access.purchasing.permissions,"scope":access.purchasing.scope}),
+        serde_json::json!({"suppliers":suppliers,"offers":offers,"orders":orders,"documents":documents,"pageLimit":100,"permissions":access.purchasing.permissions,"scope":access.purchasing.scope}),
     )
 }

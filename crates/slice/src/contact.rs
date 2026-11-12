@@ -17,6 +17,14 @@ use crate::draft::uuid_string;
 use crate::pending::{self, PendingMarker};
 use crate::session::{self, Answer, FetchError};
 
+fn stage_caption(stage: &str, labels: &std::collections::BTreeMap<String, String>) -> String {
+    labels
+        .get(stage)
+        .filter(|label| !label.is_empty())
+        .cloned()
+        .unwrap_or_else(|| stage.to_owned())
+}
+
 #[derive(Clone, Debug, PartialEq)]
 struct Facts {
     id: String,
@@ -87,6 +95,7 @@ enum RecordState {
         followups: Vec<Followup>,
         opportunities: Vec<Opportunity>,
         pipeline_enabled: bool,
+        pipeline_labels: std::collections::BTreeMap<String, String>,
     },
     Refused {
         reason: String,
@@ -239,6 +248,8 @@ pub fn Contact() -> impl IntoView {
                         })
                         .collect();
                     let pipeline_enabled = body["pipelineEnabled"].as_bool().unwrap_or(true);
+                    let pipeline_labels =
+                        serde_json::from_value(body["pipelineLabels"].clone()).unwrap_or_default();
                     // The edit boxes adopt the freshly read facts: a write
                     // bumps the revision, and the next write must carry the
                     // revision this page just learned, not a stale one.
@@ -251,6 +262,7 @@ pub fn Contact() -> impl IntoView {
                         followups,
                         opportunities,
                         pipeline_enabled,
+                        pipeline_labels,
                     });
                 }
                 Ok(Answer { status, body }) => set_state.set(RecordState::Refused {
@@ -419,7 +431,7 @@ pub fn Contact() -> impl IntoView {
                     </p>
                 }
                 .into_any(),
-                RecordState::Loaded { facts, activities, followups, opportunities, pipeline_enabled } => {
+                RecordState::Loaded { facts, activities, followups, opportunities, pipeline_enabled, pipeline_labels } => {
                     let revision = facts.revision;
                     let contact_id_value = facts.id.clone();
                     let update_id = facts.id.clone();
@@ -611,10 +623,12 @@ pub fn Contact() -> impl IntoView {
                                     let id = opportunity.id.clone();
                                     let opportunity_revision = opportunity.revision;
                                     let stage_now = opportunity.stage.clone();
+                                    let current_label = stage_caption(&opportunity.stage, &pipeline_labels);
+                                    let labels = pipeline_labels.clone();
                                     view! {
                                         <li data-testid="record-opportunity">
                                             {opportunity.title.clone()}
-                                            " — stage "{opportunity.stage.clone()}
+                                            " — stage "{current_label}
                                             " — rev "{opportunity.revision.to_string()}
                                             {opportunity.loss_reason.clone().map(|reason| view! {
                                                 <span> " (lost: "{reason}")"</span>
@@ -640,7 +654,7 @@ pub fn Contact() -> impl IntoView {
                                                         .iter()
                                                         .map(|stage| view! {
                                                             <option value=*stage selected=*stage == stage_now>
-                                                                {*stage}
+                                                                {stage_caption(stage, &labels)}
                                                             </option>
                                                         })
                                                         .collect::<Vec<_>>()}
@@ -704,5 +718,18 @@ pub fn Contact() -> impl IntoView {
                 .into_any(),
             }}
         </section>
+    }
+}
+
+#[cfg(test)]
+mod presentation_tests {
+    use super::*;
+    #[test]
+    fn configured_stage_captions_preserve_ids_and_fallback_for_older_responses() {
+        let labels =
+            std::collections::BTreeMap::from([("new".to_owned(), "Discovery <&>".to_owned())]);
+        assert_eq!(stage_caption("new", &labels), "Discovery <&>");
+        assert_eq!(stage_caption("qualified", &labels), "qualified");
+        assert_eq!(stage_caption("new", &Default::default()), "new");
     }
 }

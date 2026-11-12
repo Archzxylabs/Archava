@@ -18,7 +18,10 @@ const staging=`${out}.staging-${process.pid}`;mkdirSync(staging,{recursive:true}
 try{
  const copy=(from,to)=>{mkdirSync(dirname(join(staging,to)),{recursive:true});cpSync(join(root,from),join(staging,to),{recursive:true,errorOnExist:true,force:false})}
  copy('target/release/archava-server','bin/archava-server');copy('target/release/archava-ops','bin/archava-ops');copy('target/site/pkg','site/pkg');copy('target/site/build-provenance.json','build-provenance.json')
+ copy('static/vendor/livekit/LICENSE','licenses/livekit-client-2.23.0/LICENSE');copy('static/vendor/livekit/provenance.json','licenses/livekit-client-2.23.0/provenance.json');copy('config/operator-actions.v1.json','config/operator-actions.v1.json');
  copy('config/library-release.v1.json','config/library-release.v1.json');copy('config/payment-providers.example.json','config/payment-providers.example.json');copy('config/email-providers.example.json','config/email-providers.example.json');copy('migrations/manifest.v1.json','migrations/manifest.v1.json');const migrationManifest=JSON.parse(readFileSync(join(root,'migrations/manifest.v1.json'),'utf8'));for(const ledger of migrationManifest.ledgers)for(const migration of ledger.migrations)copy(migration.path,migration.path);copy('deploy/archava.env.example','archava.env.example');copy('deploy/NATIVE_INSTALL.md','README.md')
+ for(const name of ['prometheus.yml','alerts.yml','README.md'])copy(`deploy/monitoring/${name}`,`monitoring/${name}`)
+ copy('deploy/archava.service','archava.service');copy('deploy/Caddyfile','Caddyfile')
  const catalog=JSON.parse(readFileSync(join(staging,'config/library-release.v1.json'),'utf8'));const artifacts=[]
  const walk=(dir)=>{for(const entry of readdirSync(join(staging,dir),{withFileTypes:true})){const path=dir?`${dir}/${entry.name}`:entry.name;if(entry.isDirectory())walk(path);else if(entry.isFile())artifacts.push({name:path,version:catalog.version,tarball:path,sha256:sha256(join(staging,path)),bytes:statSync(join(staging,path)).size})}}
  walk('');artifacts.sort((a,b)=>a.name.localeCompare(b.name,'en'))

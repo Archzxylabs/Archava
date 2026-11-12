@@ -23,23 +23,23 @@ This document succeeds the [Historical Rust Decisions](../archive/rust/DECISIONS
 - **Date**: 2026-10-31
 - **Domain**: CRM & Core Persistence Layer
 - **Impacted Files**:
-  - [`crates/host/src/crm.rs`](../../crates/host/src/crm.rs)
+  - [`crates/host/src/crm.rs`](../../crates/host/src/erp/crm.rs)
   - [`crates/adapters/src/lib.rs`](../../crates/adapters/src/lib.rs)
-  - [`crates/adapters/src/crm.rs`](../../crates/adapters/src/crm.rs)
+  - [`crates/adapters/src/crm.rs`](../../crates/adapters/src/erp/crm.rs)
   - Documentation: [`docs/modules/CRM_MODULE.md`](../modules/CRM_MODULE.md) and [`docs/architecture/README.md`](README.md)
 
 ### Context & Friction
 
 In Archava, all 20+ ERP ledgers (commerce, purchasing, foodservice, laundry, accommodation, billing, etc.) have their PostgreSQL persistence cleanly sequestered inside `crates/adapters/src/erp/*` behind atomic `FORCE RLS` transactions.
 
-CRM has remained the solitary architectural exception: [`crates/host/src/crm.rs`](../../crates/host/src/crm.rs) (2,612 lines) couples Axum HTTP request handling, tenant auth, state machine pipeline transitions, mutation claims, and raw SQL queries directly in the host crate. This represents a shallow, leaky seam:
+CRM has remained the solitary architectural exception: [`crates/host/src/crm.rs`](../../crates/host/src/erp/crm.rs) (2,612 lines) couples Axum HTTP request handling, tenant auth, state machine pipeline transitions, mutation claims, and raw SQL queries directly in the host crate. This represents a shallow, leaky seam:
 1. **Asymmetry**: The database layer is split — ERP queries live in `archava-adapters`, but CRM queries live in `archava-host`.
 2. **Lack of Locality**: Schema changes, transaction timeouts, and SQL adjustments for CRM require modifying the HTTP layer.
 3. **Low Leverage**: Other consumers (CLI tools, background maintenance jobs, Ops routines) cannot execute CRM mutations without depending on the Axum HTTP router stack.
 
 ### Decision
 
-Extract the complete CRM persistence engine from [`crates/host/src/crm.rs`](../../crates/host/src/crm.rs) into a dedicated, deep repository module in `crates/adapters/src/crm.rs`.
+Extract the complete CRM persistence engine from [`crates/host/src/crm.rs`](../../crates/host/src/erp/crm.rs) into a dedicated, deep repository module in `crates/adapters/src/crm.rs`.
 
 #### Seam Division of Responsibilities
 
@@ -64,7 +64,7 @@ Extract the complete CRM persistence engine from [`crates/host/src/crm.rs`](../.
      ) -> Result<Option<CommandReceipt>, CrmPersistenceError>;
      ```
 
-2. **[`crates/host/src/crm.rs`](../../crates/host/src/crm.rs) (The HTTP Coordinator)**:
+2. **[`crates/host/src/crm.rs`](../../crates/host/src/erp/crm.rs) (The HTTP Coordinator)**:
    - Shrinks from ~2,600 lines to ~400 lines.
    - Responsible strictly for HTTP boundary concerns: parsing JSON request bodies, extracting authenticated session claims, verifying CSRF headers, delegating to `adapters::crm`, and mapping domain receipts or refusals to HTTP status codes.
 
@@ -84,7 +84,7 @@ Extract the complete CRM persistence engine from [`crates/host/src/crm.rs`](../.
   - Migrate contact creation, update, activity logging, follow-up tracking, and pipeline opportunity transition queries.
   - Implement atomic idempotency claim and audit logging within transaction scope.
 - [x] **Phase 3: Host Coordinator Refactor**
-  - Rewire [`crates/host/src/crm.rs`](../../crates/host/src/crm.rs) to call `archava_adapters::crm`.
+  - Rewire [`crates/host/src/crm.rs`](../../crates/host/src/erp/crm.rs) to call `archava_adapters::crm`.
   - Strip redundant SQL strings and direct pool operations from `crates/host`.
 - [x] **Phase 4: Verification & Docs Alignment**
   - Run `cargo test -p archava-host --test crm --locked -- --test-threads=1`.
@@ -238,7 +238,7 @@ Updated compile-time tripwire [`crates/host/src/extractors.rs`](../../crates/hos
   - [`crates/domain/src/erp/crm.rs`](../../crates/domain/src/erp/crm.rs)
   - [`crates/domain/src/erp/mod.rs`](../../crates/domain/src/erp/mod.rs)
   - [`crates/adapters/src/erp/mod.rs`](../../crates/adapters/src/erp/mod.rs)
-  - [`crates/adapters/src/crm.rs`](../../crates/adapters/src/crm.rs)
+  - [`crates/adapters/src/crm.rs`](../../crates/adapters/src/erp/crm.rs)
   - [`crates/host/src/routes/erp.rs`](../../crates/host/src/routes/erp.rs)
   - [`crates/host/src/routes/crm.rs`](../../crates/host/src/routes/crm.rs)
   - [`docs/architecture/README.md`](README.md)
@@ -266,6 +266,10 @@ Normalize CRM as a first-class business module of the Archava ERP suite across a
    Mounted canonical `/erp/crm/commands`, `/erp/crm/commands/status`, `/erp/crm/records`, and `/erp/crm/contacts` routes under the ERP router tree, while retaining `/crm/*` and `/contacts` in `routes/crm.rs` as front-office client aliases.
 5. **Documentation Harmony**:
    Updated `docs/architecture/README.md` and `docs/modules/CRM_MODULE.md` to define Archava unequivocally as a Modular ERP Monolith with CRM as its native front-office pillar.
+
+### Addendum (2026-11-12): physical relocation
+
+The compatibility re-export is gone. The adapter now lives at `crates/adapters/src/erp/crm.rs` and the HTTP boundary at `crates/host/src/erp/crm.rs`; the only module paths are `archava_adapters::erp::crm` and `archava_host::erp::crm`. `crates/host/src/routes/crm.rs` stays where it is: it is the front-office route family (`/contacts`, `/crm/*`, agent, owner configuration, assistant), not a CRM module. URLs, the `crm-pg` ledger, migration IDs and the `tests/crm.rs` suite name are unchanged. File names in the ADR-014 and ADR-018 text above describe the tree at the time of those decisions.
 
 ---
 

@@ -42,6 +42,16 @@ cargo test --workspace --locked -- --test-threads=1
 
 Use PostgreSQL tooling for full integration coverage. Tests provision owned disposable fixtures; never repoint them at a shared application database. Test counts vary with the source and scope, so record the current output rather than copying a count from an old report.
 
+## Public Domain catalogues
+
+`config/operator-actions.v1.json` and `config/accounting-currencies.v1.json` are
+canonical shared inputs. Run `node tools/rust/domain-assets.mjs --write` after
+editing them, then verify normally. Their exact generated copies live inside
+`crates/domain/embedded/` so a packaged Domain crate does not require the parent
+checkout. `node tools/rust/domain-assets.mjs --check` is read-only; structure
+verification and build provenance refuse missing or stale copies. Only the two
+public catalogues are copied, never deployment credentials.
+
 ## Build the application
 
 ```bash
@@ -66,7 +76,7 @@ node tools/rust/run-persistent.mjs
 
 Both launchers build before serving. They support `--help` without starting a service. The preview fixture's `stop` command uses its own pidfile; preserve unrelated servers when working on a shared checkout.
 
-Start at `/app` to sign in, `/app/home` for the overview, and `/app/contacts` for the CRM workflow. Operations at `/app/erp` is the native Tier 1 workspace for catalog/orders, purchasing, invoices, support and read-tool missions. The release tracker records remaining costing/provider work. The server embeds the shared stylesheet and migrations, so rebuild the native server after changing those files; rebuild WASM after changing view markup.
+Start at `/app` to sign in, `/app/home` for the overview, and `/app/contacts` for the CRM workflow. Operations at `/app/erp` provides the [18 installed native business domains](modules/NATIVE_OPERATIONS.md), [reviewed imports, proactive cards and approved business missions](modules/REVIEWED_WORKFLOWS.md), plus [configured conversational media](modules/LIVE_MEDIA.md). The release tracker distinguishes local acceptance from external provider/deployment work. The server embeds the shared stylesheet and migrations, so rebuild the native server after changing those files; rebuild WASM after changing view markup.
 
 ## Browser acceptance
 
@@ -77,6 +87,10 @@ node tools/e2e/verify.mjs --output target/e2e/latest
 ```
 
 This gate owns a fresh Chromium profile and disposable PostgreSQL fixture. It exercises CRM UI writes, receipt recovery and authorization negatives, then restarts the production executable on the same database. It does not use a shared database or a user-started browser. See [tool ownership](../tools/README.md) for installed-browser configuration. Preview processes can use `ARCHAVA_SLICE_PIDFILE` to isolate their pidfile; the gate sets a unique path.
+
+For real Gemini inference, use the explicitly selected [live acceptance launcher](../tools/README.md#live-gemini-acceptance).
+The [live acceptance record](product/AGENT_LIVE_ACCEPTANCE_2026-11-05.md) documents
+the tested model/profile, six natural-language goals, provider limits and remaining scope.
 
 ## Supporting tools
 

@@ -1,6 +1,19 @@
 use super::*;
 use crate::draft::uuid_string;
 
+fn terminal_receipt(body: &Value, request: &str, invoice: &str) -> bool {
+    body["requestId"]
+        .as_str()
+        .or_else(|| body["request_id"].as_str())
+        == Some(request)
+        && body["invoiceId"]
+            .as_str()
+            .or_else(|| body["invoice_id"].as_str())
+            == Some(invoice)
+        && body["id"].as_str().is_some_and(|id| !id.is_empty())
+        && matches!(body["state"].as_str(), Some("accepted" | "rejected"))
+}
+
 #[derive(Clone, Copy)]
 struct EmailPanelState {
     invoice: StoredValue<String>,
@@ -34,12 +47,12 @@ impl EmailPanelState {
                     self.emails.set_if_alive(items.clone());
 
                     // If a pending request is being tracked, check if the server has its terminal receipt
-                    if let Some(pending_req_id) = self.pending.get_untracked() {
+                    if let Some(pending_req_id) = self.pending.try_get_untracked().flatten() {
                         if let Some(found) = items.iter().find(|e| {
                             e["requestId"] == pending_req_id || e["request_id"] == pending_req_id
                         }) {
                             let state = found["state"].as_str().unwrap_or("");
-                            if matches!(state, "accepted" | "rejected") {
+                            if terminal_receipt(found, &pending_req_id, &invoice_id) {
                                 pending::clear_by_request_id(
                                     &held.tenant,
                                     &held.principal,
@@ -49,12 +62,20 @@ impl EmailPanelState {
                                 self.notice
                                     .set_if_alive(format!("Email outcome confirmed: {state}"));
                             }
-                            if self.recipient.get_untracked().is_empty() {
+                            if self
+                                .recipient
+                                .try_get_untracked()
+                                .is_some_and(|value| value.is_empty())
+                            {
                                 if let Some(rec) = found["recipient"].as_str() {
                                     self.recipient.set_if_alive(rec.to_string());
                                 }
                             }
-                            if self.subject.get_untracked().is_empty() {
+                            if self
+                                .subject
+                                .try_get_untracked()
+                                .is_some_and(|value| value.is_empty())
+                            {
                                 if let Some(subj) = found["subject"].as_str() {
                                     self.subject.set_if_alive(subj.to_string());
                                 }
@@ -116,17 +137,28 @@ impl EmailPanelState {
         spawn_local(async move {
             match session::api_fetch("POST", &path, Some(body)).await {
                 Ok(answer) if answer.status == 200 => {
-                    let returned_key = answer.body["requestId"]
-                        .as_str()
-                        .or_else(|| answer.body["request_id"].as_str());
-                    let state = answer.body["state"].as_str().unwrap_or("accepted");
-                    if returned_key == Some(&pending_key)
-                        && matches!(state, "accepted" | "rejected")
-                    {
+                    let state = answer.body["state"].as_str().unwrap_or("unknown");
+                    if terminal_receipt(&answer.body, &pending_key, &invoice_id) {
                         pending::clear_by_request_id(&held.tenant, &held.principal, &pending_key);
                         self.pending.set_if_alive(None);
                     }
                     self.notice.set_if_alive(format!("Email status: {state}"));
+                    self.refresh();
+                }
+                Ok(answer)
+                    if answer.status == 409
+                        && answer.body["reason"] == "email_already_recorded"
+                        && answer.body["requestId"].as_str() == Some(pending_key.as_str())
+                        && answer.body["invoiceId"].as_str() == Some(invoice_id.as_str())
+                        && answer.body["duplicateOf"]
+                            .as_str()
+                            .is_some_and(|id| !id.is_empty() && id != pending_key) =>
+                {
+                    // The backend explicitly refused this key without an
+                    // invocation; the original transmission stays in history.
+                    pending::clear_by_request_id(&held.tenant, &held.principal, &pending_key);
+                    self.pending.set_if_alive(None);
+                    self.notice.set_if_alive("These invoice details already have an email transmission. Review the history before sending another message.".into());
                     self.refresh();
                 }
                 Ok(answer) if (400..500).contains(&answer.status) && old.is_none() => {
@@ -153,6 +185,26 @@ impl EmailPanelState {
             }
             self.busy.set_if_alive(false);
         });
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn only_a_matching_explicit_terminal_invoice_receipt_clears_recovery() {
+        let accepted =
+            json!({"id":"receipt","requestId":"request","invoiceId":"invoice","state":"accepted"});
+        assert!(terminal_receipt(&accepted, "request", "invoice"));
+        for body in [
+            json!({"id":"receipt","requestId":"request","invoiceId":"invoice"}),
+            json!({"id":"receipt","requestId":"request","invoiceId":"invoice","state":"unknown"}),
+            json!({"id":"receipt","requestId":"different","invoiceId":"invoice","state":"accepted"}),
+            json!({"id":"receipt","requestId":"request","invoiceId":"another","state":"accepted"}),
+            json!({"requestId":"request","invoiceId":"invoice","state":"accepted"}),
+        ] {
+            assert!(!terminal_receipt(&body, "request", "invoice"), "{body}");
+        }
     }
 }
 

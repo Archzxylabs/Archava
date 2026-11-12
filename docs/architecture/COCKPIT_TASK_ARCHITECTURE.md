@@ -22,6 +22,8 @@ The [router](../../crates/host/src/router.rs) mounts:
 - `GET /api/v1/cockpit/missions/{id}?tenant=TENANT`: read durable state.
 - `POST /api/v1/cockpit/missions/{id}/steps/{step_index}/complete?tenant=TENANT`: record a typed worker result.
 - `POST /api/v1/cockpit/missions/{id}/abort?tenant=TENANT`: abort with a reason.
+- `POST /api/v1/cockpit/missions/{id}/steps/{step_index}/approve?tenant=TENANT`: record human approval under the selected policy.
+- `POST /api/v1/cockpit/missions/{id}/run-next?tenant=TENANT`: execute an eligible registered read or approved business step.
 
 Use the explicit `tenant` query parameter for ID-based operations so they work after a cold restart. Earlier callers may use a warm cache's tenant hint; the hint is only a selector and never authorizes access. Request fields are defined by the handler's typed structs.
 
@@ -39,11 +41,13 @@ An identical completed worker report can be retried without another effect or ev
 
 ## Execution and worker limits
 
-A worker report remains caller-supplied metadata. No enforced 50:1 compression ratio, autonomous scheduler, exactly-once external effect, compensation engine, or complete financial verification follows from these command handlers. A committed checkpoint requires a separate executor/recovery implementation to resume real work safely.
+Registered business tools use the [finite dispatcher](../../crates/host/src/business.rs) and existing domain handlers. Business steps require approval and current domain grants. The stable mission/step request key survives a lost checkpoint; retry recovers the domain receipt without a second business effect. Caller-supplied completion cannot claim success for such a step. Native forms can create the reviewed mission, and mission detail shows its inputs and verified output. See [reviewed workflows](../modules/REVIEWED_WORKFLOWS.md).
+
+Other worker reports remain caller-supplied metadata. These handlers do not implement an autonomous scheduler, general compensation engine, enforced compression ratio, or complete financial verification. External provider delivery still needs its own verified receipt and recovery boundary.
 
 ## Verification
 
-[Host regression tests](../../crates/host/tests/cockpit.rs) exercise real PostgreSQL under the non-owner runtime role: failed persistence rollback, auto-launch/abort failures, cold restart, dependency ordering, identical/conflicting replay, concurrent completion, assigned scope, revoked membership and CSRF refusal. [Raw red and green runs](../archive/audits/evidence/launch-2026-10-29/) retain their execution scope; they are not live-provider or deployment certifications.
+[Product workflow tests](../../crates/host/tests/product_workflows.rs) cover all 13 additional native module contracts, real business effects, approval, forged reports and injected checkpoint failure. [Host regression tests](../../crates/host/tests/cockpit.rs) exercise real PostgreSQL under the non-owner runtime role: failed persistence rollback, auto-launch/abort failures, cold restart, dependency ordering, identical/conflicting replay, concurrent completion, assigned scope, revoked membership and CSRF refusal. [Raw red and green runs](../archive/audits/evidence/launch-2026-10-29/) retain their execution scope; they are not live-provider or deployment certifications.
 
 ```bash
 cargo test -p archava-host --test cockpit --locked -- --test-threads=1

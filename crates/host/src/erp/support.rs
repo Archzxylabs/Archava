@@ -139,6 +139,10 @@ fn map_support_result(error: SupportError) -> Result<(StatusCode, ErpBody), ErpG
 
 fn gate_outcome(error: ErpGateError) -> (StatusCode, ErpBody) {
     match error {
+        ErpGateError::Configuration(error) => {
+            let (status, body) = error.response();
+            (status, ErpBody::Doc(body.0))
+        }
         ErpGateError::Authority(refusal) => outcome(authority_refusal(&refusal)),
         ErpGateError::Database(ledger, source) => {
             tracing::error!(error = %source, "refusing: {ledger} database failure");
@@ -197,6 +201,7 @@ pub struct SupportTenantQuery {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct SupportCaseQuery {
+    pub search: Option<String>,
     pub tenant: TenantId,
     pub limit: Option<i64>,
     pub after: Option<Uuid>,
@@ -557,6 +562,9 @@ pub async fn support_case_read(
     query: SupportCaseQuery,
 ) -> Result<(StatusCode, ErpBody), ErpGateError> {
     let mut document = serde_json::Map::new();
+    if let Some(search) = query.search {
+        document.insert("search".into(), json!(search));
+    }
     if let Some(limit) = query.limit {
         document.insert("limit".to_string(), json!(limit));
     }

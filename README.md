@@ -1,8 +1,16 @@
 # Archava
 
-Archava is a Rust ERP/CRM workspace with an Axum HTTP host, PostgreSQL persistence, and a Leptos application rendered on the server and hydrated with WebAssembly.
+Archava is agentic AI for business: customers describe an outcome, Ava prepares a
+plan from authorized business context, humans review business changes, and the
+agent executes through existing business tools and reports verified results.
 
-The Cargo workspace lives at the repository root. Business engines, HTTP APIs, and user interfaces have different completion boundaries: the CRM supports the contact → follow-up → receipt flow; the Operations screen currently presents explicitly labelled demo views. A domain implementation or a passing unit test does not establish that its complete product workflow is ready to launch.
+The implementation is a Rust modular monolith with an Axum HTTP host,
+PostgreSQL persistence and a Leptos server-rendered/WebAssembly UI. Its 18 business
+domains provide native action forms and scoped reads. The [agent runtime](docs/modules/AGENT_RUNTIME.md)
+connects durable conversations, preferences, reviewed goals, mission execution,
+continuation and receipt-backed reports. General model-backed planning requires
+a configured provider; the local fallback has explicit limits. Build/test and
+owned-fixture results do not certify live-provider quality or public deployment.
 
 ## Start here
 

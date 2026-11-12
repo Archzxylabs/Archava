@@ -11,7 +11,7 @@ async function mutate(page, path, body) {
 }
 
 export async function startEmailFixture() {
-  const state = { sends: 0, keys: [], ids: [], bodies: [], failNext: false }
+  const state = { sends: 0, keys: [], ids: [], bodies: [], failNext: false, delayNextMs: 0 }
   const server = createServer(async (req, res) => {
     try {
       assert.equal(req.headers.authorization, `Bearer ${key}`)
@@ -22,6 +22,8 @@ export async function startEmailFixture() {
       state.sends += 1
       state.keys.push(req.headers['idempotency-key'])
       state.bodies.push(payload)
+      const delay = state.delayNextMs; state.delayNextMs = 0
+      if (delay) await new Promise(resolve => setTimeout(resolve, delay))
       if (state.failNext) {
         state.failNext = false
         res.writeHead(500, { 'content-type': 'application/json' })
@@ -80,6 +82,16 @@ export async function verifyEmail({ page, origin, until, pass, suffix, provider 
   assert.ok(provider.state.bodies[0].to.includes(`customer-${suffix}@archava.test`))
   pass('EMAIL-outbox-accepted', { invoice: invoice.id, requestId: accepted[0].requestId, providerMessageId: accepted[0].providerMessageId })
 
+  // A fresh key for identical content must be refused explicitly, without an
+  // external invocation or an unresolvable pending marker in the browser.
+  await page.click(t('email-send-button'))
+  await until(() => page.text(t('email-notice')).then(s => s.includes('already have an email transmission')), 'duplicate email explained')
+  assert.equal(await page.evaluate(`!!document.querySelector('${t('email-pending-recovery')}')`), false)
+  assert.equal(await page.evaluate(`document.querySelector('${t('email-send-button')}').disabled`), false)
+  assert.equal(provider.state.sends, 1)
+  assert.equal((await list()).length, 1)
+  pass('EMAIL-duplicate-intent-recovery', { invoice: invoice.id, originalRequestId: accepted[0].requestId, providerSends: provider.state.sends })
+
   provider.state.failNext = true
   await page.fill(t('email-subject'), `Retry ${suffix}`)
   await page.click(t('email-send-button'))
@@ -123,5 +135,22 @@ export async function verifyEmail({ page, origin, until, pass, suffix, provider 
   const foreign = await page.evaluate(`fetch('/erp/billing/invoices/${invoice.id}/emails?tenant=globex-corp').then(r=>r.status)`)
   assert.ok([403, 404].includes(foreign), `Foreign tenant email list status ${foreign}`)
   pass('EMAIL-tenant-refusal', { status: foreign })
+
+  // Keep the same WASM document alive while the email component is disposed.
+  // A full browser navigation would hide a late callback into that component.
+  const hydratedAt = await page.evaluate('window.archavaSliceHydratedAt')
+  provider.state.delayNextMs = 1500
+  await page.fill(t('email-subject'), `Navigate away ${suffix}`)
+  await page.click(t('email-send-button'))
+  await until(() => provider.state.sends === 4, 'delayed email invocation started')
+  await page.click('a[href="/app/contacts"]')
+  await until(() => page.evaluate("location.pathname==='/app/contacts' && !!document.querySelector('[data-testid=contacts-count]')"), 'email component disposed by client navigation')
+  assert.equal(await page.evaluate('window.archavaSliceHydratedAt'), hydratedAt)
+  await until(async () => {
+    const rows = await list()
+    return rows.length === 3 && rows.every(row => row.state === 'accepted')
+  }, 'email accepted after component disposal')
+  assert.deepEqual(page.errors, [])
+  pass('EMAIL-late-response-after-navigation', { invoice: invoice.id, sameWasmDocument: true, providerSuccesses: provider.state.ids.length })
   return { invoice: invoice.id, requestId: accepted[0].requestId, retryRequestId: retryKey, providerSends: provider.state.sends, providerSuccesses: provider.state.ids.length }
 }

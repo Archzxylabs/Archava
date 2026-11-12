@@ -209,6 +209,7 @@ pub fn Home() -> impl IntoView {
                 <div><h1>"Your workspace."</h1><p class="hint">"People, context, and the next step."</p></div>
                 <div class="page-actions"><button type="button" data-testid="home-refresh" disabled=move || matches!(state.get(), OverviewState::Loading) on:click=move |_| refresh.update(|value| *value = value.wrapping_add(1))><WorkspaceIcon name="recover" />"Refresh"</button><a class="action-link" href="/app/contacts">"Open contacts"<WorkspaceIcon name="arrow" /></a></div>
             </header>
+            <crate::agent::AgentEntry/>
             <div aria-live="polite" aria-busy=move || matches!(state.get(), OverviewState::Loading).to_string()>
                 {move || match state.get() {
                     OverviewState::SignedOut => view! { <div class="dashboard-panel overview-message"><h2>"Welcome to your workspace"</h2><p>"Sign in to see the contacts available to you."</p><a class="action-link" href="/app">"Sign in"</a></div> }.into_any(),

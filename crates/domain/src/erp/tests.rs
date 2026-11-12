@@ -378,3 +378,48 @@ fn an_operation_runs_only_with_every_grant_its_branch_names() {
         Err(ErpError::Forbidden)
     );
 }
+
+#[test]
+fn supplier_contact_commands_bind_only_reviewed_identity_and_revision() {
+    let id = "01933df1-8d5e-783f-9b1e-1d3f9a2b3c4d";
+    for input in [
+        json!({"operation":"supplier.create-from-contact","code":"SOURCE","contactId":id,"expectedContactRevision":1}),
+        json!({"operation":"supplier.refresh-contact","id":id,"expectedRevision":1,"expectedContactRevision":2,"reason":"Reviewed change"}),
+    ] {
+        assert!(parse_command(&input).is_ok());
+        assert_eq!(
+            serde_json::to_value(parse_command(&input).unwrap()).unwrap(),
+            input
+        );
+        for extra in ["name", "ownerId", "tenant", "role", "supplierContactId"] {
+            let mut forged = input.clone();
+            forged[extra] = json!(id);
+            assert!(parse_command(&forged).is_err());
+        }
+        for revision in [
+            json!(0),
+            json!(-1),
+            json!(2147483648i64),
+            json!(1.5),
+            json!("2"),
+            json!(null),
+        ] {
+            let mut invalid = input.clone();
+            invalid["expectedContactRevision"] = revision;
+            assert!(parse_command(&invalid).is_err());
+        }
+    }
+    assert!(parse_command(&json!({"operation":"supplier.create-from-contact","code":"SOURCE","contactId":"bad-id","expectedContactRevision":1})).is_err());
+}
+
+#[test]
+fn supplier_names_follow_the_database_unicode_character_bound() {
+    assert!(parse_command(
+        &json!({"operation":"supplier.create","code":"UNICODE","name":"供".repeat(160)})
+    )
+    .is_ok());
+    assert!(parse_command(
+        &json!({"operation":"supplier.create","code":"UNICODE","name":"供".repeat(161)})
+    )
+    .is_err());
+}

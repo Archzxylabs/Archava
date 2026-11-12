@@ -12,9 +12,11 @@ use leptos::prelude::*;
 use leptos::task::spawn_local;
 use serde_json::{json, Value};
 
+use crate::alive::AliveSignal;
 use crate::draft::uuid_string;
 use crate::pending::{self, PendingMarker};
 use crate::session::{self, Answer, FetchError};
+mod disclosure;
 
 #[derive(Clone, Debug, PartialEq)]
 enum Load {
@@ -53,6 +55,13 @@ fn change_text(change: &Value) -> String {
     match change["kind"].as_str() {
         Some("enable") => format!("Enable {}", change["module"].as_str().unwrap_or("?")),
         Some("disable") => format!("Disable {}", change["module"].as_str().unwrap_or("?")),
+        Some("aiDisclosure") => {
+            if change["policy"].is_null() {
+                "Stop business-data sharing with AI".into()
+            } else {
+                "Update the AI data-sharing selection".into()
+            }
+        }
         Some("relabelStage") => format!(
             "Label {} → {}",
             change["stage"].as_str().unwrap_or("?"),
@@ -99,6 +108,12 @@ pub fn Owner() -> impl IntoView {
     let history = RwSignal::new(Vec::<Value>::new());
     let desired = RwSignal::new(Vec::<String>::new());
     let plan = RwSignal::new(None::<Value>);
+    let reviewed_request = RwSignal::new(None::<Value>);
+    let disclosure_approval = RwSignal::new(None::<Value>);
+    let ai_change = RwSignal::new(None::<Value>);
+    let reviewed_provider = RwSignal::new(Value::Null);
+    let reviewed_companies = RwSignal::new(Value::Null);
+    let instruction = RwSignal::new(String::new());
     // `Some(target)` means the plan is a restore preview.
     let plan_mode = RwSignal::new(None::<i64>);
     let action = RwSignal::new(Action::Idle);
@@ -123,23 +138,24 @@ pub fn Owner() -> impl IntoView {
                                 .collect()
                         })
                         .unwrap_or_default();
-                    desired.set(enabled);
-                    load.set(Load::Ready(body));
+                    desired.set_if_alive(enabled);
+                    ai_change.set_if_alive(None);
+                    load.set_if_alive(Load::Ready(body));
                 }
-                Ok(answer) => load.set(Load::Refused {
+                Ok(answer) => load.set_if_alive(Load::Refused {
                     reason: answer.reason().unwrap_or("refused").to_string(),
                     message: answer.body["message"]
                         .as_str()
                         .unwrap_or("The owner configuration could not be read.")
                         .to_string(),
                 }),
-                Err(FetchError::NoAnswer(why)) => load.set(Load::Unreachable(why)),
+                Err(FetchError::NoAnswer(why)) => load.set_if_alive(Load::Unreachable(why)),
             }
             match session::api_fetch("GET", &format!("/own/history?tenant={tenant}"), None).await {
                 Ok(Answer { status: 200, body }) => {
-                    history.set(body["revisions"].as_array().cloned().unwrap_or_default());
+                    history.set_if_alive(body["revisions"].as_array().cloned().unwrap_or_default());
                 }
-                _ => history.set(Vec::new()),
+                _ => history.set_if_alive(Vec::new()),
             }
         });
     };
@@ -155,7 +171,7 @@ pub fn Owner() -> impl IntoView {
             let Some(marker) = pending::read_scoped(&held.tenant, "owner", &held.principal) else {
                 return;
             };
-            pending_id.set(Some(marker.request_id.clone()));
+            pending_id.set_if_alive(Some(marker.request_id.clone()));
             let path = format!(
                 "/own/status?tenant={}&requestId={}",
                 held.tenant, marker.request_id
@@ -167,10 +183,10 @@ pub fn Owner() -> impl IntoView {
                     if crate::receipt::owner(&body, &marker.request_id) =>
                 {
                     pending::clear_by_request_id(&held.tenant, &held.principal, &marker.request_id);
-                    pending_id.set(None);
+                    pending_id.set_if_alive(None);
                     let revision = body["receipt"]["revision"].as_i64().unwrap_or(0);
                     let outcome = body["receipt"]["outcome"].as_str().unwrap_or("apply");
-                    action.set(Action::Applied(format!(
+                    action.set_if_alive(Action::Applied(format!(
                         "recovered {outcome} committed revision {revision}"
                     )));
                     refresh();
@@ -180,10 +196,10 @@ pub fn Owner() -> impl IntoView {
                 Ok(Answer { status: 200, body })
                     if body["decision"].as_str() == Some("unknown") =>
                 {
-                    action.set(Action::Pending(marker.request_id.clone()));
+                    action.set_if_alive(Action::Pending(marker.request_id.clone()));
                 }
-                Ok(answer) => action.set(refusal(&answer)),
-                Err(FetchError::NoAnswer(why)) => action.set(Action::Offline(why)),
+                Ok(answer) => action.set_if_alive(refusal(&answer)),
+                Err(FetchError::NoAnswer(why)) => action.set_if_alive(Action::Offline(why)),
             }
         });
     };
@@ -202,7 +218,7 @@ pub fn Owner() -> impl IntoView {
             return;
         };
         let tenant = held.tenant;
-        action.set(Action::Busy);
+        action.set_if_alive(Action::Busy);
         spawn_local(async move {
             let (path, body) = match restore_target {
                 Some(target) => (
@@ -243,6 +259,7 @@ pub fn Owner() -> impl IntoView {
                                 "baseRevision": base,
                                 "enable": enable,
                                 "disable": disable,
+                                "aiDisclosure": ai_change.get_untracked(),
                             }
                         }),
                     )
@@ -250,12 +267,16 @@ pub fn Owner() -> impl IntoView {
             };
             match session::api_fetch("POST", &path, Some(body.to_string())).await {
                 Ok(Answer { status: 200, body }) => {
-                    plan.set(Some(body["plan"].clone()));
-                    plan_mode.set(restore_target);
-                    action.set(Action::Idle);
+                    reviewed_request.set_if_alive(body.get("request").cloned());
+                    disclosure_approval.set_if_alive(body.get("disclosureApproval").cloned());
+                    reviewed_provider.set_if_alive(body["aiProvider"].clone());
+                    reviewed_companies.set_if_alive(body["disclosureCompanies"].clone());
+                    plan.set_if_alive(Some(body["plan"].clone()));
+                    plan_mode.set_if_alive(restore_target);
+                    action.set_if_alive(Action::Idle);
                 }
-                Ok(answer) => action.set(refusal(&answer)),
-                Err(FetchError::NoAnswer(why)) => action.set(Action::Offline(why)),
+                Ok(answer) => action.set_if_alive(refusal(&answer)),
+                Err(FetchError::NoAnswer(why)) => action.set_if_alive(Action::Offline(why)),
             }
         });
     };
@@ -285,12 +306,12 @@ pub fn Owner() -> impl IntoView {
             principal.clone(),
         );
         if let Err(why) = pending::write(&marker) {
-            action.set(Action::Offline(why));
+            action.set_if_alive(Action::Offline(why));
             return;
         }
-        pending_id.set(Some(request_id.clone()));
+        pending_id.set_if_alive(Some(request_id.clone()));
         let mode = plan_mode.get_untracked();
-        action.set(Action::Busy);
+        action.set_if_alive(Action::Busy);
         spawn_local(async move {
             let body = match mode {
                 Some(target) => json!({
@@ -298,6 +319,7 @@ pub fn Owner() -> impl IntoView {
                     "requestId": request_id,
                     "targetRevision": target,
                     "confirmation": {"planHash": hash, "baseRevision": base},
+                    "disclosureApproval": disclosure_approval.get_untracked(),
                 }),
                 None => {
                     let Load::Ready(config) = load.get_untracked() else {
@@ -317,12 +339,13 @@ pub fn Owner() -> impl IntoView {
                     json!({
                         "tenant": tenant,
                         "requestId": request_id,
-                        "request": {
+                        "request": reviewed_request.get_untracked().unwrap_or_else(||json!({
                             "baseRevision": base,
                             "enable": wanted.iter().filter(|id| !current.contains(id)).cloned().collect::<Vec<_>>(),
                             "disable": current.iter().filter(|id| !wanted.contains(id)).cloned().collect::<Vec<_>>(),
-                        },
+                        })),
                         "confirmation": {"planHash": hash, "baseRevision": base},
+                        "disclosureApproval": disclosure_approval.get_untracked(),
                     })
                 }
             };
@@ -335,15 +358,15 @@ pub fn Owner() -> impl IntoView {
                 Ok(Answer { status: 200, body }) if crate::receipt::owner(&body, &request_id) => {
                     // Committed: the outcome is known, so the marker is spent.
                     pending::clear_by_request_id(&tenant, &principal, &request_id);
-                    pending_id.set(None);
+                    pending_id.set_if_alive(None);
                     let revision = body["receipt"]["revision"]
                         .as_i64()
                         .map(|revision| revision.to_string())
                         .unwrap_or_else(|| "?".to_string());
                     let outcome = body["receipt"]["outcome"].as_str().unwrap_or("apply");
-                    plan.set(None);
-                    plan_mode.set(None);
-                    action.set(Action::Applied(format!(
+                    plan.set_if_alive(None);
+                    plan_mode.set_if_alive(None);
+                    action.set_if_alive(Action::Applied(format!(
                         "{outcome} committed revision {revision}"
                     )));
                     refresh();
@@ -352,31 +375,62 @@ pub fn Owner() -> impl IntoView {
                     // 5xx is the other half of a lost response: the host may
                     // have committed and then failed to answer, so the key is
                     // NOT spent — reloading is the only way to find out.
-                    action.set(Action::Offline(format!(
+                    action.set_if_alive(Action::Offline(format!(
                         "the host answered {} — operation {request_id} may be committed; reload to recover its outcome.",
                         answer.status
                     )))
                 }
                 Ok(answer) if resuming => {
-                    action.set(Action::Offline(format!("The retry was refused ({}). Original reference {request_id} is retained; check its status or review the original plan again.",answer.status)));
+                    action.set_if_alive(Action::Offline(format!("The retry was refused ({}). Original reference {request_id} is retained; check its status or review the original plan again.",answer.status)));
                 }
                 Ok(answer) => {
                     // A 4xx refusal wrote nothing (the host is transactional),
                     // so the key is spent and the plan is no longer confirmable.
                     pending::clear_by_request_id(&tenant, &principal, &request_id);
-                    pending_id.set(None);
-                    plan.set(None);
-                    plan_mode.set(None);
-                    action.set(refusal(&answer));
+                    pending_id.set_if_alive(None);
+                    plan.set_if_alive(None);
+                    plan_mode.set_if_alive(None);
+                    action.set_if_alive(refusal(&answer));
                 }
                 Err(FetchError::NoAnswer(why)) => {
                     // Unknown: the transport died and the server may well have
                     // committed it. The marker stays — that key is the only
                     // thing that can answer the question on reload.
-                    action.set(Action::Offline(format!(
+                    action.set_if_alive(Action::Offline(format!(
                         "{why} — operation {request_id} is still pending; reload to recover its outcome."
                     )))
                 }
+            }
+        });
+    };
+
+    let chat_preview = move |event: leptos::ev::SubmitEvent| {
+        event.prevent_default();
+        let Some(held) = session::held() else {
+            return;
+        };
+        let message = instruction.get_untracked();
+        action.set_if_alive(Action::Busy);
+        plan.set_if_alive(None);
+        plan_mode.set_if_alive(None);
+        spawn_local(async move {
+            match session::api_fetch(
+                "POST",
+                "/own/chat",
+                Some(json!({"tenant":held.tenant,"message":message}).to_string()),
+            )
+            .await
+            {
+                Ok(Answer { status: 200, body }) if body["plan"].is_object() => {
+                    reviewed_request.set_if_alive(body.get("request").cloned());
+                    disclosure_approval.set_if_alive(body.get("disclosureApproval").cloned());
+                    reviewed_provider.set_if_alive(body["aiProvider"].clone());
+                    reviewed_companies.set_if_alive(body["disclosureCompanies"].clone());
+                    plan.set_if_alive(Some(body["plan"].clone()));
+                    action.set_if_alive(Action::Idle);
+                }
+                Ok(answer) => action.set_if_alive(refusal(&answer)),
+                Err(FetchError::NoAnswer(why)) => action.set_if_alive(Action::Offline(why)),
             }
         });
     };
@@ -404,6 +458,7 @@ pub fn Owner() -> impl IntoView {
             <div class="settings-layout">
                 <nav class="settings-navigation" aria-label="Settings sections">
                     <a href="#settings-modules">"Installed modules"</a>
+                    <a href="#settings-ai">"AI data sharing"</a>
                     <a href="#settings-review">"Review changes"</a>
                     <a href="#settings-history">"Revision history"</a>
                     <p>"Changes are previewed before they are applied."</p>
@@ -433,6 +488,7 @@ pub fn Owner() -> impl IntoView {
                 _ => view! { <p></p> }.into_any(),
             }}
 
+            <form class="ops-form" data-testid="owner-chat" on:submit=chat_preview><label class="ops-field"><span>"Describe your business or a module change"</span><textarea data-testid="owner-chat-input" maxlength="512" required placeholder="Bisnis saya hotel, tambahkan laundry tanpa restaurant" prop:value=move||instruction.get() on:input=move|e|instruction.set_if_alive(event_target_value(&e))></textarea></label><button class="btn" type="submit" data-testid="owner-chat-preview" disabled=move||matches!(action.get(),Action::Busy)||pending_id.get().is_some()>"Preview request"</button><p class="hint">"This creates a reviewable configuration plan. Confirm the plan below to apply it. Module access still requires the appropriate role."</p></form>
             {move || match load.get() {
                 Load::Ready(config) => {
                     let can_apply = config["grants"]["apply"] == true;
@@ -465,9 +521,9 @@ pub fn Owner() -> impl IntoView {
                                         } else {
                                             next.push(toggle_id.clone());
                                         }
-                                        desired.set(next);
-                                        plan.set(None);
-                                        plan_mode.set(None);
+                                        desired.set_if_alive(next);
+                                        plan.set_if_alive(None);
+                                        plan_mode.set_if_alive(None);
                                     }
                                 >
                                     {move || if desired.get().contains(&label_id) { "Disable" } else { "Enable" }}
@@ -499,6 +555,10 @@ pub fn Owner() -> impl IntoView {
             }}
 
                 </section>
+                {move||match load.get(){
+                    Load::Ready(config)=>view!{<disclosure::SharingSettings config=config change=ai_change on_edit=Callback::new(move |_|{plan.set_if_alive(None);plan_mode.set_if_alive(None);}) on_preview=Callback::new(move |_|preview(None))/>}.into_any(),
+                    _=>().into_any(),
+                }}
                 <section class="settings-section settings-review" id="settings-review" node_ref=review_section tabindex="-1" aria-labelledby="settings-review-heading">
                     <h2 id="settings-review-heading">"Review changes"</h2>
                     <p class="hint">"Preview your selection to see its changes and effects before confirming."</p>
@@ -577,6 +637,11 @@ pub fn Owner() -> impl IntoView {
                             <ul data-testid="owner-effects">
                                 {effects.into_iter().map(|line| view! { <li>{line}</li> }).collect_view()}
                             </ul>
+                            {if planned["changes"].as_array().into_iter().flatten().any(|c|c["kind"]=="aiDisclosure") {
+                                let mut metadata=match load.get(){Load::Ready(v)=>v,_=>Value::Null};
+                                metadata["disclosureCompanies"]=reviewed_companies.get();
+                                disclosure::review(&planned["config"]["aiDisclosure"],&reviewed_provider.get(),&metadata)
+                            }else{().into_any()}}
                             <button
                                 data-testid="owner-confirm"
                                 disabled=move || is_blocked

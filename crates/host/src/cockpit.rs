@@ -262,6 +262,7 @@ async fn create(
                 || s.depends_on.iter().any(|&i| i32::try_from(i).is_err())
                 || !bounded(&s.step_name, 128)
                 || !bounded(&s.tool_name, 128)
+                || crate::business::tool(&s.tool_name).is_some() && !s.payload_input.is_object()
         })
     {
         return Err(masked(
@@ -281,9 +282,19 @@ async fn create(
                 s.payload_input,
                 s.depends_on,
             );
-            if let Some(ref auth) = s.required_authority {
+            let business = crate::business::tool(&step.tool_target).is_some();
+            if let Some(ref auth) = if business {
+                Some(
+                    s.required_authority
+                        .clone()
+                        .filter(|level| matches!(level.to_uppercase().as_str(), "L4" | "L5"))
+                        .unwrap_or_else(|| "L3".to_string()),
+                )
+            } else {
+                s.required_authority
+            } {
                 let auth_upper = auth.to_uppercase();
-                if auth_upper == "L4" || auth_upper == "L5" {
+                if business || auth_upper == "L4" || auth_upper == "L5" {
                     let gate = archava_cockpit::ApprovalGate::new(&auth_upper, "owner");
                     if let Some(obj) = step.payload_input.as_object_mut() {
                         obj.insert("approval_gate".into(), json!(gate));
@@ -389,8 +400,9 @@ async fn complete(
     step_index: usize,
     scope: MissionScope,
     headers: &HeaderMap,
-    req: CompleteStepRequest,
+    execution: (CompleteStepRequest, bool),
 ) -> Result<Response> {
+    let (req, verified) = execution;
     let actor = principal(state, headers, true).await?;
     if i32::try_from(step_index).is_err() || !bounded(&req.agent_role, 64) {
         return Err(masked(
@@ -417,6 +429,9 @@ async fn complete(
         .iter()
         .find(|s| s.step_index == step_index)
         .ok_or_else(|| masked(StatusCode::NOT_FOUND, "Step not found."))?;
+    if crate::business::tool(&step.tool_target).is_some() && !verified {
+        return Err(masked(StatusCode::FORBIDDEN,"Business steps must be executed through run-next; a caller report is not proof of a business effect."));
+    }
     if step.status == StepStatus::RequiresApproval {
         return Err(conflict(
             "Cannot complete a step that requires supervisor approval.",
@@ -702,7 +717,7 @@ pub async fn complete_step(
         Ok(Json(req)) => req,
         Err(rejection) => return masked(rejection.status(), "Invalid request payload."),
     };
-    complete(&state, id, index, scope, &headers, req)
+    complete(&state, id, index, scope, &headers, (req, false))
         .await
         .unwrap_or_else(|e| e)
 }
@@ -1005,18 +1020,53 @@ pub async fn run_next(
         {
             return Err(conflict("This step is not ready to run."));
         }
+        if crate::business::tool(&step.tool_target).is_some() {
+            tx.commit().await.map_err(unavailable)?;
+            let mut values = if step.payload_input.get("__agent_bindings_version").is_some() {
+                crate::agent::bindings::resolve(&mission, &step, step.payload_input.clone())
+                    .map_err(|e| masked(StatusCode::BAD_REQUEST, e))?
+            } else {
+                step.payload_input.clone()
+            };
+            if let Some(object) = values.as_object_mut() {
+                object.remove("approval_gate");
+            }
+            let key = crate::business::stable_key("cockpit", &format!("{id}:{step_index}"));
+            let response = crate::business::execute(
+                state,
+                headers,
+                tenant.as_str(),
+                key,
+                &step.tool_target,
+                &values,
+            )
+            .await;
+            if response.0 != StatusCode::OK {
+                return Err(response);
+            }
+            return complete(state,id,step_index,MissionScope{tenant:Some(tenant.to_string())},headers,(CompleteStepRequest{agent_role:"business_executor".into(),success:true,high_signal_summary:format!("{} committed under current grants with receipt {key}.",step.tool_target),output_payload:json!({"tool":step.tool_target,"requestId":key,"input":values,"receipt":response.1.0,"verified":true}),token_cost:0},true)).await;
+        }
         if !step.payload_input.is_object()
-            || step
-                .payload_input
-                .as_object()
-                .is_some_and(|o| o.iter().any(|(k, _)| k != "approval_gate"))
+            || step.payload_input.as_object().is_some_and(|o| {
+                o.iter()
+                    .any(|(k, _)| k != "approval_gate" && k != "companyId")
+            })
         {
             return Err(masked(
                 StatusCode::BAD_REQUEST,
-                "These read tools require an empty input object.",
+                "Read tools accept only an optional companyId.",
             ));
         }
         tx.commit().await.map_err(unavailable)?;
+        let company_id = step
+            .payload_input
+            .get("companyId")
+            .map(|v| {
+                v.as_str()
+                    .and_then(|id| Uuid::parse_str(id).ok())
+                    .ok_or_else(|| masked(StatusCode::BAD_REQUEST, "Invalid companyId."))
+            })
+            .transpose()?;
         let response = match step.tool_target.as_str() {
             "commerce.workspace.read" => {
                 crate::erp::commerce::workspace(
@@ -1025,6 +1075,8 @@ pub async fn run_next(
                     Ok(Query(crate::erp::commerce::WorkspaceQuery {
                         tenant: tenant.clone(),
                         search: String::new(),
+                        company_id,
+                        id: None,
                     })),
                 )
                 .await
@@ -1036,6 +1088,8 @@ pub async fn run_next(
                     Ok(Query(crate::erp::workspace::WorkspaceQuery {
                         tenant: tenant.clone(),
                         search: String::new(),
+                        company_id,
+                        id: None,
                     })),
                 )
                 .await
@@ -1047,6 +1101,8 @@ pub async fn run_next(
                     Ok(Query(crate::erp::workspace::WorkspaceQuery {
                         tenant: tenant.clone(),
                         search: String::new(),
+                        company_id,
+                        id: None,
                     })),
                 )
                 .await
@@ -1074,7 +1130,7 @@ pub async fn run_next(
             })
             .filter(|(key, _)| key != "permissions")
             .collect();
-        complete(state,id,step.step_index,MissionScope{tenant:Some(tenant.to_string())},headers,CompleteStepRequest{agent_role:"workspace_reader".into(),success:true,high_signal_summary:format!("{} read completed under current operator grants.",step.tool_target),output_payload:json!({"tool":step.tool_target,"recordCounts":counts,"bounded":true}),token_cost:0}).await
+        complete(state,id,step.step_index,MissionScope{tenant:Some(tenant.to_string())},headers,(CompleteStepRequest{agent_role:"workspace_reader".into(),success:true,high_signal_summary:format!("{} read completed under current operator grants.",step.tool_target),output_payload:json!({"tool":step.tool_target,"recordCounts":counts,"bounded":true}),token_cost:0},true)).await
     }
     execute(&state, id, scope, &headers, request.step_index)
         .await

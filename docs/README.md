@@ -2,6 +2,10 @@
 
 Comprehensive engineering, architectural, and operational documentation for the Archava Rust modular monolith (22 Cargo workspace crates, Axum host, PostgreSQL `FORCE RLS` multi-tenancy, and Leptos SSR/WASM UI).
 
+Start with the [active product PRD](product/PRD.md) for Archava's agentic AI for
+business direction, requirements and measurable outcomes. Requirements and roadmap
+targets are separate from implementation and release acceptance.
+
 ---
 
 ## 🧭 Curated Reading Paths
@@ -21,7 +25,7 @@ Navigate directly to what you need based on your role or objective:
 5. **[Architecture Decisions (ADR Ledger)](architecture/DECISIONS.md)**: Living ledger of architectural decisions (ADR-014 through ADR-019).
 
 ### 3. 💼 ERP & CRM Business Modules
-1. **[Business Modules Overview](modules/README.md)**: Master index of all 16 business domain contracts.
+1. **[Business Modules Overview](modules/README.md)**: Domain contracts and evidence for the 18 mounted business domains.
 2. **[CRM Module](modules/CRM_MODULE.md)**: Contacts, sales pipeline stages, follow-up drafting, and durable receipt recovery.
 3. **[Commerce Module](modules/COMMERCE_MODULE.md)**: Catalog items, customer orders, inventory stock, and landed cost layers.
 4. **[Billing Module](modules/BILLING_MODULE.md)**: Invoicing, gateway payment attempts, webhooks, and email outbox dispatch.
@@ -44,7 +48,7 @@ Navigate directly to what you need based on your role or objective:
 | [`DEVELOPER_GUIDE.md`](DEVELOPER_GUIDE.md) | Local development setup, CLI commands, and test suites | Living Reference |
 | [`GLOSSARY.md`](GLOSSARY.md) | Authoritative domain dictionary and invariant terminology | Living Reference |
 | [`architecture/`](architecture/README.md) | Technical system design, crate boundaries, ADR ledger, and integration contracts | Living Reference |
-| [`modules/`](modules/README.md) | Specifications for all 16 ERP business domains | Living Reference |
+| [`modules/`](modules/README.md) | Business domain contracts and mounted capability specifications | Living Reference |
 | [`product/`](product/README.md) | Product PRDs, roadmap, launch readiness, and Charcoal & Amber design system | Living Reference |
 | [`archive/`](archive/README.md) | Immutable audit trails, historical research, and pre-Rust records | Frozen Archive |
 
@@ -57,3 +61,15 @@ All maintained documentation is governed by automated verification gates:
 - Run `node tools/check-docs.mjs` to verify that every internal Markdown link and heading anchor resolves.
 - Run `node tools/check-structure.mjs` to ensure module boundaries and migration manifests remain intact.
 - Historical evidence in `archive/` is frozen; never edit historical pass/fail records or retroactively rewrite past audit findings.
+
+Current Ava business-agent behavior is defined by the [agent runtime](modules/AGENT_RUNTIME.md).
+The [5 November completion record](product/AGENTIC_COMPLETION_2026-11-05.md) separates
+functional acceptance, observed performance and external acceptance still outstanding.
+The [live Gemini acceptance](product/AGENT_LIVE_ACCEPTANCE_2026-11-05.md) adds six
+natural-language browser goals against the actual Google service with a tested
+model/reasoning profile, independent SQL effects and the failures found along the way.
+
+The [6 November global ERP comparison](product/ERP_GLOBAL_BENCHMARK_2026-11-06.md)
+maps 18 product families to Archava's mounted capabilities and separates local
+test success from ERP depth. Its [proposed acceptance protocol](product/ERP_PARITY_ACCEPTANCE_2026-11-06.md)
+defines the work and evidence needed before claiming parity or superiority.

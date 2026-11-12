@@ -260,7 +260,7 @@ fn MissionDetail(ui: MissionUi, data: Value) -> impl IntoView {
   view!{<li><strong>{text(&step,"step_name")}</strong><span>{state}</span>
    {needs_approval.then(move||view!{<button type="button" class="btn secondary warning" data-testid="mission-step-approve" disabled=move||ui.busy.get()||!ui.can_write.get() on:click=move|_|ui.approve_step(approve_id.clone(),index)>"Approve step"</button>})}
    {ready.then(move||view!{<button type="button" class="btn secondary" data-testid="mission-run" disabled=move||ui.busy.get()||!ui.can_write.get() on:click=move|_|ui.run(run_id.clone(),index)>"Run step"</button>})}
-   <p class="hint">{text(&step,"isolated_context_summary")}</p></li>}
+   <p class="hint">{text(&step,"isolated_context_summary")}</p><details><summary>"Reviewed step details"</summary><p>{text(&step,"tool_target")}</p>{operator::details(step["payload_input"].clone())}{operator::details(step["payload_output"].clone())}</details></li>}
  }).collect::<Vec<_>>();
     view! {
         <section class="ops-detail" data-testid="mission-detail">

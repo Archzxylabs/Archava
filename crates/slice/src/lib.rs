@@ -36,6 +36,8 @@ use leptos::prelude::*;
 use leptos_router::components::{Route, Router, Routes};
 use leptos_router::path;
 
+mod agent;
+mod alive;
 pub mod contact;
 mod contact_context;
 pub mod contacts;
@@ -94,6 +96,7 @@ pub fn App() -> impl IntoView {
     // first render to `Some` in this effect is a real change every island
     // rewrites.
     Effect::new(move |_| session::restore_session());
+    provide_context(agent::AgentDraft(RwSignal::new(None)));
 
     view! {
         // The router wraps the WHOLE body, header included: the session
