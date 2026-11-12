@@ -22,6 +22,14 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
+      # The debug test build, the wasm check and the LTO release build do not
+      # fit on a stock runner together. Remove preinstalled SDKs this job never
+      # uses; Chrome and the Node tool cache stay because later steps need them.
+      - name: Free runner disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /opt/hostedtoolcache/CodeQL /usr/local/share/boost
+          df -h /
+
       - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
         with:
           toolchain: 1.96.0
@@ -55,6 +63,14 @@ jobs:
 
       - name: Full Workspace Test Suite
         run: cargo test --workspace --locked -- --test-threads=1
+
+      # The debug artifacts have served the lint and test steps. The wasm check
+      # and the release build use their own target directories, so drop them
+      # before the remaining builds need the space.
+      - name: Release debug build artifacts
+        run: |
+          rm -rf target/debug
+          df -h /
 
       - name: WASM Portable Boundary Gate
         run: |
