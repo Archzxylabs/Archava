@@ -113,7 +113,7 @@ tracing = "0.1"
 # The baseline hashes migration files with sha256 (`packages/commerce-pg/src/
 # migrate.ts:13`) and the readiness port must produce the SAME digest form.
 sha2 = "0.10"
-aes-gcm = "0.10"
+aes-gcm = "0.11"
 
 # RA01 host identity: the baseline's session cryptography, port for port.
 # `scrypt` at the fixed OWASP parameters identity-pg pins (N=32768, r=8, p=3);
