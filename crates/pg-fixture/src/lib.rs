@@ -1393,6 +1393,11 @@ async fn provision_profile_options(
     // 1. initdb: trust auth on loopback + unix socket, no durability (this is
     //    a disposable instance, and fsync off makes initdb and every test
     //    transaction measurably faster).
+    //    Collation is pinned to `C`: without it the cluster inherits the
+    //    machine's locale, and a text `ORDER BY` returns `INVENTORY` before
+    //    `INV-NEW` under en_US but after it under C — the same test then
+    //    passes on one machine and fails on another. Character
+    //    classification (`lc-ctype`) is left to the environment on purpose.
     let initdb = tool("initdb")
         .args([
             "-D",
@@ -1403,6 +1408,7 @@ async fn provision_profile_options(
             "UTF8",
             "--auth-local=trust",
             "--auth-host=trust",
+            "--lc-collate=C",
             "--no-sync",
         ])
         .output()
