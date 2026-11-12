@@ -1,0 +1,68 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.11s
+     Running tests/candidate10_email_review_tmp.rs (target/debug/deps/candidate10_email_review_tmp-68e4f2cf29ac1fa3)
+
+running 4 tests
+test review_candidate10_concurrent_fresh_keys_cannot_both_pass_payload_dedupe ... REVIEW_PROOF concurrent_preinsert_waiters=2 first_http=200 OK second_http=200 OK provider_sends=2
+
+thread 'review_candidate10_concurrent_fresh_keys_cannot_both_pass_payload_dedupe' (216992) panicked at crates/host/tests/candidate10_email_review_tmp.rs:514:178:
+assertion `left == right` failed: SELECT FOR SHARE without a uniqueness/intent lock admitted duplicate email sends
+  left: 2
+ right: 1
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+test review_candidate10_original_key_replay_keeps_its_snapshot_after_invoice_changes ... REVIEW_PROOF first_send=200 OK invoice_correction=200 OK exact_key_replay=409 Conflict reason="conflict"
+
+thread 'review_candidate10_original_key_replay_keeps_its_snapshot_after_invoice_changes' (217050) panicked at crates/host/tests/candidate10_email_review_tmp.rs:492:192:
+assertion `left == right` failed: exact replay must return its original receipt and immutable body
+  left: 409
+ right: 200
+FAILED
+test review_candidate10_unknown_older_than_provider_window_requires_reconciliation ... REVIEW_PROOF simulated_age_hours=25 replay_http=200 OK replay_state="accepted" provider_sends=2
+
+thread 'review_candidate10_unknown_older_than_provider_window_requires_reconciliation' (217086) panicked at crates/host/tests/candidate10_email_review_tmp.rs:502:242:
+assertion `left == right` failed: unknown send past provider dedupe window must not be automatically dispatched again
+  left: 2
+ right: 1
+FAILED
+test review_candidate10_unknown_response_then_new_ui_key_cannot_dispatch_twice ... REVIEW_PROOF first_http=200 OK first_state="unknown" second_http=200 OK second_state="unknown" provider_sends=2
+
+thread 'review_candidate10_unknown_response_then_new_ui_key_cannot_dispatch_twice' (217122) panicked at crates/host/tests/candidate10_email_review_tmp.rs:485:5:
+assertion `left == right` failed: UI clears the original marker on Unknown200 then permits a fresh key to resend
+  left: 2
+ right: 1
+FAILED
+
+failures:
+
+failures:
+    review_candidate10_concurrent_fresh_keys_cannot_both_pass_payload_dedupe
+    review_candidate10_original_key_replay_keeps_its_snapshot_after_invoice_changes
+    review_candidate10_unknown_older_than_provider_window_requires_reconciliation
+    review_candidate10_unknown_response_then_new_ui_key_cannot_dispatch_twice
+
+test result: FAILED. 0 passed; 4 failed; 0 ignored; 0 measured; 7 filtered out; finished in 4.54s
+
+error: test failed, to rerun pass `-p archava-host --test candidate10_email_review_tmp`
+     Running tests/candidate10_presence_review_tmp.rs (target/debug/deps/candidate10_presence_review_tmp-5b57f0e03e6fec2d)
+
+running 1 test
+test review_candidate10_authorized_tenants_cannot_share_a_generated_room ... REVIEW_PROOF tenant_a="acme" tenant_b="acme-west" room_a="archava-acme-west-123" room_b="archava-acme-west-123"
+
+thread 'review_candidate10_authorized_tenants_cannot_share_a_generated_room' (217159) panicked at crates/host/tests/candidate10_presence_review_tmp.rs:451:5:
+assertion `left != right` failed: two independently authorized tenants received tokens for the same room
+  left: String("archava-acme-west-123")
+ right: String("archava-acme-west-123")
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+
+failures:
+
+failures:
+    review_candidate10_authorized_tenants_cannot_share_a_generated_room
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 4 filtered out; finished in 1.33s
+
+error: test failed, to rerun pass `-p archava-host --test candidate10_presence_review_tmp`
+error: 2 targets failed:
+    `-p archava-host --test candidate10_email_review_tmp`
+    `-p archava-host --test candidate10_presence_review_tmp`

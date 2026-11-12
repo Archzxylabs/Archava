@@ -1,0 +1,22 @@
+   Compiling archava-host v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/host)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.92s
+     Running tests/candidate10_cockpit_review_tmp.rs (target/debug/deps/candidate10_cockpit_review_tmp-50a9bdd795445d48)
+
+running 1 test
+test review_candidate10_other_commerce_owner_cannot_read_private_billing_mission ... REVIEW_PROOF direct_billing=403 Forbidden other_owner_mission=200 OK private_billing_observation_leaked=false invoice="7fd4074d-865c-47e2-a266-46c42079f8e4"
+
+thread 'review_candidate10_other_commerce_owner_cannot_read_private_billing_mission' (216930) panicked at crates/host/tests/candidate10_cockpit_review_tmp.rs:830:5:
+assertion `left == right` failed: Commerce owner without Billing access read another actor's private Billing observations
+  left: 200
+ right: 403
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+
+failures:
+
+failures:
+    review_candidate10_other_commerce_owner_cannot_read_private_billing_mission
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 12 filtered out; finished in 1.37s
+
+error: test failed, to rerun pass `-p archava-host --test candidate10_cockpit_review_tmp`

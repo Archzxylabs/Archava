@@ -1,0 +1,32 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.13s
+     Running tests/cockpit_hold_resume.rs (target/debug/deps/cockpit_hold_resume-7300e77ac5233639)
+
+running 2 tests
+test test_cockpit_holding_pattern_and_resume_lifecycle ... ok
+test test_cockpit_l4_self_resume_refusal_and_independent_approval ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.51s
+
+     Running tests/invoice_email.rs (target/debug/deps/invoice_email-7a143de095b2d0fd)
+
+running 7 tests
+test idempotent_retry_returns_existing_without_second_call ... ok
+test reader_only_user_is_forbidden ... ok
+test review_gemini_email_message_markup_is_escaped ... ok
+test review_gemini_email_restore_hold_refuses_transmission ... ok
+test review_gemini_email_without_csrf_is_refused_before_provider ... ok
+test review_gemini_lost_ack_then_ui_style_new_key_must_not_duplicate_email ... ok
+test send_invoice_email_records_outbox_and_accepts ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.25s
+
+     Running tests/presence_lifecycle.rs (target/debug/deps/presence_lifecycle-9f7cbc971c087eb3)
+
+running 4 tests
+test review_gemini_foreign_tenant_session_override_is_refused ... ok
+test review_revocation_stops_subsequent_presence_operations ... ok
+test test_presence_session_lifecycle_and_turn_and_degrade ... ok
+test test_presence_unconfigured_default_returns_service_unavailable ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.79s
+
