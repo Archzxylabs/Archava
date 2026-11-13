@@ -364,7 +364,7 @@ mod tests {
                 count += 1;
             }
         }
-        assert_eq!(count, 192);
+        assert_eq!(count, 193);
     }
     #[test]
     fn supplier_payment_forms_roundtrip_exact_source_bank_and_original_payment_references() {

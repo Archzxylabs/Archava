@@ -686,3 +686,89 @@ async fn inventory_control_compares_posted_stock_and_receipt_sources_with_the_le
     .await;
     assert_eq!(st, StatusCode::FORBIDDEN, "{v}");
 }
+
+/// **Witness: declared opening balances on the inventory and payable control
+/// accounts are explained by their comparisons, and an inventory account the
+/// current policy does not name cannot take one.**
+#[tokio::test]
+async fn declared_inventory_and_payable_openings_are_explained_by_their_controls() {
+    let s = StockScenario::new(true).await;
+    s.receive(1, 1, false).await;
+    const LATER: &str = "2100-12-31";
+    let inventory = &s.p.accounts[0];
+    let payable = &s.p.accounts[2];
+    let equity = account(
+        &s.p.app,
+        &s.p.alice,
+        &s.p.book,
+        "OPEN-EQUITY",
+        "equity",
+        "financing",
+    )
+    .await;
+
+    // Only the account the current purchase policy names as inventory.
+    let (st, v) = send(
+        &s.p.app,
+        &s.p.alice,
+        &openings::opening(
+            &s.p.book,
+            "inventory",
+            "OPEN-WRONG",
+            &s.new_inventory,
+            &equity,
+            "500000",
+        ),
+    )
+    .await;
+    assert_eq!(st, StatusCode::CONFLICT, "{v}");
+
+    let (st, stock) = send(
+        &s.p.app,
+        &s.p.alice,
+        &openings::opening(
+            &s.p.book,
+            "inventory",
+            "OPEN-STOCK",
+            inventory,
+            &equity,
+            "500000",
+        ),
+    )
+    .await;
+    assert_eq!(st, StatusCode::OK, "{stock}");
+    s.p.post(&stock["receipt"]).await;
+    let report = inventory_control(&s, LATER).await;
+    let row = openings::control_of(&report, inventory);
+    assert_eq!(row["expectedMinor"], "1200100");
+    assert_eq!(row["openingMinor"], "500000");
+    assert_eq!(row["actualMinor"], "1200100");
+    assert_eq!(row["differenceMinor"], "0");
+    assert_eq!(report["postedSourceControlsAgree"], true, "{report}");
+
+    // A payable opening is a credit on the policy's payable account.
+    let (st, owed) = send(
+        &s.p.app,
+        &s.p.alice,
+        &openings::opening(&s.p.book, "payable", "OPEN-AP", payable, &equity, "300000"),
+    )
+    .await;
+    assert_eq!(st, StatusCode::OK, "{owed}");
+    s.p.post(&owed["receipt"]).await;
+    let report = subledger::accepted(&s.p.app, &s.p.alice, &s.p.book, "payable", LATER).await;
+    let row = openings::control_of(&report, payable);
+    assert_eq!(row["expectedMinor"], "300000");
+    assert_eq!(row["openingMinor"], "300000");
+    assert_eq!(row["actualMinor"], "300000");
+    assert_eq!(row["differenceMinor"], "0");
+    assert_eq!(report["postedSourceControlsAgree"], true, "{report}");
+    assert_eq!(report["positionControlDifferenceMinor"], "0");
+    assert_eq!(report["declaredOpeningMinor"], "300000");
+    let lines: Vec<(String, i64, i64)> = sqlx::query_as("SELECT a.code,l.debit_minor,l.credit_minor FROM archava_accounting.journal_lines l JOIN archava_accounting.journals j ON j.tenant_id=l.tenant_id AND j.id=l.journal_id JOIN archava_accounting.accounts a ON a.tenant_id=l.tenant_id AND a.id=l.account_id WHERE j.code='OPEN-AP' ORDER BY l.ordinal")
+        .fetch_all(&s.p.f.admin_pool)
+        .await
+        .unwrap();
+    assert_eq!(lines[0].1, 0);
+    assert_eq!(lines[0].2, 300_000);
+    assert_eq!(lines[1], ("OPEN-EQUITY".into(), 300_000, 0));
+}

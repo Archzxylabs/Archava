@@ -1,12 +1,12 @@
 # SQL migration ownership
 
-All 76 checked-in SQL migrations currently live under this directory, grouped into 31 ledger directories. The native manifest mounts 69; 7 remain reserved specifications. The owner-configuration migration was relocated from `crates/host/migrations/owner` to `owner-pg/`; its migration ID, schema namespace, SQL bytes, and checksum are unchanged.
+All 77 checked-in SQL migrations currently live under this directory, grouped into 31 ledger directories. The native manifest mounts 70; 7 remain reserved specifications. The owner-configuration migration was relocated from `crates/host/migrations/owner` to `owner-pg/`; its migration ID, schema namespace, SQL bytes, and checksum are unchanged.
 
 The manifest is the only list of applied migrations. The persistent server embeds the migrations it verifies from it at build time ([build.rs](../crates/slice/build.rs)), and the disposable PostgreSQL fixture reads the same manifest in [pg-fixture](../crates/pg-fixture/src/lib.rs). A file's presence here does not mean a given runtime mounts it or its UI is complete.
 
 ## Applied versus unmounted ledgers
 
-`manifest.v1.json` is the installer's contract: 69 of the 76 files, across 25 ledgers, carry an `id`, `path` and SHA-256 that the Ops installer verifies and applies. The remaining seven files are **unmounted**: no manifest entry, no embedded registration, and no runtime readiness check.
+`manifest.v1.json` is the installer's contract: 70 of the 77 files, across 25 ledgers, carry an `id`, `path` and SHA-256 that the Ops installer verifies and applies. The remaining seven files are **unmounted**: no manifest entry, no embedded registration, and no runtime readiness check.
 
 | Unmounted ledger | Files |
 | --- | --- |
@@ -81,3 +81,5 @@ is original-cost provenance, not COGS journal posting. See
 [Commerce](../docs/modules/COMMERCE_MODULE.md).
 
 Accounting011/012 append original-document due agreements, immutable reviewed versions and the corresponding audit kind without changing earlier SQL. See [due terms and dated subledgers](../docs/modules/DOCUMENT_DUE_TERMS.md). No historical agreements or new user grants are inferred.
+
+Accounting013 appends immutable declared opening balances: one reviewed lump on the receivable, payable or inventory control account the current policy names, bound to exactly one journal against an equity account. It imports no documents and grants no new permission. See [Accounting](../docs/modules/ACCOUNTING.md#declared-opening-balances).

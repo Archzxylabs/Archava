@@ -8642,6 +8642,90 @@
               "maxLength": 2000
             }
           ]
+        },
+        {
+          "id": "opening_balance.draft",
+          "label": "Declare an opening balance",
+          "permission": "journals.write",
+          "description": "Declare one reviewed opening amount on the receivable, payable or inventory control account that the book policy names, against an equity account. This creates a draft journal; posting is a separate reviewed action. It imports no documents, so the amount is not aged.",
+          "fields": [
+            {
+              "name": "bookId",
+              "label": "Book",
+              "kind": "string"
+            },
+            {
+              "name": "control",
+              "label": "Control account kind",
+              "kind": "string",
+              "options": [
+                "receivable",
+                "payable",
+                "inventory"
+              ]
+            },
+            {
+              "name": "code",
+              "label": "New journal code",
+              "kind": "string"
+            },
+            {
+              "name": "date",
+              "label": "Opening date (YYYY-MM-DD)",
+              "kind": "string",
+              "format": "date"
+            },
+            {
+              "name": "controlAccount",
+              "label": "Control account named by the policy",
+              "kind": "object",
+              "fields": [
+                {
+                  "name": "accountId",
+                  "label": "Reviewed account",
+                  "kind": "string"
+                },
+                {
+                  "name": "expectedAccountRevision",
+                  "label": "Reviewed account version",
+                  "kind": "integer",
+                  "min": 1,
+                  "automatic": "revision"
+                }
+              ]
+            },
+            {
+              "name": "offsetAccount",
+              "label": "Equity offset account",
+              "kind": "object",
+              "fields": [
+                {
+                  "name": "accountId",
+                  "label": "Reviewed account",
+                  "kind": "string"
+                },
+                {
+                  "name": "expectedAccountRevision",
+                  "label": "Reviewed account version",
+                  "kind": "integer",
+                  "min": 1,
+                  "automatic": "revision"
+                }
+              ]
+            },
+            {
+              "name": "amountMinor",
+              "label": "Opening amount",
+              "kind": "string",
+              "minorAmount": true
+            },
+            {
+              "name": "reason",
+              "label": "Review reason",
+              "kind": "string",
+              "maxLength": 2000
+            }
+          ]
         }
       ]
     }

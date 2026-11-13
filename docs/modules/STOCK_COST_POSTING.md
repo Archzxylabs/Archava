@@ -82,7 +82,7 @@ do not certify every business model or jurisdiction.
 | `postedSourceControlsAgree` | every difference is zero |
 | `coverage.pendingMonetarySourceCount` | captured receipts and stock cost sources dated through the cutoff that carry money and have no posted journal |
 
-The accounts listed are those named as `inventory` by a purchase policy, by a captured purchase order or by a stock layer origin. An opening balance, a counted adjustment or a manual journal on an inventory account is not a captured source and appears as a difference.
+The accounts listed are those named as `inventory` by a purchase policy, by a captured purchase order or by a stock layer origin. A posted [declared opening balance](ACCOUNTING.md#declared-opening-balances) is added to the expected balance and reported as `openingMinor`. A counted adjustment or a manual journal on an inventory account is not a captured source and appears as a difference.
 
 This is a control-account comparison, not a stock valuation: it does not read the commerce cost layers, so stock consumed without a captured stock source (for example a fulfillment before the stock policy existed) leaves ledger and expected balance equal while the physical layers are gone. A dated valuation of layers against the ledger is not delivered. The Accounting screen shows it under Financial reports as "Inventory accounts against posted stock sources".
 

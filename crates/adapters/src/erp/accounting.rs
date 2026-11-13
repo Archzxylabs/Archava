@@ -5,6 +5,7 @@ mod clearing;
 mod close;
 mod inventory;
 mod journal;
+mod openings;
 mod page;
 mod payables;
 mod purchases;
@@ -218,7 +219,8 @@ fn operation_permission(op: &str) -> Option<&'static str> {
         | "journal.reverse"
         | "invoice_source.draft"
         | "purchase_source.draft"
-        | "stock_source.draft" => "journals.write",
+        | "stock_source.draft"
+        | "opening_balance.draft" => "journals.write",
         "journal.post" => "journals.post",
         _ => return None,
     })
@@ -401,7 +403,8 @@ pub async fn record(
             | Command::InvoicePolicySet { book_id, .. }
             | Command::AccountCreate { book_id, .. }
             | Command::PeriodOpen { book_id, .. }
-            | Command::JournalDraft { book_id, .. } => id(book_id)?,
+            | Command::JournalDraft { book_id, .. }
+            | Command::OpeningBalanceDraft { book_id, .. } => id(book_id)?,
             Command::BankPolicySet {
                 bank_account_id, ..
             }
@@ -479,6 +482,9 @@ pub async fn record(
             }
             Command::PayablePaymentDraft { .. } | Command::PayableReturnDraft { .. } => {
                 payables::execute(conn, tenant, p, &b, &m.command).await?
+            }
+            Command::OpeningBalanceDraft { .. } => {
+                openings::execute(conn, tenant, p, &b, &m.command).await?
             }
             Command::BankPolicySet { .. } | Command::BankReconciliationConfirm { .. } => {
                 bank_periods::execute(conn, tenant, p, &b, &m.command).await?

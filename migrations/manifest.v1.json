@@ -331,6 +331,11 @@
           "id": "012_document_terms_audit_kind",
           "path": "migrations/accounting-pg/012_document_terms_audit_kind.sql",
           "sha256": "43c73cb344929689d864069e5a8265c6dd69489061184b008a365700e921aaf9"
+        },
+        {
+          "id": "013_declared_opening_balances",
+          "path": "migrations/accounting-pg/013_declared_opening_balances.sql",
+          "sha256": "78216741b20c84e27f3e926889dfb989dfff60b7a75f9154f5a8de5023e32332"
         }
       ]
     },
@@ -658,6 +663,8 @@
     "GRANT SELECT,INSERT ON archava_accounting.clearing_settlements TO {runtime_role}",
     "GRANT EXECUTE ON FUNCTION archava_accounting.clearing_guards_complete() TO {runtime_role}",
     "GRANT SELECT,INSERT ON archava_accounting.document_terms TO {runtime_role}",
-    "GRANT EXECUTE ON FUNCTION archava_accounting.terms_guards_complete() TO {runtime_role}"
+    "GRANT EXECUTE ON FUNCTION archava_accounting.terms_guards_complete() TO {runtime_role}",
+    "GRANT SELECT,INSERT ON archava_accounting.opening_balances TO {runtime_role}",
+    "GRANT EXECUTE ON FUNCTION archava_accounting.opening_guards_complete() TO {runtime_role}"
   ]
 }

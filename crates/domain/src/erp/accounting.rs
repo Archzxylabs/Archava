@@ -2,6 +2,7 @@
 pub mod aging;
 pub mod bank;
 pub mod clearing;
+pub mod openings;
 pub mod payables;
 pub mod purchase_sources;
 pub mod sources;
@@ -158,6 +159,17 @@ pub enum Command {
         fee_account: Option<sources::AccountRef>,
         gross_minor: String,
         fee_minor: String,
+        reason: String,
+    },
+    #[serde(rename = "opening_balance.draft", rename_all = "camelCase")]
+    OpeningBalanceDraft {
+        book_id: String,
+        control: openings::Control,
+        code: String,
+        date: String,
+        control_account: sources::AccountRef,
+        offset_account: sources::AccountRef,
+        amount_minor: String,
         reason: String,
     },
     #[serde(rename = "payable_payment.draft", rename_all = "camelCase")]
@@ -364,6 +376,7 @@ impl Command {
             Self::InvoiceTermsSet { .. } => "invoice_terms.set",
             Self::SupplierTermsSet { .. } => "supplier_terms.set",
             Self::ClearingSettlementDraft { .. } => "clearing_settlement.draft",
+            Self::OpeningBalanceDraft { .. } => "opening_balance.draft",
             Self::PayablePaymentDraft { .. } => "payable_payment.draft",
             Self::PayableReturnDraft { .. } => "payable_return.draft",
             Self::BankPolicySet { .. } => "bank_policy.set",
@@ -420,7 +433,8 @@ impl Command {
         match self {
             Self::InvoiceTermsSet { reason, .. } | Self::SupplierTermsSet { reason, .. } => reason,
             Self::ClearingSettlementDraft { reason, .. } => reason,
-            Self::PayablePaymentDraft { reason, .. }
+            Self::OpeningBalanceDraft { reason, .. }
+            | Self::PayablePaymentDraft { reason, .. }
             | Self::PayableReturnDraft { reason, .. }
             | Self::BankPolicySet { reason, .. }
             | Self::BankReconciliationConfirm { reason, .. }
@@ -505,6 +519,8 @@ pub fn parse(raw: &Value) -> Result<Mutation, ValidationError> {
         "cashAccount",
         "clearingAccount",
         "feeAccount",
+        "controlAccount",
+        "offsetAccount",
     ] {
         if let Some(account) = c.get_mut(field).and_then(Value::as_object_mut) {
             if let Some(id) = account.get_mut("accountId") {
@@ -561,6 +577,22 @@ pub fn parse(raw: &Value) -> Result<Mutation, ValidationError> {
                 // immutable event selects it again inside the transaction.
                 && (clearing::legs(clearing::Effect::Collection,gross_minor,fee_minor).is_ok()
                     || clearing::legs(clearing::Effect::Refund,gross_minor,fee_minor).is_ok())
+        }
+        Command::OpeningBalanceDraft {
+            book_id,
+            control,
+            code,
+            date,
+            control_account,
+            offset_account,
+            amount_minor,
+            ..
+        } => {
+            valid_uuid(book_id)
+                && valid_code(code)
+                && parse_calendar_date(date).is_some()
+                && sources::valid_refs(&[control_account.clone(), offset_account.clone()], 2)
+                && openings::legs(*control, amount_minor).is_ok()
         }
         Command::PayablePaymentDraft {
             source_id,
