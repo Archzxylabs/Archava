@@ -19,6 +19,7 @@ export async function verifyPriorNative({previousRoot,packageRoot,facts,scratch,
  const bankMigrationIds=['006_manual_bank_evidence','007_bank_cash_matching','008_reviewed_bank_periods']
  const bankTables=['bank_accounts','bank_statements','bank_rows','bank_allocations','bank_unmatches','bank_policies','bank_reconciliations']
  const newBank=newManifest.ledgers.find(l=>l.namespace==='archava_accounting')?.migrations.some(m=>m.id==='008_reviewed_bank_periods')===true
+ const addedBank=newBank&&oldManifest.ledgers.find(l=>l.namespace==='archava_accounting')?.migrations.some(m=>m.id==='008_reviewed_bank_periods')!==true
  const newPayables=newManifest.ledgers.find(l=>l.namespace==='archava_accounting')?.migrations.some(m=>m.id==='009_supplier_bank_settlements')===true
  const oldPayables=oldManifest.ledgers.find(l=>l.namespace==='archava_accounting')?.migrations.some(m=>m.id==='009_supplier_bank_settlements')===true
  const newClearing=newManifest.ledgers.find(l=>l.namespace==='archava_accounting')?.migrations.some(m=>m.id==='010_gateway_bank_settlements')===true
@@ -36,7 +37,7 @@ export async function verifyPriorNative({previousRoot,packageRoot,facts,scratch,
   const oldOwner=oldManifest.ledgers.find(l=>l.namespace==='archava_owner'),newOwner=newManifest.ledgers.find(l=>l.namespace==='archava_owner')
   assert.deepEqual(newOwner.migrations.slice(oldOwner.migrations.length).map(m=>m.id),['004_ai_disclosure_boundary'])
   const oldAccounting=oldManifest.ledgers.find(l=>l.namespace==='archava_accounting'),newAccounting=newManifest.ledgers.find(l=>l.namespace==='archava_accounting')
-  const accountingAdded=[...(newBank?bankMigrationIds:[]),...(newPayables&&!oldPayables?['009_supplier_bank_settlements']:[]),...(newClearing&&!oldClearing?['010_gateway_bank_settlements']:[]),...(newTerms&&!oldTerms?termsMigrationIds:[]),...(newOpenings&&!oldOpenings?['013_declared_opening_balances']:[])]
+  const accountingAdded=[...(addedBank?bankMigrationIds:[]),...(newPayables&&!oldPayables?['009_supplier_bank_settlements']:[]),...(newClearing&&!oldClearing?['010_gateway_bank_settlements']:[]),...(newTerms&&!oldTerms?termsMigrationIds:[]),...(newOpenings&&!oldOpenings?['013_declared_opening_balances']:[])]
   assert.deepEqual(newAccounting.migrations.slice(oldAccounting.migrations.length).map(m=>m.id),accountingAdded)
   assert.equal(expectedAdded,1+accountingAdded.length,'This prior profile adds exactly the Owner disclosure and the declared bank/payable migrations')
  }
@@ -180,7 +181,7 @@ export async function verifyPriorNative({previousRoot,packageRoot,facts,scratch,
    assert.equal(sql(db,'SELECT count(*) FROM archava_accounting.document_terms'),'0','Upgrade must not invent historical due agreements')
    assert.equal(sql(db,"SELECT count(*) FROM archava_accounting.memberships WHERE permissions&&ARRAY['terms.read','terms.write']::text[]"),'0','Upgrade must not grant existing users due-term authority')
   }
-  if(newBank){
+  if(addedBank){
    assert.equal(sql(db,`SELECT ${bankTables.map(table=>`(SELECT count(*) FROM archava_accounting.${table})`).join('+')}`),'0','Upgrade must not invent bank accounts, statements, matches, opening policies or reviews')
    assert.equal(sql(db,"SELECT count(*) FROM archava_accounting.memberships WHERE permissions&&ARRAY['bank.read','bank.configure','bank.import','bank.reconcile']::text[]"),'0','New bank authority is never added to existing memberships')
   }
@@ -200,7 +201,7 @@ export async function verifyPriorNative({previousRoot,packageRoot,facts,scratch,
   const denied=await call(newServer.origin,currentSession,`/erp/accounting/workspace?tenant=${tenant}&companyId=${company.companyId}`)
   if(priorAccounting){
    assert.equal(denied.status,200);assert.equal(denied.body.configuredBook.id,priorBook.bookId)
-   if(newBank){
+   if(addedBank){
     assert.equal(denied.body.bank_accounts,undefined)
     const bankRead=await call(newServer.origin,currentSession,`/erp/accounting/workspace?tenant=${tenant}&companyId=${company.companyId}&collection=bank_accounts`)
     assert.equal(bankRead.status,403,'A prior owner with books.read does not acquire bank.read during upgrade')
