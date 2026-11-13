@@ -13,9 +13,10 @@ The analysis below was written by reading test bodies before these tests existed
 | `crates/host/tests/own.rs::an_unauthenticated_caller_is_refused_on_every_owner_route` | T04: missing and forged bearer on the same eight routes |
 | `crates/host/tests/own.rs::restore_keeps_historical_labels_traceable_and_only_appends` | T08: per-revision labels, request id, plan hash and outcome in `/own/history` after a restore; earlier revisions, receipts and audit rows byte-identical; grants, CRM memberships and contacts unchanged |
 | `crates/host/tests/own.rs::two_businesses_share_one_release_and_differ_only_by_owner_configuration` | T01: two tenants on one router and catalogue with different applied configurations; separate revisions, labels and history; the same CRM command refused for one and served for the other; neither owner reaches the other tenant |
+| `crates/host/tests/own.rs::the_preview_states_changes_readiness_and_cost_and_writes_nothing` | T03/T05: changes, per-module readiness and cost, catalogue and pricing identity on the installed catalogue; previewing writes nothing; an unknown module is `unknown_module`, cannot be applied and writes nothing |
 | `crates/host/tests/product_workspaces.rs` (toggle loop) | T07: each of the thirteen workspace modules refuses its read with `module_disabled` when disabled, an unrelated module keeps answering, and the read returns after enabling |
 
-Still missing after these: items 7, 9 and 10 of the list at the end, the command-route refusal for every module (covered for `crm-pipeline` and `projects` only), and every browser negative.
+Still missing after these: items 9 and 10 of the list at the end, the command-route refusal for every module (covered for `crm-pipeline` and `projects` only), and every browser negative.
 
 ---
 

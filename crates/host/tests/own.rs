@@ -1990,3 +1990,96 @@ async fn two_businesses_share_one_release_and_differ_only_by_owner_configuration
     assert_eq!(count(&fixture, "config_revisions").await, 2);
     assert_eq!(count(&fixture, "apply_receipts").await, 2);
 }
+
+/// **Witness (OWN-T03, OWN-T05): on the installed catalogue the preview names
+/// each change with its readiness and cost classification under the server's
+/// catalogue and pricing identity, previewing writes nothing, and a module the
+/// catalogue does not offer is an explicit blocked result that cannot be
+/// applied.**
+#[tokio::test]
+async fn the_preview_states_changes_readiness_and_cost_and_writes_nothing() {
+    let fixture = provision().await;
+    seed(&fixture).await;
+    let app = archava_host::router(state(&fixture).await);
+    let alice = login(&app, "alice").await;
+
+    configure(
+        &app,
+        &alice,
+        ACME,
+        "own-request-preview-setup",
+        serde_json::json!({"baseRevision": 0, "disable": ["accommodation", "laundry"]}),
+    )
+    .await;
+    let tables = [
+        "archava_owner.config_revisions",
+        "archava_owner.apply_receipts",
+        "archava_owner.config_audit",
+    ];
+    let mut before = Vec::new();
+    for table in tables {
+        before.push(rows(&fixture, table).await);
+    }
+
+    let (status, planned) = post(
+        &app,
+        "/own/plan",
+        &plan_body(1, &["accommodation", "laundry"], &[]),
+        &alice,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{planned}");
+    let plan = &planned["plan"];
+    assert!(plan["blocked"].is_null(), "{planned}");
+    assert_eq!(plan["baseRevision"], 1);
+    assert_eq!(plan["config"]["revision"], 2);
+    assert_eq!(
+        plan["catalogueVersion"],
+        archava_host::own::CATALOGUE_VERSION
+    );
+    assert_eq!(plan["pricingVersion"], archava_host::own::PRICING_VERSION);
+    let changes = plan["changes"].as_array().expect("changes");
+    assert_eq!(
+        changes.len(),
+        2,
+        "one change per requested module: {planned}"
+    );
+    let effects = plan["effects"].as_array().expect("effects");
+    for module in ["accommodation", "laundry"] {
+        assert!(
+            changes
+                .iter()
+                .any(|change| change.to_string().contains(module)),
+            "{module} is named among the changes: {planned}"
+        );
+        let effect = effects
+            .iter()
+            .find(|effect| effect["module"] == module)
+            .unwrap_or_else(|| panic!("{module} has a stated effect: {planned}"));
+        assert_eq!(effect["readiness"], "ready", "{planned}");
+        assert_eq!(effect["cost"], "included", "{planned}");
+    }
+
+    let (status, unknown) = post(&app, "/own/plan", &plan_body(1, &["payroll"], &[]), &alice).await;
+    assert_eq!(status, StatusCode::OK, "{unknown}");
+    assert_eq!(unknown["plan"]["blocked"]["reason"], "unknown_module");
+    assert_eq!(unknown["plan"]["blocked"]["module"], "payroll");
+    assert_eq!(
+        unknown["plan"]["config"]["revision"], 1,
+        "nothing is proposed"
+    );
+    let hash = unknown["plan"]["planHash"].as_str().unwrap();
+    let (status, refused) = post(
+        &app,
+        "/own/apply",
+        &apply_body("own-request-unknown", 1, &["payroll"], &[], hash),
+        &alice,
+    )
+    .await;
+    assert_eq!(status, StatusCode::CONFLICT, "{refused}");
+    assert_eq!(refused["reason"], "plan_blocked");
+
+    for (index, table) in tables.iter().enumerate() {
+        assert_eq!(rows(&fixture, table).await, before[index], "{table}");
+    }
+}
