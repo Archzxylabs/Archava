@@ -43,6 +43,8 @@ export function registryProblems(registry) {
   if (!registry || registry.schemaVersion !== 1 || !Array.isArray(registry.modules)) return [`${REGISTRY}: expected {"schemaVersion":1,"modules":[…]}`]
   const problems = []
   const seen = { id: new Map(), namespace: new Map(), rank: new Map() }
+  // Words an owner may use for a module in chat: every id, then every alias.
+  const words = new Map(registry.modules.filter((module) => typeof module?.id === 'string').map((module) => [module.id, module.id]))
   registry.modules.forEach((module, index) => {
     const name = typeof module?.id === 'string' ? module.id : `modules[${index}]`
     for (const field of STRINGS) if (typeof module?.[field] !== 'string' || !module[field]) problems.push(`${REGISTRY}: ${name}.${field} must be a non-empty string`)
@@ -57,6 +59,25 @@ export function registryProblems(registry) {
       const values = agent?.[list]
       if (!Array.isArray(values) || values.length === 0 || values.some((value) => typeof value !== 'string' || !value)) problems.push(`${REGISTRY}: ${name}.agent.${list} must be a non-empty list of strings`)
       else if (list === 'keywords' && values.some((value) => value !== value.toLowerCase())) problems.push(`${REGISTRY}: ${name}.agent.keywords must be lower-case (utterances are lower-cased before matching)`)
+    }
+    const owner = module?.owner
+    if (owner !== undefined) {
+      if (!owner || typeof owner !== 'object' || Array.isArray(owner)) problems.push(`${REGISTRY}: ${name}.owner must be an object when present`)
+      else {
+        for (const list of ['aliases', 'requires']) {
+          const values = owner[list]
+          if (values !== undefined && (!Array.isArray(values) || values.length === 0 || values.some((value) => typeof value !== 'string' || !value))) problems.push(`${REGISTRY}: ${name}.owner.${list} must be a non-empty list of strings when present`)
+        }
+        for (const alias of Array.isArray(owner.aliases) ? owner.aliases.filter((value) => typeof value === 'string' && value) : []) {
+          if (!/^[a-z0-9-]+$/.test(alias)) problems.push(`${REGISTRY}: ${name}.owner.aliases must be single lower-case words (${JSON.stringify(alias)})`)
+          else if (words.has(alias)) problems.push(`${REGISTRY}: ${name}.owner.aliases repeats ${JSON.stringify(alias)}, which already names ${words.get(alias)}`)
+          else words.set(alias, name)
+        }
+        for (const required of Array.isArray(owner.requires) ? owner.requires.filter((value) => typeof value === 'string' && value) : []) {
+          if (required === module.id) problems.push(`${REGISTRY}: ${name}.owner.requires names the module itself`)
+          else if (!registry.modules.some((other) => other?.id === required)) problems.push(`${REGISTRY}: ${name}.owner.requires names ${JSON.stringify(required)}, which is not a module id`)
+        }
+      }
     }
     for (const [key, value] of [['id', module?.id], ['namespace', module?.namespace], ['rank', agent?.rank]]) {
       if (value === undefined) continue

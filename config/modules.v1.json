@@ -60,6 +60,12 @@
           "products",
           "orders"
         ]
+      },
+      "owner": {
+        "aliases": [
+          "retail",
+          "toko"
+        ]
       }
     },
     {
@@ -89,6 +95,14 @@
           "orders",
           "documents"
         ]
+      },
+      "owner": {
+        "aliases": [
+          "pembelian"
+        ],
+        "requires": [
+          "commerce"
+        ]
       }
     },
     {
@@ -115,6 +129,12 @@
         "collections": [
           "invoices"
         ]
+      },
+      "owner": {
+        "aliases": [
+          "invoice",
+          "tagihan"
+        ]
       }
     },
     {
@@ -140,6 +160,11 @@
         "collections": [
           "items",
           "cases"
+        ]
+      },
+      "owner": {
+        "aliases": [
+          "dukungan"
         ]
       }
     },
@@ -168,6 +193,11 @@
           "parties",
           "organizations",
           "affiliations"
+        ]
+      },
+      "owner": {
+        "aliases": [
+          "organisasi"
         ]
       }
     },
@@ -206,6 +236,11 @@
           "stock_policies",
           "stock_sources"
         ]
+      },
+      "owner": {
+        "requires": [
+          "organizations"
+        ]
       }
     },
     {
@@ -233,6 +268,11 @@
           "scope_versions",
           "change_requests"
         ]
+      },
+      "owner": {
+        "aliases": [
+          "proposal"
+        ]
       }
     },
     {
@@ -258,6 +298,11 @@
           "projects",
           "tasks",
           "milestones"
+        ]
+      },
+      "owner": {
+        "aliases": [
+          "proyek"
         ]
       }
     },
@@ -293,6 +338,18 @@
           "tickets",
           "ticket_lines"
         ]
+      },
+      "owner": {
+        "aliases": [
+          "restoran",
+          "restaurant",
+          "resto",
+          "cafe",
+          "kafe"
+        ],
+        "requires": [
+          "commerce"
+        ]
       }
     },
     {
@@ -321,6 +378,11 @@
         "collections": [
           "resources",
           "reservations"
+        ]
+      },
+      "owner": {
+        "aliases": [
+          "jadwal"
         ]
       }
     },
@@ -352,6 +414,16 @@
           "rooms",
           "stays"
         ]
+      },
+      "owner": {
+        "aliases": [
+          "hotel",
+          "penginapan",
+          "akomodasi"
+        ],
+        "requires": [
+          "scheduling"
+        ]
       }
     },
     {
@@ -380,6 +452,11 @@
           "custody_events",
           "maintenance_records"
         ]
+      },
+      "owner": {
+        "aliases": [
+          "aset"
+        ]
       }
     },
     {
@@ -405,6 +482,12 @@
         ],
         "collections": [
           "subscriptions"
+        ]
+      },
+      "owner": {
+        "aliases": [
+          "membership",
+          "langganan"
         ]
       }
     },
@@ -432,6 +515,11 @@
         ],
         "collections": [
           "sessions"
+        ]
+      },
+      "owner": {
+        "aliases": [
+          "absensi"
         ]
       }
     },
@@ -484,6 +572,11 @@
         "collections": [
           "jobs"
         ]
+      },
+      "owner": {
+        "aliases": [
+          "lapangan"
+        ]
       }
     },
     {
@@ -509,6 +602,11 @@
         ],
         "collections": [
           "jobs"
+        ]
+      },
+      "owner": {
+        "aliases": [
+          "pengiriman"
         ]
       }
     },
@@ -538,6 +636,13 @@
         ],
         "collections": [
           "enrollments"
+        ]
+      },
+      "owner": {
+        "aliases": [
+          "sekolah",
+          "school",
+          "pendidikan"
         ]
       }
     }
