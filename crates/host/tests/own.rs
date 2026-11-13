@@ -1393,3 +1393,771 @@ async fn crm_presentation_uses_current_labels_without_granting_owner_access() {
     assert_eq!(status, StatusCode::FORBIDDEN);
     assert!(revoked.get("pipelineLabels").is_none());
 }
+
+/// **Witness (OWN-T05, OWN-T07): disabling a module that another enabled
+/// module requires is an explicit blocked plan on the installed catalogue, the
+/// blocked plan cannot be applied, and nothing is written.** The requirements
+/// come from the module registry, so every declared requirement is exercised.
+#[tokio::test]
+async fn disabling_a_required_module_is_blocked_and_nothing_is_written() {
+    let fixture = provision().await;
+    seed(&fixture).await;
+    let app = archava_host::router(state(&fixture).await);
+    let alice = login(&app, "alice").await;
+
+    let (status, planned) = post(
+        &app,
+        "/own/plan",
+        &plan_body(0, &[], &["scheduling"]),
+        &alice,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{planned}");
+    let blocked = &planned["plan"]["blocked"];
+    assert_eq!(blocked["reason"], "missing_dependency", "{planned}");
+    assert_eq!(blocked["module"], "accommodation", "{planned}");
+    assert!(
+        blocked["detail"]
+            .as_str()
+            .is_some_and(|detail| detail.contains("scheduling")),
+        "the refusal names the module that must stay enabled: {planned}"
+    );
+    // A blocked plan proposes nothing: it carries the unchanged configuration.
+    assert_eq!(planned["plan"]["config"]["revision"], 0, "{planned}");
+
+    let hash = planned["plan"]["planHash"].as_str().unwrap().to_string();
+    let (status, refused) = post(
+        &app,
+        "/own/apply",
+        &apply_body("own-request-dependency", 0, &[], &["scheduling"], &hash),
+        &alice,
+    )
+    .await;
+    assert_eq!(status, StatusCode::CONFLICT, "{refused}");
+    assert_eq!(refused["reason"], "plan_blocked");
+
+    // The chat grammar reaches the same refusal as the dashboard request.
+    let (status, chatted) = post(&app, "/own/chat", &chat_body("disable scheduling"), &alice).await;
+    assert_eq!(status, StatusCode::OK, "{chatted}");
+    assert_eq!(
+        chatted["plan"]["blocked"]["reason"], "missing_dependency",
+        "{chatted}"
+    );
+
+    // Disabling the dependent together with its requirement is compatible.
+    let (status, together) = post(
+        &app,
+        "/own/plan",
+        &plan_body(0, &[], &["accommodation", "scheduling"]),
+        &alice,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{together}");
+    assert!(together["plan"]["blocked"].is_null(), "{together}");
+
+    let mut exercised = 0;
+    for module in archava_domain::modules::all() {
+        for required in module.owner_requires {
+            let (status, planned) =
+                post(&app, "/own/plan", &plan_body(0, &[], &[required]), &alice).await;
+            assert_eq!(status, StatusCode::OK, "{required}: {planned}");
+            assert_eq!(
+                planned["plan"]["blocked"]["reason"], "missing_dependency",
+                "disabling {required} while {} is enabled: {planned}",
+                module.id
+            );
+            exercised += 1;
+        }
+    }
+    assert!(exercised >= 4, "the registry declares module requirements");
+    assert_eq!(count(&fixture, "config_revisions").await, 0);
+    assert_eq!(count(&fixture, "apply_receipts").await, 0);
+}
+
+/// Every owner route with a request that would otherwise be served: `(method,
+/// uri, body)`.
+fn owner_surface(plan_hash: &str) -> Vec<(&'static str, String, Option<serde_json::Value>)> {
+    vec![
+        ("GET", format!("/own/config?tenant={ACME}"), None),
+        ("GET", format!("/own/history?tenant={ACME}"), None),
+        (
+            "GET",
+            format!("/own/status?tenant={ACME}&requestId=own-request-surface"),
+            None,
+        ),
+        (
+            "POST",
+            "/own/plan".into(),
+            Some(plan_body(1, &["crm-pipeline"], &[])),
+        ),
+        (
+            "POST",
+            "/own/chat".into(),
+            Some(chat_body("enable crm-pipeline")),
+        ),
+        (
+            "POST",
+            "/own/apply".into(),
+            Some(apply_body(
+                "own-request-refused",
+                1,
+                &["crm-pipeline"],
+                &[],
+                plan_hash,
+            )),
+        ),
+        (
+            "POST",
+            "/own/restore/plan".into(),
+            Some(serde_json::json!({"tenant": ACME, "targetRevision": 1})),
+        ),
+        (
+            "POST",
+            "/own/restore".into(),
+            Some(serde_json::json!({
+                "tenant": ACME,
+                "requestId": "own-request-refused-restore",
+                "targetRevision": 1,
+                "confirmation": {"planHash": plan_hash, "baseRevision": 1}
+            })),
+        ),
+    ]
+}
+
+async fn call(
+    app: &Router,
+    method: &str,
+    uri: &str,
+    body: Option<&serde_json::Value>,
+    session: &Session,
+) -> (StatusCode, serde_json::Value) {
+    match body {
+        Some(body) => post(app, uri, body, session).await,
+        None => {
+            assert_eq!(method, "GET");
+            get(app, uri, session).await
+        }
+    }
+}
+
+/// **Witness (OWN-T04): a principal who never held the owner grant, and one
+/// whose grant was revoked after a committed apply, are refused on every owner
+/// route — inspect, history, status, plan, chat, apply, restore preview and
+/// restore — and nothing is written.**
+#[tokio::test]
+async fn a_never_granted_or_revoked_principal_is_refused_on_every_owner_route() {
+    let fixture = provision().await;
+    seed(&fixture).await;
+    let app = archava_host::router(state(&fixture).await);
+    let alice = login(&app, "alice").await;
+    let bob = login(&app, "bob").await;
+
+    let (_, planned) = post(
+        &app,
+        "/own/plan",
+        &plan_body(0, &[], &["crm-pipeline"]),
+        &alice,
+    )
+    .await;
+    let hash = planned["plan"]["planHash"].as_str().unwrap().to_string();
+    let (status, applied) = post(
+        &app,
+        "/own/apply",
+        &apply_body("own-request-surface", 0, &[], &["crm-pipeline"], &hash),
+        &alice,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{applied}");
+
+    // Every request is one Alice is served while she holds the grant.
+    for (method, uri, body) in owner_surface(&hash)
+        .into_iter()
+        .filter(|(method, _, _)| *method == "GET")
+    {
+        let (status, served) = call(&app, method, &uri, body.as_ref(), &alice).await;
+        assert_eq!(status, StatusCode::OK, "{uri}: {served}");
+    }
+
+    for (method, uri, body) in owner_surface(&hash) {
+        let (status, refused) = call(&app, method, &uri, body.as_ref(), &bob).await;
+        assert_eq!(
+            status,
+            StatusCode::FORBIDDEN,
+            "never granted, {uri}: {refused}"
+        );
+        assert_eq!(refused["reason"], "missing_grant", "{uri}");
+    }
+
+    sqlx::query(
+        "UPDATE archava_owner.owner_grants SET active=false \
+         WHERE tenant_id=$1 AND principal_id='alice'",
+    )
+    .bind(ACME)
+    .execute(&fixture.admin_pool)
+    .await
+    .expect("revoke the owner grant");
+    for (method, uri, body) in owner_surface(&hash) {
+        let (status, refused) = call(&app, method, &uri, body.as_ref(), &alice).await;
+        assert_eq!(status, StatusCode::FORBIDDEN, "revoked, {uri}: {refused}");
+        assert_eq!(refused["reason"], "missing_grant", "{uri}");
+    }
+    assert_eq!(count(&fixture, "config_revisions").await, 1);
+    assert_eq!(count(&fixture, "apply_receipts").await, 1);
+}
+
+/// **Witness (OWN-T04): a caller without a session, or with a forged bearer,
+/// is refused on every owner route before anything is read or written.**
+#[tokio::test]
+async fn an_unauthenticated_caller_is_refused_on_every_owner_route() {
+    let fixture = provision().await;
+    seed(&fixture).await;
+    let app = archava_host::router(state(&fixture).await);
+
+    for bearer in [None, Some("forged-token")] {
+        for (method, uri, body) in owner_surface("0".repeat(64).as_str()) {
+            let (status, refused) = raw(&app, method, &uri, body.as_ref(), bearer).await;
+            assert_eq!(
+                status,
+                StatusCode::UNAUTHORIZED,
+                "{method} {uri} with bearer {bearer:?}: {refused}"
+            );
+        }
+    }
+    assert_eq!(count(&fixture, "config_revisions").await, 0);
+    assert_eq!(count(&fixture, "apply_receipts").await, 0);
+}
+
+async fn rows(fixture: &Fixture, table: &str) -> Vec<String> {
+    let sql = format!("SELECT t::text FROM {table} t ORDER BY 1");
+    sqlx::query_scalar(sqlx::AssertSqlSafe(sql))
+        .fetch_all(&fixture.admin_pool)
+        .await
+        .unwrap_or_else(|error| panic!("read {table}: {error}"))
+}
+
+async fn relabel(app: &Router, session: &Session, request_id: &str, base: i64, label: &str) {
+    let request = serde_json::json!({
+        "baseRevision": base,
+        "terminology": {"pipelineLabels": {"won": label}}
+    });
+    let (status, planned) = post(
+        app,
+        "/own/plan",
+        &serde_json::json!({"tenant": ACME, "request": request}),
+        session,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{planned}");
+    let hash = planned["plan"]["planHash"].as_str().unwrap();
+    let (status, applied) = post(
+        app,
+        "/own/apply",
+        &serde_json::json!({
+            "tenant": ACME,
+            "requestId": request_id,
+            "request": request,
+            "confirmation": {"planHash": hash, "baseRevision": base}
+        }),
+        session,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{applied}");
+}
+
+/// **Witness (OWN-T08): after a restore, the label each earlier revision
+/// carried is still readable from history with the request and plan that
+/// produced it, and the restore only appends — earlier revisions, receipts and
+/// audit rows are byte-identical, and grants, memberships and business rows are
+/// untouched.**
+#[tokio::test]
+async fn restore_keeps_historical_labels_traceable_and_only_appends() {
+    let fixture = provision().await;
+    seed(&fixture).await;
+    let app = archava_host::router(state(&fixture).await);
+    let alice = login(&app, "alice").await;
+
+    relabel(&app, &alice, "own-request-label-1", 0, "Closed deal").await;
+    relabel(&app, &alice, "own-request-label-2", 1, "Signed").await;
+
+    let append_only = [
+        "archava_owner.config_revisions",
+        "archava_owner.apply_receipts",
+        "archava_owner.config_audit",
+    ];
+    let unchanged = [
+        "archava_owner.owner_grants",
+        "archava_crm.memberships",
+        "archava_crm.contacts",
+    ];
+    let mut before = Vec::new();
+    for table in append_only.iter().chain(&unchanged) {
+        before.push(rows(&fixture, table).await);
+    }
+    assert!(before.iter().take(3).all(|rows| rows.len() >= 2));
+
+    let (status, preview) = post(
+        &app,
+        "/own/restore/plan",
+        &serde_json::json!({"tenant": ACME, "targetRevision": 1}),
+        &alice,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{preview}");
+    let hash = preview["plan"]["planHash"].as_str().unwrap();
+    let (status, restored) = post(
+        &app,
+        "/own/restore",
+        &serde_json::json!({
+            "tenant": ACME,
+            "requestId": "own-request-label-restore",
+            "targetRevision": 1,
+            "confirmation": {"planHash": hash, "baseRevision": 2}
+        }),
+        &alice,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{restored}");
+    assert_eq!(restored["receipt"]["revision"], 3);
+
+    let (status, history) = get(&app, &format!("/own/history?tenant={ACME}"), &alice).await;
+    assert_eq!(status, StatusCode::OK, "{history}");
+    let revisions = history["revisions"].as_array().expect("history rows");
+    let traced: Vec<(i64, &str, &str, &str)> = revisions
+        .iter()
+        .map(|row| {
+            (
+                row["revision"].as_i64().unwrap(),
+                row["config"]["terminology"]["pipelineLabels"]["won"]
+                    .as_str()
+                    .unwrap_or_else(|| panic!("revision keeps its label: {row}")),
+                row["requestId"].as_str().expect("request id"),
+                row["outcome"].as_str().expect("outcome"),
+            )
+        })
+        .collect();
+    assert_eq!(
+        traced,
+        vec![
+            (3, "Closed deal", "own-request-label-restore", "restore"),
+            (2, "Signed", "own-request-label-2", "apply"),
+            (1, "Closed deal", "own-request-label-1", "apply"),
+        ],
+        "{history}"
+    );
+    for row in revisions {
+        assert_eq!(row["actor"], "alice", "{row}");
+        assert!(row["planHash"]
+            .as_str()
+            .is_some_and(|hash| !hash.is_empty()));
+    }
+
+    for (index, table) in append_only.iter().enumerate() {
+        let after = rows(&fixture, table).await;
+        assert_eq!(
+            after.len(),
+            before[index].len() + 1,
+            "{table} gains one row"
+        );
+        for row in &before[index] {
+            assert!(after.contains(row), "{table} rewrote an earlier row: {row}");
+        }
+    }
+    for (index, table) in unchanged.iter().enumerate() {
+        assert_eq!(rows(&fixture, table).await, before[index + 3], "{table}");
+    }
+}
+
+const GLOBEX: &str = "globex-corp";
+const ID_GRACE: &str = "2c3e5a10-2222-4222-8222-0000000000b1";
+
+/// A second business on the same database and the same router: Dana owns
+/// `globex-corp`, with her own contact, and holds nothing in `acme-retail`.
+async fn seed_second_business(fixture: &Fixture) {
+    sqlx::query(
+        "INSERT INTO archava_identity.users (id, username, password_hash, active, version) \
+         VALUES ('dana', 'dana@archava.test', $1, true, 1)",
+    )
+    .bind(PASSWORD_HASH)
+    .execute(&fixture.admin_pool)
+    .await
+    .expect("seed the second owner");
+    sqlx::query(
+        "INSERT INTO archava_crm.memberships \
+         (tenant_id, principal_id, kind, permissions, scope, active) \
+         VALUES ($1,'dana','human',$2,'all',true)",
+    )
+    .bind(GLOBEX)
+    .bind(vec![
+        "contacts.read",
+        "contacts.write",
+        "pipeline.read",
+        "pipeline.write",
+    ])
+    .execute(&fixture.admin_pool)
+    .await
+    .expect("seed the second CRM membership");
+    sqlx::query(
+        "INSERT INTO archava_owner.owner_grants (tenant_id, principal_id, permissions, active) \
+         VALUES ($1,'dana',ARRAY['config.read','config.apply'],true)",
+    )
+    .bind(GLOBEX)
+    .execute(&fixture.admin_pool)
+    .await
+    .expect("seed the second owner grant");
+    sqlx::query(
+        "INSERT INTO archava_crm.contacts (tenant_id,id,full_name,owner_id) \
+         VALUES ($1,$2,'Grace Hopper','dana')",
+    )
+    .bind(GLOBEX)
+    .bind(uuid::Uuid::parse_str(ID_GRACE).expect("a test uuid"))
+    .execute(&fixture.admin_pool)
+    .await
+    .expect("seed the second contact");
+}
+
+/// Plan and apply one owner request for `tenant`, returning the receipt.
+async fn configure(
+    app: &Router,
+    session: &Session,
+    tenant: &str,
+    request_id: &str,
+    request: serde_json::Value,
+) -> serde_json::Value {
+    let (status, planned) = post(
+        app,
+        "/own/plan",
+        &serde_json::json!({"tenant": tenant, "request": request}),
+        session,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{planned}");
+    assert!(planned["plan"]["blocked"].is_null(), "{planned}");
+    let (status, applied) = post(
+        app,
+        "/own/apply",
+        &serde_json::json!({
+            "tenant": tenant,
+            "requestId": request_id,
+            "request": request,
+            "confirmation": {
+                "planHash": planned["plan"]["planHash"],
+                "baseRevision": request["baseRevision"]
+            }
+        }),
+        session,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{applied}");
+    applied["receipt"].clone()
+}
+
+/// **Witness (OWN-T01): two businesses run on the same binary, router and
+/// catalogue, and differ only by the configuration each owner applied.** One
+/// disables the pipeline and relabels a stage; the other keeps the pipeline
+/// and uses its own label. Each sees only its own configuration and history,
+/// neither owner can read or change the other's, and the same CRM command is
+/// refused for one business and served for the other.
+#[tokio::test]
+async fn two_businesses_share_one_release_and_differ_only_by_owner_configuration() {
+    let fixture = provision().await;
+    seed(&fixture).await;
+    seed_second_business(&fixture).await;
+    let app = archava_host::router(state(&fixture).await);
+    let alice = login(&app, "alice").await;
+    let dana = login(&app, "dana").await;
+
+    let retail = configure(
+        &app,
+        &alice,
+        ACME,
+        "own-request-shared-id",
+        serde_json::json!({
+            "baseRevision": 0,
+            "disable": ["crm-pipeline"],
+            "terminology": {"pipelineLabels": {"won": "Closed deal"}}
+        }),
+    )
+    .await;
+    // The same request id in another tenant is a different operation.
+    let studio = configure(
+        &app,
+        &dana,
+        GLOBEX,
+        "own-request-shared-id",
+        serde_json::json!({
+            "baseRevision": 0,
+            "terminology": {"pipelineLabels": {"won": "Menang"}}
+        }),
+    )
+    .await;
+    assert_eq!(retail["revision"], 1);
+    assert_eq!(studio["revision"], 1, "each business has its own revisions");
+    assert_ne!(retail["planHash"], studio["planHash"]);
+
+    let enabled = |config: &serde_json::Value, id: &str| {
+        config["modules"]
+            .as_array()
+            .expect("catalogue modules")
+            .iter()
+            .find(|module| module["id"] == id)
+            .unwrap_or_else(|| panic!("{id} is in the catalogue"))["enabled"]
+            .clone()
+    };
+    let (status, acme) = get(&app, &format!("/own/config?tenant={ACME}"), &alice).await;
+    assert_eq!(status, StatusCode::OK, "{acme}");
+    let (status, globex) = get(&app, &format!("/own/config?tenant={GLOBEX}"), &dana).await;
+    assert_eq!(status, StatusCode::OK, "{globex}");
+    assert_eq!(enabled(&acme, "crm-pipeline"), false);
+    assert_eq!(enabled(&globex, "crm-pipeline"), true);
+    assert_eq!(
+        acme["config"]["terminology"]["pipelineLabels"]["won"],
+        "Closed deal"
+    );
+    assert_eq!(
+        globex["config"]["terminology"]["pipelineLabels"]["won"],
+        "Menang"
+    );
+    // One release: both businesses are offered the identical catalogue.
+    let offered = |config: &serde_json::Value| -> Vec<String> {
+        config["modules"]
+            .as_array()
+            .expect("catalogue modules")
+            .iter()
+            .map(|module| module["id"].as_str().expect("module id").to_string())
+            .collect()
+    };
+    assert_eq!(offered(&acme), offered(&globex));
+    assert_eq!(retail["catalogueVersion"], studio["catalogueVersion"]);
+    assert!(retail["catalogueVersion"].is_string(), "{retail}");
+
+    // The same command, the same binary: refused where the owner disabled the
+    // capability, served where the owner kept it.
+    let command = |tenant: &str, contact: &str, request_id: &str| {
+        serde_json::json!({
+            "tenant": tenant,
+            "requestId": request_id,
+            "command": {
+                "operation": "opportunity.create",
+                "contactId": contact,
+                "contactRevision": 1,
+                "title": "Renewal 2027"
+            }
+        })
+    };
+    let (status, refused) = post(
+        &app,
+        "/crm/commands",
+        &command(ACME, ID_ADA, "00000000-0000-4000-8000-0000000000d1"),
+        &alice,
+    )
+    .await;
+    assert_eq!(status, StatusCode::FORBIDDEN, "{refused}");
+    assert_eq!(refused["reason"], "module_disabled");
+    let (status, accepted) = post(
+        &app,
+        "/crm/commands",
+        &command(GLOBEX, ID_GRACE, "00000000-0000-4000-8000-0000000000d2"),
+        &dana,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{accepted}");
+    assert_eq!(accepted["receipt"]["kind"], "opportunity");
+
+    // Neither owner reaches the other business.
+    for (session, tenant) in [(&alice, GLOBEX), (&dana, ACME)] {
+        for uri in [
+            format!("/own/config?tenant={tenant}"),
+            format!("/own/history?tenant={tenant}"),
+            format!("/own/status?tenant={tenant}&requestId=own-request-shared-id"),
+        ] {
+            let (status, refused) = get(&app, &uri, session).await;
+            assert_eq!(status, StatusCode::FORBIDDEN, "{uri}: {refused}");
+            assert_eq!(refused["reason"], "missing_grant", "{uri}");
+        }
+        let (status, refused) = post(
+            &app,
+            "/own/plan",
+            &serde_json::json!({"tenant": tenant, "request": {"baseRevision": 1, "enable": ["crm-pipeline"]}}),
+            session,
+        )
+        .await;
+        assert_eq!(status, StatusCode::FORBIDDEN, "{refused}");
+    }
+    let (_, history) = get(&app, &format!("/own/history?tenant={GLOBEX}"), &dana).await;
+    let revisions = history["revisions"].as_array().expect("history rows");
+    assert_eq!(revisions.len(), 1, "{history}");
+    assert_eq!(revisions[0]["actor"], "dana");
+    assert_eq!(count(&fixture, "config_revisions").await, 2);
+    assert_eq!(count(&fixture, "apply_receipts").await, 2);
+}
+
+/// **Witness (OWN-T03, OWN-T05): on the installed catalogue the preview names
+/// each change with its readiness and cost classification under the server's
+/// catalogue and pricing identity, previewing writes nothing, and a module the
+/// catalogue does not offer is an explicit blocked result that cannot be
+/// applied.**
+#[tokio::test]
+async fn the_preview_states_changes_readiness_and_cost_and_writes_nothing() {
+    let fixture = provision().await;
+    seed(&fixture).await;
+    let app = archava_host::router(state(&fixture).await);
+    let alice = login(&app, "alice").await;
+
+    configure(
+        &app,
+        &alice,
+        ACME,
+        "own-request-preview-setup",
+        serde_json::json!({"baseRevision": 0, "disable": ["accommodation", "laundry"]}),
+    )
+    .await;
+    let tables = [
+        "archava_owner.config_revisions",
+        "archava_owner.apply_receipts",
+        "archava_owner.config_audit",
+    ];
+    let mut before = Vec::new();
+    for table in tables {
+        before.push(rows(&fixture, table).await);
+    }
+
+    let (status, planned) = post(
+        &app,
+        "/own/plan",
+        &plan_body(1, &["accommodation", "laundry"], &[]),
+        &alice,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{planned}");
+    let plan = &planned["plan"];
+    assert!(plan["blocked"].is_null(), "{planned}");
+    assert_eq!(plan["baseRevision"], 1);
+    assert_eq!(plan["config"]["revision"], 2);
+    assert_eq!(
+        plan["catalogueVersion"],
+        archava_host::own::CATALOGUE_VERSION
+    );
+    assert_eq!(plan["pricingVersion"], archava_host::own::PRICING_VERSION);
+    let changes = plan["changes"].as_array().expect("changes");
+    assert_eq!(
+        changes.len(),
+        2,
+        "one change per requested module: {planned}"
+    );
+    let effects = plan["effects"].as_array().expect("effects");
+    for module in ["accommodation", "laundry"] {
+        assert!(
+            changes
+                .iter()
+                .any(|change| change.to_string().contains(module)),
+            "{module} is named among the changes: {planned}"
+        );
+        let effect = effects
+            .iter()
+            .find(|effect| effect["module"] == module)
+            .unwrap_or_else(|| panic!("{module} has a stated effect: {planned}"));
+        assert_eq!(effect["readiness"], "ready", "{planned}");
+        assert_eq!(effect["cost"], "included", "{planned}");
+    }
+
+    let (status, unknown) = post(&app, "/own/plan", &plan_body(1, &["payroll"], &[]), &alice).await;
+    assert_eq!(status, StatusCode::OK, "{unknown}");
+    assert_eq!(unknown["plan"]["blocked"]["reason"], "unknown_module");
+    assert_eq!(unknown["plan"]["blocked"]["module"], "payroll");
+    assert_eq!(
+        unknown["plan"]["config"]["revision"], 1,
+        "nothing is proposed"
+    );
+    let hash = unknown["plan"]["planHash"].as_str().unwrap();
+    let (status, refused) = post(
+        &app,
+        "/own/apply",
+        &apply_body("own-request-unknown", 1, &["payroll"], &[], hash),
+        &alice,
+    )
+    .await;
+    assert_eq!(status, StatusCode::CONFLICT, "{refused}");
+    assert_eq!(refused["reason"], "plan_blocked");
+
+    for (index, table) in tables.iter().enumerate() {
+        assert_eq!(rows(&fixture, table).await, before[index], "{table}");
+    }
+}
+
+/// **Witness (OWN-T02): a request typed in chat and the same request made on
+/// the dashboard are one plan.** A business sentence that enables several
+/// modules and disables another, and two requests the host blocks, each give
+/// the identical plan, base configuration, catalogue and pricing identity by
+/// both routes, and neither route writes anything.
+#[tokio::test]
+async fn chat_and_dashboard_agree_on_business_sentences_and_blocked_plans() {
+    let fixture = provision().await;
+    seed(&fixture).await;
+    let app = archava_host::router(state(&fixture).await);
+    let alice = login(&app, "alice").await;
+
+    configure(
+        &app,
+        &alice,
+        ACME,
+        "own-request-chat-setup",
+        serde_json::json!({"baseRevision": 0, "disable": ["accommodation", "laundry"]}),
+    )
+    .await;
+    let tables = [
+        "archava_owner.config_revisions",
+        "archava_owner.apply_receipts",
+        "archava_owner.config_audit",
+    ];
+    let mut before = Vec::new();
+    for table in tables {
+        before.push(rows(&fixture, table).await);
+    }
+
+    for (message, blocked) in [
+        (
+            "Bisnis saya hotel, tambahkan laundry tanpa restaurant",
+            None,
+        ),
+        ("disable crm-contacts", Some("mandatory")),
+        ("disable commerce", Some("missing_dependency")),
+    ] {
+        let (status, chat) = post(&app, "/own/chat", &chat_body(message), &alice).await;
+        assert_eq!(status, StatusCode::OK, "{message}: {chat}");
+        // The dashboard sends the request the chat parsed, as its own request.
+        let (status, dashboard) = post(
+            &app,
+            "/own/plan",
+            &serde_json::json!({"tenant": ACME, "request": chat["request"]}),
+            &alice,
+        )
+        .await;
+        assert_eq!(status, StatusCode::OK, "{message}: {dashboard}");
+        for key in ["plan", "baseConfig", "catalogueVersion", "pricingVersion"] {
+            assert_eq!(chat[key], dashboard[key], "{message}: {key}");
+        }
+        assert_eq!(chat["plan"]["baseRevision"], 1, "{message}");
+        match blocked {
+            Some(reason) => assert_eq!(chat["plan"]["blocked"]["reason"], reason, "{chat}"),
+            None => {
+                assert!(chat["plan"]["blocked"].is_null(), "{chat}");
+                let changed = |kind: &str| -> Vec<&str> {
+                    chat["plan"]["changes"]
+                        .as_array()
+                        .expect("the plan lists its changes")
+                        .iter()
+                        .filter(|change| change["kind"] == kind)
+                        .filter_map(|change| change["module"].as_str())
+                        .collect()
+                };
+                // Scheduling stayed enabled, so the hotel adds only itself.
+                assert_eq!(changed("enable"), ["accommodation", "laundry"], "{chat}");
+                assert_eq!(changed("disable"), ["foodservice"], "{chat}");
+            }
+        }
+    }
+
+    for (index, table) in tables.iter().enumerate() {
+        assert_eq!(rows(&fixture, table).await, before[index], "{table}");
+    }
+}

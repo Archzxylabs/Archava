@@ -559,7 +559,9 @@
         "OWN-07"
       ],
       "evidence": [
-        "docs/product/PRD_OWNER_TRACEABILITY_REVIEW_2026-11-08.md"
+        "docs/product/PRD_OWNER_TRACEABILITY_REVIEW_2026-11-08.md",
+        "docs/product/OWNER_ACCEPTANCE_TEST_MAP.md",
+        "crates/host/tests/own.rs"
       ],
       "remaining": [
         "Current two-consumer persistent CRM and owner UI/chat configuration proof; cold public-contract fixtures are only a subset."
@@ -613,7 +615,9 @@
         "SEC-01"
       ],
       "evidence": [
-        "docs/product/PRD_OWNER_TRACEABILITY_REVIEW_2026-11-08.md"
+        "docs/product/PRD_OWNER_TRACEABILITY_REVIEW_2026-11-08.md",
+        "docs/product/OWNER_ACCEPTANCE_TEST_MAP.md",
+        "crates/host/tests/own.rs"
       ],
       "remaining": [
         "Current-profile public/foreign/revoked confirm/status/replay API and browser negatives."
@@ -632,7 +636,9 @@
         "CFG-02"
       ],
       "evidence": [
-        "docs/product/PRD_OWNER_TRACEABILITY_REVIEW_2026-11-08.md"
+        "docs/product/PRD_OWNER_TRACEABILITY_REVIEW_2026-11-08.md",
+        "docs/product/OWNER_ACCEPTANCE_TEST_MAP.md",
+        "crates/host/tests/own.rs"
       ],
       "remaining": [
         "Current-profile incompatible/missing/unsupported and source-policy/resource-lifecycle dependency gaps remain explicit blocked results."
@@ -670,7 +676,9 @@
         "CFG-01"
       ],
       "evidence": [
-        "docs/product/PRD_OWNER_TRACEABILITY_REVIEW_2026-11-08.md"
+        "docs/product/PRD_OWNER_TRACEABILITY_REVIEW_2026-11-08.md",
+        "docs/product/OWNER_ACCEPTANCE_TEST_MAP.md",
+        "crates/host/tests/own.rs"
       ],
       "remaining": [
         "Actual current UI/API/tool activation and dependencies; implement and verify configured labels in business views."
@@ -689,7 +697,9 @@
         "FIN-05"
       ],
       "evidence": [
-        "docs/product/PRD_OWNER_TRACEABILITY_REVIEW_2026-11-08.md"
+        "docs/product/PRD_OWNER_TRACEABILITY_REVIEW_2026-11-08.md",
+        "docs/product/OWNER_ACCEPTANCE_TEST_MAP.md",
+        "crates/host/tests/own.rs"
       ],
       "remaining": [
         "Current config restore preserves business/financial/audit/receipt/grant/history semantics, including historical labels."

@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict'
 import {randomUUID} from 'node:crypto'
 import {spawnSync} from 'node:child_process'
-export async function verifyOwnerConfiguration({page,origin,facts,contact,until,pass}){
+export async function verifyOwnerConfiguration({page,origin,facts,contact,until,pass,openTab}){
  const tenant='acme-retail',t=id=>`[data-testid="${id}"]`
  assert.equal(new URL(origin).hostname,'127.0.0.1');assert.match(contact,/^[0-9a-f-]{36}$/)
  const call=(method,path,body)=>page.evaluate(`fetch(${JSON.stringify(path)},{method:${JSON.stringify(method)},headers:{'content-type':'application/json','x-archava-csrf':localStorage.getItem('archava_csrf')||''}${body===undefined?'':`,body:${JSON.stringify(JSON.stringify(body))}`}}).then(async r=>({status:r.status,body:await r.json()}))`)
@@ -26,6 +26,13 @@ export async function verifyOwnerConfiguration({page,origin,facts,contact,until,
  const moduleDescription=await page.text(t('owner-module-crm-pipeline')),moduleSnapshot=beforeConfig.modules.find(m=>m.id==='crm-pipeline')
  for(const key of ['readiness','cost']){assert.equal(typeof moduleSnapshot[key],'string');assert.ok(moduleSnapshot[key].length>0);assert.ok(moduleDescription.includes(moduleSnapshot[key]))}
  assert.equal(disabledPreview.plan.effects.length,0,'This optional disable declares no extra activation/provider effects')
+ // OWN-T03: what the owner reads before confirming is the plan the host computed.
+ const rendered=()=>page.evaluate(`({changes:[...document.querySelectorAll('${t('owner-changes')} li')].map(n=>n.textContent),effects:[...document.querySelectorAll('${t('owner-effects')} li')].map(n=>n.textContent),plan:document.querySelector('${t('owner-plan')}')?.textContent??'',blocked:document.querySelector('${t('owner-blocked')}')?.textContent??null,confirmDisabled:document.querySelector('${t('owner-confirm')}')?.disabled??null})`)
+ const shown=await rendered()
+ assert.deepEqual(shown.changes,['Disable crm-pipeline']);assert.deepEqual(shown.effects,[]);assert.equal(shown.blocked,null);assert.equal(shown.confirmDisabled,false)
+ assert.ok(shown.plan.includes(disabledPreview.plan.planHash),'The reviewed plan names the hash the confirmation will carry');assert.ok(shown.plan.includes(`base revision ${base}`))
+ assert.equal((await owner()).config.revision,base,'Rendering a preview writes no revision')
+ pass('OWNER-native-rendered-preview','The review section renders exactly the changes and effects of the host plan, names its plan hash and base revision, and the preview leaves the revision unchanged')
  await page.evaluate(`(()=>{const original=window.fetch.bind(window);window.__ownerApplyBodies=[];window.__ownerDrop=true;window.fetch=async(input,init)=>{const req=input instanceof Request?new Request(input.clone(),init):new Request(input,init);const apply=new URL(req.url).pathname==='/own/apply'&&req.method==='POST';if(apply)window.__ownerApplyBodies.push(await req.clone().json());const response=await original(input,init);if(apply&&response.ok&&window.__ownerDrop){window.__ownerDrop=false;throw new TypeError('Owned lost Owner acknowledgement after real commit')}return response;};})()`)
  await page.click(t('owner-confirm'));await until(()=>page.evaluate(`!!document.querySelector('${t('owner-pending-id')}')`),'retained Owner request after lost acknowledgement')
  const pending=(await page.text(t('owner-pending-id'))).trim(),sent=await page.evaluate('window.__ownerApplyBodies')
@@ -65,6 +72,39 @@ export async function verifyOwnerConfiguration({page,origin,facts,contact,until,
  await open();await until(()=>page.evaluate(`!!document.querySelector('${t(`owner-restore-${base}`)}')`),'Owner original history after label review');await page.click(t(`owner-restore-${base}`));await readyPlan();await page.click(t('owner-confirm'));await applied(base+4)
  const final=await owner();assert.deepEqual(final.config.terminology,beforeConfig.config.terminology);assert.deepEqual(final.config.enabled,beforeConfig.config.enabled);assert.deepEqual(digests(),before)
  pass('OWNER-native-label-restore-preserves-history',`Restoring the original supported configuration removes later labels as a new revision and preserves ${tables.length} independent business/financial table digests`)
+ // OWN-T05: a plan the host blocks is shown as blocked, cannot be confirmed, and is refused if sent anyway.
+ const counts=()=>JSON.parse(sql(`SELECT jsonb_build_object('revisions',(SELECT count(*) FROM archava_owner.config_revisions WHERE tenant_id='${tenant}'),'receipts',(SELECT count(*) FROM archava_owner.apply_receipts WHERE tenant_id='${tenant}'))`))
+ const settled=base+4,needed=final.modules.find(m=>m.enabled&&!m.mandatory&&final.modules.some(d=>d.enabled&&d.requires.includes(m.id)))
+ assert.ok(needed,'The installed catalogue has an optional module that another enabled module requires')
+ const beforeBlocked=counts(),blockedRequest={baseRevision:settled,disable:[needed.id]}
+ const blockedPlan=(await ok('POST','/own/plan',{tenant,request:blockedRequest})).plan
+ assert.equal(blockedPlan.blocked.reason,'missing_dependency',JSON.stringify(blockedPlan.blocked))
+ await open();await page.click(t(`owner-toggle-${needed.id}`));await page.click(t('owner-preview'));await until(()=>page.evaluate(`!!document.querySelector('${t('owner-blocked')}')`),'rendered blocked Owner plan')
+ const blockedShown=await rendered()
+ assert.ok(blockedShown.blocked.includes('missing_dependency'));assert.ok(blockedShown.blocked.includes(blockedPlan.blocked.detail),'The blocked state states what is missing');assert.equal(blockedShown.confirmDisabled,true)
+ await page.screenshot('owner-blocked-plan.png')
+ const forced=await call('POST','/own/apply',{tenant,requestId:randomUUID(),request:blockedRequest,confirmation:{planHash:blockedPlan.planHash,baseRevision:settled}})
+ assert.equal(forced.status,409,JSON.stringify(forced));assert.equal(forced.body.reason,'plan_blocked')
+ assert.deepEqual(counts(),beforeBlocked);assert.deepEqual((await owner()).config,final.config);assert.deepEqual(digests(),before)
+ pass('OWNER-native-blocked-plan-is-shown-and-never-applied',`Disabling ${needed.id} while an enabled module requires it renders the blocked reason and detail with confirmation disabled; sending the blocked plan anyway is refused and no revision or receipt is written`)
+ // OWN-T06: a plan reviewed in one tab is refused once another tab has moved the configuration.
+ await open();await page.click(t('owner-toggle-crm-pipeline'));await page.click(t('owner-preview'));await readyPlan()
+ const other=await openTab()
+ try{
+  const tab=other.page
+  await tab.navigate(`${origin}/app/owner`);await until(()=>tab.evaluate(`document.querySelector('${t('owner-preview')}')?.disabled===false`),'second tab Owner setup')
+  await tab.fill(t('owner-chat-input'),'rename new to Second tab');await tab.click(t('owner-chat-preview'));await until(()=>tab.evaluate(`document.querySelector('${t('owner-confirm')}')?.disabled===false`),'second tab plan')
+  await tab.click(t('owner-confirm'));await until(()=>tab.text(t('owner-status')).then(s=>s.includes(`committed revision ${settled+1}`)),'second tab commit')
+ }finally{await other.close()}
+ const afterOther=counts()
+ await page.click(t('owner-confirm'));await until(()=>page.text(t('owner-status')).then(s=>s.includes('stale_base')),'first tab stale refusal')
+ const moved=await owner()
+ assert.equal(moved.config.revision,settled+1);assert.equal(moved.modules.find(m=>m.id==='crm-pipeline').enabled,true,'The stale plan changed nothing');assert.equal(moved.config.terminology.pipelineLabels.new,'Second tab')
+ assert.equal(counts().revisions,afterOther.revisions,'A stale confirmation writes no revision');assert.deepEqual(digests(),before)
+ await page.screenshot('owner-stale-plan-refused.png')
+ pass('OWNER-native-two-tab-stale-plan-refused','A plan reviewed in one tab is refused with stale_base after a second tab commits a different revision; the stale plan writes no revision and changes no module')
+ await open();await until(()=>page.evaluate(`!!document.querySelector('${t(`owner-restore-${base}`)}')`),'Owner original history after stale refusal');await page.click(t(`owner-restore-${base}`));await readyPlan();await page.click(t('owner-confirm'));await applied(settled+2)
+ const restored=await owner();assert.deepEqual(restored.config.terminology,beforeConfig.config.terminology);assert.deepEqual(restored.config.enabled,beforeConfig.config.enabled);assert.deepEqual(digests(),before)
  const gaps=configuredLabelRendered?[]:['The Owner label persists but the contact pipeline still renders canonical stage names. OWN-T01/T07 remain incomplete.']
- return{scope:'Owned native Owner configuration lifecycle. Contract consumers, live model discovery, all business profiles and real-user acceptance remain separate.',baselineRevision:base,finalRevision:base+4,lostResponseRequestId:pending,oneReceipt:true,chatManualPlanIdentity:true,tableDigestsVerified:tables.length,configuredLabelRendered,allObservedRequirementsMet:gaps.length===0,gaps}
+ return{scope:'Owned native Owner configuration lifecycle. Contract consumers, live model discovery, all business profiles and real-user acceptance remain separate.',baselineRevision:base,finalRevision:base+6,lostResponseRequestId:pending,oneReceipt:true,chatManualPlanIdentity:true,tableDigestsVerified:tables.length,configuredLabelRendered,allObservedRequirementsMet:gaps.length===0,gaps}
 }
