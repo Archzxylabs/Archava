@@ -74,7 +74,12 @@ WITH mappings AS (
  WHERE s.tenant_id=$1 AND s.book_id=$2 AND v->>'role'='receivable'
 ), known AS (
  SELECT account_id FROM mappings UNION
- SELECT (v->>'accountId')::uuid FROM archava_accounting.invoice_policies p CROSS JOIN LATERAL jsonb_array_elements(p.mappings) v WHERE p.tenant_id=$1 AND p.book_id=$2 AND v->>'role'='receivable'
+ SELECT (v->>'accountId')::uuid FROM archava_accounting.invoice_policies p CROSS JOIN LATERAL jsonb_array_elements(p.mappings) v WHERE p.tenant_id=$1 AND p.book_id=$2 AND v->>'role'='receivable' UNION
+ SELECT control_account_id FROM archava_accounting.opening_balances WHERE tenant_id=$1 AND book_id=$2 AND control='receivable'
+), opening AS (
+ SELECT o.control_account_id account_id,sum(CASE WHEN j.id=o.id THEN o.amount_minor::numeric ELSE -o.amount_minor::numeric END) balance
+ FROM archava_accounting.opening_balances o JOIN archava_accounting.journals j ON j.tenant_id=o.tenant_id AND (j.id=o.id OR j.reversal_of=o.id)
+ WHERE o.tenant_id=$1 AND o.book_id=$2 AND o.control='receivable' AND j.state='posted' AND j.entry_date<=$3::text::date GROUP BY o.control_account_id
 ), expected AS (
  SELECT m.account_id,sum(CASE WHEN s.effect IN ('collection','refund') THEN -s.amount_minor::numeric ELSE s.amount_minor::numeric END) balance
  FROM mappings m JOIN archava_accounting.invoice_sources s ON s.id=m.source_id AND s.tenant_id=$1 AND s.book_id=$2
@@ -85,8 +90,8 @@ WITH mappings AS (
  SELECT l.account_id,sum(l.debit_minor::numeric-l.credit_minor::numeric) balance FROM archava_accounting.journal_lines l JOIN archava_accounting.journals j ON j.tenant_id=l.tenant_id AND j.id=l.journal_id
  WHERE j.tenant_id=$1 AND j.book_id=$2 AND j.state='posted' AND j.entry_date<=$3::text::date GROUP BY l.account_id
 )
-SELECT jsonb_build_object('accountId',a.id,'code',a.code,'name',a.name,'expectedMinor',coalesce(e.balance,0)::text,'actualMinor',coalesce(g.balance,0)::text,'differenceMinor',(coalesce(g.balance,0)-coalesce(e.balance,0))::text)
-FROM known k JOIN archava_accounting.accounts a ON a.tenant_id=$1 AND a.book_id=$2 AND a.id=k.account_id LEFT JOIN expected e ON e.account_id=a.id LEFT JOIN actual g ON g.account_id=a.id ORDER BY a.id
+SELECT jsonb_build_object('accountId',a.id,'code',a.code,'name',a.name,'expectedMinor',(coalesce(e.balance,0)+coalesce(o.balance,0))::text,'openingMinor',coalesce(o.balance,0)::text,'actualMinor',coalesce(g.balance,0)::text,'differenceMinor',(coalesce(g.balance,0)-coalesce(e.balance,0)-coalesce(o.balance,0))::text)
+FROM known k JOIN archava_accounting.accounts a ON a.tenant_id=$1 AND a.book_id=$2 AND a.id=k.account_id LEFT JOIN expected e ON e.account_id=a.id LEFT JOIN opening o ON o.account_id=a.id LEFT JOIN actual g ON g.account_id=a.id ORDER BY a.id
 "#;
 const PAYABLE_CONTROLS: &str = r#"
 WITH mappings AS (
@@ -95,7 +100,12 @@ WITH mappings AS (
 ), known AS (
  SELECT account_id FROM mappings UNION
  SELECT (v->>'accountId')::uuid FROM archava_accounting.purchase_policies p CROSS JOIN LATERAL jsonb_array_elements(p.mappings) v WHERE p.tenant_id=$1 AND p.book_id=$2 AND v->>'role'='payable' UNION
- SELECT payable_account_id FROM archava_accounting.payable_settlements WHERE tenant_id=$1 AND book_id=$2
+ SELECT payable_account_id FROM archava_accounting.payable_settlements WHERE tenant_id=$1 AND book_id=$2 UNION
+ SELECT control_account_id FROM archava_accounting.opening_balances WHERE tenant_id=$1 AND book_id=$2 AND control='payable'
+), opening AS (
+ SELECT o.control_account_id account_id,sum(CASE WHEN j.id=o.id THEN o.amount_minor::numeric ELSE -o.amount_minor::numeric END) balance
+ FROM archava_accounting.opening_balances o JOIN archava_accounting.journals j ON j.tenant_id=o.tenant_id AND (j.id=o.id OR j.reversal_of=o.id)
+ WHERE o.tenant_id=$1 AND o.book_id=$2 AND o.control='payable' AND j.state='posted' AND j.entry_date<=$3::text::date GROUP BY o.control_account_id
 ), events AS (
  SELECT m.account_id,s.goods_minor::numeric amount FROM mappings m JOIN archava_accounting.purchase_sources s ON s.origin_id=m.origin_id AND s.tenant_id=$1 AND s.book_id=$2
  JOIN archava_accounting.purchase_journal_sources x ON x.tenant_id=s.tenant_id AND x.source_id=s.id
@@ -108,8 +118,8 @@ WITH mappings AS (
  SELECT l.account_id,sum(l.credit_minor::numeric-l.debit_minor::numeric) balance FROM archava_accounting.journal_lines l JOIN archava_accounting.journals j ON j.tenant_id=l.tenant_id AND j.id=l.journal_id
  WHERE j.tenant_id=$1 AND j.book_id=$2 AND j.state='posted' AND j.entry_date<=$3::text::date GROUP BY l.account_id
 )
-SELECT jsonb_build_object('accountId',a.id,'code',a.code,'name',a.name,'expectedMinor',coalesce(e.balance,0)::text,'actualMinor',coalesce(g.balance,0)::text,'differenceMinor',(coalesce(g.balance,0)-coalesce(e.balance,0))::text)
-FROM known k JOIN archava_accounting.accounts a ON a.tenant_id=$1 AND a.book_id=$2 AND a.id=k.account_id LEFT JOIN expected e ON e.account_id=a.id LEFT JOIN actual g ON g.account_id=a.id ORDER BY a.id
+SELECT jsonb_build_object('accountId',a.id,'code',a.code,'name',a.name,'expectedMinor',(coalesce(e.balance,0)+coalesce(o.balance,0))::text,'openingMinor',coalesce(o.balance,0)::text,'actualMinor',coalesce(g.balance,0)::text,'differenceMinor',(coalesce(g.balance,0)-coalesce(e.balance,0)-coalesce(o.balance,0))::text)
+FROM known k JOIN archava_accounting.accounts a ON a.tenant_id=$1 AND a.book_id=$2 AND a.id=k.account_id LEFT JOIN expected e ON e.account_id=a.id LEFT JOIN opening o ON o.account_id=a.id LEFT JOIN actual g ON g.account_id=a.id ORDER BY a.id
 "#;
 const RECEIVABLE_PENDING: &str = "SELECT count(*) FROM archava_accounting.invoice_sources s WHERE s.tenant_id=$1 AND s.book_id=$2 AND s.source_date<=$3::text::date AND s.amount_minor<>0 AND NOT EXISTS(SELECT 1 FROM archava_accounting.journal_sources x JOIN archava_accounting.journals j ON j.tenant_id=x.tenant_id AND j.id=x.journal_id WHERE x.tenant_id=s.tenant_id AND x.source_id=s.id AND j.state='posted' AND j.entry_date<=$3::text::date)";
 const PAYABLE_PENDING: &str = "SELECT count(*) FROM archava_accounting.purchase_sources s WHERE s.tenant_id=$1 AND s.book_id=$2 AND s.source_date<=$3::text::date AND s.effect IN ('bill','void') AND s.goods_minor<>0 AND NOT EXISTS(SELECT 1 FROM archava_accounting.purchase_journal_sources x JOIN archava_accounting.journals j ON j.tenant_id=x.tenant_id AND j.id=x.journal_id WHERE x.tenant_id=s.tenant_id AND x.source_id=s.id AND j.state='posted' AND j.entry_date<=$3::text::date)";
@@ -182,8 +192,19 @@ pub async fn subledger_report(
         .net_outstanding_minor
         .parse::<i128>()
         .map_err(|_| ErpError::Conflict)?;
+    // A declared opening is a lump on the control account with no document
+    // behind it, so it is part of the expected ledger balance and not of the
+    // document positions.
+    let opening = controls.iter().try_fold(0_i128, |sum, row| {
+        let amount = row["openingMinor"]
+            .as_str()
+            .and_then(|v| v.parse::<i128>().ok())
+            .ok_or(ErpError::Conflict)?;
+        sum.checked_add(amount).ok_or(ErpError::Conflict)
+    })?;
     let position_difference = expected
-        .checked_sub(position_total)
+        .checked_sub(opening)
+        .and_then(|documents| documents.checked_sub(position_total))
         .ok_or(ErpError::Conflict)?;
     let agree = position_difference == 0 && controls.iter().all(|r| r["differenceMinor"] == "0");
     let pending_sql = match page.side {
@@ -213,9 +234,9 @@ pub async fn subledger_report(
         Value::Null
     };
     Ok(
-        json!({"book":header,"side":page.side.name(),"asOf":page.as_of,"observedAt":null,"positions":rows,"totals":aged.totals,"controls":controls,"postedSourceControlsAgree":agree,"positionControlDifferenceMinor":position_difference.to_string(),
+        json!({"book":header,"side":page.side.name(),"asOf":page.as_of,"observedAt":null,"positions":rows,"totals":aged.totals,"controls":controls,"postedSourceControlsAgree":agree,"positionControlDifferenceMinor":position_difference.to_string(),"declaredOpeningMinor":opening.to_string(),
         "coverage":{"wholeAuthorizedBookTotals":true,"qualifyingDocumentCount":count,"draftsIncluded":false,"includesOnlyPostedEffectsThroughCutoff":true,"pendingMonetarySourceCount":pending,"legacyCoverage":"future_capture_only","termsKnowledge":"current_immutable_history_selected_by_business_effective_date"},
         "page":{"limit":page.limit,"hasMore":more,"nextCursor":next},
-        "notice":"Totals cover every qualifying original document in this book. Details are paged. Unknown due dates stay separate; credits are not netted into overdue buckets. Controls compare independent original-source amounts to posted general-ledger balances, including historical and currently declared control accounts. Generic openings and adjustments remain differences. This does not certify legacy imports, statutory accounts or complete financial close."}),
+        "notice":"Totals cover every qualifying original document in this book. Details are paged. Unknown due dates stay separate; credits are not netted into overdue buckets. Controls compare independent original-source amounts to posted general-ledger balances, including historical and currently declared control accounts. A posted declared opening balance is part of the expected control balance and is shown separately; it has no documents, so it is not aged and is not in the document totals. Undeclared openings and manual adjustments remain differences. This does not certify legacy imports, statutory accounts or complete financial close."}),
     )
 }

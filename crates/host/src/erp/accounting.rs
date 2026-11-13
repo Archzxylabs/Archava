@@ -45,7 +45,7 @@ pub(crate) async fn assert_control_readiness(
         });
     }
     let source_complete: bool =
-        sqlx::query_scalar("SELECT archava_accounting.source_guards_complete() AND archava_accounting.purchase_guards_complete() AND archava_accounting.stock_guards_complete() AND archava_accounting.bank_evidence_guards_complete() AND archava_accounting.bank_matching_guards_complete() AND archava_accounting.bank_period_guards_complete() AND archava_accounting.payable_guards_complete() AND archava_accounting.clearing_guards_complete() AND archava_accounting.terms_guards_complete()")
+        sqlx::query_scalar("SELECT archava_accounting.source_guards_complete() AND archava_accounting.purchase_guards_complete() AND archava_accounting.stock_guards_complete() AND archava_accounting.bank_evidence_guards_complete() AND archava_accounting.bank_matching_guards_complete() AND archava_accounting.bank_period_guards_complete() AND archava_accounting.payable_guards_complete() AND archava_accounting.clearing_guards_complete() AND archava_accounting.terms_guards_complete() AND archava_accounting.opening_guards_complete()")
             .fetch_one(pool)
             .await
             .map_err(|source| TenantContextError::Database {

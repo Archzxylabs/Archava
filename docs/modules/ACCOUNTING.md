@@ -36,8 +36,24 @@ Currency metadata comes from [SIX ISO 4217](https://www.six-group.com/en/product
 
 The reasons are the conditions the period's database close guards refuse on: `draft_journals`, `unposted_invoice_sources`, `unposted_purchase_sources`, `unposted_stock_sources`, `unmatched_bank_rows`, `banks_without_policy` and `bank_reviews_incomplete`. The guards remain the authority; `period.close` can still be refused if something changes between the read and the command. A guard added in a migration must be added to [close.rs](../../crates/adapters/src/erp/accounting/close.rs).
 
-Not part of this report: agreement of the receivable and payable subledgers with their control accounts (see the [subledger report](DOCUMENT_DUE_TERMS.md)), stock subledger reconciliation, opening-balance controls and a year-end earnings close.
+Not part of this report: agreement of the receivable and payable subledgers with their control accounts (see the [subledger report](DOCUMENT_DUE_TERMS.md)), a dated stock valuation and a year-end earnings close.
 
 The Accounting screen shows it as "Period close check" under Financial reports: choose a period, and it lists the outstanding conditions and whether the period can be closed.
 
 [close.rs](../../crates/host/tests/erp_accounting/close.rs) walks one period through a draft journal, a bank without a policy, unmatched rows, incomplete coverage and a missing review, asserting at each step that the report lists the condition and `period.close` is refused, and that the close succeeds once the report is ready. A second test covers an unposted invoice source. Purchase and stock source counts use the guards' SQL but have no test of their own.
+
+## Declared opening balances
+
+`opening_balance.draft` (permission `journals.write`) declares one opening amount on a control account so that the control comparisons explain it instead of reporting it as a difference. Fields: `bookId`, `control` (`receivable`, `payable` or `inventory`), `code`, `date`, `controlAccount`, `offsetAccount`, `amountMinor`, `reason`.
+
+- It creates a two-line draft journal with the reserved reference `opening:<control>:<code>` and one immutable `opening_balances` row that shares the journal's id (Accounting013). Posting, voiding and reversing use the existing `journal.post`, `journal.void` and `journal.reverse`, so independent posting applies unchanged.
+- The control account must be the account the book's current policy names for that role: `receivable` from the invoice policy, `payable` and `inventory` from the purchase policy. The policy therefore has to exist first, and an account a policy no longer names cannot take a new opening.
+- The offset account must be an active equity account.
+- The amount is positive and lands on the control account's natural side: a debit for receivable and inventory, a credit for payable.
+- A generic `journal.draft` cannot use an `opening:` reference, and a stored declaration cannot be updated or deleted.
+
+In the [subledger report](DOCUMENT_DUE_TERMS.md) and the [inventory control comparison](STOCK_COST_POSTING.md#inventory-control-comparison), a posted opening dated on or before the cutoff is added to `expectedMinor` and shown as `openingMinor`; a posted reversal dated on or before the cutoff removes it. The subledger report also returns `declaredOpeningMinor`.
+
+Limits: an opening is one lump per declaration with no documents behind it. It is not aged, has no customer or supplier, is not part of the document totals and cannot be settled or allocated against. Credit-side receivable openings, debit-side payable openings, document import and stock quantities are not supported; an inventory opening changes the ledger control only and creates no cost layer. The Accounting screen offers the action through the generic reviewed form; there is no dedicated opening view.
+
+[openings.rs](../../crates/host/tests/erp_accounting/openings.rs) covers the receivable case (draft not recognized, independent posting, cutoff, a generic journal still a difference, reversal) and the refusals; `declared_inventory_and_payable_openings_are_explained_by_their_controls` in [stock_sources.rs](../../crates/host/tests/erp_accounting/stock_sources.rs) covers inventory and payable.

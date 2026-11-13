@@ -67,8 +67,10 @@ The independent control comparison derives expected balances from source
 amounts and structured settlements, with the original historical account
 mapping and currently declared role accounts. It compares each account with
 actual posted GL balances and checks that the document total matches the
-expected controls. Generic openings/adjustments remain visible differences;
-there is no balancing plug. A positive unpaid balance is valid. Captured
+expected controls. A posted [declared opening balance](ACCOUNTING.md#declared-opening-balances)
+is part of the expected control balance (`openingMinor`) and is excluded from
+the document total it is compared with. Undeclared openings and manual
+adjustments remain visible differences; there is no balancing plug. A positive unpaid balance is valid. Captured
 monetary effects not posted through the cutoff are disclosed separately.
 
 The selected due agreement is the latest immutable revision effective by the

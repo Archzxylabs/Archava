@@ -26,6 +26,8 @@ export async function verifyPriorNative({previousRoot,packageRoot,facts,scratch,
  const termsMigrationIds=['011_reviewed_document_terms','012_document_terms_audit_kind']
  const newTerms=termsMigrationIds.every(id=>newManifest.ledgers.find(l=>l.namespace==='archava_accounting')?.migrations.some(m=>m.id===id))
  const oldTerms=oldManifest.ledgers.find(l=>l.namespace==='archava_accounting')?.migrations.some(m=>m.id==='011_reviewed_document_terms')===true
+ const newOpenings=newManifest.ledgers.find(l=>l.namespace==='archava_accounting')?.migrations.some(m=>m.id==='013_declared_opening_balances')===true
+ const oldOpenings=oldManifest.ledgers.find(l=>l.namespace==='archava_accounting')?.migrations.some(m=>m.id==='013_declared_opening_balances')===true
  const oldDisclosure=oldManifest.ledgers.find(l=>l.namespace==='archava_owner')?.migrations.some(m=>m.id==='004_ai_disclosure_boundary')===true
  const newDisclosure=newManifest.ledgers.find(l=>l.namespace==='archava_owner')?.migrations.some(m=>m.id==='004_ai_disclosure_boundary')===true
  assert.ok(expectedAdded>=0)
@@ -34,7 +36,7 @@ export async function verifyPriorNative({previousRoot,packageRoot,facts,scratch,
   const oldOwner=oldManifest.ledgers.find(l=>l.namespace==='archava_owner'),newOwner=newManifest.ledgers.find(l=>l.namespace==='archava_owner')
   assert.deepEqual(newOwner.migrations.slice(oldOwner.migrations.length).map(m=>m.id),['004_ai_disclosure_boundary'])
   const oldAccounting=oldManifest.ledgers.find(l=>l.namespace==='archava_accounting'),newAccounting=newManifest.ledgers.find(l=>l.namespace==='archava_accounting')
-  const accountingAdded=[...(newBank?bankMigrationIds:[]),...(newPayables&&!oldPayables?['009_supplier_bank_settlements']:[]),...(newClearing&&!oldClearing?['010_gateway_bank_settlements']:[]),...(newTerms&&!oldTerms?termsMigrationIds:[])]
+  const accountingAdded=[...(newBank?bankMigrationIds:[]),...(newPayables&&!oldPayables?['009_supplier_bank_settlements']:[]),...(newClearing&&!oldClearing?['010_gateway_bank_settlements']:[]),...(newTerms&&!oldTerms?termsMigrationIds:[]),...(newOpenings&&!oldOpenings?['013_declared_opening_balances']:[])]
   assert.deepEqual(newAccounting.migrations.slice(oldAccounting.migrations.length).map(m=>m.id),accountingAdded)
   assert.equal(expectedAdded,1+accountingAdded.length,'This prior profile adds exactly the Owner disclosure and the declared bank/payable migrations')
  }
