@@ -200,7 +200,7 @@ try {
   if(process.env.E2E_BROWSER_NO_SANDBOX==='1') launchArgs.unshift('--no-sandbox')
   const browserLog=createWriteStream(join(output,'chromium.log')); logs.push(browserLog)
   browser=spawn(executable,launchArgs,{stdio:['ignore','ignore','pipe']}); browser.stderr.pipe(browserLog)
-  const cdpPort=await until(()=> { const f=join(profile,'DevToolsActivePort');return existsSync(f)&&Number(readFileSync(f,'utf8').split('\n')[0]) },'Chromium DevTools endpoint')
+  const cdpPort=await until(()=> { const f=join(profile,'DevToolsActivePort');return existsSync(f)&&Number(readFileSync(f,'utf8').split('\n')[0]) },'Chromium DevTools endpoint',120000)
   page=await Page.open(cdpPort)
   await page.send('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false})
   // Reference pickers load their options on a real `focus` event, which a
