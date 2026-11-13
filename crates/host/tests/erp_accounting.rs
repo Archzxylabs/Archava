@@ -5,6 +5,8 @@ mod bank;
 mod bank_periods;
 #[path = "erp_accounting/clearing.rs"]
 mod clearing;
+#[path = "erp_accounting/close.rs"]
+mod close;
 mod common;
 #[path = "erp_accounting/invoice_sources.rs"]
 mod invoice_sources;

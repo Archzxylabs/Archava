@@ -21,3 +21,23 @@ The synthetic router/PostgreSQL suite is [erp_accounting.rs](../../crates/host/t
 Currency metadata comes from [SIX ISO 4217](https://www.six-group.com/en/products-services/financial-information/market-reference-data/data-standards.html), List One published 2026-09-17. ISO minor-unit exponents are distinct from a provider's API amount units; for example this snapshot gives IDR exponent 2. A new catalogue must not silently reinterpret existing books or existing trade/payment amounts.
 
 [Manual bank evidence and matching](MANUAL_BANK_RECONCILIATION.md) defines Accounting006–007 statement imports, explicit bank grants, posted-cash allocations and immutable corrections. Complete bank/financial close remains pending.
+
+## Close readiness
+
+`GET /erp/accounting/close-readiness?tenant=<tenant>&periodId=<id>` states what still stands between a period of a native book and its close. It requires `reports.read` and the same book visibility as the reports, writes nothing, and returns:
+
+| Field | Meaning |
+| --- | --- |
+| `period` | id, book, code, state, revision, start and end date |
+| `blockers` | one entry per outstanding condition: `reason`, `count`, `message` |
+| `bankReviews` | each bank policy in range with `checkReady` and `reviewed` |
+| `ready` | the period is open and `blockers` is empty |
+| `canClose` | `ready`, and the caller holds `periods.close` |
+
+The reasons are the conditions the period's database close guards refuse on: `draft_journals`, `unposted_invoice_sources`, `unposted_purchase_sources`, `unposted_stock_sources`, `unmatched_bank_rows`, `banks_without_policy` and `bank_reviews_incomplete`. The guards remain the authority; `period.close` can still be refused if something changes between the read and the command. A guard added in a migration must be added to [close.rs](../../crates/adapters/src/erp/accounting/close.rs).
+
+Not part of this report: agreement of the receivable and payable subledgers with their control accounts (see the [subledger report](DOCUMENT_DUE_TERMS.md)), stock subledger reconciliation, opening-balance controls and a year-end earnings close.
+
+The Accounting screen shows it as "Period close check" under Financial reports: choose a period, and it lists the outstanding conditions and whether the period can be closed.
+
+[close.rs](../../crates/host/tests/erp_accounting/close.rs) walks one period through a draft journal, a bank without a policy, unmatched rows, incomplete coverage and a missing review, asserting at each step that the report lists the condition and `period.close` is refused, and that the close succeeds once the report is ready. A second test covers an unposted invoice source. Purchase and stock source counts use the guards' SQL but have no test of their own.

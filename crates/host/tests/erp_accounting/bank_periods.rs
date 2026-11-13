@@ -1,10 +1,15 @@
 use super::bank::{account_ref, bank_account, match_row, statement};
 use super::*;
 
-async fn policy(app: &Router, actor: &Value, bank: &Value, independent: bool) -> Value {
+pub(super) async fn policy(app: &Router, actor: &Value, bank: &Value, independent: bool) -> Value {
     ok(app,actor,json!({"type":"bank_policy.set","bankAccountId":bank["resourceId"],"expectedRevision":0,"fromDate":"2026-11-01","independentReview":independent,"reason":"Explicit synthetic opening basis and bank reviewer choice"})).await
 }
-async fn check(app: &Router, actor: &Value, policy: &Value, period: &Value) -> (StatusCode, Value) {
+pub(super) async fn check(
+    app: &Router,
+    actor: &Value,
+    policy: &Value,
+    period: &Value,
+) -> (StatusCode, Value) {
     call(
         app,
         "GET",
@@ -18,12 +23,12 @@ async fn check(app: &Router, actor: &Value, policy: &Value, period: &Value) -> (
     )
     .await
 }
-fn confirm(value: &Value) -> Value {
+pub(super) fn confirm(value: &Value) -> Value {
     input(
         json!({"type":"bank_reconciliation.confirm","bankPolicyId":value["bankPolicyId"],"expectedPolicyRevision":value["policyRevision"],"periodId":value["periodId"],"expectedPeriodRevision":value["periodRevision"],"expectedCheckHash":value["check"]["evidenceSha256"],"reason":"Review complete current synthetic statement and posted cash controls"}),
     )
 }
-fn empty_statement(
+pub(super) fn empty_statement(
     bank: &Value,
     cash: &Value,
     reference: &str,

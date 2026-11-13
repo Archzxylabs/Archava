@@ -118,6 +118,12 @@ pub struct BankReadinessQuery {
     pub bank_policy_id: Uuid,
     pub period_id: Uuid,
 }
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct CloseReadinessQuery {
+    pub tenant: TenantId,
+    pub period_id: Uuid,
+}
 fn refusal(status: StatusCode, reason: &str, message: &str) -> Response {
     (
         status,
@@ -387,6 +393,58 @@ pub async fn bank_reconciliation(
             &principal,
             &access,
             input.bank_policy_id,
+            input.period_id,
+        )
+        .await
+        .map_err(error)
+    }
+    .await;
+    let value = match outcome {
+        Ok(value) => value,
+        Err(e) => {
+            let _ = tx.rollback().await;
+            return e;
+        }
+    };
+    match tx.commit().await {
+        Ok(()) => (StatusCode::OK, Json(value)),
+        Err(e) => commit_error(e),
+    }
+}
+
+/// Every condition the period's close guards test, as counts, before
+/// `period.close` is submitted. Read-only.
+pub async fn close_readiness(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    query: Result<Query<CloseReadinessQuery>, QueryRejection>,
+) -> Response {
+    let Query(input) = match query {
+        Ok(value) => value,
+        Err(e) => {
+            let (s, b) = query_rejection(e);
+            return (s, Json(json!(b.0)));
+        }
+    };
+    let session = match authenticate(&state, &headers, false).await {
+        Ok(value) => value,
+        Err((s, b)) => return (s, Json(json!(b.0))),
+    };
+    let principal = PurchasePrincipal::human(session.principal_id);
+    let mut tx = match begin(&state, input.tenant.clone()).await {
+        Ok(value) => value,
+        Err(e) => return e,
+    };
+    let outcome = async {
+        let conn = tx.checked_executor().await.map_err(unavailable)?;
+        let access = store::access(conn, input.tenant.as_str(), &principal)
+            .await
+            .map_err(error)?;
+        store::close_readiness(
+            conn,
+            input.tenant.as_str(),
+            &principal,
+            &access,
             input.period_id,
         )
         .await
