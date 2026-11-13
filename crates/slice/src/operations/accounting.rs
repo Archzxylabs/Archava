@@ -5,6 +5,7 @@ mod bank;
 mod bank_check;
 mod clearing;
 mod close_check;
+mod inventory_check;
 mod payables;
 mod terms;
 use super::*;
@@ -567,6 +568,7 @@ pub(super) fn Reports(work: Workbench) -> impl IntoView {
         <payables::Balances work/>
         <aging::AgingReports work/>
         <close_check::CloseReadiness work/>
+        <inventory_check::InventoryControl work/>
         <form class="ops-form" on:submit=load><label class="ops-field"><span>"From"</span><input type="date" required data-testid="accounting-report-from" prop:value=move||from.get() on:input=move|e|from.set_if_alive(event_target_value(&e))/></label><label class="ops-field"><span>"Through"</span><input type="date" required data-testid="accounting-report-to" prop:value=move||to.get() on:input=move|e|to.set_if_alive(event_target_value(&e))/></label><button type="submit" class="btn secondary" data-testid="accounting-report-run" disabled=move||busy.get()||!work.permits("reports.read")>"Refresh financial reports"</button></form>
         {move||{let n=notice.get();(!n.is_empty()).then(||view!{<p class="refusal">{n}</p>})}}
         {move||report.get().map(|r|{let book=r["book"].clone();let rows=r["trialBalance"]["accounts"].as_array().cloned().unwrap_or_default();let row_book=book.clone();

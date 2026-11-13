@@ -69,3 +69,21 @@ Counted stock adjustments, approved financial opening/import, full as-of
 inventory reconciliation and other currencies are outside this bridge's current
 accepted profile. They remain delivery work; synthetic acquisition/return tests
 do not certify every business model or jurisdiction.
+
+## Inventory control comparison
+
+`GET /erp/accounting/inventory-control?tenant=<tenant>&bookId=<id>&asOf=<date>` compares, per inventory account of a native book, what posted sources explain with what the ledger holds through the date. It requires `reports.read` and writes nothing.
+
+| Field | Meaning |
+| --- | --- |
+| `controls[].expectedMinor` | posted receipts (goods plus landed fee) minus posted fulfillment layer costs plus posted restock costs, on the inventory account each source captured |
+| `controls[].actualMinor` | debit minus credit of every posted journal line on that account |
+| `controls[].differenceMinor` | actual minus expected |
+| `postedSourceControlsAgree` | every difference is zero |
+| `coverage.pendingMonetarySourceCount` | captured receipts and stock cost sources dated through the cutoff that carry money and have no posted journal |
+
+The accounts listed are those named as `inventory` by a purchase policy, by a captured purchase order or by a stock layer origin. An opening balance, a counted adjustment or a manual journal on an inventory account is not a captured source and appears as a difference.
+
+This is a control-account comparison, not a stock valuation: it does not read the commerce cost layers, so stock consumed without a captured stock source (for example a fulfillment before the stock policy existed) leaves ledger and expected balance equal while the physical layers are gone. A dated valuation of layers against the ledger is not delivered. The Accounting screen shows it under Financial reports as "Inventory accounts against posted stock sources".
+
+Covered by `inventory_control_compares_posted_stock_and_receipt_sources_with_the_ledger` in [stock_sources.rs](../../crates/host/tests/erp_accounting/stock_sources.rs): two receipts on two inventory accounts, a pending and then posted fulfillment, a posted restock, an earlier cutoff, a manual journal shown as a difference, and the refusals.

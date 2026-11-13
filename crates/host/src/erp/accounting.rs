@@ -124,6 +124,13 @@ pub struct CloseReadinessQuery {
     pub tenant: TenantId,
     pub period_id: Uuid,
 }
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct InventoryControlQuery {
+    pub tenant: TenantId,
+    pub book_id: Uuid,
+    pub as_of: String,
+}
 fn refusal(status: StatusCode, reason: &str, message: &str) -> Response {
     (
         status,
@@ -461,6 +468,71 @@ pub async fn close_readiness(
     match tx.commit().await {
         Ok(()) => (StatusCode::OK, Json(value)),
         Err(e) => commit_error(e),
+    }
+}
+
+/// Posted stock and purchase sources against the inventory control accounts
+/// through a business date. Read-only.
+pub async fn inventory_control(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    query: Result<Query<InventoryControlQuery>, QueryRejection>,
+) -> Response {
+    let Query(input) = match query {
+        Ok(value) => value,
+        Err(e) => {
+            let (s, b) = query_rejection(e);
+            return (s, Json(json!(b.0)));
+        }
+    };
+    if archava_domain::erp::accommodation::parse_calendar_date(&input.as_of).is_none() {
+        return refusal(
+            StatusCode::BAD_REQUEST,
+            "invalid_query",
+            "Choose a valid report date.",
+        );
+    }
+    let session = match authenticate(&state, &headers, false).await {
+        Ok(value) => value,
+        Err((s, b)) => return (s, Json(json!(b.0))),
+    };
+    let principal = PurchasePrincipal::human(session.principal_id);
+    let mut tx = match begin(&state, input.tenant.clone()).await {
+        Ok(value) => value,
+        Err(e) => return e,
+    };
+    let outcome = async {
+        let conn = tx.checked_executor().await.map_err(unavailable)?;
+        let access = store::access(conn, input.tenant.as_str(), &principal)
+            .await
+            .map_err(error)?;
+        let mut value = store::inventory_control(
+            conn,
+            input.tenant.as_str(),
+            &principal,
+            &access,
+            input.book_id,
+            &input.as_of,
+        )
+        .await
+        .map_err(error)?;
+        let now: String = sqlx::query_scalar("SELECT clock_timestamp()::text")
+            .fetch_one(conn)
+            .await
+            .map_err(unavailable)?;
+        value["observedAt"] = json!(now);
+        Ok::<_, Response>(value)
+    }
+    .await;
+    match outcome {
+        Ok(value) => match tx.commit().await {
+            Ok(()) => (StatusCode::OK, Json(value)),
+            Err(e) => commit_error(e),
+        },
+        Err(e) => {
+            let _ = tx.rollback().await;
+            e
+        }
     }
 }
 
