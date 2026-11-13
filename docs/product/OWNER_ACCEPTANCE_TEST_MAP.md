@@ -21,8 +21,12 @@ The analysis below was written by reading test bodies before these tests existed
 | browser `OWNER-native-two-tab-stale-plan-refused` | T06: a plan reviewed in one tab is refused with `stale_base` after a second tab commits; the stale plan writes no revision and changes no module |
 | browser `OWNER-native-non-owner-refused` (`tools/e2e/verify.mjs`) | T04: a signed-in principal without a management grant sees the refusal at `/app/owner` with no modules, preview or history; plan, chat and history answer `missing_grant` |
 | browser `OWNER-native-preview-and-apply-send-no-provider-request` (`tools/e2e/ai-disclosure.mjs`) | T03 f: the owned provider endpoint receives no request while the owner previews, reviews and confirms the AI-sharing configuration |
+| `crates/host/tests/own.rs::a_read_only_owner_previews_but_cannot_apply_or_restore` | T04 j: `config.read` without `config.apply` reads config with `grants.apply=false`, gets a plan, and is not refused on history, status, chat or restore preview; apply and restore answer `missing_grant` with no revision or receipt |
+| browser `OWNER-native-read-only-owner` (`tools/e2e/verify.mjs`) | T04 j: the read-only notice with the preview control disabled; plan served, apply refused |
+| browser `OWNER-native-revoked-owner-refused` (`tools/e2e/verify.mjs`) | T04 l: a grant revoked while signed in refuses the open page's next request and shows the refusal on reload |
+| `crates/host/tests/product_workspaces.rs` (`status_refused`) | A disabled module answers `module_disabled` on `/erp/<id>/commands/status` for the 13 workspace modules and commerce, purchasing, billing, support and accounting |
 
-Still missing after these: a revoked owner in the browser (T04 l; the never-granted case is covered), a read-only owner (T04 j), and the command-status routes of disabled modules.
+Nothing from the list above is still missing. The browser checks change a grant through SQL because the product has no grant-management screen.
 
 ---
 

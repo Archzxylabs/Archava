@@ -78,6 +78,31 @@ fn sample_command(id: &str) -> Option<Value> {
     body["tenant"] = json!("acme-retail");
     Some(body)
 }
+/// A disabled module answers no command status either. The modules name
+/// the receipt key differently, so each spelling is tried: a spelling the
+/// module does not read is a malformed query, and the one it reads must be
+/// refused as disabled.
+async fn status_refused(app: &axum::Router, session: &Value, id: &str) {
+    let key = Uuid::new_v4();
+    let mut refusals = 0;
+    for name in ["requestId", "commandId", "request_id"] {
+        let (status, answer) = common::call(
+            app,
+            "GET",
+            &format!("/erp/{id}/commands/status?tenant=acme-retail&{name}={key}"),
+            json!({}),
+            Some(session),
+        )
+        .await;
+        if status == StatusCode::BAD_REQUEST {
+            continue;
+        }
+        assert_eq!(status, StatusCode::FORBIDDEN, "{id} status: {answer}");
+        assert_eq!(answer["reason"], "module_disabled", "{id}: {answer}");
+        refusals += 1;
+    }
+    assert!(refusals > 0, "{id}: no status query spelling was read");
+}
 /// Rows in a module's command ledger, read as the owner role.
 async fn command_rows(pool: &sqlx::PgPool, namespace: &str) -> i64 {
     let statement = format!("SELECT count(*) FROM {namespace}.commands");
@@ -357,6 +382,7 @@ async fn thirteen_workspaces_read_real_scoped_rows_and_fail_closed_on_current_gr
                     before,
                     "{id}: a refused command records nothing"
                 );
+                status_refused(&app, &session, id).await;
                 let (status, _) = common::call(
                     &app,
                     "GET",
@@ -443,6 +469,7 @@ async fn thirteen_workspaces_read_real_scoped_rows_and_fail_closed_on_current_gr
                 .await;
                 assert_eq!(status, StatusCode::FORBIDDEN, "{id} write: {refused}");
                 assert_eq!(refused["reason"], "module_disabled", "{id}: {refused}");
+                status_refused(&app, &session, id).await;
             }
         }
     }

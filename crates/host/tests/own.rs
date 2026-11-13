@@ -1605,6 +1605,81 @@ async fn a_never_granted_or_revoked_principal_is_refused_on_every_owner_route() 
     assert_eq!(count(&fixture, "apply_receipts").await, 1);
 }
 
+/// **Witness (OWN-T04 j): a principal holding `config.read` without
+/// `config.apply` is served every read and preview, and refused on both
+/// writes without a row being written.**
+#[tokio::test]
+async fn a_read_only_owner_previews_but_cannot_apply_or_restore() {
+    let fixture = provision().await;
+    seed(&fixture).await;
+    sqlx::query(
+        "INSERT INTO archava_owner.owner_grants (tenant_id, principal_id, permissions, active) \
+         VALUES ($1,'bob',ARRAY['config.read'],true)",
+    )
+    .bind(ACME)
+    .execute(&fixture.admin_pool)
+    .await
+    .expect("seed a read-only owner grant");
+    let app = archava_host::router(state(&fixture).await);
+    let alice = login(&app, "alice").await;
+    let bob = login(&app, "bob").await;
+
+    let (_, planned) = post(
+        &app,
+        "/own/plan",
+        &plan_body(0, &[], &["crm-pipeline"]),
+        &alice,
+    )
+    .await;
+    let hash = planned["plan"]["planHash"].as_str().unwrap().to_string();
+    let (status, applied) = post(
+        &app,
+        "/own/apply",
+        &apply_body("own-request-surface", 0, &[], &["crm-pipeline"], &hash),
+        &alice,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{applied}");
+
+    let (status, config) = call(
+        &app,
+        "GET",
+        &format!("/own/config?tenant={ACME}"),
+        None,
+        &bob,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{config}");
+    assert_eq!(
+        config["grants"],
+        serde_json::json!({"read": true, "apply": false})
+    );
+
+    // His own preview of the same change Alice could apply.
+    let (status, preview) = post(
+        &app,
+        "/own/plan",
+        &plan_body(1, &["crm-pipeline"], &[]),
+        &bob,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{preview}");
+    let own_hash = preview["plan"]["planHash"].as_str().unwrap().to_string();
+
+    for (method, uri, body) in owner_surface(&own_hash) {
+        let (status, answer) = call(&app, method, &uri, body.as_ref(), &bob).await;
+        if uri == "/own/apply" || uri == "/own/restore" {
+            assert_eq!(status, StatusCode::FORBIDDEN, "read only, {uri}: {answer}");
+            assert_eq!(answer["reason"], "missing_grant", "{uri}");
+        } else {
+            assert_ne!(answer["reason"], "missing_grant", "{uri}: {answer}");
+            assert_ne!(status, StatusCode::FORBIDDEN, "{uri}: {answer}");
+        }
+    }
+    assert_eq!(count(&fixture, "config_revisions").await, 1);
+    assert_eq!(count(&fixture, "apply_receipts").await, 1);
+}
+
 /// **Witness (OWN-T04): a caller without a session, or with a forged bearer,
 /// is refused on every owner route before anything is read or written.**
 #[tokio::test]
