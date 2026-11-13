@@ -210,7 +210,7 @@ fn compute_fingerprint(command: &Value) -> String {
 
 // --- Route handlers ---
 
-pub(crate) async fn education_command(
+pub(crate) async fn command(
     State(state): State<AppState>,
     headers: HeaderMap,
     submission: Result<Json<EducationSubmission>, JsonRejection>,
@@ -231,7 +231,7 @@ pub(crate) async fn education_command(
     }
 }
 
-pub(crate) async fn education_status(
+pub(crate) async fn status(
     State(state): State<AppState>,
     headers: HeaderMap,
     query: Result<Query<EducationStatusQuery>, QueryRejection>,

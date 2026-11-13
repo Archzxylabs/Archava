@@ -365,7 +365,7 @@ pub(crate) async fn record(
 }
 
 /// `POST /crm/commands` — submit (or replay) a CRM command.
-pub(crate) async fn crm_command(
+pub(crate) async fn command(
     State(state): State<AppState>,
     headers: HeaderMap,
     submission: Result<Json<CrmSubmission>, JsonRejection>,
@@ -521,7 +521,7 @@ pub async fn submit_command(
 }
 
 /// `GET /crm/commands/status` — authorized command status recovery.
-pub(crate) async fn command_status(
+pub(crate) async fn status(
     State(state): State<AppState>,
     headers: HeaderMap,
     query: Result<Query<StatusQuery>, QueryRejection>,

@@ -18,6 +18,8 @@ const FIXTURE = 'crates/pg-fixture/src/lib.rs'
 const ROUTES = 'crates/host/src/routes/erp.rs'
 const DISPATCH = 'crates/host/src/business.rs'
 const EXTRACTORS = 'crates/host/src/extractors.rs'
+const GENERATOR = 'crates/host/build.rs'
+const SNAPSHOT = 'domain/embedded/modules.v1.json'
 const FORMS = 'config/operator-actions.v1.json'
 const MANIFEST = 'migrations/manifest.v1.json'
 /** Files whose route literals may serve a module's `readPath`. */
@@ -96,11 +98,14 @@ export function moduleChecks(root, module, shared = loadShared(root)) {
       `crates/${layer}/src/erp/mod.rs: declare \`pub mod ${source};\``)
   }
 
-  add('routes', shared.routes.includes(`"/erp/${id}/`), `${ROUTES}: mount the module's handlers under "/erp/${id}/…"`)
+  // Dispatch and the `/erp/<id>/commands` routes are generated from the
+  // registry and call these two handlers by name.
+  const host = text(root, `crates/host/src/erp/${source}.rs`)
+  const missingHandlers = ['command', 'status'].filter((name) => !new RegExp(`^pub(?:\\(crate\\))?\\s+async\\s+fn\\s+${name}\\s*\\(`, 'm').test(host))
+  add('command handlers', missingHandlers.length === 0,
+    `crates/host/src/erp/${source}.rs: define ${missingHandlers.map((name) => `\`pub(crate) async fn ${name}\``).join(' and ')}; POST /erp/${id}/commands, GET /erp/${id}/commands/status and agent dispatch are generated from the registry and call them by name`)
   add('extractor coverage', shared.extractors.includes(`include_str!("erp/${source}.rs")`),
     `${EXTRACTORS}: add ("erp/${source}.rs", include_str!("erp/${source}.rs")) so the extractor rules cover it`)
-  add('agent dispatch', new RegExp(`"${escape(id)}"\\s*=>`).test(shared.dispatch),
-    `${DISPATCH}: add \`"${id}" => call!(crate::erp::${source}::<command handler>)\` so approved agent plans can execute`)
   // Workspace read routes are mounted from `WorkspaceDomain::ALL`, so their
   // evidence is the domain's slug arm rather than a route literal.
   const workspace = readPath === `/erp/${id}/workspace` && new RegExp(`Self::\\w+\\s*=>\\s*"${escape(id)}"`).test(shared.workspaces)
@@ -139,8 +144,13 @@ export function checkModules(root = REPO_ROOT) {
   for (const { id, checks } of modules) for (const check of checks) if (!check.ok) problems.push(`${id}: ${check.point} — ${check.fix}`)
   const known = new Set(registry.modules.map((module) => module.id))
   for (const entry of shared.forms?.modules ?? []) if (!known.has(entry.id)) problems.push(`${entry.id}: has forms in ${FORMS} but no descriptor in ${REGISTRY}`)
-  const arms = shared.dispatch.slice(shared.dispatch.indexOf('match module {'))
-  for (const match of arms.matchAll(/"([a-z][a-z0-9]*)"\s*=>\s*call!/g)) if (!known.has(match[1])) problems.push(`${match[1]}: dispatched in ${DISPATCH} but has no descriptor in ${REGISTRY}`)
+  // The generated module list has exactly two consumers. If either stops
+  // expanding it, modules silently lose their routes or their agent dispatch.
+  for (const [path, source, callback, what] of [[ROUTES, shared.routes, 'mount', 'the command routes'], [DISPATCH, shared.dispatch, 'dispatch', 'agent dispatch']]) {
+    if (!source.includes(`for_each_erp_module!(${callback})`)) problems.push(`${path}: must expand for_each_erp_module!(${callback}) so ${what} follow ${REGISTRY}`)
+    for (const match of source.matchAll(/"\/erp\/([a-z][a-z0-9]*)\/commands(?:\/status)?"|"([a-z][a-z0-9]*)"\s*=>\s*call!/g)) problems.push(`${path}: ${match[1] ?? match[2]} is wired by hand; command routes and dispatch come from ${REGISTRY}`)
+  }
+  if (!text(root, GENERATOR).includes(SNAPSHOT)) problems.push(`${GENERATOR}: must generate for_each_erp_module! from ${SNAPSHOT}`)
   return { modules, problems }
 }
 

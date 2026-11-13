@@ -223,7 +223,7 @@ fn fingerprint(state: &AppState, tenant: &TenantId, actor: &ErpActor, mutation: 
 
 // --- Routes ---
 
-pub(crate) async fn laundry_command(
+pub(crate) async fn command(
     State(state): State<AppState>,
     headers: HeaderMap,
     submission: Result<Json<LaundrySubmission>, JsonRejection>,
@@ -243,7 +243,7 @@ pub(crate) async fn laundry_command(
     }
 }
 
-pub(crate) async fn laundry_status(
+pub(crate) async fn status(
     State(state): State<AppState>,
     headers: HeaderMap,
     query: Result<Query<LaundryStatusQuery>, QueryRejection>,

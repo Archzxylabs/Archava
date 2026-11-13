@@ -49,6 +49,9 @@ The registry describes wiring. It is not a grant and not acceptance: domain tran
 | [Product catalogue](../../tools/product/catalogue.mjs) | Module list for the product audit and browser gates |
 | [Operations tabs](../../crates/slice/src/operations/mod.rs) and [detail loading](../../crates/slice/src/operations/operator.rs) | `tab`, `typedDetail` |
 | [Workspace domains](../../crates/adapters/src/erp/projections.rs) | `namespace` for each workspace's tenant transaction and module-enabled check |
+| [Host build script](../../crates/host/build.rs) | `id`, `source`: generates `for_each_erp_module!`, which [agent dispatch](../../crates/host/src/business.rs) and the [command routes](../../crates/host/src/routes/erp.rs) expand |
+
+Agent dispatch and the routes `POST /erp/<id>/commands` and `GET /erp/<id>/commands/status` are generated, not listed. A module's host source must expose the two handlers as `command` and `status`; with those in place a descriptor is enough for the module to be mounted and for approved agent plans to reach it. A missing handler is a compile error naming `crate::erp::<source>::command`.
 
 The domain crate compiles a byte-identical snapshot from `crates/domain/embedded/`. After editing the registry run `node tools/rust/domain-assets.mjs --write`; the structure gate and build provenance refuse a stale snapshot.
 
@@ -63,12 +66,12 @@ These registration points cannot be derived from data, because they are Rust mod
 | Embedded migrations and readiness | `crates/slice/src/bin/archava_server.rs` |
 | Fixture ledger mapping | `crates/pg-fixture/src/lib.rs` |
 | Source file and `mod` declaration, per layer | `crates/{domain,adapters,host}/src/erp/` |
-| Routes under `/erp/<id>/` and the declared read route | `crates/host/src/routes/erp.rs` |
+| `command` and `status` handlers | `crates/host/src/erp/<source>.rs` |
+| The declared read route | `crates/host/src/routes/erp.rs` |
 | Extractor coverage | `crates/host/src/extractors.rs` |
-| Agent command dispatch | `crates/host/src/business.rs` |
 | Integration suite and specification | `crates/host/tests/`, `docs/modules/` |
 
-The gate also refuses the reverse case: a module that has forms or an agent dispatch arm but no descriptor.
+The gate also refuses the reverse case: a module that has forms but no descriptor, and a command route or dispatch arm written by hand beside the generated ones.
 
 ## Adding a module
 

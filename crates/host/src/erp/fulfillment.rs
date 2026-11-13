@@ -231,7 +231,7 @@ fn fingerprint(state: &AppState, tenant: &TenantId, actor: &ErpActor, mutation: 
 
 // --- Route handlers ---
 
-pub(crate) async fn fulfillment_command(
+pub(crate) async fn command(
     State(state): State<AppState>,
     headers: HeaderMap,
     submission: Result<Json<FulfillmentSubmission>, JsonRejection>,
@@ -251,7 +251,7 @@ pub(crate) async fn fulfillment_command(
     }
 }
 
-pub(crate) async fn fulfillment_status(
+pub(crate) async fn status(
     State(state): State<AppState>,
     headers: HeaderMap,
     query: Result<Query<FulfillmentStatusQuery>, QueryRejection>,

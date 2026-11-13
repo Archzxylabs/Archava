@@ -58,6 +58,11 @@ tower-http = { version = "0.6", features = ["fs", "trace"] }
 # forgotten.
 # ---------------------------------------------------------------------------
 
+[build-dependencies]
+# `build.rs` reads the module registry snapshot to generate the list of
+# installed business modules that dispatch and the command routes expand.
+serde_json.workspace = true
+
 [dev-dependencies]
 reqwest.workspace = true
 tokio-tungstenite.workspace = true

@@ -347,7 +347,7 @@ fn verify_provider_event(
 /// CSRF-bound like the other ERP write routes; the tenant comes only
 /// from the body. The OK body is the BARE receipt — the TS api answers
 /// `service.mutate` verbatim.
-pub(crate) async fn billing_command(
+pub(crate) async fn command(
     State(state): State<AppState>,
     headers: HeaderMap,
     submission: Result<Json<BillingSubmission>, JsonRejection>,
@@ -372,7 +372,7 @@ pub(crate) async fn billing_command(
 /// the current `billing.read` grant and returns the receipt only to the
 /// principal that recorded the command; anyone else is handed the `unknown`
 /// document. The OK body is the commandStatus document verbatim.
-pub(crate) async fn billing_status(
+pub(crate) async fn status(
     State(state): State<AppState>,
     headers: HeaderMap,
     query: Result<Query<BillingStatusQuery>, QueryRejection>,

@@ -23,12 +23,13 @@ function fixture(t, modules = [descriptor()]) {
   write('crates/slice/src/bin/archava_server.rs', 'include_bytes!("../../../../migrations/kiosk-pg/001_kiosk.sql");\n("archava_kiosk", kiosk.as_slice()),\n')
   write('crates/pg-fixture/src/lib.rs', 'match namespace {\n    "archava_kiosk" => "kiosk-pg",\n    _ => "commerce-pg",\n}\n')
   for (const layer of ['domain', 'adapters', 'host']) {
-    write(`crates/${layer}/src/erp/kiosk_sales.rs`, '')
+    write(`crates/${layer}/src/erp/kiosk_sales.rs`, layer === 'host' ? 'pub(crate) async fn command(\n) {}\npub async fn status() {}\n' : '')
     write(`crates/${layer}/src/erp/mod.rs`, 'pub mod kiosk_sales;\n')
   }
-  write('crates/host/src/routes/erp.rs', '.route("/erp/kiosk/commands", post(crate::erp::kiosk_sales::command))\n.route("/erp/kiosk/sales", get(crate::erp::kiosk_sales::sales))\n')
+  write('crates/host/src/routes/erp.rs', 'for_each_erp_module!(mount)\n.route("/erp/kiosk/sales", get(crate::erp::kiosk_sales::sales))\n')
   write('crates/host/src/extractors.rs', '("erp/kiosk_sales.rs", include_str!("erp/kiosk_sales.rs")),\n')
-  write('crates/host/src/business.rs', 'let response = match module {\n    "kiosk" => call!(crate::erp::kiosk_sales::command),\n    _ => return refused(),\n};\n')
+  write('crates/host/src/business.rs', 'let response = for_each_erp_module!(dispatch);\n')
+  write('crates/host/build.rs', 'const REGISTRY: &str = "../domain/embedded/modules.v1.json";\n')
   write('crates/host/tests/erp_kiosk.rs', '')
   write('docs/modules/KIOSK_MODULE.md', '# Kiosk\n')
   const edit = (path, change) => writeFileSync(join(root, path), change(readFileSync(join(root, path), 'utf8')))
@@ -41,7 +42,7 @@ test('a completely registered module passes every registration point', (t) => {
   const result = checkModules(root)
   assert.deepEqual(result.problems, [])
   assert.equal(result.modules.length, 1)
-  assert.ok(result.modules[0].checks.length >= 17)
+  assert.ok(result.modules[0].checks.length >= 16)
   assert.ok(result.modules[0].checks.every((check) => check.ok))
 })
 
@@ -54,10 +55,13 @@ test('each missing registration point is named with the file to change', async (
     ['server embed', (f) => f.write('crates/slice/src/bin/archava_server.rs', ''), /kiosk: server embed — .*include_bytes! migrations\/kiosk-pg\/001_kiosk\.sql/],
     ['fixture ledger', (f) => f.edit('crates/pg-fixture/src/lib.rs', (s) => s.replace('"archava_kiosk" => "kiosk-pg",', '')), /kiosk: fixture ledger — crates\/pg-fixture\/src\/lib\.rs/],
     ['adapter declaration', (f) => f.write('crates/adapters/src/erp/mod.rs', '// pub mod kiosk_sales_extra;\n'), /kiosk: adapters declaration — crates\/adapters\/src\/erp\/mod\.rs: declare `pub mod kiosk_sales;`/],
-    ['routes', (f) => f.write('crates/host/src/routes/erp.rs', '.route("/erp/kiosks/commands", post(x))\n'), /kiosk: routes — crates\/host\/src\/routes\/erp\.rs/],
+    ['command handler', (f) => f.write('crates/host/src/erp/kiosk_sales.rs', 'pub(crate) async fn kiosk_command() {}\npub async fn status() {}\n'), /kiosk: command handlers — crates\/host\/src\/erp\/kiosk_sales\.rs: define `pub\(crate\) async fn command`;/],
+    ['status handler', (f) => f.write('crates/host/src/erp/kiosk_sales.rs', 'pub async fn command() {}\nasync fn status() {}\n'), /kiosk: command handlers — .*define `pub\(crate\) async fn status`;/],
     ['read route', (f) => f.edit('crates/host/src/routes/erp.rs', (s) => s.replace('"/erp/kiosk/sales"', '"/erp/kiosk/sold"')), /kiosk: read route — declare the route "\/erp\/kiosk\/sales"/],
     ['extractor coverage', (f) => f.write('crates/host/src/extractors.rs', ''), /kiosk: extractor coverage/],
-    ['agent dispatch', (f) => f.edit('crates/host/src/business.rs', (s) => s.replace('"kiosk" =>', '"kiosks" =>')), /kiosk: agent dispatch — crates\/host\/src\/business\.rs/],
+    ['routes not generated', (f) => f.edit('crates/host/src/routes/erp.rs', (s) => s.replace('for_each_erp_module!(mount)', 'Router::new()')), /crates\/host\/src\/routes\/erp\.rs: must expand for_each_erp_module!\(mount\)/],
+    ['dispatch not generated', (f) => f.write('crates/host/src/business.rs', 'match module {}\n'), /crates\/host\/src\/business\.rs: must expand for_each_erp_module!\(dispatch\)/],
+    ['generator reads another file', (f) => f.write('crates/host/build.rs', ''), /crates\/host\/build\.rs: must generate for_each_erp_module!/],
   ]
   for (const [name, breakIt, expected] of cases) {
     await t.test(name, (t) => {
@@ -88,10 +92,12 @@ test('missing source, suite and specification files are reported separately', (t
 test('a module wired without a descriptor is refused', (t) => {
   const f = fixture(t)
   f.write('config/operator-actions.v1.json', JSON.stringify({ modules: [{ id: 'kiosk', namespace: 'archava_kiosk' }, { id: 'ghost', namespace: 'archava_ghost' }] }))
-  f.edit('crates/host/src/business.rs', (s) => s.replace('_ => return', '"phantom" => call!(crate::erp::phantom::command),\n    _ => return'))
+  f.edit('crates/host/src/business.rs', (s) => `${s}"phantom" => call!(crate::erp::phantom::command),\n`)
+  f.edit('crates/host/src/routes/erp.rs', (s) => `${s}.route("/erp/spectre/commands/status", get(x))\n`)
   const { problems } = checkModules(f.root)
   assert.ok(problems.some((problem) => /^ghost: has forms .* but no descriptor/.test(problem)))
-  assert.ok(problems.some((problem) => /^phantom: dispatched .* but has no descriptor/.test(problem)))
+  assert.ok(problems.some((problem) => /business\.rs: phantom is wired by hand/.test(problem)))
+  assert.ok(problems.some((problem) => /routes\/erp\.rs: spectre is wired by hand/.test(problem)))
 })
 
 test('the registry refuses ambiguous or malformed descriptors before comparing wiring', (t) => {

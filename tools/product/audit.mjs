@@ -70,6 +70,8 @@ export function audit({root,browserPath,rustLogPath,baselinePath}) {
   const suites=rustSuites(read(rustLogPath))
   const routeFiles=['crates/host/src/routes/erp.rs','crates/host/src/routes/crm.rs']
   const routes=routeFiles.flatMap(path=>[...read(path).matchAll(/\.route\(\s*"([^"]+)"\s*,\s*(get|post)\(/g)].map(m=>({path:m[1],method:m[2].toUpperCase(),source:path})))
+    // The command pair of every module is generated from the registry, so it has no route literal to scan.
+    .concat(modules.flatMap(module=>[['/commands','POST'],['/commands/status','GET']].map(([suffix,method])=>({path:`/erp/${module.id}${suffix}`,method,source:'config/modules.v1.json'}))))
   const uiFiles=readdirSync(resolve(root,'crates/slice/src')).filter(f=>f.endsWith('.rs')).map(f=>`crates/slice/src/${f}`).concat(readdirSync(resolve(root,'crates/slice/src/operations')).filter(f=>f.endsWith('.rs')).map(f=>`crates/slice/src/operations/${f}`))
   const uiMap={crm:['contacts.rs','contact.rs','draft.rs','desk.rs'],commerce:['commerce.rs'],purchasing:['purchasing.rs'],billing:['billing.rs','payments.rs','mail.rs'],support:['support.rs']}
   const domains=modules.map(module=>{

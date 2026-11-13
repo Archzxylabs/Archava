@@ -21,8 +21,8 @@ pub fn router() -> Router<AppState> {
         // replaces the pre-slice placeholder denial that lived on this path.
         .route("/contacts", get(crate::erp::crm::contacts))
         .route("/crm/records", get(crate::erp::crm::record))
-        .route("/crm/commands", post(crate::erp::crm::crm_command))
-        .route("/crm/commands/status", get(crate::erp::crm::command_status))
+        .route("/crm/commands", post(crate::erp::crm::command))
+        .route("/crm/commands/status", get(crate::erp::crm::status))
         // C03: the persisted owner-configuration lifecycle. Session + CSRF
         // first; the archava_owner grant and RLS tenant are checked inside.
         .route("/own/config", get(crate::own::config))
