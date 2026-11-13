@@ -291,7 +291,7 @@ fn fingerprint(state: &AppState, mutation: &AttendanceMutation) -> String {
 /// `POST /erp/attendance/commands` — submit (or replay) an attendance
 /// command. CSRF-bound like the other ERP write routes; the tenant comes
 /// only from the body. The OK body is the BARE receipt.
-pub(crate) async fn attendance_command(
+pub(crate) async fn command(
     State(state): State<AppState>,
     headers: HeaderMap,
     submission: Result<Json<AttendanceSubmission>, JsonRejection>,
@@ -313,7 +313,7 @@ pub(crate) async fn attendance_command(
 
 /// `GET /erp/attendance/commands/status?tenant=&requestId=` — the durable
 /// status of one command id.
-pub(crate) async fn attendance_status(
+pub(crate) async fn status(
     State(state): State<AppState>,
     headers: HeaderMap,
     query: Result<Query<AttendanceStatusQuery>, QueryRejection>,

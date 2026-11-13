@@ -240,7 +240,7 @@ fn fingerprint(
 /// `POST /erp/purchasing/commands` — submit (or replay) a purchasing
 /// command. CSRF-bound like the CRM write routes; the tenant comes only
 /// from the body.
-pub(crate) async fn purchase_command(
+pub(crate) async fn command(
     State(state): State<AppState>,
     headers: HeaderMap,
     submission: Result<Json<PurchaseSubmission>, JsonRejection>,
@@ -263,7 +263,7 @@ pub(crate) async fn purchase_command(
 /// `GET /erp/purchasing/commands?tenant=&requestId=` — the durable status of
 /// one request id. Session-bound like the write route (the human-kind gate
 /// is part of the repository step, same as the TS status read).
-pub(crate) async fn purchase_status(
+pub(crate) async fn status(
     State(state): State<AppState>,
     headers: HeaderMap,
     query: Result<Query<PurchaseStatusQuery>, QueryRejection>,

@@ -117,6 +117,31 @@ async fn call(uri: &str, body: Option<&str>) -> (StatusCode, String) {
     (status, String::from_utf8_lossy(&bytes).to_string())
 }
 
+/// Every module in the registry is served its command pair, and nothing else is.
+///
+/// The two routes are generated from the registry rather than written per
+/// module, so this is the proof that a descriptor alone mounts them: an
+/// unmounted path would answer 404, and a path mounted for the wrong method
+/// 405. Each request here is refused later than that, inside the handler.
+#[tokio::test]
+async fn every_registered_module_serves_its_command_pair() {
+    let unmounted = [StatusCode::NOT_FOUND, StatusCode::METHOD_NOT_ALLOWED];
+    let modules = archava_domain::modules::all();
+    assert!(!modules.is_empty());
+    for module in modules {
+        let commands = format!("/erp/{}/commands", module.id);
+        let (status, _) = call(&commands, Some("{}")).await;
+        assert!(!unmounted.contains(&status), "POST {commands}: {status}");
+        let (status, _) = call(&format!("{commands}/status"), None).await;
+        assert!(
+            !unmounted.contains(&status),
+            "GET {commands}/status: {status}"
+        );
+    }
+    let (status, _) = call("/erp/unregistered/commands", Some("{}")).await;
+    assert_eq!(status, StatusCode::NOT_FOUND);
+}
+
 /// A path the router does not declare must not be handed back.
 ///
 /// Axum answers an unmatched path with its own 404, which says nothing about the

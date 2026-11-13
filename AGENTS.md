@@ -48,7 +48,7 @@ A crate or migration existing does not mean the host mounts it. Check `crates/ho
 
 ## Business modules
 
-`config/modules.v1.json` is the single declaration of each installed module: schema, ledger, source stem, test suite, and what the agent may route to and read. Agent keyword routing, the provider projection's readable collections and the product catalogue read it; do not reintroduce per-module tables for those. After editing it or the form catalogue, run `node tools/rust/domain-assets.mjs --write`. Registration points that are Rust code (module declarations, routes, dispatch, embedded migrations, fixture mapping) are verified by `tools/check-modules.mjs`. See `docs/architecture/MODULE_REGISTRY.md` for the descriptor, the add-a-module procedure and what is not yet covered.
+`config/modules.v1.json` is the single declaration of each installed module: schema, ledger, source stem, test suite, and what the agent may route to and read. Agent keyword routing, the provider projection's readable collections and the product catalogue read it; do not reintroduce per-module tables for those. After editing it or the form catalogue, run `node tools/rust/domain-assets.mjs --write`. Agent dispatch and the `/erp/<id>/commands` and `/erp/<id>/commands/status` routes are generated from it by `crates/host/build.rs` and call `command` and `status` in `crates/host/src/erp/<source>.rs`; do not add them by hand. The remaining registration points that are Rust code (module declarations, read routes, embedded migrations, fixture mapping) are verified by `tools/check-modules.mjs`. See `docs/architecture/MODULE_REGISTRY.md` for the descriptor, the add-a-module procedure and what is not yet covered.
 
 ## Migrations and embedded assets
 

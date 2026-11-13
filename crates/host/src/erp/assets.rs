@@ -243,7 +243,7 @@ fn fingerprint(
 /// CSRF-bound like the other ERP write routes; the tenant comes only from
 /// the body. The OK body is the BARE receipt — the TS api answers
 /// `service.mutate` verbatim.
-pub(crate) async fn asset_command(
+pub(crate) async fn command(
     State(state): State<AppState>,
     headers: HeaderMap,
     submission: Result<Json<AssetSubmission>, JsonRejection>,
@@ -268,7 +268,7 @@ pub(crate) async fn asset_command(
 /// human-only + recorded-actor gates live in the repository step, same as
 /// the TS status read. The OK body is the commandStatus document
 /// verbatim.
-pub(crate) async fn asset_status(
+pub(crate) async fn status(
     State(state): State<AppState>,
     headers: HeaderMap,
     query: Result<Query<AssetStatusQuery>, QueryRejection>,

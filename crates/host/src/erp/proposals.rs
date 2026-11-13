@@ -249,7 +249,7 @@ fn fingerprint(
 /// `POST /erp/proposals/commands` — submit (or replay) a proposals command.
 /// CSRF-bound like the other ERP write routes; the tenant comes only from
 /// the body.
-pub(crate) async fn proposal_command(
+pub(crate) async fn command(
     State(state): State<AppState>,
     headers: HeaderMap,
     submission: Result<Json<ProposalSubmission>, JsonRejection>,
@@ -273,7 +273,7 @@ pub(crate) async fn proposal_command(
 /// status of one command id. Session-bound like the write route (the
 /// human-kind gate is part of the repository step, same as the TS status
 /// read).
-pub(crate) async fn proposal_status(
+pub(crate) async fn status(
     State(state): State<AppState>,
     headers: HeaderMap,
     query: Result<Query<ProposalStatusQuery>, QueryRejection>,

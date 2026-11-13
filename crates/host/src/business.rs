@@ -76,28 +76,17 @@ pub(crate) async fn execute(
             .into_response()
         };
     }
-    let response = match module {
-        "crm" => call!(crate::erp::crm::crm_command),
-        "commerce" => call!(crate::erp::commerce::command),
-        "purchasing" => call!(crate::erp::purchasing::purchase_command),
-        "billing" => call!(crate::erp::billing::billing_command),
-        "support" => call!(crate::erp::support::support_command),
-        "organizations" => call!(crate::erp::organizations::organization_command),
-        "proposals" => call!(crate::erp::proposals::proposal_command),
-        "projects" => call!(crate::erp::projects::project_command),
-        "foodservice" => call!(crate::erp::foodservice::food_service_command),
-        "scheduling" => call!(crate::erp::scheduling::scheduling_command),
-        "accommodation" => call!(crate::erp::accommodation::accommodation_command),
-        "assets" => call!(crate::erp::assets::asset_command),
-        "subscriptions" => call!(crate::erp::subscriptions::subscription_command),
-        "attendance" => call!(crate::erp::attendance::attendance_command),
-        "laundry" => call!(crate::erp::laundry::laundry_command),
-        "field" => call!(crate::erp::field_services::field_command),
-        "fulfillment" => call!(crate::erp::fulfillment::fulfillment_command),
-        "education" => call!(crate::erp::formal_education::education_command),
-        "accounting" => call!(crate::erp::accounting::command),
-        _ => return refused(StatusCode::BAD_REQUEST, "unsupported_business_tool"),
-    };
+    // One arm per module in the registry. Every module exposes its command
+    // handler under the same name, so a new module needs no entry here.
+    macro_rules! dispatch {
+        ($(($id:literal, $source:ident)),* $(,)?) => {
+            match module {
+                $($id => call!(crate::erp::$source::command),)*
+                _ => return refused(StatusCode::BAD_REQUEST, "unsupported_business_tool"),
+            }
+        };
+    }
+    let response = for_each_erp_module!(dispatch);
     let status = response.status();
     let mut body = match axum::body::to_bytes(response.into_body(), 1_048_576).await {
         Ok(bytes) => serde_json::from_slice::<Value>(&bytes).unwrap_or(Value::Null),
@@ -107,7 +96,7 @@ pub(crate) async fn execute(
         let Ok(tenant) = archava_core::tenant::TenantId::new(tenant) else {
             return refused(StatusCode::BAD_REQUEST, "invalid_business_tenant");
         };
-        let (status, verified) = crate::erp::accommodation::accommodation_status(
+        let (status, verified) = crate::erp::accommodation::status(
             State(state.clone()),
             headers.clone(),
             Ok(Query(crate::erp::accommodation::AccommodationStatusQuery {

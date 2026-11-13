@@ -239,7 +239,7 @@ fn fingerprint(state: &AppState, tenant: &TenantId, actor: &ErpActor, command: &
 
 // --- Routes -----------------------------------------------------------------
 
-pub(crate) async fn support_command(
+pub(crate) async fn command(
     State(state): State<AppState>,
     headers: HeaderMap,
     submission: Result<Json<SupportSubmission>, JsonRejection>,
@@ -259,7 +259,7 @@ pub(crate) async fn support_command(
     }
 }
 
-pub(crate) async fn support_status(
+pub(crate) async fn status(
     State(state): State<AppState>,
     headers: HeaderMap,
     query: Result<Query<SupportStatusQuery>, QueryRejection>,
