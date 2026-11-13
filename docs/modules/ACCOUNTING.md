@@ -40,7 +40,7 @@ Not part of this report: agreement of the receivable and payable subledgers with
 
 The Accounting screen shows it as "Period close check" under Financial reports: choose a period, and it lists the outstanding conditions and whether the period can be closed.
 
-[close.rs](../../crates/host/tests/erp_accounting/close.rs) walks one period through a draft journal, a bank without a policy, unmatched rows, incomplete coverage and a missing review, asserting at each step that the report lists the condition and `period.close` is refused, and that the close succeeds once the report is ready. A second test covers an unposted invoice source. Purchase and stock source counts use the guards' SQL but have no test of their own.
+[close.rs](../../crates/host/tests/erp_accounting/close.rs) walks one period through a draft journal, a bank without a policy, unmatched rows, incomplete coverage and a missing review, asserting at each step that the report lists the condition and `period.close` is refused, and that the close succeeds once the report is ready. A second test covers an unposted invoice source. Unposted receipt and stock cost sources are covered by `close_readiness_counts_unposted_receipt_and_stock_sources` in [stock_sources.rs](../../crates/host/tests/erp_accounting/stock_sources.rs).
 
 ## Declared opening balances
 
