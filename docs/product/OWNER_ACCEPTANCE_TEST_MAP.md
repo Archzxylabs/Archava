@@ -21,7 +21,9 @@ The analysis below was written by reading test bodies before these tests existed
 | browser `OWNER-native-two-tab-stale-plan-refused` | T06: a plan reviewed in one tab is refused with `stale_base` after a second tab commits; the stale plan writes no revision and changes no module |
 | browser `OWNER-native-non-owner-refused` (`tools/e2e/verify.mjs`) | T04: a signed-in principal without a management grant sees the refusal at `/app/owner` with no modules, preview or history; plan, chat and history answer `missing_grant` |
 
-Still missing after these: a revoked owner in the browser (T04 l; the never-granted case is covered), the provider-request count around an owner preview and apply (T03 f), a read-only owner (T04 j), and the command-status routes of disabled modules.
+| browser `OWNER-native-preview-and-apply-send-no-provider-request` (`tools/e2e/ai-disclosure.mjs`) | T03 f: the owned provider endpoint receives no request while the owner previews, reviews and confirms the AI-sharing configuration |
+
+Still missing after these: a revoked owner in the browser (T04 l; the never-granted case is covered), a read-only owner (T04 j), and the command-status routes of disabled modules.
 
 ---
 

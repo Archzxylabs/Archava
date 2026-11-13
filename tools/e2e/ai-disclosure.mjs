@@ -31,6 +31,7 @@ export async function verifyAiDisclosure({page,origin,until,pass,fixture,suffix}
  const review=()=>until(()=>page.evaluate(`!!document.querySelector('${t('owner-ai-review')}')&&!document.querySelector('${t('owner-confirm')}')?.disabled`),'signed native sharing review')
  const apply=async revision=>{await page.click(t('owner-confirm'));await until(()=>page.text(t('owner-status')).then(s=>s.includes(`committed revision ${revision}`)),'matching native sharing receipt')}
  const before=await owner(),base=before.config.revision
+ const providerBeforeOwner=fixture.requests.length
  assert.equal(before.config.aiDisclosure??null,null,'The standard owned fixture starts without business-data consent')
  const companyPage=await ok('GET',`/erp/organizations/workspace?tenant=${tenant}&collection=companies&limit=100`)
  const company=companyPage.companies[0];assert.ok(company?.id,'Previous company acceptance supplies a real reviewed company')
@@ -55,6 +56,9 @@ export async function verifyAiDisclosure({page,origin,until,pass,fixture,suffix}
   await page.evaluate(`document.querySelector('${t('owner-ai-settings')}').scrollIntoView({block:'start',behavior:'instant'})`)
   await page.screenshot('owner-ai-sharing-mobile.png')
  }finally{await page.send('Emulation.setDeviceMetricsOverride',viewport)}
+ // OWN-T03: reviewing and applying an owner configuration is not a provider effect.
+ assert.equal(fixture.requests.length,providerBeforeOwner,'Owner preview and confirmation send nothing to the provider')
+ pass('OWNER-native-preview-and-apply-send-no-provider-request','The owned provider endpoint receives no request while the owner previews, reviews and confirms the AI-sharing configuration')
  pass('AI-native-sharing-selection','Native settings selects the exact provider, categories, workspace and a named company; preview and signed confirmation persist one explicit policy without granting record access')
  const privateSku=`PRIVATE-AI-${suffix}`.toUpperCase(),privateTitle=`PRIVATE-AI-TITLE-${suffix}`
  const product=await ok('POST','/erp/commerce/commands',{tenant,requestId:randomUUID(),command:{operation:'product.create',sku:privateSku,title:privateTitle,unit:'unit',trackStock:false,price:77777}})
