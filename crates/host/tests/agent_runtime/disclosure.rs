@@ -7,6 +7,7 @@ use tokio::sync::Mutex;
 #[derive(Clone)]
 struct Wire {
     calls: Arc<Mutex<Vec<Value>>>,
+    schemas: Arc<Mutex<Vec<Value>>>,
     response: Value,
     revoke: Option<(Router, Value)>,
     status: StatusCode,
@@ -15,6 +16,8 @@ struct Model {
     app: Router,
     task: tokio::task::JoinHandle<()>,
     calls: Arc<Mutex<Vec<Value>>>,
+    /// The response schema sent with each call, in call order.
+    schemas: Arc<Mutex<Vec<Value>>>,
 }
 impl Drop for Model {
     fn drop(&mut self) {
@@ -34,6 +37,11 @@ async fn model_status(
         let input: Value =
             serde_json::from_str(body["contents"][0]["parts"][0]["text"].as_str().unwrap())
                 .unwrap();
+        state
+            .schemas
+            .lock()
+            .await
+            .push(body["generationConfig"]["responseJsonSchema"].clone());
         let call_index = {
             let mut calls = state.calls.lock().await;
             calls.push(input);
@@ -80,12 +88,14 @@ async fn model_status(
         )
     }
     let calls = Arc::new(Mutex::new(Vec::new()));
+    let schemas = Arc::new(Mutex::new(Vec::new()));
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let endpoint = format!("http://{}", listener.local_addr().unwrap());
     let fixture = Router::new()
         .route("/v1beta/models/{model}", route_post(wire))
         .with_state(Wire {
             calls: calls.clone(),
+            schemas: schemas.clone(),
             status,
             response,
             revoke,
@@ -103,7 +113,12 @@ async fn model_status(
             ),
         }),
     );
-    Model { app, task, calls }
+    Model {
+        app,
+        task,
+        calls,
+        schemas,
+    }
 }
 fn read_response() -> Value {
     json!({"summary":"Reviewed the approved bounded records.","questions":[],"steps":[]})
@@ -1060,6 +1075,20 @@ async fn staged_contact_reads_share_three_total_calls_with_routing_and_never_rep
         .contains("Controlled CRM target"));
     assert_eq!(calls[2]["readExpansion"]["canRequestAnotherRead"], false);
     assert_eq!(calls[2]["readExpansion"]["currentPlanningRound"], 3);
+    // The schema enforces what `readExpansion` says: a read can be requested
+    // while a later call remains, and not on the last one.
+    let schemas = m.schemas.lock().await;
+    assert_eq!(schemas.len(), 3);
+    for (round, schema) in schemas.iter().enumerate() {
+        assert_eq!(
+            schema["properties"]["lookups"].is_object(),
+            round < 2,
+            "round {}",
+            round + 1
+        );
+        assert!(schema["properties"]["steps"].is_object());
+    }
+    drop(schemas);
     assert_eq!(
         calls[2]["authorizedContext"]["lookupResults"][0]["includedRowsInCollection"],
         1

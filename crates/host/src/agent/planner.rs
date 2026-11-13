@@ -339,8 +339,19 @@ pub(super) async fn propose(
             }
             disclosure::bound_payload(&mut model_input)?;
             disclosed_context = model_input["authorizedContext"].clone();
+            // The last call the budget allows cannot be followed by a read, so
+            // its schema does not offer one. `readExpansion` states the same
+            // rule to the model; the schema makes it a constraint.
+            let can_read = model_rounds + 1 < planning_limit && lookups.len() < 8;
+            let closed;
+            let call_schema = if can_read {
+                &schema
+            } else {
+                closed = super::schema::without_reads(&schema);
+                &closed
+            };
             proposed = provider
-                .generate(&model_input, &schema)
+                .generate(&model_input, call_schema)
                 .await
                 .map_err(provider_unavailable)?;
             disclosure::recheck(state, headers, tenant, actor, &permit, &modules, &context).await?;

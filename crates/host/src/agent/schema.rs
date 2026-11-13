@@ -80,6 +80,17 @@ pub(super) fn plan(contracts: &[Value]) -> Value {
     compact(&mut schema);
     schema
 }
+/// The same proposal schema with the read-expansion field removed, for a call
+/// after which the host could not serve another read. The model is then
+/// constrained to answer with a plan or questions instead of being told in
+/// prose not to ask.
+pub(super) fn without_reads(schema: &Value) -> Value {
+    let mut closed = schema.clone();
+    if let Some(properties) = closed["properties"].as_object_mut() {
+        properties.remove("lookups");
+    }
+    closed
+}
 /// A repair only needs the already selected registered contracts. Small exact
 /// branches avoid the shared-field ambiguity without the full catalogue grammar.
 pub(super) fn correction_plan(contracts: &[Value]) -> Value {
@@ -305,6 +316,22 @@ mod tests {
                 ["properties"]["step"]["maximum"],
             11
         );
+    }
+    #[test]
+    fn a_final_round_schema_offers_no_read_expansion_and_is_otherwise_unchanged() {
+        let contracts = contracts(&["crm".to_string()]);
+        for open in [plan(&contracts), correction_plan(&contracts[..1])] {
+            assert!(open["properties"]["lookups"].is_object());
+            let closed = without_reads(&open);
+            assert!(closed["properties"].get("lookups").is_none());
+            let mut expected = open.clone();
+            expected["properties"]
+                .as_object_mut()
+                .unwrap()
+                .remove("lookups");
+            assert_eq!(closed, expected);
+            assert_eq!(closed["required"], open["required"]);
+        }
     }
     #[test]
     fn compact_preserves_field_names_while_removing_grammar_counting_bounds() {
