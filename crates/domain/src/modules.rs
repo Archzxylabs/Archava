@@ -38,6 +38,12 @@ pub struct Module {
     /// Response collections the provider projection may read. Anything not
     /// listed stays withheld.
     pub collections: &'static [&'static str],
+    /// Other words an owner may call this module by when configuring the
+    /// workspace in chat (`hotel`, `penginapan`). The id always counts.
+    pub owner_aliases: &'static [&'static str],
+    /// Module ids that must be enabled for this one to be enabled. Empty means
+    /// the module needs only the mandatory base.
+    pub owner_requires: &'static [&'static str],
 }
 
 fn leak(value: &Value, field: &str) -> &'static str {
@@ -45,6 +51,15 @@ fn leak(value: &Value, field: &str) -> &'static str {
         .as_str()
         .unwrap_or_else(|| panic!("embedded module registry: `{field}` must be a string"));
     Box::leak(text.to_owned().into_boxed_str())
+}
+
+/// An optional list: absent means empty.
+fn leak_optional_list(value: &Value, field: &str) -> &'static [&'static str] {
+    if value.is_null() {
+        &[]
+    } else {
+        leak_list(value, field)
+    }
 }
 
 fn leak_list(value: &Value, field: &str) -> &'static [&'static str] {
@@ -84,6 +99,8 @@ pub fn all() -> &'static [Module] {
                     .expect("embedded module registry: `agent.rank` must be a small integer"),
                 keywords: leak_list(&m["agent"]["keywords"], "agent.keywords"),
                 collections: leak_list(&m["agent"]["collections"], "agent.collections"),
+                owner_aliases: leak_optional_list(&m["owner"]["aliases"], "owner.aliases"),
+                owner_requires: leak_optional_list(&m["owner"]["requires"], "owner.requires"),
             })
             .collect()
     })
@@ -92,6 +109,14 @@ pub fn all() -> &'static [Module] {
 /// The module with this public id, if it is installed.
 pub fn get(id: &str) -> Option<&'static Module> {
     all().iter().find(|module| module.id == id)
+}
+
+/// The module an owner means by this lower-case word: its id or one of its
+/// declared aliases.
+pub fn owner_named(word: &str) -> Option<&'static Module> {
+    all()
+        .iter()
+        .find(|module| module.id == word || module.owner_aliases.contains(&word))
 }
 
 /// Modules in agent routing order (ascending `rank`).
@@ -133,6 +158,31 @@ mod tests {
             assert_eq!(get(module.id).map(|m| m.namespace), Some(module.namespace));
         }
         assert!(get("unknown").is_none());
+    }
+
+    #[test]
+    fn owner_words_name_one_module_and_requirements_are_installed() {
+        let mut words = BTreeSet::new();
+        for module in all() {
+            assert!(words.insert(module.id), "{} repeats a word", module.id);
+            for alias in module.owner_aliases {
+                assert_eq!(*alias, alias.to_lowercase(), "{} alias case", module.id);
+                assert!(!alias.contains(char::is_whitespace), "{alias} is one word");
+                assert!(words.insert(alias), "{alias} names two modules");
+                assert_eq!(owner_named(alias).map(|m| m.id), Some(module.id));
+            }
+            assert_eq!(owner_named(module.id).map(|m| m.id), Some(module.id));
+            for required in module.owner_requires {
+                assert_ne!(*required, module.id, "{} requires itself", module.id);
+                assert!(get(required).is_some(), "{} requires {required}", module.id);
+            }
+        }
+        assert_eq!(owner_named("hotel").map(|m| m.id), Some("accommodation"));
+        assert_eq!(
+            get("accommodation").map(|m| m.owner_requires),
+            Some(&["scheduling"][..])
+        );
+        assert!(owner_named("unknown").is_none());
     }
 
     #[test]

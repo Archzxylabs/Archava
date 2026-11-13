@@ -38,6 +38,8 @@ The registry describes wiring. It is not a grant and not acceptance: domain tran
 | `agent.rank` | Position in keyword routing; lower ranks match first. Unique. |
 | `agent.keywords` | Lower-case phrases that route an utterance to the module. |
 | `agent.collections` | Response collections the provider projection may read. Anything not listed stays withheld. |
+| `owner.aliases` | Optional. Other single lower-case words an owner may call the module by when configuring the workspace in chat (`hotel`, `penginapan`). The id always counts. A word names one module. |
+| `owner.requires` | Optional. Module ids that must be enabled for this module to be enabled. A module that names none requires only the mandatory base, `crm-contacts`. Describing a business in chat enables these with the module. |
 
 ## What reads the registry
 
@@ -49,6 +51,7 @@ The registry describes wiring. It is not a grant and not acceptance: domain tran
 | [Product catalogue](../../tools/product/catalogue.mjs) | Module list for the product audit and browser gates |
 | [Operations tabs](../../crates/slice/src/operations/mod.rs) and [detail loading](../../crates/slice/src/operations/operator.rs) | `tab`, `typedDetail` |
 | [Workspace domains](../../crates/adapters/src/erp/projections.rs) | `namespace` for each workspace's tenant transaction and module-enabled check |
+| [Owner configuration](../../crates/host/src/own.rs) | `owner.aliases` for the chat grammar, `owner.requires` for the owner catalogue |
 | [Host build script](../../crates/host/build.rs) | `id`, `source`: generates `for_each_erp_module!`, which [agent dispatch](../../crates/host/src/business.rs) and the [command routes](../../crates/host/src/routes/erp.rs) expand |
 
 Agent dispatch and the routes `POST /erp/<id>/commands` and `GET /erp/<id>/commands/status` are generated, not listed. A module's host source must expose the two handlers as `command` and `status`; with those in place a descriptor is enough for the module to be mounted and for approved agent plans to reach it. A missing handler is a compile error naming `crate::erp::<source>::command`.
@@ -86,7 +89,7 @@ The registry does not yet drive, and the gate does not yet check, these per-modu
 
 - The `WorkspaceDomain` variants, their collection tables and access resolvers in `crates/adapters/src/erp/projections.rs`, and the typed operator workspace in `crates/adapters/src/erp/operator.rs`. The host mounts `/erp/<id>/workspace` for every entry of `WorkspaceDomain::ALL`, so the variant list is the only place a workspace domain is enumerated.
 - The ten Operations tabs with dedicated views (catalog, sales, purchasing, invoices, accounting, support, missions, suggestions, import, voice) and their view dispatch in `crates/slice/src/operations/mod.rs`. Tabs for modules served by the generic operator workspace come from the registry.
-- Owner-chat module aliases in `crates/host/src/own.rs` and the assembly contracts in `crates/assembly`, which use the assembly vocabulary (`crm-contacts`, `fieldServices`) rather than these ids.
+- The assembly contracts in `crates/assembly`, which use the assembly vocabulary (`contacts`, `fieldServices`) rather than these ids, and the two CRM capabilities the owner catalogue adds by hand (`crm-contacts`, `crm-pipeline`).
 - Typed form references in `crates/domain/src/operator.rs`.
 - The fixture's per-ledger provisioning and runtime grants. Its migration lists and directories come from the migration manifest.
 

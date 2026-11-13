@@ -118,6 +118,20 @@ test('the registry refuses ambiguous or malformed descriptors before comparing w
   assert.throws(() => assert.deepEqual(checkModules(f.root).problems, []))
 })
 
+test('owner aliases name one module and requirements name installed modules', () => {
+  const kiosk = { ...descriptor(), owner: { aliases: ['warung', 'stall'], requires: ['depot'] } }
+  const depot = { ...descriptor(), id: 'depot', namespace: 'archava_depot', agent: { rank: 2, keywords: ['depot'], collections: ['bins'] }, owner: { aliases: ['gudang'] } }
+  assert.deepEqual(registryProblems({ schemaVersion: 1, modules: [kiosk, depot] }), [])
+  const problems = (owner, others = [depot]) => registryProblems({ schemaVersion: 1, modules: [{ ...descriptor(), owner }, ...others] }).join('\n')
+  assert.match(problems({ aliases: ['gudang'] }), /depot\.owner\.aliases repeats "gudang", which already names kiosk/)
+  assert.match(problems({ aliases: ['depot'] }), /kiosk\.owner\.aliases repeats "depot", which already names depot/)
+  assert.match(problems({ aliases: ['Warung Kopi'] }), /kiosk\.owner\.aliases must be single lower-case words/)
+  assert.match(problems({ aliases: [] }), /kiosk\.owner\.aliases must be a non-empty list of strings when present/)
+  assert.match(problems({ requires: ['kiosk'] }), /kiosk\.owner\.requires names the module itself/)
+  assert.match(problems({ requires: ['ghost'] }), /kiosk\.owner\.requires names "ghost", which is not a module id/)
+  assert.match(problems(['warung']), /kiosk\.owner must be an object when present/)
+})
+
 test('a missing registry is a problem, not a silent pass', (t) => {
   const f = fixture(t)
   rmSync(join(f.root, 'config/modules.v1.json'))

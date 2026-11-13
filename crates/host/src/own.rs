@@ -74,6 +74,9 @@ pub const OWNER_TABLES: &[&str] = &[
 ];
 pub const CATALOGUE_VERSION: &str = "owner-catalogue@4";
 pub const PRICING_VERSION: &str = "included@1";
+/// The base capability every tenant keeps; a module that declares no
+/// requirement of its own requires this one.
+const MANDATORY_MODULE: &str = "crm-contacts";
 
 pub(crate) async fn assert_disclosure_readiness(
     pool: &sqlx::PgPool,
@@ -138,11 +141,15 @@ pub fn catalogue() -> Catalogue {
         .filter(|m| m["id"] != "crm")
     {
         let id = module["id"].as_str().expect("embedded module id");
-        let requires = match id {
-            "accounting" => vec!["organizations".into()],
-            "purchasing" | "foodservice" => vec!["commerce".into()],
-            "accommodation" => vec!["scheduling".into()],
-            _ => vec!["crm-contacts".into()],
+        // The registry names what a module needs; one that names nothing
+        // needs only the mandatory base.
+        let declared = archava_domain::modules::get(id)
+            .map(|module| module.owner_requires)
+            .unwrap_or_default();
+        let requires = if declared.is_empty() {
+            vec![MANDATORY_MODULE.into()]
+        } else {
+            declared.iter().map(|id| (*id).into()).collect()
         };
         modules.push(ModuleSpec {
             id: id.into(),
@@ -876,17 +883,17 @@ fn parse_chat(message: &str) -> Result<Request, OwnRefusal> {
                 if !target.iter().any(|id| id == module) {
                     target.push(module.into());
                 }
-                if module == "accommodation"
-                    && !disabling
-                    && !request.enable.iter().any(|id| id == "scheduling")
-                {
-                    request.enable.push("scheduling".into());
-                }
-                if module == "foodservice"
-                    && !disabling
-                    && !request.enable.iter().any(|id| id == "commerce")
-                {
-                    request.enable.push("commerce".into());
+                // Describing a business enables what its modules need, so
+                // "hotel" alone yields a plan that can be applied.
+                if !disabling {
+                    for required in archava_domain::modules::get(module)
+                        .map(|module| module.owner_requires)
+                        .unwrap_or_default()
+                    {
+                        if !request.enable.iter().any(|id| id == required) {
+                            request.enable.push((*required).into());
+                        }
+                    }
                 }
             }
         }
@@ -957,29 +964,15 @@ fn chat_modules(rest: &str) -> Vec<String> {
         .collect()
 }
 
+/// The owner-configurable module a chat word names. The two CRM capabilities
+/// are owner vocabulary of their own; every other word comes from the module
+/// registry (`owner.aliases`, and each module's id).
 fn module_alias(word: &str) -> Option<&'static str> {
-    Some(match word.trim_matches(['?', '!', ':']) {
-        "hotel" | "penginapan" | "akomodasi" | "accommodation" => "accommodation",
-        "restoran" | "restaurant" | "resto" | "cafe" | "kafe" | "foodservice" => "foodservice",
-        "retail" | "toko" | "commerce" => "commerce",
-        "laundry" => "laundry",
-        "sekolah" | "school" | "education" | "pendidikan" => "education",
-        "membership" | "subscriptions" | "langganan" => "subscriptions",
-        "attendance" | "absensi" => "attendance",
-        "billing" | "invoice" | "tagihan" => "billing",
-        "scheduling" | "jadwal" => "scheduling",
-        "purchasing" | "pembelian" => "purchasing",
-        "support" | "dukungan" => "support",
-        "assets" | "aset" => "assets",
-        "projects" | "proyek" => "projects",
-        "proposals" | "proposal" => "proposals",
-        "organizations" | "organisasi" => "organizations",
-        "field" | "lapangan" => "field",
-        "fulfillment" | "pengiriman" => "fulfillment",
-        "crm-contacts" | "crm" => "crm-contacts",
-        "crm-pipeline" | "pipeline" => "crm-pipeline",
-        _ => return None,
-    })
+    match word.trim_matches(['?', '!', ':']) {
+        "crm-contacts" | "crm" => Some(MANDATORY_MODULE),
+        "crm-pipeline" | "pipeline" => Some("crm-pipeline"),
+        word => archava_domain::modules::owner_named(word).map(|module| module.id),
+    }
 }
 
 /// `stage to label` / `stage as label`, with the label kept in its original
@@ -1535,4 +1528,59 @@ pub struct RestoreBody {
     pub confirmation: Confirmation,
     #[serde(default)]
     pub disclosure_approval: Option<DisclosureApproval>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn chat(message: &str) -> Request {
+        parse_chat(message).unwrap_or_else(|_| panic!("{message:?} must parse"))
+    }
+
+    #[test]
+    fn a_business_sentence_enables_the_named_modules_and_what_they_need() {
+        // Aliases and requirements come from the module registry.
+        let request = chat("bisnis hotel dan laundry tanpa restoran");
+        assert_eq!(request.enable, ["accommodation", "scheduling", "laundry"]);
+        assert_eq!(request.disable, ["foodservice"]);
+        let request = chat("usaha pembelian");
+        assert_eq!(request.enable, ["purchasing", "commerce"]);
+        assert!(parse_chat("bisnis sulap").is_err());
+    }
+
+    #[test]
+    fn every_registered_module_is_named_by_its_id_and_aliases() {
+        for module in archava_domain::modules::all() {
+            let expected = if module.id == "crm" {
+                MANDATORY_MODULE
+            } else {
+                module.id
+            };
+            assert_eq!(module_alias(module.id), Some(expected), "{}", module.id);
+            for alias in module.owner_aliases {
+                assert_eq!(module_alias(alias), Some(module.id), "{alias}");
+            }
+        }
+        assert_eq!(module_alias("pipeline"), Some("crm-pipeline"));
+        assert_eq!(module_alias("unknown"), None);
+        assert_eq!(chat("enable the hotel module").enable, ["accommodation"]);
+    }
+
+    #[test]
+    fn catalogue_requirements_follow_the_registry() {
+        let catalogue = catalogue();
+        let requires = |id: &str| {
+            catalogue
+                .modules
+                .iter()
+                .find(|module| module.id == id)
+                .map(|module| module.requires.clone())
+                .unwrap_or_else(|| panic!("{id} is in the catalogue"))
+        };
+        assert_eq!(requires("accommodation"), ["scheduling"]);
+        assert_eq!(requires("accounting"), ["organizations"]);
+        assert_eq!(requires("laundry"), [MANDATORY_MODULE]);
+        assert!(requires(MANDATORY_MODULE).is_empty());
+    }
 }
