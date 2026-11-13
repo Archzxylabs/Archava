@@ -9,7 +9,7 @@ use archava_domain::erp::{
 use archava_host::{AppState, Ledger};
 use archava_pg_fixture::provision;
 use axum::http::StatusCode;
-use serde_json::json;
+use serde_json::{json, Value};
 use uuid::Uuid;
 const TABLES: &[&str] = &[
     "memberships",
@@ -24,6 +24,68 @@ const TABLES: &[&str] = &[
     "audit",
     "approvals",
 ];
+/// A command body that deserializes for module `id`, so the request reaches
+/// the module check inside the tenant transaction. Each one is the simplest
+/// create-style command of that module's own suite; `projects` instead names a
+/// project that does not exist, because this suite counts the project rows
+/// afterwards and the command is sent again once the module is enabled.
+fn sample_command(id: &str) -> Option<Value> {
+    let key = Uuid::new_v4().to_string();
+    let inner = match id {
+        "organizations" => json!({"mutation":{"requestId":key,"type":"create_organization","data":{
+            "name":"Must not write","legalName":"PT Must not write","taxId":"01.234.567.8-999.000",
+            "website":"https://acme.test","industry":"retail","billingAddress":"Jl. Merdeka 10, Jakarta"}}}),
+        "proposals" => json!({"mutation":{"type":"create_proposal","commandId":key,
+            "title":"Must not write","summary":"Disabled module","organizationId":null,
+            "contactId":null,"leadId":null,"currency":"IDR","scopeItems":[{
+                "title":"Scope","description":"Delivery of scope","estimatedDays":5,
+                "estimatedValue":1_000,"deliverableType":"service"}]}}),
+        "projects" => json!({"mutation":{"requestId":key,"command":{"operation":"task.create",
+            "projectId":Uuid::new_v4().to_string(),"projectRevision":1,"title":"Must not write",
+            "milestoneId":null,"required":true}}}),
+        "foodservice" => json!({"requestId":key,"command":{"operation":"table.create",
+            "code":"T-OFF","title":"Table T-OFF","seats":4}}),
+        "scheduling" => json!({"mutation":{"requestId":key,"command":{
+            "operation":"resource.create","title":"Must not write","kind":"room",
+            "timezone":"Asia/Jakarta"}}}),
+        "accommodation" => json!({"mutation":{"requestId":key,"command":{
+            "operation":"property.create","title":"Must not write","timezone":"UTC"}}}),
+        "assets" => json!({"mutation":{"requestId":key,"type":"create_asset","data":{
+            "code":"OFF-001","name":"Must not write","category":"Pressure washer",
+            "ownership":"business_owned"}}}),
+        "subscriptions" => json!({"mutation":{"type":"create_subscription","commandId":key,
+            "contactId":Uuid::new_v4().to_string(),"planCode":"off","planName":"Team plan",
+            "billingInterval":"monthly","unitPrice":100_000,"currency":"IDR","quantity":1,
+            "initialEntitlements":[{"featureCode":"api-calls","featureName":"API calls",
+                "entitlementType":"metered","allocatedQuantity":10}]}}),
+        "attendance" => json!({"mutation":{"type":"create_session","commandId":key,
+            "title":"Must not write","sessionCode":"OFF-1",
+            "startTime":"2026-11-01T09:00:00.000Z","endTime":"2026-11-01T17:00:00.000Z"}}),
+        "laundry" => json!({"mutation":{"type":"create_order","commandId":key,
+            "orderCode":"LND-OFF","kind":"weight","customerRef":"cust-off","currency":"USD",
+            "lines":[{"itemRef":"wash-fold-kg","quantity":3000,"unit":"gram","unitPriceMinor":15}]}}),
+        "field" => json!({"command":{"action":"create_job","commandId":key,"job":{
+            "jobId":format!("job-{key}"),"customerRef":"cust-off","siteRef":"site-off",
+            "summary":"Must not write","priority":"urgent","appointmentRef":"appt-off"}}}),
+        "fulfillment" => json!({"mutation":{"type":"create_job","commandId":key,
+            "jobCode":"FUL-OFF","kind":"dispatch","title":"Must not write","ownerRef":"ORD-OFF"}}),
+        "education" => json!({"command":{"action":"admit_applicant","commandId":key,"enrollment":{
+            "enrollmentId":format!("enr-{key}"),"studentRef":"student-off","classRef":"class-off",
+            "termRef":"term-off","guardianRef":"guardian-off"}}}),
+        _ => return None,
+    };
+    let mut body = inner;
+    body["tenant"] = json!("acme-retail");
+    Some(body)
+}
+/// Rows in a module's command ledger, read as the owner role.
+async fn command_rows(pool: &sqlx::PgPool, namespace: &str) -> i64 {
+    let statement = format!("SELECT count(*) FROM {namespace}.commands");
+    sqlx::query_scalar(sqlx::AssertSqlSafe(statement.as_str()))
+        .fetch_one(pool)
+        .await
+        .unwrap()
+}
 #[tokio::test]
 async fn thirteen_workspaces_read_real_scoped_rows_and_fail_closed_on_current_grants() {
     let f = provision().await;
@@ -228,6 +290,7 @@ async fn thirteen_workspaces_read_real_scoped_rows_and_fail_closed_on_current_gr
                 .map(|module| module.id),
         );
         let other = if id == "assets" { "projects" } else { "assets" };
+        let command = sample_command(id).expect("every workspace module has a sample command");
         for enabling in [false, true] {
             let request = if enabling {
                 json!({"baseRevision":revision,"enable":toggled,"disable":[]})
@@ -263,9 +326,37 @@ async fn thirteen_workspaces_read_real_scoped_rows_and_fail_closed_on_current_gr
             .await;
             if enabling {
                 assert_eq!(status, StatusCode::OK, "{id} enabled again: {read}");
+                let (_, answer) = common::call(
+                    &app,
+                    "POST",
+                    &format!("/erp/{id}/commands"),
+                    command.clone(),
+                    Some(&session),
+                )
+                .await;
+                assert_ne!(
+                    answer["reason"], "module_disabled",
+                    "{id} enabled again accepts commands: {answer}"
+                );
             } else {
                 assert_eq!(status, StatusCode::FORBIDDEN, "{id} disabled: {read}");
                 assert_eq!(read["reason"], "module_disabled", "{id}: {read}");
+                let before = command_rows(&f.admin_pool, domain.namespace()).await;
+                let (status, refused) = common::call(
+                    &app,
+                    "POST",
+                    &format!("/erp/{id}/commands"),
+                    command.clone(),
+                    Some(&session),
+                )
+                .await;
+                assert_eq!(status, StatusCode::FORBIDDEN, "{id} write: {refused}");
+                assert_eq!(refused["reason"], "module_disabled", "{id}: {refused}");
+                assert_eq!(
+                    command_rows(&f.admin_pool, domain.namespace()).await,
+                    before,
+                    "{id}: a refused command records nothing"
+                );
                 let (status, _) = common::call(
                     &app,
                     "GET",
@@ -282,6 +373,79 @@ async fn thirteen_workspaces_read_real_scoped_rows_and_fail_closed_on_current_gr
         revision, 28,
         "thirteen modules were disabled and enabled again"
     );
+    // The same for the ledger modules that have no workspace projection:
+    // while disabled, the command route refuses before anything else is read.
+    let key = || Uuid::new_v4().to_string();
+    for (id, command) in [
+        (
+            "commerce",
+            json!({"requestId":key(),"command":{"operation":"product.create","sku":"OFF-1","title":"Must not write","unit":"unit","trackStock":false,"price":1000}}),
+        ),
+        (
+            "purchasing",
+            json!({"requestId":key(),"command":{"operation":"supplier.create","code":"OFF-SUP","name":"Must not write"}}),
+        ),
+        (
+            "billing",
+            json!({"mutation":{"type":"create_invoice","commandId":key(),"invoiceCode":"INV-OFF","customerRef":"customer-off","currency":"IDR","consumerRef":"owner-off","lines":[{"description":"Night","quantity":1,"unitMinor":1000}]}}),
+        ),
+        (
+            "support",
+            json!({"mutation":{"requestId":key(),"command":{"operation":"case.create","requesterName":"Ada Lovelace","subject":"Must not write","description":"The module is disabled for this business.","priority":"normal","dueAt":null}}}),
+        ),
+        (
+            "accounting",
+            json!({"requestId":key(),"command":{"type":"journal.post","id":key(),"expectedRevision":1,"reason":"Must not write"}}),
+        ),
+    ] {
+        let mut toggled = vec![id];
+        toggled.extend(
+            archava_domain::modules::all()
+                .iter()
+                .filter(|module| module.owner_requires.contains(&id))
+                .map(|module| module.id),
+        );
+        let mut body = command;
+        body["tenant"] = json!("acme-retail");
+        for enabling in [false, true] {
+            let request = if enabling {
+                json!({"baseRevision":revision,"enable":toggled,"disable":[]})
+            } else {
+                json!({"baseRevision":revision,"enable":[],"disable":toggled})
+            };
+            let (_, planned) = common::call(
+                &app,
+                "POST",
+                "/own/plan",
+                json!({"tenant":"acme-retail","request":request}),
+                Some(&session),
+            )
+            .await;
+            assert!(planned["plan"]["blocked"].is_null(), "{id}: {planned}");
+            let (status, result) = common::call(
+                &app,
+                "POST",
+                "/own/apply",
+                json!({"tenant":"acme-retail","requestId":format!("toggle-{id}-{revision}"),"request":request,"confirmation":{"planHash":planned["plan"]["planHash"],"baseRevision":revision}}),
+                Some(&session),
+            )
+            .await;
+            assert_eq!(status, StatusCode::OK, "{id}: {result}");
+            revision += 1;
+            if !enabling {
+                let (status, refused) = common::call(
+                    &app,
+                    "POST",
+                    &format!("/erp/{id}/commands"),
+                    body.clone(),
+                    Some(&session),
+                )
+                .await;
+                assert_eq!(status, StatusCode::FORBIDDEN, "{id} write: {refused}");
+                assert_eq!(refused["reason"], "module_disabled", "{id}: {refused}");
+            }
+        }
+    }
     let (_, all) = common::call(
         &app,
         "GET",

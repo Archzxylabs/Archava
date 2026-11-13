@@ -2083,3 +2083,81 @@ async fn the_preview_states_changes_readiness_and_cost_and_writes_nothing() {
         assert_eq!(rows(&fixture, table).await, before[index], "{table}");
     }
 }
+
+/// **Witness (OWN-T02): a request typed in chat and the same request made on
+/// the dashboard are one plan.** A business sentence that enables several
+/// modules and disables another, and two requests the host blocks, each give
+/// the identical plan, base configuration, catalogue and pricing identity by
+/// both routes, and neither route writes anything.
+#[tokio::test]
+async fn chat_and_dashboard_agree_on_business_sentences_and_blocked_plans() {
+    let fixture = provision().await;
+    seed(&fixture).await;
+    let app = archava_host::router(state(&fixture).await);
+    let alice = login(&app, "alice").await;
+
+    configure(
+        &app,
+        &alice,
+        ACME,
+        "own-request-chat-setup",
+        serde_json::json!({"baseRevision": 0, "disable": ["accommodation", "laundry"]}),
+    )
+    .await;
+    let tables = [
+        "archava_owner.config_revisions",
+        "archava_owner.apply_receipts",
+        "archava_owner.config_audit",
+    ];
+    let mut before = Vec::new();
+    for table in tables {
+        before.push(rows(&fixture, table).await);
+    }
+
+    for (message, blocked) in [
+        (
+            "Bisnis saya hotel, tambahkan laundry tanpa restaurant",
+            None,
+        ),
+        ("disable crm-contacts", Some("mandatory")),
+        ("disable commerce", Some("missing_dependency")),
+    ] {
+        let (status, chat) = post(&app, "/own/chat", &chat_body(message), &alice).await;
+        assert_eq!(status, StatusCode::OK, "{message}: {chat}");
+        // The dashboard sends the request the chat parsed, as its own request.
+        let (status, dashboard) = post(
+            &app,
+            "/own/plan",
+            &serde_json::json!({"tenant": ACME, "request": chat["request"]}),
+            &alice,
+        )
+        .await;
+        assert_eq!(status, StatusCode::OK, "{message}: {dashboard}");
+        for key in ["plan", "baseConfig", "catalogueVersion", "pricingVersion"] {
+            assert_eq!(chat[key], dashboard[key], "{message}: {key}");
+        }
+        assert_eq!(chat["plan"]["baseRevision"], 1, "{message}");
+        match blocked {
+            Some(reason) => assert_eq!(chat["plan"]["blocked"]["reason"], reason, "{chat}"),
+            None => {
+                assert!(chat["plan"]["blocked"].is_null(), "{chat}");
+                let changed = |kind: &str| -> Vec<&str> {
+                    chat["plan"]["changes"]
+                        .as_array()
+                        .expect("the plan lists its changes")
+                        .iter()
+                        .filter(|change| change["kind"] == kind)
+                        .filter_map(|change| change["module"].as_str())
+                        .collect()
+                };
+                // Scheduling stayed enabled, so the hotel adds only itself.
+                assert_eq!(changed("enable"), ["accommodation", "laundry"], "{chat}");
+                assert_eq!(changed("disable"), ["foodservice"], "{chat}");
+            }
+        }
+    }
+
+    for (index, table) in tables.iter().enumerate() {
+        assert_eq!(rows(&fixture, table).await, before[index], "{table}");
+    }
+}

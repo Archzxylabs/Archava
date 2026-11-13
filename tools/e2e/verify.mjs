@@ -384,7 +384,11 @@ try {
   await page.click(testId('owner-confirm'));await until(()=>page.text(testId('owner-status')).then(t=>t.includes('committed revision')),'matching owner receipt')
   const ownerConfig=await page.evaluate("fetch('/own/config?tenant=acme-retail').then(r=>r.json())");assert.ok(ownerConfig.config.revision>=1)
   await page.screenshot('owner-configuration-receipt.png');pass('F05-owner-confirmation','Owner reviews and confirms a configuration revision; a matching receipt and persisted revision are present')
-  evidence.ownerConfiguration=await verifyOwnerConfiguration({page,origin,facts,contact,until,pass})
+  evidence.ownerConfiguration=await verifyOwnerConfiguration({page,origin,facts,contact,until,pass,openTab:async()=>{
+    const {targetId}=await page.send('Target.createTarget',{url:'about:blank'})
+    const tab=await Page.open(cdpPort,targetId)
+    return {page:tab,close:async()=>{tab.ws.close();await page.send('Target.closeTarget',{targetId})}}
+  }})
   await page.send('Network.clearBrowserCookies');await page.evaluate('localStorage.clear()');await login('bob')
   await selectDraft(name);await page.fill(testId('draft-summary'),'Must be refused');await page.click(testId('draft-submit'))
   await until(()=>page.text(testId('draft-status')).then((t)=>t.includes('Refused')),'read-only actor write refusal')
