@@ -66,214 +66,82 @@ use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
 use sqlx::PgPool;
 use tokio::sync::Semaphore;
 
-/// The migration files this fixture applies, in apply order.
+/// One ledger of `migrations/manifest.v1.json`: its schema, the directory its
+/// files live in under `migrations/`, and its migration ids in apply order.
+struct ManifestLedger {
+    namespace: String,
+    directory: String,
+    ids: Vec<String>,
+}
+
+/// The migration manifest, the same list the Ops installer applies and the
+/// production server embeds.
 ///
-/// Frozen as the same list `packages/commerce-pg/src/migrate.ts:5-9` declares.
-/// A new commerce migration belongs in BOTH lists — this one so the fixture
-/// keeps applying what the baseline applies, and that one because it is the
-/// migrator of record. `assert_startup_readiness` then compares the applied
-/// `schema_migrations` against these same files, so the fixture and the
-/// readiness port can never hash different inputs.
-pub const CONTROL_MIGRATIONS: &[&str] = &["001_serving_writer", "002_accounting_write_fence"];
+/// The fixture used to hold its own frozen list per ledger and its own
+/// schema-to-directory table. Both are read from the manifest instead, so a
+/// new migration reaches the installer, the server and every integration suite
+/// from one entry. `assert_startup_readiness` still compares the applied
+/// `schema_migrations` against checksums of these same files.
+fn manifest() -> &'static [ManifestLedger] {
+    static MANIFEST: std::sync::OnceLock<Vec<ManifestLedger>> = std::sync::OnceLock::new();
+    MANIFEST.get_or_init(|| {
+        let manifest: serde_json::Value =
+            serde_json::from_str(include_str!("../../../migrations/manifest.v1.json"))
+                .expect("migrations/manifest.v1.json is valid JSON");
+        manifest["ledgers"]
+            .as_array()
+            .expect("the migration manifest lists ledgers")
+            .iter()
+            .map(|ledger| {
+                let namespace = ledger["namespace"]
+                    .as_str()
+                    .expect("a manifest ledger names its namespace");
+                let mut directory = None;
+                let ids = ledger["migrations"]
+                    .as_array()
+                    .expect("a manifest ledger lists migrations")
+                    .iter()
+                    .map(|migration| {
+                        let id = migration["id"].as_str().expect("a migration has an id");
+                        let path = migration["path"].as_str().expect("a migration has a path");
+                        let found = path
+                            .strip_prefix("migrations/")
+                            .and_then(|rest| rest.strip_suffix(&format!("/{id}.sql")))
+                            .unwrap_or_else(|| {
+                                panic!("{namespace}: {path} is not migrations/<directory>/{id}.sql")
+                            });
+                        assert!(
+                            directory.get_or_insert(found) == &found,
+                            "{namespace}: migrations are spread over more than one directory"
+                        );
+                        id.to_owned()
+                    })
+                    .collect();
+                ManifestLedger {
+                    namespace: namespace.to_owned(),
+                    directory: directory
+                        .unwrap_or_else(|| panic!("{namespace}: no migrations in the manifest"))
+                        .to_owned(),
+                    ids,
+                }
+            })
+            .collect()
+    })
+}
 
-pub const COMMERCE_MIGRATIONS: &[&str] = &[
-    "001_catalog_orders_stock",
-    "002_managed_menu_products",
-    "003_purchase_receipts",
-    "004_bound_approvals",
-    "005_inventory_cost_layers",
-    "006_private_cost_writers",
-    "007_customer_contact_identity",
-    "008_customer_party_identity",
-    "009_company_owned_trade",
-    "010_return_layer_provenance",
-];
+/// One ledger of the manifest. An unknown namespace is a fixture bug, and
+/// panics rather than borrowing another ledger's files.
+fn manifest_ledger(namespace: &str) -> &'static ManifestLedger {
+    manifest()
+        .iter()
+        .find(|ledger| ledger.namespace == namespace)
+        .unwrap_or_else(|| panic!("{namespace} is not in migrations/manifest.v1.json"))
+}
 
-/// The identity ledger's migrations, in apply order — `packages/identity-pg`.
-///
-/// RA01's sessions live here rather than in the commerce namespace, exactly as
-/// the baseline keeps them: identity is its own schema with its own
-/// `schema_migrations` history, its own non-owner check and its own runtime
-/// grants. The fixture applies both ledgers because the host's authority path
-/// needs both: a session row (identity) and the membership it is resolved
-/// against (commerce).
-pub const IDENTITY_MIGRATIONS: &[&str] = &["001_identity"];
-
-/// The CRM ledger's migrations, in apply order — `packages/crm-pg`.
-///
-/// §1.4B's vertical slice reads contacts and the sales pipeline and writes a
-/// reviewed lead through the command path, so the slice's database is the real
-/// `archava_crm` schema: its own namespace, its own `schema_migrations`
-/// history, its own non-owner check and its own runtime grants
-/// (`grantCrmRuntime`, ported statement for statement in `provision`). The
-/// host's startup readiness asserts this ledger exactly like the other two —
-/// data the server can serve must be data the server has verified.
-pub const CRM_MIGRATIONS: &[&str] = &[
-    "001_crm_contacts",
-    "002_sales_pipeline",
-    "003_native_approval",
-];
-
-/// The purchasing ledger's migrations, in apply order —
-/// `packages/purchasing-pg` (Archxy 2's ERP namespace, PACKET-000): the R06
-/// cohort needs the real `archava_purchasing` schema next to
-/// `archava_commerce`, because the receipt-completion triggers reconcile the
-/// two ledgers inside ONE transaction.
-pub const PURCHASING_MIGRATIONS: &[&str] = &[
-    "001_suppliers_orders_receipts",
-    "002_landed_cost_receipts",
-    "003_supplier_contact_identity",
-    "004_supplier_party_identity",
-    "005_company_owned_trade",
-    "006_unposted_supplier_documents",
-];
-
-/// The foodservice ledger's migration, in apply order —
-/// `packages/foodservice-pg/migrations/001_tables_recipes_tickets.sql`
-/// (Archxy 2's ERP namespace, PACKET-001): a single migration above
-/// `archava_foodservice` next to the other cohort schemas.
-pub const FOOD_MIGRATIONS: &[&str] = &["001_tables_recipes_tickets"];
-
-/// The organizations ledger's migration, in apply order —
-/// `packages/organizations-pg/migrations/001_organizations_affiliations.sql`
-/// (Archxy 2's ERP namespace, PACKET-003).
-pub const ACCOUNTING_MIGRATIONS: &[&str] = &[
-    "001_company_books",
-    "002_invoice_source_posting",
-    "003_invoice_source_integrity",
-    "004_purchase_source_posting",
-    "005_stock_source_posting",
-    "006_manual_bank_evidence",
-    "007_bank_cash_matching",
-    "008_reviewed_bank_periods",
-    "009_supplier_bank_settlements",
-    "010_gateway_bank_settlements",
-    "011_reviewed_document_terms",
-    "012_document_terms_audit_kind",
-];
-
-pub const ORGANIZATIONS_MIGRATIONS: &[&str] = &[
-    "001_organizations_affiliations",
-    "002_verified_contact_affiliations",
-    "003_business_parties",
-    "004_managed_companies",
-];
-
-/// The proposals ledger's migration, in apply order —
-/// `packages/proposals-pg/migrations/001_proposals_scope_amendments.sql`
-/// (PACKET-003).
-pub const PROPOSALS_MIGRATIONS: &[&str] = &["001_proposals_scope_amendments"];
-
-/// The projects ledger's migration, in apply order —
-/// `packages/projects-pg/migrations/001_project_delivery.sql` (PACKET-003).
-pub const PROJECTS_MIGRATIONS: &[&str] = &["001_project_delivery"];
-
-/// The scheduling ledger's migrations, in apply order —
-/// `packages/scheduling-pg/migrations/{001_resource_reservations,002_shared_occupancy}.sql`
-/// (PACKET-004): 002 is the shared-occupancy kernel the accommodation cohort
-/// reserves through, and both migrations belong to the scheduling package.
-pub const SCHEDULING_MIGRATIONS: &[&str] = &["001_resource_reservations", "002_shared_occupancy"];
-
-/// The accommodation ledger's migration, in apply order —
-/// `packages/accommodation-pg/migrations/001_room_night_stays.sql`
-/// (PACKET-005).
-pub const ACCOMMODATION_MIGRATIONS: &[&str] = &["001_room_night_stays"];
-
-/// The assets ledger's migration, in apply order —
-/// `packages/assets-pg/migrations/001_assets_custody_maintenance.sql`
-/// (PACKET-006).
-pub const ASSETS_MIGRATIONS: &[&str] = &["001_assets_custody_maintenance"];
-
-/// `packages/billing-pg/migrations/001_billing_invoices_settlement.sql`
-/// (Archxy 2's ERP namespace, R07 first cohort, PACKET-007):
-/// memberships/invoices (with the priced-line sheets, corrections,
-/// attempts and settlement events) + the guard triggers + the forced
-/// tenant policies, byte-faithful to the TS package's frozen migration.
-pub const BILLING_MIGRATIONS: &[&str] = &[
-    "001_billing_invoices_settlement",
-    "002_gateway_payments",
-    "003_invoice_email_outbox",
-    "004_email_payload_snapshot",
-    "005_order_invoice_provenance",
-    "006_customer_contact_identity",
-    "007_customer_party_identity",
-    "008_company_owned_trade",
-];
-
-/// The subscriptions ledger's migration, in apply order —
-/// `packages/subscriptions-pg/migrations/001_subscriptions_entitlements_usage.sql`
-/// (Archxy 2's ERP namespace, R07 second cohort, PACKET-008):
-/// memberships/subscriptions/entitlements/usage events + the immutability
-/// triggers + the forced tenant policies, byte-faithful to the TS
-/// package's frozen migration.
-pub const SUBSCRIPTIONS_MIGRATIONS: &[&str] = &["001_subscriptions_entitlements_usage"];
-
-/// The attendance ledger's migration, in apply order —
-/// `packages/attendance-pg/migrations/001_attendance_sessions_rosters.sql`
-/// (Archxy 2's ERP namespace, R07 third cohort, PACKET-009):
-/// memberships/sessions/rosters/check-in events + the immutability
-/// triggers + the forced tenant policies, byte-faithful to the TS
-/// package's frozen migration.
-pub const ATTENDANCE_MIGRATIONS: &[&str] = &["001_attendance_sessions_rosters"];
-
-/// The support ledger's migration, in apply order —
-/// `packages/support-pg/migrations/001_cases_notes_resolution.sql`
-/// (Archxy 2's ERP namespace, R07 fourth cohort, PACKET-010):
-/// memberships/cases/commands/notes/transitions/audit + the history
-/// triggers + the forced tenant policies, byte-faithful to the TS
-/// package's frozen migration.
-pub const SUPPORT_MIGRATIONS: &[&str] = &["001_cases_notes_resolution"];
-
-/// The laundry ledger's migration, in apply order —
-/// `packages/laundry-pg/migrations/001_laundry_orders_processing.sql`
-/// (Archxy 2's ERP namespace, R08 laundry cohort).
-pub const LAUNDRY_MIGRATIONS: &[&str] = &["001_laundry_orders_processing"];
-
-/// The field services ledger's migrations, in apply order —
-/// `packages/field-services-pg/migrations/{001_field_services_dispatch_visits,002_field_services_tenant_isolation}.sql`
-/// (Archxy 2's ERP namespace, R08 field services cohort).
-pub const FIELD_MIGRATIONS: &[&str] = &[
-    "001_field_services_dispatch_visits",
-    "002_field_services_tenant_isolation",
-];
-
-/// The fulfillment ledger's migration, in apply order —
-/// `packages/fulfillment-pg/migrations/001_fulfillment_jobs_evidence.sql`
-/// (Archxy 2's ERP namespace, R08 fulfillment cohort).
-pub const FULFILLMENT_MIGRATIONS: &[&str] = &["001_fulfillment_jobs_evidence"];
-
-/// The formal education ledger's migrations, in apply order —
-/// `packages/formal-education-pg/migrations/{001_formal_education_enrollment,002_formal_education_tenant_keys}.sql`
-/// (Archxy 2's ERP namespace, R08 formal education cohort).
-pub const EDU_MIGRATIONS: &[&str] = &[
-    "001_formal_education_enrollment",
-    "002_formal_education_tenant_keys",
-];
-
-/// The provider attempt ledger's migration, in apply order —
-/// `packages/provider-runtime/migrations/001_provider_attempts.sql` (the R09
-/// provider slice): the budget buckets and the pending→finalized attempt rows
-/// the `archava-providers` crate's store runs through.
-pub const PROVIDER_MIGRATIONS: &[&str] = &["001_provider_attempts"];
-
-/// The owner-configuration ledger's migration, in apply order — Rust-owned at
-/// `migrations/owner-pg` (C03). The owner surface's grants are
-/// its own (owner PRD §6), so this ledger is additive and references no
-/// TS-owned table.
-pub const OWNER_MIGRATIONS: &[&str] = &[
-    "001_owner_config",
-    "002_reviewed_workflows",
-    "003_agent_runtime",
-    "004_ai_disclosure_boundary",
-];
-
-/// The Ava Cockpit task orchestration ledger's migration, in apply order —
-/// `migrations/cockpit-pg/001_cockpit_durable_missions.sql`.
-pub const COCKPIT_MIGRATIONS: &[&str] = &["001_cockpit_durable_missions"];
-
-/// The Ava Orbz agentic memory ledger's migration, in apply order —
-/// `migrations/orbz-pg/001_agentic_memory_orbz.sql`.
-pub const ORBZ_MIGRATIONS: &[&str] = &["001_agentic_memory_orbz"];
+/// How many migrations the manifest declares for one ledger.
+pub fn migration_count(namespace: &str) -> usize {
+    manifest_ledger(namespace).ids.len()
+}
 
 /// The namespace and ledger label the commerce schema uses.
 pub const NAMESPACE: &str = "archava_commerce";
@@ -434,7 +302,7 @@ impl Fixture {
             ("archava_cockpit", &self.cockpit_ledger),
             ("archava_orbz", &self.orbz_ledger),
         ];
-        if self.accounting_ledger.len() == ACCOUNTING_MIGRATIONS.len() {
+        if self.accounting_ledger.len() == migration_count("archava_accounting") {
             ledgers.push(("archava_accounting", &self.accounting_ledger));
         }
         ledgers
@@ -1022,7 +890,7 @@ fn free_port() -> u16 {
 /// `let Ok(x) = ... else { return }` — the silent skip this fixture exists to
 /// make impossible.
 pub async fn provision() -> Fixture {
-    provision_with_commerce_usize(COMMERCE_MIGRATIONS.len()).await
+    provision_with_commerce_usize(migration_count("archava_commerce")).await
 }
 
 /// The for-rehearsal prior profile: "a database an earlier supported release
@@ -1058,12 +926,18 @@ pub async fn provision_pre_return_provenance_profile() -> Fixture {
 /// "prior profile" window reaches. `provision` and
 /// [`provision_prior_commerce_profile`] are its only callers.
 async fn provision_with_commerce_usize(commerce_through: usize) -> Fixture {
-    provision_profiles(commerce_through, ORGANIZATIONS_MIGRATIONS.len(), true, true).await
+    provision_profiles(
+        commerce_through,
+        migration_count("archava_organizations"),
+        true,
+        true,
+    )
+    .await
 }
 
 /// Owned upgrade fixture before verified CRM affiliation sources existed.
 pub async fn provision_pre_verified_affiliations_profile() -> Fixture {
-    provision_profiles(COMMERCE_MIGRATIONS.len(), 1, false, true).await
+    provision_profiles(migration_count("archava_commerce"), 1, false, true).await
 }
 
 /// Latest pre-integration profile: published parties, legacy transaction ledgers.
@@ -1079,8 +953,8 @@ pub async fn provision_pre_company_trade_profile() -> Fixture {
 /// Previous accepted company-trade profile, before operational supplier documents.
 pub async fn provision_pre_supplier_documents_profile() -> Fixture {
     provision_profiles(
-        COMMERCE_MIGRATIONS.len(),
-        ORGANIZATIONS_MIGRATIONS.len(),
+        migration_count("archava_commerce"),
+        migration_count("archava_organizations"),
         true,
         false,
     )
@@ -1089,7 +963,7 @@ pub async fn provision_pre_supplier_documents_profile() -> Fixture {
 
 /// Latest profile before managed-company registration was mounted.
 pub async fn provision_pre_company_profile() -> Fixture {
-    provision_profiles(COMMERCE_MIGRATIONS.len(), 3, true, true).await
+    provision_profiles(migration_count("archava_commerce"), 3, true, true).await
 }
 
 /// Upgrade transaction ledgers in dependency order using the migration owner.
@@ -1347,8 +1221,8 @@ async fn provision_profiles(
 
 pub async fn provision_pre_accounting_profile() -> Fixture {
     provision_profile_options(
-        COMMERCE_MIGRATIONS.len(),
-        ORGANIZATIONS_MIGRATIONS.len(),
+        migration_count("archava_commerce"),
+        migration_count("archava_organizations"),
         true,
         true,
         false,
@@ -1544,7 +1418,7 @@ async fn provision_profile_options(
         commerce_through
     };
     // Customer-linked Commerce orders depend on the CRM contact identity schema.
-    let commerce_ledger = if commerce_through == COMMERCE_MIGRATIONS.len() {
+    let commerce_ledger = if commerce_through == migration_count("archava_commerce") {
         migrate_commerce(&owner_pool).await
     } else {
         migrate_commerce_upto(&owner_pool, commerce_through).await
@@ -1636,13 +1510,13 @@ async fn provision_profile_options(
     // Historical profiles retain their earlier surface until explicit upgrade.
     let accounting_ledger = if accounting
         && organizations_through >= 4
-        && billing_ledger.len() == BILLING_MIGRATIONS.len()
+        && billing_ledger.len() == migration_count("archava_billing")
     {
         migrate_ledger_prefix(
             &owner_pool,
             "archava_accounting",
             "archava_accounting_migrations",
-            if purchasing_ledger.len() != PURCHASING_MIGRATIONS.len() {
+            if purchasing_ledger.len() != migration_count("archava_purchasing") {
                 3
             } else if commerce_through < 10 {
                 4
@@ -2400,44 +2274,7 @@ async fn migrate_commerce_upto(pool: &PgPool, take: usize) -> Vec<(String, Strin
 /// "not identity means commerce" so a fourth ledger cannot silently inherit
 /// the wrong directory.
 fn migrations_package(namespace: &str) -> &'static str {
-    match namespace {
-        "archava_identity" => "identity-pg",
-        "archava_crm" => "crm-pg",
-        "archava_owner" => "owner-pg",
-        // The Archxy 2 ERP cohorts' migrations live in the packages they were
-        // frozen in; no other ledger may inherit one of these directories.
-        "archava_purchasing" => "purchasing-pg",
-        "archava_foodservice" => "foodservice-pg",
-        "archava_organizations" => "organizations-pg",
-        "archava_accounting" => "accounting-pg",
-        "archava_proposals" => "proposals-pg",
-        "archava_projects" => "projects-pg",
-        "archava_scheduling" => "scheduling-pg",
-        "archava_accommodation" => "accommodation-pg",
-        "archava_assets" => "assets-pg",
-        // (PACKET-007) the R07 settlement ledger migrates from its own TS
-        // package, byte-faithful, one migration deep.
-        "archava_billing" => "billing-pg",
-        // (PACKET-008) the R07 entitlements ledger migrates from its own TS
-        // package, byte-faithful, one migration deep.
-        "archava_subscriptions" => "subscriptions-pg",
-        // (PACKET-009) the R07 attendance ledger migrates from its own TS
-        // package, byte-faithful, one migration deep.
-        "archava_attendance" => "attendance-pg",
-        // (PACKET-010) the R07 support ledger migrates from its own TS
-        // package, byte-faithful, one migration deep.
-        "archava_support" => "support-pg",
-        "archava_laundry" => "laundry-pg",
-        "archava_field" => "field-services-pg",
-        "archava_fulfillment" => "fulfillment-pg",
-        "archava_edu" => "formal-education-pg",
-        // R09's provider ledger: the migration file the TS store reads too.
-        "archava_provider" => "provider-runtime",
-        "archava_cockpit" => "cockpit-pg",
-        "archava_orbz" => "orbz-pg",
-        "archava_control" => "control-pg",
-        _ => "commerce-pg",
-    }
+    &manifest_ledger(namespace).directory
 }
 
 /// The `(id, checksum)` pairs a namespace's frozen migration list produces
@@ -2450,33 +2287,7 @@ fn migrations_package(namespace: &str) -> &'static str {
 /// from whatever one process happened to store. The namespace selects the
 /// frozen file list as well as the migrations directory.
 pub fn ledger_expectations(namespace: &str) -> Vec<(String, String)> {
-    let migrations = match namespace {
-        "archava_identity" => IDENTITY_MIGRATIONS,
-        "archava_crm" => CRM_MIGRATIONS,
-        "archava_purchasing" => PURCHASING_MIGRATIONS,
-        "archava_foodservice" => FOOD_MIGRATIONS,
-        "archava_organizations" => ORGANIZATIONS_MIGRATIONS,
-        "archava_accounting" => ACCOUNTING_MIGRATIONS,
-        "archava_proposals" => PROPOSALS_MIGRATIONS,
-        "archava_projects" => PROJECTS_MIGRATIONS,
-        "archava_scheduling" => SCHEDULING_MIGRATIONS,
-        "archava_accommodation" => ACCOMMODATION_MIGRATIONS,
-        "archava_assets" => ASSETS_MIGRATIONS,
-        "archava_billing" => BILLING_MIGRATIONS,
-        "archava_subscriptions" => SUBSCRIPTIONS_MIGRATIONS,
-        "archava_attendance" => ATTENDANCE_MIGRATIONS,
-        "archava_support" => SUPPORT_MIGRATIONS,
-        "archava_laundry" => LAUNDRY_MIGRATIONS,
-        "archava_field" => FIELD_MIGRATIONS,
-        "archava_fulfillment" => FULFILLMENT_MIGRATIONS,
-        "archava_edu" => EDU_MIGRATIONS,
-        "archava_provider" => PROVIDER_MIGRATIONS,
-        "archava_owner" => OWNER_MIGRATIONS,
-        "archava_cockpit" => COCKPIT_MIGRATIONS,
-        "archava_orbz" => ORBZ_MIGRATIONS,
-        "archava_control" => CONTROL_MIGRATIONS,
-        _ => COMMERCE_MIGRATIONS,
-    };
+    let migrations = &manifest_ledger(namespace).ids;
     let migrations_dir = migrations_dir(namespace);
     migrations
         .iter()
