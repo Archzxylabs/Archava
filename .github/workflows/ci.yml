@@ -130,6 +130,13 @@ jobs:
       - name: Build release server and browser payload
         run: node tools/rust/build-slice.mjs
 
+      # Ubuntu 24.04 restricts unprivileged user namespaces through AppArmor, and
+      # Chromium then aborts with "No usable sandbox". Lift that restriction on
+      # this disposable runner so the browser keeps its sandbox, rather than
+      # launching it with --no-sandbox.
+      - name: Allow the Chromium sandbox
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
       # The Ubuntu 24.04 runner includes Chrome. The gate discovers the installed
       # browser, uses an isolated profile/fixture, and closes its own processes.
       - name: Browser operator acceptance and production restart
