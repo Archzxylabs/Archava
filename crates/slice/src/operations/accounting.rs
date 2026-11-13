@@ -4,6 +4,7 @@ mod aging;
 mod bank;
 mod bank_check;
 mod clearing;
+mod close_check;
 mod payables;
 mod terms;
 use super::*;
@@ -565,6 +566,7 @@ pub(super) fn Reports(work: Workbench) -> impl IntoView {
     view! {<section class="ops-detail" data-testid="accounting-reports"><h2>"Financial reports"</h2><p class="hint">{move||text(&work.data.get(),"notice")}</p><p class="hint">{move||text(&work.data.get(),"invoicePostingNotice")}</p><p class="hint">{move||text(&work.data.get(),"purchasePostingNotice")}</p><p class="hint">{move||text(&work.data.get(),"stockPostingNotice")}</p><p class="hint">"Reports include every posted journal in the chosen date range. Drafts and voids are excluded. The balance sheet includes earlier posted balances through the end date."</p>
         <payables::Balances work/>
         <aging::AgingReports work/>
+        <close_check::CloseReadiness work/>
         <form class="ops-form" on:submit=load><label class="ops-field"><span>"From"</span><input type="date" required data-testid="accounting-report-from" prop:value=move||from.get() on:input=move|e|from.set_if_alive(event_target_value(&e))/></label><label class="ops-field"><span>"Through"</span><input type="date" required data-testid="accounting-report-to" prop:value=move||to.get() on:input=move|e|to.set_if_alive(event_target_value(&e))/></label><button type="submit" class="btn secondary" data-testid="accounting-report-run" disabled=move||busy.get()||!work.permits("reports.read")>"Refresh financial reports"</button></form>
         {move||{let n=notice.get();(!n.is_empty()).then(||view!{<p class="refusal">{n}</p>})}}
         {move||report.get().map(|r|{let book=r["book"].clone();let rows=r["trialBalance"]["accounts"].as_array().cloned().unwrap_or_default();let row_book=book.clone();

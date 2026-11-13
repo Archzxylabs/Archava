@@ -48,6 +48,10 @@ pub fn router() -> Router<AppState> {
             "/erp/accounting/bank-reconciliation",
             get(crate::erp::accounting::bank_reconciliation),
         )
+        .route(
+            "/erp/accounting/close-readiness",
+            get(crate::erp::accounting::close_readiness),
+        )
         // CRM customer relationship management cohort (ADR-018: normalized enterprise routes)
         .route("/erp/crm/records", get(crate::erp::crm::record))
         .route("/erp/crm/contacts", get(crate::erp::crm::contacts))
