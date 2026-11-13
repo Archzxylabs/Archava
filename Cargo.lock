@@ -1746,9 +1746,9 @@ checksum = "20870f649af7073d53e38067b2a84312175d56ea15217e1b15bc83506ec50afb"
 
 [[package]]
 name = "leptos"
-version = "0.8.22"
+version = "0.8.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "713ee6895e3d1126ea9781280d01414f5643f3f201a949b71efffac07d735f00"
+checksum = "4b0f9f061ff585050a77e18b93a58d6c881c6785f473fc98924c4f77da50d891"
 dependencies = [
  "any_spawner",
  "base64 0.22.1",
@@ -1872,9 +1872,9 @@ dependencies = [
 
 [[package]]
 name = "leptos_macro"
-version = "0.8.19"
+version = "0.8.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0902af1e6947ffc7e906b7003a165f76f178dc711a47b74241025090b0c32a72"
+checksum = "0066e6f8003dbedea0900a2d7ad11734ab1a541330718866dd4b9a394a032127"
 dependencies = [
  "attribute-derive",
  "cfg-if",
@@ -2123,9 +2123,9 @@ checksum = "743fb55ba31b18fb1ecef6bdc9aa2743314978ac084044301a7eee33fb99a20d"
 
 [[package]]
 name = "napi"
-version = "3.14.2"
+version = "3.16.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a4e2cf85c02d9b057898c485b824c3c416b65193689e2b7f517efc94b86ed24c"
+checksum = "907ff7366fb7182e28edd0f08ef8ac5d6b13b8d65a3c0b3a10bf3ac092437d6b"
 dependencies = [
  "bitflags",
  "ctor",
@@ -2145,9 +2145,9 @@ checksum = "b899b545d3aa6dca985939059f258c5488d34e4ecf39c274e20009748f4b846d"
 
 [[package]]
 name = "napi-derive"
-version = "3.6.12"
+version = "3.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "92cec6048ac04041ac8055bdce1ec4f353416cd443ba9222bf73af790c3d4495"
+checksum = "d32eb00f92f84cf462fc328f49082b29c2a7d2eebeb1d447d19c1f9fdd9f89ee"
 dependencies = [
  "convert_case 0.12.0",
  "ctor",
@@ -2159,9 +2159,9 @@ dependencies = [
 
 [[package]]
 name = "napi-derive-backend"
-version = "6.1.5"
+version = "7.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fae2444f4ba7333754bb73414ff8059dec2cb23b83a95bd1a0bf08169eed1be0"
+checksum = "314cd6ca42bd978fd8bae84b4137e1322bbf3e83552fca8dbd7d18034188ff3a"
 dependencies = [
  "convert_case 0.12.0",
  "proc-macro2",
@@ -2172,9 +2172,9 @@ dependencies = [
 
 [[package]]
 name = "napi-sys"
-version = "3.4.0"
+version = "3.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e22a4f25c16a5c5411d987cd6fbd48313522ae1789ade2d6dd3efdc6d40a0fc8"
+checksum = "d153beb7d5c973f4b9395be8a83054a28968b61188f1dd1a2cc2321af22daea2"
 dependencies = [
  "libloading",
 ]
@@ -3914,9 +3914,9 @@ checksum = "b6c140620e7ffbb22c2dee59cafe6084a59b5ffc27a8859a5f0d494b5d52b6be"
 
 [[package]]
 name = "uuid"
-version = "1.28.0"
+version = "1.29.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7cc1186384beb7dd8eedea376413fd654937285ea6c9cfbb928dc3043ea4b606"
+checksum = "bed99139f7dac9b5cfe5f17be4d66dc7079a34dee1d74bcc77217119240e267c"
 dependencies = [
  "getrandom 0.4.3",
  "js-sys",
