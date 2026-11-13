@@ -495,3 +495,194 @@ async fn stock_first_policy_and_fulfillment_lock_company_before_book_and_capture
         2
     );
 }
+
+async fn inventory_control(s: &StockScenario, as_of: &str) -> Value {
+    let (st, v) = call(
+        &s.p.app,
+        "GET",
+        &format!(
+            "/erp/accounting/inventory-control?tenant=acme&bookId={}&asOf={as_of}",
+            s.p.book["bookId"].as_str().unwrap()
+        ),
+        Value::Null,
+        Some(&s.p.alice),
+    )
+    .await;
+    assert_eq!(st, StatusCode::OK, "{v}");
+    v
+}
+/// `(code, expected, actual, difference)` per inventory control account.
+fn control_rows(report: &Value) -> Vec<(String, String, String, String)> {
+    report["controls"]
+        .as_array()
+        .expect("the report lists its control accounts")
+        .iter()
+        .map(|r| {
+            let field = |key: &str| r[key].as_str().unwrap().to_string();
+            (
+                field("code"),
+                field("expectedMinor"),
+                field("actualMinor"),
+                field("differenceMinor"),
+            )
+        })
+        .collect()
+}
+fn row(
+    code: &str,
+    expected: &str,
+    actual: &str,
+    difference: &str,
+) -> (String, String, String, String) {
+    (
+        code.into(),
+        expected.into(),
+        actual.into(),
+        difference.into(),
+    )
+}
+
+/// **Witness: the inventory control comparison explains each inventory
+/// account's ledger balance from posted receipt, fulfillment and restock
+/// sources, counts sources not yet posted, honours the cutoff date, and shows
+/// a manual posting to an inventory account as a difference.**
+#[tokio::test]
+async fn inventory_control_compares_posted_stock_and_receipt_sources_with_the_ledger() {
+    let s = StockScenario::new(true).await;
+    s.receive(1, 1, false).await;
+    s.receive(2, 100, true).await;
+    const LATER: &str = "2100-12-31";
+
+    // Two posted receipts, each on the inventory account its order captured.
+    let received = inventory_control(&s, LATER).await;
+    assert_eq!(
+        control_rows(&received),
+        [
+            row("INV-NEW", "1410000", "1410000", "0"),
+            row("INVENTORY", "700100", "700100", "0"),
+        ]
+    );
+    assert_eq!(received["postedSourceControlsAgree"], true);
+    assert_eq!(received["coverage"]["pendingMonetarySourceCount"], 0);
+    assert_eq!(received["asOf"], LATER);
+    assert!(received["observedAt"].is_string());
+    // Before anything was dated, both sides are empty and still agree.
+    let earlier = inventory_control(&s, "2000-01-01").await;
+    assert_eq!(
+        control_rows(&earlier),
+        [
+            row("INV-NEW", "0", "0", "0"),
+            row("INVENTORY", "0", "0", "0")
+        ]
+    );
+    assert_eq!(earlier["postedSourceControlsAgree"], true);
+
+    // A fulfillment that accounting has not posted changes neither side; it is
+    // reported as pending.
+    let (sale, sold, sale_line) = s.sell(2).await;
+    let sold_source = s.source(&sold).await;
+    assert_eq!(sold_source["amountMinor"], "1405100");
+    let pending = inventory_control(&s, LATER).await;
+    assert_eq!(control_rows(&pending), control_rows(&received));
+    assert_eq!(pending["coverage"]["pendingMonetarySourceCount"], 1);
+
+    // Posting it removes exactly its layer cost from the accounts it came from.
+    let (st, v) = send(&s.p.app, &s.p.alice, &s.draft(&sold_source, "STOCK-SOLD")).await;
+    assert_eq!(st, StatusCode::OK, "{v}");
+    s.p.post(&v["receipt"]).await;
+    let sold_report = inventory_control(&s, LATER).await;
+    assert_eq!(
+        sold_report["postedSourceControlsAgree"], true,
+        "{sold_report}"
+    );
+    assert_eq!(sold_report["coverage"]["pendingMonetarySourceCount"], 0);
+    let remaining: i64 = control_rows(&sold_report)
+        .iter()
+        .map(|r| r.2.parse::<i64>().unwrap())
+        .sum();
+    assert_eq!(remaining, 700_100 + 1_410_000 - 1_405_100);
+
+    // A restock returns its original cost to the account it left.
+    let returned=s.trade(json!({"operation":"order.return","id":sale["id"],"expectedRevision":3,"lineId":sale_line,"quantity":1,"disposition":"restock","reason":"Return one unit to stock"})).await;
+    let returned_source = s.source(&returned).await;
+    let (st, v) = send(
+        &s.p.app,
+        &s.p.alice,
+        &s.draft(&returned_source, "STOCK-RETURN"),
+    )
+    .await;
+    assert_eq!(st, StatusCode::OK, "{v}");
+    s.p.post(&v["receipt"]).await;
+    let restocked = inventory_control(&s, LATER).await;
+    assert_eq!(restocked["postedSourceControlsAgree"], true, "{restocked}");
+    let remaining: i64 = control_rows(&restocked)
+        .iter()
+        .map(|r| r.2.parse::<i64>().unwrap())
+        .sum();
+    assert_eq!(remaining, 700_100 + 1_410_000 - 1_405_100 + 700_100);
+
+    // A manual journal on an inventory account is not a captured source: the
+    // ledger moves, the expected balance does not, and the report says so.
+    let before = control_rows(&restocked);
+    let inventory = &s.p.accounts[0];
+    let manual = post(
+        &s.p.app,
+        &s.p.alice,
+        &s.p.bob,
+        &s.p.book,
+        "MANUAL-STOCK",
+        vec![line(inventory, "500", "0"), line(&s.cogs, "0", "500")],
+    )
+    .await;
+    assert_eq!(manual["revision"], 2);
+    let adjusted = inventory_control(&s, LATER).await;
+    assert_eq!(adjusted["postedSourceControlsAgree"], false);
+    let old = before.iter().find(|r| r.0 == "INVENTORY").unwrap();
+    let new = control_rows(&adjusted)
+        .into_iter()
+        .find(|r| r.0 == "INVENTORY")
+        .unwrap();
+    assert_eq!(new.1, old.1, "a manual journal is not an expected source");
+    assert_eq!(
+        new.2.parse::<i64>().unwrap(),
+        old.2.parse::<i64>().unwrap() + 500
+    );
+    assert_eq!(new.3, "500");
+
+    // Refusals: no session, an invalid date, a principal without report access.
+    let path = format!(
+        "/erp/accounting/inventory-control?tenant=acme&bookId={}",
+        s.p.book["bookId"].as_str().unwrap()
+    );
+    let (st, _) = call(
+        &s.p.app,
+        "GET",
+        &format!("{path}&asOf={LATER}"),
+        Value::Null,
+        None,
+    )
+    .await;
+    assert_eq!(st, StatusCode::UNAUTHORIZED);
+    let (st, v) = call(
+        &s.p.app,
+        "GET",
+        &format!("{path}&asOf=2026-02-30"),
+        Value::Null,
+        Some(&s.p.alice),
+    )
+    .await;
+    assert_eq!(st, StatusCode::BAD_REQUEST, "{v}");
+    sqlx::query("UPDATE archava_accounting.memberships SET permissions=array_remove(permissions,'reports.read') WHERE tenant_id='acme' AND principal_id='alice'")
+        .execute(&s.p.f.admin_pool)
+        .await
+        .unwrap();
+    let (st, v) = call(
+        &s.p.app,
+        "GET",
+        &format!("{path}&asOf={LATER}"),
+        Value::Null,
+        Some(&s.p.alice),
+    )
+    .await;
+    assert_eq!(st, StatusCode::FORBIDDEN, "{v}");
+}

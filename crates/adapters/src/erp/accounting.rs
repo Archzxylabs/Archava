@@ -3,6 +3,7 @@ mod bank;
 mod bank_periods;
 mod clearing;
 mod close;
+mod inventory;
 mod journal;
 mod page;
 mod payables;
@@ -23,6 +24,7 @@ use archava_domain::erp::{
 };
 pub use bank_periods::readiness as bank_readiness;
 pub use close::close_readiness;
+pub use inventory::inventory_control;
 pub use page::Page;
 pub use reads::{reports, workspace};
 use serde_json::{json, Value};
