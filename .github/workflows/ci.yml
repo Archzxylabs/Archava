@@ -8,8 +8,10 @@ name: CI
 #   wasm     wasm32 boundary checks for core, domain and slice hydration
 #   browser  release build, WASM payload and the real-Chromium acceptance gate
 #
-# `browser` waits for `checks`: a release build is not worth starting on a tree
-# whose tests fail. `wasm` runs alongside `checks`.
+# The three jobs run side by side, so a PR waits for the slowest job rather than
+# for their sum. Each restores its own Cargo cache (registry, compiled
+# dependencies and installed tools such as wasm-bindgen); workspace crates are
+# always rebuilt from the checked-out source.
 
 on:
   pull_request:
@@ -39,6 +41,8 @@ jobs:
         with:
           toolchain: 1.96.0
           components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
@@ -79,6 +83,8 @@ jobs:
           toolchain: 1.96.0
           targets: wasm32-unknown-unknown
 
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+
       # `.cargo/config.toml` selects clang + mold for host artifacts (build
       # scripts and proc macros), which a wasm check still compiles.
       - name: Install build toolchain dependencies
@@ -95,7 +101,6 @@ jobs:
 
   browser:
     name: Release Build and Browser Acceptance
-    needs: checks
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -111,6 +116,8 @@ jobs:
         with:
           toolchain: 1.96.0
           targets: wasm32-unknown-unknown
+
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
