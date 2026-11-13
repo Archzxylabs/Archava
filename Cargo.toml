@@ -125,7 +125,7 @@ aes-gcm = "0.10"
 # `scrypt$32768$8$3$…` shape, not the PHC string its password-hash feature
 # would wrap it in, so the two implementations can verify each other's output.
 scrypt = { version = "0.11", default-features = false }
-hmac = "0.12"
+hmac = "0.13"
 base64 = "0.22"
 uuid = { version = "1", features = ["v4", "serde"] }
 getrandom = "0.4"
