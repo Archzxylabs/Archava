@@ -1766,3 +1766,227 @@ async fn restore_keeps_historical_labels_traceable_and_only_appends() {
         assert_eq!(rows(&fixture, table).await, before[index + 3], "{table}");
     }
 }
+
+const GLOBEX: &str = "globex-corp";
+const ID_GRACE: &str = "2c3e5a10-2222-4222-8222-0000000000b1";
+
+/// A second business on the same database and the same router: Dana owns
+/// `globex-corp`, with her own contact, and holds nothing in `acme-retail`.
+async fn seed_second_business(fixture: &Fixture) {
+    sqlx::query(
+        "INSERT INTO archava_identity.users (id, username, password_hash, active, version) \
+         VALUES ('dana', 'dana@archava.test', $1, true, 1)",
+    )
+    .bind(PASSWORD_HASH)
+    .execute(&fixture.admin_pool)
+    .await
+    .expect("seed the second owner");
+    sqlx::query(
+        "INSERT INTO archava_crm.memberships \
+         (tenant_id, principal_id, kind, permissions, scope, active) \
+         VALUES ($1,'dana','human',$2,'all',true)",
+    )
+    .bind(GLOBEX)
+    .bind(vec![
+        "contacts.read",
+        "contacts.write",
+        "pipeline.read",
+        "pipeline.write",
+    ])
+    .execute(&fixture.admin_pool)
+    .await
+    .expect("seed the second CRM membership");
+    sqlx::query(
+        "INSERT INTO archava_owner.owner_grants (tenant_id, principal_id, permissions, active) \
+         VALUES ($1,'dana',ARRAY['config.read','config.apply'],true)",
+    )
+    .bind(GLOBEX)
+    .execute(&fixture.admin_pool)
+    .await
+    .expect("seed the second owner grant");
+    sqlx::query(
+        "INSERT INTO archava_crm.contacts (tenant_id,id,full_name,owner_id) \
+         VALUES ($1,$2,'Grace Hopper','dana')",
+    )
+    .bind(GLOBEX)
+    .bind(uuid::Uuid::parse_str(ID_GRACE).expect("a test uuid"))
+    .execute(&fixture.admin_pool)
+    .await
+    .expect("seed the second contact");
+}
+
+/// Plan and apply one owner request for `tenant`, returning the receipt.
+async fn configure(
+    app: &Router,
+    session: &Session,
+    tenant: &str,
+    request_id: &str,
+    request: serde_json::Value,
+) -> serde_json::Value {
+    let (status, planned) = post(
+        app,
+        "/own/plan",
+        &serde_json::json!({"tenant": tenant, "request": request}),
+        session,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{planned}");
+    assert!(planned["plan"]["blocked"].is_null(), "{planned}");
+    let (status, applied) = post(
+        app,
+        "/own/apply",
+        &serde_json::json!({
+            "tenant": tenant,
+            "requestId": request_id,
+            "request": request,
+            "confirmation": {
+                "planHash": planned["plan"]["planHash"],
+                "baseRevision": request["baseRevision"]
+            }
+        }),
+        session,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{applied}");
+    applied["receipt"].clone()
+}
+
+/// **Witness (OWN-T01): two businesses run on the same binary, router and
+/// catalogue, and differ only by the configuration each owner applied.** One
+/// disables the pipeline and relabels a stage; the other keeps the pipeline
+/// and uses its own label. Each sees only its own configuration and history,
+/// neither owner can read or change the other's, and the same CRM command is
+/// refused for one business and served for the other.
+#[tokio::test]
+async fn two_businesses_share_one_release_and_differ_only_by_owner_configuration() {
+    let fixture = provision().await;
+    seed(&fixture).await;
+    seed_second_business(&fixture).await;
+    let app = archava_host::router(state(&fixture).await);
+    let alice = login(&app, "alice").await;
+    let dana = login(&app, "dana").await;
+
+    let retail = configure(
+        &app,
+        &alice,
+        ACME,
+        "own-request-shared-id",
+        serde_json::json!({
+            "baseRevision": 0,
+            "disable": ["crm-pipeline"],
+            "terminology": {"pipelineLabels": {"won": "Closed deal"}}
+        }),
+    )
+    .await;
+    // The same request id in another tenant is a different operation.
+    let studio = configure(
+        &app,
+        &dana,
+        GLOBEX,
+        "own-request-shared-id",
+        serde_json::json!({
+            "baseRevision": 0,
+            "terminology": {"pipelineLabels": {"won": "Menang"}}
+        }),
+    )
+    .await;
+    assert_eq!(retail["revision"], 1);
+    assert_eq!(studio["revision"], 1, "each business has its own revisions");
+    assert_ne!(retail["planHash"], studio["planHash"]);
+
+    let enabled = |config: &serde_json::Value, id: &str| {
+        config["modules"]
+            .as_array()
+            .expect("catalogue modules")
+            .iter()
+            .find(|module| module["id"] == id)
+            .unwrap_or_else(|| panic!("{id} is in the catalogue"))["enabled"]
+            .clone()
+    };
+    let (status, acme) = get(&app, &format!("/own/config?tenant={ACME}"), &alice).await;
+    assert_eq!(status, StatusCode::OK, "{acme}");
+    let (status, globex) = get(&app, &format!("/own/config?tenant={GLOBEX}"), &dana).await;
+    assert_eq!(status, StatusCode::OK, "{globex}");
+    assert_eq!(enabled(&acme, "crm-pipeline"), false);
+    assert_eq!(enabled(&globex, "crm-pipeline"), true);
+    assert_eq!(
+        acme["config"]["terminology"]["pipelineLabels"]["won"],
+        "Closed deal"
+    );
+    assert_eq!(
+        globex["config"]["terminology"]["pipelineLabels"]["won"],
+        "Menang"
+    );
+    // One release: both businesses are offered the identical catalogue.
+    let offered = |config: &serde_json::Value| -> Vec<String> {
+        config["modules"]
+            .as_array()
+            .expect("catalogue modules")
+            .iter()
+            .map(|module| module["id"].as_str().expect("module id").to_string())
+            .collect()
+    };
+    assert_eq!(offered(&acme), offered(&globex));
+    assert_eq!(retail["catalogueVersion"], studio["catalogueVersion"]);
+    assert!(retail["catalogueVersion"].is_string(), "{retail}");
+
+    // The same command, the same binary: refused where the owner disabled the
+    // capability, served where the owner kept it.
+    let command = |tenant: &str, contact: &str, request_id: &str| {
+        serde_json::json!({
+            "tenant": tenant,
+            "requestId": request_id,
+            "command": {
+                "operation": "opportunity.create",
+                "contactId": contact,
+                "contactRevision": 1,
+                "title": "Renewal 2027"
+            }
+        })
+    };
+    let (status, refused) = post(
+        &app,
+        "/crm/commands",
+        &command(ACME, ID_ADA, "00000000-0000-4000-8000-0000000000d1"),
+        &alice,
+    )
+    .await;
+    assert_eq!(status, StatusCode::FORBIDDEN, "{refused}");
+    assert_eq!(refused["reason"], "module_disabled");
+    let (status, accepted) = post(
+        &app,
+        "/crm/commands",
+        &command(GLOBEX, ID_GRACE, "00000000-0000-4000-8000-0000000000d2"),
+        &dana,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{accepted}");
+    assert_eq!(accepted["receipt"]["kind"], "opportunity");
+
+    // Neither owner reaches the other business.
+    for (session, tenant) in [(&alice, GLOBEX), (&dana, ACME)] {
+        for uri in [
+            format!("/own/config?tenant={tenant}"),
+            format!("/own/history?tenant={tenant}"),
+            format!("/own/status?tenant={tenant}&requestId=own-request-shared-id"),
+        ] {
+            let (status, refused) = get(&app, &uri, session).await;
+            assert_eq!(status, StatusCode::FORBIDDEN, "{uri}: {refused}");
+            assert_eq!(refused["reason"], "missing_grant", "{uri}");
+        }
+        let (status, refused) = post(
+            &app,
+            "/own/plan",
+            &serde_json::json!({"tenant": tenant, "request": {"baseRevision": 1, "enable": ["crm-pipeline"]}}),
+            session,
+        )
+        .await;
+        assert_eq!(status, StatusCode::FORBIDDEN, "{refused}");
+    }
+    let (_, history) = get(&app, &format!("/own/history?tenant={GLOBEX}"), &dana).await;
+    let revisions = history["revisions"].as_array().expect("history rows");
+    assert_eq!(revisions.len(), 1, "{history}");
+    assert_eq!(revisions[0]["actor"], "dana");
+    assert_eq!(count(&fixture, "config_revisions").await, 2);
+    assert_eq!(count(&fixture, "apply_receipts").await, 2);
+}
