@@ -1393,3 +1393,376 @@ async fn crm_presentation_uses_current_labels_without_granting_owner_access() {
     assert_eq!(status, StatusCode::FORBIDDEN);
     assert!(revoked.get("pipelineLabels").is_none());
 }
+
+/// **Witness (OWN-T05, OWN-T07): disabling a module that another enabled
+/// module requires is an explicit blocked plan on the installed catalogue, the
+/// blocked plan cannot be applied, and nothing is written.** The requirements
+/// come from the module registry, so every declared requirement is exercised.
+#[tokio::test]
+async fn disabling_a_required_module_is_blocked_and_nothing_is_written() {
+    let fixture = provision().await;
+    seed(&fixture).await;
+    let app = archava_host::router(state(&fixture).await);
+    let alice = login(&app, "alice").await;
+
+    let (status, planned) = post(
+        &app,
+        "/own/plan",
+        &plan_body(0, &[], &["scheduling"]),
+        &alice,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{planned}");
+    let blocked = &planned["plan"]["blocked"];
+    assert_eq!(blocked["reason"], "missing_dependency", "{planned}");
+    assert_eq!(blocked["module"], "accommodation", "{planned}");
+    assert!(
+        blocked["detail"]
+            .as_str()
+            .is_some_and(|detail| detail.contains("scheduling")),
+        "the refusal names the module that must stay enabled: {planned}"
+    );
+    // A blocked plan proposes nothing: it carries the unchanged configuration.
+    assert_eq!(planned["plan"]["config"]["revision"], 0, "{planned}");
+
+    let hash = planned["plan"]["planHash"].as_str().unwrap().to_string();
+    let (status, refused) = post(
+        &app,
+        "/own/apply",
+        &apply_body("own-request-dependency", 0, &[], &["scheduling"], &hash),
+        &alice,
+    )
+    .await;
+    assert_eq!(status, StatusCode::CONFLICT, "{refused}");
+    assert_eq!(refused["reason"], "plan_blocked");
+
+    // The chat grammar reaches the same refusal as the dashboard request.
+    let (status, chatted) = post(&app, "/own/chat", &chat_body("disable scheduling"), &alice).await;
+    assert_eq!(status, StatusCode::OK, "{chatted}");
+    assert_eq!(
+        chatted["plan"]["blocked"]["reason"], "missing_dependency",
+        "{chatted}"
+    );
+
+    // Disabling the dependent together with its requirement is compatible.
+    let (status, together) = post(
+        &app,
+        "/own/plan",
+        &plan_body(0, &[], &["accommodation", "scheduling"]),
+        &alice,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{together}");
+    assert!(together["plan"]["blocked"].is_null(), "{together}");
+
+    let mut exercised = 0;
+    for module in archava_domain::modules::all() {
+        for required in module.owner_requires {
+            let (status, planned) =
+                post(&app, "/own/plan", &plan_body(0, &[], &[required]), &alice).await;
+            assert_eq!(status, StatusCode::OK, "{required}: {planned}");
+            assert_eq!(
+                planned["plan"]["blocked"]["reason"], "missing_dependency",
+                "disabling {required} while {} is enabled: {planned}",
+                module.id
+            );
+            exercised += 1;
+        }
+    }
+    assert!(exercised >= 4, "the registry declares module requirements");
+    assert_eq!(count(&fixture, "config_revisions").await, 0);
+    assert_eq!(count(&fixture, "apply_receipts").await, 0);
+}
+
+/// Every owner route with a request that would otherwise be served: `(method,
+/// uri, body)`.
+fn owner_surface(plan_hash: &str) -> Vec<(&'static str, String, Option<serde_json::Value>)> {
+    vec![
+        ("GET", format!("/own/config?tenant={ACME}"), None),
+        ("GET", format!("/own/history?tenant={ACME}"), None),
+        (
+            "GET",
+            format!("/own/status?tenant={ACME}&requestId=own-request-surface"),
+            None,
+        ),
+        (
+            "POST",
+            "/own/plan".into(),
+            Some(plan_body(1, &["crm-pipeline"], &[])),
+        ),
+        (
+            "POST",
+            "/own/chat".into(),
+            Some(chat_body("enable crm-pipeline")),
+        ),
+        (
+            "POST",
+            "/own/apply".into(),
+            Some(apply_body(
+                "own-request-refused",
+                1,
+                &["crm-pipeline"],
+                &[],
+                plan_hash,
+            )),
+        ),
+        (
+            "POST",
+            "/own/restore/plan".into(),
+            Some(serde_json::json!({"tenant": ACME, "targetRevision": 1})),
+        ),
+        (
+            "POST",
+            "/own/restore".into(),
+            Some(serde_json::json!({
+                "tenant": ACME,
+                "requestId": "own-request-refused-restore",
+                "targetRevision": 1,
+                "confirmation": {"planHash": plan_hash, "baseRevision": 1}
+            })),
+        ),
+    ]
+}
+
+async fn call(
+    app: &Router,
+    method: &str,
+    uri: &str,
+    body: Option<&serde_json::Value>,
+    session: &Session,
+) -> (StatusCode, serde_json::Value) {
+    match body {
+        Some(body) => post(app, uri, body, session).await,
+        None => {
+            assert_eq!(method, "GET");
+            get(app, uri, session).await
+        }
+    }
+}
+
+/// **Witness (OWN-T04): a principal who never held the owner grant, and one
+/// whose grant was revoked after a committed apply, are refused on every owner
+/// route — inspect, history, status, plan, chat, apply, restore preview and
+/// restore — and nothing is written.**
+#[tokio::test]
+async fn a_never_granted_or_revoked_principal_is_refused_on_every_owner_route() {
+    let fixture = provision().await;
+    seed(&fixture).await;
+    let app = archava_host::router(state(&fixture).await);
+    let alice = login(&app, "alice").await;
+    let bob = login(&app, "bob").await;
+
+    let (_, planned) = post(
+        &app,
+        "/own/plan",
+        &plan_body(0, &[], &["crm-pipeline"]),
+        &alice,
+    )
+    .await;
+    let hash = planned["plan"]["planHash"].as_str().unwrap().to_string();
+    let (status, applied) = post(
+        &app,
+        "/own/apply",
+        &apply_body("own-request-surface", 0, &[], &["crm-pipeline"], &hash),
+        &alice,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{applied}");
+
+    // Every request is one Alice is served while she holds the grant.
+    for (method, uri, body) in owner_surface(&hash)
+        .into_iter()
+        .filter(|(method, _, _)| *method == "GET")
+    {
+        let (status, served) = call(&app, method, &uri, body.as_ref(), &alice).await;
+        assert_eq!(status, StatusCode::OK, "{uri}: {served}");
+    }
+
+    for (method, uri, body) in owner_surface(&hash) {
+        let (status, refused) = call(&app, method, &uri, body.as_ref(), &bob).await;
+        assert_eq!(
+            status,
+            StatusCode::FORBIDDEN,
+            "never granted, {uri}: {refused}"
+        );
+        assert_eq!(refused["reason"], "missing_grant", "{uri}");
+    }
+
+    sqlx::query(
+        "UPDATE archava_owner.owner_grants SET active=false \
+         WHERE tenant_id=$1 AND principal_id='alice'",
+    )
+    .bind(ACME)
+    .execute(&fixture.admin_pool)
+    .await
+    .expect("revoke the owner grant");
+    for (method, uri, body) in owner_surface(&hash) {
+        let (status, refused) = call(&app, method, &uri, body.as_ref(), &alice).await;
+        assert_eq!(status, StatusCode::FORBIDDEN, "revoked, {uri}: {refused}");
+        assert_eq!(refused["reason"], "missing_grant", "{uri}");
+    }
+    assert_eq!(count(&fixture, "config_revisions").await, 1);
+    assert_eq!(count(&fixture, "apply_receipts").await, 1);
+}
+
+/// **Witness (OWN-T04): a caller without a session, or with a forged bearer,
+/// is refused on every owner route before anything is read or written.**
+#[tokio::test]
+async fn an_unauthenticated_caller_is_refused_on_every_owner_route() {
+    let fixture = provision().await;
+    seed(&fixture).await;
+    let app = archava_host::router(state(&fixture).await);
+
+    for bearer in [None, Some("forged-token")] {
+        for (method, uri, body) in owner_surface("0".repeat(64).as_str()) {
+            let (status, refused) = raw(&app, method, &uri, body.as_ref(), bearer).await;
+            assert_eq!(
+                status,
+                StatusCode::UNAUTHORIZED,
+                "{method} {uri} with bearer {bearer:?}: {refused}"
+            );
+        }
+    }
+    assert_eq!(count(&fixture, "config_revisions").await, 0);
+    assert_eq!(count(&fixture, "apply_receipts").await, 0);
+}
+
+async fn rows(fixture: &Fixture, table: &str) -> Vec<String> {
+    let sql = format!("SELECT t::text FROM {table} t ORDER BY 1");
+    sqlx::query_scalar(sqlx::AssertSqlSafe(sql))
+        .fetch_all(&fixture.admin_pool)
+        .await
+        .unwrap_or_else(|error| panic!("read {table}: {error}"))
+}
+
+async fn relabel(app: &Router, session: &Session, request_id: &str, base: i64, label: &str) {
+    let request = serde_json::json!({
+        "baseRevision": base,
+        "terminology": {"pipelineLabels": {"won": label}}
+    });
+    let (status, planned) = post(
+        app,
+        "/own/plan",
+        &serde_json::json!({"tenant": ACME, "request": request}),
+        session,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{planned}");
+    let hash = planned["plan"]["planHash"].as_str().unwrap();
+    let (status, applied) = post(
+        app,
+        "/own/apply",
+        &serde_json::json!({
+            "tenant": ACME,
+            "requestId": request_id,
+            "request": request,
+            "confirmation": {"planHash": hash, "baseRevision": base}
+        }),
+        session,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{applied}");
+}
+
+/// **Witness (OWN-T08): after a restore, the label each earlier revision
+/// carried is still readable from history with the request and plan that
+/// produced it, and the restore only appends — earlier revisions, receipts and
+/// audit rows are byte-identical, and grants, memberships and business rows are
+/// untouched.**
+#[tokio::test]
+async fn restore_keeps_historical_labels_traceable_and_only_appends() {
+    let fixture = provision().await;
+    seed(&fixture).await;
+    let app = archava_host::router(state(&fixture).await);
+    let alice = login(&app, "alice").await;
+
+    relabel(&app, &alice, "own-request-label-1", 0, "Closed deal").await;
+    relabel(&app, &alice, "own-request-label-2", 1, "Signed").await;
+
+    let append_only = [
+        "archava_owner.config_revisions",
+        "archava_owner.apply_receipts",
+        "archava_owner.config_audit",
+    ];
+    let unchanged = [
+        "archava_owner.owner_grants",
+        "archava_crm.memberships",
+        "archava_crm.contacts",
+    ];
+    let mut before = Vec::new();
+    for table in append_only.iter().chain(&unchanged) {
+        before.push(rows(&fixture, table).await);
+    }
+    assert!(before.iter().take(3).all(|rows| rows.len() >= 2));
+
+    let (status, preview) = post(
+        &app,
+        "/own/restore/plan",
+        &serde_json::json!({"tenant": ACME, "targetRevision": 1}),
+        &alice,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{preview}");
+    let hash = preview["plan"]["planHash"].as_str().unwrap();
+    let (status, restored) = post(
+        &app,
+        "/own/restore",
+        &serde_json::json!({
+            "tenant": ACME,
+            "requestId": "own-request-label-restore",
+            "targetRevision": 1,
+            "confirmation": {"planHash": hash, "baseRevision": 2}
+        }),
+        &alice,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{restored}");
+    assert_eq!(restored["receipt"]["revision"], 3);
+
+    let (status, history) = get(&app, &format!("/own/history?tenant={ACME}"), &alice).await;
+    assert_eq!(status, StatusCode::OK, "{history}");
+    let revisions = history["revisions"].as_array().expect("history rows");
+    let traced: Vec<(i64, &str, &str, &str)> = revisions
+        .iter()
+        .map(|row| {
+            (
+                row["revision"].as_i64().unwrap(),
+                row["config"]["terminology"]["pipelineLabels"]["won"]
+                    .as_str()
+                    .unwrap_or_else(|| panic!("revision keeps its label: {row}")),
+                row["requestId"].as_str().expect("request id"),
+                row["outcome"].as_str().expect("outcome"),
+            )
+        })
+        .collect();
+    assert_eq!(
+        traced,
+        vec![
+            (3, "Closed deal", "own-request-label-restore", "restore"),
+            (2, "Signed", "own-request-label-2", "apply"),
+            (1, "Closed deal", "own-request-label-1", "apply"),
+        ],
+        "{history}"
+    );
+    for row in revisions {
+        assert_eq!(row["actor"], "alice", "{row}");
+        assert!(row["planHash"]
+            .as_str()
+            .is_some_and(|hash| !hash.is_empty()));
+    }
+
+    for (index, table) in append_only.iter().enumerate() {
+        let after = rows(&fixture, table).await;
+        assert_eq!(
+            after.len(),
+            before[index].len() + 1,
+            "{table} gains one row"
+        );
+        for row in &before[index] {
+            assert!(after.contains(row), "{table} rewrote an earlier row: {row}");
+        }
+    }
+    for (index, table) in unchanged.iter().enumerate() {
+        assert_eq!(rows(&fixture, table).await, before[index + 3], "{table}");
+    }
+}

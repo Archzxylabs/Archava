@@ -214,6 +214,74 @@ async fn thirteen_workspaces_read_real_scoped_rows_and_fail_closed_on_current_gr
     )
     .await;
     assert!(blocked["plan"]["blocked"].is_object(), "{blocked}");
+    // OWN-T07 for every workspace module: disabling it (with whatever the
+    // registry says requires it) refuses its workspace read while an unrelated
+    // module keeps answering, and enabling it serves it again.
+    let mut revision = 2;
+    for domain in archava_adapters::erp::projections::WorkspaceDomain::ALL {
+        let id = domain.slug();
+        let mut toggled = vec![id];
+        toggled.extend(
+            archava_domain::modules::all()
+                .iter()
+                .filter(|module| module.owner_requires.contains(&id))
+                .map(|module| module.id),
+        );
+        let other = if id == "assets" { "projects" } else { "assets" };
+        for enabling in [false, true] {
+            let request = if enabling {
+                json!({"baseRevision":revision,"enable":toggled,"disable":[]})
+            } else {
+                json!({"baseRevision":revision,"enable":[],"disable":toggled})
+            };
+            let (_, planned) = common::call(
+                &app,
+                "POST",
+                "/own/plan",
+                json!({"tenant":"acme-retail","request":request}),
+                Some(&session),
+            )
+            .await;
+            assert!(planned["plan"]["blocked"].is_null(), "{id}: {planned}");
+            let (status, result) = common::call(
+                &app,
+                "POST",
+                "/own/apply",
+                json!({"tenant":"acme-retail","requestId":format!("toggle-{id}-{revision}"),"request":request,"confirmation":{"planHash":planned["plan"]["planHash"],"baseRevision":revision}}),
+                Some(&session),
+            )
+            .await;
+            assert_eq!(status, StatusCode::OK, "{id}: {result}");
+            revision += 1;
+            let (status, read) = common::call(
+                &app,
+                "GET",
+                &format!("/erp/{id}/workspace?tenant=acme-retail"),
+                json!({}),
+                Some(&session),
+            )
+            .await;
+            if enabling {
+                assert_eq!(status, StatusCode::OK, "{id} enabled again: {read}");
+            } else {
+                assert_eq!(status, StatusCode::FORBIDDEN, "{id} disabled: {read}");
+                assert_eq!(read["reason"], "module_disabled", "{id}: {read}");
+                let (status, _) = common::call(
+                    &app,
+                    "GET",
+                    &format!("/erp/{other}/workspace?tenant=acme-retail"),
+                    json!({}),
+                    Some(&session),
+                )
+                .await;
+                assert_eq!(status, StatusCode::OK, "{other} stays served without {id}");
+            }
+        }
+    }
+    assert_eq!(
+        revision, 28,
+        "thirteen modules were disabled and enabled again"
+    );
     let (_, all) = common::call(
         &app,
         "GET",
