@@ -772,3 +772,77 @@ async fn declared_inventory_and_payable_openings_are_explained_by_their_controls
     assert_eq!(lines[0].2, 300_000);
     assert_eq!(lines[1], ("OPEN-EQUITY".into(), 300_000, 0));
 }
+
+/// **Witness: receipts and stock costs that accounting has not posted are
+/// counted by the close-readiness report, and the close is refused.**
+#[tokio::test]
+async fn close_readiness_counts_unposted_receipt_and_stock_sources() {
+    let s = StockScenario::new(true).await;
+    let blockers = |report: &Value| -> Vec<(String, i64)> {
+        report["blockers"]
+            .as_array()
+            .expect("the report lists its blockers")
+            .iter()
+            .map(|b| {
+                (
+                    b["reason"].as_str().unwrap().to_string(),
+                    b["count"].as_i64().unwrap(),
+                )
+            })
+            .collect()
+    };
+    let path = format!(
+        "/erp/accounting/close-readiness?tenant=acme&periodId={}",
+        s.p.period["resourceId"].as_str().unwrap()
+    );
+    let close = input(
+        json!({"type":"period.close","id":s.p.period["resourceId"],"expectedRevision":1,"reason":"Captured sources must be posted first"}),
+    );
+
+    // A received order whose receipt source is captured but not yet drafted.
+    let po = s.p.draft_order(1).await;
+    s.p.purchase(json!({"operation":"order.confirm","id":po["id"],"expectedRevision":1,"reason":"Original acquisition mapping"})).await;
+    let order_line = s.p.order_line(&po).await;
+    let received=s.p.purchase(json!({"operation":"order.receive","id":po["id"],"expectedRevision":2,"landedFeeMinor":1,"allocationBasis":"value","lines":[{"lineId":order_line,"accepted":1,"rejected":0}],"reason":"Actual accepted inventory cost"})).await;
+    let (st, report) = call(&s.p.app, "GET", &path, Value::Null, Some(&s.p.alice)).await;
+    assert_eq!(st, StatusCode::OK, "{report}");
+    assert_eq!(
+        blockers(&report),
+        [("unposted_purchase_sources".to_string(), 1)]
+    );
+    assert_eq!(report["ready"], false);
+    assert_eq!(
+        send(&s.p.app, &s.p.alice, &close).await.0,
+        StatusCode::CONFLICT
+    );
+    let accounts: Vec<_> = [&s.p.accounts[0], &s.p.accounts[1], &s.p.accounts[3]]
+        .iter()
+        .map(|a| json!({"accountId":a["resourceId"],"expectedAccountRevision":1}))
+        .collect();
+    let journal=ok(&s.p.app,&s.p.alice,json!({"type":"purchase_source.draft","sourceId":received["requestId"],"code":"ACQUIRE","accounts":accounts,"reason":"Review immutable acquisition, separately post"})).await;
+    s.p.post(&journal).await;
+
+    // A fulfillment whose stock cost is captured but not yet posted.
+    let (_, sold, _) = s.sell(1).await;
+    let (st, report) = call(&s.p.app, "GET", &path, Value::Null, Some(&s.p.alice)).await;
+    assert_eq!(st, StatusCode::OK, "{report}");
+    assert_eq!(
+        blockers(&report),
+        [("unposted_stock_sources".to_string(), 1)]
+    );
+    assert_eq!(
+        send(&s.p.app, &s.p.alice, &close).await.0,
+        StatusCode::CONFLICT
+    );
+    let source = s.source(&sold).await;
+    let (st, v) = send(&s.p.app, &s.p.alice, &s.draft(&source, "STOCK-SOLD")).await;
+    assert_eq!(st, StatusCode::OK, "{v}");
+    s.p.post(&v["receipt"]).await;
+
+    let (st, report) = call(&s.p.app, "GET", &path, Value::Null, Some(&s.p.alice)).await;
+    assert_eq!(st, StatusCode::OK, "{report}");
+    assert_eq!(blockers(&report), []);
+    assert_eq!(report["ready"], true, "{report}");
+    let (st, v) = send(&s.p.app, &s.p.alice, &close).await;
+    assert_eq!(st, StatusCode::OK, "{v}");
+}
