@@ -6,12 +6,14 @@
 //! - Enforces strict fallback: Voice -> Chat degradation on disconnect or timeout.
 //! - Loopback mode for isolated, offline, and non-network integration testing.
 
+pub mod live;
 use archava_domain::presence::{
     generate_livekit_room_token, PresenceError, PresenceGateway, PresenceMode, PresenceSession,
     VoiceTranscriptFrame, DEFAULT_SESSION_TTL_MS,
 };
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use std::collections::BTreeSet;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use thiserror::Error;
@@ -29,10 +31,13 @@ pub enum VoiceProviderError {
 
     #[error("Invalid configuration: {0}")]
     InvalidConfig(String),
+
+    #[error("Live voice transcript transport is not mounted")]
+    TransportUnavailable,
 }
 
 /// Configuration for the realtime voice bridge.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct VoiceBridgeConfig {
     pub livekit_url: String,
     pub api_key: String,
@@ -40,6 +45,13 @@ pub struct VoiceBridgeConfig {
     pub api_secret: Vec<u8>,
     pub request_timeout: Duration,
     pub loopback_mode: bool,
+}
+impl std::fmt::Debug for VoiceBridgeConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("VoiceBridgeConfig")
+            .field("loopback_mode", &self.loopback_mode)
+            .finish_non_exhaustive()
+    }
 }
 
 impl Default for VoiceBridgeConfig {
@@ -59,14 +71,82 @@ impl Default for VoiceBridgeConfig {
 pub struct VoiceClient {
     config: VoiceBridgeConfig,
     gateway: Arc<Mutex<PresenceGateway>>,
+    live: Option<Arc<live::LiveConfig>>,
+    streams: Arc<Mutex<BTreeSet<String>>>,
 }
 
 impl VoiceClient {
     pub fn new(config: VoiceBridgeConfig) -> Self {
         Self {
             config,
+            live: None,
+            streams: Arc::new(Mutex::new(BTreeSet::new())),
             gateway: Arc::new(Mutex::new(PresenceGateway::new())),
         }
+    }
+
+    /// Whether this client has a transcript transport implementation. LiveKit
+    /// credentials alone only mint a join token; they do not make the host a
+    /// media/transcript bridge.
+    pub fn transport_available(&self) -> bool {
+        self.config.loopback_mode || self.live.is_some() && self.livekit_origins().is_some()
+    }
+
+    pub fn claim_stream(&self, id: &str) -> Result<StreamLease, VoiceProviderError> {
+        let mut streams = self
+            .streams
+            .lock()
+            .map_err(|_| VoiceProviderError::TransportUnavailable)?;
+        if streams.len() >= 32 || !streams.insert(id.to_string()) {
+            return Err(VoiceProviderError::TransportUnavailable);
+        }
+        Ok(StreamLease {
+            id: id.into(),
+            streams: Arc::clone(&self.streams),
+        })
+    }
+    pub fn with_live(mut self, config: live::LiveConfig) -> Self {
+        self.live = Some(Arc::new(config));
+        self
+    }
+    pub fn live_config(&self) -> Option<&live::LiveConfig> {
+        self.live.as_deref()
+    }
+    pub fn livekit_url(&self) -> &str {
+        &self.config.livekit_url
+    }
+    pub fn livekit_origins(&self) -> Option<Vec<String>> {
+        let url = reqwest::Url::parse(&self.config.livekit_url).ok()?;
+        if !matches!(url.scheme(), "https" | "wss" | "http" | "ws")
+            || !url.username().is_empty()
+            || url.password().is_some()
+            || url.query().is_some()
+            || url.fragment().is_some()
+            || url.path() != "/"
+        {
+            return None;
+        }
+        let local = url
+            .host_str()
+            .is_some_and(|host| matches!(host, "127.0.0.1" | "localhost" | "[::1]" | "::1"));
+        if matches!(url.scheme(), "http" | "ws") && !local {
+            return None;
+        }
+        let host = url.host_str()?;
+        let host = if host.contains(':') && !host.starts_with('[') {
+            format!("[{host}]")
+        } else {
+            host.to_string()
+        };
+        let authority = match url.port() {
+            Some(port) => format!("{host}:{port}"),
+            None => host,
+        };
+        Some(if matches!(url.scheme(), "https" | "wss") {
+            vec![format!("https://{authority}"), format!("wss://{authority}")]
+        } else {
+            vec![format!("http://{authority}"), format!("ws://{authority}")]
+        })
     }
 
     /// Creates a loopback client for mock and unit testing without network dependencies.
@@ -132,6 +212,13 @@ impl VoiceClient {
         frame: &VoiceTranscriptFrame,
         now_epoch_ms: u64,
     ) -> Result<VoiceTranscriptFrame, VoiceProviderError> {
+        if !self.config.loopback_mode {
+            // Do not manufacture an assistant transcript when a deployment has
+            // configured LiveKit but the media/transcript bridge is absent.
+            // The caller must surface this as unavailable until a real bridge
+            // is mounted.
+            return Err(VoiceProviderError::TransportUnavailable);
+        }
         let mut gw = self
             .gateway
             .lock()
@@ -176,6 +263,24 @@ impl VoiceClient {
         Ok(new_mode)
     }
 
+    /// Explicitly closes a presence session and releases its capacity slot.
+    pub fn close_session(
+        &self,
+        tenant_id: &str,
+        session_id: &str,
+        now_epoch_ms: u64,
+    ) -> Result<bool, VoiceProviderError> {
+        let mut gw = self
+            .gateway
+            .lock()
+            .map_err(|_| PresenceError::SigningError("mutex poisoned".into()))?;
+
+        // Expired sessions are not useful capacity and should not survive a
+        // close request merely because the caller reached this endpoint late.
+        let _ = gw.get_session(tenant_id, session_id, now_epoch_ms);
+        Ok(gw.close_session(tenant_id, session_id))
+    }
+
     /// Retrieves current session state.
     pub fn get_session(
         &self,
@@ -203,5 +308,18 @@ impl VoiceClient {
             .map_err(|_| PresenceError::SigningError("mutex poisoned".into()))?;
         let session = gw.find_session_by_id(session_id, now_epoch_ms)?;
         Ok(session.clone())
+    }
+}
+
+/// Releasing a connection also releases its single-stream lease on every exit.
+pub struct StreamLease {
+    id: String,
+    streams: Arc<Mutex<BTreeSet<String>>>,
+}
+impl Drop for StreamLease {
+    fn drop(&mut self) {
+        if let Ok(mut streams) = self.streams.lock() {
+            streams.remove(&self.id);
+        }
     }
 }

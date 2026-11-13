@@ -1,0 +1,369 @@
+{
+  "researchDate": "2026-11-06",
+  "currentArchavaSource": "c299a8e192bcdbbe68a270ea7ada189cd6a856790c6a4a6c8e940c7c16e2a8dd",
+  "productFamilies": 18,
+  "specialistWorkflowComparators": 3,
+  "sourceCount": 45,
+  "sources": [
+    {
+      "id": "S01",
+      "organization": "Microsoft",
+      "title": "Record to report",
+      "url": "https://learn.microsoft.com/en-us/dynamics365/guidance/business-processes/record-to-report-overview",
+      "kind": "technical documentation",
+      "scope_and_limit": "Hubungan operasi, subledger, posting, laporan dan close"
+    },
+    {
+      "id": "S02",
+      "organization": "Microsoft",
+      "title": "Order to cash",
+      "url": "https://learn.microsoft.com/en-us/dynamics365/guidance/business-processes/order-to-cash-overview",
+      "kind": "technical documentation",
+      "scope_and_limit": "Definisi proses sales sampai cash"
+    },
+    {
+      "id": "S03",
+      "organization": "Microsoft",
+      "title": "Source to pay",
+      "url": "https://learn.microsoft.com/en-us/dynamics365/guidance/business-processes/source-to-pay-overview",
+      "kind": "technical documentation",
+      "scope_and_limit": "Procurement, vendor invoice dan pembayaran"
+    },
+    {
+      "id": "S04",
+      "organization": "SAP",
+      "title": "Universal Journal",
+      "url": "https://help.sap.com/docs/SAP_S4HANA_CLOUD/0fa84c9d9c634132b7c4abb9ffdd8f06/523b8a55559ad007e10000000a44538d.html",
+      "kind": "technical documentation",
+      "scope_and_limit": "Financial dan management accounting; release 2608 dalam halaman"
+    },
+    {
+      "id": "S05",
+      "organization": "SAP",
+      "title": "S/4HANA product learning",
+      "url": "https://learning.sap.com/products/s4hana-cloud",
+      "kind": "official product learning",
+      "scope_and_limit": "Portofolio domain ERP"
+    },
+    {
+      "id": "S06",
+      "organization": "Oracle",
+      "title": "Finance and Accounting",
+      "url": "https://www.oracle.com/erp/finance-and-accounting/",
+      "kind": "official product page",
+      "scope_and_limit": "Financials, EPM, procurement, project dan risk; periksa lisensi terpisah"
+    },
+    {
+      "id": "S07",
+      "organization": "Oracle",
+      "title": "Fusion Applications",
+      "url": "https://www.oracle.com/applications/",
+      "kind": "official portfolio page",
+      "scope_and_limit": "Batas ERP dibandingkan SCM/HCM dan aplikasi terkait"
+    },
+    {
+      "id": "S08",
+      "organization": "Oracle NetSuite",
+      "title": "OneWorld",
+      "url": "https://www.netsuite.com/portal/products/global-business-management.shtml",
+      "kind": "official product page",
+      "scope_and_limit": "Global accounting, currency dan subsidiary; OneWorld add-on"
+    },
+    {
+      "id": "S09",
+      "organization": "Microsoft",
+      "title": "Business Central functionality",
+      "url": "https://learn.microsoft.com/en-us/dynamics365/business-central/across-business-functionality",
+      "kind": "technical documentation",
+      "scope_and_limit": "Financial, warehouse, project, asset dan operasi"
+    },
+    {
+      "id": "S10",
+      "organization": "Microsoft",
+      "title": "Business Central manufacturing",
+      "url": "https://learn.microsoft.com/en-us/dynamics365/business-central/production-manage-manufacturing",
+      "kind": "technical documentation",
+      "scope_and_limit": "BOM/routing/production; Premium experience"
+    },
+    {
+      "id": "S11",
+      "organization": "Infor",
+      "title": "CloudSuite product family explanation",
+      "url": "https://www.infor.com/blog/erp-end-of-support-next-steps",
+      "kind": "official vendor article",
+      "scope_and_limit": "Core ERP dan industri; bukan bukti pengujian mandiri"
+    },
+    {
+      "id": "S12",
+      "organization": "Epicor",
+      "title": "Kinetic",
+      "url": "https://www.epicor.com/en-us/products/enterprise-resource-planning-erp/kinetic/",
+      "kind": "official product page",
+      "scope_and_limit": "Discrete manufacturing ERP"
+    },
+    {
+      "id": "S13",
+      "organization": "Epicor",
+      "title": "Kinetic Financial Management",
+      "url": "https://www.epicor.com/en-us/products/enterprise-resource-planning-erp/kinetic/financial-management/",
+      "kind": "official product page",
+      "scope_and_limit": "Financial accounting dan konfigurasi industri"
+    },
+    {
+      "id": "S14",
+      "organization": "IFS",
+      "title": "IFS Cloud",
+      "url": "https://www.ifs.com/en/ifs-cloud",
+      "kind": "official product page",
+      "scope_and_limit": "ERP/EAM/SCM/FSM; availability per implementasi"
+    },
+    {
+      "id": "S15",
+      "organization": "Workday",
+      "title": "Financial Management",
+      "url": "https://www.workday.com/en-us/products/financial-management.html",
+      "kind": "official product page",
+      "scope_and_limit": "Finance, reporting dan controlled workflows"
+    },
+    {
+      "id": "S16",
+      "organization": "Workday",
+      "title": "Close and Consolidation",
+      "url": "https://www.workday.com/en-us/products/financial-management/close-consolidate.html",
+      "kind": "official product page",
+      "scope_and_limit": "FX translation, intercompany dan close"
+    },
+    {
+      "id": "S17",
+      "organization": "Acumatica",
+      "title": "Product Editions",
+      "url": "https://www.acumatica.com/cloud-erp-software/product-editions/",
+      "kind": "official feature and edition matrix",
+      "scope_and_limit": "Included dibandingkan optional per edisi"
+    },
+    {
+      "id": "S18",
+      "organization": "Sage",
+      "title": "X3 capabilities",
+      "url": "https://www.sage.com/en-us/sage-business-cloud/sage-x3/product-capabilities/",
+      "kind": "official product page",
+      "scope_and_limit": "Finance, supply chain dan produksi"
+    },
+    {
+      "id": "S19",
+      "organization": "Odoo",
+      "title": "Accounting documentation 19.0",
+      "url": "https://github.com/odoo/documentation/blob/19.0/content/applications/finance/accounting.rst",
+      "kind": "official documentation source",
+      "scope_and_limit": "Diperiksa melalui GitHub karena timeout situs; edisi perlu dikunci"
+    },
+    {
+      "id": "S20",
+      "organization": "Odoo",
+      "title": "AI agents documentation 19.0",
+      "url": "https://github.com/odoo/documentation/blob/19.0/content/applications/productivity/ai/agents.rst",
+      "kind": "official documentation source",
+      "scope_and_limit": "Topics/tools/sources dan aksi; bukan hanya chat"
+    },
+    {
+      "id": "S21",
+      "organization": "Odoo",
+      "title": "Multi-currency documentation 19.0",
+      "url": "https://www.odoo.com/documentation/19.0/applications/finance/accounting/get_started/multi_currency.html",
+      "kind": "technical documentation",
+      "scope_and_limit": "Company currency dan exchange differences"
+    },
+    {
+      "id": "S22",
+      "organization": "Frappe",
+      "title": "ERPNext accounting",
+      "url": "https://docs.frappe.io/erpnext/accounting-introduction",
+      "kind": "technical documentation",
+      "scope_and_limit": "Ledger dari transaksi operasi dan pelaporan"
+    },
+    {
+      "id": "S23",
+      "organization": "Frappe",
+      "title": "ERPNext manufacturing",
+      "url": "https://docs.frappe.io/erpnext/manufacturing",
+      "kind": "technical documentation",
+      "scope_and_limit": "Production dengan inventory dan quality"
+    },
+    {
+      "id": "S24",
+      "organization": "Frappe",
+      "title": "ERPNext Work Order",
+      "url": "https://docs.frappe.io/erpnext/work-order",
+      "kind": "technical documentation",
+      "scope_and_limit": "Materials, BOM, shop-floor orders"
+    },
+    {
+      "id": "S25",
+      "organization": "Frappe",
+      "title": "ERPNext Subcontracting",
+      "url": "https://docs.frappe.io/erpnext/subcontracting",
+      "kind": "technical documentation",
+      "scope_and_limit": "Stock/accounting pada receipt subcontracting"
+    },
+    {
+      "id": "S26",
+      "organization": "Zoho",
+      "title": "ERP and Analytics launch context",
+      "url": "https://www.zoho.com/blog/analytics/zoho-analytics-meets-zoho-erp.html",
+      "kind": "official dated vendor article",
+      "scope_and_limit": "Februari 2026; ERP diluncurkan di India"
+    },
+    {
+      "id": "S27",
+      "organization": "Zoho",
+      "title": "ERP September 2026 updates",
+      "url": "https://help.zoho.com/portal/en-gb/community/topic/zoho-erp-product-updates-september-2026",
+      "kind": "official product update",
+      "scope_and_limit": "Manufacturing Order controls; bukan klaim semua wilayah"
+    },
+    {
+      "id": "S28",
+      "organization": "Mekari Jurnal",
+      "title": "Feature catalogue",
+      "url": "https://www.jurnal.id/id/fitur/",
+      "kind": "official product page",
+      "scope_and_limit": "Accounting, reconciliation, reporting dan currency"
+    },
+    {
+      "id": "S29",
+      "organization": "Accurate",
+      "title": "Financial reporting",
+      "url": "https://accurate.id/online/fitur/laporan-keuangan/",
+      "kind": "official product page",
+      "scope_and_limit": "P&L, balance sheet dan cashflow"
+    },
+    {
+      "id": "S30",
+      "organization": "Accurate",
+      "title": "Bank reconciliation",
+      "url": "https://help.accurate.id/product/accurate-online/fitur-aol/kas-bank/rekonsiliasi-bank/rekonsiliasi-bank-accurate-online/",
+      "kind": "technical product tutorial",
+      "scope_and_limit": "Bank matching/reconciliation workflow"
+    },
+    {
+      "id": "S31",
+      "organization": "Accurate",
+      "title": "Multi Branch",
+      "url": "https://help.accurate.id/product/accurate-online/fitur-aol/perusahaan/cabang/mengenal-fitur-cabang/",
+      "kind": "technical product tutorial",
+      "scope_and_limit": "Cabang merupakan add-on"
+    },
+    {
+      "id": "S32",
+      "organization": "HashMicro",
+      "title": "ERP product",
+      "url": "https://www.hashmicro.com/id/sistem-erp",
+      "kind": "official marketing/product page",
+      "scope_and_limit": "Cakupan lintas domain; perlu demo dan validasi kontrak"
+    },
+    {
+      "id": "S33",
+      "organization": "Rillet",
+      "title": "AI accounting",
+      "url": "https://www.rillet.com/platform/ai-accounting-software",
+      "kind": "official product page",
+      "scope_and_limit": "AI finance, ledger, reconciliation dan entity"
+    },
+    {
+      "id": "S34",
+      "organization": "Campfire",
+      "title": "Current product",
+      "url": "https://campfire.ai/",
+      "kind": "official product page",
+      "scope_and_limit": "Accounting, revenue, report dan close; redirect domain lama diperiksa"
+    },
+    {
+      "id": "S35",
+      "organization": "Campfire",
+      "title": "Accruals archived public help",
+      "url": "https://help.meetcampfire.com/articles/6230744932-accruals",
+      "kind": "dated official help snapshot",
+      "scope_and_limit": "Terakhir dipelihara Juni 2026; help baru mengarah SSO; tidak dianggap dokumentasi privat terkini"
+    },
+    {
+      "id": "S36",
+      "organization": "SAP",
+      "title": "Joule agentic workflows",
+      "url": "https://www.sap.com/products/artificial-intelligence/joule-studio/agentic-workflows.html",
+      "kind": "official product documentation",
+      "scope_and_limit": "Agen plus deterministic workflow dan human oversight"
+    },
+    {
+      "id": "S37",
+      "organization": "SAP",
+      "title": "AI Q3 2026 release highlights",
+      "url": "https://news.sap.com/2026/10/ai-release-highlights-q3-2026/",
+      "kind": "official dated release article",
+      "scope_and_limit": "26 Oktober 2026; membedakan rilis, early adopter dan pilot"
+    },
+    {
+      "id": "S38",
+      "organization": "Microsoft",
+      "title": "Supervise agent tasks",
+      "url": "https://learn.microsoft.com/en-us/dynamics365/business-central/supervise-agent-tasks",
+      "kind": "technical documentation",
+      "scope_and_limit": "Task timeline, review, approval, missing input dan continuation"
+    },
+    {
+      "id": "S39",
+      "organization": "Oracle",
+      "title": "AI ERP capabilities",
+      "url": "https://www.oracle.com/erp/ai-financials/",
+      "kind": "official product capability catalogue",
+      "scope_and_limit": "Finance agents; tidak membuktikan setiap tenant telah mengaktifkan semua fitur"
+    },
+    {
+      "id": "S40",
+      "organization": "Oracle",
+      "title": "AI ERP release feature list",
+      "url": "https://docs.oracle.com/en/cloud/saas/fusion-ai/aiafl/ai-erp.html",
+      "kind": "technical release catalogue",
+      "scope_and_limit": "Jenis fitur dan release; periksa uptake dan paket"
+    },
+    {
+      "id": "S41",
+      "organization": "Microsoft",
+      "title": "MFA Business Central",
+      "url": "https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/security/multifactor-authentication",
+      "kind": "technical documentation",
+      "scope_and_limit": "Microsoft Entra MFA dan Conditional Access"
+    },
+    {
+      "id": "S42",
+      "organization": "DJP",
+      "title": "Coretax official portal",
+      "url": "https://pajak.go.id/id/coretaxdjp",
+      "kind": "government primary source",
+      "scope_and_limit": "Rujukan otoritas; riset tidak menguji submission atau menetapkan tarif"
+    },
+    {
+      "id": "S43",
+      "organization": "Oracle Hospitality",
+      "title": "OPERA End of Day controls",
+      "url": "https://docs.oracle.com/en/industries/hospitality/opera-cloud/26.2/ocsuh/c_opera_controls_end_of_day.htm",
+      "kind": "technical product documentation",
+      "scope_and_limit": "Specialist workflow comparator beyond ERP family count"
+    },
+    {
+      "id": "S44",
+      "organization": "Oracle Food and Beverage",
+      "title": "Simphony Enterprise Cash Management",
+      "url": "https://docs.oracle.com/en/industries/food-beverage/simphony/simmu/c_ecm_operations.htm",
+      "kind": "technical product documentation",
+      "scope_and_limit": "Cashiering operations and privileges; specialist comparator"
+    },
+    {
+      "id": "S45",
+      "organization": "Frappe Education",
+      "title": "Fee Schedule",
+      "url": "https://docs.frappe.io/education/fee-schedule",
+      "kind": "technical product documentation",
+      "scope_and_limit": "Student fee schedule to invoice; separate Frappe app"
+    }
+  ]
+}

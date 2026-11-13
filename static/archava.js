@@ -104,14 +104,18 @@
         // POST /embed/checkout/sign, which needs a session and the CSRF header.
         // Minting that signature is a server call, so this client passes the
         // signed URL (or its `sig`) instead of assembling one the host refuses.
-        if (!params.url && !params.sig) {
+        if (!params.orderId || (!params.url && !params.sig)) {
           if (typeof params.onError === 'function') {
-            params.onError({ reason: 'checkout_signature_required' });
+            params.onError({ reason: params.orderId ? 'checkout_signature_required' : 'checkout_order_required' });
           }
           return;
         }
         var overlay = document.createElement('div');
         overlay.id = 'archava-modal-overlay';
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
+        overlay.setAttribute('aria-label', 'Archava Checkout');
+        overlay.tabIndex = -1;
         overlay.style.cssText =
           'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(15,23,42,0.8);backdrop-filter:blur(8px);z-index:999999;display:flex;align-items:center;justify-content:center;transition:opacity 0.25s ease;';
 
@@ -119,17 +123,21 @@
         var query = new URLSearchParams({
           tenant: tenantId,
           orderId: params.orderId || '',
-          amount: params.amountCents || 0,
+          amount: params.amount !== undefined ? params.amount : params.amountCents || 0,
+          currency: params.currency || 'IDR',
+          item: params.item || 'Archava Verified Checkout',
           embed: 'true',
         });
         if (params.sig) {
           query.set('sig', params.sig);
         }
         iframe.src = params.url || baseUrl + '/embed/checkout?' + query.toString();
+        iframe.title = 'Archava Checkout';
         iframe.style.cssText =
           'width:92%;max-width:580px;height:88vh;max-height:820px;border:1px solid rgba(255,255,255,0.12);border-radius:24px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.6);background:#090d16;';
 
         var closeBtn = document.createElement('button');
+        closeBtn.type = 'button';
         closeBtn.innerHTML = '&#x2715;';
         closeBtn.setAttribute('aria-label', 'Close Archava Checkout');
         closeBtn.style.cssText =
@@ -143,11 +151,15 @@
           closeBtn.style.transform = 'scale(1)';
         };
 
+        var previouslyFocused = document.activeElement;
+        var handleKeydown;
         var cleanup = function () {
           if (overlay.parentNode) {
             overlay.parentNode.removeChild(overlay);
           }
           window.removeEventListener('message', handleMessage);
+          window.removeEventListener('keydown', handleKeydown);
+          if (previouslyFocused && typeof previouslyFocused.focus === 'function') previouslyFocused.focus();
         };
 
         closeBtn.onclick = function () {
@@ -217,10 +229,19 @@
           }
         };
 
+        handleKeydown = function (event) {
+          if (event.key === 'Escape') {
+            event.preventDefault();
+            cleanup();
+            if (typeof params.onCancel === 'function') params.onCancel();
+          }
+        };
         window.addEventListener('message', handleMessage);
+        window.addEventListener('keydown', handleKeydown);
         overlay.appendChild(iframe);
         overlay.appendChild(closeBtn);
         document.body.appendChild(overlay);
+        closeBtn.focus();
       },
 
       /**
@@ -233,9 +254,16 @@
           return;
         }
 
-        mountOptions = mountOptions || {};
-        var view = mountOptions.view || 'erp';
-        var height = mountOptions.height || '680px';
+         mountOptions = mountOptions || {};
+         var view = mountOptions.view || 'erp';
+         var allowedViews = ['home', 'erp', 'contacts', 'contact', 'desk', 'owner', 'recover', 'draft'];
+         if (allowedViews.indexOf(view) === -1) {
+           if (typeof mountOptions.onError === 'function') {
+             mountOptions.onError({ reason: 'unsupported_view' });
+           }
+           return;
+         }
+         var height = mountOptions.height || '680px';
         var activeMode = mountOptions.mode || mode;
         var activeProfile = mountOptions.profile || profile;
 
@@ -282,12 +310,15 @@
         var trigger = null;
         if (!isKiosk) {
           trigger = document.createElement('button');
+          trigger.type = 'button';
           trigger.id = 'archava-trigger-btn';
           trigger.setAttribute('aria-label', 'Open Ava Partner');
+          trigger.setAttribute('aria-haspopup', 'dialog');
+          trigger.setAttribute('aria-expanded', 'false');
           trigger.style.cssText =
             'width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg, ' +
             themeColor +
-            ', #818cf8);box-shadow:0 12px 28px rgba(99,102,241,0.45);border:2px solid rgba(255,255,255,0.2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);outline:none;';
+            ', #818cf8);box-shadow:0 12px 28px rgba(99,102,241,0.45);border:2px solid rgba(255,255,255,0.2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);';
 
           trigger.onmouseover = function () {
             trigger.style.transform = 'scale(1.08) translateY(-2px)';
@@ -312,6 +343,10 @@
         // Panel Window
         var panel = document.createElement('div');
         panel.id = 'archava-panel';
+        panel.setAttribute('role', 'dialog');
+        panel.setAttribute('aria-modal', 'true');
+        panel.setAttribute('aria-labelledby', 'archava-panel-title');
+        panel.tabIndex = -1;
         panel.style.cssText =
           'display:' + (isKiosk ? 'flex' : 'none') + ';' +
           'flex-direction:column;border-radius:' + (isKiosk ? '0' : '24px') + ';' +
@@ -328,13 +363,15 @@
           '<div style="display:flex;align-items:center;gap:10px;">' +
             '<div style="width:10px;height:10px;border-radius:50%;background:#10b981;box-shadow:0 0 8px #10b981;"></div>' +
             '<div>' +
-              '<div style="font-weight:600;font-size:14px;color:#f8fafc;letter-spacing:-0.01em;">Ava Autonomous Partner</div>' +
-              '<div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em;">' + activeProfile.replace('_', ' ') + ' &bull; ' + activeMode.replace('_', ' ') + '</div>' +
+              '<div id="archava-panel-title" style="font-weight:600;font-size:14px;color:#f8fafc;letter-spacing:-0.01em;">Ava Assistant</div>' +
+              '<div style="font-size:10px;color:#fbbf24;text-transform:uppercase;letter-spacing:0.05em;">Preview only &bull; live backend required</div>' +
             '</div>' +
           '</div>';
 
         if (!isKiosk) {
           var closePanelBtn = document.createElement('button');
+          closePanelBtn.type = 'button';
+          closePanelBtn.setAttribute('aria-label', 'Close Ava assistant');
           closePanelBtn.innerHTML = '&#x2715;';
           closePanelBtn.style.cssText =
             'background:transparent;border:none;color:#94a3b8;cursor:pointer;font-size:16px;padding:4px;';
@@ -357,7 +394,7 @@
             '<div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#818cf8,#c084fc);display:flex;align-items:center;justify-content:center;box-shadow:0 0 35px rgba(129,140,248,0.4);border:2px solid rgba(255,255,255,0.4);animation:archava-pulse 2.5s infinite ease-in-out;">' +
               '<svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' +
             '</div>' +
-            '<div style="margin-top:10px;font-size:11px;color:#cbd5e1;font-weight:500;">Ava Live Concierge &bull; Siap Membantu</div>';
+              '<div style="margin-top:10px;font-size:11px;color:#fbbf24;font-weight:500;">Visual preview &bull; live provider required</div>';
           panel.appendChild(avatarStage);
         }
 
@@ -370,8 +407,8 @@
             '<div style="width:110px;height:110px;border-radius:50%;background:radial-gradient(circle,#6366f1 0%,rgba(99,102,241,0.1) 70%);display:flex;align-items:center;justify-content:center;box-shadow:0 0 45px rgba(99,102,241,0.5);animation:archava-pulse 1.8s infinite ease-in-out;">' +
               '<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>' +
             '</div>' +
-            '<div style="font-size:14px;color:#f8fafc;font-weight:500;">Mendengarkan... Silakan bicara</div>' +
-            '<div style="font-size:11px;color:#64748b;">Opus 48kHz HD Audio Aktif</div>';
+              '<div style="font-size:14px;color:#f8fafc;font-weight:500;">Voice preview unavailable</div>' +
+              '<div style="font-size:11px;color:#64748b;">Connect a verified media provider before use</div>';
           panel.appendChild(voiceStage);
         }
 
@@ -385,19 +422,21 @@
         var cardsData = [
           {
             id: 'card_ar_1',
+            actionType: 'dispatch_ar_reminders',
             priority: 'urgent',
-            title: '3 Tagihan Jatuh Tempo',
-            badge: 'Rp 14.2M',
-            desc: 'Overdue > 7 hari',
-            actionText: 'Kirim WA + QRIS',
+             title: 'Example billing reminder',
+             badge: 'Preview',
+             desc: 'No tenant data loaded',
+             actionText: 'Run verified action',
           },
           {
             id: 'card_stock_1',
+            actionType: 'generate_reorder_po',
             priority: 'attention',
-            title: '2 Item Stok Menipis',
-            badge: 'Stok Kritis',
-            desc: 'Biji Kopi & Susu UHT',
-            actionText: 'Draft PO Supplier',
+             title: 'Example stock alert',
+             badge: 'Preview',
+             desc: 'No inventory data loaded',
+             actionText: 'Run verified action',
           },
         ];
 
@@ -422,29 +461,48 @@
             '</div>';
 
           var actBtn = document.createElement('button');
-          actBtn.style.cssText =
+           actBtn.type = 'button';
+           actBtn.style.cssText =
             'width:100%;padding:4px 8px;font-size:10px;font-weight:600;border-radius:6px;background:' +
             (isUrgent ? '#ef4444' : '#eab308') +
             ';color:#fff;border:none;cursor:pointer;transition:opacity 0.2s;';
           actBtn.textContent = card.actionText + ' (1-Tap)';
 
-          actBtn.onclick = function () {
-            actBtn.disabled = true;
-            actBtn.textContent = 'Memproses...';
-            setTimeout(function () {
-              actBtn.style.background = '#10b981';
-              actBtn.textContent = '✅ Berhasil!';
-              if (chatStream) {
-                var confirmMsg = document.createElement('div');
-                confirmMsg.style.cssText =
-                  'background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);border-radius:12px;padding:10px 12px;color:#a7f3d0;font-size:12px;line-height:1.4;max-width:90%;align-self:flex-start;';
-                confirmMsg.innerHTML =
-                  '<strong>Aksi Selesai:</strong> ' + card.title + ' berhasil dieksekusi via Ava Cockpit.';
-                chatStream.appendChild(confirmMsg);
-                chatStream.scrollTop = chatStream.scrollHeight;
-              }
-            }, 800);
-          };
+           actBtn.onclick = async function () {
+             actBtn.disabled = true;
+             actBtn.textContent = 'Memeriksa...';
+             var actionResult;
+             try {
+               if (typeof mountOptions.onAction !== 'function') {
+                 throw new Error('No verified action transport is configured.');
+               }
+               actionResult = await mountOptions.onAction({
+                 cardId: card.id,
+                 actionType: card.actionType,
+                 profile: activeProfile,
+               });
+             } catch (error) {
+               actionResult = { ok: false, message: error && error.message ? error.message : 'Action was not executed.' };
+             }
+
+             var statusMessage = document.createElement('div');
+             statusMessage.setAttribute('role', 'status');
+             statusMessage.style.cssText =
+               'background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:10px 12px;color:#cbd5e1;font-size:12px;line-height:1.4;max-width:90%;align-self:flex-start;';
+             if (actionResult && actionResult.ok === true) {
+               actBtn.style.background = '#10b981';
+               actBtn.textContent = '✓ Confirmed';
+               statusMessage.textContent = actionResult.message || 'The action was confirmed by the configured backend.';
+             } else {
+               actBtn.disabled = false;
+               actBtn.textContent = card.actionText;
+               statusMessage.textContent = (actionResult && actionResult.message) || 'This action is not connected to a verified backend.';
+             }
+             if (chatStream) {
+               chatStream.appendChild(statusMessage);
+               chatStream.scrollTop = chatStream.scrollHeight;
+             }
+           };
 
           cardEl.appendChild(actBtn);
           actionFeed.appendChild(cardEl);
@@ -454,14 +512,16 @@
         // Chat Conversation Stream (if Chat enabled)
         var chatStream = null;
         if (hasChat) {
-          chatStream = document.createElement('div');
-          chatStream.id = 'archava-chat-stream';
+           chatStream = document.createElement('div');
+           chatStream.id = 'archava-chat-stream';
+           chatStream.setAttribute('aria-live', 'polite');
+           chatStream.setAttribute('aria-label', 'Ava conversation');
           chatStream.style.cssText =
             'flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;';
           
           chatStream.innerHTML =
             '<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:12px 14px;color:#e2e8f0;font-size:13px;line-height:1.5;max-width:85%;align-self:flex-start;">' +
-              'Halo! Saya Ava, co-pilot operasional Anda. Pilih aksi cepat atau tanyakan apa saja.' +
+              'Ava UI preview. Connect a verified assistant transport before asking for live business data.' +
             '</div>';
 
           // Quick Prompt Pills
@@ -517,35 +577,26 @@
             textInput.value = '';
             chatStream.scrollTop = chatStream.scrollHeight;
 
-            // Bimodal Generative Response Simulator
-            setTimeout(function () {
-              var qLower = val.toLowerCase();
-              var reply = document.createElement('div');
-              reply.style.cssText =
-                'background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:10px 12px;color:#e2e8f0;font-size:12px;line-height:1.4;max-width:88%;align-self:flex-start;';
-
-              if (qLower.indexOf('omzet') !== -1 || qLower.indexOf('penjualan') !== -1) {
-                reply.innerHTML =
-                  '<div style="font-size:11px;color:#94a3b8;margin-bottom:4px;">📊 Ringkasan Penjualan Hari Ini:</div>' +
-                  '<div style="font-size:18px;font-weight:700;color:#10b981;">Rp 84.500.000 <span style="font-size:11px;color:#34d399;font-weight:500;">(+18.4%)</span></div>' +
-                  '<div style="font-size:11px;color:#cbd5e1;margin-top:4px;">Total 142 pesanan selesai. 89% via QRIS instan.</div>' +
-                  '<div style="margin-top:8px;height:4px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden;"><div style="width:78%;height:100%;background:#10b981;"></div></div>';
-              } else if (qLower.indexOf('stok') !== -1 || qLower.indexOf('habis') !== -1) {
-                reply.innerHTML =
-                  '<div style="font-size:11px;color:#fca5a5;font-weight:600;margin-bottom:4px;">⚠️ Peringatan Stok Kritis (FIFO):</div>' +
-                  '<div style="display:flex;flex-direction:column;gap:4px;margin-top:4px;">' +
-                    '<div style="display:flex;justify-content:space-between;font-size:11px;color:#f8fafc;"><span>Biji Kopi Arabica</span><strong style="color:#ef4444;">1.8 kg (Sisa 1 hari)</strong></div>' +
-                    '<div style="display:flex;justify-content:space-between;font-size:11px;color:#f8fafc;"><span>Susu UHT Fresh</span><strong style="color:#eab308;">4 liter (Sisa 2 hari)</strong></div>' +
-                  '</div>' +
-                  '<button style="margin-top:8px;width:100%;padding:6px;background:#6366f1;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Generate Purchase Order (PO)</button>';
-              } else {
-                reply.innerHTML =
-                  'Saya telah mencatat instruksi Anda. Menghubungkan ke Ava Cockpit Engine untuk memverifikasi kebijakan dan mengeksekusi aksi terkait.';
-              }
-
-              chatStream.appendChild(reply);
-              chatStream.scrollTop = chatStream.scrollHeight;
-            }, 600);
+             var reply = document.createElement('div');
+             reply.style.cssText =
+               'background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:10px 12px;color:#e2e8f0;font-size:12px;line-height:1.4;max-width:88%;align-self:flex-start;';
+             if (typeof mountOptions.onQuery !== 'function') {
+               reply.textContent = 'Live assistant data is not connected. No business action or synthetic result was created.';
+               chatStream.appendChild(reply);
+               chatStream.scrollTop = chatStream.scrollHeight;
+               return;
+             }
+             Promise.resolve(mountOptions.onQuery({ query: val, profile: activeProfile }))
+               .then(function (result) {
+                 reply.textContent = result && result.message ? result.message : 'The configured assistant returned no displayable result.';
+               })
+               .catch(function (error) {
+                 reply.textContent = error && error.message ? error.message : 'The assistant request failed before a result was confirmed.';
+               })
+               .finally(function () {
+                 chatStream.appendChild(reply);
+                 chatStream.scrollTop = chatStream.scrollHeight;
+               });
           }
 
           sendBtn.onclick = function () {
@@ -565,17 +616,54 @@
         document.body.appendChild(widgetRoot);
 
         // Keyframe CSS injection
-        var styleTag = document.createElement('style');
-        styleTag.textContent =
-          '@keyframes archava-pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.85; } }';
+         var styleTag = document.createElement('style');
+         styleTag.textContent =
+           '@keyframes archava-pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.85; } }' +
+           '@media (prefers-reduced-motion: reduce) { #archava-assistant-widget *, #archava-assistant-widget *::before, #archava-assistant-widget *::after { animation: none !important; transition: none !important; } }';
         document.head.appendChild(styleTag);
 
         // Toggle behavior
         if (trigger) {
-          trigger.onclick = function () {
-            var isHidden = panel.style.display === 'none';
-            panel.style.display = isHidden ? 'flex' : 'none';
-          };
+           var previouslyFocused = null;
+           var closePanel = function () {
+             panel.style.display = 'none';
+             trigger.setAttribute('aria-expanded', 'false');
+             if (previouslyFocused && typeof previouslyFocused.focus === 'function') previouslyFocused.focus();
+           };
+           closePanelBtn.onclick = closePanel;
+           trigger.onclick = function () {
+             var isHidden = panel.style.display === 'none';
+             if (isHidden) {
+               previouslyFocused = document.activeElement;
+               panel.style.display = 'flex';
+               trigger.setAttribute('aria-expanded', 'true');
+               closePanelBtn.focus();
+             } else {
+               closePanel();
+             }
+           };
+           panel.addEventListener('keydown', function (event) {
+             if (event.key === 'Escape') {
+               event.preventDefault();
+               closePanel();
+                return;
+              }
+              if (event.key === 'Tab') {
+                var focusable = panel.querySelectorAll(
+                  'button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+                );
+                if (!focusable.length) return;
+                var first = focusable[0];
+                var last = focusable[focusable.length - 1];
+                if (event.shiftKey && document.activeElement === first) {
+                  event.preventDefault();
+                  last.focus();
+                } else if (!event.shiftKey && document.activeElement === last) {
+                  event.preventDefault();
+                  first.focus();
+                }
+              }
+            });
         }
       },
     };

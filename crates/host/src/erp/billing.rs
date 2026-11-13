@@ -198,6 +198,10 @@ fn map_purchase_result(error: PurchaseError) -> Result<(StatusCode, ErpBody), Er
 
 fn gate_outcome(error: ErpGateError) -> (StatusCode, ErpBody) {
     match error {
+        ErpGateError::Configuration(error) => {
+            let (status, body) = error.response();
+            (status, ErpBody::Doc(body.0))
+        }
         ErpGateError::Authority(refusal) => outcome(authority_refusal(&refusal)),
         ErpGateError::Database(ledger, source) => {
             tracing::error!(error = %source, "refusing: {ledger} database failure");
@@ -418,6 +422,14 @@ pub async fn submit_billing_command(
     let fingerprint = fingerprint(state, &mutation);
 
     let mut transaction = begin_billing(state, submission.tenant.clone()).await?;
+    if matches!(
+        mutation.command,
+        BillingCommand::CreateInvoiceFromOrder { .. }
+    ) {
+        crate::own::require_erp_module(&mut transaction, "archava_commerce")
+            .await
+            .map_err(ErpGateError::Configuration)?;
+    }
 
     // 1. The member ladder — ONE row: the principal's own membership,
     //    active, its permissions and scope, its OWN id as the owner (the

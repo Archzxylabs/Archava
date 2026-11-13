@@ -25,6 +25,91 @@ use axum::http::{header, HeaderMap, HeaderValue};
 use axum::middleware::Next;
 use axum::response::Response;
 
+/// Explicit transport peers permitted to supply a forwarded client chain.
+/// Empty by default: a public caller cannot select its own login budget.
+#[derive(Debug, Clone, Default)]
+pub struct TrustedProxies(Vec<(IpAddr, u8)>);
+
+impl TrustedProxies {
+    pub fn parse(raw: &str) -> Result<Self, String> {
+        let mut networks = Vec::new();
+        for entry in raw.split(',').map(str::trim).filter(|s| !s.is_empty()) {
+            if networks.len() >= 64 {
+                return Err("ARCHAVA_TRUSTED_PROXIES has too many entries".into());
+            }
+            let (address, prefix) = entry
+                .split_once('/')
+                .map_or((entry, None), |(a, p)| (a, Some(p)));
+            let address: IpAddr = address
+                .parse()
+                .map_err(|_| "ARCHAVA_TRUSTED_PROXIES requires IP addresses or CIDRs")?;
+            let width = if address.is_ipv4() { 32 } else { 128 };
+            let prefix: u8 = match prefix {
+                Some(value) => value
+                    .parse()
+                    .map_err(|_| "ARCHAVA_TRUSTED_PROXIES has an invalid prefix")?,
+                None => width,
+            };
+            if prefix > width || prefix == 0 {
+                return Err("ARCHAVA_TRUSTED_PROXIES prefix must name a bounded network".into());
+            }
+            networks.push((address, prefix));
+        }
+        Ok(Self(networks))
+    }
+
+    fn contains(&self, candidate: IpAddr) -> bool {
+        self.0
+            .iter()
+            .any(|&(network, prefix)| match (network, candidate) {
+                (IpAddr::V4(a), IpAddr::V4(b)) => {
+                    u32::from(a) >> (32 - prefix) == u32::from(b) >> (32 - prefix)
+                }
+                (IpAddr::V6(a), IpAddr::V6(b)) => {
+                    u128::from(a) >> (128 - prefix) == u128::from(b) >> (128 - prefix)
+                }
+                _ => false,
+            })
+    }
+
+    pub(crate) fn client_ip(&self, peer: Option<IpAddr>, headers: &HeaderMap) -> Option<IpAddr> {
+        let peer = peer?;
+        if !self.contains(peer) {
+            return Some(peer);
+        }
+        let mut chain = Vec::new();
+        let mut bytes = 0;
+        for header in headers.get_all("x-forwarded-for") {
+            let Ok(raw) = header.to_str() else {
+                return Some(peer);
+            };
+            bytes += raw.len();
+            if bytes > 4096 {
+                return Some(peer);
+            }
+            for value in raw.split(',') {
+                if chain.len() >= 32 {
+                    return Some(peer);
+                }
+                let Ok(address) = value.trim().parse::<IpAddr>() else {
+                    return Some(peer);
+                };
+                chain.push(address);
+            }
+        }
+        // Walk from the trusted transport toward the client. An untrusted hop
+        // terminates trust; a caller-supplied prefix to its left is ignored.
+        let mut client = peer;
+        for address in chain.into_iter().rev() {
+            if !self.contains(client) {
+                break;
+            }
+            client = address;
+        }
+        Some(client)
+    }
+}
+
 /// The session cookie over plain HTTP: the fixture's browsers, and the only
 /// name a `Secure`-less transport may set. A `__Host-` cookie is defined to be
 /// `Secure`, `Path=/` and host-locked, so a script driving `http://127.0.0.1`
@@ -323,6 +408,26 @@ pub async fn document_security_headers(request: Request, next: Next) -> Response
     response
 }
 
+/// The document admits only the configured LiveKit origin in addition to self.
+pub async fn presence_document_security_headers(
+    State(origins): State<Vec<String>>,
+    request: Request,
+    next: Next,
+) -> Response {
+    let secure = is_secure_from_peer(peer_ip(&request), request.headers());
+    let policy = if origins.is_empty() {
+        DOCUMENT_CONTENT_SECURITY_POLICY.to_string()
+    } else {
+        DOCUMENT_CONTENT_SECURITY_POLICY.replace(
+            "connect-src 'self'",
+            &format!("connect-src 'self' {}", origins.join(" ")),
+        )
+    };
+    let mut response = next.run(request).await;
+    apply_policy(response.headers_mut(), secure, &policy);
+    response
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -546,5 +651,68 @@ mod tests {
         assert!(is_command_line_client(&headers));
         headers.insert(CLIENT_HEADER, HeaderValue::from_static("browser"));
         assert!(!is_command_line_client(&headers));
+    }
+}
+
+#[cfg(test)]
+mod forwarded_client_tests {
+    use super::*;
+    fn headers(value: &str) -> HeaderMap {
+        let mut h = HeaderMap::new();
+        h.insert("x-forwarded-for", value.parse().unwrap());
+        h
+    }
+    #[test]
+    fn forwarded_clients_require_an_explicitly_trusted_transport() {
+        let trust = TrustedProxies::parse("127.0.0.1,10.20.0.0/16,::1").unwrap();
+        let public: IpAddr = "198.51.100.1".parse().unwrap();
+        assert_eq!(
+            trust.client_ip(Some(public), &headers("203.0.113.99")),
+            Some(public)
+        );
+        assert_eq!(
+            TrustedProxies::default()
+                .client_ip(Some("127.0.0.1".parse().unwrap()), &headers("203.0.113.99")),
+            Some("127.0.0.1".parse().unwrap())
+        );
+        assert_eq!(trust.client_ip(None, &headers("203.0.113.99")), None);
+        assert_eq!(
+            trust.client_ip(Some("::1".parse().unwrap()), &headers("2001:db8::7")),
+            Some("2001:db8::7".parse().unwrap())
+        );
+    }
+    #[test]
+    fn the_first_untrusted_hop_stops_forwarded_chain_authority() {
+        let trust = TrustedProxies::parse("127.0.0.1,10.20.0.0/16").unwrap();
+        let peer = Some("127.0.0.1".parse().unwrap());
+        assert_eq!(
+            trust.client_ip(peer, &headers("203.0.113.99,198.51.100.7,10.20.1.2")),
+            Some("198.51.100.7".parse().unwrap())
+        );
+        assert_eq!(
+            trust.client_ip(peer, &headers("203.0.113.99,198.51.100.7")),
+            Some("198.51.100.7".parse().unwrap())
+        );
+        assert_eq!(
+            trust.client_ip(peer, &headers("invalid,198.51.100.7")),
+            peer
+        );
+        assert_eq!(trust.client_ip(peer, &headers("198.51.100.7,")), peer);
+        assert_eq!(trust.client_ip(peer, &HeaderMap::new()), peer);
+    }
+    #[test]
+    fn invalid_or_unbounded_proxy_networks_refuse_configuration() {
+        for value in [
+            "*",
+            "0.0.0.0/0",
+            "::/0",
+            "10.0.0.1/33",
+            "::1/129",
+            "localhost",
+            "https://127.0.0.1",
+            "127.0.0.1/no",
+        ] {
+            assert!(TrustedProxies::parse(value).is_err(), "{value}");
+        }
     }
 }

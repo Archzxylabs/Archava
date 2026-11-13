@@ -107,11 +107,11 @@ pub const BILLING_NAMESPACE: &str = "archava_billing";
 
 // --- Refusal helpers ---------------------------------------------------------
 
-fn forbidden() -> PurchaseError {
+pub(super) fn forbidden() -> PurchaseError {
     PurchaseError::Domain(ErpError::Forbidden)
 }
 
-fn conflict() -> PurchaseError {
+pub(super) fn conflict() -> PurchaseError {
     PurchaseError::Domain(ErpError::Conflict)
 }
 
@@ -119,10 +119,16 @@ fn not_found() -> PurchaseError {
     PurchaseError::Domain(ErpError::NotFound)
 }
 
-/// Every driver failure is a database failure — the TS billing
-/// repository ships no SQLSTATE catch whitelist (see the module header),
-/// so the port folds nothing at this boundary either.
-fn refuses(error: sqlx::Error) -> PurchaseError {
+/// Preserve the historical billing driver contract except the installed
+/// source-period guard: a reviewed financial close is a business conflict.
+pub(super) fn refuses(error: sqlx::Error) -> PurchaseError {
+    if error.as_database_error().is_some_and(|e| {
+        e.code().as_deref() == Some("23514")
+            && (e.message() == "Reopen the financial source period before changing its invoice"
+                || e.constraint() == Some("invoice_sources_amount_minor_check"))
+    }) {
+        return conflict();
+    }
     PurchaseError::Database {
         ledger: BILLING_LEDGER,
         source: error,
@@ -379,6 +385,13 @@ VALUES($1,$2,$3,$4,$5,$6,$7,$8::timestamptz)",
 /// repository splats, one helper here so the arms stay statement-shaped.
 fn audit_reason(command: &BillingCommand) -> String {
     match command {
+        BillingCommand::CreateInvoiceFromOrder {
+            invoice_code,
+            order_id,
+            ..
+        } => {
+            format!("Created invoice {invoice_code} from sales order {order_id}")
+        }
         BillingCommand::CreateInvoice {
             invoice_code,
             lines,
@@ -453,6 +466,21 @@ pub async fn record_billing_command(
     }
     let command = &mutation.command;
     grant(access, command.required_permission())?;
+    if let BillingCommand::CreateInvoiceFromOrder { order_id, .. } = command {
+        super::billing_invoice::authorize_order(connection, tenant, principal, order_id).await?;
+    }
+    if principal.kind.as_str() == "human" {
+        if let Some(raw) = command.invoice_ref() {
+            super::company_trade::authorize(
+                connection,
+                tenant,
+                principal,
+                super::company_trade::Record::Invoice,
+                parse_uuid_value(raw)?,
+            )
+            .await?;
+        }
+    }
     let request_id = parse_uuid_value(command.command_id())?;
     let actor_id = principal.id.as_str();
 
@@ -532,90 +560,10 @@ async fn execute_billing_arm(
     now: &str,
 ) -> Result<BillingReceipt, PurchaseError> {
     match command {
-        BillingCommand::CreateInvoice {
-            invoice_code,
-            customer_ref,
-            currency,
-            consumer_ref,
-            lines,
-            ..
-        } => {
-            // create_invoice — the priced line sheet: gross = Σ quantity ×
-            // unit, the receipt carries the FIRST line's id. The TS
-            // reduce's float product rounds silently for monstrous
-            // sheets; the port refuses (checked arithmetic — the product
-            // the migration's own line CHECK could not hold either).
-            let invoice_id = Uuid::new_v4();
-            let mut gross_minor: i64 = 0;
-            for line in lines {
-                let total = line
-                    .quantity
-                    .checked_mul(line.unit_minor)
-                    .ok_or_else(conflict)?;
-                gross_minor = gross_minor.checked_add(total).ok_or_else(conflict)?;
-            }
-            sqlx::query(
-                "INSERT INTO archava_billing.invoices(\
-tenant_id,id,invoice_code,customer_ref,currency,status,gross_minor,outstanding_minor,\
-consumer_ref,owner_id,created_at) VALUES($1,$2,$3,$4,$5,'draft',$6,$6,$7,$8,$9::timestamptz)",
-            )
-            .bind(tenant)
-            .bind(invoice_id)
-            .bind(invoice_code)
-            .bind(customer_ref)
-            .bind(currency)
-            .bind(gross_minor)
-            .bind(consumer_ref)
-            .bind(&access.owner_id)
-            .bind(now)
-            .execute(&mut *connection)
-            .await
-            .map_err(refuses)?;
-
-            let mut first_line_id: Option<Uuid> = None;
-            for line in lines {
-                let line_id = Uuid::new_v4();
-                first_line_id.get_or_insert(line_id);
-                let line_total = line
-                    .quantity
-                    .checked_mul(line.unit_minor)
-                    .ok_or_else(conflict)?;
-                sqlx::query(
-                    "INSERT INTO archava_billing.invoice_lines(\
-tenant_id,id,invoice_id,description,quantity,unit_minor,line_total_minor,recorded_by,recorded_at) \
-VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9::timestamptz)",
-                )
-                .bind(tenant)
-                .bind(line_id)
-                .bind(invoice_id)
-                .bind(&line.description)
-                .bind(int4(line.quantity)?)
-                .bind(line.unit_minor)
-                .bind(line_total)
-                .bind(&access.owner_id)
-                .bind(now)
-                .execute(&mut *connection)
+        BillingCommand::CreateInvoice { .. } | BillingCommand::CreateInvoiceFromOrder { .. } => {
+            super::billing_invoice::create(connection, tenant, access, request_id, command, now)
                 .await
-                .map_err(refuses)?;
-            }
-
-            Ok(BillingReceipt {
-                command_id: request_id.to_string(),
-                tenant_id: tenant.to_string(),
-                action: "create_invoice",
-                invoice_id: Some(invoice_id.to_string()),
-                line_id: first_line_id.map(|uuid| uuid.to_string()),
-                correction_id: None,
-                attempt_id: None,
-                event_id: None,
-                status: STATUS_DRAFT.to_string(),
-                outstanding_minor: Some(gross_minor),
-                revision: Some(1),
-                idempotency_replay: false,
-                executed_at: now.to_string(),
-            })
         }
-
         BillingCommand::IssueInvoice {
             invoice_id,
             expected_revision,
@@ -1035,6 +983,16 @@ pub async fn billing_command_status(
     };
     let receipt_value = receipt_value.ok_or_else(conflict)?;
     let stored = BillingReceipt::parse(&receipt_value, false).map_err(|_| conflict())?;
+    if let Some(raw) = &stored.invoice_id {
+        super::company_trade::authorize_human(
+            connection,
+            tenant,
+            &access.owner_id,
+            super::company_trade::Record::Invoice,
+            parse_uuid_value(raw)?,
+        )
+        .await?;
+    }
     if access.scope != archava_domain::erp::ErpScope::All {
         if let Some(invoice) = &stored.invoice_id {
             let visible:bool=sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM archava_billing.invoices WHERE tenant_id=$1 AND id=$2 AND owner_id=$3)")
@@ -1124,11 +1082,30 @@ pub async fn workspace_view(
     access: &BillingAccess,
     search: &str,
 ) -> Result<serde_json::Value, PurchaseError> {
+    workspace_view_scoped(connection, tenant, access, search, None).await
+}
+pub async fn workspace_view_scoped(
+    connection: &mut PgConnection,
+    tenant: &str,
+    access: &BillingAccess,
+    search: &str,
+    company: Option<Uuid>,
+) -> Result<serde_json::Value, PurchaseError> {
+    workspace_view_filtered(connection, tenant, access, search, company, None).await
+}
+pub async fn workspace_view_filtered(
+    connection: &mut PgConnection,
+    tenant: &str,
+    access: &BillingAccess,
+    search: &str,
+    company: Option<Uuid>,
+    id: Option<Uuid>,
+) -> Result<serde_json::Value, PurchaseError> {
     if !access.holds("billing.read") {
         return Err(forbidden());
     }
-    let rows=sqlx::query_scalar::<_,serde_json::Value>("SELECT json_build_object('id',i.id,'code',i.invoice_code,'customer',i.customer_ref,'currency',i.currency,'status',i.status,'gross',i.gross_minor,'correction',i.correction_minor,'settled',i.settled_minor,'outstanding',i.outstanding_minor,'revision',i.revision,'consumerRef',i.consumer_ref,'lines',coalesce((SELECT json_agg(json_build_object('id',l.id,'description',l.description,'quantity',l.quantity,'unitAmount',l.unit_minor,'total',l.line_total_minor) ORDER BY l.id) FROM archava_billing.invoice_lines l WHERE l.tenant_id=i.tenant_id AND l.invoice_id=i.id),'[]'::json)) FROM archava_billing.invoices i WHERE i.tenant_id=$1 AND ($2 OR i.owner_id=$3) AND ($4='' OR strpos(lower(i.invoice_code||' '||i.customer_ref),lower($4))>0) ORDER BY i.created_at DESC,i.id LIMIT 100")
-        .bind(tenant).bind(access.scope==archava_domain::erp::ErpScope::All).bind(&access.owner_id).bind(search).fetch_all(connection).await.map_err(|e|super::purchase_database_error(BILLING_LEDGER,e))?;
+    let rows=sqlx::query_scalar::<_,serde_json::Value>("SELECT json_build_object('id',i.id,'code',i.invoice_code,'customer',i.customer_ref,'companyId',to_jsonb(i)->'company_id','companyRevision',to_jsonb(i)->'company_revision','companyCode',to_jsonb(i)->'company_code','companyName',to_jsonb(i)->'company_name','currency',i.currency,'status',i.status,'gross',i.gross_minor,'correction',i.correction_minor,'settled',i.settled_minor,'outstanding',i.outstanding_minor,'revision',i.revision,'consumerRef',i.consumer_ref,'customerContactId',i.customer_contact_id,'customerContactRevision',i.customer_contact_revision,'customerPartyId',i.customer_party_id,'customerPartyRevision',i.customer_party_revision,'sourceOrderId',i.source_order_id,'sourceOrderRevision',i.source_order_revision,'lines',coalesce((SELECT json_agg(json_build_object('id',l.id,'sourceOrderLineId',l.source_order_line_id,'description',l.description,'quantity',l.quantity,'unitAmount',l.unit_minor,'total',l.line_total_minor) ORDER BY l.id) FROM archava_billing.invoice_lines l WHERE l.tenant_id=i.tenant_id AND l.invoice_id=i.id),'[]'::json)) FROM archava_billing.invoices i WHERE i.tenant_id=$1 AND (to_jsonb(i)->>'company_id')::uuid IS NOT DISTINCT FROM $5::uuid AND ($2 OR i.owner_id=$3) AND ($6::uuid IS NULL OR i.id=$6) AND ($4='' OR strpos(lower(i.invoice_code||' '||i.customer_ref),lower($4))>0) ORDER BY i.created_at DESC,i.id LIMIT 100")
+        .bind(tenant).bind(access.scope==archava_domain::erp::ErpScope::All).bind(&access.owner_id).bind(search).bind(company).bind(id).fetch_all(connection).await.map_err(|e|super::purchase_database_error(BILLING_LEDGER,e))?;
     Ok(
         serde_json::json!({"invoices":rows,"pageLimit":100,"permissions":access.permissions,"scope":access.scope}),
     )

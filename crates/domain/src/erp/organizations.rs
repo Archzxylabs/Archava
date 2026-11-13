@@ -31,6 +31,10 @@ use super::{bounded_title, valid_uuid, ErpScope};
 /// The organization ledger's permission vocabulary — the schema CHECK's
 /// 5-word array (`permissions <@ ARRAY[...]`) and `ORGANIZATION_PERMISSIONS`.
 pub const ORGANIZATION_PERMISSIONS: &[&str] = &[
+    "companies.read",
+    "companies.write",
+    "parties.read",
+    "parties.write",
     "organizations.read",
     "organizations.write",
     "affiliations.read",
@@ -51,6 +55,8 @@ pub enum OrganizationKind {
     UpdateOrganization,
     ArchiveOrganization,
     CreateAffiliation,
+    CreateReviewedAffiliation,
+    VerifyAffiliationContact,
     UpdateAffiliation,
     RemoveAffiliation,
 }
@@ -63,6 +69,8 @@ impl OrganizationKind {
             Self::UpdateOrganization => "update_organization",
             Self::ArchiveOrganization => "archive_organization",
             Self::CreateAffiliation => "create_affiliation",
+            Self::CreateReviewedAffiliation => "create_reviewed_affiliation",
+            Self::VerifyAffiliationContact => "verify_affiliation_contact",
             Self::UpdateAffiliation => "update_affiliation",
             Self::RemoveAffiliation => "remove_affiliation",
         }
@@ -75,9 +83,11 @@ impl OrganizationKind {
             Self::CreateOrganization | Self::UpdateOrganization | Self::ArchiveOrganization => {
                 "organizations.write"
             }
-            Self::CreateAffiliation | Self::UpdateAffiliation | Self::RemoveAffiliation => {
-                "affiliations.write"
-            }
+            Self::CreateAffiliation
+            | Self::CreateReviewedAffiliation
+            | Self::VerifyAffiliationContact
+            | Self::UpdateAffiliation
+            | Self::RemoveAffiliation => "affiliations.write",
         }
     }
 
@@ -87,6 +97,8 @@ impl OrganizationKind {
             "update_organization" => Some(Self::UpdateOrganization),
             "archive_organization" => Some(Self::ArchiveOrganization),
             "create_affiliation" => Some(Self::CreateAffiliation),
+            "create_reviewed_affiliation" => Some(Self::CreateReviewedAffiliation),
+            "verify_affiliation_contact" => Some(Self::VerifyAffiliationContact),
             "update_affiliation" => Some(Self::UpdateAffiliation),
             "remove_affiliation" => Some(Self::RemoveAffiliation),
             _ => None,
@@ -176,6 +188,35 @@ pub enum OrganizationData {
         #[serde(rename = "isPrimary", skip_serializing_if = "Option::is_none")]
         is_primary: Option<bool>,
     },
+    #[serde(rename = "create_reviewed_affiliation")]
+    CreateReviewedAffiliation {
+        #[serde(rename = "organizationId")]
+        organization_id: String,
+        #[serde(rename = "expectedOrganizationRevision")]
+        expected_organization_revision: i64,
+        #[serde(rename = "contactId")]
+        contact_id: String,
+        #[serde(rename = "expectedContactRevision")]
+        expected_contact_revision: i64,
+        role: String,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        title: Option<Option<String>>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        department: Option<Option<String>>,
+        #[serde(rename = "isPrimary", skip_serializing_if = "Option::is_none")]
+        is_primary: Option<bool>,
+    },
+    #[serde(rename = "verify_affiliation_contact")]
+    VerifyAffiliationContact {
+        id: String,
+        #[serde(rename = "organizationId")]
+        organization_id: String,
+        #[serde(rename = "expectedOrganizationRevision")]
+        expected_organization_revision: i64,
+        #[serde(rename = "expectedContactRevision")]
+        expected_contact_revision: i64,
+        reason: String,
+    },
     #[serde(rename = "update_affiliation")]
     UpdateAffiliation {
         id: String,
@@ -209,6 +250,8 @@ impl OrganizationData {
             Self::UpdateOrganization { .. } => OrganizationKind::UpdateOrganization,
             Self::ArchiveOrganization { .. } => OrganizationKind::ArchiveOrganization,
             Self::CreateAffiliation { .. } => OrganizationKind::CreateAffiliation,
+            Self::CreateReviewedAffiliation { .. } => OrganizationKind::CreateReviewedAffiliation,
+            Self::VerifyAffiliationContact { .. } => OrganizationKind::VerifyAffiliationContact,
             Self::UpdateAffiliation { .. } => OrganizationKind::UpdateAffiliation,
             Self::RemoveAffiliation { .. } => OrganizationKind::RemoveAffiliation,
         }
@@ -376,6 +419,43 @@ fn parse_data(
                 is_primary,
             })
         }
+        OrganizationKind::CreateReviewedAffiliation => {
+            Ok(OrganizationData::CreateReviewedAffiliation {
+                organization_id: required_uuid(object, "organizationId", "organizationId")?,
+                expected_organization_revision: as_i64_member(
+                    object.get("expectedOrganizationRevision"),
+                    "expectedOrganizationRevision",
+                    1,
+                )?,
+                contact_id: required_uuid(object, "contactId", "contactId")?,
+                expected_contact_revision: as_i64_member(
+                    object.get("expectedContactRevision"),
+                    "expectedContactRevision",
+                    1,
+                )?,
+                role: required_text(object, "role", "role", 80)?,
+                title: tristate_text(object, "title", "title", 100)?,
+                department: tristate_text(object, "department", "department", 80)?,
+                is_primary: optional_bool(object, "isPrimary")?,
+            })
+        }
+        OrganizationKind::VerifyAffiliationContact => {
+            Ok(OrganizationData::VerifyAffiliationContact {
+                id: required_uuid(object, "id", "id")?,
+                organization_id: required_uuid(object, "organizationId", "organizationId")?,
+                expected_organization_revision: as_i64_member(
+                    object.get("expectedOrganizationRevision"),
+                    "expectedOrganizationRevision",
+                    1,
+                )?,
+                expected_contact_revision: as_i64_member(
+                    object.get("expectedContactRevision"),
+                    "expectedContactRevision",
+                    1,
+                )?,
+                reason: required_text(object, "reason", "reason", 2000)?,
+            })
+        }
         OrganizationKind::UpdateAffiliation => {
             let role = optional_text(object, "role", "role", 80)?;
             let title = tristate_text(object, "title", "title", 100)?;
@@ -404,21 +484,66 @@ fn parse_data(
             reason: required_text(object, "reason", "reason", 2000)?,
         }),
     }?;
-    // Strictness: the arm's data object must carry ONLY the members the
-    // arm declares (checked by re-serializing the parsed arm and comparing
-    // member counts — an unknown or duplicate-shaped member is a refusal).
-    let known = match arm {
-        OrganizationKind::CreateOrganization => 6,
-        OrganizationKind::UpdateOrganization => 9,
-        OrganizationKind::ArchiveOrganization => 4,
-        OrganizationKind::CreateAffiliation => 7,
-        OrganizationKind::UpdateAffiliation => 8,
-        OrganizationKind::RemoveAffiliation => 4,
+    let allowed: &[&str] = match arm {
+        OrganizationKind::CreateOrganization => &[
+            "name",
+            "legalName",
+            "taxId",
+            "website",
+            "industry",
+            "billingAddress",
+        ],
+        OrganizationKind::UpdateOrganization => &[
+            "id",
+            "revision",
+            "name",
+            "legalName",
+            "taxId",
+            "website",
+            "industry",
+            "billingAddress",
+        ],
+        OrganizationKind::ArchiveOrganization => &["id", "revision", "reason"],
+        OrganizationKind::CreateAffiliation => &[
+            "organizationId",
+            "contactId",
+            "role",
+            "title",
+            "department",
+            "isPrimary",
+        ],
+        OrganizationKind::CreateReviewedAffiliation => &[
+            "organizationId",
+            "expectedOrganizationRevision",
+            "contactId",
+            "expectedContactRevision",
+            "role",
+            "title",
+            "department",
+            "isPrimary",
+        ],
+        OrganizationKind::VerifyAffiliationContact => &[
+            "id",
+            "organizationId",
+            "expectedOrganizationRevision",
+            "expectedContactRevision",
+            "reason",
+        ],
+        OrganizationKind::UpdateAffiliation => &[
+            "id",
+            "organizationId",
+            "role",
+            "title",
+            "department",
+            "isPrimary",
+            "status",
+        ],
+        OrganizationKind::RemoveAffiliation => &["id", "organizationId", "reason"],
     };
-    // The parser injected its own `type` discriminator into the map above;
-    // count only the document's real members against the strictness table.
-    let members = object.keys().filter(|key| key.as_str() != "type").count();
-    if members > known {
+    if object
+        .keys()
+        .any(|key| key != "type" && !allowed.contains(&key.as_str()))
+    {
         return Err(ValidationError("type"));
     }
     Ok(data)
@@ -443,6 +568,9 @@ pub fn parse_mutation(raw: &Value) -> Result<OrganizationMutation, ValidationErr
         .get("data")
         .and_then(Value::as_object)
         .ok_or(ValidationError("type"))?;
+    if data_object.contains_key("type") {
+        return Err(ValidationError("type"));
+    }
     let mut data_object = data_object.clone();
     data_object.insert("type".to_string(), Value::String(kind.to_string()));
     let data = parse_data(kind, &data_object)?;
@@ -661,5 +789,52 @@ mod tests {
         assert!(!access.sees("principa-toba"));
         access.scope = ErpScope::All;
         assert!(access.sees("principa-toba"), "global sees every owner");
+    }
+    #[test]
+    fn reviewed_relationships_reject_authority_claims_and_invalid_revisions() {
+        let id = "01933df1-8d5e-783f-9b1e-1d3f9a2b3c4d";
+        for (kind, data) in [
+            (
+                "create_reviewed_affiliation",
+                serde_json::json!({"organizationId":id,"expectedOrganizationRevision":1,"contactId":id,"expectedContactRevision":1,"role":"Customer contact"}),
+            ),
+            (
+                "verify_affiliation_contact",
+                serde_json::json!({"id":id,"organizationId":id,"expectedOrganizationRevision":1,"expectedContactRevision":1,"reason":"Review"}),
+            ),
+        ] {
+            let input = serde_json::json!({"requestId":id,"type":kind,"data":data});
+            assert!(parse_mutation(&input).is_ok());
+            for key in [
+                "name",
+                "ownerId",
+                "contact_name",
+                "contact_revision",
+                "permissions",
+            ] {
+                let mut forged = input.clone();
+                forged["data"][key] = serde_json::json!("forged");
+                assert!(parse_mutation(&forged).is_err());
+            }
+            for key in ["expectedOrganizationRevision", "expectedContactRevision"] {
+                for value in [
+                    serde_json::json!(0),
+                    serde_json::json!(-1),
+                    serde_json::json!(1.5),
+                    serde_json::json!(2147483648i64),
+                    serde_json::json!("1"),
+                ] {
+                    let mut invalid = input.clone();
+                    invalid["data"][key] = value;
+                    assert!(parse_mutation(&invalid).is_err());
+                }
+            }
+        }
+    }
+    #[test]
+    fn optional_fields_do_not_allow_unknown_keys_in_legacy_relationships() {
+        let id = "01933df1-8d5e-783f-9b1e-1d3f9a2b3c4d";
+        let input = serde_json::json!({"requestId":id,"type":"create_affiliation","data":{"organizationId":id,"contactId":id,"role":"Buyer","ownerId":"forged"}});
+        assert!(parse_mutation(&input).is_err());
     }
 }

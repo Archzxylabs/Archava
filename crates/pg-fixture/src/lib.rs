@@ -74,7 +74,7 @@ use tokio::sync::Semaphore;
 /// migrator of record. `assert_startup_readiness` then compares the applied
 /// `schema_migrations` against these same files, so the fixture and the
 /// readiness port can never hash different inputs.
-pub const CONTROL_MIGRATIONS: &[&str] = &["001_serving_writer"];
+pub const CONTROL_MIGRATIONS: &[&str] = &["001_serving_writer", "002_accounting_write_fence"];
 
 pub const COMMERCE_MIGRATIONS: &[&str] = &[
     "001_catalog_orders_stock",
@@ -83,6 +83,10 @@ pub const COMMERCE_MIGRATIONS: &[&str] = &[
     "004_bound_approvals",
     "005_inventory_cost_layers",
     "006_private_cost_writers",
+    "007_customer_contact_identity",
+    "008_customer_party_identity",
+    "009_company_owned_trade",
+    "010_return_layer_provenance",
 ];
 
 /// The identity ledger's migrations, in apply order — `packages/identity-pg`.
@@ -115,8 +119,14 @@ pub const CRM_MIGRATIONS: &[&str] = &[
 /// cohort needs the real `archava_purchasing` schema next to
 /// `archava_commerce`, because the receipt-completion triggers reconcile the
 /// two ledgers inside ONE transaction.
-pub const PURCHASING_MIGRATIONS: &[&str] =
-    &["001_suppliers_orders_receipts", "002_landed_cost_receipts"];
+pub const PURCHASING_MIGRATIONS: &[&str] = &[
+    "001_suppliers_orders_receipts",
+    "002_landed_cost_receipts",
+    "003_supplier_contact_identity",
+    "004_supplier_party_identity",
+    "005_company_owned_trade",
+    "006_unposted_supplier_documents",
+];
 
 /// The foodservice ledger's migration, in apply order —
 /// `packages/foodservice-pg/migrations/001_tables_recipes_tickets.sql`
@@ -127,7 +137,27 @@ pub const FOOD_MIGRATIONS: &[&str] = &["001_tables_recipes_tickets"];
 /// The organizations ledger's migration, in apply order —
 /// `packages/organizations-pg/migrations/001_organizations_affiliations.sql`
 /// (Archxy 2's ERP namespace, PACKET-003).
-pub const ORGANIZATIONS_MIGRATIONS: &[&str] = &["001_organizations_affiliations"];
+pub const ACCOUNTING_MIGRATIONS: &[&str] = &[
+    "001_company_books",
+    "002_invoice_source_posting",
+    "003_invoice_source_integrity",
+    "004_purchase_source_posting",
+    "005_stock_source_posting",
+    "006_manual_bank_evidence",
+    "007_bank_cash_matching",
+    "008_reviewed_bank_periods",
+    "009_supplier_bank_settlements",
+    "010_gateway_bank_settlements",
+    "011_reviewed_document_terms",
+    "012_document_terms_audit_kind",
+];
+
+pub const ORGANIZATIONS_MIGRATIONS: &[&str] = &[
+    "001_organizations_affiliations",
+    "002_verified_contact_affiliations",
+    "003_business_parties",
+    "004_managed_companies",
+];
 
 /// The proposals ledger's migration, in apply order —
 /// `packages/proposals-pg/migrations/001_proposals_scope_amendments.sql`
@@ -163,6 +193,11 @@ pub const BILLING_MIGRATIONS: &[&str] = &[
     "001_billing_invoices_settlement",
     "002_gateway_payments",
     "003_invoice_email_outbox",
+    "004_email_payload_snapshot",
+    "005_order_invoice_provenance",
+    "006_customer_contact_identity",
+    "007_customer_party_identity",
+    "008_company_owned_trade",
 ];
 
 /// The subscriptions ledger's migration, in apply order —
@@ -225,7 +260,12 @@ pub const PROVIDER_MIGRATIONS: &[&str] = &["001_provider_attempts"];
 /// `migrations/owner-pg` (C03). The owner surface's grants are
 /// its own (owner PRD §6), so this ledger is additive and references no
 /// TS-owned table.
-pub const OWNER_MIGRATIONS: &[&str] = &["001_owner_config"];
+pub const OWNER_MIGRATIONS: &[&str] = &[
+    "001_owner_config",
+    "002_reviewed_workflows",
+    "003_agent_runtime",
+    "004_ai_disclosure_boundary",
+];
 
 /// The Ava Cockpit task orchestration ledger's migration, in apply order —
 /// `migrations/cockpit-pg/001_cockpit_durable_missions.sql`.
@@ -314,6 +354,7 @@ pub struct Fixture {
     /// The same ledger for `archava_organizations`, `archava_proposals` and
     /// `archava_projects` — the R04 cohorts' ledgers (PACKET-003).
     pub organizations_ledger: Vec<(String, String)>,
+    pub accounting_ledger: Vec<(String, String)>,
     pub proposals_ledger: Vec<(String, String)>,
     pub projects_ledger: Vec<(String, String)>,
     /// The same ledger for `archava_scheduling` — the R05 reservations
@@ -373,8 +414,8 @@ impl Fixture {
     /// vectors. Returning the pair keeps integration tests from accidentally
     /// checking only the purchasing ledger while still avoiding a dependency
     /// from the fixture crate back into the host crate.
-    pub fn erp_readiness(&self) -> [(&'static str, &[(String, String)]); 17] {
-        [
+    pub fn erp_readiness(&self) -> Vec<(&'static str, &[(String, String)])> {
+        let mut ledgers: Vec<(&'static str, &[(String, String)])> = vec![
             ("archava_foodservice", &self.foodservice_ledger),
             ("archava_organizations", &self.organizations_ledger),
             ("archava_proposals", &self.proposals_ledger),
@@ -392,7 +433,11 @@ impl Fixture {
             ("archava_edu", &self.edu_ledger),
             ("archava_cockpit", &self.cockpit_ledger),
             ("archava_orbz", &self.orbz_ledger),
-        ]
+        ];
+        if self.accounting_ledger.len() == ACCOUNTING_MIGRATIONS.len() {
+            ledgers.push(("archava_accounting", &self.accounting_ledger));
+        }
+        ledgers
     }
 
     /// A connection URL for the runtime role.
@@ -930,7 +975,7 @@ impl Drop for ProvisioningGuard {
 /// exit is not an error here: stopping an already-dead (or never-started)
 /// server is a no-op, and the caller removes the directory either way.
 fn stop_server(data: &Path) -> std::io::Result<()> {
-    let _stop = Command::new("pg_ctl")
+    let stop = Command::new("pg_ctl")
         .args([
             "-D",
             data.to_str().expect("utf-8 data dir"),
@@ -943,7 +988,16 @@ fn stop_server(data: &Path) -> std::io::Result<()> {
         ])
         .stdin(Stdio::null())
         .stderr(Stdio::null())
-        .output()?;
+        .output();
+    if let Err(error) = stop {
+        // Teardown is best-effort. Provisioning still fails loudly when the
+        // required PostgreSQL tools are absent; cleanup must not turn a test
+        // failure into a second panic merely because pg_ctl is unavailable.
+        if error.kind() == std::io::ErrorKind::NotFound {
+            return Ok(());
+        }
+        return Err(error);
+    }
     Ok(())
 }
 
@@ -995,10 +1049,320 @@ pub async fn provision_pre_private_cost_writers_profile() -> Fixture {
     provision_with_commerce_usize(5).await
 }
 
+/// Existing company-owned costing before exact return-layer/use provenance.
+pub async fn provision_pre_return_provenance_profile() -> Fixture {
+    provision_with_commerce_usize(9).await
+}
+
 /// The provision body, parameterized over how far into the commerce ledger the
 /// "prior profile" window reaches. `provision` and
 /// [`provision_prior_commerce_profile`] are its only callers.
 async fn provision_with_commerce_usize(commerce_through: usize) -> Fixture {
+    provision_profiles(commerce_through, ORGANIZATIONS_MIGRATIONS.len(), true, true).await
+}
+
+/// Owned upgrade fixture before verified CRM affiliation sources existed.
+pub async fn provision_pre_verified_affiliations_profile() -> Fixture {
+    provision_profiles(COMMERCE_MIGRATIONS.len(), 1, false, true).await
+}
+
+/// Latest pre-integration profile: published parties, legacy transaction ledgers.
+pub async fn provision_pre_party_transaction_profile() -> Fixture {
+    provision_profiles(7, 3, false, true).await
+}
+
+/// Profile before company-owned trade dimensions were mounted.
+pub async fn provision_pre_company_trade_profile() -> Fixture {
+    provision_profiles(8, 4, true, true).await
+}
+
+/// Previous accepted company-trade profile, before operational supplier documents.
+pub async fn provision_pre_supplier_documents_profile() -> Fixture {
+    provision_profiles(
+        COMMERCE_MIGRATIONS.len(),
+        ORGANIZATIONS_MIGRATIONS.len(),
+        true,
+        false,
+    )
+    .await
+}
+
+/// Latest profile before managed-company registration was mounted.
+pub async fn provision_pre_company_profile() -> Fixture {
+    provision_profiles(COMMERCE_MIGRATIONS.len(), 3, true, true).await
+}
+
+/// Upgrade transaction ledgers in dependency order using the migration owner.
+pub async fn apply_pending_party_transaction_migrations(owner_pool: &PgPool) {
+    apply_pending_organization_migrations(owner_pool).await;
+    apply_pending_commerce_migrations(owner_pool).await;
+    migrate_ledger(
+        owner_pool,
+        "archava_purchasing",
+        "archava_purchasing_migrations",
+    )
+    .await;
+    migrate_ledger(owner_pool, "archava_billing", "archava_billing_migrations").await;
+    grant_supplier_document_runtime(owner_pool).await;
+    // New dependent tables must enter the serving fence after the entire
+    // upgrade, including supplier documents created after Organizations.
+    sqlx::query("SELECT archava_control.install_runtime_write_guards()")
+        .execute(owner_pool)
+        .await
+        .expect("refresh all upgraded trade writer guards");
+}
+
+/// Apply the current organization history prefix using the real owner path.
+pub async fn apply_pending_organization_migrations(owner_pool: &PgPool) -> Vec<(String, String)> {
+    let ledger = migrate_ledger(
+        owner_pool,
+        "archava_organizations",
+        "archava_organizations_migrations",
+    )
+    .await;
+    grant_party_runtime(owner_pool).await;
+    grant_company_runtime(owner_pool).await;
+    let control: bool = sqlx::query_scalar(
+        "SELECT to_regprocedure('archava_control.install_runtime_write_guards()') IS NOT NULL",
+    )
+    .fetch_one(owner_pool)
+    .await
+    .expect("control protocol lookup");
+    if control {
+        sqlx::query("SELECT archava_control.install_runtime_write_guards()")
+            .execute(owner_pool)
+            .await
+            .expect("refresh new-table write guards");
+    }
+
+    ledger
+}
+
+async fn grant_supplier_document_runtime(pool: &PgPool) {
+    let present: bool = sqlx::query_scalar(
+        "SELECT to_regclass('archava_purchasing.supplier_documents') IS NOT NULL",
+    )
+    .fetch_one(pool)
+    .await
+    .unwrap();
+    if present {
+        for statement in [format!("GRANT SELECT,INSERT,UPDATE ON archava_purchasing.supplier_documents,archava_purchasing.supplier_document_allocations TO {RUNTIME_USER}"),format!("GRANT SELECT,INSERT ON archava_purchasing.supplier_document_versions TO {RUNTIME_USER}")] { sqlx::query(sqlx::AssertSqlSafe(statement.as_str())).execute(pool).await.unwrap(); }
+    }
+}
+
+pub async fn apply_pending_accounting_migrations(owner_pool: &PgPool) -> Vec<(String, String)> {
+    let ledger = migrate_ledger(
+        owner_pool,
+        "archava_accounting",
+        "archava_accounting_migrations",
+    )
+    .await;
+    grant_accounting_runtime(owner_pool).await;
+    migrate_ledger(owner_pool, "archava_control", "archava_control_migrations").await;
+    sqlx::query("SELECT archava_control.install_runtime_write_guards()")
+        .execute(owner_pool)
+        .await
+        .expect("refresh accounting writer guards");
+    ledger
+}
+async fn grant_accounting_runtime(pool: &PgPool) {
+    let present: bool =
+        sqlx::query_scalar("SELECT to_regclass('archava_accounting.books') IS NOT NULL")
+            .fetch_one(pool)
+            .await
+            .unwrap();
+    if present {
+        for statement in [
+        format!("GRANT USAGE ON SCHEMA archava_accounting TO {RUNTIME_USER}"),
+        format!("GRANT SELECT ON archava_accounting.schema_migrations,archava_accounting.memberships TO {RUNTIME_USER}"),
+        format!("GRANT SELECT,INSERT ON archava_accounting.journal_lines,archava_accounting.audit,archava_accounting.invoice_sources,archava_accounting.journal_sources TO {RUNTIME_USER}"),
+        format!("GRANT SELECT,INSERT,UPDATE ON archava_accounting.books,archava_accounting.accounts,archava_accounting.periods,archava_accounting.journals,archava_accounting.commands,archava_accounting.invoice_policies TO {RUNTIME_USER}"),
+        format!("GRANT EXECUTE ON FUNCTION archava_accounting.lock_membership(text,text) TO {RUNTIME_USER}"),
+        format!("GRANT EXECUTE ON FUNCTION archava_accounting.source_guards_complete() TO {RUNTIME_USER}"),
+    ] {sqlx::query(sqlx::AssertSqlSafe(statement.as_str())).execute(pool).await.unwrap();}
+        let purchase_present: bool = sqlx::query_scalar(
+            "SELECT to_regclass('archava_accounting.purchase_policies') IS NOT NULL",
+        )
+        .fetch_one(pool)
+        .await
+        .unwrap();
+        if purchase_present {
+            for statement in [
+                format!("GRANT SELECT,INSERT,UPDATE ON archava_accounting.purchase_policies TO {RUNTIME_USER}"),
+                format!("GRANT SELECT,INSERT ON archava_accounting.purchase_origins,archava_accounting.purchase_sources,archava_accounting.purchase_journal_sources TO {RUNTIME_USER}"),
+                format!("GRANT EXECUTE ON FUNCTION archava_accounting.lock_purchase_company(text,uuid),archava_accounting.purchase_guards_complete() TO {RUNTIME_USER}"),
+            ] {sqlx::query(sqlx::AssertSqlSafe(statement.as_str())).execute(pool).await.unwrap();}
+        }
+        let stock_present: bool = sqlx::query_scalar(
+            "SELECT to_regclass('archava_accounting.stock_policies') IS NOT NULL",
+        )
+        .fetch_one(pool)
+        .await
+        .unwrap();
+        if stock_present {
+            for statement in [
+                format!("GRANT SELECT ON archava_accounting.stock_layer_origins TO {RUNTIME_USER}"),
+                format!("GRANT SELECT,INSERT,UPDATE ON archava_accounting.stock_policies TO {RUNTIME_USER}"),
+                format!("GRANT SELECT,INSERT ON archava_accounting.stock_sources,archava_accounting.stock_journal_sources TO {RUNTIME_USER}"),
+                format!("GRANT EXECUTE ON FUNCTION archava_accounting.stock_guards_complete() TO {RUNTIME_USER}"),
+            ] {sqlx::query(sqlx::AssertSqlSafe(statement.as_str())).execute(pool).await.unwrap();}
+        }
+        let bank_present: bool = sqlx::query_scalar(
+            "SELECT to_regclass('archava_accounting.bank_accounts') IS NOT NULL",
+        )
+        .fetch_one(pool)
+        .await
+        .unwrap();
+        if bank_present {
+            for statement in [
+                format!("GRANT SELECT,INSERT ON archava_accounting.bank_accounts,archava_accounting.bank_statements,archava_accounting.bank_rows TO {RUNTIME_USER}"),
+                format!("GRANT EXECUTE ON FUNCTION archava_accounting.bank_evidence_guards_complete() TO {RUNTIME_USER}"),
+            ] {sqlx::query(sqlx::AssertSqlSafe(statement.as_str())).execute(pool).await.unwrap();}
+        }
+        let matching_present: bool = sqlx::query_scalar(
+            "SELECT to_regclass('archava_accounting.bank_allocations') IS NOT NULL",
+        )
+        .fetch_one(pool)
+        .await
+        .unwrap();
+        if matching_present {
+            for statement in [
+                format!("GRANT SELECT,INSERT ON archava_accounting.bank_allocations,archava_accounting.bank_unmatches TO {RUNTIME_USER}"),
+                format!("GRANT EXECUTE ON FUNCTION archava_accounting.bank_matching_guards_complete() TO {RUNTIME_USER}"),
+            ] {sqlx::query(sqlx::AssertSqlSafe(statement.as_str())).execute(pool).await.unwrap();}
+        }
+        let periods_present: bool = sqlx::query_scalar(
+            "SELECT to_regclass('archava_accounting.bank_policies') IS NOT NULL",
+        )
+        .fetch_one(pool)
+        .await
+        .unwrap();
+        if periods_present {
+            for statement in [
+                format!("GRANT SELECT,INSERT,UPDATE ON archava_accounting.bank_policies TO {RUNTIME_USER}"),
+                format!("GRANT SELECT,INSERT ON archava_accounting.bank_reconciliations TO {RUNTIME_USER}"),
+                format!("GRANT EXECUTE ON FUNCTION archava_accounting.bank_period_guards_complete() TO {RUNTIME_USER}"),
+            ] {sqlx::query(sqlx::AssertSqlSafe(statement.as_str())).execute(pool).await.unwrap();}
+        }
+        let payables_present: bool = sqlx::query_scalar(
+            "SELECT to_regclass('archava_accounting.payable_settlements') IS NOT NULL",
+        )
+        .fetch_one(pool)
+        .await
+        .unwrap();
+        if payables_present {
+            for statement in [
+                format!("GRANT SELECT,INSERT ON archava_accounting.payable_settlements TO {RUNTIME_USER}"),
+                format!("GRANT EXECUTE ON FUNCTION archava_accounting.payable_guards_complete() TO {RUNTIME_USER}"),
+            ] {sqlx::query(sqlx::AssertSqlSafe(statement.as_str())).execute(pool).await.unwrap();}
+        }
+        let clearing_present: bool = sqlx::query_scalar(
+            "SELECT to_regclass('archava_accounting.clearing_settlements') IS NOT NULL",
+        )
+        .fetch_one(pool)
+        .await
+        .unwrap();
+        if clearing_present {
+            for statement in [
+                format!("GRANT SELECT,INSERT ON archava_accounting.clearing_settlements TO {RUNTIME_USER}"),
+                format!("GRANT EXECUTE ON FUNCTION archava_accounting.clearing_guards_complete() TO {RUNTIME_USER}"),
+            ] {sqlx::query(sqlx::AssertSqlSafe(statement.as_str())).execute(pool).await.unwrap();}
+        }
+        let terms_present: bool = sqlx::query_scalar(
+            "SELECT to_regclass('archava_accounting.document_terms') IS NOT NULL",
+        )
+        .fetch_one(pool)
+        .await
+        .unwrap();
+        if terms_present {
+            for statement in [
+                format!("GRANT SELECT,INSERT ON archava_accounting.document_terms TO {RUNTIME_USER}"),
+                format!("GRANT EXECUTE ON FUNCTION archava_accounting.terms_guards_complete() TO {RUNTIME_USER}"),
+            ] {sqlx::query(sqlx::AssertSqlSafe(statement.as_str())).execute(pool).await.unwrap();}
+        }
+    }
+}
+
+async fn grant_company_runtime(pool: &PgPool) {
+    let present: bool =
+        sqlx::query_scalar("SELECT to_regclass('archava_organizations.companies') IS NOT NULL")
+            .fetch_one(pool)
+            .await
+            .unwrap();
+    if present {
+        let statement = format!(
+            "GRANT SELECT,INSERT,UPDATE ON archava_organizations.companies TO {RUNTIME_USER}"
+        );
+        sqlx::query(sqlx::AssertSqlSafe(statement.as_str()))
+            .execute(pool)
+            .await
+            .unwrap();
+        let statement =
+            format!("GRANT SELECT,INSERT ON archava_organizations.company_audit TO {RUNTIME_USER}");
+        sqlx::query(sqlx::AssertSqlSafe(statement.as_str()))
+            .execute(pool)
+            .await
+            .unwrap();
+    }
+}
+
+async fn grant_party_runtime(pool: &PgPool) {
+    let present: bool =
+        sqlx::query_scalar("SELECT to_regclass('archava_organizations.parties') IS NOT NULL")
+            .fetch_one(pool)
+            .await
+            .unwrap();
+    if present {
+        let statement = format!(
+            "GRANT SELECT,INSERT,UPDATE ON archava_organizations.parties TO {RUNTIME_USER}"
+        );
+        sqlx::query(sqlx::AssertSqlSafe(statement.as_str()))
+            .execute(pool)
+            .await
+            .unwrap();
+        let statement =
+            format!("GRANT SELECT,INSERT ON archava_organizations.party_audit TO {RUNTIME_USER}");
+        sqlx::query(sqlx::AssertSqlSafe(statement.as_str()))
+            .execute(pool)
+            .await
+            .unwrap();
+    }
+}
+
+async fn provision_profiles(
+    commerce_through: usize,
+    organizations_through: usize,
+    party_transactions: bool,
+    supplier_documents: bool,
+) -> Fixture {
+    provision_profile_options(
+        commerce_through,
+        organizations_through,
+        party_transactions,
+        supplier_documents,
+        true,
+    )
+    .await
+}
+
+pub async fn provision_pre_accounting_profile() -> Fixture {
+    provision_profile_options(
+        COMMERCE_MIGRATIONS.len(),
+        ORGANIZATIONS_MIGRATIONS.len(),
+        true,
+        true,
+        false,
+    )
+    .await
+}
+
+async fn provision_profile_options(
+    commerce_through: usize,
+    organizations_through: usize,
+    party_transactions: bool,
+    supplier_documents: bool,
+    accounting: bool,
+) -> Fixture {
     // Held for the whole provisioning window and released when this future
     // completes or unwinds. `acquire` returns `Result` only because a
     // semaphore can be closed — this one never is, hence `expect` rather than
@@ -1144,11 +1508,6 @@ async fn provision_with_commerce_usize(commerce_through: usize) -> Fixture {
     //    exactly that property being absent.
     let owner_url = url(OWNER_USER, DATABASE, port);
     let owner_pool = connect(&owner_url, 1).await;
-    let commerce_ledger = if commerce_through == COMMERCE_MIGRATIONS.len() {
-        migrate_commerce(&owner_pool).await
-    } else {
-        migrate_commerce_upto(&owner_pool, commerce_through).await
-    };
     let identity_ledger = migrate_ledger(
         &owner_pool,
         "archava_identity",
@@ -1159,15 +1518,49 @@ async fn provision_with_commerce_usize(commerce_through: usize) -> Fixture {
     // applied by the same owner role so the runtime role is a non-owner of
     // this schema exactly as it is of the other two.
     let crm_ledger = migrate_ledger(&owner_pool, "archava_crm", "archava_crm_migrations").await;
+    let organizations_ledger = migrate_ledger_prefix(
+        &owner_pool,
+        "archava_organizations",
+        "archava_organizations_migrations",
+        organizations_through,
+    )
+    .await;
+    // Current party-linked ledgers require the Organizations registry. The old
+    // affiliation profile retains its matching pre-party dependent histories.
+    let commerce_through = if organizations_through < 3 || !party_transactions {
+        commerce_through.min(7)
+    } else {
+        commerce_through
+    };
+    let commerce_through = if organizations_through < 4 {
+        commerce_through.min(8)
+    } else {
+        commerce_through
+    };
+    // Customer-linked Commerce orders depend on the CRM contact identity schema.
+    let commerce_ledger = if commerce_through == COMMERCE_MIGRATIONS.len() {
+        migrate_commerce(&owner_pool).await
+    } else {
+        migrate_commerce_upto(&owner_pool, commerce_through).await
+    };
     // Archxy 2 ERP namespace (PACKET-000): the purchasing ledger migrates under
     // the same owner role, with the same migrate.ts semantics, so the runtime
     // role is a non-owner of this schema exactly as it is of the others. The
     // cross-ledger FOREIGN KEY into `archava_commerce.products` means this must
     // run AFTER the commerce migration (it does — order above).
-    let purchasing_ledger = migrate_ledger(
+    let purchasing_ledger = migrate_ledger_prefix(
         &owner_pool,
         "archava_purchasing",
         "archava_purchasing_migrations",
+        if organizations_through < 3 || !party_transactions {
+            3
+        } else if organizations_through < 4 || commerce_through < 9 {
+            4
+        } else if !supplier_documents {
+            5
+        } else {
+            usize::MAX
+        },
     )
     .await;
     // Archxy 2 ERP namespace (PACKET-001): the foodservice ledger migrates
@@ -1183,12 +1576,6 @@ async fn provision_with_commerce_usize(commerce_through: usize) -> Fixture {
     // Archxy 2 ERP namespace (PACKET-003): the three R04 ledgers migrate under
     // the same owner role from their own packages; ordering after the commerce
     // family keeps every ledger's advisory lock label distinct.
-    let organizations_ledger = migrate_ledger(
-        &owner_pool,
-        "archava_organizations",
-        "archava_organizations_migrations",
-    )
-    .await;
     let proposals_ledger = migrate_ledger(
         &owner_pool,
         "archava_proposals",
@@ -1226,8 +1613,41 @@ async fn provision_with_commerce_usize(commerce_through: usize) -> Fixture {
     // under the same owner role, after the R05 family — no cross-schema
     // FOREIGN KEY exists, but the namespace's one printed apply order
     // holds (the R07 area's first subject).
-    let billing_ledger =
-        migrate_ledger(&owner_pool, "archava_billing", "archava_billing_migrations").await;
+    let billing_ledger = migrate_ledger_prefix(
+        &owner_pool,
+        "archava_billing",
+        "archava_billing_migrations",
+        if organizations_through < 3 || !party_transactions {
+            6
+        } else if organizations_through < 4 || commerce_through < 9 {
+            7
+        } else {
+            usize::MAX
+        },
+    )
+    .await;
+    // Source capture references the current company-owned Billing schema.
+    // Historical profiles retain their earlier surface until explicit upgrade.
+    let accounting_ledger = if accounting
+        && organizations_through >= 4
+        && billing_ledger.len() == BILLING_MIGRATIONS.len()
+    {
+        migrate_ledger_prefix(
+            &owner_pool,
+            "archava_accounting",
+            "archava_accounting_migrations",
+            if purchasing_ledger.len() != PURCHASING_MIGRATIONS.len() {
+                3
+            } else if commerce_through < 10 {
+                4
+            } else {
+                usize::MAX
+            },
+        )
+        .await
+    } else {
+        Vec::new()
+    };
     // Archxy 2 ERP namespace (PACKET-008): the subscriptions ledger
     // migrates under the same owner role, after the settlement sibling —
     // no cross-schema FOREIGN KEY exists, but the namespace's one printed
@@ -1286,8 +1706,17 @@ async fn provision_with_commerce_usize(commerce_through: usize) -> Fixture {
     let cockpit_ledger =
         migrate_ledger(&owner_pool, "archava_cockpit", "archava_cockpit_migrations").await;
     let orbz_ledger = migrate_ledger(&owner_pool, "archava_orbz", "archava_orbz_migrations").await;
-    let _control_ledger =
-        migrate_ledger(&owner_pool, "archava_control", "archava_control_migrations").await;
+    let _control_ledger = if accounting && organizations_through >= 4 {
+        migrate_ledger(&owner_pool, "archava_control", "archava_control_migrations").await
+    } else {
+        migrate_ledger_prefix(
+            &owner_pool,
+            "archava_control",
+            "archava_control_migrations",
+            1,
+        )
+        .await
+    };
 
     // 5. Runtime grants — the port of grantCommerceRuntime
     //    (`packages/commerce-pg/src/migrate.ts:59-76`), statement for statement.
@@ -1705,6 +2134,11 @@ async fn provision_with_commerce_usize(commerce_through: usize) -> Fixture {
         format!(
             "GRANT SELECT ON archava_owner.schema_migrations,             archava_owner.owner_grants,archava_owner.config_revisions,             archava_owner.config_audit TO {RUNTIME_USER}"
         ),
+        format!("GRANT SELECT,INSERT,UPDATE ON archava_owner.reviewed_workflows TO {RUNTIME_USER}"),
+        format!("GRANT SELECT,INSERT ON archava_owner.agent_threads,archava_owner.agent_turns,archava_owner.agent_preferences TO {RUNTIME_USER}"),
+        format!("GRANT SELECT,INSERT,UPDATE ON archava_owner.agent_goals TO {RUNTIME_USER}"),
+        format!("GRANT SELECT,INSERT,DELETE ON archava_owner.agent_work TO {RUNTIME_USER}"),
+        format!("GRANT SELECT,INSERT ON archava_owner.agent_model_attempts TO {RUNTIME_USER}"),
         format!(
             "GRANT SELECT,INSERT ON archava_owner.config_revisions,             archava_owner.apply_receipts,archava_owner.config_audit TO {RUNTIME_USER}"
         ),
@@ -1764,6 +2198,10 @@ async fn provision_with_commerce_usize(commerce_through: usize) -> Fixture {
     // Everything that can fail has now succeeded. Disarm the guard so its
     // `Drop` stops touching the directory, and hand cleanup to the `Fixture`.
     guard.disarm();
+    grant_party_runtime(&owner_pool).await;
+    grant_company_runtime(&owner_pool).await;
+    grant_supplier_document_runtime(&owner_pool).await;
+    grant_accounting_runtime(&owner_pool).await;
     Fixture {
         admin_pool,
         owner_pool,
@@ -1777,6 +2215,7 @@ async fn provision_with_commerce_usize(commerce_through: usize) -> Fixture {
         purchasing_ledger,
         foodservice_ledger,
         organizations_ledger,
+        accounting_ledger,
         proposals_ledger,
         projects_ledger,
         scheduling_ledger,
@@ -1840,7 +2279,14 @@ async fn wait_ready(admin_url: &str, log: &Path) {
 /// The checksums recorded here are `archava_adapters::rls::migration_checksum`
 /// of the file bytes — the same function the readiness check recomputes.
 async fn migrate_commerce(pool: &PgPool) -> Vec<(String, String)> {
-    migrate_ledger(pool, NAMESPACE, "archava_commerce_migrations").await
+    let ledger = migrate_ledger(pool, NAMESPACE, "archava_commerce_migrations").await;
+    sqlx::query(sqlx::AssertSqlSafe(format!(
+        "GRANT EXECUTE ON FUNCTION archava_commerce.return_layer_guards_complete() TO {RUNTIME_USER}"
+    )))
+    .execute(pool)
+    .await
+    .expect("grant return provenance readiness");
+    ledger
 }
 
 /// The commerce ledger applied only through a prefix of the frozen list.
@@ -1957,6 +2403,7 @@ fn migrations_package(namespace: &str) -> &'static str {
         "archava_purchasing" => "purchasing-pg",
         "archava_foodservice" => "foodservice-pg",
         "archava_organizations" => "organizations-pg",
+        "archava_accounting" => "accounting-pg",
         "archava_proposals" => "proposals-pg",
         "archava_projects" => "projects-pg",
         "archava_scheduling" => "scheduling-pg",
@@ -2003,6 +2450,7 @@ pub fn ledger_expectations(namespace: &str) -> Vec<(String, String)> {
         "archava_purchasing" => PURCHASING_MIGRATIONS,
         "archava_foodservice" => FOOD_MIGRATIONS,
         "archava_organizations" => ORGANIZATIONS_MIGRATIONS,
+        "archava_accounting" => ACCOUNTING_MIGRATIONS,
         "archava_proposals" => PROPOSALS_MIGRATIONS,
         "archava_projects" => PROJECTS_MIGRATIONS,
         "archava_scheduling" => SCHEDULING_MIGRATIONS,
@@ -2103,6 +2551,7 @@ pub async fn attach(data_dir: &Path, port: u16) -> Fixture {
         purchasing_ledger: ledger_expectations("archava_purchasing"),
         foodservice_ledger: ledger_expectations("archava_foodservice"),
         organizations_ledger: ledger_expectations("archava_organizations"),
+        accounting_ledger: ledger_expectations("archava_accounting"),
         proposals_ledger: ledger_expectations("archava_proposals"),
         projects_ledger: ledger_expectations("archava_projects"),
         scheduling_ledger: ledger_expectations("archava_scheduling"),
@@ -2133,11 +2582,23 @@ fn migrations_dir(namespace: &str) -> std::path::PathBuf {
 }
 
 async fn migrate_ledger(pool: &PgPool, namespace: &str, lock_label: &str) -> Vec<(String, String)> {
+    migrate_ledger_prefix(pool, namespace, lock_label, usize::MAX).await
+}
+
+async fn migrate_ledger_prefix(
+    pool: &PgPool,
+    namespace: &str,
+    lock_label: &str,
+    through: usize,
+) -> Vec<(String, String)> {
     let migrations_dir = migrations_dir(namespace);
     // The recorded pairs come from the SAME derivation an attach re-runs —
     // one definition, so a restart always recomputes what a fresh apply
     // recorded.
-    let ledger = ledger_expectations(namespace);
+    let ledger = ledger_expectations(namespace)
+        .into_iter()
+        .take(through)
+        .collect::<Vec<_>>();
 
     let mut transaction = pool.begin().await.expect("begin migration transaction");
     sqlx::query("SELECT pg_advisory_xact_lock(hashtext($1))")
@@ -2194,7 +2655,7 @@ async fn migrate_ledger(pool: &PgPool, namespace: &str, lock_label: &str) -> Vec
         sqlx::raw_sql(sqlx::AssertSqlSafe(sql.as_str()))
             .execute(&mut *transaction)
             .await
-            .unwrap_or_else(|error| panic!("apply migration {namespace}/{id}: {error}"));
+            .unwrap_or_else(|error| panic!("apply migration {namespace}/{id}: {error:?}"));
         let record =
             format!("INSERT INTO {namespace}.schema_migrations(id,checksum) VALUES($1,$2)");
         sqlx::query(sqlx::AssertSqlSafe(record.as_str()))

@@ -1,0 +1,36 @@
+   Compiling archava-host v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/host)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.02s
+     Running tests/review_gemini_email_tmp.rs (target/debug/deps/review_gemini_email_tmp-18545f660cb57840)
+
+running 3 tests
+test review_gemini_email_message_markup_is_escaped ... REVIEW_PROOF client_markup_in_provider_html=true
+
+thread 'review_gemini_email_message_markup_is_escaped' (192173) panicked at crates/host/tests/review_gemini_email_tmp.rs:357:176:
+untrusted message markup was inserted into the provider HTML unchanged
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+test review_gemini_email_without_csrf_is_refused_before_provider ... REVIEW_PROOF missing_csrf_status=200 OK provider_sends=1
+
+thread 'review_gemini_email_without_csrf_is_refused_before_provider' (192211) panicked at crates/host/tests/review_gemini_email_tmp.rs:337:5:
+assertion `left == right` failed: email dispatch without the required CSRF header reached the provider
+  left: 200
+ right: 403
+FAILED
+test review_gemini_lost_ack_then_ui_style_new_key_must_not_duplicate_email ... REVIEW_PROOF same_invoice_same_message_new_ui_keys_provider_sends=2
+
+thread 'review_gemini_lost_ack_then_ui_style_new_key_must_not_duplicate_email' (192251) panicked at crates/host/tests/review_gemini_email_tmp.rs:350:5:
+assertion `left == right` failed: current UI retry construction duplicates customer email after a lost acknowledgement
+  left: 2
+ right: 1
+FAILED
+
+failures:
+
+failures:
+    review_gemini_email_message_markup_is_escaped
+    review_gemini_email_without_csrf_is_refused_before_provider
+    review_gemini_lost_ack_then_ui_style_new_key_must_not_duplicate_email
+
+test result: FAILED. 0 passed; 3 failed; 0 ignored; 0 measured; 3 filtered out; finished in 3.33s
+
+error: test failed, to rerun pass `-p archava-host --test review_gemini_email_tmp`

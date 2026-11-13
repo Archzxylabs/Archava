@@ -7,10 +7,18 @@ use axum::response::IntoResponse;
 use axum::routing::{get, post};
 use axum::{Json, Router};
 use serde::Deserialize;
+use sqlx::Row;
 use subtle::ConstantTimeEq;
+use uuid::Uuid;
 
 use crate::router::{authenticate, AppState};
 use crate::routes::auth::LoginSource;
+use archava_adapters::erp::{
+    commerce_kernel::resolve_commerce_context, PurchaseError, COMMERCE_LEDGER, COMMERCE_NAMESPACE,
+};
+use archava_core::tenant::TenantId;
+use archava_domain::erp::purchasing::PurchasePrincipal;
+use archava_domain::erp::ErpError;
 
 /// Mounts the public, system, static assets, and embed checkout routes.
 pub fn router() -> Router<AppState> {
@@ -19,6 +27,42 @@ pub fn router() -> Router<AppState> {
         .route("/readyz", get(ready))
         .route("/metrics", get(metrics_endpoint))
         .route("/v1/archava.js", get(serve_embed_script))
+        .route(
+            "/v1/voice-worklet.js",
+            get(|| async {
+                (
+                    [(
+                        header::CONTENT_TYPE,
+                        "application/javascript; charset=utf-8",
+                    )],
+                    include_str!("../../../../static/voice-worklet.js"),
+                )
+            }),
+        )
+        .route(
+            "/v1/voice.js",
+            get(|| async {
+                (
+                    [(
+                        header::CONTENT_TYPE,
+                        "application/javascript; charset=utf-8",
+                    )],
+                    include_str!("../../../../static/voice.js"),
+                )
+            }),
+        )
+        .route(
+            "/v1/livekit-client.js",
+            get(|| async {
+                (
+                    [(
+                        header::CONTENT_TYPE,
+                        "application/javascript; charset=utf-8",
+                    )],
+                    include_str!("../../../../static/vendor/livekit/livekit-client.umd.js"),
+                )
+            }),
+        )
         .route("/archava.css", get(serve_archava_css))
         .route("/workspace.css", get(serve_workspace_css))
         .route("/embed/checkout", get(serve_embed_checkout))
@@ -393,7 +437,7 @@ pub async fn serve_embed_checkout(
     </div>
     <div class="detail-row">
       <span style="color:var(--text-muted);">Settlement Model</span>
-      <span style="color:#f59e0b;">Simulated Sandbox (Non-Financial)</span>
+       <span style="color:#f59e0b;">Provider settlement required</span>
     </div>
     <div class="detail-row">
       <span>Total Amount</span>
@@ -402,53 +446,28 @@ pub async fn serve_embed_checkout(
 
     <div class="payment-methods">
       <div class="method-option active">
-        <input type="radio" name="pay_method" checked id="m_qris">
-        <label for="m_qris" style="cursor:pointer;flex:1;">QRIS / Instant Sandbox Simulation</label>
+         <input type="radio" name="pay_method" checked id="m_qris" disabled>
+         <label for="m_qris" style="flex:1;">QRIS / configured provider</label>
       </div>
       <div class="method-option">
-        <input type="radio" name="pay_method" id="m_va">
-        <label for="m_va" style="cursor:pointer;flex:1;">Virtual Account / Test Sandbox</label>
+         <input type="radio" name="pay_method" id="m_va" disabled>
+         <label for="m_va" style="flex:1;">Virtual Account / configured provider</label>
       </div>
     </div>
 
-    <button id="pay-btn" class="btn-pay" onclick="completePayment()">Simulate Settlement ({formatted_amount})</button>
-    <button class="btn-cancel" onclick="cancelPayment()">Cancel and return to store</button>
+     <button id="pay-btn" class="btn-pay" disabled>Payment provider unavailable</button>
+     <button class="btn-cancel" onclick="cancelPayment()">Close checkout</button>
 
     <div class="footer-note">
-      Demonstration Sandbox &bull; No Real Financial Transactions Settled
+       Display only &bull; no financial transaction was initiated
     </div>
   </div>
 
   <script>
     var orderId = "{order_id}";
     var tenantId = "{tenant_id}";
-    var amount = {amount};
-
-    function completePayment() {{
-      var btn = document.getElementById('pay-btn');
-      btn.disabled = true;
-      btn.innerText = 'Simulating sandbox settlement...';
-
-      setTimeout(function() {{
-        var receipt = {{
-          transactionId: 'sim_' + Math.random().toString(36).substring(2, 12),
-          orderId: orderId,
-          tenantId: tenantId,
-          amount: amount,
-          status: 'simulated_test',
-          isSimulated: true,
-          timestamp: new Date().toISOString()
-        }};
-        window.parent.postMessage({{
-          type: 'ARCHAVA_PAYMENT_SIMULATED',
-          orderId: orderId,
-          receipt: receipt
-        }}, '*');
-      }}, 600);
-    }}
-
-    function cancelPayment() {{
-      window.parent.postMessage({{
+     function cancelPayment() {{
+       window.parent.postMessage({{
         type: 'ARCHAVA_PAYMENT_CANCEL',
         orderId: orderId
       }}, '*');
@@ -484,6 +503,86 @@ pub struct SignCheckoutRequest {
     pub item: Option<String>,
 }
 
+/// Reads the authoritative commerce quote inside the tenant-scoped RLS
+/// transaction. The embed request may display a caller-supplied label, but it
+/// may not invent an order, amount, or currency.
+async fn checkout_order_quote(
+    state: &AppState,
+    tenant: &TenantId,
+    order: &str,
+    principal_id: &str,
+) -> Result<Option<(u64, String)>, StatusCode> {
+    if state.ledger().namespace != COMMERCE_NAMESPACE {
+        return Err(StatusCode::SERVICE_UNAVAILABLE);
+    }
+    let order_id = Uuid::parse_str(order).map_err(|_| StatusCode::NOT_FOUND)?;
+    let mut transaction = archava_adapters::rls::TenantTransaction::begin(
+        state.pool(),
+        COMMERCE_NAMESPACE,
+        COMMERCE_LEDGER,
+        tenant.clone(),
+    )
+    .await
+    .map_err(|_| StatusCode::SERVICE_UNAVAILABLE)?;
+    let connection = transaction
+        .checked_executor()
+        .await
+        .map_err(|_| StatusCode::SERVICE_UNAVAILABLE)?;
+    let principal = PurchasePrincipal::human(principal_id.to_owned());
+    let context =
+        match resolve_commerce_context(&mut *connection, tenant.as_str(), &principal).await {
+            Ok(context) => context,
+            Err(PurchaseError::Domain(ErpError::Forbidden)) => return Err(StatusCode::FORBIDDEN),
+            Err(_) => return Err(StatusCode::SERVICE_UNAVAILABLE),
+        };
+    if !context.access.holds(&["orders.read"]) {
+        return Err(StatusCode::FORBIDDEN);
+    }
+    match archava_adapters::erp::company_trade::authorize(
+        &mut *connection,
+        tenant.as_str(),
+        &principal,
+        archava_adapters::erp::company_trade::Record::Sale,
+        order_id,
+    )
+    .await
+    {
+        Ok(_) => {}
+        Err(PurchaseError::Domain(ErpError::Forbidden)) => return Err(StatusCode::FORBIDDEN),
+        Err(PurchaseError::Domain(ErpError::NotFound)) => return Ok(None),
+        Err(_) => return Err(StatusCode::SERVICE_UNAVAILABLE),
+    }
+    let row = sqlx::query(
+        "SELECT total_estimate, currency
+         FROM archava_commerce.orders
+         WHERE tenant_id = $1 AND id = $2 AND state IN ('draft', 'reserved')
+           AND ($3 OR owner_id = $4)",
+    )
+    .bind(tenant.as_str())
+    .bind(order_id)
+    .bind(context.access.scope.covers_all())
+    .bind(&context.owner_id)
+    .fetch_optional(&mut *connection)
+    .await
+    .map_err(|_| StatusCode::SERVICE_UNAVAILABLE)?;
+    transaction
+        .commit()
+        .await
+        .map_err(|_| StatusCode::SERVICE_UNAVAILABLE)?;
+
+    row.map(|row| {
+        let amount = row
+            .try_get::<i64, _>("total_estimate")
+            .map_err(|_| StatusCode::SERVICE_UNAVAILABLE)?;
+        let amount = u64::try_from(amount).map_err(|_| StatusCode::SERVICE_UNAVAILABLE)?;
+        let currency = row
+            .try_get::<String, _>("currency")
+            .map_err(|_| StatusCode::SERVICE_UNAVAILABLE)?;
+        Ok((amount, currency))
+    })
+    .transpose()
+}
+
 /// `POST /embed/checkout/sign` — exchanges a session for one signed checkout
 /// URL.
 ///
@@ -496,14 +595,17 @@ pub async fn sign_embed_checkout(
     headers: HeaderMap,
     submission: Result<Json<SignCheckoutRequest>, JsonRejection>,
 ) -> (StatusCode, Json<serde_json::Value>) {
-    if let Err((status, _)) = authenticate(&state, &headers, true).await {
-        let reason = if status == StatusCode::FORBIDDEN {
-            "csrf_required"
-        } else {
-            "unauthenticated"
-        };
-        return (status, Json(serde_json::json!({ "error": reason })));
-    }
+    let principal = match authenticate(&state, &headers, true).await {
+        Ok(session) => session.principal_id,
+        Err((status, _)) => {
+            let reason = if status == StatusCode::FORBIDDEN {
+                "csrf_required"
+            } else {
+                "unauthenticated"
+            };
+            return (status, Json(serde_json::json!({ "error": reason })));
+        }
+    };
     let Json(submission) = match submission {
         Ok(submission) => submission,
         Err(rejected) => {
@@ -515,14 +617,71 @@ pub async fn sign_embed_checkout(
         }
     };
 
+    // A signature is an authority-bearing checkout document. Do not let any
+    // authenticated user mint a signed document for an arbitrary tenant or a
+    // made-up order. The browser may display caller-supplied values, but the
+    // signer must first prove active membership in the requested tenant.
+    let (Some(raw_tenant), Some(raw_order)) =
+        (submission.tenant.as_deref(), submission.order_id.as_deref())
+    else {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({ "error": "tenant_and_order_required" })),
+        );
+    };
+    let requested_amount = submission.amount;
+    let requested_currency = submission.currency.clone();
     let params = checkout_params(EmbedCheckoutQuery {
-        tenant: submission.tenant,
-        order_id: submission.order_id,
-        amount: submission.amount,
-        currency: submission.currency,
+        tenant: Some(raw_tenant.to_string()),
+        order_id: Some(raw_order.to_string()),
+        amount: requested_amount,
+        currency: requested_currency.clone(),
         item: submission.item,
         sig: None,
     });
+    let tenant = match TenantId::new(&params.tenant) {
+        Ok(tenant) => tenant,
+        Err(_) => {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({ "error": "invalid_tenant" })),
+            )
+        }
+    };
+    let quote = match checkout_order_quote(&state, &tenant, &params.order, &principal).await {
+        Ok(Some(quote)) => quote,
+        Ok(None) => {
+            return (
+                StatusCode::NOT_FOUND,
+                Json(serde_json::json!({ "error": "checkout_order_not_found" })),
+            )
+        }
+        Err(status) => {
+            let error = if status == StatusCode::FORBIDDEN {
+                "forbidden_checkout_access"
+            } else {
+                "checkout_storage_unavailable"
+            };
+            return (status, Json(serde_json::json!({ "error": error })));
+        }
+    };
+    if requested_amount.is_some_and(|amount| amount != quote.0)
+        || requested_currency.is_some_and(|currency| currency.to_ascii_uppercase() != quote.1)
+    {
+        return (
+            StatusCode::CONFLICT,
+            Json(serde_json::json!({ "error": "checkout_quote_mismatch" })),
+        );
+    }
+    let params = CheckoutParams {
+        tenant: params.tenant,
+        order: params.order,
+        amount: quote.0,
+        currency: quote.1,
+        item: params.item,
+        sig: None,
+    };
+
     let signature = state.identity().embed_signature(&canonical_checkout(
         &params.tenant,
         &params.order,

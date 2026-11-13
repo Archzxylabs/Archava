@@ -33,6 +33,7 @@ fn module(
 
 fn catalogue() -> Catalogue {
     let mut catalogue = Catalogue {
+        disclosure_modules: None,
         catalogue_version: "test-catalogue@1".to_string(),
         pricing_version: "test-pricing@1".to_string(),
         modules: vec![
@@ -96,6 +97,7 @@ fn base() -> OwnerConfig {
     labels.insert("won".to_string(), "Won".to_string());
     OwnerConfig {
         revision: 1,
+        ai_disclosure: None,
         enabled: BTreeSet::from(["core".to_string()]),
         terminology: Terminology {
             pipeline_labels: labels,
@@ -114,6 +116,7 @@ fn request(base_revision: i64, enable: &[&str], disable: &[&str]) -> Request {
         disable: disable.iter().map(|id| id.to_string()).collect(),
         terminology: None,
         replace_terminology: None,
+        ai_disclosure: None,
     }
 }
 
@@ -374,6 +377,7 @@ fn t01_relabelling_changes_the_label_but_not_the_canonical_stage_key() {
             pipeline_labels: labels,
         }),
         replace_terminology: None,
+        ai_disclosure: None,
     };
     let plan = store.plan(&request).unwrap();
     assert_eq!(
@@ -501,6 +505,7 @@ fn a3_restore_removes_the_labels_the_target_never_had() {
             pipeline_labels: labels,
         }),
         replace_terminology: None,
+        ai_disclosure: None,
     };
     let plan = store.plan(&relabel).unwrap();
     store
@@ -632,4 +637,83 @@ fn a2_a_moved_catalogue_identity_refuses_the_stale_plan() {
         .expect("an honest confirmation must apply");
     assert_eq!(receipt.plan_hash, plan.plan_hash);
     assert_eq!(receipt.revision, plan.base_revision + 1);
+}
+
+fn disclosure_policy() -> archava_own::DisclosurePolicy {
+    serde_json::from_value(serde_json::json!({
+        "providerBinding":"a".repeat(64),"modules":["restaurant"],
+        "dataClasses":["record_references","business_facts"],
+        "companies":["00000000-0000-4000-8000-000000000001"],
+        "includeWorkspaceRecords":false
+    }))
+    .unwrap()
+}
+#[test]
+fn disclosure_is_an_explicit_versioned_change_and_restore_never_merges_a_newer_grant() {
+    use archava_own::DisclosureChange;
+    let mut store = store();
+    let legacy = serde_json::to_value(store.current()).unwrap();
+    assert!(legacy.get("aiDisclosure").is_none());
+    let decoded: OwnerConfig = serde_json::from_value(legacy.clone()).unwrap();
+    assert_eq!(serde_json::to_value(decoded).unwrap(), legacy);
+    let mut requested = request(1, &[], &[]);
+    requested.ai_disclosure = Some(DisclosureChange::Replace {
+        policy: disclosure_policy(),
+    });
+    let plan = store.plan(&requested).unwrap();
+    assert!(plan.blocked.is_none());
+    assert_ne!(
+        plan.plan_hash,
+        store.plan(&request(1, &[], &[])).unwrap().plan_hash
+    );
+    let mut other = requested.clone();
+    let mut changed = disclosure_policy();
+    changed.include_workspace_records = true;
+    other.ai_disclosure = Some(DisclosureChange::Replace { policy: changed });
+    assert_ne!(plan.plan_hash, store.plan(&other).unwrap().plan_hash);
+    store
+        .apply(&plan, Some(&confirm(&plan)), "disclosure-enable")
+        .unwrap();
+    assert!(store.current().ai_disclosure.is_some());
+    let restore = store.restore(1).unwrap();
+    assert!(restore.config.ai_disclosure.is_none());
+    store
+        .apply(
+            &restore,
+            Some(&confirm(&restore)),
+            "disclosure-revoke-restore",
+        )
+        .unwrap();
+    assert_eq!(store.current().revision, 3);
+    assert!(store.current().ai_disclosure.is_none());
+    assert!(store
+        .history()
+        .iter()
+        .find(|s| s.revision == 2)
+        .unwrap()
+        .ai_disclosure
+        .is_some());
+    let old_grant = store.restore(2).unwrap();
+    assert_eq!(old_grant.config.ai_disclosure, Some(disclosure_policy()));
+    // Host provider/company/expiry approval checks still govern reactivation.
+}
+#[test]
+fn unavailable_disclosure_blocks_the_whole_configuration_without_a_partial_enable() {
+    use archava_own::DisclosureChange;
+    let mut store = store();
+    let original = store.current().clone();
+    let mut policy = disclosure_policy();
+    policy.modules.insert("reports".into());
+    let mut requested = request(1, &["restaurant"], &[]);
+    requested.ai_disclosure = Some(DisclosureChange::Replace { policy });
+    let plan = store.plan(&requested).unwrap();
+    assert_eq!(
+        plan.blocked.as_ref().unwrap().reason,
+        BlockedReason::InvalidDisclosure
+    );
+    assert_eq!(plan.config, original);
+    assert!(store
+        .apply(&plan, Some(&confirm(&plan)), "blocked-disclosure")
+        .is_err());
+    assert_eq!(store.current(), &original);
 }

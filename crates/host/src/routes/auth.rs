@@ -44,13 +44,15 @@ impl FromRequestParts<AppState> for LoginSource {
 
     async fn from_request_parts(
         parts: &mut Parts,
-        _state: &AppState,
+        state: &AppState,
     ) -> Result<Self, Self::Rejection> {
         let peer = parts
             .extensions
             .get::<ConnectInfo<SocketAddr>>()
             .map(|ConnectInfo(address)| address.ip());
-        let bucket = peer
+        let bucket = state
+            .trusted_proxies()
+            .client_ip(peer, &parts.headers)
             .map(|address| address.to_string())
             .unwrap_or_else(|| NO_CONNECT_INFO_SOURCE.to_string());
         Ok(Self { bucket, peer })

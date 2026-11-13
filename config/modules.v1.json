@@ -1,0 +1,525 @@
+{
+  "schemaVersion": 1,
+  "modules": [
+    {
+      "id": "crm",
+      "label": "CRM",
+      "namespace": "archava_crm",
+      "ledger": "crm-pg",
+      "source": "crm",
+      "suite": "crm",
+      "spec": "docs/modules/CRM_MODULE.md",
+      "readPath": "/contacts",
+      "uiPath": "/app/contacts",
+      "control": "contact-create",
+      "agent": {
+        "rank": 19,
+        "keywords": [
+          "crm",
+          "contact",
+          "kontak",
+          "pelanggan",
+          "customer",
+          "follow-up",
+          "follow up",
+          "followup",
+          "calon"
+        ],
+        "collections": [
+          "items",
+          "contacts"
+        ]
+      }
+    },
+    {
+      "id": "commerce",
+      "label": "Commerce",
+      "namespace": "archava_commerce",
+      "ledger": "commerce-pg",
+      "source": "commerce",
+      "suite": "erp_commerce",
+      "spec": "docs/modules/COMMERCE_MODULE.md",
+      "readPath": "/erp/commerce/workspace",
+      "uiPath": "/app/erp?module=catalog",
+      "control": "product-save",
+      "agent": {
+        "rank": 16,
+        "keywords": [
+          "commerce",
+          "inventory",
+          "stock",
+          "stok",
+          "order",
+          "pesanan",
+          "replenish",
+          "catalog",
+          "produk",
+          "product"
+        ],
+        "collections": [
+          "products",
+          "orders"
+        ]
+      }
+    },
+    {
+      "id": "purchasing",
+      "label": "Purchasing",
+      "namespace": "archava_purchasing",
+      "ledger": "purchasing-pg",
+      "source": "purchasing",
+      "suite": "erp_purchasing",
+      "spec": "docs/modules/PURCHASING_MODULE.md",
+      "readPath": "/erp/purchasing/workspace",
+      "uiPath": "/app/erp?module=purchasing",
+      "control": "purchase-save",
+      "agent": {
+        "rank": 15,
+        "keywords": [
+          "purchasing",
+          "purchase",
+          "supplier",
+          "pemasok",
+          "pembelian",
+          "penawaran"
+        ],
+        "collections": [
+          "suppliers",
+          "offers",
+          "orders",
+          "documents"
+        ]
+      }
+    },
+    {
+      "id": "billing",
+      "label": "Billing",
+      "namespace": "archava_billing",
+      "ledger": "billing-pg",
+      "source": "billing",
+      "suite": "erp_billing",
+      "spec": "docs/modules/BILLING_MODULE.md",
+      "readPath": "/erp/billing/workspace",
+      "uiPath": "/app/erp?module=invoices",
+      "control": "invoice-save",
+      "agent": {
+        "rank": 17,
+        "keywords": [
+          "invoice",
+          "billing",
+          "tagihan",
+          "penagihan",
+          "payment",
+          "collection plan"
+        ],
+        "collections": [
+          "invoices"
+        ]
+      }
+    },
+    {
+      "id": "support",
+      "label": "Support",
+      "namespace": "archava_support",
+      "ledger": "support-pg",
+      "source": "support",
+      "suite": "erp_support",
+      "spec": "docs/modules/SUPPORT_CASES_MODULE.md",
+      "readPath": "/erp/support/cases",
+      "uiPath": "/app/erp?module=support",
+      "control": "case-save",
+      "agent": {
+        "rank": 18,
+        "keywords": [
+          "support",
+          "tiket",
+          "ticket",
+          "case",
+          "dukungan"
+        ],
+        "collections": [
+          "items",
+          "cases"
+        ]
+      }
+    },
+    {
+      "id": "organizations",
+      "label": "Organizations",
+      "namespace": "archava_organizations",
+      "ledger": "organizations-pg",
+      "source": "organizations",
+      "suite": "erp_organizations",
+      "spec": "docs/modules/ORGANIZATION_IDENTITY.md",
+      "readPath": "/erp/organizations/workspace",
+      "uiPath": "/app/erp?module=organizations",
+      "control": "module-organizations-create",
+      "agent": {
+        "rank": 14,
+        "keywords": [
+          "organization",
+          "organisasi",
+          "affiliation",
+          "afiliasi"
+        ],
+        "collections": [
+          "companies",
+          "parties",
+          "organizations",
+          "affiliations"
+        ]
+      }
+    },
+    {
+      "id": "accounting",
+      "label": "Accounting",
+      "namespace": "archava_accounting",
+      "ledger": "accounting-pg",
+      "source": "accounting",
+      "suite": "erp_accounting",
+      "spec": "docs/modules/ACCOUNTING.md",
+      "readPath": "/erp/accounting/workspace",
+      "uiPath": "/app/erp?module=accounting",
+      "control": "module-accounting-create",
+      "agent": {
+        "rank": 1,
+        "keywords": [
+          "accounting",
+          "akuntansi",
+          "pembukuan",
+          "jurnal",
+          "journal",
+          "ledger",
+          "buku besar"
+        ],
+        "collections": [
+          "books",
+          "accounts",
+          "periods",
+          "journals",
+          "invoice_policies",
+          "invoice_sources",
+          "purchase_policies",
+          "purchase_sources",
+          "stock_policies",
+          "stock_sources"
+        ]
+      }
+    },
+    {
+      "id": "proposals",
+      "label": "Proposals/change requests",
+      "namespace": "archava_proposals",
+      "ledger": "proposals-pg",
+      "source": "proposals",
+      "suite": "erp_proposals",
+      "spec": "docs/modules/NATIVE_OPERATIONS.md",
+      "readPath": "/erp/proposals/workspace",
+      "uiPath": "/app/erp?module=proposals",
+      "control": "module-proposals-create",
+      "agent": {
+        "rank": 13,
+        "keywords": [
+          "proposal",
+          "scope",
+          "change request"
+        ],
+        "collections": [
+          "proposals",
+          "scope_items",
+          "scope_versions",
+          "change_requests"
+        ]
+      }
+    },
+    {
+      "id": "projects",
+      "label": "Projects",
+      "namespace": "archava_projects",
+      "ledger": "projects-pg",
+      "source": "projects",
+      "suite": "erp_projects",
+      "spec": "docs/modules/PROJECT_DELIVERY_MODULE.md",
+      "readPath": "/erp/projects/workspace",
+      "uiPath": "/app/erp?module=projects",
+      "control": "module-projects-create",
+      "agent": {
+        "rank": 12,
+        "keywords": [
+          "project",
+          "proyek",
+          "milestone"
+        ],
+        "collections": [
+          "projects",
+          "tasks",
+          "milestones"
+        ]
+      }
+    },
+    {
+      "id": "foodservice",
+      "label": "Foodservice",
+      "namespace": "archava_foodservice",
+      "ledger": "foodservice-pg",
+      "source": "foodservice",
+      "suite": "erp_foodservice",
+      "spec": "docs/modules/FOODSERVICE_MODULE.md",
+      "readPath": "/erp/foodservice/workspace",
+      "uiPath": "/app/erp?module=foodservice",
+      "control": "module-foodservice-create",
+      "agent": {
+        "rank": 4,
+        "keywords": [
+          "foodservice",
+          "restaurant",
+          "restoran",
+          "menu",
+          "ingredient",
+          "bahan",
+          "dapur",
+          "kitchen"
+        ],
+        "collections": [
+          "tables",
+          "menu_items",
+          "recipe_versions",
+          "recipe_components",
+          "tickets",
+          "ticket_lines"
+        ]
+      }
+    },
+    {
+      "id": "scheduling",
+      "label": "Resource reservations",
+      "namespace": "archava_scheduling",
+      "ledger": "scheduling-pg",
+      "source": "scheduling",
+      "suite": "erp_scheduling",
+      "spec": "docs/modules/RESOURCE_RESERVATIONS_MODULE.md",
+      "readPath": "/erp/scheduling/workspace",
+      "uiPath": "/app/erp?module=scheduling",
+      "control": "module-scheduling-create",
+      "agent": {
+        "rank": 3,
+        "keywords": [
+          "schedule",
+          "scheduling",
+          "jadwal",
+          "resource",
+          "reservation",
+          "reservasi",
+          "booking"
+        ],
+        "collections": [
+          "resources",
+          "reservations"
+        ]
+      }
+    },
+    {
+      "id": "accommodation",
+      "label": "Accommodation",
+      "namespace": "archava_accommodation",
+      "ledger": "accommodation-pg",
+      "source": "accommodation",
+      "suite": "erp_accommodation",
+      "spec": "docs/modules/ACCOMMODATION_MODULE.md",
+      "readPath": "/erp/accommodation/workspace",
+      "uiPath": "/app/erp?module=accommodation",
+      "control": "module-accommodation-create",
+      "agent": {
+        "rank": 2,
+        "keywords": [
+          "hotel",
+          "guest",
+          "tamu",
+          "kamar",
+          "housekeeping",
+          "accommodation"
+        ],
+        "collections": [
+          "properties",
+          "room_types",
+          "rooms",
+          "stays"
+        ]
+      }
+    },
+    {
+      "id": "assets",
+      "label": "Assets",
+      "namespace": "archava_assets",
+      "ledger": "assets-pg",
+      "source": "assets",
+      "suite": "erp_assets",
+      "spec": "docs/modules/ASSETS_MODULE.md",
+      "readPath": "/erp/assets/workspace",
+      "uiPath": "/app/erp?module=assets",
+      "control": "module-assets-create",
+      "agent": {
+        "rank": 11,
+        "keywords": [
+          "asset",
+          "aset",
+          "equipment",
+          "maintenance",
+          "perawatan"
+        ],
+        "collections": [
+          "assets",
+          "custody_events",
+          "maintenance_records"
+        ]
+      }
+    },
+    {
+      "id": "subscriptions",
+      "label": "Subscriptions",
+      "namespace": "archava_subscriptions",
+      "ledger": "subscriptions-pg",
+      "source": "subscriptions",
+      "suite": "erp_subscriptions",
+      "spec": "docs/modules/SUBSCRIPTIONS_MODULE.md",
+      "readPath": "/erp/subscriptions/subscriptions",
+      "uiPath": "/app/erp?module=subscriptions",
+      "control": "module-subscriptions-create",
+      "agent": {
+        "rank": 6,
+        "keywords": [
+          "subscription",
+          "langganan",
+          "entitlement",
+          "membership"
+        ],
+        "collections": [
+          "subscriptions"
+        ]
+      }
+    },
+    {
+      "id": "attendance",
+      "label": "Attendance",
+      "namespace": "archava_attendance",
+      "ledger": "attendance-pg",
+      "source": "attendance",
+      "suite": "erp_attendance",
+      "spec": "docs/modules/ATTENDANCE_MODULE.md",
+      "readPath": "/erp/attendance/sessions",
+      "uiPath": "/app/erp?module=attendance",
+      "control": "module-attendance-create",
+      "agent": {
+        "rank": 7,
+        "keywords": [
+          "attendance",
+          "kehadiran",
+          "attendee",
+          "peserta",
+          "check-in sesi"
+        ],
+        "collections": [
+          "sessions"
+        ]
+      }
+    },
+    {
+      "id": "laundry",
+      "label": "Laundry",
+      "namespace": "archava_laundry",
+      "ledger": "laundry-pg",
+      "source": "laundry",
+      "suite": "erp_laundry",
+      "spec": "docs/modules/LAUNDRY_MODULE.md",
+      "readPath": "/erp/laundry/orders",
+      "uiPath": "/app/erp?module=laundry",
+      "control": "module-laundry-create",
+      "agent": {
+        "rank": 5,
+        "keywords": [
+          "laundry",
+          "linen",
+          "cucian"
+        ],
+        "collections": [
+          "orders"
+        ]
+      }
+    },
+    {
+      "id": "field",
+      "label": "Field services",
+      "namespace": "archava_field",
+      "ledger": "field-services-pg",
+      "source": "field_services",
+      "suite": "erp_field_services",
+      "spec": "docs/modules/FIELD_SERVICES_MODULE.md",
+      "readPath": "/erp/field/jobs",
+      "uiPath": "/app/erp?module=field",
+      "control": "module-field-create",
+      "agent": {
+        "rank": 9,
+        "keywords": [
+          "teknisi",
+          "field service",
+          "service job",
+          "dispatch plan"
+        ],
+        "collections": [
+          "jobs"
+        ]
+      }
+    },
+    {
+      "id": "fulfillment",
+      "label": "Fulfillment",
+      "namespace": "archava_fulfillment",
+      "ledger": "fulfillment-pg",
+      "source": "fulfillment",
+      "suite": "erp_fulfillment",
+      "spec": "docs/modules/FULFILLMENT_MODULE.md",
+      "readPath": "/erp/fulfillment/jobs",
+      "uiPath": "/app/erp?module=fulfillment",
+      "control": "module-fulfillment-create",
+      "agent": {
+        "rank": 10,
+        "keywords": [
+          "fulfillment",
+          "pengiriman",
+          "shipment",
+          "delivery dispatch"
+        ],
+        "collections": [
+          "jobs"
+        ]
+      }
+    },
+    {
+      "id": "education",
+      "label": "Formal education",
+      "namespace": "archava_edu",
+      "ledger": "formal-education-pg",
+      "source": "formal_education",
+      "suite": "erp_formal_education",
+      "spec": "docs/modules/FORMAL_EDUCATION_MODULE.md",
+      "readPath": "/erp/education/enrollments",
+      "uiPath": "/app/erp?module=education",
+      "control": "module-education-create",
+      "agent": {
+        "rank": 8,
+        "keywords": [
+          "education",
+          "enrollment",
+          "belajar",
+          "siswa",
+          "student",
+          "kelas",
+          "learning"
+        ],
+        "collections": [
+          "enrollments"
+        ]
+      }
+    }
+  ]
+}

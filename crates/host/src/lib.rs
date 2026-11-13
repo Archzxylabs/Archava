@@ -31,15 +31,15 @@
 //! readiness constructor succeeds. The fixture-backed `slice_server` remains
 //! a separate preview/proof entrypoint; it is not the production runtime.
 
+pub mod agent;
 pub mod assistant;
 mod authority;
 pub mod cockpit;
-pub mod crm;
 // Laya's System 1 gate, mounted in shadow mode by the conversation route.
 mod decision;
 // The ERP host surface — Archxy 2's bounded cohorts (R06 onward), one module
 // per ledger family, transactions opened through the same TenantTransaction
-// gate as `crm`. PACKED-000 records this lib.rs diff for the integration
+// gate as `erp::crm`. PACKED-000 records this lib.rs diff for the integration
 // writer along with the other shared-file patches.
 pub mod erp;
 pub mod feed;
@@ -67,4 +67,11 @@ pub use router::{router, AllReadiness, AppState, Ledger};
 // The same header policy the JSON router carries, exported so the SSR document
 // router cannot be assembled without it (audit H10: `/app` bypassed the headers
 // because the layer lived only on the host router).
-pub use security::{document_security_headers, parse_frame_ancestors, security_headers};
+pub use security::{
+    document_security_headers, parse_frame_ancestors, presence_document_security_headers,
+    security_headers, TrustedProxies,
+};
+
+mod business;
+
+mod workflows;

@@ -199,7 +199,7 @@ async fn setup(mock: &Mock) -> (Fixture, Router, Value, Uuid) {
 #[tokio::test]
 async fn send_invoice_email_records_outbox_and_accepts() {
     let mock = Mock::start().await;
-    let (_f, app, auth, invoice_id) = setup(&mock).await;
+    let (f, app, auth, invoice_id) = setup(&mock).await;
     let req_id = Uuid::new_v4();
 
     let (status, body) = call(
@@ -246,6 +246,23 @@ async fn send_invoice_email_records_outbox_and_accepts() {
     assert_eq!(list.len(), 1);
     assert_eq!(list[0]["id"], body["id"]);
     assert_eq!(list[0]["state"], "accepted");
+
+    let snapshot = sqlx::query(
+        "SELECT payload_text, payload_html, from_address FROM archava_billing.email_outbox \
+         WHERE tenant_id = 'acme' AND request_id = $1",
+    )
+    .bind(req_id)
+    .fetch_one(&f.admin_pool)
+    .await
+    .unwrap();
+    let payload_text: String = sqlx::Row::try_get(&snapshot, "payload_text").unwrap();
+    let payload_html: Option<String> = sqlx::Row::try_get(&snapshot, "payload_html").unwrap();
+    let from_address: String = sqlx::Row::try_get(&snapshot, "from_address").unwrap();
+    assert!(payload_text.contains("INV-EMAIL"));
+    assert!(payload_html
+        .unwrap_or_default()
+        .contains("Invoice INV-EMAIL"));
+    assert_eq!(from_address, "Acme Billing <billing@acme.com>");
 }
 
 #[tokio::test]
@@ -304,6 +321,66 @@ async fn idempotent_retry_returns_existing_without_second_call() {
     .await;
 
     assert_eq!(status3, StatusCode::CONFLICT);
+}
+
+#[tokio::test]
+async fn a_request_id_cannot_replay_a_receipt_for_another_invoice() {
+    let mock = Mock::start().await;
+    let (_f, app, auth, first_invoice) = setup(&mock).await;
+    let (status, second) = call(
+        &app,
+        "POST",
+        "/erp/billing/commands",
+        json!({
+            "tenant": "acme",
+            "mutation": {
+                "type": "create_invoice",
+                "commandId": Uuid::new_v4(),
+                "invoiceCode": "INV-EMAIL-SECOND",
+                "customerRef": "Another Customer",
+                "consumerRef": "test",
+                "currency": "IDR",
+                "lines": [{"description": "Another service", "quantity": 1, "unitMinor": 200}]
+            }
+        }),
+        Some(&auth),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{second}");
+    let second_invoice = second["invoiceId"].as_str().unwrap();
+
+    let request_id = Uuid::new_v4();
+    let first_path = format!("/erp/billing/invoices/{first_invoice}/send-email?tenant=acme");
+    let (first_status, first_body) = call(
+        &app,
+        "POST",
+        &first_path,
+        json!({
+            "requestId": request_id,
+            "recipient": "customer@example.com",
+            "subject": "Invoice replay boundary"
+        }),
+        Some(&auth),
+    )
+    .await;
+    assert_eq!(first_status, StatusCode::OK, "{first_body}");
+    assert_eq!(mock.state.lock().unwrap().send_count, 1);
+
+    let second_path = format!("/erp/billing/invoices/{second_invoice}/send-email?tenant=acme");
+    let (second_status, second_body) = call(
+        &app,
+        "POST",
+        &second_path,
+        json!({
+            "requestId": request_id,
+            "recipient": "customer@example.com",
+            "subject": "Invoice replay boundary"
+        }),
+        Some(&auth),
+    )
+    .await;
+    assert_eq!(second_status, StatusCode::CONFLICT, "{second_body}");
+    assert_eq!(mock.state.lock().unwrap().send_count, 1);
 }
 
 #[tokio::test]
@@ -367,13 +444,15 @@ async fn review_gemini_lost_ack_then_ui_style_new_key_must_not_duplicate_email()
     let mock = Mock::start().await;
     let (_f, app, auth, invoice) = setup(&mock).await;
     let path = format!("/erp/billing/invoices/{invoice}/send-email?tenant=acme");
-    for _ in 0..2 {
-        let (status, _) = call(
+    let first = Uuid::new_v4();
+    let second = Uuid::new_v4();
+    for key in [first, second] {
+        let (status, body) = call(
             &app,
             "POST",
             &path,
             json!({
-                "requestId": Uuid::new_v4(),
+                "requestId": key,
                 "recipient": "customer@example.com",
                 "subject": "Original invoice",
                 "message": "Please review the invoice details attached."
@@ -381,7 +460,14 @@ async fn review_gemini_lost_ack_then_ui_style_new_key_must_not_duplicate_email()
             Some(&auth),
         )
         .await;
-        assert_eq!(status, StatusCode::OK);
+        if key == first {
+            assert_eq!(status, StatusCode::OK);
+        } else {
+            assert_eq!(status, StatusCode::CONFLICT);
+            assert_eq!(body["reason"], "email_already_recorded");
+            assert_eq!(body["requestId"], key.to_string());
+            assert_eq!(body["duplicateOf"], first.to_string());
+        }
     }
     let count = mock.state.lock().unwrap().send_count;
     assert_eq!(

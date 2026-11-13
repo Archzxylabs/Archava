@@ -1,0 +1,24 @@
+   Compiling archava-host v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/host)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.24s
+     Running tests/workspace_flows.rs (target/debug/deps/workspace_flows-e8d02e6a6b4232e7)
+
+running 1 test
+test mission_creation_replay_private_listing_real_tools_and_step_retry ... FAILED
+
+failures:
+
+---- mission_creation_replay_private_listing_real_tools_and_step_retry stdout ----
+
+thread 'mission_creation_replay_private_listing_real_tools_and_step_retry' (217403) panicked at crates/host/tests/workspace_flows.rs:288:5:
+assertion `left == right` failed
+  left: 200
+ right: 403
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    mission_creation_replay_private_listing_real_tools_and_step_retry
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 11 filtered out; finished in 1.37s
+
+error: test failed, to rerun pass `-p archava-host --test workspace_flows`

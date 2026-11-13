@@ -15,11 +15,13 @@ use axum::{
 use serde::Deserialize;
 use serde_json::{json, Value};
 #[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct WorkspaceQuery {
     pub tenant: TenantId,
     #[serde(default)]
     pub search: String,
+    pub company_id: Option<uuid::Uuid>,
+    pub id: Option<uuid::Uuid>,
 }
 type Response = (StatusCode, Json<Value>);
 async fn read(
@@ -51,6 +53,19 @@ async fn read(
     let mut tx = TenantTransaction::begin(state.pool(), namespace, ledger, input.tenant.clone())
         .await
         .map_err(unavailable)?;
+    crate::own::require_erp_module(&mut tx, namespace)
+        .await
+        .map_err(crate::own::OwnRefusal::response)?;
+    if let Some(id) = input.company_id {
+        archava_adapters::erp::company_trade::resolve(
+            tx.checked_executor().await.map_err(unavailable)?,
+            input.tenant.as_str(),
+            &principal,
+            id,
+        )
+        .await
+        .map_err(error)?;
+    }
     let value = if is_billing {
         let ctx = billing::resolve_billing_context(
             tx.checked_executor().await.map_err(unavailable)?,
@@ -59,11 +74,13 @@ async fn read(
         )
         .await
         .map_err(error)?;
-        billing::workspace_view(
+        billing::workspace_view_filtered(
             tx.checked_executor().await.map_err(unavailable)?,
             input.tenant.as_str(),
             &ctx,
             &input.search,
+            input.company_id,
+            input.id,
         )
         .await
         .map_err(error)?
@@ -75,11 +92,13 @@ async fn read(
         )
         .await
         .map_err(error)?;
-        purchasing::workspace_view(
+        purchasing::workspace_view_filtered(
             tx.checked_executor().await.map_err(unavailable)?,
             input.tenant.as_str(),
             &ctx,
             &input.search,
+            input.company_id,
+            input.id,
         )
         .await
         .map_err(error)?

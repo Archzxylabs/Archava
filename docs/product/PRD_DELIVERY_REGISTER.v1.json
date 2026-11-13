@@ -1,0 +1,546 @@
+{
+  "schemaVersion": 1,
+  "scope": "Whole active PRD plus owner requirements; earlier local milestone acceptance is supporting evidence, not completion of an entire requirement. Inherited requirements remain applicable.",
+  "completionRule": "Never complete the whole product while a required requirement, selected profile, provider/operations acceptance, or real-user pilot remains open. Historical proof is immutable.",
+  "releaseProfile": {
+    "status": "building_multi_model_profiles",
+    "accountingSource": null,
+    "jurisdictions": [],
+    "functionalCurrencies": [],
+    "offeredIndustryProfiles": [],
+    "productionDeployment": "deferred_by_owner_until_website",
+    "engineeringRecommendation": "Native accounting first, with optional bound external accounting per company; one official source per company book. Owner asked for a recommendation; actual company setup remains explicit.",
+    "businessModelTarget": "Owner clarified 2026-11-08: ready across business models, catalogued families and validated hybrid compositions. Continue local implementation and acceptance matrices without requiring a first customer/model choice. Per-model profiles define explicit configuration, mandatory workflows and evidence; no universal readiness is inferred."
+  },
+  "requirements": [
+    {
+      "id": "DAT-01",
+      "source": "docs/product/PRD.md",
+      "priority": "P0",
+      "requirement": "Customer, supplier, item, entity, dokumen dan external reference memiliki identitas stabil serta hubungan yang tervalidasi. Dari order dapat ditelusuri fulfillment, invoice, payment dan accounting; nama bebas tidak menjadi satu-satunya penghubung",
+      "status": "partial",
+      "evidence": [
+        "docs/product/PRD_PARTY_TRANSACTIONS_ACCEPTANCE_2026-11-07.md",
+        "docs/product/PRD_COMPANY_TRADE_ACCEPTANCE_2026-11-07.md",
+        "docs/product/PRD_STOCK_POSTING_ACCEPTANCE_2026-11-08.md"
+      ],
+      "remaining": [
+        "Authoritative accounting/book/source links and selected-profile lifecycle evidence."
+      ]
+    },
+    {
+      "id": "DAT-02",
+      "source": "docs/product/PRD.md",
+      "priority": "P0",
+      "requirement": "Uang, quantity, currency, rounding, waktu dan revisi memakai aturan eksplisit. Transisi menjaga audit, idempotency dan concurrency; koreksi tidak menghapus histori atau mengubah original cost secara diam-diam",
+      "status": "partial",
+      "evidence": [
+        "docs/product/PRD_COMPANY_TRADE_ACCEPTANCE_2026-11-07.md",
+        "docs/product/PRD_STOCK_POSTING_ACCEPTANCE_2026-11-08.md",
+        "docs/product/PRD_DUE_TERMS_ACCEPTANCE_2026-11-12.md"
+      ],
+      "remaining": [
+        "Financial currency/rounding/period/opening and full correction/reconciliation oracles."
+      ]
+    },
+    {
+      "id": "FIN-01",
+      "source": "docs/product/PRD.md",
+      "priority": "P0 untuk proses keuangan",
+      "requirement": "Ledger resmi persisten menerima posting seimbang, source document, periode, pembalikan dan referensi. Jika eksternal, mapping dan status sinkronisasinya dapat direkonsiliasi; library GL saja tidak lulus",
+      "status": "partial",
+      "evidence": [
+        "docs/modules/ACCOUNTING.md",
+        "docs/product/PRD_NATIVE_GL_ACCEPTANCE_2026-11-08.md",
+        "docs/product/PRD_INVOICE_POSTING_ACCEPTANCE_2026-11-08.md",
+        "docs/modules/STOCK_COST_POSTING.md",
+        "docs/product/PRD_STOCK_POSTING_ACCEPTANCE_2026-11-08.md",
+        "docs/modules/MANUAL_BANK_RECONCILIATION.md",
+        "docs/product/PRD_MANUAL_BANK_ACCEPTANCE_2026-11-11.md",
+        "docs/product/PRD_GATEWAY_CLEARING_ACCEPTANCE_2026-11-12.md"
+      ],
+      "remaining": [
+        "Complete AP/AR payments/aging, bank, opening/import, counted stock adjustments, full subledger close and profile-specific financial lifecycle. Future whole-IDR purchase/stock/invoice source cooperation and native review have bounded local acceptance. External declaration is not a tested connector."
+      ]
+    },
+    {
+      "id": "FIN-02",
+      "source": "docs/product/PRD.md",
+      "priority": "P0 untuk purchasing lengkap",
+      "requirement": "Requisition/PO sesuai scope, partial/rejected receipt, vendor bill, toleransi three-way match, AP dan supplier payment terhubung; mismatch ditahan untuk review sesuai policy",
+      "status": "partial",
+      "evidence": [
+        "docs/product/PRD_SUPPLIER_DOCUMENTS_ACCEPTANCE_2026-11-07.md",
+        "docs/product/PRD_STOCK_POSTING_ACCEPTANCE_2026-11-08.md",
+        "docs/modules/MANUAL_BANK_RECONCILIATION.md",
+        "docs/product/PRD_MANUAL_BANK_ACCEPTANCE_2026-11-11.md",
+        "docs/modules/SUPPLIER_PAYMENTS.md",
+        "docs/product/PRD_SUPPLIER_PAYMENTS_ACCEPTANCE_2026-11-11.md",
+        "docs/product/PRD_GATEWAY_CLEARING_ACCEPTANCE_2026-11-12.md"
+      ],
+      "remaining": [
+        "Supplier payment, terms/aging, supported matching tolerances and complete bank/subledger close remain. Future whole-IDR receipt, matched goods claim and void source posting have scoped native/browser evidence; no complete supplier-payment lifecycle is claimed."
+      ]
+    },
+    {
+      "id": "FIN-03",
+      "source": "docs/product/PRD.md",
+      "priority": "P0 untuk penjualan lengkap",
+      "requirement": "Order, fulfillment, invoice/credit note, AR, terms/aging, payment/refund dan inventory cost terhubung. Retry atau webhook berulang tidak menggandakan revenue, stok atau pembayaran",
+      "status": "partial",
+      "evidence": [
+        "docs/product/PRD_M01_ACCEPTANCE_2026-11-06.md",
+        "docs/product/PRD_COMPANY_TRADE_ACCEPTANCE_2026-11-07.md",
+        "docs/product/PRD_INVOICE_POSTING_ACCEPTANCE_2026-11-08.md",
+        "docs/product/PRD_STOCK_POSTING_ACCEPTANCE_2026-11-08.md",
+        "docs/modules/MANUAL_BANK_RECONCILIATION.md",
+        "docs/product/PRD_MANUAL_BANK_ACCEPTANCE_2026-11-11.md",
+        "docs/product/PRD_GATEWAY_CLEARING_ACCEPTANCE_2026-11-12.md"
+      ],
+      "remaining": [
+        "AR terms/aging, formal credit-document/allocation controls, complete bank/collection lifecycle and full subledger close remain. One-company IDR fulfillment/restock, actual invoice, verified gateway collection/refund and reviewed invoice correction cooperate with exact source posting in a bounded local scenario."
+      ]
+    },
+    {
+      "id": "FIN-04",
+      "source": "docs/product/PRD.md",
+      "priority": "P0 untuk keuangan",
+      "requirement": "Bank/cash records, statement import, fee, settlement, matching dan exception dapat direkonsiliasi terhadap saldo serta ledger resmi. Provider payment status saja tidak memenuhi requirement",
+      "status": "partial",
+      "evidence": [
+        "docs/modules/MANUAL_BANK_RECONCILIATION.md",
+        "docs/product/PRD_MANUAL_BANK_ACCEPTANCE_2026-11-11.md",
+        "docs/modules/SUPPLIER_PAYMENTS.md",
+        "docs/product/PRD_SUPPLIER_PAYMENTS_ACCEPTANCE_2026-11-11.md",
+        "docs/product/PRD_GATEWAY_FEE_NATIVE_FINDING_2026-11-12.md",
+        "docs/product/PRD_GATEWAY_CLEARING_ACCEPTANCE_2026-11-12.md",
+        "docs/modules/DOCUMENT_DUE_TERMS.md",
+        "docs/product/PRD_DUE_TERMS_ACCEPTANCE_2026-11-12.md"
+      ],
+      "remaining": [
+        "The dated manual-bank, supplier-payment, gateway-clearing and due-term/as-of profiles have source-bound local acceptance, including original B01 and explicit collection/refund fees. Real bank formats, statement corrections, grouped/FX payouts, complete selected-profile financial cooperation and real-user acceptance remain."
+      ]
+    },
+    {
+      "id": "FIN-05",
+      "source": "docs/product/PRD.md",
+      "priority": "P0 untuk penggantian ERP keuangan",
+      "requirement": "Trial balance, laba rugi, neraca, arus kas, ledger detail, subledger dan period close cocok ke sumber; closed period menolak perubahan tidak sah dan membuka kembali melalui policy berizin",
+      "status": "partial",
+      "evidence": [
+        "docs/modules/ACCOUNTING.md",
+        "docs/product/PRD_NATIVE_GL_ACCEPTANCE_2026-11-08.md",
+        "docs/product/PRD_STOCK_POSTING_ACCEPTANCE_2026-11-08.md",
+        "docs/modules/MANUAL_BANK_RECONCILIATION.md",
+        "docs/product/PRD_MANUAL_BANK_ACCEPTANCE_2026-11-11.md",
+        "docs/modules/SUPPLIER_PAYMENTS.md",
+        "docs/product/PRD_SUPPLIER_PAYMENTS_ACCEPTANCE_2026-11-11.md",
+        "docs/product/PRD_GATEWAY_FEE_NATIVE_FINDING_2026-11-12.md",
+        "docs/product/PRD_GATEWAY_CLEARING_ACCEPTANCE_2026-11-12.md",
+        "docs/modules/DOCUMENT_DUE_TERMS.md",
+        "docs/product/PRD_DUE_TERMS_ACCEPTANCE_2026-11-12.md"
+      ],
+      "remaining": [
+        "Native GL/source reports, reviewed manual-bank controls and whole-book dated AR/AP source-to-GL comparisons have source-bound local native/browser/restart/upgrade/recovery acceptance. Complete stock subledger reconciliation, opening/import controls and complete selected-profile period close remain."
+      ]
+    },
+    {
+      "id": "FIN-06",
+      "source": "docs/product/PRD.md",
+      "priority": "P0/P1 sesuai profil",
+      "requirement": "Tax, localization, opening balances dan effective dating mengikuti aturan scope yang ditelaah pihak kompeten. Export/filing serta integrasi resmi diuji bila dijanjikan; komentar PSAK/IFRS tidak menjadi sertifikasi",
+      "status": "open",
+      "evidence": [],
+      "remaining": [
+        "Selected jurisdictions/currencies, competent localization review and any promised filing integrations remain."
+      ]
+    },
+    {
+      "id": "AGT-01",
+      "source": "docs/product/PRD.md",
+      "priority": "P0 untuk klaim agentic",
+      "requirement": "Tujuan natural-language menjadi rencana typed yang didukung, atau klarifikasi/gap yang jujur. Follow-up mempertahankan tujuan dan preferensi yang relevan; dependency memakai hasil terverifikasi. Perubahan scope setelah partial completion menampilkan efek yang sudah terjadi",
+      "status": "partial",
+      "evidence": [
+        "docs/product/AGENTIC_COMPLETION_2026-11-05.md",
+        "docs/product/AGENT_LIVE_ACCEPTANCE_2026-11-05.md",
+        "docs/product/PRD_AGENT_CONTEXT_FINDING_2026-11-08.md",
+        "docs/product/PRD_AGENT_CONTEXT_RECHECK_2026-11-08.md",
+        "docs/product/PRD_PRIOR_CONTEXT_FINDING_2026-11-09.md",
+        "docs/product/PRD_CRM_LABEL_PLANNER_FINDING_2026-11-11.md"
+      ],
+      "remaining": [
+        "Requirement-specific mapped execution and selected-profile acceptance remain; a passing milestone or source file alone is insufficient."
+      ]
+    },
+    {
+      "id": "AGT-02",
+      "source": "docs/product/PRD.md",
+      "priority": "P0",
+      "requirement": "Preview menampilkan target, kuantitas, uang, dependency dan dampak penting. Approval terikat rencana/revisi; authority dicek kembali saat eksekusi. Stale plan, revoke, salah entity dan semantic mismatch tidak menghasilkan write",
+      "status": "partial",
+      "evidence": [
+        "docs/product/PRD_COMPANY_TRADE_ACCEPTANCE_2026-11-07.md",
+        "docs/product/PRD_AGENT_CONTEXT_FINDING_2026-11-08.md",
+        "docs/product/PRD_AGENT_CONTEXT_RECHECK_2026-11-08.md",
+        "docs/product/PRD_AI_FINANCIAL_FINDING_2026-11-09.md",
+        "docs/product/PRD_AI_NATIVE_BOUNDARY_ACCEPTANCE_2026-11-09.md",
+        "docs/product/PRD_CRM_LABEL_PLANNER_FINDING_2026-11-11.md"
+      ],
+      "remaining": [
+        "Exact native financial preview, Accounting dispatch, one-effect replay and independent posting have scoped acceptance. Full financial agent workflows, safe partial-completion continuation and remaining selected-profile semantic mismatch oracles remain."
+      ]
+    },
+    {
+      "id": "AGT-03",
+      "source": "docs/product/PRD.md",
+      "priority": "P0",
+      "requirement": "Status membedakan proposed, awaiting approval, running, partial, committed, reconciled, failed dan cancelled sesuai kontrak. Laporan sukses membutuhkan receipt/effect nyata. Retry/restart mempertahankan correlation; cancel tidak berpura-pura membatalkan efek yang sudah commit",
+      "status": "partial",
+      "evidence": [
+        "docs/product/AGENTIC_COMPLETION_2026-11-05.md",
+        "docs/product/PRD_AGENT_CONTEXT_FINDING_2026-11-08.md",
+        "docs/product/PRD_AGENT_CONTEXT_RECHECK_2026-11-08.md",
+        "docs/product/PRD_PRIOR_CONTEXT_FINDING_2026-11-09.md"
+      ],
+      "remaining": [
+        "Requirement-specific mapped execution and selected-profile acceptance remain; a passing milestone or source file alone is insufficient."
+      ]
+    },
+    {
+      "id": "AGT-04",
+      "source": "docs/product/PRD.md",
+      "priority": "P0 untuk jawaban analitis",
+      "requirement": "Knowledge dan data bisnis mempunyai sumber, timestamp, cakupan dan izin. Query/aggregate mencakup filter yang diminta atau mengungkap batasnya; data di luar halaman pertama tetap ditemukan. Catatan/dokumen tidak menjadi instruksi yang melampaui authority",
+      "status": "partial",
+      "evidence": [
+        "docs/modules/AGENT_RUNTIME.md",
+        "docs/product/PRD_CRM_READ_FINDING_2026-11-09.md"
+      ],
+      "remaining": [
+        "Targeted authorized lookup scenarios passed; current-source release regression, complete-filter analytical aggregates and B05 held-out dataset remain."
+      ]
+    },
+    {
+      "id": "AGT-05",
+      "source": "docs/product/PRD.md",
+      "priority": "P1",
+      "requirement": "Pemantauan stok, tugas jatuh tempo, invoice atau exception dapat menghasilkan rekomendasi proaktif dalam scope terkonfigurasi. Trigger, deduplication, budget, notifikasi dan berhenti/resume dapat diaudit; tidak ada autonomous external spending tanpa policy/authority yang diperlukan",
+      "status": "partial",
+      "evidence": [
+        "docs/modules/REVIEWED_WORKFLOWS.md"
+      ],
+      "remaining": [
+        "Requirement-specific mapped execution and selected-profile acceptance remain; a passing milestone or source file alone is insufficient."
+      ]
+    },
+    {
+      "id": "AGT-06",
+      "source": "docs/product/PRD.md",
+      "priority": "P0 untuk jalur AI yang dijual",
+      "requirement": "Model/profile, budget, quota, timeout dan retry eksplisit. Provider down, output rusak atau referensi salah menghasilkan recovery/klarifikasi yang aman dan manual fallback. Model diganti hanya melalui evaluasi konfigurasi baru; semua kegagalan masuk laporan biaya dan availability",
+      "status": "partial",
+      "evidence": [
+        "docs/product/AGENT_LIVE_ACCEPTANCE_2026-11-05.md",
+        "docs/product/PRD_AI_NATIVE_BOUNDARY_ACCEPTANCE_2026-11-09.md",
+        "docs/product/PRD_GEMINI_SCHEMA_FINDING_2026-11-09.md",
+        "docs/product/PRD_PRIOR_CONTEXT_FINDING_2026-11-09.md",
+        "docs/product/PRD_CRM_READ_FINDING_2026-11-09.md"
+      ],
+      "remaining": [
+        "The 60e65 native candidate passes its full gate and owned native checks, but the real-Gemini run fails its third CRM planning turn on lookup budget after six successful live checks. A subsequent diagnostic receives HTTP429; no model/key substitution or further inference retry is used. New staged reads preserve the original three-total-call limit and pass local authority/budget tests; actual CRM reasoning and six-turn acceptance remain unverified pending provider availability. Held-out trials, aggregate cost/availability reporting and evaluated model variation remain."
+      ]
+    },
+    {
+      "id": "CFG-01",
+      "source": "docs/product/PRD.md",
+      "priority": "P0 untuk self-service",
+      "requirement": "Owner menjelaskan bisnis dan mendapatkan susunan modul/options yang memang tersedia dan kompatibel. Preview memperlihatkan dependency, izin, biaya/readiness dan gap; extension yang belum tersedia tidak ditampilkan seolah sudah aktif",
+      "status": "partial",
+      "evidence": [
+        "docs/product/OWNER_CONFIGURATION_PRD.md"
+      ],
+      "remaining": [
+        "Requirement-specific mapped execution and selected-profile acceptance remain; a passing milestone or source file alone is insufficient."
+      ]
+    },
+    {
+      "id": "CFG-02",
+      "source": "docs/product/PRD.md",
+      "priority": "P0 untuk self-service",
+      "requirement": "Apply memakai current management grant dan versi konfigurasi. Dua tab, retry dan restart memberi satu perubahan yang sah. Disable memperbarui UI/API/tools sekaligus dan menjaga data/history; restore konfigurasi tidak memundurkan transaksi keuangan",
+      "status": "partial",
+      "evidence": [
+        "docs/product/OWNER_CONFIGURATION_PRD.md"
+      ],
+      "remaining": [
+        "Requirement-specific mapped execution and selected-profile acceptance remain; a passing milestone or source file alone is insufficient."
+      ]
+    },
+    {
+      "id": "CFG-03",
+      "source": "docs/product/PRD.md",
+      "priority": "P0 untuk klaim reusable",
+      "requirement": "Dua consumer/business model memakai kontrak dan rilis core/module yang sama tanpa source fork. Kombinasi mempunyai manifest, compatibility, permission dan upgrade evidence; keberadaan crate tidak cukup",
+      "status": "partial",
+      "evidence": [
+        "docs/product/PRD_COLD_PACKAGE_FINDING_2026-11-08.md",
+        "docs/product/PRD_COLD_CONSUMERS_2026-11-08.md",
+        "docs/product/PRD_PERSISTENT_CONSUMERS_2026-11-08.md",
+        "docs/product/PRD_STOCK_POSTING_ACCEPTANCE_2026-11-08.md"
+      ],
+      "remaining": [
+        "Two independently built public-contract clients now pass configured persistent CRM, distinct project/order extensions, current grant revocation, forged observation/stale revision refusal, native restart and installation isolation. Complete the full business workflows, industry screens, manifest/compatibility/upgrade combinations and selected-profile/customer acceptance. Separate Owner UI/chat evidence and this scoped CLI seam do not accept every reuse requirement."
+      ]
+    },
+    {
+      "id": "UX-01",
+      "source": "docs/product/PRD.md",
+      "priority": "P1; wajib sebelum pilot",
+      "requirement": "Owner/operator baru dapat menyiapkan bisnis, mengimpor data uji dan menyelesaikan tugas pertama lewat flow yang dimengerti. Ukur waktu onboarding, hambatan dan kebutuhan bantuan terhadap profil pengguna, termasuk migrasi existing system",
+      "status": "open",
+      "evidence": [],
+      "remaining": [
+        "Actual new-user onboarding and assistance/time measurements remain."
+      ]
+    },
+    {
+      "id": "UX-02",
+      "source": "docs/product/PRD.md",
+      "priority": "P0 untuk jalur yang dijual",
+      "requirement": "UI/API menyediakan operasi manual yang setara ketika AI tidak tersedia. Status, error, approval dan recovery memakai bahasa bisnis, mendukung keyboard dan viewport sasaran; bukti dapat dibuka tanpa membaca log atau raw JSON",
+      "status": "partial",
+      "evidence": [
+        "docs/modules/NATIVE_OPERATIONS.md",
+        "docs/product/PRD_STOCK_POSTING_ACCEPTANCE_2026-11-08.md"
+      ],
+      "remaining": [
+        "Requirement-specific mapped execution and selected-profile acceptance remain; a passing milestone or source file alone is insufficient."
+      ]
+    },
+    {
+      "id": "UX-03",
+      "source": "docs/product/PRD.md",
+      "priority": "P0 untuk Presence yang dijual",
+      "requirement": "Customer/employee/owner dan embed/channel memakai identity serta data scope yang benar. Chat, live voice, interruption dan avatar diterima terpisah untuk paket yang menawarkan masing-masing mode; transcript saja tidak membuktikan voice quality",
+      "status": "partial",
+      "evidence": [
+        "docs/modules/LIVE_MEDIA.md"
+      ],
+      "remaining": [
+        "Acceptance per sold presence mode, live media quality and external scope remain."
+      ]
+    },
+    {
+      "id": "INT-01",
+      "source": "docs/product/PRD.md",
+      "priority": "P0 untuk integrasi yang dijual",
+      "requirement": "Connector memakai kontrak berversi, scope/secret lifecycle dan signature/correlation yang benar. External effect memiliki outbox, retry dan reconciliation; webhook berulang/terlambat, response hilang dan partial failure teruji. Tidak mengklaim exactly-once universal untuk jaringan eksternal",
+      "status": "partial",
+      "evidence": [
+        "docs/modules/BILLING_MODULE.md"
+      ],
+      "remaining": [
+        "Requirement-specific mapped execution and selected-profile acceptance remain; a passing milestone or source file alone is insufficient."
+      ]
+    },
+    {
+      "id": "INT-02",
+      "source": "docs/product/PRD.md",
+      "priority": "P0 sebelum migrasi data pelanggan",
+      "requirement": "Import memvalidasi mapping, duplicate identity, opening balance dan control totals. Dry run, rollback/kompensasi yang sesuai serta rekonsiliasi source-to-target tersedia; data production tidak dipakai sebagai fixture uji",
+      "status": "partial",
+      "evidence": [
+        "docs/modules/REVIEWED_WORKFLOWS.md"
+      ],
+      "remaining": [
+        "Requirement-specific mapped execution and selected-profile acceptance remain; a passing milestone or source file alone is insufficient."
+      ]
+    },
+    {
+      "id": "SEC-01",
+      "source": "docs/product/PRD.md",
+      "priority": "P0; kedalaman sesuai profil",
+      "requirement": "Actor, tenant, entity, role, service account, independent approver dan revoke ditegakkan server. MFA/SSO/provisioning/offboarding wajib bila profil mensyaratkan; RLS lokal tidak dihitung sebagai bukti seluruh IAM enterprise",
+      "status": "partial",
+      "evidence": [
+        "docs/architecture/WRITE_FENCING.md",
+        "docs/product/PRD_AGENT_CONTEXT_FINDING_2026-11-08.md"
+      ],
+      "remaining": [
+        "Requirement-specific mapped execution and selected-profile acceptance remain; a passing milestone or source file alone is insufficient.",
+        "Fresh RustSec scan has zero vulnerability advisories, but RUSTSEC-2024-0436 (unmaintained transitive paste 1.0.15 in Leptos/reactive dependencies) remains a supply-chain review item. No advisory ignore was added."
+      ]
+    },
+    {
+      "id": "SEC-02",
+      "source": "docs/product/PRD.md",
+      "priority": "P0",
+      "requirement": "Owner memahami data apa yang dikirim ke provider. Knowledge/context field, retention, export/delete, audit dan residency mengikuti policy profil; secret tidak masuk prompt/log. Self-host backend tidak berarti inference selalu lokal; pilihan tanpa provider diuji bila ditawarkan",
+      "status": "partial",
+      "evidence": [
+        "docs/modules/AI_DATA_SHARING.md",
+        "docs/product/PRD_AI_FINANCIAL_FINDING_2026-11-09.md",
+        "docs/product/PRD_AI_NATIVE_BOUNDARY_ACCEPTANCE_2026-11-09.md",
+        "docs/product/PRD_PRIOR_CONTEXT_FINDING_2026-11-09.md",
+        "docs/product/PRD_CRM_READ_FINDING_2026-11-09.md"
+      ],
+      "remaining": [
+        "Signed Owner selections, revocation and closed field/company projection have bounded native acceptance. A separate owned-wire regression confirmed historical derived case text could survive assignment loss; metadata-only history now fixes that case in focused tests, with fresh release acceptance underway. Complete safe historical memory, local history retention/export/delete/residency, broader field/alias coverage and actual provider agreement validation remain. Known credential filtering does not classify every possible secret in arbitrary user text."
+      ]
+    },
+    {
+      "id": "OPS-01",
+      "source": "docs/product/PRD.md",
+      "priority": "P0 sebelum pilot produksi",
+      "requirement": "Backup terenkripsi, restore ke host bersih, upgrade/migration, audit/alert dan runbook diuji. Tetapkan serta ukur RTO/RPO; single-writer fencing bukan bukti HA, dan restore lokal bukan bukti disaster recovery produksi",
+      "status": "partial",
+      "evidence": [
+        "deploy/NATIVE_INSTALL.md",
+        "docs/product/PRD_AGENT_CONTEXT_FINDING_2026-11-08.md",
+        "docs/product/PRD_AGENT_CONTEXT_RECHECK_2026-11-08.md",
+        "docs/product/PRD_STOCK_POSTING_ACCEPTANCE_2026-11-08.md"
+      ],
+      "remaining": [
+        "Selected production host clean restore and measured RTO/RPO remain."
+      ]
+    },
+    {
+      "id": "OPS-02",
+      "source": "docs/product/PRD.md",
+      "priority": "P0 sebelum klaim kapasitas/SLA",
+      "requirement": "Sizing, workload, concurrency, data volume dan konfigurasi dikunci. Laporkan p50/p95, errors, saturation, recovery dan biaya; pertahankan target Commerce 50 ms yang masih terbuka sampai ada perubahan requirement beralasan dan tercatat",
+      "status": "partial",
+      "evidence": [
+        "docs/product/PRD_PORTABLE_COMMERCE_ACCEPTANCE_2026-11-08.md",
+        "docs/product/PRD_AGENT_CONTEXT_FINDING_2026-11-08.md",
+        "docs/product/PRD_AGENT_CONTEXT_RECHECK_2026-11-08.md",
+        "docs/product/PRD_STOCK_POSTING_ACCEPTANCE_2026-11-08.md"
+      ],
+      "remaining": [
+        "The bounded fcd94e local Commerce workload meets the unchanged 50ms target in repeated actual API/browser observations. New code still needs its own current-source proof; selected hardware/profile mixed workloads, saturation/recovery/cost, production capacity and real-user acceptance remain.",
+        "Current f6b74cf full browser correctness passed, but Commerce p95 55.98 ms exceeds its unchanged 50 ms local target. Five subsequent registered repetitions met the same target (Commerce p95 14.32–15.23 ms); retain the first miss and investigate variation before claiming production tail reliability. Neither run accepts production capacity or the complete performance budget."
+      ]
+    },
+    {
+      "id": "EXT-01",
+      "source": "docs/product/PRD.md",
+      "priority": "conditional by offered industry",
+      "requirement": "Each offered industry capability has a complete supported lifecycle, correction, negative authority, finance links and user evidence.",
+      "status": "open",
+      "evidence": [],
+      "remaining": [
+        "Define offered industry profiles; no module-name parity claims."
+      ]
+    },
+    {
+      "id": "OWN-01",
+      "source": "docs/product/OWNER_CONFIGURATION_PRD.md",
+      "priority": "P0 for self-service",
+      "requirement": "Owner dapat melihat current business profile, installed/enabled capabilities, configurable options, permissions yang ia miliki, dan kebutuhan yang belum tersedia. Menampilkan katalog tidak memberikan entitlement atau grants.",
+      "status": "open",
+      "evidence": [],
+      "remaining": [
+        "Requirement-specific mapped execution and selected-profile acceptance remain; a passing milestone or source file alone is insufficient."
+      ]
+    },
+    {
+      "id": "OWN-02",
+      "source": "docs/product/OWNER_CONFIGURATION_PRD.md",
+      "priority": "P0 for self-service",
+      "requirement": "Archava menanyakan hanya business details yang belum jelas, kemudian menghasilkan structured requirements. Jangan memaksa memilih satu label industri untuk bisnis hybrid atau meminta owner memahami crate/schema/env vars.",
+      "status": "open",
+      "evidence": [],
+      "remaining": [
+        "Requirement-specific mapped execution and selected-profile acceptance remain; a passing milestone or source file alone is insufficient."
+      ]
+    },
+    {
+      "id": "OWN-03",
+      "source": "docs/product/OWNER_CONFIGURATION_PRD.md",
+      "priority": "P0 for self-service",
+      "requirement": "Backend menyusun immutable proposed configuration dari trusted catalogue dan current state. Dependency resolution, compatibility, permissions, data lifecycle, readiness dan pricing dievaluasi deterministik. LLM hanya mengusulkan structured input; tidak menjalankan schema edits atau arbitrary code.",
+      "status": "open",
+      "evidence": [],
+      "remaining": [
+        "Requirement-specific mapped execution and selected-profile acceptance remain; a passing milestone or source file alone is insufficient."
+      ]
+    },
+    {
+      "id": "OWN-04",
+      "source": "docs/product/OWNER_CONFIGURATION_PRD.md",
+      "priority": "P0 for self-service",
+      "requirement": "Tampilkan dalam bahasa bisnis: apa yang ditambah/diubah, fitur/UI/workflows yang terdampak, dependencies, active records/jobs yang perlu diselesaikan, biaya implementasi/recurring/usage bila berlaku, perkiraan gangguan, dan recovery path. Missing price/readiness menjadi explicit unknown/review state.",
+      "status": "open",
+      "evidence": [
+        "docs/product/PRD_AGENT_CONTEXT_FINDING_2026-11-08.md"
+      ],
+      "remaining": [
+        "Requirement-specific mapped execution and selected-profile acceptance remain; a passing milestone or source file alone is insufficient."
+      ]
+    },
+    {
+      "id": "OWN-05",
+      "source": "docs/product/OWNER_CONFIGURATION_PRD.md",
+      "priority": "P0 for self-service",
+      "requirement": "Persetujuan terikat tenant/principal, operation, plan/input hash, base config revision, catalogue/release compatibility, pricing snapshot bila relevan, affected resources dan expiry. Tidak ada `approved: true` dari model/body yang dapat menggantikan server-verifiable approval.",
+      "status": "open",
+      "evidence": [],
+      "remaining": [
+        "Requirement-specific mapped execution and selected-profile acceptance remain; a passing milestone or source file alone is insufficient."
+      ]
+    },
+    {
+      "id": "OWN-06",
+      "source": "docs/product/OWNER_CONFIGURATION_PRD.md",
+      "priority": "P0 for self-service",
+      "requirement": "Backend mengecek ulang current authority dan preconditions, mengklaim request idempotency, lalu menerapkan melalui supported transaction/job. Tampilkan progress/outcome dari authoritative backend. “Applied” hanya setelah actual runtime configuration/activation yang relevan terkonfirmasi.",
+      "status": "open",
+      "evidence": [],
+      "remaining": [
+        "Requirement-specific mapped execution and selected-profile acceptance remain; a passing milestone or source file alone is insufficient."
+      ]
+    },
+    {
+      "id": "OWN-07",
+      "source": "docs/product/OWNER_CONFIGURATION_PRD.md",
+      "priority": "P0 for self-service",
+      "requirement": "Setelah refresh, connection loss atau worker restart, owner dapat mengecek request yang sama tanpa double activation/charge. Unknown outcome direkonsiliasi sebelum retry. Current authority tetap diperiksa untuk status/replay.",
+      "status": "open",
+      "evidence": [
+        "docs/product/PRD_AGENT_CONTEXT_FINDING_2026-11-08.md"
+      ],
+      "remaining": [
+        "Requirement-specific mapped execution and selected-profile acceptance remain; a passing milestone or source file alone is insufficient."
+      ]
+    },
+    {
+      "id": "OWN-08",
+      "source": "docs/product/OWNER_CONFIGURATION_PRD.md",
+      "priority": "P0 for self-service",
+      "requirement": "Tampilkan versi konfigurasi dan audit perubahan. Restore supported prior configuration membuat versi baru setelah compatibility check; tidak berarti mengembalikan seluruh database ke masa lalu atau membatalkan payment, stock, invoice, agreement dan pekerjaan bisnis yang sudah terjadi.",
+      "status": "open",
+      "evidence": [
+        "docs/product/PRD_AGENT_CONTEXT_FINDING_2026-11-08.md"
+      ],
+      "remaining": [
+        "Requirement-specific mapped execution and selected-profile acceptance remain; a passing milestone or source file alone is insufficient."
+      ]
+    }
+  ],
+  "acceptanceSuites": {
+    "OWN-T01..OWN-T10": "requires explicit mapped execution; existing own.rs and browser evidence are inputs, not automatic acceptance",
+    "B01..B07": "proposed protocols; require selected profiles and actual results"
+  },
+  "overallStatus": "in_progress",
+  "inheritedRequirements": {
+    "status": "requires_traceability",
+    "sources": [
+      "docs/product/PRD_FULL_RUST.md",
+      "docs/product/OWNER_CONFIGURATION_PRD.md",
+      "docs/archive/history/PRD.md"
+    ],
+    "note": "Applicable inherited requirements must be mapped and accepted or explicitly superseded before whole-product completion.",
+    "inventory": "docs/product/PRD_INHERITED_TRACEABILITY.v1.json"
+  }
+}

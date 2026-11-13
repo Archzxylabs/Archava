@@ -1,0 +1,26 @@
+   Compiling archava-domain v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/domain)
+   Compiling archava-adapters v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/adapters)
+   Compiling archava-providers v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/providers)
+   Compiling archava-pg-fixture v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/pg-fixture)
+   Compiling archava-host v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/host)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 5.76s
+     Running tests/review_gemini_presence_tmp.rs (target/debug/deps/review_gemini_presence_tmp-03a2ce8e42773344)
+
+running 1 test
+test review_gemini_foreign_tenant_session_override_is_refused ... REVIEW_PROOF tenant="acme" owner="mallory" foreign_start=201 Created original_owner_read=403 Forbidden foreign_owner_read=200 OK
+
+thread 'review_gemini_foreign_tenant_session_override_is_refused' (191243) panicked at crates/host/tests/review_gemini_presence_tmp.rs:200:5:
+assertion `left != right` failed: an account belonging only to tenant other replaced an acme presence session
+  left: 201
+ right: 201
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+
+failures:
+
+failures:
+    review_gemini_foreign_tenant_session_override_is_refused
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 1.30s
+
+error: test failed, to rerun pass `-p archava-host --test review_gemini_presence_tmp`

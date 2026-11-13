@@ -4,7 +4,7 @@
 //!
 //! The HTTP boundary and coordination layer for CRM operations.
 //! Transactional persistence, RLS enforcement, idempotency claims, and SQL statements
-//! are extracted to [`archava_adapters::crm`].
+//! are extracted to [`archava_adapters::erp::crm`].
 //!
 //! This module coordinates:
 //! - Route extraction and input parsing (`/contacts`, `/crm/records`, `/crm/commands`, `/crm/commands/status`).
@@ -19,7 +19,7 @@ use crate::router::{
     authenticate, authority_refusal, query_rejection, rejection, unknown_request, AppState,
     CommandOutcome, Ledger,
 };
-use archava_adapters::crm::{
+use archava_adapters::erp::crm::{
     CrmPersistenceError, CRM_LEDGER_NAME, CRM_LEDGER_NAMESPACE, CRM_TABLES,
 };
 use archava_adapters::rls::TenantTransaction;
@@ -31,8 +31,8 @@ use axum::response::{IntoResponse, Response};
 use axum::Json;
 
 // Re-export CRM domain types and adapter vocabulary so callers and test suites
-// continue to resolve them from `archava_host::crm`.
-pub use archava_adapters::crm::{
+// continue to resolve them from `archava_host::erp::crm`.
+pub use archava_adapters::erp::crm::{
     member_of, transition_allowed, ActivityKind, ContactFields, ContactPatch, ContactsPageQuery,
     CrmAccess, CrmActor, CrmCommand, CrmContact, CrmFollowup, CrmOpportunity, CrmPageValue,
     CrmRecordValue, CrmScope, CrmStatusValue, CrmSubmission, Permission, PipelineStage,
@@ -45,7 +45,7 @@ pub async fn authorize(
     tenant: &TenantId,
     actor: &CrmActor,
 ) -> Result<CrmAccess, AuthorityError> {
-    archava_adapters::crm::authorize(connection, tenant, actor)
+    archava_adapters::erp::crm::authorize(connection, tenant, actor)
         .await
         .map_err(AuthorityError::from)
 }
@@ -202,7 +202,7 @@ pub(crate) async fn begin(
     state: &AppState,
     tenant: TenantId,
 ) -> Result<TenantTransaction<'_>, AuthorityError> {
-    archava_adapters::crm::begin(state.pool(), tenant)
+    archava_adapters::erp::crm::begin(state.pool(), tenant)
         .await
         .map_err(AuthorityError::from)
 }
@@ -213,7 +213,7 @@ pub(crate) fn human(presented: &AuthenticatedSession) -> CrmActor {
 }
 
 /// Computes the stable fingerprint for a submission.
-fn fingerprint(
+pub(crate) fn fingerprint(
     state: &AppState,
     tenant: &TenantId,
     actor: &CrmActor,
@@ -274,7 +274,7 @@ pub(crate) async fn contacts(
         }
     };
 
-    match archava_adapters::crm::list_contacts(
+    match archava_adapters::erp::crm::list_contacts(
         &mut transaction,
         &query.tenant,
         &access,
@@ -329,7 +329,7 @@ pub(crate) async fn record(
             }
         }
     };
-    let pipeline_enabled = {
+    let (pipeline_enabled, configuration_revision, pipeline_labels) = {
         let connection = match transaction.checked_executor().await {
             Ok(conn) => conn,
             Err(err) => {
@@ -337,13 +337,12 @@ pub(crate) async fn record(
                 return outcome(authority_refusal(&AuthorityError::from(err)));
             }
         };
-        matches!(
-            crate::own::module_enabled(connection, &query.tenant, "crm-pipeline").await,
-            Ok(true)
-        )
+        crate::own::crm_presentation(connection, &query.tenant)
+            .await
+            .unwrap_or_default()
     };
 
-    match archava_adapters::crm::read_record(
+    match archava_adapters::erp::crm::read_record(
         &mut transaction,
         &query.tenant,
         &access,
@@ -352,7 +351,9 @@ pub(crate) async fn record(
     )
     .await
     {
-        Ok(record_val) => {
+        Ok(mut record_val) => {
+            record_val.pipeline_labels = pipeline_labels;
+            record_val.configuration_revision = configuration_revision;
             let _ = transaction.rollback().await;
             (StatusCode::OK, CrmBody::Record(record_val))
         }
@@ -456,7 +457,7 @@ pub async fn submit_command(
     }
 
     // 3. Delegate execution to transactional adapter
-    let outcome = archava_adapters::crm::execute_command(
+    let outcome = archava_adapters::erp::crm::execute_command(
         &mut transaction,
         &submission.tenant,
         &actor,
@@ -468,7 +469,7 @@ pub async fn submit_command(
     .await;
 
     match outcome {
-        Ok(archava_adapters::crm::CommandExecution::Committed {
+        Ok(archava_adapters::erp::crm::CommandExecution::Committed {
             receipt,
             is_replay: false,
             ..
@@ -484,7 +485,7 @@ pub async fn submit_command(
                 }),
             ))
         }
-        Ok(archava_adapters::crm::CommandExecution::Committed {
+        Ok(archava_adapters::erp::crm::CommandExecution::Committed {
             receipt,
             is_replay: true,
             fingerprint: stored_fp,
@@ -501,7 +502,7 @@ pub async fn submit_command(
                 }),
             ))
         }
-        Ok(archava_adapters::crm::CommandExecution::Unconfirmed { request_id }) => {
+        Ok(archava_adapters::erp::crm::CommandExecution::Unconfirmed { request_id }) => {
             let _ = transaction.rollback().await;
             Ok((
                 StatusCode::OK,
@@ -554,7 +555,7 @@ pub(crate) async fn command_status(
         }
     };
 
-    let status_val = archava_adapters::crm::read_status(
+    let status_val = archava_adapters::erp::crm::read_status(
         &mut transaction,
         &query.tenant,
         &access,

@@ -34,6 +34,8 @@
 
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
+pub mod disclosure;
+pub use disclosure::{DataClass, DisclosureChange, DisclosurePolicy};
 
 /// A module's install/entitlement/readiness facts, from the trusted catalogue.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -84,6 +86,9 @@ pub struct Catalogue {
     pub catalogue_version: String,
     pub pricing_version: String,
     pub modules: Vec<ModuleSpec>,
+    /// Trusted data-consumer IDs can differ from management switch IDs.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub disclosure_modules: Option<BTreeSet<String>>,
 }
 
 impl Catalogue {
@@ -109,6 +114,8 @@ pub struct OwnerConfig {
     pub enabled: BTreeSet<String>,
     #[serde(default)]
     pub terminology: Terminology,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ai_disclosure: Option<DisclosurePolicy>,
 }
 
 /// A typed request. Both the dashboard and the assistant produce THIS shape.
@@ -127,6 +134,8 @@ pub struct Request {
     /// patch (`terminology`) only ever adds or relabels.
     #[serde(default)]
     pub replace_terminology: Option<Terminology>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ai_disclosure: Option<DisclosureChange>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -145,6 +154,9 @@ pub enum Change {
     /// The stage's label is removed because the target snapshot never had it.
     RemoveStage {
         stage: String,
+    },
+    AiDisclosure {
+        policy: Option<DisclosurePolicy>,
     },
 }
 
@@ -165,6 +177,7 @@ pub enum BlockedReason {
     ModuleUnavailable,
     MissingDependency,
     Mandatory,
+    InvalidDisclosure,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -414,6 +427,12 @@ impl Store {
             // The target snapshot IS the answer: a stage it does not name is
             // removed. Passing it as a patch would leave newer labels stuck.
             replace_terminology: Some(target.terminology.clone()),
+            ai_disclosure: Some(match &target.ai_disclosure {
+                Some(policy) => DisclosureChange::Replace {
+                    policy: policy.clone(),
+                },
+                None => DisclosureChange::Revoke {},
+            }),
         };
         self.plan(&request).map_err(RestoreError::Plan)
     }
@@ -579,6 +598,36 @@ impl Catalogue {
             }
         }
 
+        let mut ai_disclosure = current.ai_disclosure.clone();
+        if let Some(change) = &request.ai_disclosure {
+            let proposed = match change {
+                DisclosureChange::Replace { policy } => Some(policy.clone()),
+                DisclosureChange::Revoke {} => None,
+            };
+            let installed = self
+                .modules
+                .iter()
+                .filter(|m| m.installed && m.entitled && m.readiness != Readiness::Unavailable)
+                .map(|m| m.id.clone())
+                .collect();
+            let areas = self.disclosure_modules.as_ref().unwrap_or(&installed);
+            if proposed
+                .as_ref()
+                .is_some_and(|policy| !policy.valid_for(areas))
+            {
+                blocked.get_or_insert(Blocked {
+                    reason: BlockedReason::InvalidDisclosure,
+                    module: "ai_data".into(),
+                    detail: "Review the provider binding, installed business areas, data categories and company scope.".into(),
+                });
+            } else if proposed != ai_disclosure {
+                ai_disclosure = proposed;
+                changes.push(Change::AiDisclosure {
+                    policy: ai_disclosure.clone(),
+                });
+            }
+        }
+
         changes.sort_by_key(change_line);
         // Effects are part of the answer the client reads, so their order is
         // canonical too — a reordered request must serialize identically.
@@ -593,6 +642,7 @@ impl Catalogue {
                 revision: current.revision + 1,
                 enabled,
                 terminology,
+                ai_disclosure,
             }
         };
         let plan_hash = hash(&canonical(
@@ -645,6 +695,12 @@ fn canonical(
     for (stage, label) in &config.terminology.pipeline_labels {
         out.push_str(&format!("label={stage}={label}\n"));
     }
+    if let Some(policy) = &config.ai_disclosure {
+        out.push_str(&format!(
+            "ai-disclosure={}\n",
+            serde_json::to_string(policy).expect("disclosure policy is serializable")
+        ));
+    }
     let mut changes: Vec<String> = changes.iter().map(change_line).collect();
     changes.sort();
     for change in changes {
@@ -679,6 +735,10 @@ fn change_line(change: &Change) -> String {
         Change::Disable { module } => format!("disable:{module}"),
         Change::RelabelStage { stage, label } => format!("relabel:{stage}={label}"),
         Change::RemoveStage { stage } => format!("remove:{stage}"),
+        Change::AiDisclosure { policy } => format!(
+            "ai-disclosure:{}",
+            serde_json::to_string(policy).expect("disclosure policy is serializable")
+        ),
     }
 }
 
@@ -721,6 +781,7 @@ fn blocked_reason_token(reason: BlockedReason) -> &'static str {
         BlockedReason::ModuleUnavailable => "module_unavailable",
         BlockedReason::MissingDependency => "missing_dependency",
         BlockedReason::Mandatory => "mandatory",
+        BlockedReason::InvalidDisclosure => "invalid_disclosure",
     }
 }
 

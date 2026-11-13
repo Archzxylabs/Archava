@@ -1,0 +1,35 @@
+groups:
+  - name: archava-runtime
+    rules:
+      - alert: ArchavaUnavailable
+        expr: up{job="archava"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: Archava monitoring endpoint is unavailable
+          description: Check the service process, listener and scraper authorization.
+      - alert: ArchavaDatabaseOrWriterUnavailable
+        expr: archava_db_ready{job="archava"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: Archava cannot use the database as the current writer
+          description: Inspect database connectivity and writer takeover/drain state; do not bypass the fence.
+      - alert: ArchavaServerErrors
+        expr: (rate(archava_http_requests_5xx_total{job="archava"}[5m]) / clamp_min(rate(archava_http_requests_total{job="archava"}[5m]), 0.001)) > 0.01 and rate(archava_http_requests_total{job="archava"}[5m]) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: More than one percent of Archava requests return server errors
+          description: Correlate JSON request logs with database/provider failures and current release.
+      - alert: ArchavaRequestLatency
+        expr: histogram_quantile(0.95, sum by (le) (rate(archava_http_request_duration_seconds_bucket{job="archava"}[5m]))) > 0.25 and sum(rate(archava_http_request_duration_seconds_count{job="archava"}[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Global Archava request p95 exceeds 250 milliseconds
+          description: Inspect database contention and resource saturation; this is a global API histogram, not a per-route SLO.

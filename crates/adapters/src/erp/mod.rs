@@ -30,11 +30,19 @@
 //! the commerce surface (orders, returns, reservations) ports in the next
 //! packet and is deliberately NOT half-faked here.
 
+pub mod accounting;
+mod billing_invoice;
 pub mod commerce_kernel;
+pub mod companies;
+pub mod company_trade;
 /// The CRM transactional persistence adapter (ADR-018: normalized under ERP adapters).
-pub use crate::crm;
+pub mod crm;
+mod customer;
 pub mod foodservice;
+pub mod operator;
 pub mod organizations;
+pub mod parties;
+pub mod projections;
 pub mod projects;
 pub mod proposals;
 // R05 cohorts (PACKET-004..006).
@@ -43,6 +51,7 @@ pub mod assets;
 pub mod commerce;
 pub mod purchasing;
 pub mod scheduling;
+mod supplier_documents;
 
 // R07 cohorts (PACKET-007..010).
 pub mod attendance;

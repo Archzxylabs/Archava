@@ -1,0 +1,7 @@
+{
+  "package": "livekit-client",
+  "version": "2.23.0",
+  "source": "https://registry.npmjs.org/livekit-client/-/livekit-client-2.23.0.tgz",
+  "integrity": "sha512-j9Kg86nJjBjNFUD+ukp2jwMCGa0k+YD5gU//RzAM+ZY3pbG631QCte7fQjwqWMmtBzhDJL9nKYuOLMv/9IbAxg==",
+  "bundleSha256": "fb646f2260d84f91238d0a2dc10726c456631d6a26c7cafc43cfee5959b4d31d"
+}

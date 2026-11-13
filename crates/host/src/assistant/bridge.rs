@@ -6,7 +6,7 @@ use archava_assistant::{
 use uuid::Uuid;
 
 use crate::authority::AuthorityError;
-use crate::crm::{CrmAccess, CrmScope, CRM_LEDGER};
+use crate::erp::crm::{CrmAccess, CrmScope, CRM_LEDGER};
 
 /// `AuthorityError` → [`AssistantError`] for the tools. Missing/foreign
 /// membership keeps the baseline authorizer's own refusal; stored data

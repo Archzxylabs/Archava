@@ -16,7 +16,7 @@ use super::bridge::{
     as_uuid, bridged_access, bridged_activity_kind, bridged_followup_status, bridged_scope,
     bridged_stage, context_refusal, db_refusal, escaped_search, refusal, stage_text,
 };
-use crate::crm::{authorize, begin, CrmAccess, CrmActor, CrmScope, Permission};
+use crate::erp::crm::{authorize, begin, CrmAccess, CrmActor, CrmScope, Permission};
 use crate::router::AppState;
 
 /// The [`HostCrm`] implementation against the CRM schema, with the same

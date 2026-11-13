@@ -118,8 +118,8 @@ pub const BILLING_PERMISSIONS: &[&str] = &[
 
 /// Bounded `invoiceCode`: trimmed 1–50.
 pub const INVOICE_CODE_MAX: usize = 50;
-/// Bounded `customerRef`: trimmed 1–120.
-pub const CUSTOMER_REF_MAX: usize = 120;
+/// Bounded `customerRef`: trimmed 1–160, including frozen Commerce customer names.
+pub const CUSTOMER_REF_MAX: usize = 160;
 /// Bounded `reason`: trimmed 1–500 (the line description's 1–300 bound is
 /// its own constant below).
 pub const REASON_MAX: usize = 500;
@@ -264,7 +264,7 @@ pub enum BillingCommand {
         command_id: String,
         /// Trimmed, 1–50 chars.
         invoice_code: String,
-        /// Trimmed, 1–120 chars.
+        /// Trimmed, 1–160 chars.
         customer_ref: String,
         /// Three uppercase letters after trimming.
         currency: String,
@@ -273,6 +273,18 @@ pub enum BillingCommand {
         /// 1–200 priced lines, each description 1–300 and an integer
         /// quantity × integer unit amount.
         lines: Vec<PricedLine>,
+    },
+    /// Creates one draft from a fulfilled, unreturned native sales order.
+    /// Prices, quantities and customer are read from the frozen source, never supplied.
+    #[serde(rename = "create_invoice_from_order")]
+    CreateInvoiceFromOrder {
+        #[serde(rename = "commandId")]
+        command_id: String,
+        invoice_code: String,
+        #[serde(rename = "orderId")]
+        order_id: String,
+        #[serde(rename = "expectedOrderRevision")]
+        expected_order_revision: i64,
     },
     #[serde(rename = "issue_invoice")]
     IssueInvoice {
@@ -360,6 +372,7 @@ impl BillingCommand {
     pub fn mutation_type(&self) -> &'static str {
         match self {
             Self::CreateInvoice { .. } => "create_invoice",
+            Self::CreateInvoiceFromOrder { .. } => "create_invoice_from_order",
             Self::IssueInvoice { .. } => "issue_invoice",
             Self::AppendCorrection { .. } => "append_correction",
             Self::VoidInvoice { .. } => "void_invoice",
@@ -375,7 +388,9 @@ impl BillingCommand {
     /// grant must hold anyway, exactly as the TS arms order it).
     pub fn required_permission(&self) -> &'static str {
         match self {
-            Self::CreateInvoice { .. } | Self::RecordPaymentAttempt { .. } => "billing.write",
+            Self::CreateInvoice { .. }
+            | Self::CreateInvoiceFromOrder { .. }
+            | Self::RecordPaymentAttempt { .. } => "billing.write",
             Self::AppendCorrection { .. }
             | Self::IssueInvoice { .. }
             | Self::VoidInvoice { .. } => "billing.settle",
@@ -388,6 +403,7 @@ impl BillingCommand {
     pub fn command_id(&self) -> &str {
         match self {
             Self::CreateInvoice { command_id, .. }
+            | Self::CreateInvoiceFromOrder { command_id, .. }
             | Self::IssueInvoice { command_id, .. }
             | Self::AppendCorrection { command_id, .. }
             | Self::VoidInvoice { command_id, .. }
@@ -406,7 +422,7 @@ impl BillingCommand {
             | Self::VoidInvoice { invoice_id, .. }
             | Self::RecordPaymentAttempt { invoice_id, .. }
             | Self::RecordProviderEvent { invoice_id, .. } => Some(invoice_id),
-            Self::CreateInvoice { .. } => None,
+            Self::CreateInvoice { .. } | Self::CreateInvoiceFromOrder { .. } => None,
         }
     }
 }
@@ -792,6 +808,33 @@ pub fn parse_command(
     arm: Option<&str>,
 ) -> Result<BillingCommand, ValidationError> {
     match arm {
+        Some("create_invoice_from_order") => {
+            if !strict_members(
+                data,
+                &[
+                    "type",
+                    "commandId",
+                    "invoiceCode",
+                    "orderId",
+                    "expectedOrderRevision",
+                ],
+            ) {
+                return Err(ValidationError("type"));
+            }
+            Ok(BillingCommand::CreateInvoiceFromOrder {
+                command_id: required_uuid(data, "commandId").ok_or(ValidationError("commandId"))?,
+                invoice_code: bounded_member(data, "invoiceCode", 1, INVOICE_CODE_MAX)
+                    .ok_or(ValidationError("invoiceCode"))?,
+                order_id: required_uuid(data, "orderId").ok_or(ValidationError("orderId"))?,
+                expected_order_revision: bounded_integer(
+                    data,
+                    "expectedOrderRevision",
+                    1,
+                    i64::from(i32::MAX),
+                )
+                .ok_or(ValidationError("expectedOrderRevision"))?,
+            })
+        }
         Some("create_invoice") => {
             if !strict_members(
                 data,
@@ -1378,5 +1421,42 @@ mod tests {
         assert!(!object.contains_key("correctionId"));
         assert!(!object.contains_key("attemptId"));
         assert!(!object.contains_key("eventId"));
+    }
+
+    #[test]
+    fn order_invoice_accepts_only_source_identity_and_reviewed_revision() {
+        let raw = json!({"type":"create_invoice_from_order",
+            "commandId":"11111111-1111-4111-8111-111111111111", "invoiceCode":"INV-SOURCE",
+            "orderId":"22222222-2222-4222-8222-222222222222", "expectedOrderRevision":3});
+        let parsed = parse_mutation(&raw).unwrap();
+        assert_eq!(parsed.command.mutation_type(), "create_invoice_from_order");
+        assert_eq!(parsed.command.required_permission(), "billing.write");
+        assert!(parsed.command.invoice_ref().is_none());
+        for field in [
+            "customerRef",
+            "currency",
+            "lines",
+            "ownerId",
+            "role",
+            "sourceOrderId",
+        ] {
+            let mut forged = raw.clone();
+            forged[field] = json!("forged");
+            assert!(parse_mutation(&forged).is_err(), "{field}");
+        }
+        for invalid in [
+            json!(0),
+            json!(-1),
+            json!(1.5),
+            json!(2147483648i64),
+            json!("3"),
+        ] {
+            let mut forged = raw.clone();
+            forged["expectedOrderRevision"] = invalid;
+            assert!(parse_mutation(&forged).is_err());
+        }
+        let mut forged = raw;
+        forged["orderId"] = json!("not-an-order-id");
+        assert!(parse_mutation(&forged).is_err());
     }
 }

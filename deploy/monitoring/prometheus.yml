@@ -1,0 +1,12 @@
+# Host-local scraper. For a separate/container scraper, configure a private
+# target and x-archava-metrics-token in http_headers using a secret file.
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+rule_files:
+  - alerts.yml
+scrape_configs:
+  - job_name: archava
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['127.0.0.1:8347']

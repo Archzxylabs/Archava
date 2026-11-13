@@ -1,6 +1,6 @@
 //! The ERP host surface — the Archxy 2 namespace for the bounded ERP cohorts.
 //!
-//! Placement mirrors `host/src/crm.rs`: this module owns the purchasing
+//! Placement mirrors `host/src/erp/crm.rs`: this module owns the purchasing
 //! ledger descriptor, the transaction opener with the baseline's `SET LOCAL`
 //! guards, the submission boundary, and the routes that call the adapters'
 //! step functions from ONE transaction. The authorization ladder is a
@@ -12,9 +12,15 @@
 //! through the kernel port, so this module's scope is narrower than its
 //! fathers' and deliberately so.
 
+pub mod accounting;
 pub mod foodservice;
 // R04 cohorts (PACKET-003).
+mod companies;
+/// CRM HTTP boundary (ADR-018: first-class ERP domain).
+pub mod crm;
 pub mod organizations;
+mod parties;
+pub mod projections;
 pub mod projects;
 pub mod proposals;
 // R05 cohorts (PACKET-004..006).
@@ -40,28 +46,24 @@ use archava_adapters::rls::{TenantContextError, TenantTransaction};
 
 use crate::router::Ledger;
 
-/// The purchasing ledger descriptor — the nine tables migration 001 creates
-/// and every one of the readiness gates counts.
+/// Keep the host gate aligned with all mounted purchasing persistence, including document history and allocations.
 pub const PURCHASING_LEDGER: Ledger = Ledger {
     namespace: "archava_purchasing",
     ledger: "purchasing",
-    tables: &[
-        "memberships",
-        "suppliers",
-        "offers",
-        "orders",
-        "lines",
-        "receipts",
-        "receipt_lines",
-        "commands",
-        "audit",
-    ],
+    tables: archava_adapters::erp::purchasing::TABLES,
+};
+
+pub const ACCOUNTING_LEDGER: Ledger = Ledger {
+    namespace: "archava_accounting",
+    ledger: "accounting",
+    tables: archava_adapters::erp::accounting::TABLES,
 };
 
 /// The ways an ERP request fails as INFRASTRUCTURE — everything else is a
 /// caller-facing answer the submit functions return as data.
 #[derive(Debug)]
 pub enum ErpGateError {
+    Configuration(crate::own::OwnRefusal),
     /// Authority-resolution (>session, tenant context, checked executor) —
     /// mapped with the SAME fixed texts the CRM routes use.
     Authority(crate::authority::AuthorityError),
@@ -81,7 +83,7 @@ impl From<TenantContextError> for ErpGateError {
     }
 }
 
-/// The transaction opener — [`crate::crm`]'s opener with the purchasing
+/// The transaction opener — [`crate::erp::crm`]'s opener with the purchasing
 /// ledger's namespace: non-owner runtime first (inside
 /// `TenantTransaction::begin`), then the `SET LOCAL` timeouts
 /// `packages/purchasing-pg/src/repository.ts` sets on every transaction
@@ -110,6 +112,9 @@ pub(crate) async fn begin(
                 .map_err(|source| ErpGateError::Database(PURCHASING_LEDGER.ledger, source))?;
         }
     }
+    crate::own::require_erp_module(&mut transaction, PURCHASING_LEDGER.namespace)
+        .await
+        .map_err(ErpGateError::Configuration)?;
     Ok(transaction)
 }
 
@@ -157,6 +162,9 @@ pub(crate) async fn begin_foodservice(
                 .map_err(|source| ErpGateError::Database(FOODSERVICE_LEDGER.ledger, source))?;
         }
     }
+    crate::own::require_erp_module(&mut transaction, FOODSERVICE_LEDGER.namespace)
+        .await
+        .map_err(ErpGateError::Configuration)?;
     Ok(transaction)
 }
 
@@ -176,6 +184,10 @@ pub const ORGANIZATIONS_LEDGER: Ledger = Ledger {
         "memberships",
         "organizations",
         "affiliations",
+        "parties",
+        "party_audit",
+        "companies",
+        "company_audit",
         "commands",
         "audit",
     ],
@@ -234,6 +246,9 @@ macro_rules! r04_opener {
                         .map_err(|source| ErpGateError::Database($ledger.ledger, source))?;
                 }
             }
+            crate::own::require_erp_module(&mut transaction, $ledger.namespace)
+                .await
+                .map_err(ErpGateError::Configuration)?;
             Ok(transaction)
         }
     };

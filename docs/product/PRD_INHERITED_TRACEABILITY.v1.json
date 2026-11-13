@@ -1,0 +1,3666 @@
+{
+  "schemaVersion": 1,
+  "scope": "Inherited execution and acceptance inventory. Source paragraphs/tables remain authoritative. Historical chapter review identifies retained requirements, context and explicitly superseded technical choices; this inventory grants no scope exclusion.",
+  "sourceSnapshots": [
+    {
+      "path": "docs/product/PRD_FULL_RUST.md",
+      "sha256": "88ca6da6c2b07c8d73834e6d9c8aba3ee665737ee98ea39d85820d1d77c759f6"
+    },
+    {
+      "path": "docs/archive/history/PRD.md",
+      "sha256": "ba50460e73424be15e29768de5203ce9853416babb65147dcbe1b1aa4e70f0ed"
+    },
+    {
+      "path": "docs/product/OWNER_CONFIGURATION_PRD.md",
+      "sha256": "0aadbbc616eb9c78b987a0f2e2656ed6ce84436656e21b2ed9dcec70307aed9e"
+    },
+    {
+      "path": "docs/product/ERP_PARITY_ACCEPTANCE_2026-11-06.md",
+      "sha256": "243a24c12e7102c4d469e71eab6a46b56d2cff053fb278a983b3e9db4aa515a7"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "RUST-R00",
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 672,
+      "kind": "migration_milestone",
+      "requirement": "Scope: Frozen inventory/hashes, reviewed A/J status, current contracts/consumers, corrected expectations, toolchain proposal, release identity plan Acceptance: Resolve critical authority/integrity and clean-bootstrap/release blockers for affected work; prototype murni boleh lanjut terisolasi",
+      "status": "partial",
+      "mappedRequirements": [
+        "DAT-01",
+        "SEC-01",
+        "OPS-01",
+        "OWN-08"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Finish the frozen behavior/entrypoint inventory, corrected baseline and selected consumer/profile disposition."
+      ]
+    },
+    {
+      "id": "RUST-R01",
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 673,
+      "kind": "migration_milestone",
+      "requirement": "Scope: Workspace, DTO/errors, authenticated policy seam, SQLx non-owner transaction, packaging skeleton, Leptos login/contact-list/one reviewed command/recovery prototype Acceptance: Synthetic DB/API/browser negative cases, no secret in WASM/SSR, build/UI budgets registered; prototype belum owner cutover",
+      "status": "partial",
+      "mappedRequirements": [
+        "SEC-01",
+        "UX-02",
+        "OPS-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_TRACEABILITY_REVIEW_2026-11-08.md",
+        "docs/product/PRD_NATIVE_GL_ACCEPTANCE_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete registered build/UI budgets and full source-profile foundation acceptance; local feasibility is not owner cutover."
+      ]
+    },
+    {
+      "id": "RUST-R02",
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 674,
+      "kind": "migration_milestone",
+      "requirement": "Scope: Pricing, deployment/assembly planning dan capacity math (additional reference-rate slice recorded separately) Acceptance: Approved parity including errors/bug corrections, compiled-consumer benchmarks, two cold consumers; no blanket full-domain claim",
+      "status": "partial",
+      "mappedRequirements": [
+        "CFG-03",
+        "OPS-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Reconcile pure-engine parity/errors, compiled baselines and two independent cold shipped consumers."
+      ]
+    },
+    {
+      "id": "RUST-R03",
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 675,
+      "kind": "migration_milestone",
+      "requirement": "Scope: Identity/sessions, contacts/pipeline, action confirmation/receipts, basic assistant chat/planning, minimal Leptos operational UI Acceptance: K05 + K04 independent consumers with identical shipped core/CRM; revoked-scope/replay/CSRF/restart evidence",
+      "status": "partial",
+      "mappedRequirements": [
+        "AGT-01",
+        "AGT-03",
+        "SEC-01",
+        "UX-02",
+        "CFG-03"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_TRACEABILITY_REVIEW_2026-11-08.md",
+        "docs/product/PRD_NATIVE_GL_ACCEPTANCE_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete K04/K05 independent consumers with identical shipped core/CRM and declared UI/authority coverage."
+      ]
+    },
+    {
+      "id": "RUST-R04",
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 676,
+      "kind": "migration_milestone",
+      "requirement": "Scope: Organizations, proposals/amendments, projects, capacity reservations/queue Acceptance: Immutable scope/history, revision/race tests, two supported consumers per accepted module; visible usable UI flows",
+      "status": "partial",
+      "mappedRequirements": [
+        "DAT-01",
+        "DAT-02",
+        "EXT-01",
+        "CFG-03"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Finish declared agreements/project/capacity lifecycle, immutable history/races and two supported consumers."
+      ]
+    },
+    {
+      "id": "RUST-R05",
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 677,
+      "kind": "migration_milestone",
+      "requirement": "Scope: Scheduling + accommodation and asset boundary mapping Acceptance: Single authority for shared occupancy, overlap/race/cancel/recovery tests, packaged UI/API proof",
+      "status": "partial",
+      "mappedRequirements": [
+        "DAT-01",
+        "DAT-02",
+        "EXT-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Finish selected shared occupancy/asset overlap, cancel/recovery and packaged consumer/API/UI proof."
+      ]
+    },
+    {
+      "id": "RUST-R06",
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 678,
+      "kind": "migration_milestone",
+      "requirement": "Scope: Commerce + purchasing + foodservice; related fulfillment/asset effects mapped explicitly Acceptance: Single physical stock pool, partial accepted/rejected receipts, rollback/races, tenant scope, single writer across cohort",
+      "status": "partial",
+      "mappedRequirements": [
+        "DAT-01",
+        "DAT-02",
+        "FIN-02",
+        "FIN-03"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Finish real source accounting, returns and mapped fulfillment/asset effects, full stock cohort oracles and consumer proof."
+      ]
+    },
+    {
+      "id": "RUST-R07",
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 679,
+      "kind": "migration_milestone",
+      "requirement": "Scope: Billing, subscriptions/entitlements, attendance, support, fulfillment; dependencies ordered by actual transaction graph Acceptance: Verified financial state, relationships/permissions, durable dispatch and UI; existing narrow scope only",
+      "status": "partial",
+      "mappedRequirements": [
+        "FIN-01",
+        "FIN-03",
+        "FIN-04",
+        "FIN-05",
+        "EXT-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Finish supported billing/subscription/entitlement/dispatch relationships and financial lifecycle; invoice sources remain under validation."
+      ]
+    },
+    {
+      "id": "RUST-R08",
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 680,
+      "kind": "migration_milestone",
+      "requirement": "Scope: Laundry, field services, formal education candidate and other R00-inventory extensions Acceptance: Accepted specs first, authority-bound references and delegated scopes, independent consumers, API/UI/recovery proof",
+      "status": "partial",
+      "mappedRequirements": [
+        "EXT-01",
+        "SEC-01",
+        "CFG-03",
+        "UX-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Accept offered vertical specs, references/delegated scope, recovery and independent consumers; module existence is insufficient."
+      ]
+    },
+    {
+      "id": "RUST-R09",
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 681,
+      "kind": "migration_milestone",
+      "requirement": "Scope: Context/knowledge/decision parity, public SDK/widget, supported realtime voice/avatar/provider behaviors Acceptance: Two host integrations, page consent/privacy, streaming/media lifecycle, Chat fallback, no public owner-tool access",
+      "status": "partial",
+      "mappedRequirements": [
+        "AGT-01",
+        "AGT-04",
+        "AGT-06",
+        "UX-03",
+        "SEC-02",
+        "CFG-03"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Finish knowledge/context/decision parity, actual offered media, consent/privacy and two host integrations."
+      ]
+    },
+    {
+      "id": "RUST-R10",
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 682,
+      "kind": "migration_milestone",
+      "requirement": "Scope: Rust CLI replacements, assembly/pack/verify, fresh install/prior upgrade/backup-restore, signed-off release candidate Acceptance: Exact identity proofs, drained/fenced writer handover, rollback rehearsal, local operator runbook",
+      "status": "partial",
+      "mappedRequirements": [
+        "OPS-01",
+        "OPS-02",
+        "INT-02",
+        "OWN-08"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_TRACEABILITY_REVIEW_2026-11-08.md",
+        "docs/product/PRD_NATIVE_GL_ACCEPTANCE_2026-11-08.md"
+      ],
+      "remaining": [
+        "Finish full-profile data/settings/key preservation, operator acceptance and exact release identity; public deployment remains owner-deferred."
+      ]
+    },
+    {
+      "id": "RUST-R11",
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 683,
+      "kind": "migration_milestone",
+      "requirement": "Scope: Complete inventory disposition, first-party runtime/UI Rust, documented compatibility exceptions, legacy cleanup Acceptance: All required gates \u00a723; no mandatory Node product runtime or hidden TS engine; 40-kit readiness stays separately evidenced",
+      "status": "partial",
+      "mappedRequirements": [
+        "CFG-03",
+        "OPS-01",
+        "OPS-02",
+        "OWN-08",
+        "EXT-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Resolve all required behavior dispositions and gates, no mandatory legacy product engine, and documented compatibility exceptions; industry readiness separate."
+      ]
+    },
+    {
+      "id": "RUST-G01",
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 721,
+      "kind": "migration_acceptance_gate",
+      "requirement": "Required proof: Frozen inventory + reviewed corrected behavior + source/dirty input identity Insufficient: Merujuk HEAD lama sambil memport dirty source yang berbeda",
+      "status": "partial",
+      "mappedRequirements": [
+        "DAT-01",
+        "OPS-01",
+        "OWN-08"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_TRACEABILITY_REVIEW_2026-11-08.md",
+        "docs/product/PRD_NATIVE_GL_ACCEPTANCE_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete full frozen inventory and corrected behavior review; preserve per-candidate dirty-source identity."
+      ]
+    },
+    {
+      "id": "RUST-G02",
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 722,
+      "kind": "migration_acceptance_gate",
+      "requirement": "Required proof: Supported wire/error/rounding/fingerprint semantics preserved or versioned correction accepted Insufficient: Compile success, happy-path quote match saja",
+      "status": "partial",
+      "mappedRequirements": [
+        "DAT-02",
+        "INT-01",
+        "CFG-03"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Finish profile-wide wire/error/rounding/fingerprint compatibility and explicitly accepted corrections."
+      ]
+    },
+    {
+      "id": "RUST-G03",
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 723,
+      "kind": "migration_acceptance_gate",
+      "requirement": "Required proof: Negative tenant/actor/grants/scope/revocation/service intersection tests pass at real entrypoints/DB Insufficient: UI hide button, administrator test role, cached receipt before auth",
+      "status": "partial",
+      "mappedRequirements": [
+        "SEC-01",
+        "SEC-02",
+        "AGT-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_TRACEABILITY_REVIEW_2026-11-08.md",
+        "docs/product/PRD_NATIVE_GL_ACCEPTANCE_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete sensitive route/tool/consumer authority coverage, external channel identity and selected enterprise controls."
+      ]
+    },
+    {
+      "id": "RUST-G04",
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 724,
+      "kind": "migration_acceptance_gate",
+      "requirement": "Required proof: Atomic cohort/financial/relationship/concurrency invariants pass Insufficient: Dual commits, draft paid entitlements, string-only unverified references claimed bound",
+      "status": "partial",
+      "mappedRequirements": [
+        "DAT-01",
+        "DAT-02",
+        "FIN-01",
+        "FIN-02",
+        "FIN-03",
+        "FIN-05"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_TRACEABILITY_REVIEW_2026-11-08.md",
+        "docs/product/PRD_NATIVE_GL_ACCEPTANCE_2026-11-08.md"
+      ],
+      "remaining": [
+        "Finish AP/bank/COGS/subledger source lifecycle and selected-profile concurrency/control totals."
+      ]
+    },
+    {
+      "id": "RUST-G05",
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 725,
+      "kind": "migration_acceptance_gate",
+      "requirement": "Required proof: Two independent cold consumers use identical shipped core/domain via supported minimal dependency closure Insufficient: Import source workspace/absolute machine paths, installing every package to hide gaps",
+      "status": "partial",
+      "mappedRequirements": [
+        "CFG-03",
+        "OWN-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_TRACEABILITY_REVIEW_2026-11-08.md",
+        "docs/product/PRD_COLD_PACKAGE_FINDING_2026-11-08.md",
+        "docs/product/PRD_COLD_CONSUMERS_2026-11-08.md",
+        "docs/product/PRD_PERSISTENT_CONSUMERS_2026-11-08.md"
+      ],
+      "remaining": [
+        "Two independently built public-contract clients now pass configured persistent CRM, distinct project/order extensions, current grant revocation, forged observation/stale revision refusal, native restart and installation isolation. Complete the full business workflows, industry screens, manifest/compatibility/upgrade combinations and selected-profile/customer acceptance. Separate Owner UI/chat evidence and this scoped CLI seam do not accept every reuse requirement."
+      ]
+    },
+    {
+      "id": "RUST-G06",
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 726,
+      "kind": "migration_acceptance_gate",
+      "requirement": "Required proof: Real browser SSR/hydration/approval/recovery/accessibility/embed/media tests for declared scope Insufficient: Navigation entry, static screenshot atau Rust `cargo test` saja",
+      "status": "partial",
+      "mappedRequirements": [
+        "UX-01",
+        "UX-02",
+        "UX-03",
+        "SEC-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_TRACEABILITY_REVIEW_2026-11-08.md",
+        "docs/product/PRD_NATIVE_GL_ACCEPTANCE_2026-11-08.md"
+      ],
+      "remaining": [
+        "Finish offered accessibility/embed/media and actual persona usability; finite owned browser screenshots do not establish all UX acceptance."
+      ]
+    },
+    {
+      "id": "RUST-G07",
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 727,
+      "kind": "migration_acceptance_gate",
+      "requirement": "Required proof: Supported fresh/prior upgrade, microseconds/key/settings/history preservation, pending-action recovery, isolated restore/rollback rehearsal Insufficient: Fresh empty DB only, backup file without restore proof",
+      "status": "partial",
+      "mappedRequirements": [
+        "OPS-01",
+        "INT-02",
+        "AGT-03"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_TRACEABILITY_REVIEW_2026-11-08.md",
+        "docs/product/PRD_NATIVE_GL_ACCEPTANCE_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete all supported prior-profile keys/settings/microsecond/history preservation and operational recovery expectations."
+      ]
+    },
+    {
+      "id": "RUST-G08",
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 728,
+      "kind": "migration_acceptance_gate",
+      "requirement": "Required proof: Pinned toolchain/deps, build/feature/lint/advisory checks and registered benchmark gates Insufficient: Suppressed tests, changed workloads, unqualified microbenchmark claim",
+      "status": "partial",
+      "mappedRequirements": [
+        "OPS-02",
+        "CFG-03"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_TRACEABILITY_REVIEW_2026-11-08.md",
+        "docs/product/PRD_NATIVE_GL_ACCEPTANCE_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete advisory/feature matrix and registered workload/UI/build budgets with repeated measurement and semantic correctness."
+      ]
+    },
+    {
+      "id": "RUST-G09",
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 729,
+      "kind": "migration_acceptance_gate",
+      "requirement": "Required proof: All artifacts/config/migrations/proofs point to exact immutable profile; every required failure explained Insufficient: Reused profile label, stale/empty proof, missing failure in reasons",
+      "status": "partial",
+      "mappedRequirements": [
+        "OPS-01",
+        "OWN-08"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_TRACEABILITY_REVIEW_2026-11-08.md",
+        "docs/product/PRD_NATIVE_GL_ACCEPTANCE_2026-11-08.md"
+      ],
+      "remaining": [
+        "Finish current invoice candidate gate/build/browser/package and bind the entire declared profile; explain required failures."
+      ]
+    },
+    {
+      "id": "RUST-G10",
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 730,
+      "kind": "migration_acceptance_gate",
+      "requirement": "Required proof: Rust operating CLI/runbook, writer fencing, accepted inventory, documented exceptions Insufficient: Silent TS fallback, unfinished worker/webhook/SDK path",
+      "status": "partial",
+      "mappedRequirements": [
+        "OPS-01",
+        "OWN-08",
+        "INT-01",
+        "UX-03"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_TRACEABILITY_REVIEW_2026-11-08.md",
+        "docs/product/PRD_NATIVE_GL_ACCEPTANCE_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete accepted inventory, declared worker/webhook/SDK paths and explicit compatibility/retirement evidence without silent legacy fallback."
+      ]
+    },
+    {
+      "id": "EXEC-01",
+      "source": "docs/archive/history/PRD.md",
+      "line": 2042,
+      "kind": "inherited_execution_contract",
+      "requirement": "Supported release profile. Record a versioned host-owned profile with",
+      "status": "open",
+      "mappedRequirements": [],
+      "evidence": [],
+      "remaining": [
+        "Map applicable detailed criteria to current execution and selected-profile proof. A chapter heading or passing test count is insufficient."
+      ]
+    },
+    {
+      "id": "EXEC-02",
+      "source": "docs/archive/history/PRD.md",
+      "line": 2050,
+      "kind": "inherited_execution_contract",
+      "requirement": "Safe composition and module lifecycle. Expose validated declared",
+      "status": "open",
+      "mappedRequirements": [],
+      "evidence": [],
+      "remaining": [
+        "Map applicable detailed criteria to current execution and selected-profile proof. A chapter heading or passing test count is insufficient."
+      ]
+    },
+    {
+      "id": "EXEC-03",
+      "source": "docs/archive/history/PRD.md",
+      "line": 2074,
+      "kind": "inherited_execution_contract",
+      "requirement": "Shared intelligence/presence boundary. Define a versioned server",
+      "status": "open",
+      "mappedRequirements": [],
+      "evidence": [],
+      "remaining": [
+        "Map applicable detailed criteria to current execution and selected-profile proof. A chapter heading or passing test count is insufficient."
+      ]
+    },
+    {
+      "id": "EXEC-04",
+      "source": "docs/archive/history/PRD.md",
+      "line": 2090,
+      "kind": "inherited_execution_contract",
+      "requirement": "Scoped security and dependency verification. Maintain a versioned",
+      "status": "open",
+      "mappedRequirements": [],
+      "evidence": [],
+      "remaining": [
+        "Map applicable detailed criteria to current execution and selected-profile proof. A chapter heading or passing test count is insufficient."
+      ]
+    },
+    {
+      "id": "EXEC-05",
+      "source": "docs/archive/history/PRD.md",
+      "line": 2108,
+      "kind": "inherited_execution_contract",
+      "requirement": "Local capacity baseline. Add a reproducible, bounded benchmark against",
+      "status": "open",
+      "mappedRequirements": [],
+      "evidence": [],
+      "remaining": [
+        "Map applicable detailed criteria to current execution and selected-profile proof. A chapter heading or passing test count is insufficient."
+      ]
+    },
+    {
+      "id": "EXEC-06",
+      "source": "docs/archive/history/PRD.md",
+      "line": 2123,
+      "kind": "inherited_execution_contract",
+      "requirement": "Upgrade, recovery and release handoff. Prove a previously supported",
+      "status": "open",
+      "mappedRequirements": [],
+      "evidence": [],
+      "remaining": [
+        "Map applicable detailed criteria to current execution and selected-profile proof. A chapter heading or passing test count is insufficient."
+      ]
+    },
+    {
+      "id": "OWN-T01",
+      "source": "docs/product/OWNER_CONFIGURATION_PRD.md",
+      "line": 230,
+      "kind": "owner_acceptance",
+      "requirement": "Dua business-model consumers memakai identical released CRM/core tanpa source fork; owner hanya mengubah supported config melalui UI/Archava",
+      "status": "partial",
+      "mappedRequirements": [
+        "CFG-03",
+        "OWN-02",
+        "OWN-06",
+        "OWN-07"
+      ],
+      "evidence": [
+        "docs/product/PRD_OWNER_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Current two-consumer persistent CRM and owner UI/chat configuration proof; cold public-contract fixtures are only a subset."
+      ]
+    },
+    {
+      "id": "OWN-T02",
+      "source": "docs/product/OWNER_CONFIGURATION_PRD.md",
+      "line": 231,
+      "kind": "owner_acceptance",
+      "requirement": "Request yang sama lewat chat dan dashboard menghasilkan equivalent validated plan dengan authoritative base/config/catalogue/pricing identity",
+      "status": "partial",
+      "mappedRequirements": [
+        "OWN-02",
+        "OWN-03",
+        "OWN-04"
+      ],
+      "evidence": [
+        "docs/product/PRD_OWNER_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Bind API chat/dashboard plan equivalence and native/browser action to one current artifact/config/catalogue/pricing profile."
+      ]
+    },
+    {
+      "id": "OWN-T03",
+      "source": "docs/product/OWNER_CONFIGURATION_PRD.md",
+      "line": 232,
+      "kind": "owner_acceptance",
+      "requirement": "Preview menampilkan actual changes/dependencies/readiness/cost classification; tidak ada hidden activation/payment/provider side effect",
+      "status": "partial",
+      "mappedRequirements": [
+        "OWN-04"
+      ],
+      "evidence": [
+        "docs/product/PRD_OWNER_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Current preview/readiness/cost/unknown and absence-of-external-effect proof for every supported owner change."
+      ]
+    },
+    {
+      "id": "OWN-T04",
+      "source": "docs/product/OWNER_CONFIGURATION_PRD.md",
+      "line": 233,
+      "kind": "owner_acceptance",
+      "requirement": "Owner tanpa management grant, public session, forged valid tenant/role/approval dan revoked-grant confirm/status/replay ditolak oleh backend",
+      "status": "partial",
+      "mappedRequirements": [
+        "OWN-05",
+        "SEC-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_OWNER_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Current-profile public/foreign/revoked confirm/status/replay API and browser negatives."
+      ]
+    },
+    {
+      "id": "OWN-T05",
+      "source": "docs/product/OWNER_CONFIGURATION_PRD.md",
+      "line": 234,
+      "kind": "owner_acceptance",
+      "requirement": "Incompatible/missing dependency, module unavailable atau unsupported workflow menghasilkan explicit blocked/gap result; tidak dijalankan atau dihitung PASS",
+      "status": "partial",
+      "mappedRequirements": [
+        "OWN-03",
+        "OWN-07",
+        "CFG-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_OWNER_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Current-profile incompatible/missing/unsupported and source-policy/resource-lifecycle dependency gaps remain explicit blocked results."
+      ]
+    },
+    {
+      "id": "OWN-T06",
+      "source": "docs/product/OWNER_CONFIGURATION_PRD.md",
+      "line": 235,
+      "kind": "owner_acceptance",
+      "requirement": "Duplicate/racing apply, two-tab stale config, refresh/lost response dan host restart menghasilkan satu authoritative config effect dan authorized recovery",
+      "status": "partial",
+      "mappedRequirements": [
+        "OWN-06",
+        "OWN-07",
+        "AGT-03"
+      ],
+      "evidence": [
+        "docs/product/PRD_OWNER_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Current-profile browser two-tab stale apply, lost response, restart and one durable effect plus authorized recovery."
+      ]
+    },
+    {
+      "id": "OWN-T07",
+      "source": "docs/product/OWNER_CONFIGURATION_PRD.md",
+      "line": 236,
+      "kind": "owner_acceptance",
+      "requirement": "Optional module enable/disable mengubah actual UI/API/tool availability; direct API tetap menolak ketika disabled; dependent module disable ditolak",
+      "status": "partial",
+      "mappedRequirements": [
+        "OWN-06",
+        "OWN-07",
+        "CFG-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_OWNER_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Actual current UI/API/tool activation and dependencies; implement and verify configured labels in business views."
+      ]
+    },
+    {
+      "id": "OWN-T08",
+      "source": "docs/product/OWNER_CONFIGURATION_PRD.md",
+      "line": 237,
+      "kind": "owner_acceptance",
+      "requirement": "Existing records/audit/receipts/permissions terjaga; historical label/meaning dapat ditelusuri; config restore tidak menulis ulang business/financial history",
+      "status": "partial",
+      "mappedRequirements": [
+        "OWN-08",
+        "DAT-02",
+        "FIN-05"
+      ],
+      "evidence": [
+        "docs/product/PRD_OWNER_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Current config restore preserves business/financial/audit/receipt/grant/history semantics, including historical labels."
+      ]
+    },
+    {
+      "id": "OWN-T09",
+      "source": "docs/product/OWNER_CONFIGURATION_PRD.md",
+      "line": 238,
+      "kind": "owner_acceptance",
+      "requirement": "Stale catalogue/config/price snapshot atau changed target resources meminta replan/reconfirmation; model tidak mengarang price atau readiness",
+      "status": "partial",
+      "mappedRequirements": [
+        "OWN-03",
+        "OWN-05"
+      ],
+      "evidence": [
+        "docs/product/PRD_OWNER_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Bind changed target/base/catalogue/pricing refusal and reconfirmation to current native/browser evidence."
+      ]
+    },
+    {
+      "id": "OWN-T10",
+      "source": "docs/product/OWNER_CONFIGURATION_PRD.md",
+      "line": 239,
+      "kind": "owner_acceptance",
+      "requirement": "Real browser membuktikan inspect \u2192 plan \u2192 preview \u2192 confirm \u2192 applied \u2192 recovery/history/restore; tanpa editing code/config file atau terminal oleh owner",
+      "status": "partial",
+      "mappedRequirements": [
+        "OWN-01",
+        "OWN-02",
+        "OWN-03",
+        "OWN-04",
+        "OWN-05",
+        "OWN-06",
+        "OWN-07",
+        "OWN-08",
+        "UX-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_OWNER_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete current native inspect/chat/manual plan/preview/confirm/apply/recovery/history/restore without owner code, config-file or terminal work."
+      ]
+    },
+    {
+      "id": "B01",
+      "source": "docs/product/ERP_PARITY_ACCEPTANCE_2026-11-06.md",
+      "line": 57,
+      "kind": "selected_profile_benchmark",
+      "requirement": "transaksi sampai laporan keuangan",
+      "status": "open",
+      "mappedRequirements": [
+        "DAT-01",
+        "DAT-02",
+        "FIN-01",
+        "FIN-02",
+        "FIN-03",
+        "FIN-04",
+        "FIN-05",
+        "FIN-06"
+      ],
+      "evidence": [
+        "docs/product/PRD_BENCHMARK_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete actual operating-source AP/COGS, bank settlement/reconciliation, return/credit/refund and complete subledger close with original B01 totals and all negative/recovery cases. Manual GL and invoice-source subsets do not accept B01."
+      ]
+    },
+    {
+      "id": "B02",
+      "source": "docs/product/ERP_PARITY_ACCEPTANCE_2026-11-06.md",
+      "line": 119,
+      "kind": "selected_profile_benchmark",
+      "requirement": "multiwarehouse dan traceability",
+      "status": "open",
+      "mappedRequirements": [
+        "DAT-01",
+        "DAT-02",
+        "FIN-02",
+        "FIN-03",
+        "EXT-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_BENCHMARK_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Selected-profile two-warehouse/transit/UOM/lot-serial/quality/expiry/original-return-cost and finance proof, native or actual integrated WMS."
+      ]
+    },
+    {
+      "id": "B03",
+      "source": "docs/product/ERP_PARITY_ACCEPTANCE_2026-11-06.md",
+      "line": 141,
+      "kind": "selected_profile_benchmark",
+      "requirement": "produksi yang terhubung dengan finansial",
+      "status": "open",
+      "mappedRequirements": [
+        "DAT-01",
+        "DAT-02",
+        "FIN-01",
+        "FIN-05",
+        "EXT-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_BENCHMARK_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Selected manufacturing BOM/routing/capacity/material/WIP/quality/scrap/subcontracting/finance lifecycle and independent close oracles."
+      ]
+    },
+    {
+      "id": "B04",
+      "source": "docs/product/ERP_PARITY_ACCEPTANCE_2026-11-06.md",
+      "line": 165,
+      "kind": "selected_profile_benchmark",
+      "requirement": "organisasi, currency dan penutupan grup",
+      "status": "open",
+      "mappedRequirements": [
+        "DAT-01",
+        "FIN-01",
+        "FIN-05",
+        "FIN-06",
+        "SEC-01",
+        "EXT-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_BENCHMARK_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Selected group profile legal entities, two functional currencies, FX/intercompany/translation/elimination/consolidation and reconciled drill-down."
+      ]
+    },
+    {
+      "id": "B05",
+      "source": "docs/product/ERP_PARITY_ACCEPTANCE_2026-11-06.md",
+      "line": 185,
+      "kind": "selected_profile_benchmark",
+      "requirement": "tujuan bisnis dan agen AI",
+      "status": "open",
+      "mappedRequirements": [
+        "AGT-01",
+        "AGT-02",
+        "AGT-03",
+        "AGT-04",
+        "AGT-05",
+        "AGT-06",
+        "UX-01",
+        "OPS-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_BENCHMARK_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Frozen held-out live agent goals versus development suite with independent correctness/authority/recovery/context/task-time/cost/effort and provider-failure oracles; preserve every attempt and model profile."
+      ]
+    },
+    {
+      "id": "B06",
+      "source": "docs/product/ERP_PARITY_ACCEPTANCE_2026-11-06.md",
+      "line": 234,
+      "kind": "selected_profile_benchmark",
+      "requirement": "IAM, integrasi dan pengoperasian",
+      "status": "open",
+      "mappedRequirements": [
+        "SEC-01",
+        "SEC-02",
+        "INT-01",
+        "INT-02",
+        "OPS-01",
+        "OWN-08"
+      ],
+      "evidence": [
+        "docs/product/PRD_BENCHMARK_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Full selected IAM/provider authority/key/webhook/recovery, opening/history migration, target upgrade/offsite encrypted restore/rotation/received-alert/RTO-RPO and operator acceptance."
+      ]
+    },
+    {
+      "id": "B07",
+      "source": "docs/product/ERP_PARITY_ACCEPTANCE_2026-11-06.md",
+      "line": 267,
+      "kind": "selected_profile_benchmark",
+      "requirement": "performa, TCO dan pilot",
+      "status": "open",
+      "mappedRequirements": [
+        "OPS-02",
+        "UX-01",
+        "UX-02",
+        "AGT-05"
+      ],
+      "evidence": [
+        "docs/product/PRD_BENCHMARK_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Registered comparable mixed workload with tails/errors/saturation/recovery/cost and real-user pilot baselines/KPIs; current local Commerce target stays 50ms."
+      ]
+    },
+    {
+      "id": "MASTER-REUSE-01",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1588,
+      "kind": "retained_master_contract",
+      "requirement": "the same released module implementation must serve at least two reference consumers without copying business logic, importing parent workspace source or adding tenant-name branches to core.",
+      "status": "partial",
+      "mappedRequirements": [
+        "CFG-03",
+        "DAT-01",
+        "INT-01",
+        "SEC-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete backend/UI consumer composition, explicit vertical/config boundaries, supported profile/upgrade combinations and accepted external-authority adapters; scoped CLI persistence is only partial proof."
+      ]
+    },
+    {
+      "id": "MASTER-REUSE-02",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1590,
+      "kind": "retained_master_contract",
+      "requirement": "a deterministic business module must accept authorized dashboard/API calls without requiring an LLM/model session; Archava must use the same domain service and state-transition rules.",
+      "status": "partial",
+      "mappedRequirements": [
+        "CFG-03",
+        "DAT-01",
+        "INT-01",
+        "SEC-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete backend/UI consumer composition, explicit vertical/config boundaries, supported profile/upgrade combinations and accepted external-authority adapters; scoped CLI persistence is only partial proof."
+      ]
+    },
+    {
+      "id": "MASTER-REUSE-03",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1592,
+      "kind": "retained_master_contract",
+      "requirement": "each resource has one authoritative owner. Cross-module access uses public services, IDs and events. A module cannot silently update another module's internal tables. Transactions spanning modules require an explicit application-service boundary and tested failure semantics; external effects are not made atomic by a database transaction.",
+      "status": "partial",
+      "mappedRequirements": [
+        "CFG-03",
+        "DAT-01",
+        "INT-01",
+        "SEC-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete backend/UI consumer composition, explicit vertical/config boundaries, supported profile/upgrade combinations and accepted external-authority adapters; scoped CLI persistence is only partial proof."
+      ]
+    },
+    {
+      "id": "MASTER-REUSE-04",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1594,
+      "kind": "retained_master_contract",
+      "requirement": "configuration changes supported options, not domain invariants. Material differences in scheduling, inventory valuation, patient care or school administration use explicit vertical extensions. A generic contact can be linked to a guest/student/patient record, but those records retain domain-specific permissions and meaning.",
+      "status": "partial",
+      "mappedRequirements": [
+        "CFG-03",
+        "DAT-01",
+        "INT-01",
+        "SEC-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete backend/UI consumer composition, explicit vertical/config boundaries, supported profile/upgrade combinations and accepted external-authority adapters; scoped CLI persistence is only partial proof."
+      ]
+    },
+    {
+      "id": "MASTER-REUSE-05",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1596,
+      "kind": "retained_master_contract",
+      "requirement": "existing client systems remain supported via adapters. Read projections may be cached with provenance/freshness, but must not become a competing editable source of truth. Reconcile mappings and deletes explicitly.",
+      "status": "open",
+      "mappedRequirements": [
+        "CFG-03",
+        "DAT-01",
+        "INT-01",
+        "SEC-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete backend/UI consumer composition, explicit vertical/config boundaries, supported profile/upgrade combinations and accepted external-authority adapters; scoped CLI persistence is only partial proof."
+      ]
+    },
+    {
+      "id": "MASTER-MOD-01",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1655,
+      "kind": "retained_master_contract",
+      "requirement": "resolve declared dependencies against a finite supported release profile. Reject unknown IDs, unsatisfied ranges, cycles, conflicts and attempts to disable required dependencies. Produce explicit reasons rather than silently substituting implementations.",
+      "status": "partial",
+      "mappedRequirements": [
+        "CFG-01",
+        "CFG-02",
+        "CFG-03",
+        "OWN-01",
+        "OWN-03",
+        "OWN-06",
+        "OWN-08"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete the versioned manifest fields, combination/readiness tests, UI/tool lifecycle and pending-effect recovery for the supported profile; registry metadata alone is insufficient."
+      ]
+    },
+    {
+      "id": "MASTER-MOD-02",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1657,
+      "kind": "retained_master_contract",
+      "requirement": "installation/configuration, commercial entitlement, UI visibility, runtime readiness and user/action permission are separate states. Turning a module on grants no role/resource access. A module can be installed but unavailable because its required port is missing.",
+      "status": "partial",
+      "mappedRequirements": [
+        "CFG-01",
+        "CFG-02",
+        "CFG-03",
+        "OWN-01",
+        "OWN-03",
+        "OWN-06",
+        "OWN-08"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete the versioned manifest fields, combination/readiness tests, UI/tool lifecycle and pending-effect recovery for the supported profile; registry metadata alone is insufficient."
+      ]
+    },
+    {
+      "id": "MASTER-MOD-03",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1659,
+      "kind": "retained_master_contract",
+      "requirement": "disabling a module prevents new invocations and removes its active UI/tools from the supported projection. It must not delete business data, invalidate legal retention or abandon already-started effects without a recovery policy. Uninstall/data purge requires an explicit authorized lifecycle.",
+      "status": "partial",
+      "mappedRequirements": [
+        "CFG-01",
+        "CFG-02",
+        "CFG-03",
+        "OWN-01",
+        "OWN-03",
+        "OWN-06",
+        "OWN-08"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete the versioned manifest fields, combination/readiness tests, UI/tool lifecycle and pending-effect recovery for the supported profile; registry metadata alone is insufficient."
+      ]
+    },
+    {
+      "id": "MASTER-MOD-04",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1661,
+      "kind": "retained_master_contract",
+      "requirement": "additional actions use the existing versioned closed action registry, risk classification and validated executor boundary. Manifest strings alone do not create executable tools or extend that registry. Preserve the separately registered native follow-up creation/completion actions and their distinct consent.",
+      "status": "partial",
+      "mappedRequirements": [
+        "CFG-01",
+        "CFG-02",
+        "CFG-03",
+        "OWN-01",
+        "OWN-03",
+        "OWN-06",
+        "OWN-08"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete the versioned manifest fields, combination/readiness tests, UI/tool lifecycle and pending-effect recovery for the supported profile; registry metadata alone is insufficient."
+      ]
+    },
+    {
+      "id": "MASTER-CFG-01",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1674,
+      "kind": "retained_master_contract",
+      "requirement": "preserve separate requested, supported, configured, connected and healthy states. Legacy `enabled: true` is not proof that an integration exists or can execute. Template common integrations begin as suggestions; automatic provisioning requires explicit validated selection and readiness.",
+      "status": "partial",
+      "mappedRequirements": [
+        "CFG-01",
+        "CFG-02",
+        "CFG-03",
+        "OWN-03",
+        "OWN-04",
+        "SEC-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Finish requested/configured/connected/healthy projections, safe public config and consistent quote/deployment scope under independent catalog/config/price versions; unsupported scope cannot be silently activated."
+      ]
+    },
+    {
+      "id": "MASTER-CFG-02",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1676,
+      "kind": "retained_master_contract",
+      "requirement": "distinguish supported pipeline/stage labels, field options and workflow settings from executable code. No arbitrary scripts, SQL, dynamic imports or unreviewed schemas come from tenant/browser/model configuration.",
+      "status": "partial",
+      "mappedRequirements": [
+        "CFG-01",
+        "CFG-02",
+        "CFG-03",
+        "OWN-03",
+        "OWN-04",
+        "SEC-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Finish requested/configured/connected/healthy projections, safe public config and consistent quote/deployment scope under independent catalog/config/price versions; unsupported scope cannot be silently activated."
+      ]
+    },
+    {
+      "id": "MASTER-CFG-03",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1678,
+      "kind": "retained_master_contract",
+      "requirement": "a public browser config is a safe projection. Secrets, internal margins, employee roles and privileged tool definitions stay server-side. Client IDs select intended deployments; they are not authorization credentials.",
+      "status": "partial",
+      "mappedRequirements": [
+        "CFG-01",
+        "CFG-02",
+        "CFG-03",
+        "OWN-03",
+        "OWN-04",
+        "SEC-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Finish requested/configured/connected/healthy projections, safe public config and consistent quote/deployment scope under independent catalog/config/price versions; unsupported scope cannot be silently activated."
+      ]
+    },
+    {
+      "id": "MASTER-CFG-04",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1680,
+      "kind": "retained_master_contract",
+      "requirement": "quote selection and deployment selection use the same supported scope. A suggested integration cannot be promoted to connected scope or omitted from price/manual-review treatment by a config merge. Planned/unpriced native modules receive an explicit unsupported/manual-scope result, never an invented price.",
+      "status": "partial",
+      "mappedRequirements": [
+        "CFG-01",
+        "CFG-02",
+        "CFG-03",
+        "OWN-03",
+        "OWN-04",
+        "SEC-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Finish requested/configured/connected/healthy projections, safe public config and consistent quote/deployment scope under independent catalog/config/price versions; unsupported scope cannot be silently activated."
+      ]
+    },
+    {
+      "id": "MASTER-TEN-01",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1694,
+      "kind": "retained_master_contract",
+      "requirement": "bind server-owned tenant scope to an authenticated employee/member, scoped service identity or constrained public customer session. Do not trust role, tenant, approval or provider credentials supplied by browser/model input. Public visitors do not need employee login, but receive a separate limited principal/tool/data projection.",
+      "status": "partial",
+      "mappedRequirements": [
+        "SEC-01",
+        "SEC-02",
+        "UX-03"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Finish public/customer/embed identity and the full retrieval/cache/file/export/job/provider isolation/privacy matrix, retaining native FORCE RLS/session/resource tests."
+      ]
+    },
+    {
+      "id": "MASTER-TEN-02",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1696,
+      "kind": "retained_master_contract",
+      "requirement": "isolate tenant records, retrieval, cache keys, exports, files, credentials, events, jobs, rate budgets and action attempts. Resource-level ownership also applies within a tenant, such as one customer's booking or one employee's permitted contact set.",
+      "status": "partial",
+      "mappedRequirements": [
+        "SEC-01",
+        "SEC-02",
+        "UX-03"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Finish public/customer/embed identity and the full retrieval/cache/file/export/job/provider isolation/privacy matrix, retaining native FORCE RLS/session/resource tests."
+      ]
+    },
+    {
+      "id": "MASTER-TEN-03",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1698,
+      "kind": "retained_master_contract",
+      "requirement": "for shared PostgreSQL data, use tenant-bound keys/queries and tested RLS defense in depth. Runtime roles must not be superusers or `BYPASSRLS`; address table-owner bypass explicitly. Establish transaction-local scope and test reused connections. Migration/admin credentials are separate and their cross-tenant operations explicitly authorized.",
+      "status": "partial",
+      "mappedRequirements": [
+        "SEC-01",
+        "SEC-02",
+        "UX-03"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Finish public/customer/embed identity and the full retrieval/cache/file/export/job/provider isolation/privacy matrix, retaining native FORCE RLS/session/resource tests."
+      ]
+    },
+    {
+      "id": "MASTER-AUTH-01",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1704,
+      "kind": "retained_master_contract",
+      "requirement": "effective action authorization intersects initiating-principal grants/resource ownership, service allowlist, tenant capability/module policy, validated inputs, approval and current business preconditions. A model confidence, enabled module or paid tier grants no independent authority.",
+      "status": "partial",
+      "mappedRequirements": [
+        "SEC-01",
+        "AGT-02",
+        "AGT-03",
+        "DAT-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Finish current-authority, action/consent/expiry/retry/unknown-outcome proof across every supported entry point and selected profile, without enabling unsupported high-risk actions."
+      ]
+    },
+    {
+      "id": "MASTER-AUTH-02",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1706,
+      "kind": "retained_master_contract",
+      "requirement": "business APIs enforce permissions and invariants for every entry point: dashboard, direct API, Archava and background worker. UI controls are conveniences, not enforcement. Preserve L0\u2013L5 and capability boundaries, including existing L5 non-autonomy. General CRM writes require Act; the existing bounded Assist lead-capture allowance does not authorize arbitrary CRM mutation.",
+      "status": "partial",
+      "mappedRequirements": [
+        "SEC-01",
+        "AGT-02",
+        "AGT-03",
+        "DAT-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Finish current-authority, action/consent/expiry/retry/unknown-outcome proof across every supported entry point and selected profile, without enabling unsupported high-risk actions."
+      ]
+    },
+    {
+      "id": "MASTER-AUTH-03",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1708,
+      "kind": "retained_master_contract",
+      "requirement": "bind confirmation to canonical payload, target/resource revision, expiry, tenant and principal/session. Recheck time-sensitive permissions and preconditions before execution. Keep raw provider keys, credentials and approval tokens out of prompts/logs.",
+      "status": "partial",
+      "mappedRequirements": [
+        "SEC-01",
+        "AGT-02",
+        "AGT-03",
+        "DAT-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Finish current-authority, action/consent/expiry/retry/unknown-outcome proof across every supported entry point and selected profile, without enabling unsupported high-risk actions."
+      ]
+    },
+    {
+      "id": "MASTER-AUTH-04",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1710,
+      "kind": "retained_master_contract",
+      "requirement": "preserve one canonical intent/attempt across retries and restarts. Distinguish a retried action from an intentionally new identical action. Atomic durable attempt identity and one-time approval consumption must be demonstrated before the corresponding real writes. Unknown results remain unknown until authoritative reconciliation or a defined operator recovery.",
+      "status": "partial",
+      "mappedRequirements": [
+        "SEC-01",
+        "AGT-02",
+        "AGT-03",
+        "DAT-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Finish current-authority, action/consent/expiry/retry/unknown-outcome proof across every supported entry point and selected profile, without enabling unsupported high-risk actions."
+      ]
+    },
+    {
+      "id": "MASTER-REL-01",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1721,
+      "kind": "retained_master_contract",
+      "requirement": "declare a public contract before applying semantic versions. Initially support a small set of tested release profiles with exact resolved versions instead of every possible module combination. Document supported runtimes/UI contracts and incompatible changes.",
+      "status": "partial",
+      "mappedRequirements": [
+        "OPS-01",
+        "CFG-03",
+        "INT-02",
+        "SEC-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete supported profile version/compatibility windows, interruptions/recovery and the export/deletion/retention/backup/provider privacy lifecycle; isolated native upgrades do not accept all release obligations."
+      ]
+    },
+    {
+      "id": "MASTER-REL-02",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1723,
+      "kind": "retained_master_contract",
+      "requirement": "separate product release, module package, config schema, API/event, database schema and pricebook versions. A module version bump does not authorize a price change or automatic client upgrade.",
+      "status": "partial",
+      "mappedRequirements": [
+        "OPS-01",
+        "CFG-03",
+        "INT-02",
+        "SEC-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete supported profile version/compatibility windows, interruptions/recovery and the export/deletion/retention/backup/provider privacy lifecycle; isolated native upgrades do not accept all release obligations."
+      ]
+    },
+    {
+      "id": "MASTER-REL-03",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1725,
+      "kind": "retained_master_contract",
+      "requirement": "each persistence module owns ordered migrations and a migration ledger. Test an existing-data upgrade, interrupted run, supported restart/recovery and prior/current code compatibility. Use expand/contract changes for shared services where mixed deployments may coexist. Destructive changes require explicit data/recovery planning; code rollback is not proof of data rollback.",
+      "status": "partial",
+      "mappedRequirements": [
+        "OPS-01",
+        "CFG-03",
+        "INT-02",
+        "SEC-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete supported profile version/compatibility windows, interruptions/recovery and the export/deletion/retention/backup/provider privacy lifecycle; isolated native upgrades do not accept all release obligations."
+      ]
+    },
+    {
+      "id": "MASTER-REL-04",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1727,
+      "kind": "retained_master_contract",
+      "requirement": "tenants sharing tables cannot independently apply incompatible schema histories. Coordinate a shared-service schema release. Dedicated deployments may remain pinned within a documented support window. Record which profiles are tested; do not claim compatibility from version constraints alone.",
+      "status": "partial",
+      "mappedRequirements": [
+        "OPS-01",
+        "CFG-03",
+        "INT-02",
+        "SEC-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete supported profile version/compatibility windows, interruptions/recovery and the export/deletion/retention/backup/provider privacy lifecycle; isolated native upgrades do not accept all release obligations."
+      ]
+    },
+    {
+      "id": "MASTER-REL-05",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1729,
+      "kind": "retained_master_contract",
+      "requirement": "before hosted persistent modules go live, back up database/files/config as applicable and demonstrate restoration to an isolated environment. Record observed recovery time, backup age and consistency. Assign support-tier RPO/RTO commitments only after capacity and restore evidence exist.",
+      "status": "partial",
+      "mappedRequirements": [
+        "OPS-01",
+        "CFG-03",
+        "INT-02",
+        "SEC-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete supported profile version/compatibility windows, interruptions/recovery and the export/deletion/retention/backup/provider privacy lifecycle; isolated native upgrades do not accept all release obligations."
+      ]
+    },
+    {
+      "id": "MASTER-REL-06",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1731,
+      "kind": "retained_master_contract",
+      "requirement": "privacy lifecycle covers exports, deletion/retention, backups, audit and provider data. Deleting a contact must reconcile dependent records and retention duties; do not blindly cascade financial/audit deletion. Curated support knowledge records problem, root cause, affected version, fix and prevention rather than ingesting all conversations automatically.",
+      "status": "partial",
+      "mappedRequirements": [
+        "OPS-01",
+        "CFG-03",
+        "INT-02",
+        "SEC-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete supported profile version/compatibility windows, interruptions/recovery and the export/deletion/retention/backup/provider privacy lifecycle; isolated native upgrades do not accept all release obligations."
+      ]
+    },
+    {
+      "id": "MASTER-CRM-01",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1741,
+      "kind": "retained_master_contract",
+      "requirement": "provide bounded contact list/detail/create/update and activity/task operations, permission checks, record revisions and durable audit. Typed validation and pagination must bound query/mutation scope. Automatic bulk messaging or arbitrary workflow execution is outside the first slice.",
+      "status": "partial",
+      "mappedRequirements": [
+        "DAT-01",
+        "DAT-02",
+        "CFG-03",
+        "UX-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete the supported CRM composition/UI/agent/consumer acceptance and declared field/view/assignment configurations; preserve canonical transitions, current permissions, audits and original receipt identities."
+      ]
+    },
+    {
+      "id": "MASTER-CRM-02",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1743,
+      "kind": "retained_master_contract",
+      "requirement": "dashboard and Archava operate on the same authorized records/service. Archava can list contacts, retrieve activity context and prepare a follow-up; mutation/sending follows existing capability/approval rules. External email delivery is enabled only when its separate Act/provider gates pass.",
+      "status": "partial",
+      "mappedRequirements": [
+        "DAT-01",
+        "DAT-02",
+        "CFG-03",
+        "UX-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete the supported CRM composition/UI/agent/consumer acceptance and declared field/view/assignment configurations; preserve canonical transitions, current permissions, audits and original receipt identities."
+      ]
+    },
+    {
+      "id": "MASTER-CRM-03",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1745,
+      "kind": "retained_master_contract",
+      "requirement": "two contexts share the same released contacts/activity implementation. Labels, supported fields and views can differ through config; genuinely new domain records live in extensions. Seed/demo data are isolated fixtures and never represented as real customer records.",
+      "status": "partial",
+      "mappedRequirements": [
+        "DAT-01",
+        "DAT-02",
+        "CFG-03",
+        "UX-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete the supported CRM composition/UI/agent/consumer acceptance and declared field/view/assignment configurations; preserve canonical transitions, current permissions, audits and original receipt identities."
+      ]
+    },
+    {
+      "id": "MASTER-CRM-04",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1747,
+      "kind": "retained_master_contract",
+      "requirement": "later leads/opportunities and sales stages must have explicit transition, assignment, visibility and audit policies. Stage relabeling cannot bypass domain rules. A contact, guest, student and patient are distinct business concepts even when linked to a shared identity.",
+      "status": "partial",
+      "mappedRequirements": [
+        "DAT-01",
+        "DAT-02",
+        "CFG-03",
+        "UX-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete the supported CRM composition/UI/agent/consumer acceptance and declared field/view/assignment configurations; preserve canonical transitions, current permissions, audits and original receipt identities."
+      ]
+    },
+    {
+      "id": "MASTER-ERP-01",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1762,
+      "kind": "retained_master_contract",
+      "requirement": "define each module's invariants before implementation and validate them on actual business scenarios. Stock quantity and time-slot capacity must not be collapsed into a single generic CRUD table. An invoice/payment module is not an assertion of full accounting, tax or payroll compliance.",
+      "status": "partial",
+      "mappedRequirements": [
+        "DAT-01",
+        "DAT-02",
+        "FIN-01",
+        "FIN-02",
+        "FIN-03",
+        "FIN-04",
+        "FIN-05",
+        "FIN-06",
+        "EXT-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete selected-profile operating/financial source lifecycles, domain scenarios and explicit external authoritative adapters; narrow modules and candidate industry families do not establish full ERP/statutory readiness."
+      ]
+    },
+    {
+      "id": "MASTER-ERP-02",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1764,
+      "kind": "retained_master_contract",
+      "requirement": "keep posted financial/stock history traceable. Corrections use authorized adjustment/reversal semantics appropriate to the source system. An LLM cannot edit immutable financial truth, mark payments successful or make accounting policy decisions.",
+      "status": "partial",
+      "mappedRequirements": [
+        "DAT-01",
+        "DAT-02",
+        "FIN-01",
+        "FIN-02",
+        "FIN-03",
+        "FIN-04",
+        "FIN-05",
+        "FIN-06",
+        "EXT-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete selected-profile operating/financial source lifecycles, domain scenarios and explicit external authoritative adapters; narrow modules and candidate industry families do not establish full ERP/statutory readiness."
+      ]
+    },
+    {
+      "id": "MASTER-ERP-03",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1766,
+      "kind": "retained_master_contract",
+      "requirement": "support external authoritative systems with scoped adapters when client needs exceed first-party module scope. Avoid synchronized writable duplicates unless there is an explicit ownership/conflict/reconciliation design.",
+      "status": "open",
+      "mappedRequirements": [
+        "DAT-01",
+        "DAT-02",
+        "FIN-01",
+        "FIN-02",
+        "FIN-03",
+        "FIN-04",
+        "FIN-05",
+        "FIN-06",
+        "EXT-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete selected-profile operating/financial source lifecycles, domain scenarios and explicit external authoritative adapters; narrow modules and candidate industry families do not establish full ERP/statutory readiness."
+      ]
+    },
+    {
+      "id": "MASTER-DIST-01",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1907,
+      "kind": "retained_master_contract",
+      "requirement": "prove consumption through packed artifacts in at least two host/configuration contexts outside workspace source resolution. Declare transitive dependencies and runtime support. No package may rely on parent paths, test aliases, private environment files or another project's build output.",
+      "status": "partial",
+      "mappedRequirements": [
+        "CFG-03",
+        "UX-03",
+        "OPS-01",
+        "SEC-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete supported browser/server consumer artifacts, SDK/profile/version compatibility, packaged license/advisory scope and controlled distribution/update policy; public publishing remains separately authorized."
+      ]
+    },
+    {
+      "id": "MASTER-DIST-02",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1909,
+      "kind": "retained_master_contract",
+      "requirement": "publish separate public browser and server surfaces. Browser output must not import Node-only adapters, provider keys or private operational data. Preserve SDK consent/page-awareness contracts; business dashboard components can be reused without coupling host-page design to the assistant widget.",
+      "status": "partial",
+      "mappedRequirements": [
+        "CFG-03",
+        "UX-03",
+        "OPS-01",
+        "SEC-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete supported browser/server consumer artifacts, SDK/profile/version compatibility, packaged license/advisory scope and controlled distribution/update policy; public publishing remains separately authorized."
+      ]
+    },
+    {
+      "id": "MASTER-DIST-03",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1911,
+      "kind": "retained_master_contract",
+      "requirement": "use internal controlled artifacts initially. A registry, CDN or public SDK bundle requires an explicit distribution/access/update policy. Inspect packaged contents, source/build hashes, licenses and dependency advisories. Provenance does not prove absence of malicious code and may disclose source/build metadata; review registry capabilities before enabling it for private IP.",
+      "status": "partial",
+      "mappedRequirements": [
+        "CFG-03",
+        "UX-03",
+        "OPS-01",
+        "SEC-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete supported browser/server consumer artifacts, SDK/profile/version compatibility, packaged license/advisory scope and controlled distribution/update policy; public publishing remains separately authorized."
+      ]
+    },
+    {
+      "id": "MASTER-MIG-01",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1913,
+      "kind": "retained_master_contract",
+      "requirement": "map existing package exports and dependencies first. Keep working ports, assistant safety, pricing and browser reference behavior. Add compiled exports/artifacts and a compatibility path incrementally rather than moving all source or switching frameworks at once.",
+      "status": "partial",
+      "mappedRequirements": [
+        "CFG-03",
+        "UX-02",
+        "UX-03",
+        "OPS-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete retained-behavior consumer comparisons, supported compatibility replacements and shared presence/identity integrations without silently retiring legitimate paths."
+      ]
+    },
+    {
+      "id": "MASTER-MIG-02",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1915,
+      "kind": "retained_master_contract",
+      "requirement": "add manifest/resolution contracts alongside legacy config, then prove two compositions. Introduce trusted auth/tenant hosting, persistent business records and durable action recovery at their gates. Shared Voice/Human integration must preserve template consent/session/page protocol behavior and provider failure evidence.",
+      "status": "partial",
+      "mappedRequirements": [
+        "CFG-03",
+        "UX-02",
+        "UX-03",
+        "OPS-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete retained-behavior consumer comparisons, supported compatibility replacements and shared presence/identity integrations without silently retiring legitimate paths."
+      ]
+    },
+    {
+      "id": "MASTER-MIG-03",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1917,
+      "kind": "retained_master_contract",
+      "requirement": "route one scoped consumer to the new contract and compare behavior before removing legacy paths. Record unsupported differences. No existing passing suite or legitimate behavior is removed merely to satisfy a new module architecture.",
+      "status": "partial",
+      "mappedRequirements": [
+        "CFG-03",
+        "UX-02",
+        "UX-03",
+        "OPS-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete retained-behavior consumer comparisons, supported compatibility replacements and shared presence/identity integrations without silently retiring legitimate paths."
+      ]
+    },
+    {
+      "id": "MASTER-OPS-01",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1925,
+      "kind": "retained_master_contract",
+      "requirement": "correlate tenant, initiating principal/service actor, request/turn, config/release profile, approval, action attempt, resource and authoritative outcome. Telemetry is metadata-first; provider payloads, credentials, tokens and unnecessary PII must not be logged.",
+      "status": "partial",
+      "mappedRequirements": [
+        "OPS-01",
+        "OPS-02",
+        "SEC-01",
+        "SEC-02",
+        "AGT-03",
+        "AGT-06"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete the selected-profile observability/alert/support ownership and operational recovery evidence, with correlation, restricted audit and metadata-only privacy; local tests do not establish hosted SLA."
+      ]
+    },
+    {
+      "id": "MASTER-OPS-02",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1927,
+      "kind": "retained_master_contract",
+      "requirement": "separate durable audit from sampled diagnostic traces. Record denials, approvals, changes and outcomes with restricted append/write access and tenant-scoped reads. This is not a guarantee of immutability against all privileged administrators.",
+      "status": "partial",
+      "mappedRequirements": [
+        "OPS-01",
+        "OPS-02",
+        "SEC-01",
+        "SEC-02",
+        "AGT-03",
+        "AGT-06"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete the selected-profile observability/alert/support ownership and operational recovery evidence, with correlation, restricted audit and metadata-only privacy; local tests do not establish hosted SLA."
+      ]
+    },
+    {
+      "id": "MASTER-OPS-03",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1929,
+      "kind": "retained_master_contract",
+      "requirement": "expose host/module/provider health and readiness, action/webhook/worker failures, unknown outcomes, latency, usage and cost anomalies. Configuration completeness is not provider readiness. Alert through a defined operator channel with an owner/runbook; no autonomous customer communication is implied.",
+      "status": "partial",
+      "mappedRequirements": [
+        "OPS-01",
+        "OPS-02",
+        "SEC-01",
+        "SEC-02",
+        "AGT-03",
+        "AGT-06"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete the selected-profile observability/alert/support ownership and operational recovery evidence, with correlation, restricted audit and metadata-only privacy; local tests do not establish hosted SLA."
+      ]
+    },
+    {
+      "id": "MASTER-OPS-04",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1931,
+      "kind": "retained_master_contract",
+      "requirement": "define support hours, severity/response policy, maintenance windows, upstream limitations and defect warranty versus paid maintenance for each release/contract. The \u00a729 mature uptime target is aspirational until observed; no unlimited support or unmeasured SLA is created by this revision.",
+      "status": "partial",
+      "mappedRequirements": [
+        "OPS-01",
+        "OPS-02",
+        "SEC-01",
+        "SEC-02",
+        "AGT-03",
+        "AGT-06"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Complete the selected-profile observability/alert/support ownership and operational recovery evidence, with correlation, restricted audit and metadata-only privacy; local tests do not establish hosted SLA."
+      ]
+    },
+    {
+      "id": "MASTER-VAL-01",
+      "source": "docs/archive/history/PRD.md",
+      "line": 1947,
+      "kind": "retained_master_contract",
+      "requirement": "report offline fixtures, mocked transports, local database evidence and live provider/deployment evidence separately. Passing a mocked test is not a claim of payment/email/CRM production success. New acceptance requires source and runnable evidence, not only this PRD.",
+      "status": "partial",
+      "mappedRequirements": [
+        "OPS-01",
+        "OPS-02",
+        "SEC-01",
+        "SEC-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "remaining": [
+        "Bind actual source/profile to independent functional, privacy/security, recovery/load and applicable provider/user outcomes; keep fixtures, local databases and live evidence distinct."
+      ]
+    }
+  ],
+  "chapterReview": [
+    {
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 22,
+      "heading": "1. Keputusan dan penjelasan untuk owner",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "CFG-03",
+        "UX-02",
+        "OPS-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 41,
+      "heading": "2. Tujuan, batas, dan ukuran selesai",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "AGT-01",
+        "CFG-03",
+        "UX-02",
+        "OPS-01",
+        "EXT-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 76,
+      "heading": "3. A \u2014 Current state dan kualitas evidence",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "DAT-01",
+        "SEC-01",
+        "OPS-01",
+        "CFG-03",
+        "EXT-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 144,
+      "heading": "4. B \u2014 Target state dan pengalaman pengguna",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "AGT-01",
+        "AGT-02",
+        "AGT-03",
+        "UX-02",
+        "UX-03",
+        "CFG-03"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 168,
+      "heading": "5. C \u2014 Gap analysis dan pilihan teknologi",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "UX-02",
+        "UX-03",
+        "SEC-01",
+        "OPS-01",
+        "OPS-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 224,
+      "heading": "6. D \u2014 Proposed architecture dan folder ownership",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "CFG-03",
+        "DAT-02",
+        "SEC-01",
+        "OPS-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 286,
+      "heading": "7. E \u2014 Module contract dan composition",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "CFG-01",
+        "CFG-02",
+        "CFG-03",
+        "OWN-01",
+        "OWN-03",
+        "OWN-06",
+        "OWN-08"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 334,
+      "heading": "8. F \u2014 Tenancy dan identity strategy",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "SEC-01",
+        "SEC-02",
+        "DAT-02",
+        "OPS-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 354,
+      "heading": "9. G \u2014 Configuration strategy dan kit library",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "CFG-01",
+        "CFG-02",
+        "CFG-03",
+        "OWN-01",
+        "OWN-02",
+        "OWN-03",
+        "OWN-04",
+        "OWN-05",
+        "OWN-06",
+        "OWN-07",
+        "OWN-08",
+        "SEC-02",
+        "EXT-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 378,
+      "heading": "10. H \u2014 Versioning dan distribution strategy",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "CFG-03",
+        "OPS-01",
+        "OPS-02",
+        "OWN-08",
+        "INT-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 401,
+      "heading": "11. I \u2014 Migration strategy dan data preservation",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "DAT-02",
+        "SEC-01",
+        "OPS-01",
+        "INT-02",
+        "AGT-03"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 435,
+      "heading": "12. J \u2014 Security model dan supply chain",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "SEC-01",
+        "SEC-02",
+        "AGT-02",
+        "AGT-06",
+        "INT-01",
+        "OPS-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 453,
+      "heading": "13. K \u2014 Tool/action permissions dan execution model",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "AGT-01",
+        "AGT-02",
+        "AGT-03",
+        "AGT-06",
+        "SEC-01",
+        "INT-01",
+        "DAT-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 494,
+      "heading": "14. L \u2014 Pricing engine architecture",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "DAT-02",
+        "CFG-03",
+        "OWN-04",
+        "OPS-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 506,
+      "heading": "15. M \u2014 CRM, organizations, project dan scope pipeline",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "DAT-01",
+        "DAT-02",
+        "CFG-03",
+        "UX-02",
+        "EXT-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 518,
+      "heading": "16. N \u2014 Delivery queue dan capacity estimation",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "DAT-01",
+        "DAT-02",
+        "EXT-01",
+        "AGT-04",
+        "CFG-03"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 528,
+      "heading": "17. O \u2014 Proposal \u2192 contract \u2192 payment flow",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "DAT-01",
+        "DAT-02",
+        "FIN-03",
+        "INT-01",
+        "EXT-01",
+        "AGT-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 542,
+      "heading": "18. Rust web UI, browser SDK dan realtime",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "UX-01",
+        "UX-02",
+        "UX-03",
+        "SEC-01",
+        "SEC-02",
+        "AGT-01",
+        "AGT-02",
+        "AGT-03",
+        "AGT-06",
+        "INT-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 582,
+      "heading": "19. P \u2014 Observability, backups dan incident operations",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "OPS-01",
+        "OPS-02",
+        "AGT-03",
+        "AGT-06",
+        "SEC-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 594,
+      "heading": "20. Q \u2014 Test strategy dan evidence contracts",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "DAT-02",
+        "SEC-01",
+        "SEC-02",
+        "OPS-01",
+        "OPS-02",
+        "CFG-03",
+        "UX-02",
+        "UX-03"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 639,
+      "heading": "21. Performance, build quality dan scalability evaluation",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "OPS-02",
+        "CFG-03",
+        "UX-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 662,
+      "heading": "22. R \u2014 Implementation roadmap dan sequencing",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "AGT-01",
+        "AGT-02",
+        "AGT-03",
+        "AGT-04",
+        "AGT-06",
+        "CFG-03",
+        "DAT-01",
+        "DAT-02",
+        "EXT-01",
+        "FIN-01",
+        "FIN-02",
+        "FIN-03",
+        "FIN-04",
+        "FIN-05",
+        "INT-01",
+        "INT-02",
+        "OPS-01",
+        "OPS-02",
+        "OWN-01",
+        "OWN-08",
+        "SEC-01",
+        "SEC-02",
+        "UX-01",
+        "UX-02",
+        "UX-03"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 717,
+      "heading": "23. Acceptance gates dan status reporting",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "AGT-01",
+        "AGT-02",
+        "AGT-03",
+        "AGT-04",
+        "AGT-06",
+        "CFG-03",
+        "DAT-01",
+        "DAT-02",
+        "EXT-01",
+        "FIN-01",
+        "FIN-02",
+        "FIN-03",
+        "FIN-04",
+        "FIN-05",
+        "INT-01",
+        "INT-02",
+        "OPS-01",
+        "OPS-02",
+        "OWN-01",
+        "OWN-08",
+        "SEC-01",
+        "SEC-02",
+        "UX-01",
+        "UX-02",
+        "UX-03"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 743,
+      "heading": "24. Risks, decisions dan change control",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "SEC-01",
+        "DAT-02",
+        "OPS-01",
+        "OPS-02",
+        "CFG-03"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 766,
+      "heading": "25. Handoff eksekusi untuk Archxy",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "DAT-01",
+        "CFG-03",
+        "OWN-01",
+        "OWN-02",
+        "OWN-03",
+        "OWN-04",
+        "OWN-05",
+        "OWN-06",
+        "OWN-07",
+        "OWN-08",
+        "OPS-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/PRD_FULL_RUST.md",
+      "line": 796,
+      "heading": "26. Traceability A\u2013R dan referensi",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "DAT-01",
+        "CFG-03",
+        "OPS-01",
+        "EXT-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_RUST_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 39,
+      "heading": "1. Executive summary",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "AGT-01",
+        "AGT-02",
+        "AGT-03",
+        "AGT-04",
+        "AGT-06",
+        "CFG-01",
+        "CFG-03",
+        "UX-02",
+        "UX-03",
+        "INT-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_FOUNDATION_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 77,
+      "heading": "2. Product thesis",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "AGT-01",
+        "AGT-02",
+        "AGT-03",
+        "AGT-04",
+        "AGT-06",
+        "UX-01",
+        "UX-02",
+        "UX-03",
+        "CFG-03",
+        "INT-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_FOUNDATION_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 124,
+      "heading": "3. Brand architecture",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "UX-01",
+        "UX-02",
+        "UX-03",
+        "AGT-01",
+        "CFG-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_FOUNDATION_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 144,
+      "heading": "4. Goals",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "AGT-01",
+        "AGT-02",
+        "AGT-03",
+        "AGT-04",
+        "AGT-05",
+        "AGT-06",
+        "CFG-01",
+        "CFG-03",
+        "UX-01",
+        "UX-02",
+        "UX-03",
+        "INT-01",
+        "OPS-01",
+        "OPS-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_FOUNDATION_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 183,
+      "heading": "5. Non-goals for the initial reusable release",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "FIN-06",
+        "SEC-01",
+        "SEC-02",
+        "CFG-03",
+        "EXT-01",
+        "OPS-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_FOUNDATION_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 201,
+      "heading": "6. Users and personas",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "OWN-01",
+        "OWN-02",
+        "OWN-03",
+        "OWN-04",
+        "OWN-05",
+        "OWN-06",
+        "OWN-07",
+        "OWN-08",
+        "UX-01",
+        "UX-02",
+        "UX-03",
+        "SEC-01",
+        "SEC-02",
+        "CFG-01",
+        "CFG-03",
+        "AGT-03",
+        "AGT-04",
+        "AGT-06",
+        "OPS-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_FOUNDATION_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 265,
+      "heading": "7. Commercial model",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "CFG-01",
+        "CFG-03",
+        "OWN-01",
+        "OWN-03",
+        "OWN-04",
+        "UX-03",
+        "AGT-06",
+        "INT-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_PRODUCT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 455,
+      "heading": "8. Regional pricebooks",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "CFG-01",
+        "OWN-03",
+        "OWN-04",
+        "DAT-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_PRODUCT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 557,
+      "heading": "9. Discounts, bundles, floors, and quote validity",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "OWN-03",
+        "OWN-04",
+        "OWN-05",
+        "CFG-01",
+        "DAT-02",
+        "SEC-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_PRODUCT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 613,
+      "heading": "10. Recommended client-facing bundles",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "CFG-01",
+        "CFG-03",
+        "OWN-02",
+        "OWN-03",
+        "OWN-04",
+        "UX-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_PRODUCT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 668,
+      "heading": "11. Deterministic pricing calculation",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "DAT-02",
+        "CFG-01",
+        "OWN-03",
+        "OWN-04",
+        "AGT-02",
+        "AGT-06"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_PRODUCT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 729,
+      "heading": "12. Example calculations",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "DAT-02",
+        "CFG-01",
+        "OWN-03",
+        "OWN-04"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_PRODUCT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 805,
+      "heading": "13. Template catalog",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "CFG-01",
+        "CFG-03",
+        "OWN-02",
+        "OWN-03",
+        "OWN-04",
+        "EXT-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_PRODUCT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 845,
+      "heading": "14. Archava Studio requirements",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "OWN-01",
+        "OWN-02",
+        "OWN-03",
+        "OWN-04",
+        "OWN-05",
+        "OWN-06",
+        "OWN-07",
+        "OWN-08",
+        "CFG-01",
+        "CFG-03",
+        "UX-01",
+        "SEC-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_PRODUCT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 913,
+      "heading": "15. Client Admin requirements",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "OWN-01",
+        "OWN-04",
+        "OWN-06",
+        "OWN-07",
+        "OWN-08",
+        "UX-01",
+        "UX-02",
+        "UX-03",
+        "SEC-01",
+        "SEC-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_PRODUCT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 941,
+      "heading": "16. Page awareness and Context Graph",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "AGT-01",
+        "AGT-04",
+        "UX-03",
+        "SEC-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_PRODUCT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 967,
+      "heading": "17. Knowledge architecture",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "AGT-04",
+        "AGT-06",
+        "INT-01",
+        "INT-02",
+        "SEC-01",
+        "SEC-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_PRODUCT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 1011,
+      "heading": "18. Action, capability, and permission model",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "AGT-02",
+        "AGT-03",
+        "SEC-01",
+        "INT-01",
+        "OWN-05",
+        "OWN-06"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_PRODUCT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 1039,
+      "heading": "19. Transaction lifecycle",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "DAT-01",
+        "DAT-02",
+        "FIN-03",
+        "FIN-04",
+        "AGT-02",
+        "AGT-03",
+        "INT-01",
+        "UX-03"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_PRODUCT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 1062,
+      "heading": "20. Durable workflows",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "AGT-03",
+        "AGT-05",
+        "AGT-06",
+        "INT-01",
+        "OPS-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_PRODUCT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 1084,
+      "heading": "21. Presence provider architecture",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "UX-03",
+        "AGT-06",
+        "INT-01",
+        "SEC-02",
+        "OPS-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_PRODUCT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 1116,
+      "heading": "22. Technical baseline and adoption rules",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "CFG-03",
+        "DAT-02",
+        "INT-01",
+        "OPS-01",
+        "EXT-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_PRODUCT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 1150,
+      "heading": "23. Multi-tenancy",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "SEC-01",
+        "SEC-02",
+        "DAT-01",
+        "CFG-03",
+        "INT-01",
+        "OPS-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_PRODUCT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 1173,
+      "heading": "24. Archava Web SDK",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "UX-01",
+        "UX-03",
+        "AGT-04",
+        "INT-01",
+        "SEC-02",
+        "CFG-03"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_PRODUCT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 1203,
+      "heading": "25. Generative UI",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "UX-02",
+        "UX-03",
+        "AGT-01",
+        "AGT-02",
+        "SEC-01",
+        "SEC-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_PRODUCT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 1222,
+      "heading": "26. Human handoff",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "UX-03",
+        "AGT-03",
+        "AGT-04",
+        "SEC-01",
+        "SEC-02",
+        "INT-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_PRODUCT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 1242,
+      "heading": "27. Analytics and outcomes",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "AGT-03",
+        "AGT-05",
+        "AGT-06",
+        "OWN-01",
+        "OWN-04",
+        "UX-01",
+        "OPS-02",
+        "SEC-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_PRODUCT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 1282,
+      "heading": "28. Security and privacy requirements",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "SEC-01",
+        "SEC-02",
+        "AGT-02",
+        "AGT-04",
+        "AGT-06",
+        "INT-01",
+        "OPS-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_PRODUCT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 1306,
+      "heading": "29. Reliability and performance targets",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "OPS-01",
+        "OPS-02",
+        "AGT-06",
+        "INT-01",
+        "UX-03"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_PRODUCT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 1332,
+      "heading": "30. Testing strategy",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "AGT-01",
+        "AGT-02",
+        "AGT-03",
+        "AGT-04",
+        "AGT-05",
+        "AGT-06",
+        "CFG-03",
+        "UX-02",
+        "UX-03",
+        "INT-01",
+        "INT-02",
+        "SEC-01",
+        "SEC-02",
+        "OPS-01",
+        "OPS-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_PRODUCT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 1382,
+      "heading": "31. Reference products",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "CFG-01",
+        "CFG-03",
+        "EXT-01",
+        "UX-01",
+        "UX-03",
+        "AGT-01",
+        "AGT-03"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_PRODUCT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 1395,
+      "heading": "32. Canonical showcase",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "AGT-01",
+        "AGT-02",
+        "AGT-03",
+        "AGT-04",
+        "UX-01",
+        "UX-02",
+        "UX-03",
+        "FIN-03",
+        "INT-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_PRODUCT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 1419,
+      "heading": "33. Build phases",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "CFG-03",
+        "UX-02",
+        "UX-03",
+        "INT-01",
+        "OPS-01",
+        "EXT-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_PRODUCT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 1433,
+      "heading": "34. Acceptance criteria for v1 commercial readiness",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "AGT-01",
+        "AGT-02",
+        "AGT-03",
+        "AGT-04",
+        "AGT-06",
+        "CFG-01",
+        "CFG-03",
+        "UX-01",
+        "UX-02",
+        "UX-03",
+        "INT-01",
+        "SEC-01",
+        "SEC-02",
+        "OPS-01",
+        "OPS-02",
+        "OWN-03",
+        "OWN-04"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_PRODUCT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 1456,
+      "heading": "35. Commercial and pricing review schedule",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "DAT-02",
+        "OWN-03",
+        "OWN-04",
+        "OWN-05",
+        "OWN-08",
+        "AGT-06",
+        "OPS-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_PRODUCT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 1473,
+      "heading": "36. Research basis and market anchors",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "CFG-01",
+        "OWN-03",
+        "OWN-04",
+        "INT-01",
+        "OPS-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_PRODUCT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 1483,
+      "heading": "37. Source-of-truth hierarchy",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "DAT-01",
+        "DAT-02",
+        "AGT-02",
+        "AGT-04",
+        "CFG-01",
+        "CFG-02",
+        "OWN-03",
+        "OWN-04",
+        "OWN-05",
+        "OWN-06",
+        "SEC-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_PRODUCT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 1502,
+      "heading": "38. Final product rule",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "CFG-01",
+        "CFG-03",
+        "OWN-02",
+        "OWN-03",
+        "OWN-04",
+        "OWN-06",
+        "EXT-01",
+        "UX-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_PRODUCT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 1510,
+      "heading": "39. Decision Intelligence \u2014 internal bounded judgment",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "AGT-01",
+        "AGT-04",
+        "AGT-06",
+        "SEC-01",
+        "SEC-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 1549,
+      "heading": "40. Company, product and internal library boundaries",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "CFG-03",
+        "UX-01",
+        "OPS-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 1576,
+      "heading": "41. Reuse layers and domain ownership",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "CFG-03",
+        "DAT-01",
+        "INT-01",
+        "SEC-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 1600,
+      "heading": "42. Module contract",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "CFG-01",
+        "CFG-02",
+        "CFG-03",
+        "OWN-01",
+        "OWN-03",
+        "OWN-06",
+        "OWN-08"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 1668,
+      "heading": "43. Client configuration and resolved plans",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "CFG-01",
+        "CFG-02",
+        "CFG-03",
+        "OWN-03",
+        "OWN-04",
+        "SEC-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 1690,
+      "heading": "44. Tenancy, identity and tool permissions",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "SEC-01",
+        "SEC-02",
+        "UX-03",
+        "AGT-02",
+        "AGT-03",
+        "DAT-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 1719,
+      "heading": "45. Versioning, migrations and recovery",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "OPS-01",
+        "CFG-03",
+        "INT-02",
+        "SEC-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 1735,
+      "heading": "46. CRM / ERP across business models",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "DAT-01",
+        "DAT-02",
+        "FIN-01",
+        "FIN-02",
+        "FIN-03",
+        "FIN-04",
+        "FIN-05",
+        "FIN-06",
+        "EXT-01",
+        "CFG-03"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 1905,
+      "heading": "47. Packaging and incremental migration",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "CFG-03",
+        "UX-03",
+        "OPS-01",
+        "SEC-02",
+        "UX-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 1921,
+      "heading": "48. Operational and verification requirements",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "OPS-01",
+        "OPS-02",
+        "SEC-01",
+        "SEC-02",
+        "AGT-03",
+        "AGT-06"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 1953,
+      "heading": "49. Priorities, milestone acceptance and rollout",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "CFG-03",
+        "AGT-01",
+        "EXT-01",
+        "OPS-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 1999,
+      "heading": "50. Current execution scope and definition of done",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "CFG-01",
+        "CFG-02",
+        "CFG-03",
+        "OWN-01",
+        "OWN-03",
+        "OWN-06",
+        "OWN-07",
+        "OWN-08",
+        "SEC-01",
+        "SEC-02",
+        "OPS-01",
+        "OPS-02",
+        "UX-02",
+        "UX-03"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/archive/history/PRD.md",
+      "line": 2179,
+      "heading": "51. Business-shaped CRM/ERP and owner self-service",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "OWN-01",
+        "OWN-02",
+        "OWN-03",
+        "OWN-04",
+        "OWN-05",
+        "OWN-06",
+        "OWN-07",
+        "OWN-08",
+        "CFG-01",
+        "CFG-02",
+        "CFG-03"
+      ],
+      "evidence": [
+        "docs/product/PRD_MASTER_CONTRACT_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/OWNER_CONFIGURATION_PRD.md",
+      "line": 15,
+      "heading": "1. Thesis produk",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "OWN-01",
+        "OWN-02",
+        "OWN-03",
+        "OWN-04",
+        "OWN-05",
+        "OWN-06",
+        "OWN-07",
+        "OWN-08",
+        "CFG-03"
+      ],
+      "evidence": [
+        "docs/product/PRD_OWNER_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/OWNER_CONFIGURATION_PRD.md",
+      "line": 38,
+      "heading": "2. Posisi dan batas janji",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "OWN-03",
+        "OWN-04",
+        "CFG-01",
+        "CFG-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_OWNER_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/OWNER_CONFIGURATION_PRD.md",
+      "line": 66,
+      "heading": "3. Contoh pengalaman owner",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "OWN-02",
+        "OWN-04",
+        "OWN-07",
+        "CFG-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_OWNER_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/OWNER_CONFIGURATION_PRD.md",
+      "line": 86,
+      "heading": "4. Alur yang wajib tersedia",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "OWN-01",
+        "OWN-02",
+        "OWN-03",
+        "OWN-04",
+        "OWN-05",
+        "OWN-06",
+        "OWN-07",
+        "OWN-08",
+        "AGT-02",
+        "AGT-03"
+      ],
+      "evidence": [
+        "docs/product/PRD_OWNER_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/OWNER_CONFIGURATION_PRD.md",
+      "line": 129,
+      "heading": "5. Apa yang dapat dikonfigurasi",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "OWN-03",
+        "OWN-07",
+        "SEC-01",
+        "SEC-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_OWNER_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/OWNER_CONFIGURATION_PRD.md",
+      "line": 149,
+      "heading": "6. Owner surface dan platform/internal Studio",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "OWN-01",
+        "OWN-05",
+        "SEC-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_OWNER_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/OWNER_CONFIGURATION_PRD.md",
+      "line": 165,
+      "heading": "7. Runtime configuration dan installation",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "OWN-06",
+        "OWN-07",
+        "OWN-08",
+        "OPS-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_OWNER_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/OWNER_CONFIGURATION_PRD.md",
+      "line": 183,
+      "heading": "8. Delivery scope dan hubungannya dengan migrasi Rust",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "CFG-03",
+        "OWN-01",
+        "OWN-02",
+        "OWN-03",
+        "OWN-04",
+        "OWN-05",
+        "OWN-06",
+        "OWN-07",
+        "OWN-08"
+      ],
+      "evidence": [
+        "docs/product/PRD_OWNER_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/OWNER_CONFIGURATION_PRD.md",
+      "line": 226,
+      "heading": "9. Acceptance proof OWN-V1",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "OWN-01",
+        "OWN-02",
+        "OWN-03",
+        "OWN-04",
+        "OWN-05",
+        "OWN-06",
+        "OWN-07",
+        "OWN-08",
+        "CFG-03",
+        "SEC-01",
+        "UX-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_OWNER_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/ERP_PARITY_ACCEPTANCE_2026-11-06.md",
+      "line": 11,
+      "heading": "1. Pilih scope yang dapat dibandingkan",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "DAT-01",
+        "FIN-01",
+        "FIN-06",
+        "CFG-03",
+        "SEC-01",
+        "OPS-01",
+        "OPS-02",
+        "UX-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_BENCHMARK_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/ERP_PARITY_ACCEPTANCE_2026-11-06.md",
+      "line": 35,
+      "heading": "2. Prioritas backlog dengan hasil yang bisa diperiksa",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "DAT-01",
+        "FIN-01",
+        "FIN-06",
+        "CFG-03",
+        "SEC-01",
+        "OPS-01",
+        "OPS-02",
+        "UX-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_BENCHMARK_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/ERP_PARITY_ACCEPTANCE_2026-11-06.md",
+      "line": 57,
+      "heading": "3. Benchmark B01 \u2014 transaksi sampai laporan keuangan",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "DAT-01",
+        "DAT-02",
+        "FIN-01",
+        "FIN-02",
+        "FIN-03",
+        "FIN-04",
+        "FIN-05",
+        "FIN-06"
+      ],
+      "evidence": [
+        "docs/product/PRD_BENCHMARK_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/ERP_PARITY_ACCEPTANCE_2026-11-06.md",
+      "line": 119,
+      "heading": "4. Benchmark B02 \u2014 multiwarehouse dan traceability",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "DAT-01",
+        "DAT-02",
+        "FIN-02",
+        "FIN-03",
+        "EXT-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_BENCHMARK_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/ERP_PARITY_ACCEPTANCE_2026-11-06.md",
+      "line": 141,
+      "heading": "5. Benchmark B03 \u2014 produksi yang terhubung dengan finansial",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "DAT-01",
+        "DAT-02",
+        "FIN-01",
+        "FIN-05",
+        "EXT-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_BENCHMARK_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/ERP_PARITY_ACCEPTANCE_2026-11-06.md",
+      "line": 165,
+      "heading": "6. Benchmark B04 \u2014 organisasi, currency dan penutupan grup",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "DAT-01",
+        "FIN-01",
+        "FIN-05",
+        "FIN-06",
+        "SEC-01",
+        "EXT-01"
+      ],
+      "evidence": [
+        "docs/product/PRD_BENCHMARK_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/ERP_PARITY_ACCEPTANCE_2026-11-06.md",
+      "line": 185,
+      "heading": "7. Benchmark B05 \u2014 tujuan bisnis dan agen AI",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "AGT-01",
+        "AGT-02",
+        "AGT-03",
+        "AGT-04",
+        "AGT-05",
+        "AGT-06",
+        "UX-01",
+        "OPS-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_BENCHMARK_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/ERP_PARITY_ACCEPTANCE_2026-11-06.md",
+      "line": 234,
+      "heading": "8. Benchmark B06 \u2014 IAM, integrasi dan pengoperasian",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "SEC-01",
+        "SEC-02",
+        "INT-01",
+        "INT-02",
+        "OPS-01",
+        "OWN-08"
+      ],
+      "evidence": [
+        "docs/product/PRD_BENCHMARK_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/ERP_PARITY_ACCEPTANCE_2026-11-06.md",
+      "line": 267,
+      "heading": "9. Benchmark B07 \u2014 performa, TCO dan pilot",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "OPS-02",
+        "UX-01",
+        "UX-02",
+        "AGT-05"
+      ],
+      "evidence": [
+        "docs/product/PRD_BENCHMARK_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    },
+    {
+      "source": "docs/product/ERP_PARITY_ACCEPTANCE_2026-11-06.md",
+      "line": 291,
+      "heading": "10. Artefak untuk keputusan berikutnya",
+      "classification": "requirements_mapped",
+      "mappedRequirements": [
+        "DAT-01",
+        "FIN-01",
+        "FIN-06",
+        "CFG-03",
+        "SEC-01",
+        "OPS-01",
+        "OPS-02",
+        "UX-02"
+      ],
+      "evidence": [
+        "docs/product/PRD_BENCHMARK_TRACEABILITY_REVIEW_2026-11-08.md"
+      ],
+      "reviewed": true
+    }
+  ],
+  "status": "requires_traceability",
+  "completionRule": "Every retained applicable criterion needs current proof. Explicit source supersession must cite the newer governing text; profile exclusions require the owner scope record. No entire milestone is accepted by a matching source filename."
+}

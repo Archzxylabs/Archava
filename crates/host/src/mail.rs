@@ -172,6 +172,11 @@ enum Failure {
     Gate(ErpGateError),
     Validation,
     Unconfigured,
+    Duplicate {
+        request_id: Uuid,
+        invoice_id: Uuid,
+        original_request_id: String,
+    },
     #[allow(dead_code)]
     Transport(TransportError),
 }
@@ -200,6 +205,24 @@ impl From<EmailValidationError> for Failure {
 impl IntoResponse for Failure {
     fn into_response(self) -> Response {
         let (status, reason) = match self {
+            Self::Gate(ErpGateError::Configuration(error)) => {
+                return error.response().into_response()
+            }
+            Self::Duplicate {
+                request_id,
+                invoice_id,
+                original_request_id,
+            } => {
+                return (
+                    StatusCode::CONFLICT,
+                    Json(json!({
+                        "status":"refused", "reason":"email_already_recorded",
+                        "requestId":request_id, "invoiceId":invoice_id,
+                        "duplicateOf":original_request_id,
+                        "message":"These invoice details already have an email transmission. Review its history before sending another message."
+                    })),
+                ).into_response();
+            }
             Self::Gate(ErpGateError::Authority(error)) => {
                 return crate::router::authority_refusal(&error).into_response();
             }
@@ -294,9 +317,16 @@ pub(crate) async fn send_invoice_email(
         let mut tx = begin_billing(&state, query.tenant.clone()).await?;
         let conn = tx.checked_executor().await?;
 
+        store::authorize_transmission(
+            conn,
+            query.tenant.as_str(),
+            &human(presented.principal_id.clone()),
+            invoice_id,
+        ).await?;
+
         // Idempotency fast path: if this request was already recorded, inspect its state
         let existing_outbox = sqlx::query(
-            "SELECT id, request_id, invoice_id, recipient, subject, payload_sha256, state, provider, provider_message_id, error_reason, \
+            "SELECT id, request_id, invoice_id, actor_id, recipient, subject, payload_sha256, state, provider, provider_message_id, error_reason, \
              (created_at >= clock_timestamp() - interval '24 hours') AS within_idempotency_window \
              FROM archava_billing.email_outbox \
              WHERE tenant_id = $1 AND request_id = $2",
@@ -307,7 +337,27 @@ pub(crate) async fn send_invoice_email(
         .await
         .map_err(|e| ErpGateError::Database("billing", e))?;
 
+        let existing_uncertain = existing_outbox.as_ref().and_then(|row| {
+            row.try_get::<String, _>("state")
+                .ok()
+                .and_then(|state| EmailState::parse(&state))
+        }).is_some_and(|state| matches!(state, EmailState::Invoking | EmailState::Unknown));
+        let existing_payload_sha256 = existing_outbox
+            .as_ref()
+            .and_then(|row| row.try_get::<String, _>("payload_sha256").ok());
+
         if let Some(row) = existing_outbox {
+            let recorded_actor: String = row.try_get("actor_id")
+                .map_err(|e| ErpGateError::Database("billing", e))?;
+            if recorded_actor != presented.principal_id {
+                return Err(Failure::Store(PurchaseError::Domain(ErpError::Forbidden)));
+            }
+            let existing_invoice_id: Uuid = row
+                .try_get("invoice_id")
+                .map_err(|e| ErpGateError::Database("billing", e))?;
+            if existing_invoice_id != invoice_id {
+                return Err(Failure::Store(PurchaseError::Domain(ErpError::Conflict)));
+            }
             let existing_recipient: String = row.try_get("recipient").unwrap_or_default();
             let existing_subject: String = row.try_get("subject").unwrap_or_default();
             if existing_recipient != recipient.as_str() || existing_subject != subject.as_str() {
@@ -344,8 +394,8 @@ pub(crate) async fn send_invoice_email(
         }
 
         let invoice_row = sqlx::query(
-            "SELECT invoice_code, customer_ref, currency, status, gross_minor, outstanding_minor \
-             FROM archava_billing.invoices WHERE tenant_id = $1 AND id = $2",
+            "SELECT invoice_code, customer_ref, currency, status, gross_minor, outstanding_minor, (to_jsonb(i)->>'company_name') AS company_name \
+             FROM archava_billing.invoices i WHERE tenant_id = $1 AND id = $2",
         )
         .bind(query.tenant.as_str())
         .bind(invoice_id)
@@ -374,6 +424,7 @@ pub(crate) async fn send_invoice_email(
         .await
         .map_err(|e| ErpGateError::Database("billing", e))?;
 
+        let company_issuer=invoice_row.as_ref().and_then(|row|row.try_get::<Option<String>,_>("company_name").ok().flatten());
         let (invoice_code, customer_ref, currency, outstanding_minor): (
             String,
             String,
@@ -391,68 +442,90 @@ pub(crate) async fn send_invoice_email(
             None => (invoice_id.to_string(), String::new(), "IDR".to_string(), 0),
         };
 
-        let raw_message = payload
-            .message
-            .as_deref()
-            .unwrap_or("Please review your invoice details below.");
-        let escaped_message = html_escape(raw_message);
-        let formatted_due = format_money(outstanding_minor, &currency);
+        let snapshot = if existing_uncertain {
+            Some(store::load_email_invocation(&mut *conn, query.tenant.as_str(), payload.request_id).await?)
+        } else {
+            None
+        };
 
-        let mut text_content = format!(
-            "Invoice: {}\nCustomer: {}\nTotal Due: {}\n\n{}\n",
-            invoice_code, customer_ref, formatted_due, raw_message
-        );
-        if !invoice_lines.is_empty() {
-            text_content.push_str("\nLine items:\n");
-            for line in &invoice_lines {
-                let desc: String = line.try_get("description").unwrap_or_default();
-                let qty: i32 = line.try_get("quantity").unwrap_or(1);
-                let total: i64 = line.try_get("line_total_minor").unwrap_or(0);
-                let formatted_line = format_money(total, &currency);
-                text_content.push_str(&format!("- {desc} (x{qty}): {formatted_line}\n"));
+        let (text_content, html_content, digest, from_address) = if let Some(snapshot) = snapshot {
+            (
+                snapshot.payload_text,
+                snapshot.payload_html,
+                existing_payload_sha256.ok_or(Failure::Validation)?,
+                snapshot.from_address,
+            )
+        } else {
+            let raw_message = payload
+                .message
+                .as_deref()
+                .unwrap_or("Please review your invoice details below.");
+            let escaped_message = html_escape(raw_message);
+            let formatted_due = format_money(outstanding_minor, &currency);
+
+            let mut text_content = format!(
+                "Invoice: {}\nCustomer: {}\nTotal Due: {}\n\n{}\n",
+                invoice_code, customer_ref, formatted_due, raw_message
+            );
+            if let Some(issuer)=&company_issuer{text_content=format!("Company: {issuer}\n{text_content}");}
+            if !invoice_lines.is_empty() {
+                text_content.push_str("\nLine items:\n");
+                for line in &invoice_lines {
+                    let desc: String = line.try_get("description").unwrap_or_default();
+                    let qty: i32 = line.try_get("quantity").unwrap_or(1);
+                    let total: i64 = line.try_get("line_total_minor").unwrap_or(0);
+                    let formatted_line = format_money(total, &currency);
+                    text_content.push_str(&format!("- {desc} (x{qty}): {formatted_line}\n"));
+                }
             }
-        }
-        if let Some(ref url) = payment_link {
-            text_content.push_str(&format!("\nPay online: {url}\n"));
-        }
+            if let Some(ref url) = payment_link {
+                text_content.push_str(&format!("\nPay online: {url}\n"));
+            }
 
-        let mut html_content = format!(
-            "<h2>Invoice {}</h2><p>Customer: <strong>{}</strong></p><p>Total Due: <strong>{}</strong></p><p>{}</p>",
-            html_escape(&invoice_code),
-            html_escape(&customer_ref),
-            html_escape(&formatted_due),
-            escaped_message
-        );
-        if !invoice_lines.is_empty() {
-            html_content.push_str("<h3>Line items</h3><ul>");
-            for line in &invoice_lines {
-                let desc: String = line.try_get("description").unwrap_or_default();
-                let qty: i32 = line.try_get("quantity").unwrap_or(1);
-                let total: i64 = line.try_get("line_total_minor").unwrap_or(0);
-                let formatted_line = format_money(total, &currency);
+            let mut html_content = format!(
+                "<h2>Invoice {}</h2><p>Customer: <strong>{}</strong></p><p>Total Due: <strong>{}</strong></p><p>{}</p>",
+                html_escape(&invoice_code),
+                html_escape(&customer_ref),
+                html_escape(&formatted_due),
+                escaped_message
+            );
+            if let Some(issuer)=&company_issuer{html_content=format!("<p>Company: <strong>{}</strong></p>{html_content}",html_escape(issuer));}
+            if !invoice_lines.is_empty() {
+                html_content.push_str("<h3>Line items</h3><ul>");
+                for line in &invoice_lines {
+                    let desc: String = line.try_get("description").unwrap_or_default();
+                    let qty: i32 = line.try_get("quantity").unwrap_or(1);
+                    let total: i64 = line.try_get("line_total_minor").unwrap_or(0);
+                    let formatted_line = format_money(total, &currency);
+                    html_content.push_str(&format!(
+                        "<li>{} (x{}) &mdash; {}</li>",
+                        html_escape(&desc),
+                        qty,
+                        html_escape(&formatted_line)
+                    ));
+                }
+                html_content.push_str("</ul>");
+            }
+            if let Some(ref url) = payment_link {
                 html_content.push_str(&format!(
-                    "<li>{} (x{}) &mdash; {}</li>",
-                    html_escape(&desc),
-                    qty,
-                    html_escape(&formatted_line)
+                    "<p><a href=\"{}\">Pay online</a></p>",
+                    html_escape(url)
                 ));
             }
-            html_content.push_str("</ul>");
-        }
-        if let Some(ref url) = payment_link {
-            html_content.push_str(&format!(
-                "<p><a href=\"{}\">Pay online</a></p>",
-                html_escape(url)
-            ));
-        }
 
-        let email_payload = EmailPayload::new(
-            recipient.clone(),
-            subject.clone(),
-            text_content.clone(),
-            Some(html_content.clone()),
-        )?;
-        let digest = email_payload.digest();
+            let email_payload = EmailPayload::new(
+                recipient.clone(),
+                subject.clone(),
+                text_content.clone(),
+                Some(html_content.clone()),
+            )?;
+            (
+                text_content,
+                Some(html_content),
+                email_payload.digest(),
+                integration.from_address.clone(),
+            )
+        };
 
         let (receipt, should_invoke) = store::prepare_email_transmission(
             conn,
@@ -464,11 +537,24 @@ pub(crate) async fn send_invoice_email(
                 recipient: &recipient,
                 subject: &subject,
                 payload_sha256: &digest,
+                payload_text: &text_content,
+                payload_html: html_content.as_deref(),
+                from_address: &from_address,
                 provider: "resend",
             },
         )
         .await?;
 
+        if receipt.request_id != payload.request_id.to_string() {
+            // A new key with identical content was deduplicated to an older
+            // intent. Refuse this new intent explicitly; it has no durable
+            // receipt of its own and must not leave an unresolvable UI marker.
+            return Err(Failure::Duplicate {
+                request_id: payload.request_id,
+                invoice_id,
+                original_request_id: receipt.request_id,
+            });
+        }
         tx.commit().await?;
 
         if !should_invoke {
@@ -479,11 +565,11 @@ pub(crate) async fn send_invoice_email(
             .client
             .send_email(
                 &payload.request_id.to_string(),
-                &integration.from_address,
+                &from_address,
                 recipient.as_str(),
                 subject.as_str(),
                 &text_content,
-                Some(&html_content),
+                html_content.as_deref(),
             )
             .await;
 
@@ -527,6 +613,17 @@ pub(crate) async fn send_invoice_email(
         };
 
         update_tx.commit().await?;
+
+        // Persist the trusted provider result even if grants changed while
+        // HTTP was in flight, then recheck access before disclosing it.
+        let mut read_tx = begin_billing(&state, query.tenant.clone()).await?;
+        store::authorize_transmission(
+            read_tx.checked_executor().await?,
+            query.tenant.as_str(),
+            &human(presented.principal_id),
+            invoice_id,
+        ).await?;
+        read_tx.rollback().await?;
 
         Ok::<_, Failure>(Json(final_receipt))
     }

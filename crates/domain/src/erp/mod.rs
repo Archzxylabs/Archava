@@ -19,11 +19,14 @@
 //! absorbed.
 
 // Core CRM Customer Relationship Management domain contracts (ADR-018).
+pub mod accounting;
 pub mod crm;
 
 pub mod foodservice;
 // R04 cohorts (PACKET-003).
+pub mod companies;
 pub mod organizations;
+pub mod parties;
 pub mod projects;
 pub mod proposals;
 // R05 cohorts (PACKET-004..006).
@@ -31,6 +34,7 @@ pub mod accommodation;
 pub mod assets;
 pub mod commerce;
 pub mod purchasing;
+pub mod purchasing_documents;
 pub mod scheduling;
 pub mod stock;
 

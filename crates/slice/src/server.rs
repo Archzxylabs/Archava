@@ -27,12 +27,13 @@ use crate::App;
 /// `Referrer-Policy` (audit H10). `default-src 'none'` would blank the shell,
 /// so the document policy that admits `/pkg` and the hydration bootstrap is
 /// used instead of the JSON one.
-fn with_security_headers<S>(router: Router<S>) -> Router<S>
+fn with_security_headers<S>(router: Router<S>, origins: Vec<String>) -> Router<S>
 where
     S: Clone + Send + Sync + 'static,
 {
-    router.layer(axum::middleware::from_fn(
-        archava_host::document_security_headers,
+    router.layer(axum::middleware::from_fn_with_state(
+        origins,
+        archava_host::presence_document_security_headers,
     ))
 }
 
@@ -81,19 +82,27 @@ pub fn build_app(state: AppState, site_addr: SocketAddr, pkg_dir: &Path) -> Rout
         )
         .leptos_routes(&options, routes, move || shell(shell_options.clone()));
 
-    with_security_headers(slice_router)
-        .with_state(options)
-        .merge(archava_host::router(state))
-        // One span per request, for the API and the document alike. Without a
-        // subscriber these events are discarded (which is why the launcher
-        // installs one), and with one the log line carries method, path,
-        // status and latency — the request-level evidence an operator needs
-        // when `/readyz` flips to 503.
-        .layer(
-            TraceLayer::new_for_http()
-                .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
-                .on_response(DefaultOnResponse::new().level(Level::INFO)),
-        )
+    with_security_headers(
+        slice_router,
+        state
+            .presence
+            .client
+            .as_ref()
+            .and_then(|c| c.livekit_origins())
+            .unwrap_or_default(),
+    )
+    .with_state(options)
+    .merge(archava_host::router(state))
+    // One span per request, for the API and the document alike. Without a
+    // subscriber these events are discarded (which is why the launcher
+    // installs one), and with one the log line carries method, path,
+    // status and latency — the request-level evidence an operator needs
+    // when `/readyz` flips to 503.
+    .layer(
+        TraceLayer::new_for_http()
+            .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
+            .on_response(DefaultOnResponse::new().level(Level::INFO)),
+    )
 }
 
 /// Resolve and validate the generated browser payload.
@@ -131,6 +140,8 @@ fn shell(options: LeptosOptions) -> impl leptos::IntoView {
                 <meta name="viewport" content="width=device-width, initial-scale=1" />
                 <title>"Archava | Business workspace"</title>
                 <link rel="stylesheet" href="/workspace.css" />
+                <script src="/v1/livekit-client.js" defer></script>
+                <script src="/v1/voice.js" defer></script>
                 <HydrationScripts options />
             </head>
             <body>
@@ -172,7 +183,10 @@ mod tests {
     /// pins that the layer reaches a route it did not originate from.
     #[tokio::test]
     async fn the_document_router_carries_the_shared_header_policy() {
-        let app = with_security_headers(Router::new().route("/app", get(|| async { "shell" })));
+        let app = with_security_headers(
+            Router::new().route("/app", get(|| async { "shell" })),
+            Vec::new(),
+        );
         let response = app
             .oneshot(
                 Request::builder()

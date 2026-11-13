@@ -1,5 +1,5 @@
 //! The purchasing routes — the Archxy 2 port of the R06 purchasing mutation
-//! surface against `archava_purchasing`, in the shape [`crate::crm`] pinned
+//! surface against `archava_purchasing`, in the shape [`crate::erp::crm`] pinned
 //! for this host: extraction → session → ONE tenant transaction whose member
 //! ladder, authorization, idempotency claim, effect and audit all run on the
 //! adapters' step functions.
@@ -141,6 +141,10 @@ fn map_purchase_result(error: PurchaseError) -> Result<(StatusCode, ErpBody), Er
 
 fn gate_outcome(error: ErpGateError) -> (StatusCode, ErpBody) {
     match error {
+        ErpGateError::Configuration(error) => {
+            let (status, body) = error.response();
+            (status, ErpBody::Doc(body.0))
+        }
         ErpGateError::Authority(refusal) => outcome(authority_refusal(&refusal)),
         ErpGateError::Database(ledger, source) => {
             tracing::error!(error = %source, "refusing: {ledger} database failure");
@@ -302,7 +306,26 @@ pub async fn submit_purchase_command(
     let fingerprint = fingerprint(state, &submission.tenant, &principal, &mutation);
 
     let mut transaction = begin(state, submission.tenant.clone()).await?;
+    if matches!(
+        mutation.command,
+        archava_domain::erp::purchasing::PurchaseCommand::SupplierCreateFromContact { .. }
+            | archava_domain::erp::purchasing::PurchaseCommand::SupplierRefreshContact { .. }
+    ) {
+        crate::own::require_erp_module(&mut transaction, "crm-contacts")
+            .await
+            .map_err(ErpGateError::Configuration)?;
+    }
 
+    if matches!(
+        mutation.command,
+        archava_domain::erp::purchasing::PurchaseCommand::OrderCreateForCompany { .. }
+            | archava_domain::erp::purchasing::PurchaseCommand::SupplierCreateFromParty { .. }
+            | archava_domain::erp::purchasing::PurchaseCommand::SupplierRefreshParty { .. }
+    ) {
+        crate::own::require_erp_module(&mut transaction, "organizations")
+            .await
+            .map_err(ErpGateError::Configuration)?;
+    }
     // 1. The member ladder — BOTH ledgers, the service narrow, the
     //    commerce-narrows-purchasing rule, the catalog.read floor.
     let context = {

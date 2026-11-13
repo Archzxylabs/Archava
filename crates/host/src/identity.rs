@@ -258,6 +258,7 @@ impl std::fmt::Debug for Identity {
 #[derive(Debug)]
 pub(crate) struct AuthenticatedSession {
     pub(crate) principal_id: String,
+    pub(crate) session_hash: String,
 }
 
 impl Identity {
@@ -496,6 +497,19 @@ impl Identity {
         .await?;
         Ok(row.map(|row| AuthenticatedSession {
             principal_id: row.get::<String, _>("user_id"),
+            session_hash: digest.clone(),
+        }))
+    }
+
+    /// Internal worker lookup. Does not refresh idle time or mint a bearer token.
+    pub(crate) async fn active_session_hash(
+        &self,
+        hash: &str,
+    ) -> Result<Option<AuthenticatedSession>, IdentityError> {
+        let row=sqlx::query("SELECT s.user_id FROM archava_identity.sessions s JOIN archava_identity.users u ON u.id=s.user_id WHERE s.token_hash=$1 AND u.active AND u.version=s.user_version AND s.expires_at>now() AND s.last_seen_at>now()-interval '30 minutes'").bind(hash).fetch_optional(&self.pool).await?;
+        Ok(row.map(|r| AuthenticatedSession {
+            principal_id: r.get("user_id"),
+            session_hash: hash.into(),
         }))
     }
 

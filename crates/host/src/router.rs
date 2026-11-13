@@ -17,7 +17,7 @@
 //! | `/erp/*/commands`, `/erp/*/*` reads | session + CSRF, then the ledger's own grant and RLS |
 //! | `/api/v1/cockpit/*`, `/api/v1/orbz/*` | session + CSRF; mission/memory scope from the session |
 //! | `/api/v1/presets/*`, `/api/v1/feed/*` | session (mutations also CSRF); the feed is synthesized demo data |
-//! | `/api/preview/generate`, `/api/migration/*` | session + CSRF; `/api/migration/commit` answers 501 |
+//! | `/api/preview/generate`, `/api/migration/*` | session + CSRF; server-bound review and atomic import commit |
 //! | `/api/webhooks/privy` | provider shared secret, timing-safe |
 //! | `/api/webhooks/payment/*` | provider signature before any transaction |
 //! | `/embed/checkout` | HMAC signature over the rendered values, minted by `POST /embed/checkout/sign` behind session + CSRF |
@@ -160,6 +160,8 @@ pub struct AppState {
     /// The credential `/metrics` requires from a non-loopback peer. `None`
     /// means only a loopback peer may scrape it.
     metrics_token: Option<Arc<str>>,
+    trusted_proxies: crate::security::TrustedProxies,
+    agent_config: Arc<crate::agent::AgentConfig>,
 }
 
 #[derive(Debug)]
@@ -214,6 +216,13 @@ impl AppState {
             expected_migrations,
         )
         .await?;
+        if ledger.namespace == "archava_commerce"
+            && expected_migrations
+                .iter()
+                .any(|(id, _)| id == "010_return_layer_provenance")
+        {
+            crate::erp::commerce::assert_return_provenance_readiness(&pool).await?;
+        }
         let identity =
             Identity::open(pool.clone(), identity_key, expected_identity_migrations).await?;
         archava_adapters::writer::assert_ready(&pool).await?;
@@ -223,6 +232,8 @@ impl AppState {
             presence: Arc::new(crate::presence::PresenceRegistry::default()),
             embed_frame_ancestors: Arc::new(Vec::new()),
             metrics_token: None,
+            trusted_proxies: crate::security::TrustedProxies::default(),
+            agent_config: Arc::new(crate::agent::AgentConfig::default()),
             inner: Arc::new(AppStateInner {
                 pool,
                 ledger,
@@ -240,6 +251,14 @@ impl AppState {
     /// field directly.
     pub(crate) fn pool(&self) -> &PgPool {
         &self.inner.pool
+    }
+
+    pub fn with_agent_config(mut self, config: crate::agent::AgentConfig) -> Self {
+        self.agent_config = Arc::new(config);
+        self
+    }
+    pub(crate) fn agent_config(&self) -> &crate::agent::AgentConfig {
+        &self.agent_config
     }
 
     pub fn with_payment_registry(mut self, registry: crate::payments::PaymentRegistry) -> Self {
@@ -279,7 +298,7 @@ impl AppState {
     /// checksum-exact migrations (`archava_crm`), so a host that serves the
     /// slice refuses to build any state at all unless BOTH ledgers pass: this
     /// method is [`AppState::try_new`] followed by the same startup assertion
-    /// for [`crate::crm::CRM_LEDGER`]. The per-transaction non-owner check
+    /// for [`crate::erp::crm::CRM_LEDGER`]. The per-transaction non-owner check
     /// (inside [`TenantTransaction::begin`]) still applies on every CRM
     /// request on top of this gate.
     pub async fn try_new_crm(
@@ -300,9 +319,9 @@ impl AppState {
         .await?;
         assert_startup_readiness(
             state.pool(),
-            crate::crm::CRM_LEDGER.namespace,
-            crate::crm::CRM_LEDGER.ledger,
-            crate::crm::CRM_LEDGER.tables,
+            crate::erp::crm::CRM_LEDGER.namespace,
+            crate::erp::crm::CRM_LEDGER.ledger,
+            crate::erp::crm::CRM_LEDGER.tables,
             expected_crm_migrations,
         )
         .await?;
@@ -339,6 +358,7 @@ impl AppState {
             expected_owner_migrations,
         )
         .await?;
+        crate::own::assert_disclosure_readiness(state.pool()).await?;
         Ok(state)
     }
 
@@ -385,6 +405,7 @@ impl AppState {
             let ledger = match *namespace {
                 "archava_foodservice" => crate::erp::FOODSERVICE_LEDGER,
                 "archava_organizations" => crate::erp::ORGANIZATIONS_LEDGER,
+                "archava_accounting" => crate::erp::ACCOUNTING_LEDGER,
                 "archava_proposals" => crate::erp::PROPOSALS_LEDGER,
                 "archava_projects" => crate::erp::PROJECTS_LEDGER,
                 "archava_scheduling" => crate::erp::SCHEDULING_LEDGER,
@@ -410,6 +431,9 @@ impl AppState {
                 expected_migrations,
             )
             .await?;
+            if *namespace == "archava_accounting" {
+                crate::erp::accounting::assert_control_readiness(self.pool()).await?;
+            }
         }
         Ok(())
     }
@@ -458,6 +482,8 @@ impl AppState {
             presence: Arc::new(crate::presence::PresenceRegistry::default()),
             embed_frame_ancestors: Arc::new(Vec::new()),
             metrics_token: None,
+            trusted_proxies: crate::security::TrustedProxies::default(),
+            agent_config: Arc::new(crate::agent::AgentConfig::default()),
             inner: Arc::new(AppStateInner {
                 pool,
                 ledger,
@@ -518,6 +544,15 @@ impl AppState {
 
     pub(crate) fn metrics_token(&self) -> Option<&str> {
         self.metrics_token.as_deref()
+    }
+
+    pub fn with_trusted_proxies(mut self, proxies: crate::security::TrustedProxies) -> Self {
+        self.trusted_proxies = proxies;
+        self
+    }
+
+    pub(crate) fn trusted_proxies(&self) -> &crate::security::TrustedProxies {
+        &self.trusted_proxies
     }
 }
 
@@ -885,6 +920,9 @@ pub(crate) async fn authenticate(
     headers: &HeaderMap,
     csrf_required: bool,
 ) -> Result<AuthenticatedSession, (StatusCode, Json<CommandOutcome>)> {
+    if let Some(result) = crate::agent::delegation::authenticate(state).await {
+        return result.map_err(|_| unauthenticated());
+    }
     let Some(token) = session_token(headers) else {
         return Err(unauthenticated());
     };
@@ -938,7 +976,7 @@ pub(crate) async fn require_session(
 }
 
 // The contact-list placeholder was removed when the §1.4B slice landed the
-// real, session-scoped contact read: `crate::crm::contacts` serves `GET
+// real, session-scoped contact read: `crate::erp::crm::contacts` serves `GET
 // /contacts` now. (The refusal it used to carry assumed a caller-less read
 // was possible at all; the real read is session-scoped, so the note that
 // explained the reservation stays here in the router where the route lives.)
@@ -1394,7 +1432,8 @@ mod tests {
         assert!(body.contains("Archava Checkout - ord_test_99"));
         assert!(body.contains("tenant_acme"));
         assert!(body.contains("150000"));
-        assert!(body.contains("ARCHAVA_PAYMENT_SIMULATED"));
+        assert!(body.contains("Payment provider unavailable"));
+        assert!(!body.contains("ARCHAVA_PAYMENT_SIMULATED"));
     }
 
     /// The signature is minted only for a session holding the CSRF header.

@@ -723,7 +723,7 @@ WHERE tenant_id=$1 AND ($2::boolean OR owner_id=$3 OR assignee_id=$3) \
 AND ($4::uuid IS NULL OR id>$4) AND ($5::text IS NULL OR state=$5) \
 AND ($6::text IS NULL OR priority=$6) \
 AND ($7::boolean IS NULL OR (state IN ('open','in_progress','waiting') AND due_at IS NOT NULL \
-AND due_at<=$8::timestamptz)=$7) ORDER BY id LIMIT $9"
+AND due_at<=$8::timestamptz)=$7) AND ($10='' OR strpos(lower(requester_name||' '||subject||' '||description),lower($10))>0) ORDER BY id LIMIT $9"
     )))
     .bind(tenant)
     .bind(access.sees_all())
@@ -734,6 +734,7 @@ AND due_at<=$8::timestamptz)=$7) ORDER BY id LIMIT $9"
     .bind(query.overdue)
     .bind(&observed)
     .bind(query.limit + 1)
+    .bind(query.search)
     .fetch_all(&mut *connection)
     .await
     .map_err(database)?;

@@ -1,0 +1,77 @@
+/** Reviewed party master and role/version lifecycle, with independent SQL. */
+import assert from 'node:assert/strict'
+import {randomUUID} from 'node:crypto'
+import {spawnSync} from 'node:child_process'
+export async function verifyParties({page,origin,facts,until,pass,suffix}){
+ assert.equal(new URL(origin).hostname,'127.0.0.1');assert.match(suffix,/^[0-9a-f]{8}$/);assert.ok(Number.isInteger(facts.port)&&facts.port>1023&&facts.port<65536)
+ const t=id=>`[data-testid="${id}"]`,contact='ffffffff-ffff-4fff-8fff-000000000117',organization='eeeeeeee-eeee-4eee-8eee-000000000101'
+ const name=`Customer identity ${suffix}`,reviewed=`Reviewed party ${suffix}`,interim=`Interim party ${suffix}`,finalName=`Final party ${suffix}`,orgFinal=`Final organization party ${suffix}`
+ const sql=input=>{const r=spawnSync('psql',['-X','-qAt','-v','ON_ERROR_STOP=1','-h','127.0.0.1','-p',String(facts.port),'-U','postgres','-d','archava_test'],{env:{...process.env,PGPASSWORD:'archava'},input,encoding:'utf8',timeout:30000});assert.equal(r.status,0,r.stderr);return r.stdout.trim().split('\n').at(-1)}
+ // Explicit party grants for the owned synthetic actor; no user database is used.
+ sql("SET archava.tenant_id='acme-retail';UPDATE archava_organizations.memberships SET permissions=ARRAY['organizations.read','organizations.write','affiliations.read','affiliations.write','parties.read','parties.write','audit.read'] WHERE tenant_id='acme-retail' AND principal_id='alice';")
+ const post=(path,body)=>page.evaluate(`fetch(${JSON.stringify(path)},{method:'POST',headers:{'content-type':'application/json','x-archava-csrf':localStorage.getItem('archava_csrf')||''},body:${JSON.stringify(JSON.stringify(body))}}).then(async r=>({status:r.status,body:await r.json()}))`)
+ const send=(type,data)=>post('/erp/organizations/commands',{tenant:'acme-retail',mutation:{requestId:randomUUID(),type,data}})
+ const view=()=>page.evaluate("fetch('/erp/organizations/workspace?tenant=acme-retail&collection=parties&limit=100').then(r=>r.json())")
+ const select=(id,value)=>page.evaluate(`(()=>{const n=document.querySelector(${JSON.stringify(t(id))});n.value=${JSON.stringify(value)};n.dispatchEvent(new Event('change',{bubbles:true}));})()`)
+ const rename=async(revision,fullName)=>{const r=await post('/crm/commands',{tenant:'acme-retail',requestId:randomUUID(),command:{operation:'contact.update',id:contact,expectedRevision:revision,data:{fullName}}});assert.equal(r.status,200,JSON.stringify(r.body))}
+ const screenshot=async(name,id)=>{await page.evaluate(`document.querySelector(${JSON.stringify(t(id))}).scrollIntoView({block:'center',behavior:'instant'})`);await page.evaluate('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');await page.screenshot(name)}
+ await page.navigate(`${origin}/app/erp?module=organizations`)
+ await until(()=>page.evaluate(`!!document.querySelector('${t('party-save')}')&&!document.querySelector('${t('party-contact-find')}').disabled`),'party source picker ready')
+ await page.evaluate(`document.querySelector('${t('party-save')}').closest('details').open=true`)
+ await page.fill(t('party-contact-search'),name);await page.click(t('party-contact-find'))
+ await until(()=>page.evaluate(`!document.querySelector('${t('party-contact-next')}').disabled&&!document.querySelector('${t('party-contact-find')}').disabled`),'party contacts first page')
+ await page.click(t('party-contact-next'))
+ await until(()=>page.evaluate(`!!document.querySelector('${t('party-contact-select')}').querySelector('option[value="${contact}"]')`),'party contact page two')
+ await select('party-contact-select',contact);await page.click(t('party-supplier'))
+ assert.match(await page.text(t('party-contact-selected')),/identity-117@archava.test/)
+ await page.evaluate(`document.querySelector('${t('party-contact-search')}').focus()`)
+ await page.send('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,nativeVirtualKeyCode:13,text:'\r',unmodifiedText:'\r'})
+ await page.send('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,nativeVirtualKeyCode:13})
+ await until(()=>page.evaluate(`!document.querySelector('${t('party-contact-find')}').disabled&&document.querySelector('${t('party-contact-select')}').value==='${contact}'`),'party keyboard search keeps identity')
+ assert.equal((await view()).parties.length,0)
+ pass('PARTY-reviewed-source-and-keyboard','Page-two CRM source is selected by UUID; Enter searches without registering a prepared party')
+ await rename(1,reviewed)
+ await page.evaluate(`(()=>{const original=window.fetch;window.__partyRequests=[];window.fetch=async function(input,init){const request=input instanceof Request?input:new Request(input,init);let entry;if(request.method==='POST'&&new URL(request.url).pathname==='/erp/organizations/commands'){entry={body:await request.clone().json()};window.__partyRequests.push(entry);}const response=await original.call(window,input,init);if(entry)entry.status=response.status;return response;};})()`)
+ await page.click(t('party-save'));await until(()=>page.evaluate('window.__partyRequests.at(-1)?.status===409'),'stale party registration refused');assert.equal((await view()).parties.length,0)
+ await page.click(t('party-contact-refresh'));await until(()=>page.text(t('party-contact-selected')).then(t=>t.includes(reviewed)),'party source refreshed');await page.click(t('party-save'))
+ await until(async()=> (await view()).parties.some(p=>p.sourceContactId===contact),'contact party registered')
+ const party=(await view()).parties.find(p=>p.sourceContactId===contact);assert.equal(party.name,reviewed);assert.equal(party.sourceRevision,2);assert.equal(party.customer,true);assert.equal(party.supplier,true)
+ const original=await page.evaluate("window.__partyRequests.find(r=>r.body.mutation.type==='party.create_from_contact'&&r.status===200).body")
+ pass('PARTY-registration-stale-recovery','Stale source refuses with no master write; an explicit refresh creates one party with both business roles')
+ await page.evaluate(`document.querySelector('${t('party-save')}').closest('details').open=false;document.querySelector('${t('party-profile')}').closest('details').open=true`)
+ await until(()=>page.evaluate(`!!document.querySelector('${t('party-profile')}').querySelector('option[value="${party.id}"]')`),'party in profile selector');await select('party-profile',party.id)
+ await until(()=>page.text(t('party-profile-current')).then(t=>t.includes(reviewed)),'party profile current')
+ await rename(2,interim);await page.click(t('party-source-load'));await until(()=>page.text(t('party-source-preview')).then(t=>t.includes(interim)),'party refresh preview')
+ await rename(3,finalName);await page.fill(t('party-profile-reason'),'Reviewed current source')
+ let count=await page.evaluate('window.__partyRequests.length');await page.click(t('party-source-save'));await until(()=>page.evaluate(`window.__partyRequests.length>${count}&&window.__partyRequests.at(-1)?.status===409`),'stale party refresh refused')
+ assert.equal((await view()).parties.find(p=>p.id===party.id).name,reviewed)
+ await page.click(t('party-source-load'));await until(()=>page.text(t('party-source-preview')).then(t=>t.includes(finalName)),'new party source reviewed')
+ await screenshot('party-source-review.png','party-source-preview');await page.click(t('party-source-save'))
+ await until(()=>page.text(t('party-profile-current')).then(t=>t.includes(finalName)),'party source refresh committed')
+ assert.equal((await view()).parties.find(p=>p.id===party.id).revision,2)
+ const replay=await post('/erp/organizations/commands',original);assert.equal(replay.status,200,JSON.stringify(replay.body));assert.equal(replay.body.receipt.partyId,party.id)
+ pass('PARTY-reviewed-refresh-and-history','A stale refresh refuses; applying a fresh review updates the master and keeps original registration replay stable')
+ for(const [id,revision] of [['party-profile-customer',3],['party-profile-supplier',4]]){await page.click(t(id));await page.fill(t('party-profile-reason'),'Reviewed role change');await page.click(t('party-roles-save'));await until(async()=> (await view()).parties.find(p=>p.id===party.id)?.revision===revision,'party role change');await until(()=>page.text(t('party-profile-current')).then(t=>t.includes(`party revision ${revision}`)),'party role projection refreshed')}
+ let current=(await view()).parties.find(p=>p.id===party.id);assert.equal(current.customer,false);assert.equal(current.supplier,false)
+ await page.click(t('party-profile-customer'));await page.click(t('party-profile-supplier'));await page.fill(t('party-profile-reason'),'Reactivate reviewed business roles');await page.click(t('party-roles-save'));await until(async()=> (await view()).parties.find(p=>p.id===party.id)?.revision===5,'party roles restored')
+ await screenshot('party-role-lifecycle.png','party-profile-current')
+ pass('PARTY-role-lifecycle-stable-id','Customer and supplier roles change independently, including both inactive and reactivation, while retaining the same party ID')
+ await page.evaluate(`document.querySelector('${t('party-save')}').closest('details').open=true`);await page.click(t('party-organization-source'))
+ await until(()=>page.evaluate(`!!document.querySelector('${t('party-org-find')}')&&!document.querySelector('${t('party-org-find')}').disabled`),'organization party source ready')
+ await page.fill(t('party-org-search'),`Organization identity ${suffix}`);await page.click(t('party-org-find'));await until(()=>page.evaluate(`!document.querySelector('${t('party-org-next')}').disabled`),'organization party page one');await page.click(t('party-org-next'));await until(()=>page.evaluate(`!!document.querySelector('${t('party-org-select')}').querySelector('option[value="${organization}"]')`),'organization party page two');await select('party-org-select',organization)
+ const changed=await send('update_organization',{id:organization,revision:1,name:finalName});assert.equal(changed.status,200,JSON.stringify(changed.body));await page.click(t('party-org-refresh'));await until(()=>page.text(t('party-org-selected')).then(t=>t.includes(finalName)),'organization party source reviewed');await page.click(t('party-save'))
+ await until(async()=> (await view()).parties.some(p=>p.sourceOrganizationId===organization),'organization party registered')
+ const orgParty=(await view()).parties.find(p=>p.sourceOrganizationId===organization);assert.equal(orgParty.name,finalName);assert.notEqual(orgParty.id,party.id);assert.equal(orgParty.sourceContactId,null)
+ const orgOriginal=await page.evaluate("window.__partyRequests.find(r=>r.body.mutation.type==='party.create_from_organization'&&r.status===200).body")
+ pass('PARTY-distinct-source-identities','An organization and CRM contact with the same display name remain separate typed sources and distinct party IDs')
+ const updated=await send('update_organization',{id:organization,revision:2,name:orgFinal});assert.equal(updated.status,200,JSON.stringify(updated.body))
+ await until(()=>page.evaluate(`!!document.querySelector('${t('party-profile')}').querySelector('option[value="${orgParty.id}"]')`),'organization party profile option');await select('party-profile',orgParty.id);await until(()=>page.text(t('party-profile-current')).then(t=>t.includes('party revision 1')),'organization party selected');await page.click(t('party-source-load'));await until(()=>page.text(t('party-source-preview')).then(t=>t.includes(orgFinal)),'organization source revision reviewed');await page.fill(t('party-profile-reason'),'Reviewed organization master');await page.click(t('party-source-save'));await until(async()=> (await view()).parties.find(p=>p.id===orgParty.id)?.revision===2,'organization party refreshed')
+ const orgReplay=await post('/erp/organizations/commands',orgOriginal);assert.equal(orgReplay.status,200,JSON.stringify(orgReplay.body));assert.equal(orgReplay.body.receipt.partyId,orgParty.id)
+ const cross=await post('/erp/organizations/commands',{tenant:'acme-retail',mutation:{requestId:original.mutation.requestId,type:'create_organization',data:{name:'Must conflict'}}});assert.equal(cross.status,409)
+ const status=await page.evaluate(`fetch('/erp/organizations/commands/status?tenant=acme-retail&requestId=${original.mutation.requestId}').then(r=>r.json())`);assert.equal(status.receipt.partyId,party.id)
+ pass('PARTY-organization-refresh-and-request-namespace','Organization source refresh preserves identity/history; replay and status recover exact parties and cross-operation request reuse conflicts')
+ const proof=JSON.parse(sql(`SET archava.tenant_id='acme-retail';SELECT json_build_object('parties',(SELECT count(*) FROM archava_organizations.parties WHERE tenant_id='acme-retail'),'contactPartyRevision',p.revision,'contactSourceRevision',p.source_revision,'contactName',p.name,'contactCustomer',p.customer,'contactSupplier',p.supplier,'organizationPartyRevision',o.revision,'organizationSourceRevision',o.source_revision,'organizationName',o.name,'distinctIdentities',p.id<>o.id AND p.source_contact_id IS NOT NULL AND o.source_organization_id IS NOT NULL,'contactHistory',(SELECT json_agg(snapshot->>'name' ORDER BY revision) FROM archava_organizations.party_audit WHERE tenant_id=p.tenant_id AND party_id=p.id),'audits',(SELECT count(*) FROM archava_organizations.party_audit WHERE tenant_id='acme-retail')) FROM archava_organizations.parties p CROSS JOIN archava_organizations.parties o WHERE p.tenant_id='acme-retail' AND o.tenant_id=p.tenant_id AND p.id='${party.id}' AND o.id='${orgParty.id}';`))
+ assert.deepEqual(proof,{parties:2,contactPartyRevision:5,contactSourceRevision:4,contactName:finalName,contactCustomer:true,contactSupplier:true,organizationPartyRevision:2,organizationSourceRevision:3,organizationName:orgFinal,distinctIdentities:true,contactHistory:[reviewed,finalName,finalName,finalName,finalName],audits:7})
+ await screenshot('party-master-final.png','party-profile-current');pass('PARTY-independent-SQL',proof)
+ return{party:party.id,organizationParty:orgParty.id,contact,organization,proof}
+}

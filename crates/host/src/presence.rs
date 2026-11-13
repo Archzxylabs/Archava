@@ -3,6 +3,7 @@
 //! Provides authenticated presence session establishment, LiveKit WebRTC token
 //! minting, sequential transcript turns, and degradation to Chat fallback.
 
+pub mod media;
 use crate::{
     authority::MembershipKind,
     router::{authenticate, AppState},
@@ -57,15 +58,19 @@ impl PresenceRegistry {
             (Ok(url), Ok(key), Ok(secret))
                 if !url.is_empty() && !key.is_empty() && !secret.is_empty() =>
             {
-                Self::new(VoiceClient::new(
-                    archava_providers::voice::VoiceBridgeConfig {
-                        livekit_url: url,
-                        api_key: key,
-                        api_secret: secret.into_bytes(),
-                        request_timeout: std::time::Duration::from_secs(5),
-                        loopback_mode: false,
+                let client = VoiceClient::new(archava_providers::voice::VoiceBridgeConfig {
+                    livekit_url: url,
+                    api_key: key,
+                    api_secret: secret.into_bytes(),
+                    request_timeout: std::time::Duration::from_secs(5),
+                    loopback_mode: false,
+                });
+                Self::new(
+                    match archava_providers::voice::live::LiveConfig::from_env() {
+                        Some(config) => client.with_live(config),
+                        None => client,
                     },
-                ))
+                )
             }
             _ => Self::default(),
         }
@@ -237,6 +242,16 @@ pub async fn start_presence_session(
         Ok(c) => c,
         Err(r) => return *r,
     };
+    if !voice_client.transport_available() {
+        return (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(json!({
+                "error": "presence_transport_unavailable",
+                "message": "Live media/transcript bridge is not mounted on this deployment"
+            })),
+        )
+            .into_response();
+    }
     match voice_client.start_session(
         &tenant_id,
         &session_id,
@@ -248,7 +263,10 @@ pub async fn start_presence_session(
             StatusCode::CREATED,
             Json(json!({
                 "session": pres_session,
-                "token": token
+                "token": token,
+                "livekit_url":voice_client.livekit_url(),
+                "stream_path":format!("/presence/sessions/{session_id}/stream"),
+                "media_transport":if voice_client.live_config().is_some(){"gemini_live_pcm"}else{"loopback"}
             })),
         )
             .into_response(),
@@ -408,6 +426,14 @@ pub async fn process_presence_turn(
         Err(VoiceProviderError::Presence(PresenceError::SessionNotFound(_))) => {
             (StatusCode::NOT_FOUND, Json(json!({"error": "not_found"}))).into_response()
         }
+        Err(VoiceProviderError::TransportUnavailable) => (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(json!({
+                "error": "presence_transport_unavailable",
+                "message": "Live transcript transport is not configured on this deployment"
+            })),
+        )
+            .into_response(),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(json!({ "error": e.to_string() })),
@@ -500,6 +526,68 @@ pub async fn degrade_presence_session(
         Err(VoiceProviderError::Presence(PresenceError::SessionNotFound(_))) => {
             (StatusCode::NOT_FOUND, Json(json!({"error": "not_found"}))).into_response()
         }
+        Err(e) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({ "error": e.to_string() })),
+        )
+            .into_response(),
+    }
+}
+
+/// DELETE /presence/sessions/{id} — closes an active session and releases its
+/// in-memory capacity slot. Only the participant may close their own session.
+pub async fn close_presence_session(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    RoutePath(id): RoutePath<String>,
+) -> Response {
+    let session = match authenticate(&state, &headers, true).await {
+        Ok(session) => session,
+        Err(err_response) => return err_response.into_response(),
+    };
+
+    let current_ms = now_ms();
+    let voice_client = match get_voice_client(&state) {
+        Ok(c) => c,
+        Err(r) => return *r,
+    };
+    let target_session = match voice_client.find_session(&id, current_ms) {
+        Ok(s) => s,
+        Err(VoiceProviderError::Presence(PresenceError::SessionNotFound(_))) => {
+            return (StatusCode::NOT_FOUND, Json(json!({"error": "not_found"}))).into_response()
+        }
+        Err(VoiceProviderError::Presence(PresenceError::SessionExpired(_))) => {
+            return (StatusCode::GONE, Json(json!({"error": "session_expired"}))).into_response()
+        }
+        Err(e) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({ "error": e.to_string() })),
+            )
+                .into_response()
+        }
+    };
+
+    if target_session.participant_id != session.principal_id {
+        return (
+            StatusCode::FORBIDDEN,
+            Json(json!({ "error": "forbidden_session_access" })),
+        )
+            .into_response();
+    }
+    if let Err(res) =
+        verify_active_membership(&state, &target_session.tenant_id, &session.principal_id).await
+    {
+        return res;
+    }
+
+    match voice_client.close_session(&target_session.tenant_id, &id, current_ms) {
+        Ok(true) => (
+            StatusCode::OK,
+            Json(json!({ "session_id": id, "closed": true })),
+        )
+            .into_response(),
+        Ok(false) => (StatusCode::NOT_FOUND, Json(json!({ "error": "not_found" }))).into_response(),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(json!({ "error": e.to_string() })),

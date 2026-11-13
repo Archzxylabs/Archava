@@ -1,0 +1,13 @@
+# Explicit money units
+
+Financial book amounts use exact integer minor units represented as decimal strings. A book fixes its currency, ISO exponent and catalogue version at explicit setup. For the pinned SIX snapshot, USD and IDR have exponent 2, JPY has exponent 0, and KWD has exponent 3. Native financial forms accept normal decimal amounts and convert them exactly; reports format stored units using the book metadata. Float conversion is not part of that contract.
+
+Existing operating contracts are distinct. The retained Commerce integer `price` and purchasing unit-cost fields do not carry a complete currency/unit declaration themselves. Their current native IDR screens render integers directly as whole Rupiah. Some historical API/cost fields contain `Minor` in their names; that name alone is not proof of ISO minor units. External payment integrations also have their own amount-unit contract. Installing the financial ledger does not reinterpret any of those existing values.
+
+A source-to-book policy must therefore explicitly bind the operating currency and amount unit, the functional book currency, exact scale, rounding/remainder behavior and effective version. For a **reviewed whole-IDR source** into an IDR book with exponent 2, `15000` operating units becomes `1500000` financial minor units. That conversion is valid only after the source's unit/currency has actually been established. It must not be applied automatically to unspecified legacy data or a different currency. FX is a separate, currently unaccepted capability.
+
+The [invoice bridge](INVOICE_POSTING.md) implements an explicit future-only `whole_idr` policy for company invoices. It derives the exact signed book amount from the immutable source receipt and keeps provider collections in clearing until bank reconciliation. That increment is being validated; it does not generalize unknown legacy units, other currencies, FX or opening imports.
+
+These rules also require source fixtures and independent control totals through PO/receipt/bill/payment, inventory/COGS, bank statement and period reporting. A standalone balanced journal cannot prove that a source unit was mapped correctly. Those remaining policies and opening controls stay whole-PRD work; installing the native ledger does not silently post legacy operating records.
+
+References: [financial book contract](ACCOUNTING.md), [current native amount display](../../crates/slice/src/operations/mod.rs), [financial parser and limits](../../crates/domain/src/erp/accounting.rs), and [currency catalogue](../../config/accounting-currencies.v1.json). Metadata provenance is recorded in that catalogue and the accounting migration.

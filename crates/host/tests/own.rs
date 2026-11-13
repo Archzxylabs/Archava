@@ -24,6 +24,8 @@ use axum::body::{to_bytes, Body};
 use axum::http::{Request, StatusCode};
 use axum::routing::Router;
 use tower::ServiceExt;
+#[path = "own/disclosure.rs"]
+mod disclosure;
 
 const TABLES: &[&str] = &[
     "memberships",
@@ -777,8 +779,8 @@ async fn the_chat_plan_equals_the_dashboard_plan_and_applies() {
     .await;
     assert_eq!(status, StatusCode::OK, "{dashboard}");
     // The preview document is closed: the plan plus the authoritative base,
-    // catalogue and pricing identity, and nothing that could be read as a
-    // hidden activation, payment or provider effect.
+    // catalogue and pricing identity, public provider destination and optional
+    // signed disclosure review. Preview still has no external provider effect.
     let mut keys: Vec<&str> = dashboard
         .as_object()
         .expect("the preview is an object")
@@ -788,7 +790,16 @@ async fn the_chat_plan_equals_the_dashboard_plan_and_applies() {
     keys.sort_unstable();
     assert_eq!(
         keys,
-        ["baseConfig", "catalogueVersion", "plan", "pricingVersion"]
+        [
+            "aiProvider",
+            "baseConfig",
+            "catalogueVersion",
+            "disclosureApproval",
+            "disclosureCompanies",
+            "plan",
+            "pricingVersion",
+            "request"
+        ]
     );
     assert_eq!(dashboard["plan"]["changes"][0]["kind"], "disable");
     assert!(dashboard.get("payment").is_none());
@@ -980,7 +991,8 @@ async fn a_confirmation_from_a_previous_catalogue_or_pricing_refuses() {
     .await;
     let hash = planned["plan"]["planHash"].as_str().unwrap().to_string();
     assert_eq!(
-        planned["plan"]["catalogueVersion"], "owner-catalogue@1",
+        planned["plan"]["catalogueVersion"],
+        archava_host::own::CATALOGUE_VERSION,
         "the plan the owner sees must name its catalogue: {planned}"
     );
     assert_eq!(planned["plan"]["pricingVersion"], "included@1");
@@ -998,7 +1010,10 @@ async fn a_confirmation_from_a_previous_catalogue_or_pricing_refuses() {
     assert_eq!(status, StatusCode::CONFLICT, "{refusal}");
     assert_eq!(refusal["reason"], "catalogue_changed");
     assert_eq!(refusal["detail"]["held"], "owner-catalogue@0");
-    assert_eq!(refusal["detail"]["live"], "owner-catalogue@1");
+    assert_eq!(
+        refusal["detail"]["live"],
+        archava_host::own::CATALOGUE_VERSION
+    );
     assert_eq!(count(&fixture, "config_revisions").await, 0);
 
     // An older pricing identity: the same refusal, never a silent apply.
@@ -1020,12 +1035,16 @@ async fn a_confirmation_from_a_previous_catalogue_or_pricing_refuses() {
         &[],
         &hash,
     );
-    live["confirmation"]["catalogueVersion"] = serde_json::json!("owner-catalogue@1");
+    live["confirmation"]["catalogueVersion"] =
+        serde_json::json!(archava_host::own::CATALOGUE_VERSION);
     live["confirmation"]["pricingVersion"] = serde_json::json!("included@1");
     let (status, applied) = post(&app, "/own/apply", &live, &alice).await;
     assert_eq!(status, StatusCode::OK, "{applied}");
     assert_eq!(applied["receipt"]["revision"], 1);
-    assert_eq!(applied["receipt"]["catalogueVersion"], "owner-catalogue@1");
+    assert_eq!(
+        applied["receipt"]["catalogueVersion"],
+        archava_host::own::CATALOGUE_VERSION
+    );
     assert_eq!(applied["receipt"]["pricingVersion"], "included@1");
 }
 
@@ -1298,4 +1317,79 @@ async fn another_principal_cannot_read_or_replay_a_foreign_request_id() {
     assert_eq!(count(&fixture, "apply_receipts").await, 1);
     let (_, history) = get(&app, &format!("/own/history?tenant={ACME}"), &alice).await;
     assert_eq!(history["revisions"][0]["actor"], "alice");
+}
+
+/// Configured labels are public CRM presentation, not Owner management authority.
+#[tokio::test]
+async fn crm_presentation_uses_current_labels_without_granting_owner_access() {
+    let fixture = provision().await;
+    seed(&fixture).await;
+    let app = archava_host::router(state(&fixture).await);
+    let alice = login(&app, "alice").await;
+    let bob = login(&app, "bob").await;
+    let path = format!("/crm/records?tenant={ACME}&contact={ID_ADA}");
+    let (status, initial) = get(&app, &path, &bob).await;
+    assert_eq!(status, StatusCode::OK, "{initial}");
+    assert_eq!(initial["pipelineLabels"], serde_json::json!({}));
+    assert_eq!(initial["configurationRevision"], 0);
+    let request = serde_json::json!({"baseRevision":0,"terminology":{"pipelineLabels":{"new":"Discovery <&>"}}});
+    let (status, preview) = post(
+        &app,
+        "/own/plan",
+        &serde_json::json!({"tenant":ACME,"request":request}),
+        &alice,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{preview}");
+    let (status, applied) = post(&app, "/own/apply", &serde_json::json!({"tenant":ACME,"requestId":"crm-label-review","request":request,"confirmation":{"planHash":preview["plan"]["planHash"],"baseRevision":0}}), &alice).await;
+    assert_eq!(status, StatusCode::OK, "{applied}");
+    let (status, shown) = get(&app, &path, &bob).await;
+    assert_eq!(status, StatusCode::OK, "{shown}");
+    assert_eq!(shown["pipelineLabels"]["new"], "Discovery <&>");
+    assert_eq!(shown["configurationRevision"], 1);
+    assert_eq!(shown["contact"], initial["contact"]);
+    for secret in ["config", "grants", "permissions", "enabled", "ownerGrants"] {
+        assert!(shown.get(secret).is_none());
+    }
+    assert_eq!(
+        get(&app, &format!("/own/config?tenant={ACME}"), &bob)
+            .await
+            .0,
+        StatusCode::FORBIDDEN
+    );
+    // Old responses still decode without requiring a newer server immediately.
+    let mut older = shown.clone();
+    older.as_object_mut().unwrap().remove("pipelineLabels");
+    older
+        .as_object_mut()
+        .unwrap()
+        .remove("configurationRevision");
+    let decoded: archava_host::erp::crm::CrmRecordValue = serde_json::from_value(older).unwrap();
+    assert!(decoded.pipeline_labels.is_empty());
+    assert_eq!(decoded.configuration_revision, 0);
+    let (status, foreign) = get(
+        &app,
+        &format!("/crm/records?tenant=unrelated-business&contact={ID_ADA}"),
+        &bob,
+    )
+    .await;
+    assert!(matches!(
+        status,
+        StatusCode::FORBIDDEN | StatusCode::NOT_FOUND
+    ));
+    assert!(foreign.get("pipelineLabels").is_none());
+    sqlx::query("UPDATE archava_crm.memberships SET scope='assigned' WHERE tenant_id=$1 AND principal_id='bob'").bind(ACME).execute(&fixture.admin_pool).await.unwrap();
+    let (status, hidden) = get(&app, &path, &bob).await;
+    assert_eq!(status, StatusCode::NOT_FOUND);
+    assert!(hidden.get("pipelineLabels").is_none());
+    sqlx::query(
+        "UPDATE archava_crm.memberships SET active=false WHERE tenant_id=$1 AND principal_id='bob'",
+    )
+    .bind(ACME)
+    .execute(&fixture.admin_pool)
+    .await
+    .unwrap();
+    let (status, revoked) = get(&app, &path, &bob).await;
+    assert_eq!(status, StatusCode::FORBIDDEN);
+    assert!(revoked.get("pipelineLabels").is_none());
 }

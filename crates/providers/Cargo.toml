@@ -21,6 +21,7 @@ sqlx.workspace = true
 # pair must match byte-for-byte). `sha2` is already inside Cargo.lock (sqlx
 # depends on it), so this adds no registry resolution.
 sha2.workspace = true
+hmac.workspace = true
 # Error surfaces with the fixed messages the boundary carries. No panic
 # paths in a budget ledger.
 thiserror.workspace = true
@@ -35,10 +36,13 @@ archava-domain.workspace = true
 reqwest.workspace = true
 serde.workspace = true
 subtle.workspace = true
+tokio-tungstenite.workspace = true
+rustls.workspace = true
+futures-util.workspace = true
+base64.workspace = true
 tokio = { workspace = true, features = ["time", "sync"] }
 
 [dev-dependencies]
-base64.workspace = true
 
 # The disposable owned instance. Dev-only by the same rule the fixture's own
 # crate records: no production crate depends on it, and the crate graph holds.

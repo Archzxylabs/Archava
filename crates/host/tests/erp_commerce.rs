@@ -20,7 +20,9 @@ const TABLES: &[&str] = &[
     "approvals",
 ];
 async fn setup() -> (Fixture, Router, Value) {
-    let f = provision().await;
+    setup_fixture(provision().await).await
+}
+async fn setup_fixture(f: Fixture) -> (Fixture, Router, Value) {
     for (user, tenant, scope, permissions) in [
         (
             "alice",
@@ -123,7 +125,7 @@ fn stock(view: &Value, id: &str) -> i64 {
 }
 #[tokio::test]
 async fn physical_order_reservation_fulfillment_partial_return_and_recovery() {
-    let (_f, app, session) = setup().await;
+    let (f, app, session) = setup().await;
     let p = product(&app, &session, "PHYSICAL", true).await;
     command(&app,&session,json!({"operation":"stock.adjust","productId":p,"quantity":10,"reason":"Opening inventory count"})).await;
     let created=command(&app,&session,json!({"operation":"order.create","customerName":"Synthetic Customer","lines":[{"productId":p,"quantity":2}]})).await;
@@ -182,6 +184,135 @@ async fn physical_order_reservation_fulfillment_partial_return_and_recovery() {
     let view = snapshot(&app, &session).await;
     assert_eq!(stock(&view, &p), 10);
     assert_eq!(view["orders"][0]["state"], "returned");
+    let exact_links: i64 = sqlx::query_scalar("SELECT count(*) FROM archava_commerce.inventory_layers l JOIN archava_commerce.inventory_return_costs r ON r.tenant_id=l.tenant_id AND r.id=l.return_cost_id JOIN archava_commerce.inventory_uses u ON u.tenant_id=r.tenant_id AND u.id=r.source_use_id WHERE l.tenant_id='acme' AND u.order_id=$1 AND l.source_request_id=r.request_id AND l.product_id=r.product_id AND l.original_quantity=r.quantity AND l.total_cost_minor IS NOT DISTINCT FROM r.total_cost_minor")
+        .bind(Uuid::parse_str(order).unwrap()).fetch_one(&f.admin_pool).await.unwrap();
+    assert_eq!(exact_links, 2, "Each actual returned portion has its exact original use reference; replay creates none extra");
+}
+
+#[tokio::test]
+async fn return_provenance_readiness_refuses_disabled_guards_and_exposed_cost_writers() {
+    let (f, _, _) = setup().await;
+    let open = || {
+        AppState::try_new(
+            f.runtime_pool.clone(),
+            Ledger {
+                namespace: "archava_commerce",
+                ledger: "Commerce",
+                tables: TABLES,
+            },
+            &f.commerce_ledger,
+            &f.identity_ledger,
+            &[7u8; 32],
+        )
+    };
+    assert!(open().await.is_ok());
+    sqlx::query(
+        "ALTER TABLE archava_commerce.inventory_layers DISABLE TRIGGER return_layer_provenance",
+    )
+    .execute(&f.owner_pool)
+    .await
+    .unwrap();
+    assert!(
+        open().await.is_err(),
+        "Disabled provenance must refuse current-profile startup"
+    );
+    sqlx::query(
+        "ALTER TABLE archava_commerce.inventory_layers ENABLE TRIGGER return_layer_provenance",
+    )
+    .execute(&f.owner_pool)
+    .await
+    .unwrap();
+    sqlx::query("GRANT EXECUTE ON FUNCTION archava_commerce.cost_movement() TO archava_runtime")
+        .execute(&f.owner_pool)
+        .await
+        .unwrap();
+    assert!(
+        open().await.is_err(),
+        "Runtime access to the private cost writer must refuse startup"
+    );
+    sqlx::query("REVOKE EXECUTE ON FUNCTION archava_commerce.cost_movement() FROM archava_runtime")
+        .execute(&f.owner_pool)
+        .await
+        .unwrap();
+    assert!(open().await.is_ok());
+}
+
+#[tokio::test]
+async fn existing_return_layers_upgrade_without_guessed_origins_and_remain_consumable() {
+    let (f, app, session) =
+        setup_fixture(archava_pg_fixture::provision_pre_return_provenance_profile().await).await;
+    let p = product(&app, &session, "PRIOR-RETURN", true).await;
+    command(&app,&session,json!({"operation":"stock.adjust","productId":p,"quantity":2,"reason":"Prior operational stock, not a financial opening"})).await;
+    let sale=command(&app,&session,json!({"operation":"order.create","customerName":"Prior return customer","lines":[{"productId":p,"quantity":2}]})).await;
+    command(
+        &app,
+        &session,
+        json!({"operation":"order.reserve","id":sale["id"],"expectedRevision":1,"holdSeconds":600}),
+    )
+    .await;
+    command(
+        &app,
+        &session,
+        json!({"operation":"order.fulfill","id":sale["id"],"expectedRevision":2}),
+    )
+    .await;
+    let line: Uuid =
+        sqlx::query_scalar("SELECT id FROM archava_commerce.order_lines WHERE order_id=$1")
+            .bind(Uuid::parse_str(sale["id"].as_str().unwrap()).unwrap())
+            .fetch_one(&f.admin_pool)
+            .await
+            .unwrap();
+    command(&app,&session,json!({"operation":"order.return","id":sale["id"],"expectedRevision":3,"lineId":line,"quantity":1,"disposition":"restock","reason":"Prior return lacks an explicit return-layer reference"})).await;
+    let before: Value = sqlx::query_scalar(
+        "SELECT jsonb_agg(to_jsonb(l) ORDER BY id) FROM archava_commerce.inventory_layers l",
+    )
+    .fetch_one(&f.admin_pool)
+    .await
+    .unwrap();
+    let upgraded = archava_pg_fixture::apply_pending_commerce_migrations(&f.owner_pool).await;
+    assert_eq!(upgraded.len(), f.commerce_ledger.len() + 1);
+    assert_eq!(
+        archava_pg_fixture::apply_pending_commerce_migrations(&f.owner_pool).await,
+        upgraded
+    );
+    let after:Value=sqlx::query_scalar("SELECT jsonb_agg(to_jsonb(l)-'return_cost_id' ORDER BY id) FROM archava_commerce.inventory_layers l").fetch_one(&f.admin_pool).await.unwrap();
+    assert_eq!(before,after,"Upgrade preserves every original field and attaches no guessed historical account/cost origin");
+    let state = AppState::try_new(
+        f.runtime_pool.clone(),
+        Ledger {
+            namespace: "archava_commerce",
+            ledger: "Commerce",
+            tables: TABLES,
+        },
+        &upgraded,
+        &f.identity_ledger,
+        &[7u8; 32],
+    )
+    .await
+    .unwrap();
+    let app = router(state);
+    command(&app,&session,json!({"operation":"order.return","id":sale["id"],"expectedRevision":4,"lineId":line,"quantity":1,"disposition":"restock","reason":"New return now binds its exact original use"})).await;
+    let counts:(i64,i64)=sqlx::query_as("SELECT count(*) FILTER(WHERE return_cost_id IS NULL),count(*) FILTER(WHERE return_cost_id IS NOT NULL) FROM archava_commerce.inventory_layers WHERE source_kind='return'").fetch_one(&f.admin_pool).await.unwrap();
+    assert_eq!(counts, (1, 1));
+    let next=command(&app,&session,json!({"operation":"order.create","customerName":"Consume preserved legacy stock","lines":[{"productId":p,"quantity":2}]})).await;
+    command(
+        &app,
+        &session,
+        json!({"operation":"order.reserve","id":next["id"],"expectedRevision":1,"holdSeconds":600}),
+    )
+    .await;
+    command(
+        &app,
+        &session,
+        json!({"operation":"order.fulfill","id":next["id"],"expectedRevision":2}),
+    )
+    .await;
+    assert_eq!(stock(&snapshot(&app, &session).await, &p), 0);
+    let unknown:i64=sqlx::query_scalar("SELECT count(*) FROM archava_commerce.inventory_layers WHERE source_kind='return' AND total_cost_minor IS NULL").fetch_one(&f.admin_pool).await.unwrap();
+    assert_eq!(
+        unknown, 2,
+        "Physical reuse preserves unknown cost instead of manufacturing a zero financial balance"
+    );
 }
 #[tokio::test]
 async fn services_can_reserve_and_complete_without_inventing_stock_allocations() {

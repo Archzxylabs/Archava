@@ -19,7 +19,7 @@
 
 The [domain module registry](../../crates/domain/src/erp/mod.rs), [HTTP registry](../../crates/host/src/erp/mod.rs), [main router](../../crates/host/src/router.rs), and [persistent bootstrap](../../crates/slice/src/bin/archava_server.rs) establish different parts of the implementation. Check all relevant layers before publishing a feature as an end-to-end product capability.
 
-The current Operations UI is a labelled demonstration. A sample metric in that view is not a read from a financial ledger. Module specifications are indexed under [modules](../modules/README.md), with current Rust source links and historical acceptance context.
+The current Operations UI uses real authorized projections and mutations for catalog/sales, purchasing, invoices and support, plus read-tool missions. This does not establish operator screens for the other ledgers or live accounting/hardware/messaging integrations. Module specifications are indexed under [modules](../modules/README.md), with current Rust source links and historical acceptance context.
 
 ## Evidence and ownership
 

@@ -7,7 +7,7 @@
 | Responsibility | Source |
 | --- | --- |
 | Session and HTTP mutation boundary | [host router](../../crates/host/src/router.rs) |
-| CRM read/command/receipt processing | [host CRM](../../crates/host/src/crm.rs) |
+| CRM read/command/receipt processing | [host CRM](../../crates/host/src/erp/crm.rs) |
 | Client pending markers | [slice pending](../../crates/slice/src/pending.rs) |
 | Read-only recovery UI | [slice recovery](../../crates/slice/src/recover.rs) |
 | Owner plan/apply lifecycle | [owner engine](../../crates/own/src/lib.rs) and [host adapter](../../crates/host/src/own.rs) |
