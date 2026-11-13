@@ -133,7 +133,7 @@ version = "0.1.0"
 dependencies = [
  "archava-core",
  "archava-orbz",
- "hmac 0.12.1",
+ "hmac 0.13.0",
  "serde",
  "serde_json",
  "sha2 0.10.9",
@@ -166,7 +166,7 @@ name = "archava-domain"
 version = "0.1.0"
 dependencies = [
  "archava-core",
- "hmac 0.12.1",
+ "hmac 0.13.0",
  "serde",
  "serde_json",
  "sha2 0.10.9",
@@ -206,7 +206,7 @@ dependencies = [
  "base64 0.22.1",
  "futures-util",
  "getrandom 0.4.3",
- "hmac 0.12.1",
+ "hmac 0.13.0",
  "reqwest",
  "rustls",
  "scrypt",
@@ -319,7 +319,7 @@ dependencies = [
  "archava-pg-fixture",
  "base64 0.22.1",
  "futures-util",
- "hmac 0.12.1",
+ "hmac 0.13.0",
  "reqwest",
  "rustls",
  "serde",
