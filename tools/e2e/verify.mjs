@@ -395,6 +395,13 @@ try {
   assert.deepEqual(databaseCounts(facts.port,contact,lostId),{same_email_rows:1,contact_rows:1,followups:expectedFollowups,receipt_rows:1})
   const crossTenant=await page.evaluate("fetch('/contacts?tenant=globex-corp').then(r=>r.status)");assert.ok([403,404].includes(crossTenant),`Cross-tenant HTTP ${crossTenant}`)
   pass('F04-role-and-tenant-refusal','Read-only UI submission creates no effect; foreign tenant read refused')
+  // OWN-T04: a signed-in principal without a management grant gets a refusal, not the settings.
+  const ownerBefore=evidence.ownerConfiguration.finalRevision
+  await page.navigate(`${origin}/app/owner`);await until(()=>page.text(testId('owner-refusal')).then((t)=>t.includes('missing_grant')),'non-owner settings refusal')
+  assert.equal(await page.evaluate("!!document.querySelector('[data-testid=owner-modules]')||!!document.querySelector('[data-testid=owner-preview]')||!!document.querySelector('[data-testid=owner-history] li')"),false,'A refused principal sees no modules, preview control or history')
+  const nonOwner=await page.evaluate(`(async()=>{const h={'content-type':'application/json','x-archava-csrf':localStorage.getItem('archava_csrf')||''};const plan=await fetch('/own/plan',{method:'POST',headers:h,body:JSON.stringify({tenant:'acme-retail',request:{baseRevision:${ownerBefore},disable:['crm-pipeline']}})});const chat=await fetch('/own/chat',{method:'POST',headers:h,body:JSON.stringify({tenant:'acme-retail',message:'disable crm-pipeline'})});const history=await fetch('/own/history?tenant=acme-retail');return{plan:[plan.status,(await plan.json()).reason],chat:[chat.status,(await chat.json()).reason],history:[history.status,(await history.json()).reason]};})()`)
+  assert.deepEqual(nonOwner,{plan:[403,'missing_grant'],chat:[403,'missing_grant'],history:[403,'missing_grant']})
+  await page.screenshot('owner-non-owner-refused.png');pass('OWNER-native-non-owner-refused','A signed-in principal without a management grant sees the refusal at the settings page with no modules, preview or history, and plan, chat and history are refused by the host')
   await page.navigate(`${origin}/app/contacts`);await page.send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true})
   await until(()=>page.evaluate('document.documentElement.scrollWidth<=innerWidth'),'mobile overflow check')
   await page.screenshot('contacts-mobile.png');pass('UI-mobile-layout','390px viewport has no horizontal page overflow')

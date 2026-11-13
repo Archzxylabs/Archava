@@ -19,8 +19,9 @@ The analysis below was written by reading test bodies before these tests existed
 | browser `OWNER-native-rendered-preview` (`tools/e2e/owner-configuration.mjs`) | T03: the review section renders exactly the host plan's changes and effects, its plan hash and base revision; the preview writes no revision |
 | browser `OWNER-native-blocked-plan-is-shown-and-never-applied` | T05: a `missing_dependency` plan renders its reason and detail with confirmation disabled; sending the blocked plan anyway is `plan_blocked`; no revision or receipt is written |
 | browser `OWNER-native-two-tab-stale-plan-refused` | T06: a plan reviewed in one tab is refused with `stale_base` after a second tab commits; the stale plan writes no revision and changes no module |
+| browser `OWNER-native-non-owner-refused` (`tools/e2e/verify.mjs`) | T04: a signed-in principal without a management grant sees the refusal at `/app/owner` with no modules, preview or history; plan, chat and history answer `missing_grant` |
 
-Still missing after these: browser sign-in as a non-owner or revoked owner at `/app/owner` (T04 l), the provider-request count around an owner preview and apply (T03 f), a read-only owner (T04 j), and the command-status routes of disabled modules.
+Still missing after these: a revoked owner in the browser (T04 l; the never-granted case is covered), the provider-request count around an owner preview and apply (T03 f), a read-only owner (T04 j), and the command-status routes of disabled modules.
 
 ---
 
