@@ -20,8 +20,9 @@ function fixture(t, modules = [descriptor()]) {
   write('config/operator-actions.v1.json', JSON.stringify({ schemaVersion: 1, modules: [{ id: 'kiosk', namespace: 'archava_kiosk', actions: [] }] }))
   write('migrations/kiosk-pg/001_kiosk.sql', '')
   write('migrations/manifest.v1.json', JSON.stringify({ schemaVersion: 1, ledgers: [{ namespace: 'archava_kiosk', migrations: [{ id: '001_kiosk', path: 'migrations/kiosk-pg/001_kiosk.sql', sha256: '0' }] }] }))
-  write('crates/slice/src/bin/archava_server.rs', 'include_bytes!("../../../../migrations/kiosk-pg/001_kiosk.sql");\n("archava_kiosk", kiosk.as_slice()),\n')
-  write('crates/pg-fixture/src/lib.rs', 'match namespace {\n    "archava_kiosk" => "kiosk-pg",\n    _ => "commerce-pg",\n}\n')
+  write('crates/slice/src/bin/archava_server.rs', 'include!(concat!(env!("OUT_DIR"), "/embedded_ledgers.rs"));\n')
+  write('crates/slice/build.rs', 'const MANIFEST: &str = "../../migrations/manifest.v1.json";\nconst NOT_VERIFIED_AT_STARTUP: &[&str] = &["archava_control"];\n')
+  write('crates/pg-fixture/src/lib.rs', 'include_str!("../../../migrations/manifest.v1.json")\nmigrate_ledger(&owner, "archava_kiosk", "archava_kiosk_migrations")\n')
   for (const layer of ['domain', 'adapters', 'host']) {
     write(`crates/${layer}/src/erp/kiosk_sales.rs`, layer === 'host' ? 'pub(crate) async fn command(\n) {}\npub async fn status() {}\n' : '')
     write(`crates/${layer}/src/erp/mod.rs`, 'pub mod kiosk_sales;\n')
@@ -52,8 +53,11 @@ test('each missing registration point is named with the file to change', async (
     ['form schema mismatch', (f) => f.write('config/operator-actions.v1.json', JSON.stringify({ modules: [{ id: 'kiosk', namespace: 'archava_other' }] })), /kiosk: form catalogue/],
     ['manifest', (f) => f.write('migrations/manifest.v1.json', JSON.stringify({ schemaVersion: 1, ledgers: [] })), /kiosk: migration manifest — migrations\/manifest\.v1\.json/],
     ['manifest path outside ledger', (f) => f.edit('migrations/manifest.v1.json', (s) => s.replace('migrations/kiosk-pg/', 'migrations/other-pg/')), /kiosk: migration manifest/],
-    ['server embed', (f) => f.write('crates/slice/src/bin/archava_server.rs', ''), /kiosk: server embed — .*include_bytes! migrations\/kiosk-pg\/001_kiosk\.sql/],
-    ['fixture ledger', (f) => f.edit('crates/pg-fixture/src/lib.rs', (s) => s.replace('"archava_kiosk" => "kiosk-pg",', '')), /kiosk: fixture ledger — crates\/pg-fixture\/src\/lib\.rs/],
+    ['server embed', (f) => f.edit('crates/slice/build.rs', (s) => s.replace('"archava_control"', '"archava_control", "archava_kiosk"')), /kiosk: server embed — crates\/slice\/build\.rs: "archava_kiosk" is excluded/],
+    ['server embeds by hand', (f) => f.write('crates/slice/src/bin/archava_server.rs', 'include_bytes!("../../../../migrations/kiosk-pg/001_kiosk.sql")\n'), /archava_server\.rs: must embed the migrations crates\/slice\/build\.rs generates/],
+    ['server keeps a second list', (f) => f.edit('crates/slice/src/bin/archava_server.rs', (s) => `${s}include_bytes!("../../../../migrations/kiosk-pg/001_kiosk.sql")\n`), /archava_server\.rs: embeds a migration by hand/],
+    ['fixture ledger', (f) => f.edit('crates/pg-fixture/src/lib.rs', (s) => s.replace('"archava_kiosk", ', '"archava_kiosks", ')), /kiosk: fixture ledger — crates\/pg-fixture\/src\/lib\.rs: apply "archava_kiosk"/],
+    ['fixture keeps its own list', (f) => f.edit('crates/pg-fixture/src/lib.rs', (s) => s.replace('include_str!', 'read')), /crates\/pg-fixture\/src\/lib\.rs: must read ledgers and migrations from migrations\/manifest\.v1\.json/],
     ['adapter declaration', (f) => f.write('crates/adapters/src/erp/mod.rs', '// pub mod kiosk_sales_extra;\n'), /kiosk: adapters declaration — crates\/adapters\/src\/erp\/mod\.rs: declare `pub mod kiosk_sales;`/],
     ['command handler', (f) => f.write('crates/host/src/erp/kiosk_sales.rs', 'pub(crate) async fn kiosk_command() {}\npub async fn status() {}\n'), /kiosk: command handlers — crates\/host\/src\/erp\/kiosk_sales\.rs: define `pub\(crate\) async fn command`;/],
     ['status handler', (f) => f.write('crates/host/src/erp/kiosk_sales.rs', 'pub async fn command() {}\nasync fn status() {}\n'), /kiosk: command handlers — .*define `pub\(crate\) async fn status`;/],

@@ -19,6 +19,7 @@ const ROUTES = 'crates/host/src/routes/erp.rs'
 const DISPATCH = 'crates/host/src/business.rs'
 const EXTRACTORS = 'crates/host/src/extractors.rs'
 const GENERATOR = 'crates/host/build.rs'
+const EMBEDS = 'crates/slice/build.rs'
 const SNAPSHOT = 'domain/embedded/modules.v1.json'
 const FORMS = 'config/operator-actions.v1.json'
 const MANIFEST = 'migrations/manifest.v1.json'
@@ -84,12 +85,12 @@ export function moduleChecks(root, module, shared = loadShared(root)) {
   const paths = (mounted?.migrations ?? []).map((migration) => migration.path)
   add('migration manifest', paths.length > 0 && paths.every((path) => path.startsWith(`migrations/${ledger}/`)),
     `${MANIFEST}: add a ledger with "namespace":"${namespace}" whose migrations live under migrations/${ledger}/ (id, path, sha256)`)
-  const missing = paths.filter((path) => !shared.server.includes(`${path}"`))
-  add('server embed', paths.length > 0 && missing.length === 0,
-    `${SERVER}: include_bytes! ${missing.length ? missing.join(', ') : `every migrations/${ledger}/*.sql`} and register "${namespace}" for readiness`)
-  const mapped = new RegExp(`"${escape(namespace)}"\\s*=>\\s*"${escape(ledger)}"`).test(shared.fixture)
-    || new RegExp(`_\\s*=>\\s*"${escape(ledger)}"`).test(shared.fixture)
-  add('fixture ledger', mapped, `${FIXTURE}: map "${namespace}" => "${ledger}" and apply its migrations and runtime grants`)
+  // The server embeds, and the fixture resolves, every manifest ledger from
+  // the manifest itself. What is left to check is that neither opts out.
+  add('server embed', paths.length > 0 && !shared.embedGenerator.includes(`"${namespace}"`),
+    `${EMBEDS}: "${namespace}" is excluded from the migrations the server embeds and verifies; a module's ledger must not be`)
+  add('fixture ledger', shared.fixture.includes(`"${namespace}"`),
+    `${FIXTURE}: apply "${namespace}" (migrate_ledger) and its runtime grants when provisioning`)
 
   for (const layer of LAYERS) {
     const file = `crates/${layer}/src/erp/${source}.rs`
@@ -123,6 +124,7 @@ function loadShared(root) {
     forms: json(root, FORMS),
     ledgers: Array.isArray(manifest?.ledgers) ? manifest.ledgers : [],
     server: text(root, SERVER),
+    embedGenerator: text(root, EMBEDS),
     fixture: text(root, FIXTURE),
     routes: text(root, ROUTES),
     extractors: text(root, EXTRACTORS),
@@ -150,6 +152,11 @@ export function checkModules(root = REPO_ROOT) {
     if (!source.includes(`for_each_erp_module!(${callback})`)) problems.push(`${path}: must expand for_each_erp_module!(${callback}) so ${what} follow ${REGISTRY}`)
     for (const match of source.matchAll(/"\/erp\/([a-z][a-z0-9]*)\/commands(?:\/status)?"|"([a-z][a-z0-9]*)"\s*=>\s*call!/g)) problems.push(`${path}: ${match[1] ?? match[2]} is wired by hand; command routes and dispatch come from ${REGISTRY}`)
   }
+  // Migration registration has one source: the manifest. The server embeds
+  // from it at build time and the fixture reads it, so neither keeps a list.
+  if (!shared.embedGenerator.includes(MANIFEST) || !shared.server.includes('embedded_ledgers.rs')) problems.push(`${SERVER}: must embed the migrations ${EMBEDS} generates from ${MANIFEST}`)
+  if (/include_bytes!\([^)]*\.sql"/.test(shared.server)) problems.push(`${SERVER}: embeds a migration by hand; add it to ${MANIFEST} instead`)
+  if (!shared.fixture.includes(`include_str!("../../../${MANIFEST}")`)) problems.push(`${FIXTURE}: must read ledgers and migrations from ${MANIFEST}`)
   if (!text(root, GENERATOR).includes(SNAPSHOT)) problems.push(`${GENERATOR}: must generate for_each_erp_module! from ${SNAPSHOT}`)
   return { modules, problems }
 }

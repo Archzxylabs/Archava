@@ -55,6 +55,11 @@ archava-domain.workspace = true
 leptos_router.workspace = true
 serde_json.workspace = true
 
+[build-dependencies]
+# `build.rs` reads the migration manifest to generate the migrations the
+# production server embeds.
+serde_json.workspace = true
+
 [features]
 # The hydration build compiles the cdylib export for wasm32 with this feature
 # on ("--features hydrate"); nothing else in the crate switches on it — the

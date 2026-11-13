@@ -63,8 +63,8 @@ These registration points cannot be derived from data, because they are Rust mod
 | --- | --- |
 | Form catalogue with the same schema | `config/operator-actions.v1.json` |
 | Migration directory and manifest ledger | `migrations/<ledger>/`, `migrations/manifest.v1.json` |
-| Embedded migrations and readiness | `crates/slice/src/bin/archava_server.rs` |
-| Fixture ledger mapping | `crates/pg-fixture/src/lib.rs` |
+| The ledger is not excluded from the embedded migrations | `crates/slice/build.rs` |
+| The fixture applies the ledger | `crates/pg-fixture/src/lib.rs` |
 | Source file and `mod` declaration, per layer | `crates/{domain,adapters,host}/src/erp/` |
 | `command` and `status` handlers | `crates/host/src/erp/<source>.rs` |
 | The declared read route | `crates/host/src/routes/erp.rs` |
@@ -77,7 +77,7 @@ The gate also refuses the reverse case: a module that has forms but no descripto
 
 1. Add its descriptor to `config/modules.v1.json` and its forms to `config/operator-actions.v1.json`, then run `node tools/rust/domain-assets.mjs --write`.
 2. Run `node tools/check-modules.mjs --explain <id>`. It lists every registration point as present or missing, with the file and what to add.
-3. Work through the missing points until the command reports the module completely registered. Migrations follow the four-step registration in `AGENTS.md`.
+3. Work through the missing points until the command reports the module completely registered. Migrations are registered in the manifest, as described in `AGENTS.md`.
 4. Run `node tools/rust/verify.mjs`, then add the module's own integration evidence.
 
 ## Not yet covered
@@ -88,6 +88,6 @@ The registry does not yet drive, and the gate does not yet check, these per-modu
 - The ten Operations tabs with dedicated views (catalog, sales, purchasing, invoices, accounting, support, missions, suggestions, import, voice) and their view dispatch in `crates/slice/src/operations/mod.rs`. Tabs for modules served by the generic operator workspace come from the registry.
 - Owner-chat module aliases in `crates/host/src/own.rs` and the assembly contracts in `crates/assembly`, which use the assembly vocabulary (`crm-contacts`, `fieldServices`) rather than these ids.
 - Typed form references in `crates/domain/src/operator.rs`.
-- Fixture migration lists and runtime grants beyond the schema-to-directory mapping.
+- The fixture's per-ledger provisioning and runtime grants. Its migration lists and directories come from the migration manifest.
 
-The server bootstrap and the fixture still each hold their own ledger registration; the gate checks both against the manifest but does not remove the duplication.
+Migrations are registered once, in `migrations/manifest.v1.json`: the server embeds from it at build time and the fixture reads it. The gate refuses a migration embedded by hand.

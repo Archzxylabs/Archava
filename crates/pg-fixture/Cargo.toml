@@ -13,4 +13,6 @@ rust-version.workspace = true
 # that can exist.
 archava-adapters.workspace = true
 sqlx.workspace = true
+# Reads `migrations/manifest.v1.json`, the one list of ledgers and migrations.
+serde_json.workspace = true
 tokio = { workspace = true, features = ["sync", "time"] }

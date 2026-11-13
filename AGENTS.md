@@ -44,7 +44,7 @@ cargo check --target wasm32-unknown-unknown -p archava-slice --lib --features hy
 
 `sqlx` is intentionally built without `macros`: do not add `sqlx::query!`/`query_as!` or any build-time database connection. Use runtime `sqlx::query` and explicit transactions. Resolve actor, tenant, grant, and role from the session and database, never from request-body claims. All CRM and ERP persistence is unified inside `crates/adapters` under atomic `FORCE RLS` transactions (ADR-014, ADR-018). HTTP routes are modularized in `crates/host/src/routes/` (ADR-015), and assistant turn flow is in `crates/host/src/assistant/` (ADR-017).
 
-A crate or migration existing does not mean the host mounts it. Check `crates/host/src/router.rs` and the ledger constants in `crates/slice/src/bin/archava_server.rs` for the actual surface.
+A crate or migration existing does not mean the host mounts it. Check `crates/host/src/router.rs` for the routes and `migrations/manifest.v1.json` for the ledgers the server verifies.
 
 ## Business modules
 
@@ -52,12 +52,12 @@ A crate or migration existing does not mean the host mounts it. Check `crates/ho
 
 ## Migrations and embedded assets
 
-Applied SQL is append-only: never edit its bytes, rename migration IDs, or rename schemas to tidy a directory. A new migration for a mounted ledger needs more than the `.sql` file:
+Applied SQL is append-only: never edit its bytes, rename migration IDs, or rename schemas to tidy a directory. A new migration for an existing ledger needs two things:
 
 1. `migrations/<ledger>/NNN_name.sql`
-2. its SHA-256 entry in `migrations/manifest.v1.json` (the Ops installer verifies this)
-3. `include_bytes!` plus ledger registration in `crates/slice/src/bin/archava_server.rs`
-4. the corresponding list in `crates/pg-fixture/src/lib.rs` when the fixture applies that ledger
+2. its entry (id, path, SHA-256) in `migrations/manifest.v1.json`
+
+The manifest is the only list. The Ops installer applies it, `crates/slice/build.rs` generates the server's embedded migrations from it, and `crates/pg-fixture` reads it, so do not add `include_bytes!` or a migration list by hand. A new ledger additionally needs the fixture to apply it and grant the runtime role (`crates/pg-fixture/src/lib.rs`); the server verifies every manifest ledger except the two named in `crates/slice/build.rs`.
 
 The server embeds migrations, `static/archava.js`, `static/archava.css`, `static/workspace.css`, and the fonts, and refuses to serve when the database history differs from the embedded profile. Rebuild the native server after changing SQL or an embedded asset; rebuild the WASM bundle too after changing view markup. `build-slice.mjs` rebuilds both.
 

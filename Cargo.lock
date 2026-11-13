@@ -299,6 +299,7 @@ name = "archava-pg-fixture"
 version = "0.1.0"
 dependencies = [
  "archava-adapters",
+ "serde_json",
  "sqlx",
  "tokio",
 ]

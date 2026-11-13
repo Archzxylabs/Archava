@@ -2,7 +2,7 @@
 
 All 76 checked-in SQL migrations currently live under this directory, grouped into 31 ledger directories. The native manifest mounts 69; 7 remain reserved specifications. The owner-configuration migration was relocated from `crates/host/migrations/owner` to `owner-pg/`; its migration ID, schema namespace, SQL bytes, and checksum are unchanged.
 
-The persistent server embeds the migrations it mounts in [archava_server.rs](../crates/slice/src/bin/archava_server.rs). The disposable PostgreSQL fixture resolves the same canonical files through [pg-fixture](../crates/pg-fixture/src/lib.rs). A file's presence here does not mean a given runtime mounts it or its UI is complete.
+The manifest is the only list of applied migrations. The persistent server embeds the migrations it verifies from it at build time ([build.rs](../crates/slice/build.rs)), and the disposable PostgreSQL fixture reads the same manifest in [pg-fixture](../crates/pg-fixture/src/lib.rs). A file's presence here does not mean a given runtime mounts it or its UI is complete.
 
 ## Applied versus unmounted ledgers
 

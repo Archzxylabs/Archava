@@ -50,7 +50,7 @@ How one feature spans the layers (e.g. an ERP domain such as billing):
 | HTTP handler, authority checks | `crates/host/src/erp/<domain>.rs`, wired in `crates/host/src/routes/` |
 | UI | `crates/slice/src/operations/`, `static/workspace.css` |
 | Declaration | one descriptor in `config/modules.v1.json` (the module registry) |
-| Schema | `migrations/<domain>-pg/NNN_*.sql` + manifest + embed + fixture (four-step registration in `AGENTS.md`) |
+| Schema | `migrations/<domain>-pg/NNN_*.sql` + its entry in `migrations/manifest.v1.json` (see `AGENTS.md`) |
 | Integration test | `crates/host/tests/erp_<domain>.rs` (owns a disposable PostgreSQL cluster) |
 | Spec | `docs/modules/<DOMAIN>_MODULE.md` |
 
@@ -58,11 +58,11 @@ Things that are not obvious from any single file:
 
 - **Module registry.** `config/modules.v1.json` declares each business module once; agent routing keywords, the provider-readable collections and the product catalogue read it, and `node tools/check-modules.mjs` checks every Rust registration point against it. When adding or moving a module, run `node tools/check-modules.mjs --explain <id>` — it lists what is missing and where. `docs/architecture/MODULE_REGISTRY.md` has the procedure and the per-module tables that are still hand-maintained.
 
-- **Mounted ≠ present.** The actual surface is `crates/host/src/router.rs` + `routes/` and the ledger constants in `crates/slice/src/bin/archava_server.rs`. Seven SQL files are deliberately unmounted and allowlisted in `check-structure.mjs`.
+- **Mounted ≠ present.** The actual surface is `crates/host/src/router.rs` + `routes/` and the ledgers in `migrations/manifest.v1.json`, which the server embeds and verifies. Seven SQL files are deliberately unmounted and allowlisted in `check-structure.mjs`.
 - **Two roles, two phases.** `archava_owner` applies migrations (via `archava-ops`); the server runs as non-owner `archava_runtime`, sets a transaction-local tenant, and refuses to boot on an owner/superuser/`BYPASSRLS` URL or when DB migration history differs from the embedded checksums. RLS gives tenant isolation only — grants/scope/role are still checked in the host from session + database, never from request bodies.
 - **Write contracts are part of the boundary:** command receipts, idempotency keys, stale-revision (optimistic concurrency) checks, uncertain-outcome recovery, and writer fencing (`docs/architecture/WRITE_FENCING.md`). Preserve them when touching adapters or handlers.
 - **Embedding.** The native server `include_bytes!`s migrations, `static/archava.{js,css}`, `static/workspace.css`, and fonts. SQL/asset change → rebuild native; view markup change → rebuild native *and* WASM (`build-slice.mjs` does both). Changing an embedded asset also invalidates native package provenance.
-- **Ledger registration is duplicated** between the server bootstrap and `crates/pg-fixture/src/lib.rs`; update both, or tests and production drift apart.
+- **Migrations have one list.** The server's embedded migrations are generated from `migrations/manifest.v1.json` by `crates/slice/build.rs`, and the fixture reads the same manifest. Only a new ledger needs code: the fixture must apply it and grant the runtime role.
 - **Agent runtime ("Ava").** Not a crate: goal → review → execution → receipt-backed report lives in `crates/host/src/agent/` and `crates/host/src/assistant/`, using `assistant`/`context` for planning, `providers` for model calls, `cockpit` for durable missions, `orbz` for memory. Vocabulary is defined in `docs/GLOSSARY.md`; see `docs/modules/AGENT_RUNTIME.md`.
 
 ## Working in this checkout
