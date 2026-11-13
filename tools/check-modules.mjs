@@ -46,6 +46,8 @@ export function registryProblems(registry) {
     if (typeof module?.id === 'string' && !/^[a-z][a-z0-9]*$/.test(module.id)) problems.push(`${REGISTRY}: ${name}.id must be lower-case alphanumeric (it is a route segment)`)
     if (typeof module?.source === 'string' && !/^[a-z][a-z0-9_]*$/.test(module.source)) problems.push(`${REGISTRY}: ${name}.source must be a Rust module name`)
     if (typeof module?.namespace === 'string' && !/^archava_[a-z0-9_]+$/.test(module.namespace)) problems.push(`${REGISTRY}: ${name}.namespace must start with archava_`)
+    if (module?.tab !== undefined && (typeof module.tab !== 'string' || !module.tab)) problems.push(`${REGISTRY}: ${name}.tab must be a non-empty string when present`)
+    if (module?.typedDetail !== undefined && typeof module.typedDetail !== 'boolean') problems.push(`${REGISTRY}: ${name}.typedDetail must be true or false when present`)
     const agent = module?.agent
     if (!Number.isInteger(agent?.rank) || agent.rank < 1) problems.push(`${REGISTRY}: ${name}.agent.rank must be a positive integer`)
     for (const list of ['keywords', 'collections']) {
