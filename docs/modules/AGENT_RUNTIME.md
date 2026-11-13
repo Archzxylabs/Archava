@@ -197,10 +197,18 @@ already grounded ID is rechecked through the authenticated endpoint and withheld
 if current access is lost. Query text and historical identifiers are not reflected
 into provider coverage. Included counts describe projected approved collections.
 
+The response schema follows the same budget. While a later call remains and
+fewer than eight reads were accepted, the schema offers the `lookups` field. On
+the last call the budget allows it is removed, so the provider is constrained
+to return a plan or questions rather than only told in `readExpansion` that no
+read can follow. A provider that ignores its schema and still asks for a read
+is refused with `agent_lookup_budget_exceeded` as before; no budget changed.
+
 Before each later planning round, the host refreshes all authorized sources and
 the accumulated typed lookups. Previously read queries may be refreshed along
 with a new distinct query; a provider request consisting only of duplicate reads
-does not consume another planning slot. Membership/configuration changes stop
+is not served again: the turn ends with `agent_lookup_budget_exceeded` instead
+of spending another planning slot on it. Membership/configuration changes stop
 the turn, and row-level reassignment is reflected in the fresh reads. This avoids
 resending an unrelated stale source while expanding another business area.
 
