@@ -244,6 +244,8 @@ export async function verifyPriorNative({previousRoot,packageRoot,facts,scratch,
   const verifyPriorSources=async(database,server,session)=>{
    if(!priorInvoiceSources)return
    const after=JSON.parse(sql(database,"SELECT jsonb_build_object('sources',(SELECT count(*) FROM archava_accounting.invoice_sources),'policies',(SELECT count(*) FROM archava_accounting.invoice_policies),'links',(SELECT count(*) FROM archava_accounting.journal_sources),'invoices',(SELECT jsonb_agg(to_jsonb(r) ORDER BY tenant_id,id) FROM archava_billing.invoices r),'commands',(SELECT jsonb_agg(to_jsonb(r) ORDER BY tenant_id,request_id) FROM archava_billing.commands r));"))
+   // A later migration may add columns to a prior invoice row. They must arrive empty (null or zero); every prior column must be unchanged.
+   for(const [i,row] of (after.invoices||[]).entries()){const prior=priorSourceProof.invoices?.[i]||{};for(const key of Object.keys(row))if(!Object.hasOwn(prior,key)){assert.ok(row[key]===null||row[key]===0,`Upgrade filled new invoice column ${key}`);delete row[key]}}
    assert.deepEqual(after,priorSourceProof)
    const r=await call(server.origin,session,`/erp/accounting/reports?tenant=${tenant}&bookId=${priorSourceBook.bookId}&from=2000-01-01&to=2100-12-31`)
    assert.equal(r.status,200);assert.equal(r.body.balanceSheet.assetsMinor,'1500000');assert.equal(r.body.trialBalance.balanced,true);assert.equal(r.body.sourceCoverage.postedCount,1);assert.equal(r.body.sourceCoverage.unpostedCount,0)
