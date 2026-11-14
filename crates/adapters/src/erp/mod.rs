@@ -31,6 +31,7 @@
 //! packet and is deliberately NOT half-faked here.
 
 pub mod accounting;
+pub mod aggregates;
 mod billing_invoice;
 pub mod commerce_kernel;
 pub mod companies;

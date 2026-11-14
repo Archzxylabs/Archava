@@ -150,3 +150,176 @@ fn source_organization_party_and_affiliation_aliases_inherit_the_company_selecti
         assert_eq!(v["sources"][0]["coverage"][key]["withheldByPolicy"], true);
     }
 }
+fn sharing(modules: &[&str], classes: &[&str], companies: &[&str], workspace: bool) -> Permit {
+    Permit {policy:serde_json::from_value(json!({"providerBinding":"a".repeat(64),"modules":modules,"dataClasses":classes,"companies":companies,"includeWorkspaceRecords":workspace})).unwrap(),identity:"aggregate-policy".into(),company_sources:Default::default()}
+}
+#[test]
+fn an_aggregate_needs_its_module_and_every_data_category_of_its_shape() {
+    let facts = sharing(
+        &["billing"],
+        &["conversation_text", "business_facts"],
+        &[],
+        true,
+    );
+    assert_eq!(facts.aggregate_refusal("billing", false, None), None);
+    assert_eq!(
+        facts.aggregate_refusal("billing", false, Some("business_facts")),
+        None
+    );
+    assert_eq!(
+        facts.aggregate_refusal("commerce", false, None),
+        Some(("aggregate_module_not_shared", None))
+    );
+    assert_eq!(
+        facts.aggregate_refusal("billing", true, None),
+        Some(("aggregate_data_class_not_shared", Some("financial_amounts")))
+    );
+    assert_eq!(
+        facts.aggregate_refusal("billing", false, Some("names")),
+        Some(("aggregate_data_class_not_shared", Some("names")))
+    );
+    // A category the registry could misspell is never treated as shared.
+    assert_eq!(
+        facts.aggregate_refusal("billing", false, Some("everything")),
+        Some(("aggregate_data_class_not_shared", None))
+    );
+    // Amounts and names without statuses and dates: even a count is refused.
+    let amounts = sharing(
+        &["billing"],
+        &["conversation_text", "financial_amounts", "names"],
+        &[],
+        true,
+    );
+    assert_eq!(
+        amounts.aggregate_refusal("billing", true, Some("names")),
+        Some(("aggregate_data_class_not_shared", Some("business_facts")))
+    );
+    let all = sharing(
+        &["billing"],
+        &[
+            "conversation_text",
+            "business_facts",
+            "financial_amounts",
+            "names",
+        ],
+        &[],
+        true,
+    );
+    assert_eq!(all.aggregate_refusal("billing", true, Some("names")), None);
+}
+#[test]
+fn an_aggregate_counts_only_approved_companies_and_never_all_by_default() {
+    let a = "00000000-0000-4000-8000-000000000001";
+    let b = "00000000-0000-4000-8000-000000000002";
+    let id = |s: &str| Uuid::parse_str(s).unwrap();
+    let none = sharing(&["billing"], &["business_facts"], &[], false);
+    let scope = none.aggregate_scope(None);
+    assert_eq!(scope.companies, Some(vec![]), "empty never means all");
+    assert!(!scope.unassigned);
+    let one = sharing(&["billing"], &["business_facts"], &[a], true);
+    let scope = one.aggregate_scope(None);
+    assert_eq!(scope.companies, Some(vec![id(a)]));
+    assert!(scope.unassigned);
+    // A company-scoped turn counts that company only, and only if approved.
+    let scope = one.aggregate_scope(Some(id(a)));
+    assert_eq!(scope.companies, Some(vec![id(a)]));
+    assert!(!scope.unassigned);
+    let scope = one.aggregate_scope(Some(id(b)));
+    assert_eq!(scope.companies, Some(vec![]));
+    assert!(!scope.unassigned);
+}
+#[test]
+fn aggregate_results_and_offers_follow_the_current_selection() {
+    let result = |group: Value, measure: &str| json!({"kind":"aggregate","module":"billing","collection":"invoices","measure":{"kind":measure,"field":if measure=="sum"{json!("outstanding")}else{Value::Null}},"groupBy":group,"filter":{"dateField":"issued","companyId":"00000000-0000-4000-8000-000000000001"},"rowsCovered":3,"sections":[if measure=="sum"{json!({"rows":3,"groups":[{"label":"Private Customer Name","rows":3,"amount":705100}]})}else{json!({"rows":3,"groups":[{"label":"issued","rows":3}]})}]});
+    let by_customer = result(json!("customer"), "sum");
+    let by_status = result(json!("status"), "count");
+    let refused = json!({"kind":"aggregate","refused":true,"reason":"aggregate_dimension_not_listed","message":"m","module":"billing","collection":"invoices"});
+    let context = json!({"sources":[],"aggregateResults":[by_customer,by_status,refused]});
+    let facts = sharing(
+        &["billing"],
+        &["conversation_text", "business_facts"],
+        &[],
+        true,
+    );
+    let out = facts.project(&context);
+    let text = out.to_string();
+    assert!(!text.contains("Private Customer Name"), "{text}");
+    assert!(!text.contains("705100"), "{text}");
+    let shown = out["aggregateResults"].as_array().unwrap();
+    assert_eq!(shown.len(), 2, "the count by status and the refusal");
+    assert_eq!(shown[0]["groupBy"], "status");
+    // Without record references the company identifier does not travel.
+    assert!(shown[0]["filter"].get("companyId").is_none());
+    assert_eq!(shown[0]["filter"]["companyFilterApplied"], true);
+    assert!(!text.contains("00000000-0000-4000-8000-000000000001"));
+    assert_eq!(shown[1], refused);
+    let all = sharing(
+        &["billing"],
+        &[
+            "conversation_text",
+            "record_references",
+            "business_facts",
+            "financial_amounts",
+            "names",
+        ],
+        &[],
+        true,
+    );
+    let out = all.project(&context);
+    assert_eq!(out["aggregateResults"].as_array().unwrap().len(), 3);
+    assert_eq!(out["aggregateResults"][0], by_customer);
+    let unshared = sharing(
+        &["commerce"],
+        &["conversation_text", "business_facts"],
+        &[],
+        true,
+    );
+    assert_eq!(
+        unshared.project(&context)["aggregateResults"],
+        json!([refused])
+    );
+    // Offers: only what the selection lets the provider receive.
+    let sources = json!({"sources":[{"module":"billing","available":true},{"module":"commerce","available":true},{"module":"purchasing","available":false},{"module":"crm","available":true}]});
+    let offers = super::super::aggregate::offers(&facts, &sources);
+    assert_eq!(
+        offers,
+        json!([{"module":"billing","collection":"invoices","measures":["count"],"sumFields":[],"groupBy":["status","month"],"filters":["status","dateFrom","dateTo","companyId"],"dateField":"issued","filterValues":{"status":["draft","issued","settled","void"]}}])
+            .as_array()
+            .unwrap()
+            .clone()
+    );
+    let mut wide = all.clone();
+    wide.policy.modules.insert("commerce".into());
+    wide.policy.modules.insert("purchasing".into());
+    let offers = super::super::aggregate::offers(&wide, &sources);
+    assert_eq!(offers.len(), 2, "an unavailable module offers nothing");
+    assert_eq!(offers[0]["module"], "billing");
+    assert_eq!(offers[0]["measures"], json!(["count", "sum"]));
+    assert_eq!(
+        offers[0]["sumFields"],
+        json!(["gross", "outstanding", "tax"])
+    );
+    assert_eq!(offers[0]["groupBy"], json!(["status", "customer", "month"]));
+    assert_eq!(offers[1]["module"], "commerce");
+    assert_eq!(offers[1]["sumFields"], json!(["total"]));
+    let silent = sharing(
+        &["billing"],
+        &["conversation_text", "names", "financial_amounts"],
+        &[],
+        true,
+    );
+    assert!(super::super::aggregate::offers(&silent, &sources).is_empty());
+}
+#[test]
+fn the_selected_companys_trade_unit_is_shared_as_a_business_fact_only() {
+    let context = json!({"sources":[],"companyId":"00000000-0000-4000-8000-000000000001","tradeCurrency":{"currency":"USD","unit":"minor","unitLabel":"minor units of USD"}});
+    let facts = sharing(
+        &["commerce"],
+        &["conversation_text", "business_facts"],
+        &[],
+        true,
+    );
+    assert_eq!(facts.project(&context)["tradeCurrency"]["currency"], "USD");
+    let names = sharing(&["commerce"], &["conversation_text", "names"], &[], true);
+    assert!(names.project(&context).get("tradeCurrency").is_none());
+}

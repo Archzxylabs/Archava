@@ -38,12 +38,76 @@ pub struct Module {
     /// Response collections the provider projection may read. Anything not
     /// listed stays withheld.
     pub collections: &'static [&'static str],
+    /// Aggregate lookups the agent may request: a closed list per collection.
+    /// Anything not named here is refused.
+    pub aggregates: &'static [Aggregate],
     /// Other words an owner may call this module by when configuring the
     /// workspace in chat (`hotel`, `penginapan`). The id always counts.
     pub owner_aliases: &'static [&'static str],
     /// Module ids that must be enabled for this one to be enabled. Empty means
     /// the module needs only the mandatory base.
     pub owner_requires: &'static [&'static str],
+}
+
+/// One collection the agent may ask a count or a sum over, as declared under
+/// `agent.aggregates`. The names are public vocabulary; the SQL behind each
+/// one is fixed in the adapters (`archava_adapters::erp::aggregates`), which
+/// refuses a name it does not implement.
+#[derive(Debug)]
+pub struct Aggregate {
+    /// One of the module's provider-readable collections.
+    pub collection: &'static str,
+    /// Integer amount fields a sum may name. A count is always offered.
+    pub sums: &'static [&'static str],
+    /// What the result may be grouped by.
+    pub dimensions: &'static [AggregateDimension],
+    /// Filters a request may carry.
+    pub filters: &'static [&'static str],
+    /// Which date the `dateFrom`/`dateTo` filters and the `month` dimension
+    /// read (`issued`, `created`).
+    pub date: &'static str,
+}
+
+/// A group-by dimension and the data class of the owner's AI sharing policy
+/// its labels belong to (`business_facts`, `names`).
+#[derive(Debug)]
+pub struct AggregateDimension {
+    pub id: &'static str,
+    pub class: &'static str,
+}
+
+fn leak_aggregates(value: &Value) -> &'static [Aggregate] {
+    let Some(items) = value.as_array() else {
+        assert!(
+            value.is_null(),
+            "embedded module registry: `agent.aggregates` must be an array"
+        );
+        return &[];
+    };
+    Box::leak(
+        items
+            .iter()
+            .map(|item| Aggregate {
+                collection: leak(&item["collection"], "agent.aggregates.collection"),
+                sums: leak_list(&item["sums"], "agent.aggregates.sums"),
+                dimensions: Box::leak(
+                    item["dimensions"]
+                        .as_array()
+                        .expect("embedded module registry: `agent.aggregates.dimensions` must be an array")
+                        .iter()
+                        .map(|dimension| AggregateDimension {
+                            id: leak(&dimension["id"], "agent.aggregates.dimensions.id"),
+                            class: leak(&dimension["class"], "agent.aggregates.dimensions.class"),
+                        })
+                        .collect::<Vec<_>>()
+                        .into_boxed_slice(),
+                ),
+                filters: leak_list(&item["filters"], "agent.aggregates.filters"),
+                date: leak(&item["date"], "agent.aggregates.date"),
+            })
+            .collect::<Vec<_>>()
+            .into_boxed_slice(),
+    )
 }
 
 fn leak(value: &Value, field: &str) -> &'static str {
@@ -99,11 +163,20 @@ pub fn all() -> &'static [Module] {
                     .expect("embedded module registry: `agent.rank` must be a small integer"),
                 keywords: leak_list(&m["agent"]["keywords"], "agent.keywords"),
                 collections: leak_list(&m["agent"]["collections"], "agent.collections"),
+                aggregates: leak_aggregates(&m["agent"]["aggregates"]),
                 owner_aliases: leak_optional_list(&m["owner"]["aliases"], "owner.aliases"),
                 owner_requires: leak_optional_list(&m["owner"]["requires"], "owner.requires"),
             })
             .collect()
     })
+}
+
+/// The aggregate declared for one collection of a module, if any.
+pub fn aggregate(module: &str, collection: &str) -> Option<&'static Aggregate> {
+    get(module)?
+        .aggregates
+        .iter()
+        .find(|aggregate| aggregate.collection == collection)
 }
 
 /// The module with this public id, if it is installed.
@@ -158,6 +231,61 @@ mod tests {
             assert_eq!(get(module.id).map(|m| m.namespace), Some(module.namespace));
         }
         assert!(get("unknown").is_none());
+    }
+
+    #[test]
+    fn aggregates_are_declared_over_readable_collections_with_known_label_classes() {
+        let mut declared = Vec::new();
+        for module in all() {
+            for aggregate in module.aggregates {
+                assert!(
+                    module.collections.contains(&aggregate.collection),
+                    "{}.{} is not provider-readable",
+                    module.id,
+                    aggregate.collection
+                );
+                assert!(!aggregate.dimensions.is_empty() && !aggregate.filters.is_empty());
+                for dimension in aggregate.dimensions {
+                    assert!(
+                        matches!(dimension.class, "business_facts" | "names"),
+                        "{}.{} dimension {}",
+                        module.id,
+                        aggregate.collection,
+                        dimension.id
+                    );
+                }
+                let names: BTreeSet<_> = aggregate.dimensions.iter().map(|d| d.id).collect();
+                assert_eq!(names.len(), aggregate.dimensions.len());
+                assert!(!aggregate.sums.contains(&"count"), "count is implicit");
+                declared.push((module.id, aggregate.collection));
+            }
+        }
+        assert_eq!(
+            declared,
+            [
+                ("commerce", "orders"),
+                ("purchasing", "orders"),
+                ("billing", "invoices")
+            ],
+            "a new aggregate needs its SQL in the adapters and a disclosure review"
+        );
+        let invoices = aggregate("billing", "invoices").unwrap();
+        assert_eq!(invoices.sums, ["gross", "outstanding", "tax"]);
+        assert_eq!(invoices.date, "issued");
+        assert_eq!(
+            invoices
+                .dimensions
+                .iter()
+                .map(|d| (d.id, d.class))
+                .collect::<Vec<_>>(),
+            [
+                ("status", "business_facts"),
+                ("customer", "names"),
+                ("month", "business_facts")
+            ]
+        );
+        assert!(aggregate("billing", "payments").is_none());
+        assert!(aggregate("crm", "contacts").is_none());
     }
 
     #[test]

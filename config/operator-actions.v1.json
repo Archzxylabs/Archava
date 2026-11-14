@@ -312,7 +312,8 @@
               "name": "price",
               "label": "Price",
               "kind": "integer",
-              "default": 0
+              "default": 0,
+              "description": "The selling price of one unit, in the product's currency. An integer in the record's own currency unit: whole Rupiah when the currency is IDR (150000 is Rp 150.000), the currency's ISO minor unit otherwise (1999 is USD 19.99, 1500 is JPY 1500). A company's records use the currency of its accounting book; a record without a company is IDR."
             }
           ]
         },
@@ -338,7 +339,8 @@
               "name": "price",
               "label": "Price",
               "kind": "integer",
-              "default": 0
+              "default": 0,
+              "description": "The selling price of one unit, in the product's currency. An integer in the record's own currency unit: whole Rupiah when the currency is IDR (150000 is Rp 150.000), the currency's ISO minor unit otherwise (1999 is USD 19.99, 1500 is JPY 1500). A company's records use the currency of its accounting book; a record without a company is IDR."
             },
             {
               "name": "active",
@@ -376,7 +378,8 @@
               "label": "Unit cost minor",
               "kind": "integer",
               "default": 0,
-              "optional": true
+              "optional": true,
+              "description": "The cost of one unit, in the product's currency. An integer in the record's own currency unit: whole Rupiah when the currency is IDR (150000 is Rp 150.000), the currency's ISO minor unit otherwise (1999 is USD 19.99, 1500 is JPY 1500). A company's records use the currency of its accounting book; a record without a company is IDR."
             }
           ]
         },
@@ -669,7 +672,8 @@
               "name": "price",
               "label": "Price",
               "kind": "integer",
-              "default": 0
+              "default": 0,
+              "description": "The selling price of one unit, in the product's currency. An integer in the record's own currency unit: whole Rupiah when the currency is IDR (150000 is Rp 150.000), the currency's ISO minor unit otherwise (1999 is USD 19.99, 1500 is JPY 1500). A company's records use the currency of its accounting book; a record without a company is IDR."
             }
           ]
         },
@@ -712,7 +716,8 @@
               "label": "Unit cost minor",
               "kind": "integer",
               "default": 0,
-              "optional": true
+              "optional": true,
+              "description": "The cost of one unit, in the product's currency. An integer in the record's own currency unit: whole Rupiah when the currency is IDR (150000 is Rp 150.000), the currency's ISO minor unit otherwise (1999 is USD 19.99, 1500 is JPY 1500). A company's records use the currency of its accounting book; a record without a company is IDR."
             }
           ]
         },
@@ -936,7 +941,8 @@
               "name": "unitCost",
               "label": "Unit cost",
               "kind": "integer",
-              "default": 0
+              "default": 0,
+              "description": "The supplier's cost of one unit, in the product's currency. An integer in the record's own currency unit: whole Rupiah when the currency is IDR (150000 is Rp 150.000), the currency's ISO minor unit otherwise (1999 is USD 19.99, 1500 is JPY 1500). A company's records use the currency of its accounting book; a record without a company is IDR."
             }
           ]
         },
@@ -968,7 +974,8 @@
               "name": "unitCost",
               "label": "Unit cost",
               "kind": "integer",
-              "default": 0
+              "default": 0,
+              "description": "The supplier's cost of one unit, in the product's currency. An integer in the record's own currency unit: whole Rupiah when the currency is IDR (150000 is Rp 150.000), the currency's ISO minor unit otherwise (1999 is USD 19.99, 1500 is JPY 1500). A company's records use the currency of its accounting book; a record without a company is IDR."
             }
           ]
         },
@@ -1228,7 +1235,8 @@
               "label": "Landed fee minor",
               "kind": "integer",
               "default": 0,
-              "optional": true
+              "optional": true,
+              "description": "The freight and handling fee of this receipt as a whole, in the purchase order's currency. An integer in the record's own currency unit: whole Rupiah when the currency is IDR (150000 is Rp 150.000), the currency's ISO minor unit otherwise (1999 is USD 19.99, 1500 is JPY 1500). A company's records use the currency of its accounting book; a record without a company is IDR."
             },
             {
               "name": "allocationBasis",
@@ -1389,7 +1397,8 @@
             {
               "name": "declaredTotal",
               "label": "declaredTotal",
-              "kind": "integer"
+              "kind": "integer",
+              "description": "The net goods total printed on the supplier's document, in the document's currency. An integer in the record's own currency unit: whole Rupiah when the currency is IDR (150000 is Rp 150.000), the currency's ISO minor unit otherwise (1999 is USD 19.99, 1500 is JPY 1500). A company's records use the currency of its accounting book; a record without a company is IDR."
             },
             {
               "name": "lines",
@@ -1413,7 +1422,8 @@
                   {
                     "name": "unitCost",
                     "label": "unitCost",
-                    "kind": "integer"
+                    "kind": "integer",
+                    "description": "The supplier's cost of one unit, in the product's currency. An integer in the record's own currency unit: whole Rupiah when the currency is IDR (150000 is Rp 150.000), the currency's ISO minor unit otherwise (1999 is USD 19.99, 1500 is JPY 1500). A company's records use the currency of its accounting book; a record without a company is IDR."
                   }
                 ]
               }
@@ -1473,7 +1483,8 @@
             {
               "name": "declaredTotal",
               "label": "declaredTotal",
-              "kind": "integer"
+              "kind": "integer",
+              "description": "The net goods total printed on the supplier's document, in the document's currency. An integer in the record's own currency unit: whole Rupiah when the currency is IDR (150000 is Rp 150.000), the currency's ISO minor unit otherwise (1999 is USD 19.99, 1500 is JPY 1500). A company's records use the currency of its accounting book; a record without a company is IDR."
             },
             {
               "name": "lines",
@@ -1497,7 +1508,8 @@
                   {
                     "name": "unitCost",
                     "label": "unitCost",
-                    "kind": "integer"
+                    "kind": "integer",
+                    "description": "The supplier's cost of one unit, in the product's currency. An integer in the record's own currency unit: whole Rupiah when the currency is IDR (150000 is Rp 150.000), the currency's ISO minor unit otherwise (1999 is USD 19.99, 1500 is JPY 1500). A company's records use the currency of its accounting book; a record without a company is IDR."
                   }
                 ]
               }
@@ -1659,7 +1671,8 @@
                     "name": "unitMinor",
                     "label": "Unit minor",
                     "kind": "integer",
-                    "default": 0
+                    "default": 0,
+                    "description": "The price of one unit of this line, in the invoice's currency. An integer in the record's own currency unit: whole Rupiah when the currency is IDR (150000 is Rp 150.000), the currency's ISO minor unit otherwise (1999 is USD 19.99, 1500 is JPY 1500). A company's records use the currency of its accounting book; a record without a company is IDR."
                   }
                 ]
               },
@@ -1755,7 +1768,8 @@
               "name": "amountMinor",
               "label": "Amount minor",
               "kind": "integer",
-              "default": 0
+              "default": 0,
+              "description": "The signed correction to what is owed, in the invoice's currency: negative reduces it. An integer in the record's own currency unit: whole Rupiah when the currency is IDR (150000 is Rp 150.000), the currency's ISO minor unit otherwise (1999 is USD 19.99, 1500 is JPY 1500). A company's records use the currency of its accounting book; a record without a company is IDR."
             },
             {
               "name": "reason",
@@ -1827,7 +1841,8 @@
               "name": "amountMinor",
               "label": "Amount minor",
               "kind": "integer",
-              "default": 0
+              "default": 0,
+              "description": "The amount of the payment attempt, in the invoice's currency. An integer in the record's own currency unit: whole Rupiah when the currency is IDR (150000 is Rp 150.000), the currency's ISO minor unit otherwise (1999 is USD 19.99, 1500 is JPY 1500). A company's records use the currency of its accounting book; a record without a company is IDR."
             },
             {
               "name": "providerRef",
@@ -1884,7 +1899,8 @@
               "name": "amountMinor",
               "label": "Amount minor",
               "kind": "integer",
-              "default": 0
+              "default": 0,
+              "description": "The amount the payment provider reported, in the invoice's currency. An integer in the record's own currency unit: whole Rupiah when the currency is IDR (150000 is Rp 150.000), the currency's ISO minor unit otherwise (1999 is USD 19.99, 1500 is JPY 1500). A company's records use the currency of its accounting book; a record without a company is IDR."
             },
             {
               "name": "currency",
@@ -2014,7 +2030,7 @@
               "label": "Amount to reverse, in the invoice's unit",
               "kind": "integer",
               "min": 1,
-              "description": "A positive integer in the invoice's own currency and unit; at most the receipt's amount less what was already reversed."
+              "description": "A positive integer in the invoice's own currency and unit; at most the receipt's amount less what was already reversed. Whole Rupiah for IDR (150000 is Rp 150.000); the currency's ISO minor unit otherwise (1999 is USD 19.99)."
             },
             {
               "name": "reason",

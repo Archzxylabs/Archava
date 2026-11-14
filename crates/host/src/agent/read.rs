@@ -111,6 +111,7 @@ pub(super) async fn context(
     let before = fingerprint(state, tenant, actor, modules).await?;
     let mut sources = Vec::new();
     let mut selected_company = None;
+    let mut trade_currency = None;
     if let Some(company) = company {
         let mut tx = begin(state, tenant, actor).await?;
         let stamp = archava_adapters::erp::company_trade::resolve(
@@ -124,6 +125,16 @@ pub(super) async fn context(
         selected_company = Some(
             json!({"id":stamp.id,"revision":stamp.revision,"code":stamp.code,"legalName":stamp.name,"active":stamp.active}),
         );
+        // The company's trade currency is its book's (IDR without a book), read
+        // by the same rule the Commerce workspace reports as `tradeCurrency`.
+        let currency = archava_adapters::erp::commerce_kernel::company_trade_currency(
+            tx.checked_executor().await.map_err(unavailable)?,
+            tenant.as_str(),
+            company,
+        )
+        .await
+        .map_err(unavailable)?;
+        trade_currency = Some(super::units::describe(&currency));
         tx.commit().await.map_err(unavailable)?;
     }
     for module in modules {
@@ -212,9 +223,11 @@ pub(super) async fn context(
             "agent_context_access_changed",
         ));
     }
-    Ok(
-        json!({"sources":sources,"accessHash":fingerprint,"observedAt":observed,"bounded":true,"companyId":company,"note":"These are bounded authorized records in the selected company or legacy scope, not complete workspace totals."}),
-    )
+    let mut context = json!({"sources":sources,"accessHash":fingerprint,"observedAt":observed,"bounded":true,"companyId":company,"note":"These are bounded authorized records in the selected company or legacy scope, not complete workspace totals."});
+    if let Some(trade_currency) = trade_currency {
+        context["tradeCurrency"] = trade_currency;
+    }
+    Ok(context)
 }
 pub(super) async fn fingerprint(
     state: &AppState,

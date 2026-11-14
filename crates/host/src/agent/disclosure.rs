@@ -78,6 +78,68 @@ impl Permit {
     pub fn modules(&self) -> Vec<String> {
         self.policy.modules.iter().cloned().collect()
     }
+    /// Whether the approved selection lets an aggregate of this shape reach
+    /// the provider, by the rule that governs record fields: the module must
+    /// be shared, and every part of the result must belong to a shared data
+    /// category. A count, a state, a currency and a date are business facts;
+    /// a sum is a financial amount; a group label carries the category its
+    /// dimension declares in the module registry (customer and supplier names
+    /// are `names`). An undeclared or unknown category is never shared.
+    pub fn aggregate_refusal(
+        &self,
+        module: &str,
+        sum: bool,
+        label_class: Option<&str>,
+    ) -> Option<(&'static str, Option<&'static str>)> {
+        if !self.policy.modules.contains(module) {
+            return Some(("aggregate_module_not_shared", None));
+        }
+        let mut needed = vec![DataClass::BusinessFacts];
+        if sum {
+            needed.push(DataClass::FinancialAmounts);
+        }
+        if let Some(class) = label_class {
+            match DataClass::ALL.iter().find(|c| c.as_str() == class) {
+                Some(class) => needed.push(*class),
+                None => return Some(("aggregate_data_class_not_shared", None)),
+            }
+        }
+        needed
+            .into_iter()
+            .find(|class| !self.policy.data_classes.contains(class))
+            .map(|class| ("aggregate_data_class_not_shared", Some(class.as_str())))
+    }
+    /// The company rows an aggregate may count for the provider: the selected
+    /// company of a company-scoped turn, otherwise the approved companies the
+    /// actor can still read, and records without a company only under their
+    /// own flag. Empty company selection never means all companies.
+    pub fn aggregate_scope(
+        &self,
+        company: Option<Uuid>,
+    ) -> archava_adapters::erp::aggregates::CompanyScope {
+        let shared = |id: &Uuid| self.policy.company_allowed(Some(&id.to_string()));
+        match company {
+            Some(id) => archava_adapters::erp::aggregates::CompanyScope {
+                companies: Some(Some(id).into_iter().filter(shared).collect()),
+                unassigned: false,
+            },
+            None => archava_adapters::erp::aggregates::CompanyScope {
+                companies: Some(
+                    self.policy
+                        .companies
+                        .iter()
+                        .filter_map(|id| Uuid::parse_str(id).ok())
+                        .collect(),
+                ),
+                unassigned: self.policy.include_workspace_records,
+            },
+        }
+    }
+    pub fn shares_references(&self) -> bool {
+        self.policy
+            .data_classes
+            .contains(&DataClass::RecordReferences)
+    }
     pub fn stamp(&self) -> Value {
         json!({"policyHash":self.identity,"providerBinding":self.policy.provider_binding,
             "modules":self.policy.modules,"dataClasses":self.policy.data_classes,
@@ -194,6 +256,21 @@ impl Permit {
                 }
             }
             out["requestedReferenceIds"] = json!(ids);
+        }
+        // The unit of the selected company's trade amounts is a business fact.
+        if self.policy.data_classes.contains(&DataClass::BusinessFacts)
+            && context["tradeCurrency"].is_object()
+        {
+            out["tradeCurrency"] = context["tradeCurrency"].clone();
+        }
+        // Aggregates were computed for this selection; a result of a module
+        // that is no longer shared, or one that fails the category rule
+        // again here, is dropped rather than trusted.
+        if let Some(results) = context["aggregateResults"].as_array() {
+            out["aggregateResults"] = json!(results
+                .iter()
+                .filter_map(|result| super::aggregate::provider_view(self, result))
+                .collect::<Vec<_>>());
         }
         if let Some(results) = context["lookupResults"].as_array() {
             let coverage=results.iter().filter(|r|r["module"].as_str().is_some_and(|m|self.policy.modules.contains(m))).map(|r| {

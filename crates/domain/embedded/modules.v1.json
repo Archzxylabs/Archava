@@ -59,6 +59,35 @@
         "collections": [
           "products",
           "orders"
+        ],
+        "aggregates": [
+          {
+            "collection": "orders",
+            "sums": [
+              "total"
+            ],
+            "dimensions": [
+              {
+                "id": "state",
+                "class": "business_facts"
+              },
+              {
+                "id": "customer",
+                "class": "names"
+              },
+              {
+                "id": "month",
+                "class": "business_facts"
+              }
+            ],
+            "filters": [
+              "state",
+              "dateFrom",
+              "dateTo",
+              "companyId"
+            ],
+            "date": "created"
+          }
         ]
       },
       "owner": {
@@ -94,6 +123,35 @@
           "offers",
           "orders",
           "documents"
+        ],
+        "aggregates": [
+          {
+            "collection": "orders",
+            "sums": [
+              "total"
+            ],
+            "dimensions": [
+              {
+                "id": "state",
+                "class": "business_facts"
+              },
+              {
+                "id": "supplier",
+                "class": "names"
+              },
+              {
+                "id": "month",
+                "class": "business_facts"
+              }
+            ],
+            "filters": [
+              "state",
+              "dateFrom",
+              "dateTo",
+              "companyId"
+            ],
+            "date": "created"
+          }
         ]
       },
       "owner": {
@@ -128,6 +186,37 @@
         ],
         "collections": [
           "invoices"
+        ],
+        "aggregates": [
+          {
+            "collection": "invoices",
+            "sums": [
+              "gross",
+              "outstanding",
+              "tax"
+            ],
+            "dimensions": [
+              {
+                "id": "status",
+                "class": "business_facts"
+              },
+              {
+                "id": "customer",
+                "class": "names"
+              },
+              {
+                "id": "month",
+                "class": "business_facts"
+              }
+            ],
+            "filters": [
+              "status",
+              "dateFrom",
+              "dateTo",
+              "companyId"
+            ],
+            "date": "issued"
+          }
         ]
       },
       "owner": {
