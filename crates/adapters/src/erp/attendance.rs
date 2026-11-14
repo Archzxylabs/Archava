@@ -148,6 +148,8 @@ pub async fn resolve_attendance_context(
     .await
     .map_err(|error| match error {
         PurchaseError::Domain(domain) => AttendanceError::Domain(domain),
+        // This ledger's error type has no catalogued-reason variant yet.
+        PurchaseError::Refused(_) => AttendanceError::Domain(ErpError::Conflict),
         PurchaseError::Database { ledger, source } => AttendanceError::Database { ledger, source },
     })?
     .ok_or_else(forbidden)?;

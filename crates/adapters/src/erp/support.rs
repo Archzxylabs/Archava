@@ -144,6 +144,8 @@ pub async fn resolve_support_context(
     .await
     .map_err(|error| match error {
         PurchaseError::Domain(domain) => SupportError::Domain(domain),
+        // This ledger's error type has no catalogued-reason variant yet.
+        PurchaseError::Refused(_) => SupportError::Domain(ErpError::Conflict),
         PurchaseError::Database { ledger, source } => SupportError::Database { ledger, source },
     })?
     .ok_or_else(forbidden)?;
@@ -178,6 +180,8 @@ pub async fn resolve_support_context(
         .await
         .map_err(|error| match error {
             PurchaseError::Domain(domain) => SupportError::Domain(domain),
+            // This ledger's error type has no catalogued-reason variant yet.
+            PurchaseError::Refused(_) => SupportError::Domain(ErpError::Conflict),
             PurchaseError::Database { ledger, source } => SupportError::Database { ledger, source },
         })?
         .ok_or_else(forbidden)?;
@@ -488,6 +492,8 @@ tenant_id, id, case_id, author_id, body, request_id) VALUES($1, $2, $3, $4, $5, 
                         .await
                         .map_err(|error| match error {
                             PurchaseError::Domain(domain) => SupportError::Domain(domain),
+                            // This ledger's error type has no catalogued-reason variant yet.
+                            PurchaseError::Refused(_) => SupportError::Domain(ErpError::Conflict),
                             PurchaseError::Database { ledger, source } => {
                                 SupportError::Database { ledger, source }
                             }

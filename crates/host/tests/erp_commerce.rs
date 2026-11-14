@@ -621,6 +621,12 @@ async fn book_refused(f: &Fixture, app: &Router, session: &Value, company: &str,
     )
     .await;
     assert_eq!(status, StatusCode::CONFLICT, "{body}");
+    assert_eq!(body["decision"], "refused", "{body}");
+    assert_eq!(body["reason"], "conflict", "{body}");
+    assert_eq!(
+        body["detail"]["code"], "book_currency_conflicts_with_existing_trade",
+        "{body}"
+    );
     assert_eq!(books(f, company).await, Vec::<String>::new());
     let recorded: i64 = sqlx::query_scalar(
         "SELECT count(*) FROM archava_accounting.commands WHERE request_id=$1::uuid",
@@ -849,6 +855,50 @@ async fn the_database_refuses_a_currency_other_than_the_company_book() {
     let order = command(&app, &session, company_order(&company, &buyer, &[&item])).await;
     let message=refused_check(sqlx::query("INSERT INTO archava_commerce.order_lines(tenant_id,id,order_id,product_id,sku,title,unit,track_stock,quantity,price,product_revision) SELECT p.tenant_id,$1,$2::uuid,p.id,p.sku,p.title,p.unit,p.track_stock,1,p.price,p.revision FROM archava_commerce.products p WHERE p.tenant_id='acme' AND p.id=$3::uuid").bind(Uuid::new_v4()).bind(order["id"].as_str().unwrap()).bind(&legacy).execute(&f.admin_pool).await);
     assert_eq!(message, "Sales line is priced in another currency");
+    // The same refusal through the command names its reason: still a 409
+    // conflict, now with the catalogued code and sentence, in both languages.
+    let mixed = submission(company_order(&company, &buyer, &[&item, &legacy]));
+    for attempt in ["first", "replayed"] {
+        let (status, body) = call(
+            &app,
+            "POST",
+            "/erp/commerce/commands",
+            mixed.clone(),
+            Some(&session),
+        )
+        .await;
+        assert_eq!(status, StatusCode::CONFLICT, "{attempt} {body}");
+        assert_eq!(body["decision"], "refused", "{attempt} {body}");
+        assert_eq!(body["reason"], "conflict", "{attempt} {body}");
+        assert_eq!(
+            body["detail"]["code"], "sales_line_currency_mismatch",
+            "{attempt} {body}"
+        );
+        assert_eq!(body["message"], body["detail"]["message"], "{attempt}");
+        assert!(
+            body["message"]
+                .as_str()
+                .unwrap()
+                .starts_with("This product is priced in a different currency"),
+            "{attempt} {body}"
+        );
+        assert!(
+            body["detail"]["messageId"]
+                .as_str()
+                .unwrap()
+                .starts_with("Produk ini dihargai dalam mata uang yang berbeda"),
+            "{attempt} {body}"
+        );
+    }
+    // A refused command leaves no receipt, so its key is still unclaimed.
+    let recorded: i64 = sqlx::query_scalar(
+        "SELECT count(*) FROM archava_commerce.commands WHERE request_id=$1::uuid",
+    )
+    .bind(mixed["requestId"].as_str().unwrap())
+    .fetch_one(&f.admin_pool)
+    .await
+    .unwrap();
+    assert_eq!(recorded, 0, "the refused order leaves no command");
     let lines: i64 = sqlx::query_scalar(
         "SELECT count(*) FROM archava_commerce.order_lines WHERE order_id=$1::uuid",
     )

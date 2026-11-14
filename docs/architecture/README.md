@@ -96,6 +96,7 @@ These source maps distinguish implemented library behavior, host wiring and rema
 | Document | Purpose |
 | --- | --- |
 | [Module registry](MODULE_REGISTRY.md) | One descriptor per business module, its consumers, the registration gate and what is not yet covered |
+| [Refusal reasons](REFUSAL_REASONS.md) | Catalogue that gives a database guard's refusal a stable code and an English/Indonesian sentence, how the adapters and host carry it, and what is not covered |
 | [Agent runtime](../modules/AGENT_RUNTIME.md) | Durable conversations, reviewed goals, current-authority continuation and receipt reports |
 | [Native operations](../modules/NATIVE_OPERATIONS.md) | Installed form contracts, scoped reads, Owner configuration and receipt recovery |
 | [Reviewed workflows](../modules/REVIEWED_WORKFLOWS.md) | Atomic imports, real proactive actions and approved mission execution |

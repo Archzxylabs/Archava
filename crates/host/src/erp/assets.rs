@@ -148,6 +148,12 @@ fn map_purchase_result(error: PurchaseError) -> Result<(StatusCode, ErpBody), Er
         PurchaseError::Domain(ErpError::Forbidden) => Ok(forbidden()),
         PurchaseError::Domain(ErpError::NotFound) => Ok(unknown_resource()),
         PurchaseError::Domain(ErpError::Conflict) => Ok(conflict()),
+        // A conflict whose database guard is catalogued: the same 409 and
+        // `reason`, with the specific sentence and its code.
+        PurchaseError::Refused(refusal) => Ok((
+            StatusCode::CONFLICT,
+            ErpBody::Doc(crate::erp::refused_document(refusal)),
+        )),
         // The TS 400-class carrier — see the adapter header's refusal net.
         PurchaseError::Domain(ErpError::Unavailable) => Ok(invalid_submission()),
         PurchaseError::Database { ledger, source } => Err(ErpGateError::Database(ledger, source)),

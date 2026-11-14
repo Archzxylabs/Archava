@@ -223,10 +223,26 @@ pub async fn lock_document_products_scoped(
     company: Option<Uuid>,
     currency: &str,
 ) -> Result<Vec<ProductRow>, PurchaseError> {
+    lock_document_products_refusing(connection, tenant, ids, owner_module, company, currency, "")
+        .await
+}
+/// [`lock_document_products_scoped`] for a caller whose database guard has a
+/// catalogued reason for a product in another currency: `mismatch` is that
+/// reason's code (`config/refusal-reasons.v1.json`), so the conflict decided
+/// here says what the guard would have. An unknown code is a plain conflict.
+pub async fn lock_document_products_refusing(
+    connection: &mut PgConnection,
+    tenant: &str,
+    ids: &[Uuid],
+    owner_module: &str,
+    company: Option<Uuid>,
+    currency: &str,
+    mismatch: &str,
+) -> Result<Vec<ProductRow>, PurchaseError> {
     let products =
         lock_trade_products_scoped(connection, tenant, ids, owner_module, company).await?;
     if products.iter().any(|product| product.currency != currency) {
-        return Err(PurchaseError::Domain(ErpError::Conflict));
+        return Err(super::refused_by_code(mismatch));
     }
     Ok(products)
 }

@@ -196,7 +196,8 @@ pub(super) async fn execute(
     )
     .await
     .map_err(|error| match error {
-        archava_adapters::erp::PurchaseError::Domain(_) => {
+        archava_adapters::erp::PurchaseError::Domain(_)
+        | archava_adapters::erp::PurchaseError::Refused(_) => {
             refused(StatusCode::FORBIDDEN, "purchasing_access_refused")
         }
         other => workflows::unavailable(other),

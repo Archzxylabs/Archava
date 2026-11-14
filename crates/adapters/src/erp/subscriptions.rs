@@ -160,6 +160,8 @@ pub async fn resolve_subscriptions_context(
     .await
     .map_err(|error| match error {
         PurchaseError::Domain(domain) => SubscriptionError::Domain(domain),
+        // This ledger's error type has no catalogued-reason variant yet.
+        PurchaseError::Refused(_) => SubscriptionError::Domain(ErpError::Conflict),
         PurchaseError::Database { ledger, source } => {
             SubscriptionError::Database { ledger, source }
         }
@@ -199,6 +201,8 @@ pub async fn resolve_subscriptions_context(
         .await
         .map_err(|error| match error {
             PurchaseError::Domain(domain) => SubscriptionError::Domain(domain),
+            // This ledger's error type has no catalogued-reason variant yet.
+            PurchaseError::Refused(_) => SubscriptionError::Domain(ErpError::Conflict),
             PurchaseError::Database { ledger, source } => {
                 SubscriptionError::Database { ledger, source }
             }

@@ -1,7 +1,7 @@
 //! Invoice creation from explicit priced lines or a frozen native sales order.
 //! Called only inside the billing command's tenant transaction and receipt claim.
 use super::{
-    billing::{conflict, forbidden, refuses},
+    billing::{conflict, forbidden, refused, refuses},
     commerce_kernel::{lock_commerce_order, resolve_commerce_context},
     PurchaseError,
 };
@@ -86,8 +86,13 @@ async fn draft(
             // authorize_order already holds the source lock in this transaction.
             let order_id = Uuid::parse_str(order_id).map_err(|_| conflict())?;
             let order = lock_commerce_order(connection, tenant, order_id, "commerce").await?;
-            if order.state != "fulfilled" || order.revision != *expected_order_revision {
+            if order.revision != *expected_order_revision {
                 return Err(conflict());
+            }
+            // The same rules as the provenance guard (Billing 005), decided
+            // here so the refusal can say which one.
+            if order.state != "fulfilled" {
+                return Err(refused("invoice_order_not_fulfilled"));
             }
             let exists: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM archava_billing.invoices WHERE tenant_id=$1 AND source_order_id=$2)")
                 .bind(tenant).bind(order_id).fetch_one(&mut *connection).await.map_err(refuses)?;
@@ -106,7 +111,7 @@ async fn draft(
                     .map_err(refuses)?
                     != 0
                 {
-                    return Err(conflict());
+                    return Err(refused("invoice_order_has_returns"));
                 }
                 lines.push((
                     Some(row.try_get("id").map_err(refuses)?),

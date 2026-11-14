@@ -182,9 +182,10 @@ async fn opening_declarations_refuse_wrong_accounts_forged_references_and_edits(
     )
     .await;
     let start = journals(&s).await;
-    for (why, body) in [
+    for (why, code, body) in [
         (
             "an account that is not the policy's receivable account",
+            "opening_balance_wrong_control_account",
             opening(
                 &s.book,
                 "receivable",
@@ -196,6 +197,7 @@ async fn opening_declarations_refuse_wrong_accounts_forged_references_and_edits(
         ),
         (
             "a non-equity offset account",
+            "opening_balance_accounts_refused",
             opening(
                 &s.book,
                 "receivable",
@@ -207,10 +209,12 @@ async fn opening_declarations_refuse_wrong_accounts_forged_references_and_edits(
         ),
         (
             "a payable opening when the book declares no payable account",
+            "opening_balance_wrong_control_account",
             opening(&s.book, "payable", "OPEN-BAD-3", &s.ar, &equity, "1000"),
         ),
         (
             "a generic journal that takes the reserved reference",
+            "opening_reference_reserved",
             input(
                 json!({"type":"journal.draft","bookId":s.book["bookId"],"code":"OPEN-FAKE","date":OPENED,"sourceRef":"opening:receivable:OPEN-FAKE","memo":"Not a declaration","lines":[line(&s.ar,"1000","0"),line(&equity,"0","1000")],"reason":"A generic journal must not pose as an opening"}),
             ),
@@ -218,6 +222,7 @@ async fn opening_declarations_refuse_wrong_accounts_forged_references_and_edits(
     ] {
         let (st, v) = send(&s.app, &s.alice, &body).await;
         assert_eq!(st, StatusCode::CONFLICT, "{why}: {v}");
+        assert_refused_as(st, &v, code);
         assert_eq!(journals(&s).await, start, "{why} must write nothing");
     }
     for (field, value) in [

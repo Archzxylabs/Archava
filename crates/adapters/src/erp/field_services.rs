@@ -112,6 +112,8 @@ pub async fn resolve_field_context(
     .await
     .map_err(|error| match error {
         PurchaseError::Domain(domain) => FieldError::Domain(domain),
+        // This ledger's error type has no catalogued-reason variant yet.
+        PurchaseError::Refused(_) => FieldError::Domain(ErpError::Conflict),
         PurchaseError::Database { ledger, source } => FieldError::Database { ledger, source },
     })?
     .ok_or_else(forbidden)?;
@@ -145,6 +147,8 @@ pub async fn resolve_field_context(
         .await
         .map_err(|error| match error {
             PurchaseError::Domain(domain) => FieldError::Domain(domain),
+            // This ledger's error type has no catalogued-reason variant yet.
+            PurchaseError::Refused(_) => FieldError::Domain(ErpError::Conflict),
             PurchaseError::Database { ledger, source } => FieldError::Database { ledger, source },
         })?
         .ok_or_else(forbidden)?;

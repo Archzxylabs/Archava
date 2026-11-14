@@ -119,6 +119,12 @@ fn not_found() -> PurchaseError {
     PurchaseError::Domain(ErpError::NotFound)
 }
 
+/// A conflict the adapter decides before the database guard would, named by
+/// its catalogue code so the caller learns which rule refused.
+pub(super) fn refused(code: &str) -> PurchaseError {
+    super::refused_by_code(code)
+}
+
 /// Preserve the historical billing driver contract except the installed
 /// accounting source guards: a reviewed financial close, an amount beyond the
 /// ledger bound and an invoice in another currency than its company's book
@@ -130,7 +136,9 @@ pub(super) fn refuses(error: sqlx::Error) -> PurchaseError {
                 || e.message() == "Invoice currency differs from its company book"
                 || e.constraint() == Some("invoice_sources_amount_minor_check"))
     }) {
-        return conflict();
+        // The two message guards are catalogued; the amount bound is a
+        // column constraint and stays a plain conflict.
+        return super::catalogued_refusal(&error).map_or_else(conflict, PurchaseError::Refused);
     }
     PurchaseError::Database {
         ledger: BILLING_LEDGER,

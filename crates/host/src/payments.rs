@@ -159,7 +159,7 @@ impl IntoResponse for Failure {
             Self::Store(PurchaseError::Domain(ErpError::NotFound)) => {
                 (StatusCode::NOT_FOUND, "unknown_resource")
             }
-            Self::Store(PurchaseError::Domain(ErpError::Conflict)) => {
+            Self::Store(PurchaseError::Domain(ErpError::Conflict) | PurchaseError::Refused(_)) => {
                 (StatusCode::CONFLICT, "conflict")
             }
             Self::Invalid => (StatusCode::BAD_REQUEST, "invalid_submission"),

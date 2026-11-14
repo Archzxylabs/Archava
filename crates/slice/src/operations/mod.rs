@@ -336,9 +336,15 @@ fn record_id(body: &Value) -> String {
         .unwrap_or("")
         .to_string()
 }
+/// The sentence a refusal panel shows. A refusal whose reason is catalogued
+/// (`config/refusal-reasons.v1.json`) carries it as `detail.message`; that is
+/// preferred, so the specific reason shows whatever the general `message`
+/// says. Every other answer shows its `message` as before.
 fn message(answer: &Answer) -> String {
-    answer.body["message"]
+    answer.body["detail"]["message"]
         .as_str()
+        .filter(|sentence| !sentence.is_empty())
+        .or_else(|| answer.body["message"].as_str())
         .or_else(|| answer.body["error"]["message"].as_str())
         .unwrap_or("The operation could not be completed. Refresh the records before trying again.")
         .to_string()
@@ -851,6 +857,33 @@ pub fn exact_money(value: &Value, currency: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn a_refusal_panel_shows_the_catalogued_reason_when_the_answer_carries_one() {
+        let answer = |body| Answer { status: 409, body };
+        assert_eq!(
+            message(&answer(
+                json!({"decision":"refused","reason":"conflict","message":"General.","detail":{"code":"period_close_draft_journals","message":"Specific.","messageId":"Spesifik."}})
+            )),
+            "Specific."
+        );
+        assert_eq!(
+            message(&answer(
+                json!({"decision":"refused","reason":"conflict","message":"General."})
+            )),
+            "General."
+        );
+        assert_eq!(
+            message(&answer(
+                json!({"message":"General.","detail":{"code":"x","message":""}})
+            )),
+            "General."
+        );
+        assert_eq!(
+            message(&answer(json!({"error":{"message":"Nested."}}))),
+            "Nested."
+        );
+        assert!(message(&answer(json!({}))).starts_with("The operation could not be completed"));
+    }
     #[test]
     fn document_term_acknowledgement_binds_the_exact_reviewed_condition_and_both_versions() {
         for op in ["invoice_terms.set", "supplier_terms.set"] {

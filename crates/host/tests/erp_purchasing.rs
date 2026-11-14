@@ -1575,11 +1575,16 @@ async fn trade(app: &Router, session: &Session, domain: &str, command: Value) ->
     assert_eq!(status, StatusCode::OK, "{body}");
     body["receipt"].clone()
 }
-/// A refused command: a conflict that recorded no purchasing command.
-async fn trade_refused(f: &Fixture, app: &Router, session: &Session, command: Value) {
+/// A refused command: a conflict that recorded no purchasing command, and
+/// that answers a replay of the same request the same way. Returns the answer.
+async fn trade_refused(f: &Fixture, app: &Router, session: &Session, command: Value) -> Value {
     let request_id = Uuid::new_v4();
-    let (status, body) = trade_try(app, session, "purchasing", request_id, command).await;
+    let (status, body) = trade_try(app, session, "purchasing", request_id, command.clone()).await;
     assert_eq!(status, StatusCode::CONFLICT, "{body}");
+    assert_eq!(body["decision"], "refused", "{body}");
+    assert_eq!(body["reason"], "conflict", "{body}");
+    let replayed = trade_try(app, session, "purchasing", request_id, command).await;
+    assert_eq!(replayed, (status, body.clone()));
     let recorded: i64 =
         sqlx::query_scalar("SELECT count(*) FROM archava_purchasing.commands WHERE request_id=$1")
             .bind(request_id)
@@ -1587,6 +1592,15 @@ async fn trade_refused(f: &Fixture, app: &Router, session: &Session, command: Va
             .await
             .unwrap();
     assert_eq!(recorded, 0);
+    body
+}
+/// The catalogued reason a refusal names (`config/refusal-reasons.v1.json`).
+fn assert_reason(body: &Value, code: &str) {
+    assert_eq!(body["detail"]["code"], code, "{body}");
+    let refusal = archava_domain::erp::refusals::for_code(code).expect("a catalogued code");
+    assert_eq!(body["message"], refusal.message.as_str(), "{body}");
+    assert_eq!(body["detail"]["message"], refusal.message.as_str());
+    assert_eq!(body["detail"]["messageId"], refusal.message_id.as_str());
 }
 async fn organization_command(app: &Router, session: &Session, kind: &str, data: Value) -> Value {
     let (status, body) = post(
@@ -1673,6 +1687,8 @@ async fn book_refused(f: &Fixture, app: &Router, session: &Session, company: &st
     )
     .await;
     assert_eq!(status, StatusCode::CONFLICT, "{body}");
+    assert_eq!(body["reason"], "conflict", "{body}");
+    assert_reason(&body, "book_currency_conflicts_with_existing_trade");
     assert_eq!(books(f, company).await, Vec::<String>::new());
     let recorded: i64 =
         sqlx::query_scalar("SELECT count(*) FROM archava_accounting.commands WHERE request_id=$1")
@@ -2075,13 +2091,14 @@ async fn the_database_refuses_a_purchase_currency_other_than_the_company_book() 
     );
     let message = refused_check(insert_offer(&f, &supplier, &spare, Some("IDR")).await);
     assert_eq!(message, "Currency differs from the company book");
-    trade_refused(
+    let refused = trade_refused(
         &f,
         &app,
         &session,
         json!({"operation":"offer.create","supplierId":supplier,"productId":spare,"unitCost":6000}),
     )
     .await;
+    assert_reason(&refused, "offer_currency_differs_from_product");
     // An offer on a product without a company is IDR whatever books exist.
     let unowned=trade(&app,&session,"commerce",json!({"operation":"product.create","sku":"NO-COMPANY","title":"Unowned product","unit":"unit","trackStock":true,"price":10000})).await;
     let unowned = unowned["id"].as_str().unwrap();
@@ -2100,20 +2117,22 @@ async fn the_database_refuses_a_purchase_currency_other_than_the_company_book() 
     // product cannot enter its USD order, by command or by row.
     let offer = trade_offer(&app, &session, &supplier, &item, 1250).await;
     assert_eq!(stored_currency(&f, "offers", &offer).await, "USD");
-    trade_refused(
+    let refused = trade_refused(
         &f,
         &app,
         &session,
         company_purchase(&company, &supplier, &[&offer, &legacy_offer], 2),
     )
     .await;
-    trade_refused(
+    assert_reason(&refused, "purchase_line_currency_mismatch");
+    let refused = trade_refused(
         &f,
         &app,
         &session,
         company_purchase(&company, &supplier, &[&legacy_offer], 2),
     )
     .await;
+    assert_reason(&refused, "purchase_line_currency_mismatch");
     let order = trade(
         &app,
         &session,
@@ -2125,7 +2144,8 @@ async fn the_database_refuses_a_purchase_currency_other_than_the_company_book() 
     assert_eq!(stored_currency(&f, "orders", order).await, "USD");
     let message=refused_check(sqlx::query("INSERT INTO archava_purchasing.lines(tenant_id,id,order_id,offer_id,offer_revision,product_id,sku,title,unit,quantity,unit_cost) SELECT o.tenant_id,$1,$2::uuid,o.id,o.revision,p.id,p.sku,p.title,p.unit,1,o.unit_cost FROM archava_purchasing.offers o JOIN archava_commerce.products p ON p.tenant_id=o.tenant_id AND p.id=o.product_id WHERE o.id=$3::uuid").bind(Uuid::new_v4()).bind(order).bind(&legacy_offer).execute(&f.admin_pool).await);
     assert_eq!(message, "Purchase line is priced in another currency");
-    trade_refused(&f,&app,&session,json!({"operation":"order.replace-lines","id":order,"expectedRevision":1,"reason":"Mix in the earlier offer","lines":[{"offerId":offer,"quantity":2},{"offerId":legacy_offer,"quantity":1}]})).await;
+    let refused = trade_refused(&f,&app,&session,json!({"operation":"order.replace-lines","id":order,"expectedRevision":1,"reason":"Mix in the earlier offer","lines":[{"offerId":offer,"quantity":2},{"offerId":legacy_offer,"quantity":1}]})).await;
+    assert_reason(&refused, "purchase_line_currency_mismatch");
     let lines: i64 =
         sqlx::query_scalar("SELECT count(*) FROM archava_purchasing.lines WHERE order_id=$1::uuid")
             .bind(order)

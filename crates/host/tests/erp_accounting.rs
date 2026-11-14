@@ -95,6 +95,27 @@ async fn company(app: &Router, s: &Value, code: &str) -> Value {
 fn input(command: Value) -> Value {
     json!({"tenant":"acme","requestId":Uuid::new_v4(),"command":command})
 }
+/// A refusal whose database guard is catalogued
+/// (`config/refusal-reasons.v1.json`): the same 409 `conflict` as any other
+/// refusal, which now also names its reason.
+fn assert_refused_as(status: StatusCode, body: &Value, code: &str) {
+    assert_eq!(status, StatusCode::CONFLICT, "{body}");
+    assert_eq!(body["decision"], "refused", "{body}");
+    assert_eq!(body["reason"], "conflict", "{body}");
+    assert_eq!(body["detail"]["code"], code, "{body}");
+    let refusal = archava_domain::erp::refusals::for_code(code).expect("a catalogued code");
+    assert_eq!(body["message"], refusal.message.as_str(), "{body}");
+    assert_eq!(
+        body["detail"]["message"],
+        refusal.message.as_str(),
+        "{body}"
+    );
+    assert_eq!(
+        body["detail"]["messageId"],
+        refusal.message_id.as_str(),
+        "{body}"
+    );
+}
 async fn send(app: &Router, s: &Value, body: &Value) -> (StatusCode, Value) {
     call(
         app,
@@ -283,6 +304,14 @@ async fn a_non_idr_book_is_refused_once_the_company_owns_a_trade_record() {
             refused["command"]["code"] = json!(format!("{code}-{currency}"));
             let (st, v) = send(&app, &a, &refused).await;
             assert_eq!(st, StatusCode::CONFLICT, "{code} {currency} {v}");
+            assert_refused_as(st, &v, "book_currency_conflicts_with_existing_trade");
+            assert!(
+                v["message"]
+                    .as_str()
+                    .unwrap()
+                    .starts_with("This company already has products, orders or invoices in IDR"),
+                "{v}"
+            );
             let written: (i64, i64) = sqlx::query_as("SELECT (SELECT count(*) FROM archava_accounting.books WHERE company_id=$1),(SELECT count(*) FROM archava_accounting.commands WHERE request_id=$2::uuid)")
                 .bind(id)
                 .bind(refused["requestId"].as_str().unwrap())
@@ -291,7 +320,7 @@ async fn a_non_idr_book_is_refused_once_the_company_owns_a_trade_record() {
                 .unwrap();
             assert_eq!(written, (0, 0), "{code} {currency}");
         }
-        // The database gives the reason; the command reports a plain conflict.
+        // The command's reason above is the catalogue entry of this guard message.
         let direct = sqlx::query("INSERT INTO archava_accounting.books(tenant_id,id,company_id,company_revision,company_code,company_name,owner_id,code,name,currency,minor_units,currency_catalogue,source_authority,independent_posting) SELECT c.tenant_id,$1,c.id,c.revision,c.code,c.legal_name,'alice','DIRECT','Direct row','USD',2,'SIX-2026-09-17','native',true FROM archava_organizations.companies c WHERE c.id=$2")
             .bind(Uuid::new_v4())
             .bind(id)
@@ -553,7 +582,8 @@ async fn stale_accounts_unbalanced_lines_overlap_and_drafts_block_financial_fina
     let p = period(&app, &a, &book).await;
     let cash = account(&app, &a, &book, "BANK", "asset", "cash").await;
     let equity = account(&app, &a, &book, "EQUITY", "equity", "financing").await;
-    assert_eq!(send(&app,&a,&input(json!({"type":"period.open","bookId":book["bookId"],"code":"OVERLAP","startDate":"2026-11-30","endDate":"2026-12-31","reason":"Overlap refuses"}))).await.0,StatusCode::CONFLICT);
+    let (st, overlap) = send(&app,&a,&input(json!({"type":"period.open","bookId":book["bookId"],"code":"OVERLAP","startDate":"2026-11-30","endDate":"2026-12-31","reason":"Overlap refuses"}))).await;
+    assert_refused_as(st, &overlap, "period_overlaps_existing");
     assert_eq!(
         send(
             &app,
@@ -579,10 +609,13 @@ async fn stale_accounts_unbalanced_lines_overlap_and_drafts_block_financial_fina
     )
     .await;
     assert_eq!(st, StatusCode::OK, "{r}");
-    assert_eq!(
-        send(&app, &a, &action("period.close", &p)).await.0,
-        StatusCode::CONFLICT
-    );
+    // A draft journal blocks the close, and the refusal says so; sending the
+    // same request again is refused for the same reason.
+    let close = action("period.close", &p);
+    for _ in 0..2 {
+        let (st, refused) = send(&app, &a, &close).await;
+        assert_refused_as(st, &refused, "period_close_draft_journals");
+    }
     let mut inactive = action("account.set_active", &cash);
     inactive["command"]["active"] = json!(false);
     assert_eq!(send(&app, &a, &inactive).await.0, StatusCode::OK);
