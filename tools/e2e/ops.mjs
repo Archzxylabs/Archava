@@ -17,7 +17,7 @@ export async function verifyOps({ packageRoot, facts, scratch, productionEnviron
     return result.stdout.trim()
   }
   const bankTables=['bank_accounts','bank_statements','bank_rows','bank_allocations','bank_unmatches','bank_policies','bank_reconciliations']
-  const financialTables=['memberships','books','accounts','periods','journals','journal_lines','commands','audit','invoice_policies','invoice_sources','journal_sources','purchase_policies','purchase_origins','purchase_sources','purchase_journal_sources','stock_layer_origins','stock_policies','stock_sources','stock_journal_sources','payable_settlements','clearing_settlements','document_terms','opening_balances',...bankTables]
+  const financialTables=['memberships','books','accounts','periods','journals','journal_lines','commands','audit','invoice_policies','invoice_sources','journal_sources','purchase_policies','purchase_origins','purchase_sources','purchase_journal_sources','stock_layer_origins','stock_policies','stock_sources','stock_journal_sources','payable_settlements','clearing_settlements','document_terms','opening_balances','tax_codes',...bankTables]
   const financialProof=`json_build_object(${financialTables.map(table=>`'${table}',(SELECT json_build_object('rows',count(*),'digest',md5(coalesce(string_agg(to_jsonb(r)::text,'' ORDER BY to_jsonb(r)::text),''))) FROM archava_accounting.${table} r)`).join(',')})`
   const businessProof = database => JSON.parse(sql(database, `SELECT json_build_object(
     'contacts',(SELECT json_build_object('rows',count(*),'digest',md5(coalesce(string_agg(to_jsonb(c)::text,'' ORDER BY tenant_id,id),''))) FROM archava_crm.contacts c),
@@ -31,7 +31,7 @@ export async function verifyOps({ packageRoot, facts, scratch, productionEnviron
     const body = JSON.parse(result.stdout); assert.equal(body.ok, true); return body
   }
   const before = businessProof('archava_test'), captureStarted = performance.now()
-  assert.equal(financialTables.length,30)
+  assert.equal(financialTables.length,31)
   assert.ok(before.accounting.payable_settlements.rows>0,'Recovery must preserve actual supplier payments and returns')
   assert.ok(before.accounting.clearing_settlements.rows>0,'Recovery must preserve actual gateway bank payouts and refunds')
   assert.ok(before.accounting.document_terms.rows>=4,'Recovery must preserve nonempty reviewed invoice and supplier due terms')

@@ -48,6 +48,9 @@ pub async fn workspace(
         result["payablesSummary"] = payables::summary(conn, tenant, key).await?;
         result["payablesNotice"] = json!("Supplier payments record actual imported bank movements. Drafts reserve the bill and bank amount; separate posting recognizes payment. Only posted bank returns restore the payable. Terms, legacy opening balances and full subledger close require separate review.");
     }
+    if a.holds(&["tax.read"]) {
+        result["taxNotice"] = json!(tax::NOTICE);
+    }
     page::load(conn, tenant, key, page, a, &mut result).await?;
     Ok(result)
 }

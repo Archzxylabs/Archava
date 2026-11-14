@@ -41,6 +41,8 @@ pub mod stock;
 pub mod trade_money;
 // What a database guard refused, in words a person can act on.
 pub mod refusals;
+// Tax fractions and the two price bases (TAX.md rules 4 and 5).
+pub mod tax;
 
 // R07 cohorts (PACKET-007..010).
 pub mod attendance;

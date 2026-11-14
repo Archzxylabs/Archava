@@ -9,7 +9,7 @@ pub mod sources;
 pub mod stock_sources;
 pub mod terms;
 use super::{
-    accommodation::parse_calendar_date, purchasing::ValidationError, valid_code, valid_uuid,
+    accommodation::parse_calendar_date, purchasing::ValidationError, tax, valid_code, valid_uuid,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -34,6 +34,8 @@ pub const PERMISSIONS: &[&str] = &[
     "clearing.write",
     "terms.read",
     "terms.write",
+    "tax.read",
+    "tax.manage",
 ];
 pub const MAX_MINOR: i64 = 9_000_000_000_000_000;
 
@@ -170,6 +172,37 @@ pub enum Command {
         control_account: sources::AccountRef,
         offset_account: sources::AccountRef,
         amount_minor: String,
+        reason: String,
+    },
+    /// One version of a company's own tax code, stored as entered: it does not
+    /// apply until `tax_code.confirm`. Archava verifies no rate.
+    #[serde(rename = "tax_code.create", rename_all = "camelCase")]
+    TaxCodeCreate {
+        book_id: String,
+        code: String,
+        kind: tax::Kind,
+        rate: tax::Fraction,
+        #[serde(default = "tax::Fraction::one")]
+        base: tax::Fraction,
+        control_account: sources::AccountRef,
+        effective_from: String,
+        reason: String,
+    },
+    /// A reviewer confirms an entered version; from then on it applies.
+    #[serde(rename = "tax_code.confirm", rename_all = "camelCase")]
+    TaxCodeConfirm {
+        id: String,
+        expected_revision: i32,
+        reason: String,
+    },
+    /// Retire a confirmed version (`effectiveTo` is its last day) or withdraw
+    /// an entered one, which never applied and takes no last day.
+    #[serde(rename = "tax_code.retire", rename_all = "camelCase")]
+    TaxCodeRetire {
+        id: String,
+        expected_revision: i32,
+        #[serde(default)]
+        effective_to: Option<String>,
         reason: String,
     },
     #[serde(rename = "payable_payment.draft", rename_all = "camelCase")]
@@ -377,6 +410,9 @@ impl Command {
             Self::SupplierTermsSet { .. } => "supplier_terms.set",
             Self::ClearingSettlementDraft { .. } => "clearing_settlement.draft",
             Self::OpeningBalanceDraft { .. } => "opening_balance.draft",
+            Self::TaxCodeCreate { .. } => "tax_code.create",
+            Self::TaxCodeConfirm { .. } => "tax_code.confirm",
+            Self::TaxCodeRetire { .. } => "tax_code.retire",
             Self::PayablePaymentDraft { .. } => "payable_payment.draft",
             Self::PayableReturnDraft { .. } => "payable_return.draft",
             Self::BankPolicySet { .. } => "bank_policy.set",
@@ -407,6 +443,9 @@ impl Command {
         match self {
             Self::InvoiceTermsSet { .. } | Self::SupplierTermsSet { .. } => "terms.write",
             Self::ClearingSettlementDraft { .. } => "clearing.write",
+            Self::TaxCodeCreate { .. }
+            | Self::TaxCodeConfirm { .. }
+            | Self::TaxCodeRetire { .. } => "tax.manage",
             Self::PayablePaymentDraft { .. } | Self::PayableReturnDraft { .. } => "payables.write",
             Self::BankPolicySet { .. } => "bank.configure",
             Self::BankReconciliationConfirm { .. } => "bank.reconcile",
@@ -434,6 +473,9 @@ impl Command {
             Self::InvoiceTermsSet { reason, .. } | Self::SupplierTermsSet { reason, .. } => reason,
             Self::ClearingSettlementDraft { reason, .. } => reason,
             Self::OpeningBalanceDraft { reason, .. }
+            | Self::TaxCodeCreate { reason, .. }
+            | Self::TaxCodeConfirm { reason, .. }
+            | Self::TaxCodeRetire { reason, .. }
             | Self::PayablePaymentDraft { reason, .. }
             | Self::PayableReturnDraft { reason, .. }
             | Self::BankPolicySet { reason, .. }
@@ -593,6 +635,33 @@ pub fn parse(raw: &Value) -> Result<Mutation, ValidationError> {
                 && parse_calendar_date(date).is_some()
                 && sources::valid_refs(&[control_account.clone(), offset_account.clone()], 2)
                 && openings::legs(*control, amount_minor).is_ok()
+        }
+        Command::TaxCodeCreate {
+            book_id,
+            code,
+            rate,
+            base,
+            control_account,
+            effective_from,
+            ..
+        } => {
+            valid_uuid(book_id)
+                && valid_code(code)
+                && tax::TaxRule::new(*rate, *base).is_ok()
+                && sources::valid_refs(std::slice::from_ref(control_account), 1)
+                && parse_calendar_date(effective_from).is_some()
+        }
+        Command::TaxCodeRetire {
+            id,
+            expected_revision,
+            effective_to,
+            ..
+        } => {
+            valid_uuid(id)
+                && revision(*expected_revision)
+                && effective_to
+                    .as_ref()
+                    .is_none_or(|date| parse_calendar_date(date).is_some())
         }
         Command::PayablePaymentDraft {
             source_id,
@@ -853,6 +922,11 @@ pub fn parse(raw: &Value) -> Result<Mutation, ValidationError> {
             expected_revision,
             ..
         }
+        | Command::TaxCodeConfirm {
+            id,
+            expected_revision,
+            ..
+        }
         | Command::PeriodClose {
             id,
             expected_revision,
@@ -935,6 +1009,10 @@ pub struct Receipt {
     pub bank_row_id: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub document_terms: Option<Value>,
+    /// The state a tax code command left its version in: `entered` (not
+    /// confirmed, does not apply), `confirmed`, `withdrawn` or `retired`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tax_code_state: Option<String>,
 }
 
 #[cfg(test)]
@@ -965,6 +1043,104 @@ mod tests {
             assert!(minor(bad).is_err());
         }
         assert_eq!(minor("9000000000000000").unwrap(), MAX_MINOR);
+    }
+    #[test]
+    fn tax_code_commands_take_integer_fractions_and_no_claimed_people() {
+        let id = "A0000000-0000-4000-8000-000000000001";
+        let raw = json!({"requestId":id,"command":{"type":"tax_code.create","bookId":id,"code":"VAT-OUT","kind":"output",
+            "rate":{"numerator":12,"denominator":100},"base":{"numerator":11,"denominator":12},
+            "controlAccount":{"accountId":id,"expectedAccountRevision":1},"effectiveFrom":"2026-11-01","reason":"Entered by the company"}});
+        let decoded = parse(&raw).unwrap();
+        assert_eq!(decoded.command.operation(), "tax_code.create");
+        assert_eq!(decoded.command.permission(), "tax.manage");
+        let canonical = serde_json::to_value(&decoded).unwrap();
+        assert_eq!(canonical["command"]["bookId"], id.to_ascii_lowercase());
+        assert_eq!(
+            canonical["command"]["controlAccount"]["accountId"],
+            id.to_ascii_lowercase()
+        );
+        // The base fraction is 1/1 unless the company enters another.
+        let mut whole = raw.clone();
+        whole["command"].as_object_mut().unwrap().remove("base");
+        let whole = serde_json::to_value(parse(&whole).unwrap()).unwrap();
+        assert_eq!(
+            whole["command"]["base"],
+            json!({"numerator":1,"denominator":1})
+        );
+        for (field, value) in [
+            ("createdBy", json!("owner")),
+            ("reviewedBy", json!("owner")),
+            ("reviewerId", json!("owner")),
+            ("version", json!(2)),
+            ("effectiveTo", json!("2026-12-31")),
+            ("ratePercent", json!(11)),
+        ] {
+            let mut forged = raw.clone();
+            forged["command"][field] = value;
+            assert!(parse(&forged).is_err(), "{field}");
+        }
+        for (field, value) in [
+            ("kind", json!("withholding")),
+            ("code", json!("lower case")),
+            ("effectiveFrom", json!("2026-02-30")),
+            ("effectiveFrom", json!("1999-12-31")),
+            ("rate", json!(0.11)),
+            ("rate", json!({"numerator":101,"denominator":100})),
+            ("rate", json!({"numerator":-1,"denominator":100})),
+            ("rate", json!({"numerator":1,"denominator":0})),
+            ("rate", json!({"numerator":1,"denominator":1_000_001})),
+            ("base", json!({"numerator":0,"denominator":1})),
+            ("base", json!({"numerator":13,"denominator":12})),
+            (
+                "controlAccount",
+                json!({"accountId":id,"expectedAccountRevision":0}),
+            ),
+        ] {
+            let mut invalid = raw.clone();
+            invalid["command"][field] = value;
+            assert!(parse(&invalid).is_err(), "{field}");
+        }
+        // A zero rate is a legitimate code.
+        let mut zero = raw.clone();
+        zero["command"]["rate"] = json!({"numerator":0,"denominator":100});
+        assert!(parse(&zero).is_ok());
+
+        let retire = json!({"requestId":id,"command":{"type":"tax_code.retire","id":id,"expectedRevision":1,"effectiveTo":"2026-12-31","reason":"The rate changes next year"}});
+        let decoded = parse(&retire).unwrap();
+        assert_eq!(decoded.command.operation(), "tax_code.retire");
+        assert_eq!(decoded.command.permission(), "tax.manage");
+        for (field, value) in [
+            ("expectedRevision", json!(0)),
+            ("effectiveTo", json!("2026-13-01")),
+            ("rate", json!({"numerator":1,"denominator":100})),
+            ("retiredBy", json!("owner")),
+        ] {
+            let mut invalid = retire.clone();
+            invalid["command"][field] = value;
+            assert!(parse(&invalid).is_err(), "{field}");
+        }
+        // Withdrawing an entered version names no last day.
+        let mut withdraw = retire.clone();
+        withdraw["command"]
+            .as_object_mut()
+            .unwrap()
+            .remove("effectiveTo");
+        assert!(parse(&withdraw).is_ok());
+
+        let confirm = json!({"requestId":id,"command":{"type":"tax_code.confirm","id":id,"expectedRevision":1,"reason":"Checked against the company's tax advice"}});
+        let decoded = parse(&confirm).unwrap();
+        assert_eq!(decoded.command.operation(), "tax_code.confirm");
+        assert_eq!(decoded.command.permission(), "tax.manage");
+        for (field, value) in [
+            ("expectedRevision", json!(0)),
+            ("reviewedBy", json!("owner")),
+            ("reviewerId", json!("owner")),
+            ("rate", json!({"numerator":1,"denominator":100})),
+        ] {
+            let mut invalid = confirm.clone();
+            invalid["command"][field] = value;
+            assert!(parse(&invalid).is_err(), "{field}");
+        }
     }
     #[test]
     fn journal_wire_requires_exact_balanced_nonempty_one_sided_lines_and_no_claimed_actor() {

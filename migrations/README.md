@@ -1,12 +1,12 @@
 # SQL migration ownership
 
-All 81 checked-in SQL migrations currently live under this directory, grouped into 31 ledger directories. The native manifest mounts 74; 7 remain reserved specifications. The owner-configuration migration was relocated from `crates/host/migrations/owner` to `owner-pg/`; its migration ID, schema namespace, SQL bytes, and checksum are unchanged.
+All 82 checked-in SQL migrations currently live under this directory, grouped into 31 ledger directories. The native manifest mounts 75; 7 remain reserved specifications. The owner-configuration migration was relocated from `crates/host/migrations/owner` to `owner-pg/`; its migration ID, schema namespace, SQL bytes, and checksum are unchanged.
 
 The manifest is the only list of applied migrations. The persistent server embeds the migrations it verifies from it at build time ([build.rs](../crates/slice/build.rs)), and the disposable PostgreSQL fixture reads the same manifest in [pg-fixture](../crates/pg-fixture/src/lib.rs). A file's presence here does not mean a given runtime mounts it or its UI is complete.
 
 ## Applied versus unmounted ledgers
 
-`manifest.v1.json` is the installer's contract: 74 of the 81 files, across 25 ledgers, carry an `id`, `path` and SHA-256 that the Ops installer verifies and applies. The remaining seven files are **unmounted**: no manifest entry, no embedded registration, and no runtime readiness check.
+`manifest.v1.json` is the installer's contract: 75 of the 82 files, across 25 ledgers, carry an `id`, `path` and SHA-256 that the Ops installer verifies and applies. The remaining seven files are **unmounted**: no manifest entry, no embedded registration, and no runtime readiness check.
 
 | Unmounted ledger | Files |
 | --- | --- |
@@ -116,3 +116,16 @@ of the Commerce 009, Purchasing 005 and Billing 008 company guards, reads the th
 earlier ledgers directly (Accounting migrates after them) and needs no new runtime
 grant. IDR books and existing books are unaffected. See
 [trade currency](../docs/architecture/MULTI_CURRENCY.md#known-consequences).
+
+Accounting016 appends `archava_accounting.tax_codes`: one row per version of a
+company's own tax code (kind, rate and base fraction as integer fractions, control
+account, effective date range, and a state: entered, confirmed, withdrawn or retired),
+with FORCE RLS, an insert/update guard that locks the book row and allows only
+confirmation, withdrawal and retirement, the shared audit-and-receipt constraint, a
+claim trigger that binds the creator and the reviewer to their own commands, and
+`tax_guards_complete()`. It adds
+`tax.read` and `tax.manage` to the membership permission vocabulary and `tax_code` to
+the audit kinds, grants neither permission to an existing membership, creates no row
+and ships no rate. The runtime role needs `SELECT,INSERT,UPDATE` on the table and
+`EXECUTE` on the readiness function. Nothing reads a tax code yet. See
+[tax codes](../docs/modules/ACCOUNTING.md#tax-codes).

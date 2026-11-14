@@ -59,7 +59,7 @@ The native server embeds migrations, shared styles, and selected assets. `target
 
 ## SQL ownership
 
-All 81 checked-in SQL files are under `migrations/`, grouped into 31 ledger directories (74 mounted migrations registered in `migrations/manifest.v1.json` for native installation, and 7 unmounted reserved specs). The owner migration is now `migrations/owner-pg/001_owner_config.sql`. Its migration ID, namespace, bytes, and checksum were preserved when its path changed.
+All 82 checked-in SQL files are under `migrations/`, grouped into 31 ledger directories (75 mounted migrations registered in `migrations/manifest.v1.json` for native installation, and 7 unmounted reserved specs). The owner migration is now `migrations/owner-pg/001_owner_config.sql`. Its migration ID, namespace, bytes, and checksum were preserved when its path changed.
 
 Customer-linked orders add a real schema dependency: the native installer and
 fixture apply Identity, CRM, Organizations, then Commerce before the other dependent ledgers.
@@ -96,6 +96,7 @@ These source maps distinguish implemented library behavior, host wiring and rema
 | Document | Purpose |
 | --- | --- |
 | [Module registry](MODULE_REGISTRY.md) | One descriptor per business module, its consumers, the registration gate and what is not yet covered |
+| [Tax on documents](TAX.md) | Rules for a generic value-added tax on documents, what is not covered and which stage is built (stage A: tax codes only) |
 | [Refusal reasons](REFUSAL_REASONS.md) | Catalogue that gives a database guard's refusal a stable code and an English/Indonesian sentence, how the adapters and host carry it, and what is not covered |
 | [Agent runtime](../modules/AGENT_RUNTIME.md) | Durable conversations, reviewed goals, current-authority continuation and receipt reports |
 | [Native operations](../modules/NATIVE_OPERATIONS.md) | Installed form contracts, scoped reads, Owner configuration and receipt recovery |

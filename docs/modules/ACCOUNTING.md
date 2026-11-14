@@ -72,3 +72,53 @@ In the [subledger report](DOCUMENT_DUE_TERMS.md) and the [inventory control comp
 Limits: an opening is one lump per declaration with no documents behind it. It is not aged, has no customer or supplier, is not part of the document totals and cannot be settled or allocated against. Credit-side receivable openings, debit-side payable openings, document import and stock quantities are not supported; an inventory opening changes the ledger control only and creates no cost layer. The Accounting screen offers the action through the generic reviewed form; there is no dedicated opening view.
 
 [openings.rs](../../crates/host/tests/erp_accounting/openings.rs) covers the receivable case (draft not recognized, independent posting, cutoff, a generic journal still a difference, reversal) and the refusals; `declared_inventory_and_payable_openings_are_explained_by_their_controls` in [stock_sources.rs](../../crates/host/tests/erp_accounting/stock_sources.rs) covers inventory and payable.
+
+## Tax codes
+
+Stage A of [tax on documents](../architecture/TAX.md): a company enters its own tax codes. Archava ships no rate and verifies none, and nothing uses a code yet: no order, invoice, supplier document, posting policy, report or agent step reads one.
+
+A tax code belongs to one native book. One row of `archava_accounting.tax_codes` (Accounting016) is one version of a code:
+
+| Field | Meaning |
+| --- | --- |
+| `code`, `version` | The code (capital letters, digits, `-`, `_`; at most 40) and its version, counted from 1 per book and code |
+| `kind` | `output` (sales) or `input` (purchases); the same for every version of a code that was not withdrawn |
+| `rate` | `numerator/denominator` of integers, from 0 to 1 inclusive; a zero rate is allowed. Denominators are 1 to 1,000,000. Stored as entered, not reduced |
+| `base` | The fraction of the price the rate applies to, above 0 and at most 1; `1/1` when omitted |
+| `controlAccount` | An active account at its reviewed revision: class `liability` for `output`, class `asset` for `input`, in both cases with cash role `operating` (so not a cash account) |
+| `effectiveFrom`, `effectiveTo` | First and last day the version applies, both inclusive; `effectiveTo` is empty until the version is retired |
+| `state` | `entered`, `confirmed`, `withdrawn` or `retired` |
+| `createdBy`, `reviewedBy` | The actor of `tax_code.create`, and the actor of `tax_code.confirm` (empty until then) |
+
+A version moves through these states and no others:
+
+| From | Command | To | Revision |
+| --- | --- | --- | --- |
+| (new) | `tax_code.create` | `entered`: stored, does not apply | 1 |
+| `entered` | `tax_code.confirm` | `confirmed`: applies from `effectiveFrom` | 2 |
+| `entered` | `tax_code.retire` | `withdrawn`: never applied | 2 |
+| `confirmed` | `tax_code.retire` with `effectiveTo` | `retired`: applied through `effectiveTo` | 3 |
+
+Commands (permission `tax.manage`, and `tax.read` as well):
+
+- `tax_code.create`: `bookId`, `code`, `kind`, `rate`, optional `base`, `controlAccount`, `effectiveFrom`, `reason`. It stores a new open-ended version as `entered` on every book; creation never confirms. Its receipt carries `taxCodeState: "entered"`.
+- `tax_code.confirm`: `id`, `expectedRevision`, `reason`. On a book with independent posting the confirmer must be another person than the one who entered the version, the same rule as journal posting; on any other book the person who entered it may confirm it. The control account is checked again: it must still be active at the revision the version was entered with.
+- `tax_code.retire`: `id`, `expectedRevision`, optional `effectiveTo`, `reason`. On a confirmed version it sets the last day, which is required and may not precede the first. On an entered version it withdraws the version; a last day, if sent, is not stored. Retiring and withdrawing need no second person on any book.
+
+Only a confirmed or retired version applies on a date. The ranges of one code may not overlap: entered, confirmed and retired versions count, withdrawn ones do not, so a second version is refused until the first is retired with an earlier last day or withdrawn. What a stored version says cannot be edited, and a version cannot be deleted. Every insert and update locks the book row, so two concurrent writers of one book are serialised and the second sees the first one's row.
+
+`tax.read` and `tax.manage` are new permissions. The migration grants them to nobody: an existing membership has neither until an administrator adds them.
+
+The `tax_codes` collection of `/erp/accounting/workspace` (permission `tax.read`) lists the versions. `asOf=YYYY-MM-DD` chooses the date for `applies`; without it the database server's current date is used (no tenant time zone is involved), and `appliesOn` names the date either way. The Accounting screen lists the collection in a "Tax codes" panel under Financial reports with each version's state, who entered it and who confirmed it, and the sentence "Entered by your company; Archava does not verify tax rates or rules." Codes are entered, confirmed, withdrawn and retired through the generic reviewed forms.
+
+The calculation rules of the design (rule 5) are in [tax.rs](../../crates/domain/src/erp/tax.rs): `TaxRule::exclusive` and `TaxRule::inclusive`, integer-only, rounded half away from zero. No command or screen calls them yet.
+
+Refusals carry their own [reason](../architecture/REFUSAL_REASONS.md): `tax_code_control_account_wrong_class`, `tax_code_control_account_changed`, `tax_code_ranges_overlap`, `tax_code_kind_changed`, `tax_code_independent_reviewer_required`, `tax_code_not_awaiting_confirmation`, `tax_code_last_day_required`, `tax_code_ends_before_start`, `tax_code_already_closed` and `tax_code_native_book_required`. A rate or base outside its bounds is refused as an invalid submission before anything is read.
+
+Limits:
+
+- A version cannot be entered with a last day; it is created open-ended and retired after confirmation.
+- A control account that is deactivated after confirmation does not change the stored code, which still applies; the workspace row shows the account's current `active` and `revision`. An entered version whose account changed cannot be confirmed: withdraw it and enter it again.
+- The create and confirm steps are separate forms; the screen has no single guided flow for them.
+
+[tax.rs](../../crates/host/tests/erp_accounting/tax.rs) covers entering, the creator's refused confirmation and a second person's confirmation on a book with independent posting, self-confirmation on a book without it, listing by date, replay of each command, withdrawing and re-entering over the same range, retiring and a second version; confirmation after the control account changed; each refusal and the permissions; immutability by direct SQL as the serving and owner roles; concurrent versions and concurrent confirmations of one code; and the readiness function. The upgrade assertion that an existing membership gains no tax permission is in `tools/e2e/prior-native.mjs`, which this stage did not run.

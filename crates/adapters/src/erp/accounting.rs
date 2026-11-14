@@ -13,6 +13,7 @@ mod reads;
 mod sources;
 mod stock;
 mod subledger;
+mod tax;
 mod terms;
 use super::{
     commerce_kernel::load_locked_membership, company_trade, purchase_database_error, PurchaseError,
@@ -170,6 +171,7 @@ async fn book_for(
         "payable_settlement" => "SELECT book_id FROM archava_accounting.payable_settlements WHERE tenant_id=$1 AND id=$2",
         "clearing_settlement" => "SELECT book_id FROM archava_accounting.clearing_settlements WHERE tenant_id=$1 AND id=$2",
         "document_terms" => "SELECT book_id FROM archava_accounting.document_terms WHERE tenant_id=$1 AND id=$2",
+        "tax_code" => "SELECT book_id FROM archava_accounting.tax_codes WHERE tenant_id=$1 AND id=$2",
         "invoice_policy" => {
             "SELECT book_id FROM archava_accounting.invoice_policies WHERE tenant_id=$1 AND id=$2"
         }
@@ -208,6 +210,7 @@ fn operation_permission(op: &str) -> Option<&'static str> {
         "bank_allocation.record" | "bank_allocation.reverse" => "bank.reconcile",
         "payable_payment.draft" | "payable_return.draft" => "payables.write",
         "clearing_settlement.draft" => "clearing.write",
+        "tax_code.create" | "tax_code.confirm" | "tax_code.retire" => "tax.manage",
         "book.create" | "invoice_policy.set" | "purchase_policy.set" | "stock_policy.set" => {
             "books.write"
         }
@@ -257,6 +260,9 @@ pub async fn status(
         require(a, "clearing.read")?;
         require(a, "bank.read")?;
         require(a, "journals.write")?;
+    }
+    if r.resource_kind == "tax_code" {
+        require(a, "tax.read")?;
     }
     if r.resource_kind == "document_terms" {
         let snapshot = terms::read_authority(conn, tenant, a, id(&r.resource_id)?).await?;
@@ -326,6 +332,15 @@ pub async fn record(
         if matches!(m.command, Command::SupplierTermsSet { .. }) {
             require(a, "payables.read")?;
         }
+    }
+    let tax_command = matches!(
+        m.command,
+        Command::TaxCodeCreate { .. }
+            | Command::TaxCodeConfirm { .. }
+            | Command::TaxCodeRetire { .. }
+    );
+    if tax_command {
+        require(a, "tax.read")?;
     }
     if matches!(m.command, Command::ClearingSettlementDraft { .. }) {
         require(a, "clearing.read")?;
@@ -410,7 +425,11 @@ pub async fn record(
             | Command::AccountCreate { book_id, .. }
             | Command::PeriodOpen { book_id, .. }
             | Command::JournalDraft { book_id, .. }
-            | Command::OpeningBalanceDraft { book_id, .. } => id(book_id)?,
+            | Command::OpeningBalanceDraft { book_id, .. }
+            | Command::TaxCodeCreate { book_id, .. } => id(book_id)?,
+            Command::TaxCodeConfirm { id: key, .. } | Command::TaxCodeRetire { id: key, .. } => {
+                book_for(conn, tenant, "tax_code", id(key)?).await?
+            }
             Command::BankPolicySet {
                 bank_account_id, ..
             }
@@ -477,9 +496,18 @@ pub async fn record(
         // authorized adjustments, settlement, reversal and close remain possible.
         // New book setup above still requires an active reviewed company.
         if b.source != SourceAuthority::Native.as_str() {
+            // Decided here before the Accounting 016 guard would refuse it.
+            if tax_command {
+                return Err(super::refused_by_code("tax_code_native_book_required"));
+            }
             return Err(ErpError::Conflict.into());
         }
         let (kind, resource, revision) = match &m.command {
+            Command::TaxCodeCreate { .. }
+            | Command::TaxCodeConfirm { .. }
+            | Command::TaxCodeRetire { .. } => {
+                tax::execute(conn, tenant, p, &b, &m.command).await?
+            }
             Command::InvoiceTermsSet { .. } | Command::SupplierTermsSet { .. } => {
                 terms::execute(conn, tenant, p, &b, &m.command, request).await?
             }
@@ -612,6 +640,11 @@ pub async fn record(
         } else {
             None
         },
+        tax_code_state: if kind == "tax_code" {
+            Some(tax::state(conn, tenant, resource).await?)
+        } else {
+            None
+        },
     };
     let snapshot = snapshot(conn, tenant, kind, resource).await?;
     sqlx::query("INSERT INTO archava_accounting.audit(tenant_id,request_id,actor_id,operation,resource_kind,resource_id,book_id,revision,reason,snapshot) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)")
@@ -644,6 +677,7 @@ async fn snapshot(
         "bank_unmatch"=>"SELECT jsonb_build_object('record',to_jsonb(r)) FROM archava_accounting.bank_unmatches r WHERE tenant_id=$1 AND id=$2",
         "bank_policy"=>"SELECT jsonb_build_object('record',to_jsonb(r)) FROM archava_accounting.bank_policies r WHERE tenant_id=$1 AND id=$2",
         "bank_reconciliation"=>"SELECT jsonb_build_object('record',to_jsonb(r)) FROM archava_accounting.bank_reconciliations r WHERE tenant_id=$1 AND id=$2",
+        "tax_code"=>"SELECT jsonb_build_object('record',to_jsonb(r)) FROM archava_accounting.tax_codes r WHERE tenant_id=$1 AND id=$2",
         "book"=>"SELECT jsonb_build_object('record',to_jsonb(r)) FROM archava_accounting.books r WHERE tenant_id=$1 AND id=$2",
         "account"=>"SELECT jsonb_build_object('record',to_jsonb(r)) FROM archava_accounting.accounts r WHERE tenant_id=$1 AND id=$2",
         "period"=>"SELECT jsonb_build_object('record',to_jsonb(r)) FROM archava_accounting.periods r WHERE tenant_id=$1 AND id=$2",

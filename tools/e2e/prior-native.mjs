@@ -31,6 +31,7 @@ export async function verifyPriorNative({previousRoot,packageRoot,facts,scratch,
  const oldOpenings=oldManifest.ledgers.find(l=>l.namespace==='archava_accounting')?.migrations.some(m=>m.id==='013_declared_opening_balances')===true
  const sourceUnit=manifest=>manifest.ledgers.find(l=>l.namespace==='archava_accounting')?.migrations.some(m=>m.id==='014_source_unit_minor')===true
  const bookGuard=manifest=>manifest.ledgers.find(l=>l.namespace==='archava_accounting')?.migrations.some(m=>m.id==='015_book_currency_guard')===true
+ const taxCodes=manifest=>manifest.ledgers.find(l=>l.namespace==='archava_accounting')?.migrations.some(m=>m.id==='016_tax_codes')===true
  const tradeCurrency=manifest=>manifest.ledgers.find(l=>l.namespace==='archava_commerce')?.migrations.some(m=>m.id==='011_company_trade_currency')===true
  const commerceAdded=tradeCurrency(newManifest)&&!tradeCurrency(oldManifest)?['011_company_trade_currency']:[]
  const purchaseCurrency=manifest=>manifest.ledgers.find(l=>l.namespace==='archava_purchasing')?.migrations.some(m=>m.id==='007_company_trade_currency')===true
@@ -43,7 +44,7 @@ export async function verifyPriorNative({previousRoot,packageRoot,facts,scratch,
   const oldOwner=oldManifest.ledgers.find(l=>l.namespace==='archava_owner'),newOwner=newManifest.ledgers.find(l=>l.namespace==='archava_owner')
   assert.deepEqual(newOwner.migrations.slice(oldOwner.migrations.length).map(m=>m.id),['004_ai_disclosure_boundary'])
   const oldAccounting=oldManifest.ledgers.find(l=>l.namespace==='archava_accounting'),newAccounting=newManifest.ledgers.find(l=>l.namespace==='archava_accounting')
-  const accountingAdded=[...(addedBank?bankMigrationIds:[]),...(newPayables&&!oldPayables?['009_supplier_bank_settlements']:[]),...(newClearing&&!oldClearing?['010_gateway_bank_settlements']:[]),...(newTerms&&!oldTerms?termsMigrationIds:[]),...(newOpenings&&!oldOpenings?['013_declared_opening_balances']:[]),...(sourceUnit(newManifest)&&!sourceUnit(oldManifest)?['014_source_unit_minor']:[]),...(bookGuard(newManifest)&&!bookGuard(oldManifest)?['015_book_currency_guard']:[])]
+  const accountingAdded=[...(addedBank?bankMigrationIds:[]),...(newPayables&&!oldPayables?['009_supplier_bank_settlements']:[]),...(newClearing&&!oldClearing?['010_gateway_bank_settlements']:[]),...(newTerms&&!oldTerms?termsMigrationIds:[]),...(newOpenings&&!oldOpenings?['013_declared_opening_balances']:[]),...(sourceUnit(newManifest)&&!sourceUnit(oldManifest)?['014_source_unit_minor']:[]),...(bookGuard(newManifest)&&!bookGuard(oldManifest)?['015_book_currency_guard']:[]),...(taxCodes(newManifest)&&!taxCodes(oldManifest)?['016_tax_codes']:[])]
   assert.deepEqual(newAccounting.migrations.slice(oldAccounting.migrations.length).map(m=>m.id),accountingAdded)
   const oldCommerce=oldManifest.ledgers.find(l=>l.namespace==='archava_commerce'),newCommerce=newManifest.ledgers.find(l=>l.namespace==='archava_commerce')
   assert.deepEqual(newCommerce.migrations.slice(oldCommerce.migrations.length).map(m=>m.id),commerceAdded)
@@ -195,6 +196,10 @@ export async function verifyPriorNative({previousRoot,packageRoot,facts,scratch,
   if(newTerms&&!oldTerms){
    assert.equal(sql(db,'SELECT count(*) FROM archava_accounting.document_terms'),'0','Upgrade must not invent historical due agreements')
    assert.equal(sql(db,"SELECT count(*) FROM archava_accounting.memberships WHERE permissions&&ARRAY['terms.read','terms.write']::text[]"),'0','Upgrade must not grant existing users due-term authority')
+  }
+  if(taxCodes(newManifest)&&!taxCodes(oldManifest)){
+   assert.equal(sql(db,'SELECT count(*) FROM archava_accounting.tax_codes'),'0','Upgrade must not invent tax codes or rates')
+   assert.equal(sql(db,"SELECT count(*) FROM archava_accounting.memberships WHERE permissions&&ARRAY['tax.read','tax.manage']::text[]"),'0','Upgrade must not grant existing users tax code authority')
   }
   if(addedBank){
    assert.equal(sql(db,`SELECT ${bankTables.map(table=>`(SELECT count(*) FROM archava_accounting.${table})`).join('+')}`),'0','Upgrade must not invent bank accounts, statements, matches, opening policies or reviews')

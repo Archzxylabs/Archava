@@ -45,7 +45,7 @@ pub(crate) async fn assert_control_readiness(
         });
     }
     let source_complete: bool =
-        sqlx::query_scalar("SELECT archava_accounting.source_guards_complete() AND archava_accounting.purchase_guards_complete() AND archava_accounting.stock_guards_complete() AND archava_accounting.bank_evidence_guards_complete() AND archava_accounting.bank_matching_guards_complete() AND archava_accounting.bank_period_guards_complete() AND archava_accounting.payable_guards_complete() AND archava_accounting.clearing_guards_complete() AND archava_accounting.terms_guards_complete() AND archava_accounting.opening_guards_complete()")
+        sqlx::query_scalar("SELECT archava_accounting.source_guards_complete() AND archava_accounting.purchase_guards_complete() AND archava_accounting.stock_guards_complete() AND archava_accounting.bank_evidence_guards_complete() AND archava_accounting.bank_matching_guards_complete() AND archava_accounting.bank_period_guards_complete() AND archava_accounting.payable_guards_complete() AND archava_accounting.clearing_guards_complete() AND archava_accounting.terms_guards_complete() AND archava_accounting.opening_guards_complete() AND archava_accounting.tax_guards_complete()")
             .fetch_one(pool)
             .await
             .map_err(|source| TenantContextError::Database {
@@ -82,6 +82,8 @@ pub struct WorkspaceQuery {
     pub cursor: Option<Uuid>,
     #[serde(default = "page_limit")]
     pub limit: i64,
+    /// The date the tax code list answers "which version applies" for.
+    pub as_of: Option<String>,
 }
 fn page_limit() -> i64 {
     100
@@ -289,6 +291,7 @@ pub async fn workspace(
         selected: input.id,
         cursor: input.cursor,
         limit: input.limit,
+        as_of: input.as_of.as_deref(),
     };
     if !page.valid() {
         return refusal(

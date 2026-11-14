@@ -96,6 +96,8 @@ pub fn reference(name: &str, action: &str, domain: &str) -> Option<(&'static str
                     "periods"
                 } else if action == "bank_allocation.reverse" {
                     "bank_allocations"
+                } else if action.starts_with("tax_code.") {
+                    "tax_codes"
                 } else {
                     "journals"
                 },
@@ -364,7 +366,7 @@ mod tests {
                 count += 1;
             }
         }
-        assert_eq!(count, 193);
+        assert_eq!(count, 196);
     }
     #[test]
     fn supplier_payment_forms_roundtrip_exact_source_bank_and_original_payment_references() {
