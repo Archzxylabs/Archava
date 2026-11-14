@@ -351,6 +351,11 @@
           "id": "014_source_unit_minor",
           "path": "migrations/accounting-pg/014_source_unit_minor.sql",
           "sha256": "c5f25e92445919b3e75b3c0d997e6531a054eeefc53e9c25e9ea167a38057552"
+        },
+        {
+          "id": "015_book_currency_guard",
+          "path": "migrations/accounting-pg/015_book_currency_guard.sql",
+          "sha256": "fc1b94086051f2a208964f439ad442578ce4e6e0a188ed85f63c7409bbf427fa"
         }
       ]
     },

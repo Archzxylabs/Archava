@@ -944,13 +944,13 @@ async fn the_minor_stock_unit_is_refused_on_an_idr_book() {
     assert_eq!(status, StatusCode::CONFLICT, "{refused}");
 }
 
-/// A company that took a Rupiah sales order before it created a USD book.
-/// Without a stock policy the order is fulfilled and stays outside the ledger.
-/// With one, fulfilling a Rupiah order is refused as a conflict: the order
-/// stays reserved and no stock source is captured.
+/// A company that has a sales order cannot open a USD book (Accounting 015).
+/// The capture guard behind that refusal stays: with the state planted by the
+/// database owner, a Rupiah order is fulfilled outside the ledger while the USD
+/// book has no stock policy, and with one its fulfilment is refused as a
+/// conflict: the order stays reserved and no stock source is captured.
 #[tokio::test]
-async fn an_idr_sales_order_of_a_company_with_a_later_usd_book_cannot_be_fulfilled_under_a_stock_policy(
-) {
+async fn a_planted_idr_sales_order_under_a_usd_book_cannot_be_fulfilled_under_a_stock_policy() {
     let mut p = PurchaseScenario::trading().await;
     sqlx::query("UPDATE archava_organizations.memberships SET permissions=permissions||ARRAY['parties.read','parties.write'] WHERE tenant_id='acme' AND principal_id='alice'").execute(&p.f.admin_pool).await.unwrap();
     let (st, org) = call(&p.app,"POST","/erp/organizations/commands",json!({"tenant":"acme","mutation":{"requestId":Uuid::new_v4(),"type":"create_organization","data":{"name":"Rupiah buyer","legalName":"Explicit Rupiah buyer"}}}),Some(&p.alice)).await;
@@ -964,7 +964,16 @@ async fn an_idr_sales_order_of_a_company_with_a_later_usd_book_cannot_be_fulfill
         p.trade(json!({"operation":"order.reserve","id":order["id"],"expectedRevision":1,"holdSeconds":600})).await;
         orders.push(order);
     }
+    let (status, refused) = send(&p.app, &p.alice, &create(&p.company, "USD")).await;
+    assert_eq!(status, StatusCode::CONFLICT, "{refused}");
+    let books: i64 = sqlx::query_scalar("SELECT count(*) FROM archava_accounting.books")
+        .fetch_one(&p.f.admin_pool)
+        .await
+        .unwrap();
+    assert_eq!(books, 0, "the refused book is not written");
+    book_currency_guard(&p.f, false).await;
     p.open_book("USD").await;
+    book_currency_guard(&p.f, true).await;
     // No stock policy: the Rupiah order is fulfilled and nothing is captured.
     p.trade(json!({"operation":"order.fulfill","id":orders[0]["id"],"expectedRevision":2}))
         .await;

@@ -1649,7 +1649,52 @@ async fn trade_supplier(app: &Router, session: &Session, code: &str) -> String {
         .into()
 }
 async fn trade_book(app: &Router, session: &Session, company: &str, currency: &str) {
-    trade(app,session,"accounting",json!({"type":"book.create","companyId":company,"expectedCompanyRevision":1,"code":format!("BOOK-{currency}"),"name":"Explicit synthetic official book","currency":currency,"sourceAuthority":"native","independentPosting":true,"reason":"Reviewed book setup; no historical import"})).await;
+    trade(app, session, "accounting", book_command(company, currency)).await;
+}
+fn book_command(company: &str, currency: &str) -> Value {
+    json!({"type":"book.create","companyId":company,"expectedCompanyRevision":1,"code":format!("BOOK-{currency}"),"name":"Explicit synthetic official book","currency":currency,"sourceAuthority":"native","independentPosting":true,"reason":"Reviewed book setup; no historical import"})
+}
+async fn books(f: &Fixture, company: &str) -> Vec<String> {
+    sqlx::query_scalar("SELECT currency FROM archava_accounting.books WHERE company_id=$1::uuid")
+        .bind(company)
+        .fetch_all(&f.admin_pool)
+        .await
+        .unwrap()
+}
+/// `book.create` in `currency` is refused as a conflict and writes nothing.
+async fn book_refused(f: &Fixture, app: &Router, session: &Session, company: &str, currency: &str) {
+    let request_id = Uuid::new_v4();
+    let (status, body) = trade_try(
+        app,
+        session,
+        "accounting",
+        request_id,
+        book_command(company, currency),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CONFLICT, "{body}");
+    assert_eq!(books(f, company).await, Vec::<String>::new());
+    let recorded: i64 =
+        sqlx::query_scalar("SELECT count(*) FROM archava_accounting.commands WHERE request_id=$1")
+            .bind(request_id)
+            .fetch_one(&f.admin_pool)
+            .await
+            .unwrap();
+    assert_eq!(recorded, 0, "the refused book leaves no command");
+}
+/// A non-IDR book for a company that already trades. The book guard
+/// (Accounting 015) refuses that through every runtime path, so the database
+/// owner disables it to plant the state the older guards still defend against.
+async fn planted_book(f: &Fixture, app: &Router, session: &Session, company: &str, currency: &str) {
+    sqlx::query("ALTER TABLE archava_accounting.books DISABLE TRIGGER a_currency_book")
+        .execute(&f.admin_pool)
+        .await
+        .unwrap();
+    trade_book(app, session, company, currency).await;
+    sqlx::query("ALTER TABLE archava_accounting.books ENABLE TRIGGER a_currency_book")
+        .execute(&f.admin_pool)
+        .await
+        .unwrap();
 }
 /// A stock-tracked product of `company`; returns its id.
 async fn company_product(app: &Router, session: &Session, company: &str, sku: &str) -> String {
@@ -2007,7 +2052,11 @@ async fn the_database_refuses_a_purchase_currency_other_than_the_company_book() 
     )
     .await;
     let early = early["id"].as_str().unwrap();
-    trade_book(&app, &session, &company, "USD").await;
+    // A company with products, an offer and a purchase order cannot open a USD
+    // book; the mixed state the guards below defend against is planted by the
+    // database owner.
+    book_refused(&f, &app, &session, &company, "USD").await;
+    planted_book(&f, &app, &session, &company, "USD").await;
     let item = company_product(&app, &session, &company, "USD-ITEM").await;
 
     // Offers: the company's book currency, which is also the product's.
@@ -2018,7 +2067,7 @@ async fn the_database_refuses_a_purchase_currency_other_than_the_company_book() 
     refused_check(insert_offer(&f, &supplier, &item, Some("JPY")).await);
     // The format check replaced the IDR-only one.
     refused_check(insert_offer(&f, &supplier, &item, Some("usd")).await);
-    // A product priced before the book stays IDR: no offer fits it any more.
+    // The planted IDR product: no offer fits it any more.
     let message = refused_check(insert_offer(&f, &supplier, &spare, Some("USD")).await);
     assert_eq!(
         message,
@@ -2047,7 +2096,7 @@ async fn the_database_refuses_a_purchase_currency_other_than_the_company_book() 
     assert_eq!(message, "Currency differs from the company book");
     refused_check(insert_order(&f, &supplier, None, "idr").await);
 
-    // One order, one currency: the same company's earlier IDR offer and
+    // One order, one currency: the same company's planted IDR offer and
     // product cannot enter its USD order, by command or by row.
     let offer = trade_offer(&app, &session, &supplier, &item, 1250).await;
     assert_eq!(stored_currency(&f, "offers", &offer).await, "USD");
@@ -2085,7 +2134,7 @@ async fn the_database_refuses_a_purchase_currency_other_than_the_company_book() 
             .unwrap();
     assert_eq!(lines, 1);
 
-    // The order drafted before the book stays IDR and stays workable.
+    // The planted IDR order stays IDR and, with no purchase policy, workable.
     assert_eq!(stored_currency(&f, "orders", early).await, "IDR");
     trade(&app,&session,"purchasing",json!({"operation":"order.confirm","id":early,"expectedRevision":1,"reason":"Approved commitment"})).await;
     let line = order_line(&f, early).await;
@@ -2109,4 +2158,43 @@ async fn the_database_refuses_a_purchase_currency_other_than_the_company_book() 
         );
         assert!(message.contains("immutable"), "{message}");
     }
+}
+
+#[tokio::test]
+async fn a_non_idr_book_is_refused_once_the_company_has_a_purchase_order() {
+    let (f, app, session) = trade_setup().await;
+    let supplier = trade_supplier(&app, &session, "BOOK-VENDOR").await;
+    // Product, offer and draft purchase order through the commands. The
+    // purchase-order check alone is isolated in the accounting suite, where a
+    // bare order row is planted; here a header without lines cannot commit.
+    let company = trade_company(&app, &session, "PURCHASED").await;
+    let item = company_product(&app, &session, &company, "IDR-ITEM").await;
+    let offer = trade_offer(&app, &session, &supplier, &item, 6000).await;
+    let order = trade(
+        &app,
+        &session,
+        "purchasing",
+        company_purchase(&company, &supplier, &[&offer], 2),
+    )
+    .await;
+    let order = order["id"].as_str().unwrap();
+    book_refused(&f, &app, &session, &company, "USD").await;
+
+    // An IDR book is still accepted and the order stays workable in IDR.
+    trade_book(&app, &session, &company, "IDR").await;
+    assert_eq!(books(&f, &company).await, vec!["IDR".to_owned()]);
+    assert_eq!(stored_currency(&f, "offers", &offer).await, "IDR");
+    assert_eq!(stored_currency(&f, "orders", order).await, "IDR");
+    trade(&app,&session,"purchasing",json!({"operation":"order.confirm","id":order,"expectedRevision":1,"reason":"Approved commitment"})).await;
+    let again = trade(
+        &app,
+        &session,
+        "purchasing",
+        company_purchase(&company, &supplier, &[&offer], 1),
+    )
+    .await;
+    assert_eq!(
+        stored_currency(&f, "orders", again["id"].as_str().unwrap()).await,
+        "IDR"
+    );
 }
