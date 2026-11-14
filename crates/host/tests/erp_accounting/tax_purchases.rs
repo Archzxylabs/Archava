@@ -1013,8 +1013,23 @@ async fn taxed_claims_and_bills_are_refused_with_reasons_and_the_database_holds_
         "2020-01-01",
     )
     .await;
-    // An input code may use any operating asset account, also the inventory
-    // account of the purchase policy.
+    // An input code may use any operating asset account except one a posting
+    // policy names: the inventory account of the purchase policy is refused
+    // when the code is entered (Accounting 019). The capture guard below is
+    // the second line, so the database owner plants the code with the tax
+    // code guard switched off.
+    let (st, v) = send(&s.app,&s.alice,&input(json!({"type":"tax_code.create","bookId":s.book["bookId"],"code":"STOCK","kind":"input",
+        "rate":{"numerator":11,"denominator":100},
+        "controlAccount":{"accountId":s.accounts[0]["resourceId"],"expectedAccountRevision":s.accounts[0]["revision"]},
+        "effectiveFrom":"2020-01-01","reason":"Entered by the company from its own tax advice"}))).await;
+    assert_refused_as(st, &v, "tax_code_control_account_in_posting_policy");
+    let guard = |state: &'static str| {
+        sqlx::query(sqlx::AssertSqlSafe(format!(
+            "ALTER TABLE archava_accounting.tax_codes {state} TRIGGER tax_code_guard"
+        )))
+        .execute(&s.f.admin_pool)
+    };
+    guard("DISABLE").await.unwrap();
     confirmed_code(
         &s,
         "STOCK",
@@ -1024,6 +1039,7 @@ async fn taxed_claims_and_bills_are_refused_with_reasons_and_the_database_holds_
         "2020-01-01",
     )
     .await;
+    guard("ENABLE").await.unwrap();
 
     let (po, line) = received(&s, 20, "RECEIPT").await;
     let documents = count(&s, "archava_purchasing.supplier_documents").await;

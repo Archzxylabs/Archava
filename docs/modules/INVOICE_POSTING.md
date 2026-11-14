@@ -58,6 +58,13 @@ amounts and a negative amount swaps the sides; a collection or refund carries no
 A source whose tax is zero, including every source of an untaxed invoice and of a 0%
 code, is drafted with two lines as before.
 
+A correction or a void is reviewed after its invoice's issue: `invoice_source.draft`
+for a correction or void source is refused as `invoice_correction_before_issue_posted`
+while the issue source of the same invoice carries an amount and has no posted journal
+([Accounting 019](../../migrations/accounting-pg/019_tax_review_guards.sql); taxed or
+not). An issue of zero has no journal and holds nothing back; collections and refunds
+are not held to the rule; a draft stored before that migration is not looked at again.
+
 `invoice_source.draft` names three reviewed accounts for a source with tax; two
 accounts, or another third account, are refused as
 `invoice_source_tax_accounts_required`. A third account on a source without tax is a

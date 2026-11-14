@@ -297,6 +297,37 @@ mod refusal_tests {
         }
     }
 
+    /// Billing keeps its own whitelist, but a deadlock and a lock timeout are
+    /// a race the caller can retry, as in the shared classifier: a conflict,
+    /// not a database failure. Every other state billing did not whitelist
+    /// stays a database failure there.
+    #[test]
+    fn billing_classifies_lock_failures_as_conflicts_and_nothing_else_new() {
+        for state in ["40P01", "55P03"] {
+            assert!(
+                matches!(
+                    billing::refuses(raised(state, "deadlock detected")),
+                    PurchaseError::Domain(ErpError::Conflict)
+                ),
+                "{state}"
+            );
+        }
+        for state in ["23503", "23505", "22003", "P0001", "40001", "42501"] {
+            assert!(
+                matches!(
+                    billing::refuses(raised(state, GUARD)),
+                    PurchaseError::Database { .. }
+                ),
+                "{state}"
+            );
+        }
+        // An uncatalogued or unlisted guard sentence is still a database failure.
+        assert!(matches!(
+            billing::refuses(raised("23514", GUARD)),
+            PurchaseError::Database { .. }
+        ));
+    }
+
     #[test]
     fn other_sql_states_classify_as_before_whatever_their_message() {
         for state in ["23503", "23505", "22003", "40P01", "55P03"] {

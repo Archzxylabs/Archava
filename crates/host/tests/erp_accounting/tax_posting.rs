@@ -806,14 +806,15 @@ async fn capture_refuses_a_stale_tax_account_and_the_database_refuses_a_source_w
         ]
     );
     // A new version of the code with another account serves later invoices.
-    let (today,): (String,) = sqlx::query_as("SELECT current_date::text")
+    let (today,): (String,) = sqlx::query_as("SELECT (now() AT TIME ZONE 'UTC')::date::text")
         .fetch_one(&s.f.runtime_pool)
         .await
         .unwrap();
-    let (yesterday,): (String,) = sqlx::query_as("SELECT (current_date-1)::text")
-        .fetch_one(&s.f.runtime_pool)
-        .await
-        .unwrap();
+    let (yesterday,): (String,) =
+        sqlx::query_as("SELECT ((now() AT TIME ZONE 'UTC')::date-1)::text")
+            .fetch_one(&s.f.runtime_pool)
+            .await
+            .unwrap();
     ok(&s.app,&s.alice,json!({"type":"tax_code.retire","id":old["resourceId"],"expectedRevision":2,"effectiveTo":yesterday,"reason":"Its control account changed"})).await;
     confirmed_code(&s, "OLD", "output", (11, 100), (1, 1), &vat_account, &today).await;
     let renewed = taxed_invoice(&s, "RENEWED", &item, 2, Some(("OLD", false))).await;

@@ -72,6 +72,11 @@ the entered tax and the tax Archava computes from the goods total with the
 exclusive rule, `round(declaredTotal × base × rate)`. The entered amount is the one
 owed and, once matched, posted. It need not equal the computed one; it may not be
 negative or exceed the goods total (`supplier_document_tax_amount_out_of_bounds`).
+Goods plus tax may not exceed what the ledger can post in one bill: 90,000,000,000,000
+whole Rupiah for an IDR document, 9,000,000,000,000,000 minor units otherwise
+(`supplier_document_total_beyond_ledger_bound`,
+[Purchasing 009](../../migrations/purchasing-pg/009_supplier_document_tax_bound.sql)),
+checked when a claim is captured or revised, whether or not its order posts purchases.
 The read returns both and the difference:
 
 ```json

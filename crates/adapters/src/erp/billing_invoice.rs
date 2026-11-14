@@ -85,8 +85,9 @@ async fn order_tax(
 }
 
 /// Taxes an order total with the version of the order's tax code that applies
-/// on the invoice date: the database's date of the invoice's `created_at`
-/// (`now`, the command's one clock sample), the only date an invoice has. The
+/// on the invoice date: the UTC calendar date of the invoice's `created_at`
+/// (`now`, the command's one clock sample), the only date an invoice has, in
+/// the calendar every tax date uses until a tenant time zone exists. The
 /// version row is share-locked so it cannot be retired under this transaction.
 /// No applicable version refuses the invoice; it is never created untaxed.
 async fn tax_snapshot(
@@ -102,7 +103,7 @@ async fn tax_snapshot(
         "SELECT t.id,t.version,t.rate_numerator,t.rate_denominator,t.base_numerator,t.base_denominator \
          FROM archava_accounting.tax_codes t JOIN archava_accounting.books b ON b.tenant_id=t.tenant_id AND b.id=t.book_id \
          WHERE t.tenant_id=$1 AND b.company_id=$2 AND t.code=$3 AND t.kind='output' AND t.state IN ('confirmed','retired') \
-         AND $4::timestamptz::date BETWEEN t.effective_from AND coalesce(t.effective_to,DATE 'infinity') FOR SHARE OF t",
+         AND ($4::timestamptz AT TIME ZONE 'UTC')::date BETWEEN t.effective_from AND coalesce(t.effective_to,DATE 'infinity') FOR SHARE OF t",
     )
     .bind(tenant)
     .bind(company)

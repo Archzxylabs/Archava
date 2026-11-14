@@ -12,7 +12,7 @@ use crate::erp::refused_by_code;
 pub(super) const NOTICE: &str = "Tax codes are entered by your company; Archava does not verify tax rates or rules. An entered version does not apply until a reviewer confirms it. A stored version never changes: retire it and enter a new version instead.";
 
 /// One row of the `tax_codes` workspace collection. `$7` is the date the
-/// caller asked about, or the database's current date when it named none.
+/// caller asked about, or the UTC calendar date now when it named none.
 pub(super) fn projection() -> &'static str {
     "jsonb_build_object('id',s.id,'bookId',s.book_id,'code',s.code,'version',s.version,'kind',s.kind,\
      'rate',jsonb_build_object('numerator',s.rate_numerator,'denominator',s.rate_denominator),\
@@ -21,8 +21,8 @@ pub(super) fn projection() -> &'static str {
      'effectiveFrom',s.effective_from,'effectiveTo',s.effective_to,'state',s.state,'revision',s.revision,\
      'createdBy',s.created_by,'reviewedBy',s.reviewed_by,'createdAt',s.created_at,'confirmedAt',s.confirmed_at,\
      'withdrawnAt',s.withdrawn_at,'retiredAt',s.retired_at,\
-     'appliesOn',coalesce($7::text::date,current_date),\
-     'applies',s.state IN ('confirmed','retired') AND coalesce($7::text::date,current_date) BETWEEN s.effective_from AND coalesce(s.effective_to,DATE 'infinity'),\
+     'appliesOn',coalesce($7::text::date,(now() AT TIME ZONE 'UTC')::date),\
+     'applies',s.state IN ('confirmed','retired') AND coalesce($7::text::date,(now() AT TIME ZONE 'UTC')::date) BETWEEN s.effective_from AND coalesce(s.effective_to,DATE 'infinity'),\
      'enteredByCompany',true,'verifiedByArchava',false)"
 }
 
