@@ -13,11 +13,12 @@ workspace. That choice is immutable. Product IDs partition the existing stock
 balances and FIFO cost layers; every sale and PO line must match its header's
 company. Legacy foodservice and other product consumers stay in the unassigned
 scope. SKU codes remain unique across the workspace, including different
-companies. A company-owned product or sales order takes the currency of its
-company's accounting book at insert, and IDR when the company has no book
-([trade currency](../architecture/MULTI_CURRENCY.md), stage 1); purchase orders,
-supplier documents and invoices retain their IDR rules. No jurisdiction is
-inferred from a currency.
+companies. A company-owned product, sales order or purchase order, and a
+supplier offer on a company's product, takes the currency of its company's
+accounting book at insert, and IDR when the company has no book
+([trade currency](../architecture/MULTI_CURRENCY.md), stages 1-2); a supplier
+document carries its purchase order's currency. Invoices retain their IDR
+rules. No jurisdiction is inferred from a currency.
 
 Products, sales orders, purchase orders and invoices capture company ID, reviewed
 revision, code and official name. Database foreign keys bind that revision to

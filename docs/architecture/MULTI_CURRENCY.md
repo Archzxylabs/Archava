@@ -29,7 +29,10 @@ The owner targets Indonesia and a global market. The general ledger already acce
 
 - **Create the book before the company's first product.** Products a company created before its non-IDR book stay IDR. New sales orders are in the book currency, so those products can no longer be sold (the line guard refuses them) and must be created again.
 - **A product inserted while the book is being created can commit as IDR.** The insert guard takes no lock on the book. The result is the state above, not a wrong amount.
-- **Until stage 2, purchasing and foodservice refuse a non-IDR product**, so no IDR purchase document can be built over one.
+- **Foodservice refuses a non-IDR product.** It has no company, so its recipes stay IDR; a company's non-IDR product cannot be an ingredient.
+- **Offers and purchase orders follow the same rule as products.** An offer made before the company's non-IDR book stays IDR, like its product, and cannot enter a new purchase order; no new offer can be made on such a product. A purchase order drafted in IDR before the book stays IDR and can still be confirmed and received.
+- **A supplier document command must name its purchase order's currency.** Any other well-formed code is a conflict, not a validation error. The capture form still pre-fills IDR until stage 5.
+- **A non-IDR receipt reaches no ledger until stage 4.** A purchase policy cannot exist on a non-IDR book, so confirmation records no purchase origin and the receipt and supplier bill are not captured. They are not captured retroactively either: the bridge never imports an order confirmed before its policy.
 - **The insert guards have no startup readiness check**; the migration checksum is the only proof they are installed.
 
 ## Stages
@@ -37,7 +40,7 @@ The owner targets Indonesia and a global market. The general ledger already acce
 | Stage | Scope | State |
 | --- | --- | --- |
 | 1 | Commerce: products and sales orders take the company's trade currency; database guard; reads return it | implemented on branch `feat/trade-currency-commerce`, not merged: `commerce-pg/011_company_trade_currency.sql` (format check, `trade_currency`, insert guards on products, orders and order lines), the adapter sets the currency of company-owned products and orders, the workspace read returns it. Purchasing still refuses a non-IDR product, and a non-IDR order cannot be invoiced or posted until stages 2-4 |
-| 2 | Purchasing: offers, purchase orders and supplier documents | not started |
+| 2 | Purchasing: offers, purchase orders and supplier documents | implemented on branch `feat/trade-currency-purchasing`, not merged: `purchasing-pg/007_company_trade_currency.sql` (format check on offers, orders and supplier documents; `archava_purchasing.trade_currency`; insert guards on offers, orders and purchase lines), the adapter sets the currency of offers and company purchase orders and locks products in the document's currency, the supplier document command accepts its order's currency, the workspace read returns the offer currency. Receipts write the order's unit cost and landed fee to stock unchanged. A non-IDR purchase is not captured for the ledger until stage 4 |
 | 3 | Billing: invoices from orders and manual invoices; gateway refusal reason | not started |
 | 4 | Accounting source bridges and policies accept the `minor` unit on non-IDR books | not started |
 | 5 | Screens, mail and import format and parse by currency | not started |
