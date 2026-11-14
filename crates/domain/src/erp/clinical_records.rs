@@ -7,7 +7,9 @@
 //! - Strict physiological vitals bounds (e.g. systolic 40-300 mmHg, temp 30.0-45.0 °C).
 //! - Clinical governance: an encounter must record at least one primary diagnosis before completion.
 //! - Prescription accountability: medication name, dosage, frequency, and duration are mandatory.
-//! - Patient privacy (HIPAA / PDP): medical records are strictly tenant-isolated and audit-logged.
+//! - Patient privacy: this module only validates input. It is not mounted, so nothing
+//!   here stores, isolates or audit-logs a medical record, and no HIPAA / PDP
+//!   compliance is claimed.
 //! - Pure domain logic: zero I/O, zero sqlx, wasm32-clean.
 
 use serde::{Deserialize, Serialize};

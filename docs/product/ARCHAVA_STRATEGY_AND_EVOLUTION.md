@@ -14,7 +14,7 @@
 ## 1. Executive Summary & Brand Positioning
 
 **ARCHZXY** is the parent technology studio and ecosystem.  
-**Archava** is its flagship product: an intelligent, voice-driven AI Avatar paired with an indestructible, modular, pure-Rust ERP/CRM engine.
+**Archava** is its flagship product: an intelligent, voice-driven AI Avatar paired with a modular, pure-Rust ERP/CRM engine.
 
 ### Target Market
 * **Primary (Phase 1):** Mid-to-High B2B Enterprise, Luxury & Boutique Brands, Funded Startups, and High-Ticket Service Businesses (Beauty Clinics, Specialty Healthcare, Boutique Hospitality, Custom Logistics, High-End Retail).
@@ -93,11 +93,11 @@ Resolution of the "Can Archava be an SDK?" dilemma:
 │     TIER 1: SDK EMBED WIDGET    │         │   TIER 2: FULL RUST ERP ENGINE  │
 │  (For clients with existing web)│         │   (For clients replacing legacy)│
 │                                 │         │                                 │
-│ - 1-line script tag embed       │         │ - Complete 19 domain modules    │
+│ - 1-line script tag embed       │         │ - 19 domain modules             │
 │ - Proven in ArchavaXopenshopee  │         │ - 25 PostgreSQL RLS ledgers     │
 │ - Page Awareness via Scout DOM  │         │ - Multi-user RBAC dashboard     │
 │ - Custom Event communication    │         │ - archava-server binary         │
-│ - Zero server credentials given │         │ - Replaces Odoo/SAP completely  │
+│ - Zero server credentials given │         │ - Aimed at replacing Odoo/SAP   │
 └─────────────────────────────────┘         └─────────────────────────────────┘
 ```
 
@@ -109,11 +109,11 @@ Resolution of the "Can Archava be an SDK?" dilemma:
 
 ---
 
-## 6. Pure Rust Engine Status (Verified Baseline)
+## 6. Pure Rust Engine Status (as recorded on October 27, 2026)
 
-As of October 27, 2026, the entire business core of Archava is **100% implemented, audited, and passing in pure Rust**:
+This list is the state recorded on October 27, 2026. It is not an audit result and has not been re-verified; what is mounted today is in [`config/modules.v1.json`](../../config/modules.v1.json) and [`migrations/manifest.v1.json`](../../migrations/manifest.v1.json).
 
-* **Domain Modules (19 Complete):**
+* **Domain Modules (19 listed):**
   - CRM: Contacts, Pipelines, Confirmation Receipts, Assistant Desk, Authority, Pricing Engine, Rates, Assembly Planning, Capacity Math.
   - R04: Organizations, Proposals, Projects.
   - R05: Scheduling, Accommodation, Assets.

@@ -5,7 +5,7 @@ plan from authorized business context, humans review business changes, and the
 agent executes through existing business tools and reports verified results.
 
 The implementation is a Rust modular monolith with an Axum HTTP host,
-PostgreSQL persistence and a Leptos server-rendered/WebAssembly UI. Its 18 business
+PostgreSQL persistence and a Leptos server-rendered/WebAssembly UI. Its 19 business
 domains provide native action forms and scoped reads. The [agent runtime](docs/modules/AGENT_RUNTIME.md)
 connects durable conversations, preferences, reviewed goals, mission execution,
 continuation and receipt-backed reports. General model-backed planning requires

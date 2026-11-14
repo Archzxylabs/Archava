@@ -52,7 +52,7 @@ pub mod formal_education;
 pub mod fulfillment;
 pub mod laundry;
 
-// Universal Enterprise Pillars extensions.
+// Domain rules only: no adapter, schema, route or screen mounts these.
 pub mod auto_workshop;
 pub mod clinical_records;
 pub mod consignment;
@@ -72,7 +72,8 @@ pub mod salon_spa;
 pub mod studio_canvas;
 pub mod venue_booking;
 
-// Advanced Enterprise Accounting, Costing & Tax engines.
+// Unmounted accounting, costing and tax helpers; the mounted ledger is
+// `accounting`.
 pub mod general_ledger;
 pub mod inventory_costing;
 pub mod tax_indonesia;

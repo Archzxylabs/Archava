@@ -1,10 +1,19 @@
-//! Indonesian Regulatory Tax Engine & Coretax DJP Compliance.
+//! Unverified reference formulas for Indonesian PPN, PPh 21 and BPJS.
 //!
-//! Provides deterministic computations for:
-//! 1. PPN (Value Added Tax 11% / 12%) & Coretax e-Faktur schema generator.
-//! 2. PPh 21 TER (Tarif Efektif Rata-Rata) monthly withholding per PP 58/2023 & PMK 168/2023.
-//! 3. PPh 21 Pasal 17 annual progressive true-up.
-//! 4. BPJS Ketenagakerjaan (JHT, JP, JKK, JKM) & BPJS Kesehatan calculation splits.
+//! No other module uses this one: it is only declared in `erp/mod.rs`, and no
+//! adapter, route, schema or screen calls it. The rates, brackets and caps were
+//! not reviewed by a tax professional and are not kept in step with regulation.
+//! It is not an integration with Coretax or DJP and sends nothing to either.
+//! The arithmetic goes through `f64`, so the results are not suitable for
+//! posting to a ledger.
+//!
+//! Contents:
+//! 1. PPN (VAT) amount from a rate in basis points, and an e-Faktur-shaped
+//!    struct whose QR payload string is not validated against anything.
+//! 2. PPh 21 TER (Tarif Efektif Rata-Rata) monthly rate lookup, written after
+//!    PP 58/2023 & PMK 168/2023.
+//! 3. PPh 21 Pasal 17 annual progressive brackets.
+//! 4. BPJS Ketenagakerjaan (JHT, JP, JKK, JKM) & BPJS Kesehatan contribution splits.
 
 use serde::{Deserialize, Serialize};
 
@@ -49,8 +58,8 @@ impl PtkpStatus {
     }
 }
 
-/// Official monthly TER rate lookup based on gross income (in Rupiah minor cents).
-/// Reference: Lampiran PP 58/2023 & PMK 168/2023.
+/// Monthly TER rate lookup based on gross income (in Rupiah minor cents).
+/// Written after Lampiran PP 58/2023 & PMK 168/2023; the table is unverified.
 pub fn lookup_ter_rate(category: TerCategory, gross_income_cents: i64) -> f64 {
     let gross_idr = gross_income_cents / 100;
 
@@ -367,7 +376,7 @@ pub fn calculate_pasal17_annual(pkp_cents: i64) -> i64 {
     tax
 }
 
-/// Computes the statutory BPJS monthly contribution splits.
+/// BPJS monthly contribution splits (unverified rates and caps).
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct BpjsContribution {
     pub bpjs_kesehatan_employer_cents: i64,
@@ -383,7 +392,7 @@ pub struct BpjsContribution {
 }
 
 pub fn calculate_bpjs(gross_wage_cents: i64) -> BpjsContribution {
-    // Official Cap limits (in cents)
+    // Wage caps (in cents); unverified, not kept in step with regulation
     const KESEHATAN_WAGE_CAP: i64 = 12_000_000_00; // Rp 12 Juta
     const JP_WAGE_CAP: i64 = 10_042_300_00; // Rp 10.042.300
 
@@ -419,7 +428,8 @@ pub fn calculate_bpjs(gross_wage_cents: i64) -> BpjsContribution {
     }
 }
 
-/// Coretax e-Faktur Electronic VAT Document Representation.
+/// An e-Faktur-shaped VAT record. Not a Coretax document: nothing validates
+/// its fields or its QR payload, and nothing submits it.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct EFakturDocument {
     pub transaction_code: String, // e.g. "01" (Kepada Pihak Bukan Pemungut PPN)
