@@ -47,6 +47,36 @@ pub fn decision_utterance(utterance: &str) -> String {
     let after_credential = redact_credentials(&after_card);
     redact_phone_runs(&after_credential)
 }
+/// Credential-only pass for typed business data. Exact amounts and record IDs
+/// are preserved; contact masking is applied separately at the host boundary.
+pub fn credential_text(text: &str) -> String {
+    if text.contains("-----BEGIN") && text.contains("PRIVATE KEY-----") {
+        return CREDENTIAL_LABEL.to_string();
+    }
+    redact_credentials(text)
+}
+
+#[cfg(test)]
+mod credential_boundary_tests {
+    use super::*;
+    #[test]
+    fn credential_filter_preserves_exact_money_and_record_ids_but_withholds_supported_secrets() {
+        let exact = "9007199254740993 00000000-0000-4000-8000-000000000001 -705100";
+        assert_eq!(credential_text(exact), exact);
+        for secret in [
+            "AIzaOwnedSyntheticSecret0123456789",
+            "sk-proj-owned-synthetic-secret",
+            "Bearer owned.token.signature",
+            "password=x",
+            "API_KEY=owned-key",
+        ] {
+            let value = credential_text(secret);
+            assert!(!value.contains(secret), "{value}");
+            assert!(value.contains(CREDENTIAL_LABEL));
+        }
+        assert_eq!(credential_text("-----BEGIN RSA PRIVATE KEY-----\nowned synthetic value\n-----END RSA PRIVATE KEY-----"),CREDENTIAL_LABEL);
+    }
+}
 
 /// Pass 1: `\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b` /gi → `[email]`.
 fn redact_emails(text: &str) -> String {
@@ -142,24 +172,49 @@ fn redact_credentials(text: &str) -> String {
         if !boundary_at(chars, start) {
             return None;
         }
-        let prefix_len = ["sk_", "pk_", "tok_"].iter().find_map(|prefix| {
+        let prefix_len = [
+            "sk_",
+            "pk_",
+            "tok_",
+            "sk-",
+            "AIza",
+            "ghp_",
+            "github_pat_",
+            "bearer ",
+            "apikey=",
+            "api_key=",
+            "password=",
+            "secret=",
+        ]
+        .iter()
+        .find_map(|prefix| {
             let want: Vec<char> = prefix.chars().collect();
-            chars[start..].starts_with(&want[..]).then_some(want.len())
+            (chars.len() - start >= want.len()
+                && chars[start..]
+                    .iter()
+                    .zip(&want)
+                    .all(|(a, b)| a.eq_ignore_ascii_case(b)))
+            .then_some(want.len())
         });
         let prefix_len = prefix_len?;
         let body_start = start + prefix_len;
+        let minimum = if matches!(chars[body_start - 1], '=' | ' ') {
+            1
+        } else {
+            8
+        };
         let mut body_end = body_start;
         while body_end < chars.len()
             && (chars[body_end].is_ascii_alphanumeric()
                 || chars[body_end] == '_'
-                || chars[body_end] == '-')
+                || matches!(chars[body_end], '-' | '.' | '+' | '/' | '=' | ':'))
         {
             body_end += 1;
         }
-        if body_end - body_start < 8 {
+        if body_end - body_start < minimum {
             return None;
         }
-        for end in (body_start + 8..=body_end).rev() {
+        for end in (body_start + minimum..=body_end).rev() {
             let before_w = is_word(chars[end - 1]);
             let at_w = end < chars.len() && is_word(chars[end]);
             if before_w != at_w {

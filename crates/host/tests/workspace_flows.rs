@@ -1,5 +1,19 @@
 //! Native Tier 1 workspace reads, cross-ledger journeys and private mission execution.
 mod common;
+#[path = "workspace_flows/companies.rs"]
+mod companies;
+#[path = "workspace_flows/company_trade.rs"]
+mod company_trade;
+#[path = "workspace_flows/customer_identity.rs"]
+mod customer_identity;
+#[path = "workspace_flows/organization_identity.rs"]
+mod organization_identity;
+#[path = "workspace_flows/parties.rs"]
+mod parties;
+#[path = "workspace_flows/party_transactions.rs"]
+mod party_transactions;
+#[path = "workspace_flows/supplier_identity.rs"]
+mod supplier_identity;
 use archava_host::{router, router::AllReadiness, AppState, Ledger};
 use archava_pg_fixture::{provision, Fixture};
 use axum::{http::StatusCode, Router};
@@ -155,6 +169,326 @@ async fn snapshot(app: &Router, session: &Value, domain: &str) -> (StatusCode, V
         Some(session),
     )
     .await
+}
+
+async fn fulfilled_invoice_source(
+    app: &Router,
+    session: &Value,
+    sku: &str,
+    customer: &str,
+) -> Value {
+    let product=submit(app,session,"commerce",json!({"operation":"product.create","sku":sku,"title":"Frozen sales item","unit":"unit","trackStock":false,"price":10500})).await;
+    let order=submit(app,session,"commerce",json!({"operation":"order.create","customerName":customer,"lines":[{"productId":product["id"],"quantity":2}]})).await;
+    submit(app,session,"commerce",json!({"operation":"order.reserve","id":order["id"],"expectedRevision":1,"holdSeconds":300})).await;
+    submit(
+        app,
+        session,
+        "commerce",
+        json!({"operation":"order.fulfill","id":order["id"],"expectedRevision":2}),
+    )
+    .await;
+    let (_, workspace) = snapshot(app, session, "commerce").await;
+    workspace["orders"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|row| row["id"] == order["id"])
+        .unwrap()
+        .clone()
+}
+
+fn order_invoice_command(order: &Value, code: &str) -> Value {
+    json!({"type":"create_invoice_from_order","commandId":Uuid::new_v4(),"invoiceCode":code,"orderId":order["id"],"expectedOrderRevision":order["revision"]})
+}
+
+async fn order_invoice_call(app: &Router, session: &Value, command: &Value) -> (StatusCode, Value) {
+    call(
+        app,
+        "POST",
+        "/erp/billing/commands",
+        json!({"tenant":"acme","mutation":command}),
+        Some(session),
+    )
+    .await
+}
+
+#[tokio::test]
+async fn order_invoice_preserves_frozen_source_and_replays_without_another_invoice() {
+    let (f, app, session) = setup().await;
+    let customer = "A".repeat(160);
+    let order = fulfilled_invoice_source(&app, &session, "SOURCE-FROZEN", &customer).await;
+    let product = &order["lines"][0]["productId"];
+    submit(&app,&session,"commerce",json!({"operation":"product.set","id":product,"expectedRevision":1,"price":30000,"active":true})).await;
+    let command = order_invoice_command(&order, "INV-FROZEN");
+    let (status, invoice) = order_invoice_call(&app, &session, &command).await;
+    assert_eq!(status, StatusCode::OK, "{invoice}");
+    assert_eq!(invoice["action"], "create_invoice_from_order");
+    assert_eq!(invoice["outstandingMinor"], 21000);
+    let (status, replayed) = order_invoice_call(&app, &session, &command).await;
+    assert_eq!(status, StatusCode::OK, "{replayed}");
+    assert_eq!(replayed["invoiceId"], invoice["invoiceId"]);
+    assert_eq!(replayed["idempotencyReplay"], true);
+    let (status, recovered) = call(
+        &app,
+        "GET",
+        &format!(
+            "/erp/billing/commands/status?tenant=acme&requestId={}",
+            command["commandId"].as_str().unwrap()
+        ),
+        Value::Null,
+        Some(&session),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{recovered}");
+    assert_eq!(recovered["receipt"]["invoiceId"], invoice["invoiceId"]);
+    let (status, duplicate) = order_invoice_call(
+        &app,
+        &session,
+        &order_invoice_command(&order, "INV-DUPLICATE"),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CONFLICT, "{duplicate}");
+    let mut tx = f.runtime_pool.begin().await.unwrap();
+    sqlx::query("SELECT set_config('archava.tenant_id','acme',true)")
+        .execute(&mut *tx)
+        .await
+        .unwrap();
+    let stored:Value=sqlx::query_scalar("SELECT json_build_object('count',count(*),'customer',min(i.customer_ref),'gross',min(i.gross_minor),'revision',min(i.source_order_revision),'line',min(l.source_order_line_id::text),'price',min(l.unit_minor),'quantity',min(l.quantity)) FROM archava_billing.invoices i JOIN archava_billing.invoice_lines l ON l.tenant_id=i.tenant_id AND l.invoice_id=i.id WHERE i.tenant_id='acme' AND i.source_order_id=$1")
+        .bind(Uuid::parse_str(order["id"].as_str().unwrap()).unwrap()).fetch_one(&mut *tx).await.unwrap();
+    tx.commit().await.unwrap();
+    assert_eq!(stored["count"], 1);
+    assert_eq!(stored["customer"], customer);
+    assert_eq!(stored["gross"], 21000);
+    assert_eq!(stored["price"], 10500);
+    assert_eq!(stored["quantity"], 2);
+    assert_eq!(stored["revision"], 3);
+    assert_eq!(stored["line"], order["lines"][0]["id"]);
+    let (_, workspace) = snapshot(&app, &session, "billing").await;
+    assert_eq!(workspace["invoices"][0]["sourceOrderId"], order["id"]);
+    assert_eq!(
+        workspace["invoices"][0]["lines"][0]["sourceOrderLineId"],
+        order["lines"][0]["id"]
+    );
+}
+
+#[tokio::test]
+async fn order_invoice_rejects_stale_unfulfilled_missing_and_previously_returned_sources() {
+    let (_f, app, session) = setup().await;
+    let order =
+        fulfilled_invoice_source(&app, &session, "SOURCE-REFUSALS", "Synthetic buyer").await;
+    let mut stale = order_invoice_command(&order, "INV-STALE");
+    stale["expectedOrderRevision"] = json!(2);
+    assert_eq!(
+        order_invoice_call(&app, &session, &stale).await.0,
+        StatusCode::CONFLICT
+    );
+    let mut missing = order_invoice_command(&order, "INV-MISSING");
+    missing["orderId"] = json!(Uuid::new_v4());
+    assert_eq!(
+        order_invoice_call(&app, &session, &missing).await.0,
+        StatusCode::NOT_FOUND
+    );
+    let draft=submit(&app,&session,"commerce",json!({"operation":"order.create","customerName":"Draft buyer","lines":[{"productId":order["lines"][0]["productId"],"quantity":1}]})).await;
+    assert_eq!(
+        order_invoice_call(
+            &app,
+            &session,
+            &order_invoice_command(&draft, "INV-NOT-FULFILLED")
+        )
+        .await
+        .0,
+        StatusCode::CONFLICT
+    );
+    let returned=submit(&app,&session,"commerce",json!({"operation":"order.return","id":order["id"],"expectedRevision":3,"lineId":order["lines"][0]["id"],"quantity":1,"disposition":"discard","reason":"Returned before billing"})).await;
+    let mut command = order_invoice_command(&order, "INV-RETURNED");
+    command["expectedOrderRevision"] = returned["revision"].clone();
+    assert_eq!(
+        order_invoice_call(&app, &session, &command).await.0,
+        StatusCode::CONFLICT
+    );
+    let (_, workspace) = snapshot(&app, &session, "billing").await;
+    assert_eq!(workspace["invoices"], json!([]));
+}
+
+#[tokio::test]
+async fn order_invoice_rechecks_source_permissions_and_assigned_scope_even_on_replay() {
+    let (f, app, session) = setup().await;
+    let order = fulfilled_invoice_source(&app, &session, "SOURCE-AUTH", "Authorized buyer").await;
+    let command = order_invoice_command(&order, "INV-AUTH");
+    for user in ["reader", "assigned", "service-seat"] {
+        let other = login(&app, user).await;
+        let (status, body) = order_invoice_call(&app, &other, &command).await;
+        assert_eq!(status, StatusCode::FORBIDDEN, "{user}: {body}");
+    }
+    let (status, invoice) = order_invoice_call(&app, &session, &command).await;
+    assert_eq!(status, StatusCode::OK, "{invoice}");
+    sqlx::query("UPDATE archava_commerce.memberships SET permissions=array_remove(permissions,'orders.read') WHERE tenant_id='acme' AND principal_id='alice'").execute(&f.admin_pool).await.unwrap();
+    let (status, body) = order_invoice_call(&app, &session, &command).await;
+    assert_eq!(status, StatusCode::FORBIDDEN, "{body}");
+    let (_, workspace) = snapshot(&app, &session, "billing").await;
+    assert_eq!(workspace["invoices"].as_array().unwrap().len(), 1);
+}
+
+#[tokio::test]
+async fn order_invoice_serializes_competing_conversions_for_the_same_order() {
+    let (_f, app, session) = setup().await;
+    let order = fulfilled_invoice_source(&app, &session, "SOURCE-RACE", "Race buyer").await;
+    let first = order_invoice_command(&order, "INV-RACE-A");
+    let second = order_invoice_command(&order, "INV-RACE-B");
+    let (a, b) = tokio::join!(
+        order_invoice_call(&app, &session, &first),
+        order_invoice_call(&app, &session, &second)
+    );
+    assert!(
+        (a.0 == StatusCode::OK && b.0 == StatusCode::CONFLICT)
+            || (b.0 == StatusCode::OK && a.0 == StatusCode::CONFLICT),
+        "{a:?} {b:?}"
+    );
+    let (_, workspace) = snapshot(&app, &session, "billing").await;
+    assert_eq!(workspace["invoices"].as_array().unwrap().len(), 1);
+}
+
+#[tokio::test]
+async fn order_invoice_runs_through_the_registered_tool_only_after_mission_approval() {
+    let (_f, app, session) = setup().await;
+    let order = fulfilled_invoice_source(&app, &session, "SOURCE-MISSION", "Mission buyer").await;
+    let body = json!({"tenant_id":"acme","mission_code":"order-invoice-tool","title":"Invoice fulfilled order","description":"Reviewed synthetic source document","auto_launch":true,"steps":[{"step_index":0,"step_name":"Create source invoice","tool_name":"billing.create_invoice_from_order","payload_input":{"invoiceCode":"INV-MISSION-SOURCE","orderId":order["id"],"expectedOrderRevision":order["revision"]},"depends_on":[]}]});
+    let (status, mission) = call(
+        &app,
+        "POST",
+        "/api/v1/cockpit/missions",
+        body,
+        Some(&session),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CREATED, "{mission}");
+    let base = format!(
+        "/api/v1/cockpit/missions/{}",
+        mission["id"].as_str().unwrap()
+    );
+    let run = format!("{base}/run-next?tenant=acme");
+    assert_eq!(
+        call(&app, "POST", &run, json!({"stepIndex":0}), Some(&session))
+            .await
+            .0,
+        StatusCode::CONFLICT
+    );
+    let (_, workspace) = snapshot(&app, &session, "billing").await;
+    assert_eq!(workspace["invoices"], json!([]));
+    let (status, approved) = call(
+        &app,
+        "POST",
+        &format!("{base}/steps/0/approve?tenant=acme"),
+        json!({}),
+        Some(&session),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{approved}");
+    let (status, completed) =
+        call(&app, "POST", &run, json!({"stepIndex":0}), Some(&session)).await;
+    assert_eq!(status, StatusCode::OK, "{completed}");
+    assert_eq!(completed["status"], "touchdown");
+    assert_eq!(completed["steps"][0]["payload_output"]["verified"], true);
+    let (status, replayed) = call(&app, "POST", &run, json!({"stepIndex":0}), Some(&session)).await;
+    assert_eq!(status, StatusCode::OK, "{replayed}");
+    assert_eq!(completed, replayed);
+    let (_, workspace) = snapshot(&app, &session, "billing").await;
+    assert_eq!(workspace["invoices"].as_array().unwrap().len(), 1);
+    assert_eq!(workspace["invoices"][0]["sourceOrderId"], order["id"]);
+}
+
+#[tokio::test]
+async fn order_invoice_cannot_use_a_source_from_another_tenant() {
+    let (f, app, session) = setup().await;
+    sqlx::query("INSERT INTO archava_commerce.memberships(tenant_id,principal_id,kind,permissions,scope,active,role,capability) SELECT 'other',principal_id,kind,permissions,scope,active,role,capability FROM archava_commerce.memberships WHERE tenant_id='acme' AND principal_id='alice'")
+        .execute(&f.admin_pool).await.unwrap();
+    let mut product = json!({"operation":"product.create","sku":"OTHER-SOURCE","title":"Other tenant item","unit":"unit","trackStock":false,"price":1000});
+    let (status, created) = call(
+        &app,
+        "POST",
+        "/erp/commerce/commands",
+        json!({"tenant":"other","requestId":Uuid::new_v4(),"command":product}),
+        Some(&session),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{created}");
+    product = json!({"operation":"order.create","customerName":"Other tenant buyer","lines":[{"productId":created["receipt"]["id"],"quantity":1}]});
+    let (status, order) = call(
+        &app,
+        "POST",
+        "/erp/commerce/commands",
+        json!({"tenant":"other","requestId":Uuid::new_v4(),"command":product}),
+        Some(&session),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{order}");
+    let source = json!({"id":order["receipt"]["id"],"revision":1});
+    let (status, answer) = order_invoice_call(
+        &app,
+        &session,
+        &order_invoice_command(&source, "INV-CROSS-TENANT"),
+    )
+    .await;
+    assert_eq!(status, StatusCode::NOT_FOUND, "{answer}");
+    let (_, workspace) = snapshot(&app, &session, "billing").await;
+    assert_eq!(workspace["invoices"], json!([]));
+}
+
+#[tokio::test]
+async fn order_invoice_keeps_its_source_when_later_returns_are_corrected() {
+    let (_f, app, session) = setup().await;
+    let order = fulfilled_invoice_source(&app, &session, "SOURCE-RETURN", "Return buyer").await;
+    let (status, invoice) = order_invoice_call(
+        &app,
+        &session,
+        &order_invoice_command(&order, "INV-RETURN-AFTER"),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{invoice}");
+    submit(&app,&session,"commerce",json!({"operation":"order.return","id":order["id"],"expectedRevision":3,"lineId":order["lines"][0]["id"],"quantity":1,"disposition":"discard","reason":"Customer return"})).await;
+    submit(&app,&session,"billing",json!({"type":"issue_invoice","invoiceId":invoice["invoiceId"],"expectedRevision":1,"reason":"Issue original fulfilled order"})).await;
+    submit(&app,&session,"billing",json!({"type":"append_correction","invoiceId":invoice["invoiceId"],"amountMinor":-10500,"reason":"Reviewed credit for one returned item"})).await;
+    let (_, workspace) = snapshot(&app, &session, "billing").await;
+    let invoice = &workspace["invoices"][0];
+    assert_eq!(invoice["sourceOrderId"], order["id"]);
+    assert_eq!(invoice["sourceOrderRevision"], 3);
+    assert_eq!(invoice["gross"], 21000);
+    assert_eq!(invoice["correction"], -10500);
+    assert_eq!(invoice["outstanding"], 10500);
+}
+
+#[tokio::test]
+async fn order_invoice_database_rejects_repointing_and_incomplete_source_sheets() {
+    let (f, app, session) = setup().await;
+    let order = fulfilled_invoice_source(&app, &session, "SOURCE-GUARD", "Guard buyer").await;
+    let (status, invoice) =
+        order_invoice_call(&app, &session, &order_invoice_command(&order, "INV-GUARD")).await;
+    assert_eq!(status, StatusCode::OK, "{invoice}");
+    let mut tx = f.runtime_pool.begin().await.unwrap();
+    sqlx::query("SELECT set_config('archava.tenant_id','acme',true)")
+        .execute(&mut *tx)
+        .await
+        .unwrap();
+    let repoint=sqlx::query("UPDATE archava_billing.invoices SET source_order_id=NULL,source_order_revision=NULL WHERE tenant_id='acme' AND id=$1")
+        .bind(Uuid::parse_str(invoice["invoiceId"].as_str().unwrap()).unwrap()).execute(&mut *tx).await;
+    assert!(repoint.is_err());
+    tx.rollback().await.unwrap();
+    let other =
+        fulfilled_invoice_source(&app, &session, "SOURCE-INCOMPLETE", "Incomplete buyer").await;
+    let mut tx = f.runtime_pool.begin().await.unwrap();
+    sqlx::query("SELECT set_config('archava.tenant_id','acme',true)")
+        .execute(&mut *tx)
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO archava_billing.invoices(tenant_id,id,invoice_code,customer_ref,currency,gross_minor,outstanding_minor,consumer_ref,owner_id,source_order_id,source_order_revision) VALUES('acme',$1,'INV-INCOMPLETE','Incomplete buyer','IDR',21000,21000,$2,'alice',$3,3)")
+        .bind(Uuid::new_v4()).bind(format!("commerce:{}",other["id"].as_str().unwrap())).bind(Uuid::parse_str(other["id"].as_str().unwrap()).unwrap())
+        .execute(&mut *tx).await.unwrap();
+    assert!(
+        tx.commit().await.is_err(),
+        "Deferred source sheet guard must reject missing lines"
+    );
+    let (_, workspace) = snapshot(&app, &session, "billing").await;
+    assert_eq!(workspace["invoices"].as_array().unwrap().len(), 1);
 }
 #[tokio::test]
 async fn procurement_to_stock_invoice_and_support_are_real_workspace_records() {

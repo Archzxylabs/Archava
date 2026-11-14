@@ -8,6 +8,8 @@ use crate::router::AppState;
 /// Mounts the Cockpit, Orbz, Feed, Presence, Preview, and Ingestion routes.
 pub fn router() -> Router<AppState> {
     Router::new()
+        .route("/api/workflows/cancel", post(crate::workflows::cancel))
+        .route("/api/workflows/status", get(crate::workflows::status))
         .route(
             "/api/preview/generate",
             post(crate::preview::generate_preview_route),
@@ -19,7 +21,8 @@ pub fn router() -> Router<AppState> {
         )
         .route(
             "/presence/sessions/{id}",
-            get(crate::presence::get_presence_session),
+            get(crate::presence::get_presence_session)
+                .delete(crate::presence::close_presence_session),
         )
         .route(
             "/presence/sessions/{id}/turn",
@@ -28,6 +31,10 @@ pub fn router() -> Router<AppState> {
         .route(
             "/presence/sessions/{id}/degrade",
             post(crate::presence::degrade_presence_session),
+        )
+        .route(
+            "/presence/sessions/{id}/stream",
+            get(crate::presence::media::stream),
         )
         // AI Legacy Data Migration & Schema Ingestion
         .route(

@@ -91,7 +91,18 @@ pub async fn command_status(
         return Err(forbidden());
     }
     let row=sqlx::query("SELECT l.* FROM archava_billing.gateway_links l JOIN archava_billing.invoices i ON i.tenant_id=l.tenant_id AND i.id=l.invoice_id WHERE l.tenant_id=$1 AND l.request_id=$2 AND l.actor_id=$3 AND ($4 OR i.owner_id=$3)")
-        .bind(tenant).bind(request).bind(&access.owner_id).bind(access.scope==ErpScope::All).fetch_optional(connection).await.map_err(db)?;
+        .bind(tenant).bind(request).bind(&access.owner_id).bind(access.scope==ErpScope::All).fetch_optional(&mut *connection).await.map_err(db)?;
+    if let Some(row) = &row {
+        let invoice: Uuid = row.try_get("invoice_id").map_err(db)?;
+        super::company_trade::authorize_human(
+            connection,
+            tenant,
+            &access.owner_id,
+            super::company_trade::Record::Invoice,
+            invoice,
+        )
+        .await?;
+    }
     row.as_ref().map(link).transpose()
 }
 
@@ -110,6 +121,14 @@ pub async fn request_link(
     {
         return Err(forbidden());
     }
+    super::company_trade::authorize(
+        connection,
+        tenant,
+        principal,
+        super::company_trade::Record::Invoice,
+        request.invoice_id,
+    )
+    .await?;
     let service = PurchasePrincipal {
         kind: PrincipalKind::Service,
         id: request.service_id.into(),
@@ -182,6 +201,14 @@ pub async fn invoice_links(
     if !access.holds("billing.read") {
         return Err(forbidden());
     }
+    super::company_trade::authorize_human(
+        connection,
+        tenant,
+        &access.owner_id,
+        super::company_trade::Record::Invoice,
+        invoice,
+    )
+    .await?;
     invoice_lock(connection, tenant, invoice, access).await?;
     let rows=sqlx::query("SELECT * FROM archava_billing.gateway_links WHERE tenant_id=$1 AND invoice_id=$2 ORDER BY created_at DESC,id DESC LIMIT 25")
         .bind(tenant).bind(invoice).fetch_all(connection).await.map_err(db)?;
@@ -225,6 +252,8 @@ pub async fn finish_creation(
     redirect: Option<&str>,
 ) -> Result<PaymentLink, PurchaseError> {
     require_service(principal, access)?;
+    // The configured service records its already-bound provider response. Human
+    // company visibility is rechecked by command_status before returning metadata.
     invoice_lock(connection, tenant, uuid(&binding.link.invoice_id)?, access).await?;
     let row=sqlx::query("UPDATE archava_billing.gateway_links SET redirect_url=COALESCE(redirect_url,$3),state=CASE WHEN state IN ('creating','creation_unknown') THEN CASE WHEN $3::text IS NULL THEN 'creation_unknown' ELSE 'open' END ELSE state END WHERE tenant_id=$1 AND id=$2 AND service_id=$4 RETURNING *")
         .bind(tenant).bind(uuid(&binding.link.id)?).bind(redirect).bind(&principal.id).fetch_optional(connection).await.map_err(db)?.ok_or_else(missing)?;

@@ -37,11 +37,13 @@
 pub mod rls;
 // The ERP namespace (Archxy 2, PACKET-000): purchasing repository + the
 // commerce kernel primitives the stock cohort reconciles against.
-/// The CRM transactional persistence adapter (ADR-014).
-pub mod crm;
+// CRM lives at `erp::crm` (ADR-014 extraction, ADR-018 normalization).
 pub mod erp;
 
 pub use rls::{assert_startup_readiness, TenantContextError, TenantTransaction};
 
 /// Process-fixed serving writer lease and readiness.
 pub mod writer;
+
+/// Durable agent conversations, reviewed plans and execution routing.
+pub mod agent;

@@ -1,0 +1,32 @@
+   Compiling archava-host v0.1.0 (/home/haikaru/Archverse/Lab/Archava/crates/host)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.86s
+     Running tests/gateway_payments.rs (target/debug/deps/gateway_payments-bf4ff16f971387ef)
+
+running 8 tests
+test a_write_only_human_is_refused_before_any_external_gateway_invocation ... ok
+test exact_payment_receipt_recovery_is_not_limited_by_the_recent_history_window ... ok
+test gateway_challenges_unsigned_status_and_conserves_settlement_refunds_and_replays ... ok
+test original_gateway_receipts_recheck_current_scope_and_restore_hold_blocks_new_calls ... ok
+test refund_first_records_external_gross_and_refund_but_allocates_only_the_remaining_net ... ok
+test service_revocation_while_get_status_is_in_flight_refuses_all_financial_effects ... ok
+test unknown_creation_keeps_original_order_and_blocks_a_fresh_link_even_after_replay ... ok
+test verified_overpayment_is_retained_as_unapplied_money_and_refund_first_is_net_only ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 9.85s
+
+     Running tests/invoice_email.rs (target/debug/deps/invoice_email-7a143de095b2d0fd)
+
+running 3 tests
+test idempotent_retry_returns_existing_without_second_call ... ok
+test reader_only_user_is_forbidden ... ok
+test send_invoice_email_records_outbox_and_accepts ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.62s
+
+     Running tests/presence_lifecycle.rs (target/debug/deps/presence_lifecycle-9f7cbc971c087eb3)
+
+running 1 test
+test test_presence_session_lifecycle_and_turn_and_degrade ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.16s
+

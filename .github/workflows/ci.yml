@@ -1,8 +1,17 @@
 name: CI
 
-# The gates a PR must clear before review, in the order they fail fastest.
+# The gates a PR must clear before review, split so each stage gets its own
+# runner and its own disk. One job doing the debug test build, the wasm check
+# and the LTO release build ran out of space after the tests had passed.
 #
-# The rust-workspace job verifies the pure Rust platform workspace (22 crates).
+#   checks   structure, modules, docs, helper tests, fmt, Clippy, all Rust tests
+#   wasm     wasm32 boundary checks for core, domain and slice hydration
+#   browser  release build, WASM payload and the real-Chromium acceptance gate
+#
+# The three jobs run side by side, so a PR waits for the slowest job rather than
+# for their sum. Each restores its own Cargo cache (registry, compiled
+# dependencies and installed tools such as wasm-bindgen); workspace crates are
+# always rebuilt from the checked-out source.
 
 on:
   pull_request:
@@ -16,21 +25,28 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  rust-workspace:
+  checks:
     name: Rust Platform Workspace
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Preinstalled SDKs this job never uses.
+      - name: Free runner disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /opt/hostedtoolcache/CodeQL /usr/local/share/boost
+          df -h /
 
       - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
         with:
           toolchain: 1.96.0
           components: rustfmt, clippy
-          targets: wasm32-unknown-unknown
 
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 22
+          node-version: 22.22.3
 
       - name: Install build toolchain dependencies & PostgreSQL
         run: |
@@ -43,6 +59,7 @@ jobs:
       - name: Repository boundaries and helper regressions
         run: |
           node tools/check-structure.mjs
+          node tools/check-modules.mjs
           node tools/check-docs.mjs
           node --test tools/test/*.test.mjs
 
@@ -55,16 +72,77 @@ jobs:
       - name: Full Workspace Test Suite
         run: cargo test --workspace --locked -- --test-threads=1
 
+  wasm:
+    name: WASM Portable Boundary
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          toolchain: 1.96.0
+          targets: wasm32-unknown-unknown
+
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+
+      # `.cargo/config.toml` selects clang + mold for host artifacts (build
+      # scripts and proc macros), which a wasm check still compiles.
+      - name: Install build toolchain dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y clang mold sccache || sudo apt-get install -y clang mold
+          if ! command -v sccache &> /dev/null; then
+            echo "RUSTC_WRAPPER=" >> "$GITHUB_ENV"
+          fi
+
       - name: WASM Portable Boundary Gate
         run: |
-          cargo check --target wasm32-unknown-unknown -p archava-core -p archava-domain
-          cargo check --target wasm32-unknown-unknown -p archava-slice --lib --features hydrate
+          cargo check --locked --target wasm32-unknown-unknown -p archava-core -p archava-domain
+          cargo check --locked --target wasm32-unknown-unknown -p archava-slice --lib --features hydrate
+
+  browser:
+    name: Release Build and Browser Acceptance
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Preinstalled SDKs this job never uses. Chrome and the Node tool cache
+      # stay: the acceptance gate drives the installed browser.
+      - name: Free runner disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /opt/hostedtoolcache/CodeQL /usr/local/share/boost
+          df -h /
+
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          toolchain: 1.96.0
+          targets: wasm32-unknown-unknown
+
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22.22.3
+
+      - name: Install build toolchain dependencies & PostgreSQL
+        run: |
+          sudo apt-get update && sudo apt-get install -y postgresql clang mold sccache || sudo apt-get install -y postgresql clang mold
+          echo "/usr/lib/postgresql/$(ls /usr/lib/postgresql | sort -V | tail -1)/bin" >> "$GITHUB_PATH"
+          if ! command -v sccache &> /dev/null; then
+            echo "RUSTC_WRAPPER=" >> "$GITHUB_ENV"
+          fi
 
       - name: Install matching WASM packager
         run: cargo install wasm-bindgen-cli --version 0.2.129 --locked
 
       - name: Build release server and browser payload
         run: node tools/rust/build-slice.mjs
+
+      # Ubuntu 24.04 restricts unprivileged user namespaces through AppArmor, and
+      # Chromium then aborts with "No usable sandbox". Lift that restriction on
+      # this disposable runner so the browser keeps its sandbox, rather than
+      # launching it with --no-sandbox.
+      - name: Allow the Chromium sandbox
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 
       # The Ubuntu 24.04 runner includes Chrome. The gate discovers the installed
       # browser, uses an isolated profile/fixture, and closes its own processes.

@@ -157,6 +157,10 @@ pub fn match_column(col: &str, target: TargetEntityKind) -> Option<&'static str>
                 .contains(&norm.as_str())
             {
                 Some("quantity")
+            } else if ["unit_cost_minor", "unit_cost", "harga_modal", "cost"]
+                .contains(&norm.as_str())
+            {
+                Some("unit_cost_minor")
             } else if ["location", "lokasi", "gudang", "warehouse"].contains(&norm.as_str()) {
                 Some("location")
             } else {

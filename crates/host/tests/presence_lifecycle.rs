@@ -9,6 +9,7 @@ use axum::{
 };
 use serde_json::{json, Value};
 use tower::ServiceExt;
+use uuid::Uuid;
 
 const KEY: &[u8] = &[9u8; 32];
 const PASSWORD: &str = "correct horse battery staple";
@@ -52,6 +53,56 @@ async fn setup() -> (Fixture, AppState, Router, Value) {
             .await
             .unwrap();
     }
+
+    // A real commerce order lets the checkout-signing regression prove that
+    // authorization is bound to persisted quote data, not just membership.
+    let product_id = Uuid::new_v4();
+    let order_id = Uuid::parse_str("00000000-0000-4000-8000-000000000042").unwrap();
+    let line_id = Uuid::new_v4();
+    let mut tx = f.admin_pool.begin().await.unwrap();
+    sqlx::query("SELECT set_config('archava.tenant_id', 'acme', true)")
+        .execute(&mut *tx)
+        .await
+        .unwrap();
+    sqlx::query(
+        "INSERT INTO archava_commerce.products
+         (tenant_id,id,sku,title,unit,track_stock,price,currency)
+         VALUES ('acme',$1,'CHECKOUT-TEST','Checkout test product','unit',false,100,'IDR')",
+    )
+    .bind(product_id)
+    .execute(&mut *tx)
+    .await
+    .unwrap();
+    sqlx::query(
+        "INSERT INTO archava_commerce.orders
+         (tenant_id,id,owner_id,customer_name,total_estimate,currency)
+         VALUES ('acme',$1,'alice','Checkout customer',100,'IDR')",
+    )
+    .bind(order_id)
+    .execute(&mut *tx)
+    .await
+    .unwrap();
+    sqlx::query(
+        "INSERT INTO archava_commerce.order_lines
+         (tenant_id,id,order_id,product_id,sku,title,unit,track_stock,quantity,price,product_revision)
+         VALUES ('acme',$1,$2,$3,'CHECKOUT-TEST','Checkout test product','unit',false,1,100,1)",
+    )
+    .bind(line_id)
+    .bind(order_id)
+    .bind(product_id)
+    .execute(&mut *tx)
+    .await
+    .unwrap();
+    tx.commit().await.unwrap();
+
+    sqlx::query(
+        "UPDATE archava_commerce.memberships
+         SET permissions = ARRAY['orders.read']::text[]
+         WHERE tenant_id = 'acme' AND principal_id = 'alice'",
+    )
+    .execute(&f.admin_pool)
+    .await
+    .unwrap();
 
     let state = state(&f, f.runtime_pool.clone())
         .await
@@ -196,7 +247,28 @@ async fn test_presence_session_lifecycle_and_turn_and_degrade() {
     assert_eq!(degrade_json["current_mode"], "chat");
     assert_eq!(degrade_json["degraded"], true);
 
-    // 5. Unauthenticated request refused
+    // 5. The participant can explicitly close the session and release its
+    // capacity slot; the route is a CSRF-protected mutation.
+    let close_req = Request::builder()
+        .method("DELETE")
+        .uri(format!("/presence/sessions/{session_id}"))
+        .header("cookie", cookie)
+        .header("x-archava-csrf", csrf)
+        .body(Body::empty())
+        .unwrap();
+    let close_res = app.clone().oneshot(close_req).await.unwrap();
+    assert_eq!(close_res.status(), StatusCode::OK);
+
+    let after_close_req = Request::builder()
+        .method("GET")
+        .uri(format!("/presence/sessions/{session_id}"))
+        .header("cookie", cookie)
+        .body(Body::empty())
+        .unwrap();
+    let after_close_res = app.clone().oneshot(after_close_req).await.unwrap();
+    assert_eq!(after_close_res.status(), StatusCode::NOT_FOUND);
+
+    // 6. Unauthenticated request refused
     let unauth_req = Request::builder()
         .method("GET")
         .uri(format!("/presence/sessions/{session_id}"))
@@ -307,6 +379,76 @@ async fn review_gemini_foreign_tenant_session_override_is_refused() {
         .unwrap()
         .status();
     assert_eq!(mallory_read, StatusCode::FORBIDDEN);
+}
+
+#[tokio::test]
+async fn checkout_signature_mint_requires_membership_in_the_signed_tenant() {
+    let (_f, _state, app, alice) = setup().await;
+    let mallory = login(&app, "mallory").await;
+
+    let sign = |session: &Value, tenant: &str| {
+        Request::builder()
+            .method("POST")
+            .uri("/embed/checkout/sign")
+            .header("cookie", session["cookie"].as_str().unwrap())
+            .header("x-archava-csrf", session["csrf"].as_str().unwrap())
+            .header("content-type", "application/json")
+            .body(Body::from(
+                json!({
+                    "tenant": tenant,
+                    "orderId": "00000000-0000-4000-8000-000000000042",
+                    "amount": 100,
+                    "currency": "IDR",
+                    "item": "Signed checkout"
+                })
+                .to_string(),
+            ))
+            .unwrap()
+    };
+
+    let allowed = app.clone().oneshot(sign(&alice, "acme")).await.unwrap();
+    assert_eq!(allowed.status(), StatusCode::OK);
+
+    let mut mismatched = sign(&alice, "acme");
+    *mismatched.body_mut() = Body::from(
+        json!({
+            "tenant": "acme",
+            "orderId": "00000000-0000-4000-8000-000000000042",
+            "amount": 999,
+            "currency": "IDR",
+            "item": "Signed checkout"
+        })
+        .to_string(),
+    );
+    let mismatch = app.clone().oneshot(mismatched).await.unwrap();
+    assert_eq!(mismatch.status(), StatusCode::CONFLICT);
+
+    let missing = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/embed/checkout/sign")
+                .header("cookie", alice["cookie"].as_str().unwrap())
+                .header("x-archava-csrf", alice["csrf"].as_str().unwrap())
+                .header("content-type", "application/json")
+                .body(Body::from(
+                    json!({
+                        "tenant": "acme",
+                        "orderId": "00000000-0000-4000-8000-000000000099",
+                        "amount": 100,
+                        "currency": "IDR"
+                    })
+                    .to_string(),
+                ))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(missing.status(), StatusCode::NOT_FOUND);
+
+    let refused = app.clone().oneshot(sign(&mallory, "acme")).await.unwrap();
+    assert_eq!(refused.status(), StatusCode::FORBIDDEN);
 }
 
 #[tokio::test]

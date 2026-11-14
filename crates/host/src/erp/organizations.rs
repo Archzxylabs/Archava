@@ -76,7 +76,7 @@ fn outcome(answer: (StatusCode, Json<CommandOutcome>)) -> (StatusCode, ErpBody) 
 }
 
 /// 400 for a document the boundary parse refuses.
-fn invalid_submission() -> (StatusCode, ErpBody) {
+pub(super) fn invalid_submission() -> (StatusCode, ErpBody) {
     (
         StatusCode::BAD_REQUEST,
         ErpBody::Outcome(CommandOutcome {
@@ -126,7 +126,9 @@ fn conflict() -> (StatusCode, ErpBody) {
     )
 }
 
-fn map_purchase_result(error: PurchaseError) -> Result<(StatusCode, ErpBody), ErpGateError> {
+pub(super) fn map_purchase_result(
+    error: PurchaseError,
+) -> Result<(StatusCode, ErpBody), ErpGateError> {
     match error {
         PurchaseError::Domain(ErpError::Forbidden) => Ok(forbidden()),
         PurchaseError::Domain(ErpError::NotFound) => Ok(unknown_resource()),
@@ -138,6 +140,10 @@ fn map_purchase_result(error: PurchaseError) -> Result<(StatusCode, ErpBody), Er
 
 fn gate_outcome(error: ErpGateError) -> (StatusCode, ErpBody) {
     match error {
+        ErpGateError::Configuration(error) => {
+            let (status, body) = error.response();
+            (status, ErpBody::Doc(body.0))
+        }
         ErpGateError::Authority(refusal) => outcome(authority_refusal(&refusal)),
         ErpGateError::Database(ledger, source) => {
             tracing::error!(error = %source, "refusing: {ledger} database failure");
@@ -226,7 +232,7 @@ fn fingerprint(
 /// `POST /erp/organizations/commands` — submit (or replay) an organizations
 /// command. CSRF-bound like the other ERP write routes; the tenant comes
 /// only from the body.
-pub(crate) async fn organization_command(
+pub(crate) async fn command(
     State(state): State<AppState>,
     headers: HeaderMap,
     submission: Result<Json<OrganizationSubmission>, JsonRejection>,
@@ -250,7 +256,7 @@ pub(crate) async fn organization_command(
 /// status of one request id. Session-bound like the write route (the
 /// human-kind gate is part of the repository step, same as the TS status
 /// read).
-pub(crate) async fn organization_status(
+pub(crate) async fn status(
     State(state): State<AppState>,
     headers: HeaderMap,
     query: Result<Query<OrganizationStatusQuery>, QueryRejection>,
@@ -283,6 +289,19 @@ pub async fn submit_organization_command(
     submission: OrganizationSubmission,
 ) -> Result<(StatusCode, ErpBody), ErpGateError> {
     let principal = actor.principal();
+    if submission.mutation["type"]
+        .as_str()
+        .is_some_and(|kind| kind.starts_with("company."))
+    {
+        return super::companies::submit(state, principal, submission).await;
+    }
+    if submission.mutation["type"]
+        .as_str()
+        .is_some_and(|kind| kind.starts_with("party."))
+    {
+        return super::parties::submit(state, principal, submission).await;
+    }
+
     let mutation = match parse_mutation(&submission.mutation) {
         Ok(mutation) => mutation,
         Err(_) => return Ok(invalid_submission()),
@@ -290,6 +309,18 @@ pub async fn submit_organization_command(
     let fingerprint = fingerprint(state, &submission.tenant, &principal, &mutation);
 
     let mut transaction = begin_organizations(state, submission.tenant.clone()).await?;
+    use archava_domain::erp::organizations::OrganizationData;
+    if matches!(
+        &mutation.data,
+        OrganizationData::CreateAffiliation { .. }
+            | OrganizationData::CreateReviewedAffiliation { .. }
+            | OrganizationData::VerifyAffiliationContact { .. }
+    ) || matches!(&mutation.data, OrganizationData::UpdateAffiliation { status: Some(status), .. } if status=="active")
+    {
+        crate::own::require_erp_module(&mut transaction, "crm-contacts")
+            .await
+            .map_err(ErpGateError::Configuration)?;
+    }
 
     // 1. The member ladder — the ledger membership row, the active+kinds
     //    match, the permission intersection over the human's scope.
@@ -370,6 +401,45 @@ pub async fn organization_command_status(
             }
         }
     };
+
+    let company_status = archava_adapters::erp::companies::command_status(
+        transaction.checked_executor().await?,
+        query.tenant.as_str(),
+        &principal,
+        &access,
+        query.request_id,
+    )
+    .await;
+    match company_status {
+        Ok(Some(body)) => {
+            let _ = transaction.rollback().await;
+            return Ok((StatusCode::OK, ErpBody::Doc(body)));
+        }
+        Ok(None) => {}
+        Err(error) => {
+            let _ = transaction.rollback().await;
+            return map_purchase_result(error);
+        }
+    }
+    let party_status = archava_adapters::erp::parties::command_status(
+        transaction.checked_executor().await?,
+        query.tenant.as_str(),
+        &principal,
+        &access,
+        query.request_id,
+    )
+    .await;
+    match party_status {
+        Ok(Some(body)) => {
+            let _ = transaction.rollback().await;
+            return Ok((StatusCode::OK, ErpBody::Doc(body)));
+        }
+        Ok(None) => {}
+        Err(error) => {
+            let _ = transaction.rollback().await;
+            return map_purchase_result(error);
+        }
+    }
     let status = {
         let connection = transaction.checked_executor().await?;
         match adapter_command_status(

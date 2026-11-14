@@ -32,6 +32,19 @@ pub fn Support() -> impl IntoView {
             }
         });
     });
+    let action_record = RwSignal::new(json!({}));
+    Effect::new(move |_| {
+        action_record.set_if_alive(
+            work.rows("items")
+                .into_iter()
+                .find(|r| r["id"] == selected.get())
+                .map(|mut row| {
+                    row["_collection"] = json!("items");
+                    row
+                })
+                .unwrap_or_else(|| json!({})),
+        );
+    });
     view! {<Toolbar work title="Support cases"/><Feedback work/><div class="ops-layout"><section class="ops-main"><Records work collection="items" columns=vec![("subject","Subject"),("requesterName","Requester"),("priority","Priority"),("state","Status")] selected/>
     {move||work.rows("items").into_iter().find(|p|p["id"]==selected.get()).map(|case|{
      let id=text(&case,"id");let revision=integer(&case,"revision");let state=text(&case,"state");let start=id.clone();let wait=id.clone();let resume=id.clone();let resolve=id.clone();let close=id.clone();let reopen=id.clone();let note_id=id;
@@ -48,5 +61,5 @@ pub fn Support() -> impl IntoView {
       <h4>"History"</h4>{move||{let data=detail.get();view!{<ul class="ops-lines">{data["notes"].as_array().cloned().unwrap_or_default().into_iter().map(|n|view!{<li><strong>{text(&n,"authorId")}</strong>" · "{text(&n,"body")}</li>}).collect::<Vec<_>>()}{data["transitions"].as_array().cloned().unwrap_or_default().into_iter().map(|t|view!{<li>{format!("{} · {} → {}",text(&t,"occurredAt"),text(&t,"from"),text(&t,"to"))}</li>}).collect::<Vec<_>>()}</ul>}}}<p class="hint">"History is bounded; the API exposes continuation flags for longer records."</p>
      </section>}
     })}
-    </section><aside class="ops-aside"><div hidden=move||!work.permits("cases.write")><form class="ops-form" on:submit=move|e|{e.prevent_default();work.send(json!({"operation":"case.create","requesterName":requester.get_untracked(),"subject":subject.get_untracked(),"description":description.get_untracked(),"priority":"normal"}));}><h3>"New support case"</h3><Field label="Requester name" id="case-requester" value=requester/><Field label="Subject" id="case-subject" value=subject/><label class="ops-field"><span>"Description"</span><textarea data-testid="case-description" prop:value=move||description.get() on:input=move|e|description.set_if_alive(event_target_value(&e)) required></textarea></label><button class="btn" type="submit" data-testid="case-save" disabled=move||work.blocked()>"Create case"</button></form></div></aside></div>}
+    </section><aside class="ops-aside"><div hidden=move||!work.permits("cases.write")><form class="ops-form" on:submit=move|e|{e.prevent_default();work.send(json!({"operation":"case.create","requesterName":requester.get_untracked(),"subject":subject.get_untracked(),"description":description.get_untracked(),"priority":"normal"}));}><h3>"New support case"</h3><Field label="Requester name" id="case-requester" value=requester/><Field label="Subject" id="case-subject" value=subject/><label class="ops-field"><span>"Description"</span><textarea data-testid="case-description" prop:value=move||description.get() on:input=move|e|description.set_if_alive(event_target_value(&e)) required></textarea></label><button class="btn" type="submit" data-testid="case-save" disabled=move||work.blocked()>"Create case"</button></form></div><details class="ops-disclosure"><summary>"All support actions"</summary><operator::Actions work selected=action_record/></details></aside></div>}
 }

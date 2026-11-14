@@ -12,6 +12,17 @@ pub const MIGRATION_ID: &str = "001_serving_writer";
 // This include path is relative to crates/adapters/src/writer.rs after integration.
 pub const MIGRATION_SQL: &[u8] =
     include_bytes!("../../../migrations/control-pg/001_serving_writer.sql");
+pub fn expected_migrations() -> Vec<(String, String)> {
+    vec![
+        (MIGRATION_ID.into(), migration_checksum(MIGRATION_SQL)),
+        (
+            "002_accounting_write_fence".into(),
+            migration_checksum(include_bytes!(
+                "../../../migrations/control-pg/002_accounting_write_fence.sql"
+            )),
+        ),
+    ]
+}
 #[derive(Debug, thiserror::Error)]
 pub enum WriterError {
     #[error("serving writer schema is not ready")]
@@ -49,14 +60,14 @@ impl WriterLease {
     }
 }
 pub async fn assert_schema(pool: &PgPool) -> Result<(), TenantContextError> {
-    assert_startup_readiness(
-        pool,
-        NAMESPACE,
-        LEDGER,
-        &["writer_lease"],
-        &[(MIGRATION_ID.into(), migration_checksum(MIGRATION_SQL))],
-    )
-    .await
+    // The known old non-financial profile remains usable for a controlled
+    // upgrade. Once company books exist, the accounting fence is mandatory.
+    let (books,history):(bool,i64)=sqlx::query_as("SELECT EXISTS(SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='archava_accounting' AND c.relname='books'),(SELECT count(*) FROM archava_control.schema_migrations)").fetch_one(pool).await.map_err(|source|TenantContextError::Database{ledger:LEDGER,source})?;
+    let mut expected = expected_migrations();
+    if !books && history == 1 {
+        expected.truncate(1);
+    }
+    assert_startup_readiness(pool, NAMESPACE, LEDGER, &["writer_lease"], &expected).await
 }
 pub async fn is_current(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query("SELECT archava_control.require_serving_writer()")

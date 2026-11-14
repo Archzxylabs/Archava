@@ -39,6 +39,47 @@ use super::{
     COMMERCE_PERMISSION_VOCABULARY,
 };
 
+/// The row-side currency grammar: the migration's `^[A-Z]{3}$` CHECK. Which
+/// code a row may carry is the database's decision (`trade_currency`), not
+/// this parser's.
+pub(super) fn valid_currency_code(code: &str) -> bool {
+    code.len() == 3 && code.bytes().all(|byte| byte.is_ascii_uppercase())
+}
+
+/// The trade currency a new company-owned product, sales order, supplier
+/// offer or purchase order must carry: the currency of the company's
+/// accounting book, or IDR when the company has no book (or the Accounting
+/// ledger is not installed). Read in the caller's transaction; the
+/// `a_currency_*` insert guards of Commerce and Purchasing re-derive it and
+/// refuse a different value, so this is the value to send, not the authority.
+pub async fn company_trade_currency(
+    connection: &mut PgConnection,
+    tenant: &str,
+    company: Uuid,
+) -> Result<String, PurchaseError> {
+    let installed: bool =
+        sqlx::query_scalar("SELECT to_regclass('archava_accounting.books') IS NOT NULL")
+            .fetch_one(&mut *connection)
+            .await
+            .map_err(|error| purchase_database_error(COMMERCE_LEDGER, error))?;
+    if !installed {
+        return Ok("IDR".to_owned());
+    }
+    let book: Option<String> = sqlx::query_scalar(
+        "SELECT currency FROM archava_accounting.books WHERE tenant_id=$1 AND company_id=$2",
+    )
+    .bind(tenant)
+    .bind(company)
+    .fetch_optional(&mut *connection)
+    .await
+    .map_err(|error| purchase_database_error(COMMERCE_LEDGER, error))?;
+    let currency = book.unwrap_or_else(|| "IDR".to_owned());
+    if !valid_currency_code(&currency) {
+        return Err(PurchaseError::Domain(ErpError::Conflict));
+    }
+    Ok(currency)
+}
+
 fn int4(value: i64) -> Result<i32, PurchaseError> {
     i32::try_from(value).map_err(|_| PurchaseError::Domain(ErpError::Conflict))
 }
@@ -50,6 +91,7 @@ fn int4(value: i64) -> Result<i32, PurchaseError> {
 /// needs the same subset.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ProductRow {
+    pub company_id: Option<Uuid>,
     pub id: Uuid,
     pub sku: String,
     pub title: String,
@@ -108,7 +150,7 @@ fn parse_product_row(
     let currency: String = row
         .try_get("currency")
         .map_err(|error| purchase_database_error(COMMERCE_LEDGER, error))?;
-    if currency != "IDR" {
+    if !valid_currency_code(&currency) {
         return Err(PurchaseError::Domain(ErpError::Conflict));
     }
     let track_stock: bool = row
@@ -125,6 +167,7 @@ fn parse_product_row(
         return Err(PurchaseError::Domain(ErpError::Conflict));
     }
     Ok(ProductRow {
+        company_id: super::company_trade::row_company(row)?,
         id,
         sku,
         title,
@@ -164,6 +207,38 @@ pub async fn lock_commerce_products_for(
     ids: &[Uuid],
     owner_module: &str,
 ) -> Result<Vec<ProductRow>, PurchaseError> {
+    // These callers have no company (foodservice recipes and portions), so
+    // their documents are IDR and a product in another currency is refused.
+    lock_document_products_scoped(connection, tenant, ids, owner_module, None, "IDR").await
+}
+/// The company-scoped lock for a document in one currency: a supplier offer,
+/// a purchase order or its receipt. Every product must be priced in the
+/// document's currency, so a document can never be built over a product of
+/// another one. Commerce's own paths use [`lock_trade_products_scoped`].
+pub async fn lock_document_products_scoped(
+    connection: &mut PgConnection,
+    tenant: &str,
+    ids: &[Uuid],
+    owner_module: &str,
+    company: Option<Uuid>,
+    currency: &str,
+) -> Result<Vec<ProductRow>, PurchaseError> {
+    let products =
+        lock_trade_products_scoped(connection, tenant, ids, owner_module, company).await?;
+    if products.iter().any(|product| product.currency != currency) {
+        return Err(PurchaseError::Domain(ErpError::Conflict));
+    }
+    Ok(products)
+}
+/// The company-scoped product lock in whatever currency the rows carry: the
+/// catalog, stock and sales-order paths of Commerce itself.
+pub async fn lock_trade_products_scoped(
+    connection: &mut PgConnection,
+    tenant: &str,
+    ids: &[Uuid],
+    owner_module: &str,
+    company: Option<Uuid>,
+) -> Result<Vec<ProductRow>, PurchaseError> {
     verify_commerce_context(connection, tenant).await?;
     if owner_module != "commerce" && owner_module != "foodservice" {
         return Err(PurchaseError::Domain(ErpError::Conflict));
@@ -179,11 +254,11 @@ pub async fn lock_commerce_products_for(
     let managed_filter = if owner_module == "foodservice" {
         "AND (managed_by IS NULL OR managed_by = $3)"
     } else {
-        "AND (managed_by IS NULL OR managed_by IS NULL)"
+        "AND managed_by IS NULL AND $3::text='commerce'"
     };
     let lock_statement = format!(
         "SELECT * FROM archava_commerce.products WHERE tenant_id=$1 \
-         AND id=ANY($2) {managed_filter} ORDER BY id FOR UPDATE"
+         AND id=ANY($2) {managed_filter} AND (to_jsonb(products)->>'company_id')::uuid IS NOT DISTINCT FROM $4::uuid ORDER BY id FOR UPDATE"
     );
     // sqlx 0.9 refuses a dynamic string unless the caller asserts it has been
     // audited. The audit is the two-branch enum check above: the only bytes of
@@ -194,6 +269,7 @@ pub async fn lock_commerce_products_for(
         .bind(tenant)
         .bind(&unique)
         .bind(owner_module)
+        .bind(company)
         .fetch_all(&mut *connection)
         .await
         .map_err(|error| purchase_database_error(COMMERCE_LEDGER, error))?;
@@ -262,16 +338,26 @@ pub async fn read_commerce_stock(
     product_id: Uuid,
     observed: &str,
 ) -> Result<StockRecord, PurchaseError> {
+    read_commerce_stock_scoped(connection, tenant, product_id, observed, None).await
+}
+pub async fn read_commerce_stock_scoped(
+    connection: &mut PgConnection,
+    tenant: &str,
+    product_id: Uuid,
+    observed: &str,
+    company: Option<Uuid>,
+) -> Result<StockRecord, PurchaseError> {
     let row: (i32, i64, i32) = sqlx::query_as(
         "SELECT b.quantity,coalesce((SELECT sum(a.quantity) FROM archava_commerce.allocations a \
          WHERE a.tenant_id=b.tenant_id AND a.product_id=b.product_id AND a.state='held' \
          AND a.expires_at>$3::timestamptz),0)::int8 AS reserved,b.revision \
          FROM archava_commerce.stock_balances b \
-         WHERE b.tenant_id=$1 AND b.product_id=$2",
+         WHERE b.tenant_id=$1 AND b.product_id=$2 AND EXISTS(SELECT 1 FROM archava_commerce.products p WHERE p.tenant_id=b.tenant_id AND p.id=b.product_id AND (to_jsonb(p)->>'company_id')::uuid IS NOT DISTINCT FROM $4::uuid)",
     )
     .bind(tenant)
     .bind(product_id)
     .bind(observed)
+    .bind(company)
     .fetch_optional(&mut *connection)
     .await
     .map_err(|error| purchase_database_error(COMMERCE_LEDGER, error))?
@@ -433,6 +519,13 @@ pub async fn receive_purchase_stock(
     input: ReceiveStockInput,
 ) -> Result<(), PurchaseError> {
     valid_receive_input(&input)?;
+    let company = super::company_trade::record_company(
+        connection,
+        tenant,
+        super::company_trade::Record::Purchase,
+        input.purchase_id,
+    )
+    .await?;
 
     // Claim the commerce command row for THIS request id. The TS kernel
     // refuses with conflict when the claim loses (`rowCount !== 1`) — the
@@ -475,7 +568,19 @@ pub async fn receive_purchase_stock(
     let products = if ids.is_empty() {
         Vec::new()
     } else {
-        lock_commerce_products(connection, tenant, &ids).await?
+        // Stock is received in the purchase order's own currency: the unit
+        // cost and landed fee below are that order's amounts, unconverted.
+        let currency: String = sqlx::query_scalar(
+            "SELECT currency FROM archava_purchasing.orders WHERE tenant_id=$1 AND id=$2",
+        )
+        .bind(tenant)
+        .bind(input.purchase_id)
+        .fetch_optional(&mut *connection)
+        .await
+        .map_err(|error| purchase_database_error(COMMERCE_LEDGER, error))?
+        .ok_or(PurchaseError::Domain(ErpError::NotFound))?;
+        lock_document_products_scoped(connection, tenant, &ids, "commerce", company, &currency)
+            .await?
     };
     if products.iter().any(|product| !product.track_stock) {
         return Err(PurchaseError::Domain(ErpError::Conflict));
@@ -510,7 +615,8 @@ pub async fn receive_purchase_stock(
         // The stock read happens per product exactly like the TS loop; the
         // cell ceiling and the revision ceiling are the trigger's own.
         let clock = commerce_clock(connection).await?;
-        let stock = read_commerce_stock(connection, tenant, *product_id, &clock).await?;
+        let stock =
+            read_commerce_stock_scoped(connection, tenant, *product_id, &clock, company).await?;
         if stock.on_hand + quantity > STOCK_QTY_MAX || stock.revision >= REVISION_MAX {
             return Err(PurchaseError::Domain(ErpError::Conflict));
         }
@@ -704,6 +810,7 @@ pub async fn resolve_commerce_context(
 /// value the schema would refuse.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ProductCreateInput {
+    pub company: Option<(super::company_trade::CompanyStamp, i64)>,
     pub sku: String,
     pub title: String,
     pub unit: String,
@@ -772,8 +879,8 @@ async fn commerce_receipt_access(
             return Err(PurchaseError::Domain(ErpError::Forbidden));
         }
         let found: Option<i32> = sqlx::query_scalar(
-            "SELECT 1 FROM archava_commerce.orders WHERE tenant_id=$1 AND id=$2 \
-             AND ($3::boolean OR owner_id=$4)",
+            "SELECT 1 FROM archava_commerce.orders r WHERE tenant_id=$1 AND id=$2 \
+             AND ($3::boolean OR owner_id=$4) AND (to_jsonb(r)->>'company_id') IS NULL",
         )
         .bind(tenant)
         .bind(id)
@@ -797,7 +904,7 @@ async fn commerce_receipt_access(
         return Err(PurchaseError::Domain(ErpError::Conflict));
     };
     let found: Option<i32> = sqlx::query_scalar(
-        "SELECT 1 FROM archava_commerce.products WHERE tenant_id=$1 AND id=$2 AND managed_by IS NULL",
+        "SELECT 1 FROM archava_commerce.products r WHERE tenant_id=$1 AND id=$2 AND managed_by IS NULL AND (to_jsonb(r)->>'company_id') IS NULL",
     )
     .bind(tenant)
     .bind(id)
@@ -864,7 +971,22 @@ pub async fn record_product_command(
                 return Err(PurchaseError::Domain(ErpError::Forbidden));
             }
             let receipt = CommerceCommandReceipt::parse(value)?;
-            commerce_receipt_access(connection, tenant, context, &receipt).await?;
+            if let Some((company, _)) = &input.company {
+                let found = super::company_trade::record_company(
+                    connection,
+                    tenant,
+                    super::company_trade::Record::Product,
+                    Uuid::parse_str(&receipt.id)
+                        .map_err(|_| PurchaseError::Domain(ErpError::Conflict))?,
+                )
+                .await?;
+                if found != Some(company.id) {
+                    return Err(PurchaseError::Domain(ErpError::Conflict));
+                }
+            } else {
+                commerce_receipt_access(connection, tenant, context, &receipt).await?;
+            }
+
             return receipt_product_identity(receipt);
         }
         // `commerceReceiptSchema.parse(null)` refuses — a claimed-but-unrecorded
@@ -872,28 +994,54 @@ pub async fn record_product_command(
         return Err(PurchaseError::Domain(ErpError::Conflict));
     }
 
+    if let Some((company, expected)) = &input.company {
+        company.validate_new(*expected)?;
+    }
+    // An unowned product keeps the column default (IDR); a company-owned one
+    // is priced in its company's book currency.
+    let currency = match &input.company {
+        Some((company, _)) => Some(company_trade_currency(connection, tenant, company.id).await?),
+        None => None,
+    };
     let product_id = Uuid::new_v4();
-    sqlx::query(
-        "INSERT INTO archava_commerce.products(tenant_id,id,sku,title,unit,track_stock,price) \
-         VALUES($1,$2,$3,$4,$5,$6,$7)",
-    )
-    .bind(tenant)
-    .bind(product_id)
-    .bind(input.sku.as_str())
-    .bind(input.title.as_str())
-    .bind(input.unit.as_str())
-    .bind(input.track_stock)
-    .bind(int4(input.price)?)
-    .execute(&mut *connection)
-    .await
-    .map_err(|error| purchase_database_error(COMMERCE_LEDGER, error))?;
+    let statement = if input.company.is_some() {
+        "INSERT INTO archava_commerce.products(tenant_id,id,sku,title,unit,track_stock,price,company_id,company_revision,company_code,company_name,currency) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)"
+    } else {
+        "INSERT INTO archava_commerce.products(tenant_id,id,sku,title,unit,track_stock,price) VALUES($1,$2,$3,$4,$5,$6,$7)"
+    };
+    let query = sqlx::query(statement)
+        .bind(tenant)
+        .bind(product_id)
+        .bind(&input.sku)
+        .bind(&input.title)
+        .bind(&input.unit)
+        .bind(input.track_stock)
+        .bind(int4(input.price)?);
+    let query = if let Some((company, _)) = &input.company {
+        query
+            .bind(company.id)
+            .bind(company.revision)
+            .bind(&company.code)
+            .bind(&company.name)
+            .bind(currency)
+    } else {
+        query
+    };
+    query
+        .execute(&mut *connection)
+        .await
+        .map_err(|error| purchase_database_error(COMMERCE_LEDGER, error))?;
 
     insert_commerce_audit(
         connection,
         tenant,
         request_id,
         &principal.id,
-        "product.create",
+        if input.company.is_some() {
+            "product.create_for_company"
+        } else {
+            "product.create"
+        },
         product_id,
         1,
         None,
@@ -941,12 +1089,14 @@ fn receipt_product_identity(receipt: CommerceCommandReceipt) -> Result<(Uuid, i6
 /// use, because comparisons happen in SQL (`expires_at > $observed`).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct OrderRow {
+    pub company_id: Option<Uuid>,
     pub id: Uuid,
     pub owner_id: String,
     pub customer_name: String,
     pub state: String,
     pub managed_by: Option<String>,
     pub total_estimate: i64,
+    pub currency: String,
     pub revision: i64,
 }
 
@@ -985,7 +1135,7 @@ fn parse_order_row(
     if customer_name
         .trim_matches(|c: char| c.is_whitespace())
         .is_empty()
-        || customer_name.len() > 160
+        || customer_name.chars().count() > 160
     {
         return Err(PurchaseError::Domain(ErpError::Conflict));
     }
@@ -1013,6 +1163,12 @@ fn parse_order_row(
     if !(0..=TOTAL_MAX).contains(&total_estimate) {
         return Err(PurchaseError::Domain(ErpError::Conflict));
     }
+    let currency: String = row
+        .try_get("currency")
+        .map_err(|error| purchase_database_error(COMMERCE_LEDGER, error))?;
+    if !valid_currency_code(&currency) {
+        return Err(PurchaseError::Domain(ErpError::Conflict));
+    }
     let revision: i32 = row
         .try_get::<i32, _>("revision")
         .map_err(|error| purchase_database_error(COMMERCE_LEDGER, error))?;
@@ -1021,12 +1177,14 @@ fn parse_order_row(
         return Err(PurchaseError::Domain(ErpError::Conflict));
     }
     Ok(OrderRow {
+        company_id: super::company_trade::row_company(row)?,
         id,
         owner_id,
         customer_name,
         state,
         managed_by,
         total_estimate,
+        currency,
         revision,
     })
 }
@@ -1098,6 +1256,15 @@ pub async fn quote_commerce_lines(
     lines: &[DraftLine],
     owner_module: &str,
 ) -> Result<Vec<QuotedLine>, PurchaseError> {
+    quote_commerce_lines_scoped(connection, tenant, lines, owner_module, None).await
+}
+pub async fn quote_commerce_lines_scoped(
+    connection: &mut PgConnection,
+    tenant: &str,
+    lines: &[DraftLine],
+    owner_module: &str,
+    company: Option<Uuid>,
+) -> Result<Vec<QuotedLine>, PurchaseError> {
     if lines.is_empty() || lines.len() > 50 {
         return Err(PurchaseError::Domain(ErpError::Conflict));
     }
@@ -1114,7 +1281,8 @@ pub async fn quote_commerce_lines(
         seen.push(line.product_id);
     }
     let products =
-        lock_commerce_products_for(connection, tenant, &seen.to_vec(), owner_module).await?;
+        lock_trade_products_scoped(connection, tenant, &seen.to_vec(), owner_module, company)
+            .await?;
     let mut quoted = Vec::with_capacity(lines.len());
     for line in lines {
         let product = products
@@ -1189,6 +1357,39 @@ pub async fn create_commerce_draft(
     managed_by: Option<&str>,
     lines: &[DraftLine],
 ) -> Result<CommerceDraft, PurchaseError> {
+    create_commerce_draft_with_customer(
+        connection,
+        tenant,
+        owner_id,
+        CommerceCustomer {
+            company: None,
+            name: customer_name,
+            contact: None,
+            party: None,
+        },
+        managed_by,
+        lines,
+    )
+    .await
+}
+
+/// A reviewed customer identity plus its historical display-name snapshot.
+pub struct CommerceCustomer<'a> {
+    pub company: Option<&'a super::company_trade::CompanyStamp>,
+    pub name: &'a str,
+    pub contact: Option<(Uuid, i32)>,
+    pub party: Option<(Uuid, i32)>,
+}
+
+pub async fn create_commerce_draft_with_customer(
+    connection: &mut PgConnection,
+    tenant: &str,
+    owner_id: &str,
+    customer: CommerceCustomer<'_>,
+    managed_by: Option<&str>,
+    lines: &[DraftLine],
+) -> Result<CommerceDraft, PurchaseError> {
+    let customer_name = customer.name;
     verify_commerce_context(connection, tenant).await?;
     if !archava_domain::erp::valid_principal_id(owner_id) {
         return Err(PurchaseError::Domain(ErpError::Conflict));
@@ -1201,12 +1402,18 @@ pub async fn create_commerce_draft(
     if customer_name
         .trim_matches(|c: char| c.is_whitespace())
         .is_empty()
-        || customer_name.len() > 160
+        || customer_name.chars().count() > 160
     {
         return Err(PurchaseError::Domain(ErpError::Conflict));
     }
-    let quoted =
-        quote_commerce_lines(connection, tenant, lines, managed_by.unwrap_or("commerce")).await?;
+    let quoted = quote_commerce_lines_scoped(
+        connection,
+        tenant,
+        lines,
+        managed_by.unwrap_or("commerce"),
+        customer.company.map(|c| c.id),
+    )
+    .await?;
     let mut total: i64 = 0;
     for line in &quoted {
         let line_total = line
@@ -1220,20 +1427,50 @@ pub async fn create_commerce_draft(
     if !(0..=TOTAL_MAX).contains(&total) {
         return Err(PurchaseError::Domain(ErpError::Conflict));
     }
+    // An unowned order keeps the column default (IDR); a company-owned one is
+    // in its company's book currency, and the line guard refuses a product
+    // priced in any other.
+    let currency = match customer.company {
+        Some(company) => Some(company_trade_currency(connection, tenant, company.id).await?),
+        None => None,
+    };
     let order_id = Uuid::new_v4();
-    sqlx::query(
-        "INSERT INTO archava_commerce.orders(tenant_id,id,owner_id,customer_name,total_estimate,managed_by) \
-         VALUES($1,$2,$3,$4,$5,$6)",
-    )
-    .bind(tenant)
-    .bind(order_id)
-    .bind(owner_id)
-    .bind(customer_name)
-    .bind(total)
-    .bind(managed_by)
-    .execute(&mut *connection)
-    .await
-    .map_err(|error| purchase_database_error(COMMERCE_LEDGER, error))?;
+    let statement = if customer.company.is_some() {
+        "INSERT INTO archava_commerce.orders(tenant_id,id,owner_id,customer_name,total_estimate,managed_by,customer_party_id,customer_party_revision,company_id,company_revision,company_code,company_name,currency) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)"
+    } else if customer.party.is_some() {
+        "INSERT INTO archava_commerce.orders(tenant_id,id,owner_id,customer_name,total_estimate,managed_by,customer_party_id,customer_party_revision) VALUES($1,$2,$3,$4,$5,$6,$7,$8)"
+    } else if customer.contact.is_some() {
+        "INSERT INTO archava_commerce.orders(tenant_id,id,owner_id,customer_name,total_estimate,managed_by,customer_contact_id,customer_contact_revision) VALUES($1,$2,$3,$4,$5,$6,$7,$8)"
+    } else {
+        // The unlinked path also supports owned upgrade fixtures before migration 007.
+        "INSERT INTO archava_commerce.orders(tenant_id,id,owner_id,customer_name,total_estimate,managed_by) VALUES($1,$2,$3,$4,$5,$6)"
+    };
+    let query = sqlx::query(statement)
+        .bind(tenant)
+        .bind(order_id)
+        .bind(owner_id)
+        .bind(customer_name)
+        .bind(total)
+        .bind(managed_by);
+    let query = if let Some((id, revision)) = customer.party.or(customer.contact) {
+        query.bind(id).bind(revision)
+    } else {
+        query
+    };
+    let query = if let Some(company) = customer.company {
+        query
+            .bind(company.id)
+            .bind(company.revision)
+            .bind(&company.code)
+            .bind(&company.name)
+            .bind(currency)
+    } else {
+        query
+    };
+    query
+        .execute(&mut *connection)
+        .await
+        .map_err(|error| purchase_database_error(COMMERCE_LEDGER, error))?;
     insert_commerce_lines_internal(connection, tenant, order_id, &quoted).await?;
     Ok(CommerceDraft {
         order_id,
@@ -1329,8 +1566,14 @@ pub async fn reserve_commerce_order(
     }
     let mut product_ids: Vec<Uuid> = line_rows.iter().map(|(id, _, _)| *id).collect();
     product_ids.extend(owns.iter().map(|allocation| allocation.product_id));
-    let products =
-        lock_commerce_products_for(connection, tenant, &product_ids, owner_module).await?;
+    let products = lock_trade_products_scoped(
+        connection,
+        tenant,
+        &product_ids,
+        owner_module,
+        order.company_id,
+    )
+    .await?;
     if products.iter().any(|product| !product.active) {
         return Err(PurchaseError::Domain(ErpError::Conflict));
     }
@@ -1344,8 +1587,14 @@ pub async fn reserve_commerce_order(
     }
     let observed = commerce_clock(connection).await?;
     for allocation in &owns {
-        let stock =
-            read_commerce_stock(connection, tenant, allocation.product_id, &observed).await?;
+        let stock = read_commerce_stock_scoped(
+            connection,
+            tenant,
+            allocation.product_id,
+            &observed,
+            order.company_id,
+        )
+        .await?;
         if stock.available < allocation.quantity {
             return Err(PurchaseError::Domain(ErpError::Conflict));
         }
@@ -1406,7 +1655,14 @@ pub async fn fulfill_commerce_order(
             .iter()
             .map(|(product_id, _)| *product_id)
             .collect();
-        lock_commerce_products_for(connection, tenant, &allocation_products, "commerce").await?;
+        lock_trade_products_scoped(
+            connection,
+            tenant,
+            &allocation_products,
+            "commerce",
+            order.company_id,
+        )
+        .await?;
     }
     let observed = commerce_clock(connection).await?;
     let holding: bool = sqlx::query_scalar(
@@ -1496,7 +1752,14 @@ pub async fn cancel_commerce_order(
             .into_iter()
             .map(|(product_id,)| product_id)
             .collect();
-        lock_commerce_products_for(connection, tenant, &allocation_products, "commerce").await?;
+        lock_trade_products_scoped(
+            connection,
+            tenant,
+            &allocation_products,
+            "commerce",
+            order.company_id,
+        )
+        .await?;
     }
     sqlx::query(
         "UPDATE archava_commerce.allocations SET state='released' \

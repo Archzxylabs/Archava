@@ -22,9 +22,16 @@ export async function runBenchmark(options = {}) {
     method = 'GET',
     body = null,
     timeoutMs = 10000,
+    expectedStatus = 200,
   } = options
 
+  for (const [name,value,maximum] of [['concurrency',concurrency,256],['requests',requests,1000000],['timeoutMs',timeoutMs,300000]]) {
+    if (!Number.isSafeInteger(value) || value<1 || value>maximum) throw new TypeError(`${name} must be an integer from 1 to ${maximum}`)
+  }
+  if (!Number.isInteger(expectedStatus) || expectedStatus<100 || expectedStatus>599) throw new TypeError('expectedStatus must be an HTTP status')
+
   const parsedUrl = new URL(path, target)
+  if (!['http:','https:'].includes(parsedUrl.protocol) || parsedUrl.origin!==new URL(target).origin) throw new TypeError('Benchmark path must stay on the configured HTTP(S) origin')
   const isHttps = parsedUrl.protocol === 'https:'
   const client = isHttps ? https : http
 
@@ -45,6 +52,7 @@ export async function runBenchmark(options = {}) {
       remainingRequests--
       const reqStart = performance.now()
       try {
+        const payload=typeof body==='function'?body():body
         const statusCode = await new Promise((resolvePromise, rejectPromise) => {
           const req = client.request(
             parsedUrl,
@@ -66,7 +74,7 @@ export async function runBenchmark(options = {}) {
           req.on('timeout', () => {
             req.destroy(new Error('Request timed out'))
           })
-          if (body) req.write(body)
+          if (payload) req.write(payload)
           req.end()
         })
         const reqDuration = performance.now() - reqStart
@@ -110,6 +118,8 @@ export async function runBenchmark(options = {}) {
     p99Ms: Number(p99.toFixed(2)),
     maxMs: Number(max.toFixed(2)),
     statusCodes: Object.fromEntries(statusCodes.entries()),
+    expectedStatus,
+    unexpectedStatuses: [...statusCodes].filter(([status])=>status!==expectedStatus).reduce((sum,[,n])=>sum+n,0),
   }
 }
 
@@ -179,6 +189,10 @@ HTTP Statuses:  ${JSON.stringify(result.statusCodes)}
       if (options.maxP95 !== undefined && result.p95Ms > options.maxP95) {
         process.stderr.write(`FAIL: p95 latency (${result.p95Ms} ms) exceeded maximum threshold (${options.maxP95} ms)\n`)
         process.exit(1)
+      }
+      if (result.errors || result.unexpectedStatuses || result.completed!==result.totalRequests) {
+        process.stderr.write('FAIL: benchmark requests failed or returned unexpected HTTP statuses\n')
+        process.exitCode=1
       }
     })
     .catch((err) => {

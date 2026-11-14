@@ -29,8 +29,10 @@ node tools/rust/package-native.mjs --out dist/native-candidate-001
 
 The package includes server, Ops CLI, site assets, exact migration manifest,
 public configuration, source/artifact provenance and a profile accepted by
-`archava-ops`. Existing output directories are refused. Follow the
+`archava-ops`, plus systemd/Caddy and monitoring templates. Existing output directories are refused. Follow the
 [native install and recovery procedure](NATIVE_INSTALL.md) in the package.
+The owner-specific [app.archzxy.com plan](ARCHZXY.md) preserves the existing
+Netlify site and waits for a selected persistent application server.
 
 Do not build a release image from an unverified working tree. The image copies
 these two artifacts verbatim.
@@ -75,6 +77,12 @@ exact ledger history is a refusal, by design.
 | `ARCHAVA_SITE_ROOT`        | Directory containing the `pkg` browser payload   |
 | `RUST_LOG`                 | `info` by default; `archava=debug` for diagnosis |
 | `ARCHAVA_BACKUP_KEY`       | 32-byte base64 key for encrypted CRM backups     |
+| `ARCHAVA_TRUSTED_PROXIES` | Exact proxy peers/CIDRs allowed to supply the login client address; empty trusts no forwarding headers |
+| `ARCHAVA_METRICS_TOKEN` | Required metrics header token for a non-loopback scraper |
+| `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` | Optional native media room configuration |
+| `GEMINI_LIVE_MODEL`, `GEMINI_LIVE_API_KEY` | Explicit live model/key; key may fall back to `GEMINI_API_KEY` |
+
+See [live media setup and acceptance limits](../docs/modules/LIVE_MEDIA.md) before enabling voice/camera.
 
 Keep `archava.env` mode `0600`, owned by root — systemd reads the environment
 file before dropping to the service user, and the runtime never needs to read
@@ -125,6 +133,9 @@ docker compose -f deploy/compose.yaml up -d archava caddy
 The image is read-only, drops all capabilities, runs as UID 10001, and uses
 `/readyz` as its healthcheck. Caddy obtains and renews TLS certificates; set
 `ARCHAVA_DOMAIN` in the environment or a `.env` file next to the compose file.
+The dedicated ingress network fixes Caddy at `172.30.84.2`; only that peer is
+trusted for forwarded login addresses. If the subnet conflicts with a host
+route, change the subnet, Caddy address and trusted proxy setting together.
 
 ## 5. TLS and proxy
 
@@ -137,8 +148,17 @@ headers). If you use another proxy, preserve:
 - no caching of authenticated responses;
 - `/metrics` stays on the monitoring network: the reference Caddyfile blocks
   it publicly and a local scraper reads `127.0.0.1:8347/metrics` (or replaces
-  the block with an explicit allow-list). The application does not
-  authenticate it, on purpose, because scrapers do not hold sessions.
+  the block with an explicit allow-list). Non-loopback scrapers must send
+  `x-archava-metrics-token` matching `ARCHAVA_METRICS_TOKEN`; without it the
+  application refuses before probing the database.
+
+`ARCHAVA_TRUSTED_PROXIES=127.0.0.1,::1` fits host-local Caddy. The runtime
+walks `X-Forwarded-For` from the trusted transport toward the first untrusted
+hop. Never add public client networks to this list. A direct client cannot
+change its login budget by submitting a forwarded header.
+
+Scrape and alert templates are in [monitoring/README.md](monitoring/README.md).
+Configure and test an actual receiver/on-call route before operational acceptance.
 
 ## 6. Backups
 
@@ -154,7 +174,7 @@ cargo run --release -p archava-ops -- help
 ARCHAVA_BACKUP_KEY=... cargo run --release -p archava-ops -- backup \
   --port 5432 --db archava --user archava_backup --out /secure/backup-check
 ARCHAVA_BACKUP_KEY=... cargo run --release -p archava-ops -- restore \
-  --manifest /secure/backup-check/manifest.json --port 5432 \
+  --manifest /secure/backup-check/archava-backup.manifest.json --port 5432 \
   --db archava_restore_check --user archava_restore
 ```
 
@@ -173,3 +193,13 @@ ARCHAVA_BACKUP_KEY=... cargo run --release -p archava-ops -- restore \
 The runtime logs a refusal reason on startup (migration checksum, owner role,
 missing RLS, short key, missing payload). Do not bypass it by changing the
 role or the ledger.
+
+## Business goal planner
+
+The native server starts and joins its durable Ava worker. Configure
+`GEMINI_AGENT_MODEL` and `GEMINI_AGENT_API_KEY` (fallback `GEMINI_API_KEY`) for
+general model-backed planning. Without them, bounded context, clarification,
+stock replenishment and native action detail forms remain available. No model
+is guessed and Gemini Live uses separate settings. See the
+[agent runtime contract](../docs/modules/AGENT_RUNTIME.md) for approval, current
+session expiry, recovery, budgets and owned-fixture acceptance limits.

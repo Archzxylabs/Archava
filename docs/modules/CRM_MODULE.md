@@ -7,8 +7,8 @@ The working journey is **Contacts → activity → follow-up → durable receipt
 | Boundary | Current source |
 | --- | --- |
 | Domain contracts | [crates/domain/src/erp/crm.rs](../../crates/domain/src/erp/crm.rs) |
-| Transactional adapter & RLS | [crates/adapters/src/crm.rs](../../crates/adapters/src/crm.rs) (also exposed via `archava_adapters::erp::crm`) |
-| HTTP boundary & dispatch | [crates/host/src/crm.rs](../../crates/host/src/crm.rs) |
+| Transactional adapter & RLS | [crates/adapters/src/erp/crm.rs](../../crates/adapters/src/erp/crm.rs) (`archava_adapters::erp::crm`) |
+| HTTP boundary & dispatch | [crates/host/src/erp/crm.rs](../../crates/host/src/erp/crm.rs) |
 | Host router | [crates/host/src/routes/crm.rs](../../crates/host/src/routes/crm.rs) & [crates/host/src/routes/erp.rs](../../crates/host/src/routes/erp.rs) |
 | Integration tests | [crates/host/tests/crm.rs](../../crates/host/tests/crm.rs) |
 

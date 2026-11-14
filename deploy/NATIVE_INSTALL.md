@@ -3,6 +3,9 @@
 This directory is a native distribution with `bin/archava-server`,
 `bin/archava-ops`, browser assets in `site/pkg`, an exact SQL migration manifest,
 public release configuration, build provenance and `release-profile.json`.
+Service/proxy templates are `archava.service` and `Caddyfile`; private scraper
+and alert templates are under `monitoring/`. Configure an actual alert receiver
+and backup schedule in the deployment environment.
 Keep the distribution immutable. Secrets and database volumes belong elsewhere.
 
 From the distribution root:
@@ -45,11 +48,14 @@ Set `ARCHAVA_OWNER_PASSWORD` through the same private environment mechanism
 unset ARCHAVA_OWNER_PASSWORD ARCHAVA_MIGRATION_DATABASE_URL
 ```
 
-Bootstrap creates a new human identity, Tier 1 domain memberships and owner
-configuration authority atomically. It refuses existing users and previously
-provisioned tenant owners; it never overwrites a password or silently grants
-more authority to an existing account. Later account administration needs an
-explicit procedure. Tier 2 modules do not gain grants from this bootstrap.
+Bootstrap creates a new human identity, memberships from the installed native
+business catalogue, and owner configuration authority atomically. This includes
+Accounting permissions in this release; it does not create an official company
+book or post opening balances. It refuses existing users and previously
+provisioned tenant owners and never overwrites a password or silently grants
+more authority to an existing account. Migration and module enable do not grant
+existing users financial access. Later account administration needs an explicit
+administration procedure.
 
 ## Serve
 
@@ -64,6 +70,16 @@ export ARCHAVA_SITE_ROOT="$PWD/site"
 
 The server reserves its socket before acquiring a serving writer epoch, then verifies exact mounted migration history, non-owner RLS, fixed writer context and complete write-guard coverage before accepting application traffic. Use `/readyz` to check database and writer readiness. Configure TLS, service
 supervision, logs and external monitoring through the deployment environment.
+
+For provider-backed Ava planning, configure the model/key through the private
+service environment, then sign in as an authorized Owner and review **Settings →
+AI data sharing**. Select areas, data categories and explicit companies or
+workspace records, preview and confirm the selection. Current user permissions
+still apply. Changing the provider/profile requires another review. Without a
+usable selection, local planning and typed actions remain available. Stopping
+sharing prevents future requests but cannot recall data already sent. Provider
+retention and residency terms require your own provider agreement review.
+
 The server does not migrate or create an owner automatically.
 
 Keep `ARCHAVA_WRITER_TAKEOVER=false` for initial startup and after a normal graceful shutdown. An active writer refuses a second startup. For a planned stop, use the owner connection to run `./bin/archava-ops drain-writer`, then stop the old process. After a crash or intentional takeover, explicitly set `ARCHAVA_WRITER_TAKEOVER=true` for the replacement. Old processes keep their old epoch even on reconnect and cannot write after takeover. A stale process cannot drain its replacement. The epoch check lasts through each transaction; an intentional takeover waits for preceding valid writes to finish.
@@ -129,8 +145,9 @@ separately.
 
 ## Optional realtime presence
 
-Set `LIVEKIT_URL`, `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET` to enable
-realtime presence. If any value is absent, presence is unconfigured and
+`LIVEKIT_URL`, `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET` configure credentials.
+Credentials alone do not enable the production media/transcript bridge, which
+remains unavailable until implemented and accepted. If any value is absent, presence is unconfigured and
 session creation fails closed with `presence_unconfigured`; no provider is
 contacted at startup. The loopback transport used by local tests does not
 prove live voice or video.

@@ -37,6 +37,9 @@
 //! gated in `crm.rs` against the same persisted config, so a disabled module
 //! refuses even when the caller skips the UI.
 
+pub(crate) mod disclosure;
+pub use disclosure::DisclosureApproval;
+
 use axum::extract::{Query, State};
 use axum::http::{HeaderMap, StatusCode};
 use axum::Json;
@@ -47,8 +50,8 @@ use sqlx::PgConnection;
 use archava_adapters::rls::TenantTransaction;
 use archava_core::tenant::TenantId;
 use archava_own::{
-    Catalogue, Confirmation, CostClass, ModuleSpec, OwnerConfig, Plan, Readiness, Request,
-    Terminology,
+    Catalogue, Confirmation, CostClass, DisclosureChange, ModuleSpec, OwnerConfig, Plan, Readiness,
+    Request, Terminology,
 };
 
 use crate::router::{authenticate, AppState};
@@ -61,37 +64,115 @@ pub const OWNER_TABLES: &[&str] = &[
     "config_revisions",
     "apply_receipts",
     "config_audit",
+    "reviewed_workflows",
+    "agent_threads",
+    "agent_turns",
+    "agent_goals",
+    "agent_preferences",
+    "agent_work",
+    "agent_model_attempts",
 ];
-pub const CATALOGUE_VERSION: &str = "owner-catalogue@1";
+pub const CATALOGUE_VERSION: &str = "owner-catalogue@4";
 pub const PRICING_VERSION: &str = "included@1";
+/// The base capability every tenant keeps; a module that declares no
+/// requirement of its own requires this one.
+const MANDATORY_MODULE: &str = "crm-contacts";
+
+pub(crate) async fn assert_disclosure_readiness(
+    pool: &sqlx::PgPool,
+) -> Result<(), archava_adapters::rls::TenantContextError> {
+    use archava_adapters::rls::TenantContextError;
+    let db = |source| TenantContextError::Database {
+        ledger: "Owner AI disclosure boundary",
+        source,
+    };
+    let present: bool = sqlx::query_scalar(
+        "SELECT to_regprocedure('archava_owner.ai_disclosure_boundary_version()') IS NOT NULL",
+    )
+    .fetch_one(pool)
+    .await
+    .map_err(db)?;
+    if !present {
+        return Err(db(sqlx::Error::Protocol(
+            "Owner disclosure boundary is not installed".into(),
+        )));
+    }
+    let version: String =
+        sqlx::query_scalar("SELECT archava_owner.ai_disclosure_boundary_version()")
+            .fetch_one(pool)
+            .await
+            .map_err(db)?;
+    if version != disclosure::PROJECTION_VERSION {
+        return Err(db(sqlx::Error::Protocol(
+            "Owner disclosure boundary version differs from the serving binary".into(),
+        )));
+    }
+    Ok(())
+}
 
 /// The installed, supported capabilities the owner may configure. Module ids
 /// are stable; the UI maps them to names. `crm-contacts` is the mandatory
 /// base; `crm-pipeline` is the optional capability A1-OWN-02 names.
 pub fn catalogue() -> Catalogue {
+    let mut modules = vec![
+        ModuleSpec {
+            id: "crm-contacts".into(),
+            requires: vec![],
+            entitled: true,
+            installed: true,
+            mandatory: true,
+            readiness: Readiness::Ready,
+            cost: CostClass::Included,
+        },
+        ModuleSpec {
+            id: "crm-pipeline".into(),
+            requires: vec!["crm-contacts".into()],
+            entitled: true,
+            installed: true,
+            mandatory: false,
+            readiness: Readiness::Ready,
+            cost: CostClass::Included,
+        },
+    ];
+    for module in archava_domain::operator::catalogue()["modules"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter(|m| m["id"] != "crm")
+    {
+        let id = module["id"].as_str().expect("embedded module id");
+        // The registry names what a module needs; one that names nothing
+        // needs only the mandatory base.
+        let declared = archava_domain::modules::get(id)
+            .map(|module| module.owner_requires)
+            .unwrap_or_default();
+        let requires = if declared.is_empty() {
+            vec![MANDATORY_MODULE.into()]
+        } else {
+            declared.iter().map(|id| (*id).into()).collect()
+        };
+        modules.push(ModuleSpec {
+            id: id.into(),
+            requires,
+            entitled: true,
+            installed: true,
+            mandatory: false,
+            readiness: Readiness::Ready,
+            cost: CostClass::Included,
+        });
+    }
     Catalogue {
-        catalogue_version: CATALOGUE_VERSION.to_string(),
-        pricing_version: PRICING_VERSION.to_string(),
-        modules: vec![
-            ModuleSpec {
-                id: "crm-contacts".to_string(),
-                requires: Vec::new(),
-                entitled: true,
-                installed: true,
-                mandatory: true,
-                readiness: Readiness::Ready,
-                cost: CostClass::Included,
-            },
-            ModuleSpec {
-                id: "crm-pipeline".to_string(),
-                requires: vec!["crm-contacts".to_string()],
-                entitled: true,
-                installed: true,
-                mandatory: false,
-                readiness: Readiness::Ready,
-                cost: CostClass::Included,
-            },
-        ],
+        disclosure_modules: Some(
+            archava_domain::operator::catalogue()["modules"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .filter_map(|m| m["id"].as_str().map(str::to_owned))
+                .collect(),
+        ),
+        catalogue_version: CATALOGUE_VERSION.into(),
+        pricing_version: PRICING_VERSION.into(),
+        modules,
     }
 }
 
@@ -101,6 +182,7 @@ pub fn catalogue() -> Catalogue {
 fn default_config(catalogue: &Catalogue) -> OwnerConfig {
     OwnerConfig {
         revision: 0,
+        ai_disclosure: None,
         enabled: catalogue
             .modules
             .iter()
@@ -111,6 +193,78 @@ fn default_config(catalogue: &Catalogue) -> OwnerConfig {
             .collect(),
         terminology: Terminology::default(),
     }
+}
+
+// A configured capture contract must not disappear behind a module toggle.
+// The business shared owner fence and apply's exclusive fence serialize setup.
+async fn current_catalogue(
+    connection: &mut PgConnection,
+    tenant: &TenantId,
+) -> Result<Catalogue, OwnRefusal> {
+    let mut result = catalogue();
+    let installed: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='archava_accounting' AND c.relname='invoice_policies')")
+        .fetch_one(&mut *connection).await?;
+    let bound = if installed {
+        sqlx::query_scalar::<_, bool>(
+            "SELECT EXISTS(SELECT 1 FROM archava_accounting.invoice_policies WHERE tenant_id=$1)",
+        )
+        .bind(tenant.as_str())
+        .fetch_one(&mut *connection)
+        .await?
+    } else {
+        false
+    };
+    if bound {
+        for module in &mut result.modules {
+            if matches!(module.id.as_str(), "accounting" | "billing") {
+                module.mandatory = true;
+            }
+        }
+    }
+    let purchase_installed: bool = sqlx::query_scalar(
+        "SELECT to_regclass('archava_accounting.purchase_policies') IS NOT NULL",
+    )
+    .fetch_one(&mut *connection)
+    .await?;
+    let purchase_bound = if purchase_installed {
+        sqlx::query_scalar::<_, bool>(
+            "SELECT EXISTS(SELECT 1 FROM archava_accounting.purchase_policies WHERE tenant_id=$1)",
+        )
+        .bind(tenant.as_str())
+        .fetch_one(&mut *connection)
+        .await?
+    } else {
+        false
+    };
+    if purchase_bound {
+        for module in &mut result.modules {
+            if matches!(module.id.as_str(), "accounting" | "purchasing" | "commerce") {
+                module.mandatory = true;
+            }
+        }
+    }
+    let stock_installed: bool =
+        sqlx::query_scalar("SELECT to_regclass('archava_accounting.stock_policies') IS NOT NULL")
+            .fetch_one(&mut *connection)
+            .await?;
+    let stock_bound = if stock_installed {
+        sqlx::query_scalar::<_, bool>(
+            "SELECT EXISTS(SELECT 1 FROM archava_accounting.stock_policies WHERE tenant_id=$1)",
+        )
+        .bind(tenant.as_str())
+        .fetch_one(&mut *connection)
+        .await?
+    } else {
+        false
+    };
+    if stock_bound {
+        for module in &mut result.modules {
+            if matches!(module.id.as_str(), "accounting" | "commerce" | "purchasing") {
+                module.mandatory = true;
+            }
+        }
+    }
+    Ok(result)
 }
 
 #[derive(Debug)]
@@ -144,7 +298,7 @@ impl OwnRefusal {
         )
     }
 
-    fn response(self) -> (StatusCode, Json<Value>) {
+    pub(crate) fn response(self) -> (StatusCode, Json<Value>) {
         let mut body = json!({"reason": self.reason, "message": self.message});
         if let Some(detail) = self.detail {
             body["detail"] = detail;
@@ -236,16 +390,26 @@ async fn current_config(
     connection: &mut PgConnection,
     tenant: &TenantId,
 ) -> Result<OwnerConfig, OwnRefusal> {
-    let row: Option<(i64, String)> = sqlx::query_as(
-        "SELECT revision, config::text FROM archava_owner.config_revisions \
+    let row: Option<(i64, String, String)> = sqlx::query_as(
+        "SELECT revision, config::text, catalogue_version FROM archava_owner.config_revisions \
          WHERE tenant_id=$1 ORDER BY revision DESC LIMIT 1",
     )
     .bind(tenant.as_str())
     .fetch_optional(&mut *connection)
     .await?;
     match row {
-        Some((revision, raw)) => {
-            let config = parse_config(&raw)?;
+        Some((revision, raw, version)) => {
+            let mut config = parse_config(&raw)?;
+            if version == "owner-catalogue@1" {
+                for module in catalogue().modules {
+                    if module.id != "crm-contacts"
+                        && module.id != "crm-pipeline"
+                        && module.id != "accounting"
+                    {
+                        config.enabled.insert(module.id);
+                    }
+                }
+            }
             // The stored JSON names the revision it IS. A row whose two
             // records disagree is corrupt, not a usable base: planning from
             // it could mint a revision number the ledger already holds.
@@ -533,9 +697,9 @@ async fn inspect(
         (Err(read_err), Err(_)) => return Err(read_err),
     };
     let config = current_config(connection, &tenant).await?;
+    let catalogue = current_catalogue(connection, &tenant).await?;
+    let ai_provider = disclosure::description(state, &config);
     transaction.commit().await?;
-
-    let catalogue = catalogue();
     let modules: Vec<Value> = catalogue
         .modules
         .iter()
@@ -554,6 +718,9 @@ async fn inspect(
         .collect();
     Ok(json!({
         "config": config,
+        "aiProvider": ai_provider,
+        "disclosureAreas": archava_domain::operator::catalogue()["modules"].as_array().into_iter().flatten().map(|m|json!({"id":m["id"],"label":m["label"]})).collect::<Vec<_>>(),
+        "disclosureCategories": archava_own::DataClass::ALL.iter().map(|c|json!({"id":c.as_str(),"label":c.label(),"description":c.description()})).collect::<Vec<_>>(),
         "catalogueVersion": CATALOGUE_VERSION,
         "pricingVersion": PRICING_VERSION,
         "grants": {"read": read, "apply": apply},
@@ -618,11 +785,41 @@ async fn preview_at(
     if derive_base {
         request.base_revision = current.revision;
     }
-    let plan = catalogue().plan(&current, &request)?;
+    let plan = current_catalogue(connection, &tenant)
+        .await?
+        .plan(&current, &request)?;
+    if plan.blocked.is_none() {
+        disclosure::validate_request(state, connection, &tenant, &principal, &request).await?;
+    }
+    let disclosure_approval = disclosure::mint(
+        disclosure::Review {
+            state,
+            tenant: &tenant,
+            principal: &principal,
+            operation: "apply",
+            current: &current,
+            request: &request,
+            plan: &plan,
+        },
+        connection,
+    )
+    .await?;
+    let ai_provider = disclosure::description(state, &current);
+    let disclosure_companies = disclosure::company_review(
+        connection,
+        &tenant,
+        &principal,
+        plan.config.ai_disclosure.as_ref(),
+    )
+    .await;
     transaction.commit().await?;
     Ok(json!({
         "plan": plan,
+        "disclosureCompanies":disclosure_companies,
+        "disclosureApproval": disclosure_approval,
+        "aiProvider": ai_provider,
         "baseConfig": current,
+        "request": request,
         "catalogueVersion": plan.catalogue_version,
         "pricingVersion": plan.pricing_version,
     }))
@@ -657,15 +854,63 @@ fn parse_chat(message: &str) -> Result<Request, OwnRefusal> {
     let verb = parts.next().unwrap_or("").to_ascii_lowercase();
     let rest = parts.next().unwrap_or("").trim();
     let mut request = Request::default();
+    if matches!(
+        verb.as_str(),
+        "bisnis" | "usaha" | "business" | "i" | "saya"
+    ) {
+        let lower = trimmed.to_lowercase().replace([',', ';', '.'], " ");
+        let words = lower.split_whitespace().collect::<Vec<_>>();
+        let mut disabling = false;
+        for word in words {
+            match word {
+                "tanpa" | "without" | "jangan" => {
+                    disabling = true;
+                    continue;
+                }
+                "tambahkan" | "tambah" | "dengan" | "with" | "add" | "dan" | "and" => {
+                    disabling = false;
+                    continue;
+                }
+                _ => {}
+            }
+            let module = module_alias(word);
+            if let Some(module) = module {
+                let target = if disabling {
+                    &mut request.disable
+                } else {
+                    &mut request.enable
+                };
+                if !target.iter().any(|id| id == module) {
+                    target.push(module.into());
+                }
+                // Describing a business enables what its modules need, so
+                // "hotel" alone yields a plan that can be applied.
+                if !disabling {
+                    for required in archava_domain::modules::get(module)
+                        .map(|module| module.owner_requires)
+                        .unwrap_or_default()
+                    {
+                        if !request.enable.iter().any(|id| id == required) {
+                            request.enable.push((*required).into());
+                        }
+                    }
+                }
+            }
+        }
+        if request.enable.is_empty() && request.disable.is_empty() {
+            return Err(unrecognized("Name a supported business module, for example hotel, laundry, restaurant, retail, school or field service."));
+        }
+        return Ok(request);
+    }
     match verb.as_str() {
-        "enable" | "disable" => {
+        "enable" | "disable" | "aktifkan" | "nonaktifkan" | "tambahkan" => {
             let modules = chat_modules(rest);
             if modules.is_empty() {
                 return Err(unrecognized(
                     "Name at least one module to enable or disable.",
                 ));
             }
-            if verb == "enable" {
+            if matches!(verb.as_str(), "enable" | "aktifkan" | "tambahkan") {
                 request.enable = modules;
             } else {
                 request.disable = modules;
@@ -713,9 +958,21 @@ fn chat_modules(rest: &str) -> Vec<String> {
         .map(|token| token.strip_prefix("the ").unwrap_or(token))
         .map(|token| token.strip_suffix(" module").unwrap_or(token))
         .map(|token| token.trim().to_ascii_lowercase())
+        .map(|token| module_alias(&token).unwrap_or(&token).to_string())
         .filter(|token| !token.is_empty())
         .filter(|token| !token.contains(char::is_whitespace))
         .collect()
+}
+
+/// The owner-configurable module a chat word names. The two CRM capabilities
+/// are owner vocabulary of their own; every other word comes from the module
+/// registry (`owner.aliases`, and each module's id).
+fn module_alias(word: &str) -> Option<&'static str> {
+    match word.trim_matches(['?', '!', ':']) {
+        "crm-contacts" | "crm" => Some(MANDATORY_MODULE),
+        "crm-pipeline" | "pipeline" => Some("crm-pipeline"),
+        word => archava_domain::modules::owner_named(word).map(|module| module.id),
+    }
 }
 
 /// `stage to label` / `stage as label`, with the label kept in its original
@@ -787,9 +1044,27 @@ async fn submit(
         return Ok(receipt_json(&body.request_id, &receipt, true));
     }
     let current = current_config(connection, &tenant).await?;
-    let plan = catalogue().plan(&current, &body.request)?;
+    let plan = current_catalogue(connection, &tenant)
+        .await?
+        .plan(&current, &body.request)?;
     refuse_blocked(&plan)?;
     check_confirmation(&plan, &body.confirmation)?;
+    disclosure::validate_request(state, connection, &tenant, &principal, &body.request).await?;
+    disclosure::verify(
+        disclosure::Review {
+            state,
+            tenant: &tenant,
+            principal: &principal,
+            operation: "apply",
+            current: &current,
+            request: &body.request,
+            plan: &plan,
+        },
+        connection,
+        body.disclosure_approval.as_ref(),
+    )
+    .await?;
+
     let receipt = write_revision(
         connection,
         &tenant,
@@ -846,6 +1121,10 @@ async fn restore_request(
             .collect(),
         terminology: None,
         replace_terminology: Some(target.terminology),
+        ai_disclosure: Some(match target.ai_disclosure {
+            Some(policy) => DisclosureChange::Replace { policy },
+            None => DisclosureChange::Revoke {},
+        }),
     })
 }
 
@@ -875,10 +1154,39 @@ async fn restore_preview(
     require_grant(connection, &tenant, &principal, "config.read").await?;
     let request = restore_request(connection, &tenant, body.target_revision).await?;
     let current = current_config(connection, &tenant).await?;
-    let plan = catalogue().plan(&current, &request)?;
+    let plan = current_catalogue(connection, &tenant)
+        .await?
+        .plan(&current, &request)?;
+    if plan.blocked.is_none() {
+        disclosure::validate_request(state, connection, &tenant, &principal, &request).await?;
+    }
+    let disclosure_approval = disclosure::mint(
+        disclosure::Review {
+            state,
+            tenant: &tenant,
+            principal: &principal,
+            operation: &format!("restore:{}", body.target_revision),
+            current: &current,
+            request: &request,
+            plan: &plan,
+        },
+        connection,
+    )
+    .await?;
+    let ai_provider = disclosure::description(state, &current);
+    let disclosure_companies = disclosure::company_review(
+        connection,
+        &tenant,
+        &principal,
+        plan.config.ai_disclosure.as_ref(),
+    )
+    .await;
     transaction.commit().await?;
     Ok(json!({
         "plan": plan,
+        "disclosureCompanies":disclosure_companies,
+        "disclosureApproval": disclosure_approval,
+        "aiProvider": ai_provider,
         "baseConfig": current,
         "targetRevision": body.target_revision,
         "catalogueVersion": plan.catalogue_version,
@@ -938,9 +1246,27 @@ async fn restore_inner(
     }
     let request = restore_request(connection, &tenant, body.target_revision).await?;
     let current = current_config(connection, &tenant).await?;
-    let plan = catalogue().plan(&current, &request)?;
+    let plan = current_catalogue(connection, &tenant)
+        .await?
+        .plan(&current, &request)?;
     refuse_blocked(&plan)?;
     check_confirmation(&plan, &body.confirmation)?;
+    disclosure::validate_request(state, connection, &tenant, &principal, &request).await?;
+    disclosure::verify(
+        disclosure::Review {
+            state,
+            tenant: &tenant,
+            principal: &principal,
+            operation: &format!("restore:{}", body.target_revision),
+            current: &current,
+            request: &request,
+            plan: &plan,
+        },
+        connection,
+        body.disclosure_approval.as_ref(),
+    )
+    .await?;
+
     let receipt = write_revision(
         connection,
         &tenant,
@@ -1082,6 +1408,47 @@ pub async fn module_enabled(
         .contains(module))
 }
 
+/// Public CRM labels are presentation data for authorized CRM readers, not an
+/// Owner management surface. Call only inside the verified tenant transaction.
+pub(crate) async fn crm_presentation(
+    connection: &mut PgConnection,
+    tenant: &TenantId,
+) -> Result<(bool, i64, std::collections::BTreeMap<String, String>), OwnRefusal> {
+    let config = current_config(connection, tenant).await?;
+    Ok((
+        config.enabled.contains("crm-pipeline"),
+        config.revision,
+        config.terminology.pipeline_labels,
+    ))
+}
+
+/// The same tenant fence used by owner apply/restore is held through the
+/// business commit. A disabled module cannot race a concurrent mutation.
+pub(crate) async fn require_erp_module(
+    transaction: &mut TenantTransaction<'_>,
+    namespace: &str,
+) -> Result<(), OwnRefusal> {
+    let module = match namespace {
+        "archava_field" => "field",
+        "archava_edu" => "education",
+        name => name.strip_prefix("archava_").unwrap_or(name),
+    };
+    let tenant = transaction.tenant().clone();
+    let conn = transaction.checked_executor().await?;
+    sqlx::query("SELECT pg_advisory_xact_lock_shared(hashtext($1))")
+        .bind(format!("archava-owner:{}", tenant.as_str()))
+        .execute(&mut *conn)
+        .await?;
+    if !module_enabled(conn, &tenant, module).await? {
+        return Err(OwnRefusal::new(
+            StatusCode::FORBIDDEN,
+            "module_disabled",
+            "This module is disabled in the workspace configuration.",
+        ));
+    }
+    Ok(())
+}
+
 async fn session(
     state: &AppState,
     headers: &HeaderMap,
@@ -1141,6 +1508,8 @@ pub struct ApplyBody {
     pub request_id: String,
     pub request: Request,
     pub confirmation: Confirmation,
+    #[serde(default)]
+    pub disclosure_approval: Option<DisclosureApproval>,
 }
 
 #[derive(Deserialize)]
@@ -1157,4 +1526,61 @@ pub struct RestoreBody {
     pub request_id: String,
     pub target_revision: i64,
     pub confirmation: Confirmation,
+    #[serde(default)]
+    pub disclosure_approval: Option<DisclosureApproval>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn chat(message: &str) -> Request {
+        parse_chat(message).unwrap_or_else(|_| panic!("{message:?} must parse"))
+    }
+
+    #[test]
+    fn a_business_sentence_enables_the_named_modules_and_what_they_need() {
+        // Aliases and requirements come from the module registry.
+        let request = chat("bisnis hotel dan laundry tanpa restoran");
+        assert_eq!(request.enable, ["accommodation", "scheduling", "laundry"]);
+        assert_eq!(request.disable, ["foodservice"]);
+        let request = chat("usaha pembelian");
+        assert_eq!(request.enable, ["purchasing", "commerce"]);
+        assert!(parse_chat("bisnis sulap").is_err());
+    }
+
+    #[test]
+    fn every_registered_module_is_named_by_its_id_and_aliases() {
+        for module in archava_domain::modules::all() {
+            let expected = if module.id == "crm" {
+                MANDATORY_MODULE
+            } else {
+                module.id
+            };
+            assert_eq!(module_alias(module.id), Some(expected), "{}", module.id);
+            for alias in module.owner_aliases {
+                assert_eq!(module_alias(alias), Some(module.id), "{alias}");
+            }
+        }
+        assert_eq!(module_alias("pipeline"), Some("crm-pipeline"));
+        assert_eq!(module_alias("unknown"), None);
+        assert_eq!(chat("enable the hotel module").enable, ["accommodation"]);
+    }
+
+    #[test]
+    fn catalogue_requirements_follow_the_registry() {
+        let catalogue = catalogue();
+        let requires = |id: &str| {
+            catalogue
+                .modules
+                .iter()
+                .find(|module| module.id == id)
+                .map(|module| module.requires.clone())
+                .unwrap_or_else(|| panic!("{id} is in the catalogue"))
+        };
+        assert_eq!(requires("accommodation"), ["scheduling"]);
+        assert_eq!(requires("accounting"), ["organizations"]);
+        assert_eq!(requires("laundry"), [MANDATORY_MODULE]);
+        assert!(requires(MANDATORY_MODULE).is_empty());
+    }
 }

@@ -35,6 +35,10 @@ services:
       - archava.env
     environment:
       ARCHAVA_BIND_ADDR: 0.0.0.0:8347
+      ARCHAVA_TRUSTED_PROXIES: 172.30.84.2
+    networks:
+      - default
+      - ingress
     depends_on:
       postgres:
         condition: service_healthy
@@ -58,6 +62,9 @@ services:
     environment:
       ARCHAVA_DOMAIN: ${ARCHAVA_DOMAIN:?set ARCHAVA_DOMAIN}
       ARCHAVA_UPSTREAM: archava:8347
+    networks:
+      ingress:
+        ipv4_address: 172.30.84.2
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
@@ -70,3 +77,12 @@ volumes:
   pgdata:
   caddy_data:
   caddy_config:
+
+# Only Caddy and the application share this network. If this subnet conflicts
+# with an existing route, change the subnet, Caddy address and trusted peer
+# together before creating the stack.
+networks:
+  ingress:
+    ipam:
+      config:
+        - subnet: 172.30.84.0/28

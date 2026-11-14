@@ -163,10 +163,17 @@ fn civil_from_days(days: i64) -> (i64, u32, u32) {
 /// Return the oldest unresolved marker in this account/scope, including legacy keys.
 #[cfg(target_arch = "wasm32")]
 pub(crate) fn read_scoped(tenant: &str, domain: &str, principal: &str) -> Option<PendingMarker> {
-    let storage = web_sys::window()?.local_storage().ok()??;
+    oldest_in_scope(read_markers(), tenant, domain, principal)
+}
+
+#[cfg(target_arch = "wasm32")]
+fn read_markers() -> Vec<PendingMarker> {
+    let Some(storage) = web_sys::window().and_then(|w| w.local_storage().ok().flatten()) else {
+        return Vec::new();
+    };
     let mut markers = Vec::new();
-    for index in 0..storage.length().ok()? {
-        let Some(key) = storage.key(index).ok()? else {
+    for index in 0..storage.length().unwrap_or(0) {
+        let Some(key) = storage.key(index).ok().flatten() else {
             continue;
         };
         if !key.starts_with(KEY_PREFIX) {
@@ -174,13 +181,33 @@ pub(crate) fn read_scoped(tenant: &str, domain: &str, principal: &str) -> Option
         }
         if let Some(marker) = storage
             .get_item(&key)
-            .ok()?
+            .ok()
+            .flatten()
             .and_then(|raw| parse_marker(&raw))
         {
             markers.push(marker);
         }
     }
-    oldest_in_scope(markers, tenant, domain, principal)
+    markers
+}
+
+/// Recover a bounded workflow whose scope carries only its resource reference.
+#[cfg(target_arch = "wasm32")]
+pub(crate) fn read_family(tenant: &str, family: &str, principal: &str) -> Option<PendingMarker> {
+    let prefix = format!("{family}:");
+    oldest_in_scope(
+        read_markers()
+            .into_iter()
+            .filter(|m| m.domain.starts_with(&prefix))
+            .collect(),
+        tenant,
+        "",
+        principal,
+    )
+}
+#[cfg(not(target_arch = "wasm32"))]
+pub(crate) fn read_family(_tenant: &str, _family: &str, _principal: &str) -> Option<PendingMarker> {
+    None
 }
 
 #[cfg(not(target_arch = "wasm32"))]

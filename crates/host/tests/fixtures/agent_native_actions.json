@@ -1,0 +1,242 @@
+[
+  [
+    "crm",
+    "crm",
+    "contacts",
+    "contact.create",
+    {
+      "data": {
+        "fullName": "Ava contact TESTDOMAINS",
+        "email": "ava-TESTDOMAINS@archava.test"
+      }
+    }
+  ],
+  [
+    "commerce",
+    "commerce",
+    "products",
+    "product.create",
+    {
+      "sku": "AVA-TESTDOMAINS",
+      "title": "Ava product TESTDOMAINS",
+      "unit": "unit",
+      "trackStock": true,
+      "price": 1000
+    }
+  ],
+  [
+    "purchasing",
+    "purchasing",
+    "suppliers",
+    "supplier.create",
+    {
+      "code": "AVA-NEW-TESTDOMAINS",
+      "name": "Ava supplier TESTDOMAINS"
+    }
+  ],
+  [
+    "billing",
+    "billing",
+    "invoices",
+    "create_invoice",
+    {
+      "invoiceCode": "AVA-INV-TESTDOMAINS",
+      "customerRef": "owned-customer",
+      "currency": "IDR",
+      "consumerRef": "owned-consumer",
+      "lines": [
+        {
+          "description": "Reviewed service",
+          "quantity": 1,
+          "unitMinor": 1000
+        }
+      ]
+    }
+  ],
+  [
+    "support",
+    "support",
+    "cases",
+    "case.create",
+    {
+      "requesterName": "Ava customer",
+      "subject": "Ava case TESTDOMAINS",
+      "description": "Owned reviewed case",
+      "priority": "normal"
+    }
+  ],
+  [
+    "organizations",
+    "organizations",
+    "organizations",
+    "create_organization",
+    {
+      "name": "Ava organization TESTDOMAINS"
+    }
+  ],
+  [
+    "proposals",
+    "proposals",
+    "proposals",
+    "create_proposal",
+    {
+      "title": "Ava proposal TESTDOMAINS",
+      "summary": "Reviewed scope",
+      "scopeItems": [
+        {
+          "title": "Delivery",
+          "description": "Owned scope",
+          "estimatedDays": 1,
+          "estimatedValue": 1000,
+          "deliverableType": "service"
+        }
+      ]
+    }
+  ],
+  [
+    "projects",
+    "projects",
+    "projects",
+    "project.create",
+    {
+      "title": "Ava project TESTDOMAINS",
+      "scopeSummary": "Reviewed project scope"
+    }
+  ],
+  [
+    "foodservice",
+    "foodservice",
+    "tables",
+    "table.create",
+    {
+      "code": "A_TESTDOMAINS",
+      "title": "Ava table TESTDOMAINS",
+      "seats": 4
+    }
+  ],
+  [
+    "scheduling",
+    "scheduling",
+    "resources",
+    "resource.create",
+    {
+      "title": "Ava resource TESTDOMAINS",
+      "kind": "staff",
+      "timezone": "Asia/Jakarta"
+    }
+  ],
+  [
+    "accommodation",
+    "accommodation",
+    "properties",
+    "property.create",
+    {
+      "title": "Ava property TESTDOMAINS",
+      "timezone": "Asia/Jakarta",
+      "checkInTime": "14:00",
+      "checkOutTime": "11:00"
+    }
+  ],
+  [
+    "assets",
+    "assets",
+    "assets",
+    "create_asset",
+    {
+      "code": "AVA-ASSET-TESTDOMAINS",
+      "name": "Ava asset TESTDOMAINS",
+      "category": "equipment",
+      "ownership": "business_owned",
+      "condition": "good"
+    }
+  ],
+  [
+    "subscriptions",
+    "subscriptions",
+    "subscriptions",
+    "create_subscription",
+    {
+      "contactId": "REPLACE_CONTACT",
+      "planCode": "AVA-PLAN-TESTDOMAINS",
+      "planName": "Reviewed plan",
+      "initialEntitlements": [],
+      "billingInterval": "monthly",
+      "unitPrice": 10000,
+      "currency": "IDR",
+      "quantity": 1
+    }
+  ],
+  [
+    "attendance",
+    "attendance",
+    "sessions",
+    "create_session",
+    {
+      "title": "Ava session TESTDOMAINS",
+      "sessionCode": "AVA-SESSION-TESTDOMAINS",
+      "startTime": "2027-01-01T08:00:00.000Z",
+      "endTime": "2027-01-01T09:00:00.000Z",
+      "capacity": 10
+    }
+  ],
+  [
+    "laundry",
+    "laundry",
+    "orders",
+    "create_order",
+    {
+      "orderCode": "AVA-L-TESTDOMAINS",
+      "kind": "item",
+      "currency": "IDR",
+      "lines": [
+        {
+          "itemRef": "shirt",
+          "quantity": 2,
+          "unit": "piece",
+          "unitPriceMinor": 1000
+        }
+      ]
+    }
+  ],
+  [
+    "field",
+    "field",
+    "jobs",
+    "create_job",
+    {
+      "job": {
+        "jobId": "ava-job-TESTDOMAINS",
+        "customerRef": "owned-customer",
+        "siteRef": "site-main",
+        "summary": "Reviewed service job",
+        "priority": "normal",
+        "appointmentRef": "ava-appointment-TESTDOMAINS"
+      }
+    }
+  ],
+  [
+    "fulfillment",
+    "fulfillment",
+    "jobs",
+    "create_job",
+    {
+      "jobCode": "AVA-F-TESTDOMAINS",
+      "kind": "dispatch",
+      "title": "Ava dispatch TESTDOMAINS"
+    }
+  ],
+  [
+    "education",
+    "edu",
+    "enrollments",
+    "admit_applicant",
+    {
+      "enrollment": {
+        "enrollmentId": "ava-enrollment-TESTDOMAINS",
+        "studentRef": "ava-student-TESTDOMAINS",
+        "classRef": "class-main",
+        "termRef": "term-current"
+      }
+    }
+  ]
+]

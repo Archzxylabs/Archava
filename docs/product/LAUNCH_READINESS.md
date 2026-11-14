@@ -1,6 +1,108 @@
 # Archava — acuan kerja MVP dan kesiapan rilis
 
-Status: **pembangunan dan pembuktian MVP berlangsung; belum disahkan siap launching**. Dokumen ini mengikat scope, pekerjaan tersisa dan bukti. Klaim hijau dari dokumen sebelumnya tidak diperlakukan sebagai hasil pengujian baru; [snapshot sebelum takeover](../archive/audits/evidence/launch-2026-10-29/readiness-before.md) tetap disimpan.
+Eksekusi kebutuhan produk baru mengikuti [PRD aktif](PRD.md) dan
+[tracker implementasi](PRD_EXECUTION_WORK.md). M01 menghubungkan fulfilled sales
+order ke draft invoice; penerimaannya terpisah dari hasil kandidat bertanggal
+di bawah. Pekerjaan ini tidak menjalankan public deployment.
+
+[M02a customer identity](PRD_M02A_ACCEPTANCE_2026-11-06.md) menambah explicit CRM
+contact linkage pada sales order dan invoice, dengan scoped search/paging dan
+historical snapshots. Penerimaan lokalnya tidak menerima seluruh master data,
+keuangan penuh atau public production.
+
+Status: **kandidat operasional terverifikasi lokal; MVP agentic dan public production belum diterima**. Dokumen ini mengikat scope, pekerjaan tersisa dan bukti. Klaim hijau dari dokumen sebelumnya tidak diperlakukan sebagai hasil pengujian baru; [snapshot sebelum takeover](../archive/audits/evidence/launch-2026-10-29/readiness-before.md) tetap disimpan.
+
+## Simulasi gabungan — 5 November 2026
+
+[Pengujian menyeluruh](SIMULATION_REPORT_2026-11-05.md) mengulang full Rust/WASM gate
+(1.124 lulus, 0 gagal/diabaikan), 24 helper dan 42 pemeriksaan browser/operasional.
+Sebanyak 75 probe operasional terpenuhi. Diagnostik agentic tetap 6 terpenuhi/8 gap.
+Lima puluh tujuan customer mencakup 18 domain dalam dua bahasa, enam cross-domain
+goals dan delapan conversation edges: 48 memberi help, dua Scheduling goals salah
+menjadi pencarian kontak, dan tidak ada tujuan itu yang terpenuhi.
+
+Load gabungan mencatat p95 Commerce 54,81 ms, melewati target 50 ms; isolated rerun
+setelah Rust selesai mencapai 30,44 ms dan memenuhi target lokal. Kedua run
+tersimpan. Hasil library-only MCP/campaign/RPA/evals tetap dipisahkan dari serving
+integration; status agentic MVP dan production launch belum diterima.
+
+## Koreksi penerimaan agentic — 5 November 2026
+
+**MVP agentic AI for business belum diterima.** [Audit agentic terbaru](AGENTIC_AUDIT_2026-11-05.md)
+menjalankan 14 probe: 6 terpenuhi dan 8 menunjukkan gap. Tujuan bisnis dari chat
+masih mendapat bantuan CRM, tanpa rencana/misi baru; memori percakapan, kelanjutan
+pekerjaan dan laporan hasil belum menyatu. Eksekusi misi eksplisit, approval,
+dependency, receipt dan pencabutan grant bekerja. Kelulusan operasional di bawah
+merupakan fondasi dan tidak mengesahkan janji produk agentic. Tiga area model,
+voice-action dan replanning/dataflow juga belum diterima.
+
+## Penyelesaian gap produk — 5 November 2026
+
+[Laporan penerimaan terbaru](FEATURE_COMPLETION_2026-11-05.md) menutup PC-01–PC-08
+untuk scope MVP/pilot yang diimplementasikan: 18 workspace native, scoped reads,
+Owner lintas modul, approved business missions, real reorder Feed, atomic import,
+receipt/recovery dan transport mic/camera/model. Gate final lulus **1.124 tes Rust**,
+**24 helper**, **42 pemeriksaan browser/operasional** dan **75 requirement produk
+(0 gap)**. Tidak ada page error; cleanup fixture 0. Audit dependency tidak menemukan
+vulnerability setelah pembaruan trust store.
+
+Kandidat final: `dist/native-candidate-20261105-feature-complete-02`, 58 artifact,
+source `70d46de105d563b25d32b028f00801d759f04a74dce8e8e57c76c2d10134aba3`.
+HTTPS, beban dan encrypted restore/login telah diulang pada kandidat tersebut.
+Gemini/LiveKit diuji dengan transport milik tes, termasuk RTP dan WSS terverifikasi;
+provider-live, jaringan produksi, alert delivery dan public deployment belum diterima.
+Catatan audit di bawah mempertahankan keadaan dan hasil pada tanggal pengujiannya.
+
+## Audit kelengkapan produk — 4 November 2026
+
+[Audit fitur terbaru](FEATURE_COMPLETENESS_2026-11-04.md) memetakan 18 domain dan
+141 operasi, lalu menjalankan 58 pemeriksaan requirement: 30 terpenuhi dan 28
+menunjukkan gap yang berkaitan. Ini bukan persentase kesiapan atau 28 bug unik.
+Tiga puluh delapan baseline checks tetap lulus, tetapi ditemukan bug baru pada
+Assistant desk: acknowledgement dengan key/resource salah tetap ditampilkan
+sebagai Recorded. Perbaikan source untuk temuan ini belum dilakukan pada audit.
+
+Lima domain punya layar native; 13 domain belum mempunyai layar dan tujuh belum
+memasang collection-read HTTP. Owner chat terbatas pada dua modul CRM; native
+Settings belum punya input chat. Feed dispatch/import commit menjawab 501,
+mission write tool belum terdaftar dan bridge voice live belum tersedia.
+Maka hasil penutupan sembilan temuan berikut bukan penerimaan seluruh fitur produk.
+
+## Remediasi audit keseluruhan — 4 November 2026
+
+[Kandidat terverifikasi terbaru](RELEASE_CANDIDATE_2026-11-04.md) menutup sembilan
+temuan audit keseluruhan: authority/replay email, scope/authority dan durability
+Orbz, identitas client di balik proxy, recovery email, source binding SDK dan format.
+Gate penuh lulus 1.109 tes Rust; final library/WASM/Clippy gate dan 21 helper juga
+lulus. Kandidat native memuat 54 artifact; gate Chromium/operasional diperluas
+lulus 41 pemeriksaan, 0 page error dan cleanup fixture 0.
+
+HTTPS/proxy, beban 10.000 kontak + 2.000 produk/200 mutasi, serta encrypted
+backup/restore/login telah dibuktikan **lokal**. Monitoring scrape/alert templates
+telah divalidasi, tetapi alert delivery dan operasi produksi belum diuji.
+`app.archzxy.com` disiapkan sebagai rencana; domain/hosting tidak diubah dan server
+target belum tersedia. Public launch dan fitur/provider terbuka tetap belum diterima.
+
+## Verifikasi sebelum audit keseluruhan — 4 November 2026
+
+Source HEAD telah diverifikasi ulang setelah hardening terbaru:
+
+- `node tools/rust/verify.mjs` under the required non-root PostgreSQL runner: **pass**; workspace unit/integration/doc tests, persistent launcher, provider/runtime, native install/restore, format, Clippy, WASM boundary, structure and docs gates all passed. The prior root-run attempt stopped at `initdb: cannot be run as root` before integration tests.
+- Chromium acceptance: **36 checks passed, 0 page errors, fixture cleanup 0**.
+- `cargo fmt --check`, workspace Clippy with `-D warnings`, structure/docs gates, native + SSR/WASM build: **pass**.
+- `cargo audit`: **0 vulnerabilities**; one explicitly allowed unmaintained transitive `paste` warning remains.
+
+Perbaikan terbaru yang sudah berada di source:
+
+- checkout signing sekarang memerlukan active human membership pada tenant yang ditandatangani;
+- checkout signing hanya menerima persisted draft/reserved commerce order dan mengikat amount/currency ke quote server;
+- email request ID tidak dapat replay receipt dari invoice lain;
+- email outbox menyimpan immutable text/HTML/sender snapshot untuk retry uncertain;
+- presence memiliki explicit close endpoint dan live-configured transcript transport fail-closed;
+- SDK assistant tidak lagi membuat hasil bisnis palsu; action/query harus diberi verified transport callback;
+- SDK membatasi view embed ke allowlist dan menambahkan dialog/focus/reduced-motion safeguards.
+
+Batas yang masih sengaja terbuka: media LiveKit/Gemini nyata, persistence presence lintas instance, verified assistant action worker, external-origin embed acceptance, provider-live delivery, representative load, staging dan RTO/RPO evidence. Fitur-fitur tersebut tidak boleh dipasarkan sebagai completed hanya karena UI atau loopback test tersedia.
 
 ## Scope yang disepakati
 
@@ -41,7 +143,7 @@ Owner/admin mengelola instalasi dan konfigurasi; member bekerja sesuai grant dom
 | F04 | Tenant, role, Assigned, revocation | CRM/ERP baseline dan negatif presence lulus. Privasi mission C10-01 ditutup pada kandidat 12: read/complete/abort/run_next hanya untuk initiator; supervisor Owner/Admin hanya boleh resume misi holding L4/L5. Test privasi mission existing lulus pada baseline 2026-10-30 |
 | F05 | Tier 1 operasi harian | UI native menggantikan demo: katalog/sales, purchasing/receiving, invoices, support. API lintas domain dan 20 pemeriksaan browser lulus; error lifecycle run pertama diperbaiki |
 | F06 | Cockpit | SQL atomic, checkpoint rollback, replay dan restart lulus. UI mission + tiga read tools dengan dependency sudah ada. Write tools/worker eksternal dan approval/resume yang lengkap belum menjadi penerimaan rilis |
-| F07 | Email, voice, pembayaran | Payment lokal + browser terbukti (kandidat 07). Email: launcher memuat registry dari `ARCHAVA_EMAIL_CONFIG`; UI mempertahankan key; dedupe/24h window diuji (C10-03..05); browser acceptance 2026-10-30 mencakup accepted, unknown-retry dengan key sama, replay tanpa provider call, dan tenant refusal. Presence: lifecycle loopback, room hashing, session validation, serta cross-user/tenant refusal diuji di browser. Voice/live provider tetap loopback dan credential live ditunda owner |
+| F07 | Email, voice, pembayaran | Payment lokal + browser terbukti (kandidat 07). Email: launcher memuat registry dari `ARCHAVA_EMAIL_CONFIG`; UI mempertahankan key; dedupe/24h window diuji (C10-03..05); browser acceptance 2026-10-30 mencakup accepted, unknown-retry dengan key sama, replay tanpa provider call, dan tenant refusal. Presence: lifecycle loopback, room hashing, session validation, serta cross-user/tenant refusal diuji di browser. Production tanpa media/transcript bridge kini fail-closed; voice/live provider tetap belum diterima |
 | F08 | Instalasi, rilis dan pemulihan | Native manifest/packager, empty-install + login + encrypted restore + login lulus lokal; kandidat 12 memverifikasi 47 artifact dan source binding. Costing dan payment lokal sudah punya bukti; provider live tetap ditunda owner |
 
 Baseline verifikasi 2026-10-30: `node tools/rust/verify.mjs` lulus 1.080 tes Rust (0 gagal, 0 diabaikan) bersama fmt/Clippy/structure/docs; `node tools/e2e/verify.mjs` lulus 36 browser checks (0 page error, fixture cleanup 0) pada `target/e2e/release-2026-10-30-final`, termasuk email dan presence loopback; `cargo audit` menemukan 0 vulnerability dan 1 allowed warning (`paste`, RUSTSEC-2024-0436). Manifest memuat 24 ledger/37 migration dengan 37/37 checksum valid. Kandidat native 14 memuat 48 artifact (termasuk `config/email-providers.example.json`) dan lolos verifier Ops. Ini bukti lokal, bukan provider live, staging publik/TLS, atau beban produksi.
@@ -67,7 +169,7 @@ Baseline verifikasi 2026-10-30: `node tools/rust/verify.mjs` lulus 1.080 tes Rus
 | T16 | Fencing serving dan atomic restore | `serving-writer-red.log` mereproduksi HTTP 200 dari proses lama sesudah lease berganti. `serving-writer-http-matrix.log` lulus penolakan CRM/Commerce/Cockpit/login dan readyz 503; `serving-writer-boundaries-03.log` lulus tiga kelompok raw SQL, reconnect, parallel writes, ordering dan guard/owner-role negatives. `serving-writer-drain-cli.log` serta `serving-writer-restored-token.log` membuktikan operator drain, login hasil restore, penolakan copied token dan rollback restore gagal. `serving-writer-browser/result.json`: 27 pemeriksaan lulus (nol error JS/WASM, cleanup 0), termasuk dua proses native hidup/takeover/graceful-drain/default restart. `native-candidate-06.json` mengikat artifact terverifikasi. Full gate kedua lulus 1.029 Rust + 15 tooling (nol gagal/diabaikan), format/Clippy/structure/docs. Source pada snapshot fencing cocok dengan kandidat 06 dan direkam di `source-serving-writer.json`; implementasi provider berikutnya memerlukan kandidat baru |
 | T17 | Billing scope dan gateway | `billing-assigned-scope-red.log` membuktikan Assigned dapat issue invoice orang lain. Lookup mutasi, replay dan status sudah diperbaiki; `billing-assigned-scope-green.log` lulus 26 tes. `gateway-router-02.log` lulus tiga kelompok HTTP+PG, diperluas pada `gateway-financial-local-suite.log` (317 tes lulus, nol gagal/diabaikan), termasuk original key, unsigned status, refund, unapplied funds, restore hold dan service provisioning. `gateway-browser/result.json`: 30 pemeriksaan browser lulus (nol error JS/WASM, cleanup 0), mencakup recovery link create yang hilang, verified settlement 100 IDR via challenge GetStatus tanpa manipulasi client, dan cumulative partial refund 40 IDR. `native-candidate-07.json` mengikat source hash `f0c0a0b117b5702a...` dan 46 artifact terverifikasi Ops verify-release |
 | T18 | Email Outbox dan Resend — ditutup pada kandidat 12, browser acceptance ditambahkan | Kode domain/adapter/transport/UI dan tes email ada; C10-03..05 menutup recovery UI, dedupe atomik, replay immutable, dan 24h window. Launcher memuat `ARCHAVA_EMAIL_CONFIG`; paket native menyertakan contoh konfigurasi. Baseline 2026-10-30 menambah empat browser checks: accepted outbox, unknown-retry memakai key asli, replay terminal tanpa provider call, dan tenant refusal. Live Resend delivery tetap ditunda owner |
-| T19 | Presence dan Cockpit holding — presence ditutup, cockpit UI tetap F06 | Lifecycle presence, JWT development, room hashing delimiter, session validation, tenant membership, serta cross-user/tenant refusal diuji; baseline 2026-10-30 menambah dua browser checks (loopback lifecycle dan isolasi). Voice tetap sintetis/loopback dan live provider ditunda. Pause/resume L4 sudah diuji di API cockpit; flow UI lengkap tetap bagian F06 |
+| T19 | Presence dan Cockpit holding — presence ditutup, cockpit UI tetap F06 | Lifecycle presence, JWT development, room hashing delimiter, session validation, tenant membership, explicit close, serta cross-user/tenant refusal diuji; baseline 2026-10-30 menambah dua browser checks (loopback lifecycle dan isolasi). Production tanpa media/transcript bridge fail-closed; live provider dan shared persistence belum diterima. Pause/resume L4 sudah diuji di API cockpit; flow UI lengkap tetap bagian F06 |
 | T09 | Dokumentasi 16 modul | Halaman aktif ditulis ulang berdasarkan Rust. Kontrak terdahulu diarsipkan dengan [manifest hash](../archive/history/module-contracts-before-native-workspace-2026-10-29/manifest.json) |
 
 Semua nama bukti di atas berada dalam [packet takeover 2026-10-29](../archive/audits/evidence/launch-2026-10-29/). [checks.json](../archive/audits/evidence/launch-2026-10-29/checks.json) mencatat command dan exit code; hasil gagal awal/kompilasi juga dipertahankan. Bukti browser mencatat hash binary/WASM yang benar-benar diuji. Input build dan artifact berikutnya diikat melalui provenance build dan profil distribusi native.
@@ -197,16 +299,16 @@ Klaim “deduplikasi unik payload” juga belum atomic: invoice dilock `FOR SHAR
 
 | ID | Status sesudah review kandidat 10 | Penerimaan yang masih diperlukan |
 | --- | --- | --- |
-| G01 | **Parsial.** Kasus foreign membership/takeover awal dan revocation teruji tertutup; room alias baru masih P1 (C10-02) | Opaque/unambiguous room binding, ID bounds dan isolasi resource antar tenant |
+| G01 | **Implemented for the single-node loopback path.** Foreign membership/takeover, revocation, opaque room binding, bounded session IDs, explicit close, and cross-tenant collision tests pass | Durable/shared presence state is still required before multi-instance deployment |
 | G02 | **Wiring kode diperbaiki.** Native launcher membaca dan memasang email registry | Native executable proof untuk absent/invalid/configured email; build/package saja tidak membuktikan perilaku startup |
-| G03 | **Terbuka P1.** Marker ditambahkan tetapi unknown200 membersihkannya; concurrent payload-dedupe tidak atomic (C10-03) | Browser lost-ACK/reload/recover, exact receipt lookup, matching reference/invoice/state dan intent semantics |
-| G04 | **Terbuka P1.** Lease retry ditambahkan, tetapi window provider dan snapshot belum dijaga (C10-04/05) | Crash/restart + mutable invoice + before/after dedupe-window tests; bounded, fenced invocation ownership |
-| G05 | **Parsial.** Default unconfigured503 benar dan test lulus; konfigurasi LIVEKIT kini dibaca | Provider configured tetap membalas `Acknowledged: ...` pada source voice yang tidak berubah. Implementasi media LiveKit/Gemini, UI mic/camera dan media proof lokal belum ada |
+| G03 | **Implemented at the server/UI boundary.** The original request ID is retained through uncertainty, terminal receipts clear it only after matching, and concurrent same-payload claims use an advisory transaction lock | Browser lost-ACK/reload evidence still needs a fresh real-Chromium run |
+| G04 | **Implemented for bounded replay.** Immutable sender/text/HTML snapshots are stored before invocation; uncertain retries reuse them and hold after the provider's 24-hour window | Crash/restart rehearsal and provider-live evidence remain open |
+| G05 | **Fail-closed, not complete.** Missing configuration and configured-without-bridge both refuse transcript transport; loopback synthetic behavior remains test-only | LiveKit/Gemini media bridge, mic/camera UI, and live-provider proof remain open |
 | G06 | **Perbaikan implementasi diterima.** Mutasi email/presence memerlukan CSRF dan tes missing-CSRF lulus | Tambahkan wrong/missing-CSRF turn/degrade dengan zero state/provider effects untuk coverage lengkap |
-| G07 | **Parsial.** Code/customer/lines/saldo/payment URL kini dirender | Immutable snapshot belum ada. Attachment masih diklaim tanpa attachment. Non-IDR raw minor amount dilabeli currency amount tanpa konversi/label minor units, misalnya `100 USD` untuk integer minor 100 |
+| G07 | **Implemented locally.** Invoice code/customer/lines/saldo/payment URL are rendered and the provider payload snapshot is immutable across uncertain retries | No attachment is claimed; non-IDR display precision and provider-live delivery still need explicit acceptance |
 | G08 | **Perbaikan escaping diterima.** Regresi markup lulus | Snapshot/URL/preview acceptance tetap terkait G07; tidak ada klaim pengujian mailbox nyata |
 | G09 | **Hold kode diterima.** Shared gateway_runtime dibaca dan fail-closed; tes boolean hold lulus | Rehearsal restore snapshot pre-send plus provider window, bukan hanya mengubah boolean pada fixture |
-| G10 | **Parsial.** Global eviction dan cap 16.384 telah ditambahkan | session_id panjang belum dibatasi, close_session belum terhubung ke provider/HTTP, cap account/retained bytes dan lookup mutex global belum dibuktikan dengan churn/performance |
+| G10 | **Implemented for the in-memory single-node path.** Global eviction, caps, bounded IDs, explicit HTTP close, and collision prevention are covered | Shared durable state, retained-memory limits, and representative churn/latency evidence remain open |
 | G11 | **Parsial.** LIMIT 50 membatasi response | Cursor/next-page/truncation indicator dan exact receipt lookup belum ada; outcome lama masih tidak bisa dipulihkan melalui UI |
 | G12 | **Terbuka, dengan regresi P1 C10-01.** Banner/resume dan run suppression ditambahkan; conditional L4 self-resume guard diuji | Create produksi tetap menyimpan L1; test L4 mengubah authority via SQL admin. List hanya initiator, sehingga supervisor tidak menemukan misi orang lain melalui UI. Approval belum terikat policy/input/revision/receipt |
 | G13 | **Perbaikan defensive source diterima.** try_get_value menghindari getter pada owner disposed | Browser send → navigate away → delayed response masih belum diuji; WASM compile bukan bukti runtime flow |
@@ -297,11 +399,13 @@ RPO=0 untuk transaksi yang telah diakui memerlukan konfigurasi durability Postgr
 
 ## Gate peluncuran
 
+Gate publik berikut tetap dibedakan dari acceptance lokal pada laporan 5 November. Bukti staging, CI remote dan provider asli belum digantikan oleh pengujian lokal.
+
 - [x] Scope MVP dan penundaan pengujian live tercatat.
 - [ ] Seluruh flow wajib mempunyai bukti pada source/artifact kandidat akhir.
 - [ ] Seluruh fitur MVP yang dijanjikan, termasuk costing dan integrasi provider, selesai sesuai scope.
 - [ ] Tidak ada temuan P0/P1 terbuka dalam cakupan rilis yang disepakati.
-- [ ] Paket native dapat diinstal dan dipulihkan dengan runtime non-owner yang tetap mempunyai grant yang benar.
+- [x] Paket native dapat diinstal dan dipulihkan dengan runtime non-owner yang tetap mempunyai grant yang benar (gate Rust dan rehearsal native 5 November).
 - [ ] CI kandidat benar-benar dijalankan, bukan hanya file YAML tersedia.
 - [ ] Staging/pilot, beban, monitoring dan pemulihan mendapat penerimaan yang sesuai.
 
@@ -309,7 +413,7 @@ Navigasi: [panduan developer](../DEVELOPER_GUIDE.md), [deployment](../../deploy/
 
 ## Kandidat pembersihan setelah batas rilis stabil
 
-`tools/legacy` dan `examples/legacy` sudah dihapus pada pembersihan TypeScript-era; addon kompatibilitas `crates/native`, benchmark migrasi, dan SQL di luar manifest instalasi bukan bagian paket runtime native ini. Jangan hapus kandidat yang tersisa sebelum memeriksa konsumen/parity yang masih memakainya. Manifest native saat ini memuat 37 migration dalam 24 ledger; 44 file SQL ada di disk, dan 7 file di luar manifest (act/capacity/universal/crm-act) bukan bagian paket runtime native ini. Kontrak modul lama telah diarsipkan dengan hash; halaman aktif menunjuk Rust dan tidak lagi menjadi petunjuk menjalankan package lama.
+`tools/legacy` dan `examples/legacy` sudah dihapus pada pembersihan TypeScript-era; addon kompatibilitas `crates/native`, benchmark migrasi, dan SQL di luar manifest instalasi bukan bagian paket runtime native ini. Jangan hapus kandidat yang tersisa sebelum memeriksa konsumen/parity yang masih memakainya. Manifest native saat ini memuat 39 migration dalam 24 ledger; 46 file SQL ada di disk, dan 7 file di luar manifest (act/capacity/universal/crm-act) bukan bagian paket runtime native ini. Kontrak modul lama telah diarsipkan dengan hash; halaman aktif menunjuk Rust dan tidak lagi menjadi petunjuk menjalankan package lama.
 
 
 | Kandidat | Alasan dan batas pembersihan |
@@ -318,3 +422,57 @@ Navigasi: [panduan developer](../DEVELOPER_GUIDE.md), [deployment](../../deploy/
 | `crates/native` | Masih anggota Cargo workspace; tidak dapat dihapus hanya karena tidak disertakan paket serving. Periksa addon dan konsumen sebelum mengurangi anggota workspace. |
 | `tools/legacy` dan `examples/legacy` | Sudah dihapus setelah relokasi terverifikasi; file asli tetap dapat dipulihkan dari riwayat git. |
 | Kandidat `dist/native-candidate-*` terdahulu | Kandidat per snapshot, bukan distribusi yang selalu terkini. Manifest/hash dan bukti audit mempertahankan provenance; artifact lokal lama dapat dibersihkan setelah kandidat final dipilih. |
+
+## Increment PRD M02b — supplier CRM identity
+
+[Penerimaan lokal M02b](PRD_M02B_ACCEPTANCE_2026-11-06.md) menambah supplier
+registration dari kontak, reviewed profile refresh dan frozen PO/receipt history.
+1.175 Rust tests, 87 browser checks dan native candidate 63 artifact lulus
+pada satu source. Ini tidak menutup universal party/account, accounting R0,
+finance parity, load/SLA, provider production atau deployment.
+
+## Increment PRD M02c1 — verified organization/contact mapping
+
+[Penerimaan lokal M02c1](PRD_M02C1_ACCEPTANCE_2026-11-06.md) menambah reviewed
+affiliation creation dan explicit legacy verification, menutup arbitrary new CRM
+UUID references. 1.186 Rust tests, 94 browser checks, 75 product probes dan
+native candidate 64 artifact lulus pada satu source. FK NOT VALID mempertahankan
+histori yang masih unverified; ini bukan universal-party, finance atau deployment
+acceptance. Existing create/activation clients memerlukan CRM read yang berlaku.
+
+## Increment M02c2a — business-party master registry
+
+[Penerimaan lokal registry](PRD_PARTIES_ACCEPTANCE_2026-11-06.md) mencakup stable
+reviewed source, independent roles dan immutable version history. 1.197 Rust
+tests, 101 browser checks, 75 product probes dan native candidate 65 artifact lulus
+pada satu source. Transaksi legacy belum memakai party ID atau role flags ini;
+M02c2b dan finance/entity/book decisions tetap terbuka. Existing users memerlukan
+grant parties.read/write yang eksplisit.
+
+## Increment M02c2b — party-linked transactions
+
+[Penerimaan lokal transaksi](PRD_PARTY_TRANSACTIONS_ACCEPTANCE_2026-11-07.md)
+menyambungkan shared party ID/versi ke native sales/invoices/purchasing, menegakkan
+current roles untuk transaksi baru dan mempertahankan historical commitments.
+1.209 Rust tests, 107 browser checks, 75 product probes dan candidate 68
+artifacts lulus pada satu source. Prior-profile migration, current authority,
+concurrency dan approved mission turut diuji. Legacy links tidak diubah otomatis.
+M02c2c entity/account/company-book, R0/finance, production dan pilot tetap terbuka.
+
+## Increment M02c2c1 — managed-company identity
+
+[Penerimaan lokal company master](PRD_COMPANIES_ACCEPTANCE_2026-11-07.md)
+mencakup reviewed organization source, stable company ID/code, explicit management
+grants, activity dan immutable version history. 1.220 Rust tests, 113
+browser checks, 75 product probes dan 69 native artifacts lulus pada satu
+source, termasuk prior-profile preservation dan approved mission. Ini deklarasi
+company, bukan legal verification atau transaction/company/book mapping. Existing
+grants/data tidak diubah otomatis. M02c2c2, R0/finance, production dan pilot tetap terbuka.
+
+## Company-owned trade — 7 November 2026
+
+[Penerimaan lokal](PRD_COMPANY_TRADE_ACCEPTANCE_2026-11-07.md) menambah isolasi company melalui product ID, PO/stock/FIFO/sales/source invoice, human access, native company selection, Ava context dan owned mail/payment. Source, gate, Chromium, SQL dan native package terikat dalam report. Ini belum menerima legal/account/book mapping, full AP/AR/GL, bank/close, R0 profile, pilot atau public production. Pekerjaan operasional supplier-document reconciliation berikutnya tetap terpisah sampai diuji.
+
+## Unposted supplier goods documents — 7 November 2026
+
+[Penerimaan lokal](PRD_SUPPLIER_DOCUMENTS_ACCEPTANCE_2026-11-07.md) menambah supplier claim capture, exact PO/accepted-receipt matching, held differences, constrained capacity, correction/void, native company scope dan approved Ava execution. Pencocokan operasional ini tidak memposting AP/GL, pajak, stok atau pembayaran. Official accounting/R0, company/book/account mapping, country/currency, production providers, pilot serta public deployment tetap terbuka.

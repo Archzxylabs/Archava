@@ -188,6 +188,10 @@ fn map_attendance_result(error: AttendanceError) -> Result<(StatusCode, ErpBody)
 
 fn gate_outcome(error: ErpGateError) -> (StatusCode, ErpBody) {
     match error {
+        ErpGateError::Configuration(error) => {
+            let (status, body) = error.response();
+            (status, ErpBody::Doc(body.0))
+        }
         ErpGateError::Authority(refusal) => outcome(authority_refusal(&refusal)),
         ErpGateError::Database(ledger, source) => {
             tracing::error!(error = %source, "refusing: {ledger} database failure");
@@ -287,7 +291,7 @@ fn fingerprint(state: &AppState, mutation: &AttendanceMutation) -> String {
 /// `POST /erp/attendance/commands` — submit (or replay) an attendance
 /// command. CSRF-bound like the other ERP write routes; the tenant comes
 /// only from the body. The OK body is the BARE receipt.
-pub(crate) async fn attendance_command(
+pub(crate) async fn command(
     State(state): State<AppState>,
     headers: HeaderMap,
     submission: Result<Json<AttendanceSubmission>, JsonRejection>,
@@ -309,7 +313,7 @@ pub(crate) async fn attendance_command(
 
 /// `GET /erp/attendance/commands/status?tenant=&requestId=` — the durable
 /// status of one command id.
-pub(crate) async fn attendance_status(
+pub(crate) async fn status(
     State(state): State<AppState>,
     headers: HeaderMap,
     query: Result<Query<AttendanceStatusQuery>, QueryRejection>,

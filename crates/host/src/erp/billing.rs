@@ -198,6 +198,10 @@ fn map_purchase_result(error: PurchaseError) -> Result<(StatusCode, ErpBody), Er
 
 fn gate_outcome(error: ErpGateError) -> (StatusCode, ErpBody) {
     match error {
+        ErpGateError::Configuration(error) => {
+            let (status, body) = error.response();
+            (status, ErpBody::Doc(body.0))
+        }
         ErpGateError::Authority(refusal) => outcome(authority_refusal(&refusal)),
         ErpGateError::Database(ledger, source) => {
             tracing::error!(error = %source, "refusing: {ledger} database failure");
@@ -343,7 +347,7 @@ fn verify_provider_event(
 /// CSRF-bound like the other ERP write routes; the tenant comes only
 /// from the body. The OK body is the BARE receipt — the TS api answers
 /// `service.mutate` verbatim.
-pub(crate) async fn billing_command(
+pub(crate) async fn command(
     State(state): State<AppState>,
     headers: HeaderMap,
     submission: Result<Json<BillingSubmission>, JsonRejection>,
@@ -368,7 +372,7 @@ pub(crate) async fn billing_command(
 /// the current `billing.read` grant and returns the receipt only to the
 /// principal that recorded the command; anyone else is handed the `unknown`
 /// document. The OK body is the commandStatus document verbatim.
-pub(crate) async fn billing_status(
+pub(crate) async fn status(
     State(state): State<AppState>,
     headers: HeaderMap,
     query: Result<Query<BillingStatusQuery>, QueryRejection>,
@@ -418,6 +422,14 @@ pub async fn submit_billing_command(
     let fingerprint = fingerprint(state, &mutation);
 
     let mut transaction = begin_billing(state, submission.tenant.clone()).await?;
+    if matches!(
+        mutation.command,
+        BillingCommand::CreateInvoiceFromOrder { .. }
+    ) {
+        crate::own::require_erp_module(&mut transaction, "archava_commerce")
+            .await
+            .map_err(ErpGateError::Configuration)?;
+    }
 
     // 1. The member ladder — ONE row: the principal's own membership,
     //    active, its permissions and scope, its OWN id as the owner (the

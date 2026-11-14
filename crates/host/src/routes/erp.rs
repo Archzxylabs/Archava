@@ -1,18 +1,64 @@
-//! ERP cohort command, query, and workspace routes across all 17 ledgers.
+//! ERP command, query and workspace routes. The command and command-status
+//! routes come from the module registry; the read routes below are per module.
 
 use axum::routing::{get, post};
 use axum::Router;
 
 use crate::router::AppState;
 
+/// `POST /erp/<id>/commands` and `GET /erp/<id>/commands/status` for every
+/// module in the registry. Each module exposes the two handlers under the same
+/// names, so a new module is mounted here without an entry of its own.
+fn command_routes() -> Router<AppState> {
+    macro_rules! mount {
+        ($(($id:literal, $source:ident)),* $(,)?) => {
+            Router::new()$(
+                .route(
+                    concat!("/erp/", $id, "/commands"),
+                    post(crate::erp::$source::command),
+                )
+                .route(
+                    concat!("/erp/", $id, "/commands/status"),
+                    get(crate::erp::$source::status),
+                )
+            )*
+        };
+    }
+    for_each_erp_module!(mount)
+}
+
 /// Mounts all ERP ledger routes.
 pub fn router() -> Router<AppState> {
     Router::new()
+        .merge(command_routes())
+        .merge(crate::erp::projections::router())
+        .route(
+            "/erp/accounting/workspace",
+            get(crate::erp::accounting::workspace),
+        )
+        .route(
+            "/erp/accounting/reports",
+            get(crate::erp::accounting::reports),
+        )
+        .route(
+            "/erp/accounting/subledger-report",
+            get(crate::erp::accounting::subledger_report),
+        )
+        .route(
+            "/erp/accounting/bank-reconciliation",
+            get(crate::erp::accounting::bank_reconciliation),
+        )
+        .route(
+            "/erp/accounting/close-readiness",
+            get(crate::erp::accounting::close_readiness),
+        )
+        .route(
+            "/erp/accounting/inventory-control",
+            get(crate::erp::accounting::inventory_control),
+        )
         // CRM customer relationship management cohort (ADR-018: normalized enterprise routes)
-        .route("/erp/crm/commands", post(crate::crm::crm_command))
-        .route("/erp/crm/commands/status", get(crate::crm::command_status))
-        .route("/erp/crm/records", get(crate::crm::record))
-        .route("/erp/crm/contacts", get(crate::crm::contacts))
+        .route("/erp/crm/records", get(crate::erp::crm::record))
+        .route("/erp/crm/contacts", get(crate::erp::crm::contacts))
         // Billing payments & invoice email integrations
         .route(
             "/erp/billing/payments",
@@ -32,14 +78,6 @@ pub fn router() -> Router<AppState> {
         // mount into the same session-scoped api scope, mirroring the CRM
         // gate's decision/receipt documents. CSRF-bearing mutation per gate.
         .route(
-            "/erp/commerce/commands",
-            post(crate::erp::commerce::command),
-        )
-        .route(
-            "/erp/commerce/commands/status",
-            get(crate::erp::commerce::status),
-        )
-        .route(
             "/erp/commerce/workspace",
             get(crate::erp::commerce::workspace),
         )
@@ -51,104 +89,24 @@ pub fn router() -> Router<AppState> {
             "/erp/billing/workspace",
             get(crate::erp::workspace::billing),
         )
-        .route(
-            "/erp/purchasing/commands",
-            post(crate::erp::purchasing::purchase_command),
-        )
-        .route(
-            "/erp/purchasing/commands/status",
-            get(crate::erp::purchasing::purchase_status),
-        )
-        .route(
-            "/erp/foodservice/commands",
-            post(crate::erp::foodservice::food_service_command),
-        )
-        .route(
-            "/erp/foodservice/commands/status",
-            get(crate::erp::foodservice::food_service_status),
-        )
         // Archxy 2's R04 ledgers (PACKET-003): organizations, proposals and
         // projects, the same session+CSRF/tenant-path shape as the cohorts
         // above.
-        .route(
-            "/erp/organizations/commands",
-            post(crate::erp::organizations::organization_command),
-        )
-        .route(
-            "/erp/organizations/commands/status",
-            get(crate::erp::organizations::organization_status),
-        )
-        .route(
-            "/erp/proposals/commands",
-            post(crate::erp::proposals::proposal_command),
-        )
-        .route(
-            "/erp/proposals/commands/status",
-            get(crate::erp::proposals::proposal_status),
-        )
-        .route(
-            "/erp/projects/commands",
-            post(crate::erp::projects::project_command),
-        )
-        .route(
-            "/erp/projects/commands/status",
-            get(crate::erp::projects::project_status),
-        )
         // Archxy 2's R05 scheduling ledger (PACKET-004): reservations mounted
         // beside the R04 cohorts, same session+CSRF and tenant-body shape.
-        .route(
-            "/erp/scheduling/commands",
-            post(crate::erp::scheduling::scheduling_command),
-        )
-        .route(
-            "/erp/scheduling/commands/status",
-            get(crate::erp::scheduling::scheduling_status),
-        )
         // Archxy 2's R05 accommodation ledger (PACKET-005): room-night stays
         // compose the same occupancy kernel the scheduling ledger owns.
-        .route(
-            "/erp/accommodation/commands",
-            post(crate::erp::accommodation::accommodation_command),
-        )
-        .route(
-            "/erp/accommodation/commands/status",
-            get(crate::erp::accommodation::accommodation_status),
-        )
         // Archxy 2's R05 assets ledger (PACKET-006): custody and maintenance,
         // its own ledger with no shared kernel.
-        .route(
-            "/erp/assets/commands",
-            post(crate::erp::assets::asset_command),
-        )
-        .route(
-            "/erp/assets/commands/status",
-            get(crate::erp::assets::asset_status),
-        )
         // Archxy 2's R07 billing ledger (PACKET-007): the settlement
         // cohort, the R07 area's first subject — its own ledger; the
         // provider-event arm is authorised by a signature the gate
         // verifies BEFORE the transaction, so an under-signed claim
         // claims nothing.
-        .route(
-            "/erp/billing/commands",
-            post(crate::erp::billing::billing_command),
-        )
-        .route(
-            "/erp/billing/commands/status",
-            get(crate::erp::billing::billing_status),
-        )
         // Archxy 2's R07 subscriptions ledger (PACKET-008): the
         // entitlements/usage cohort — the READ surfaces come with it
         // (list, detail, entitlements, usage history), because a ledger
         // whose rows can only be written is not a usable domain.
-        .route(
-            "/erp/subscriptions/commands",
-            post(crate::erp::subscriptions::subscription_command),
-        )
-        .route(
-            "/erp/subscriptions/commands/status",
-            get(crate::erp::subscriptions::subscription_status),
-        )
         .route(
             "/erp/subscriptions/subscriptions",
             get(crate::erp::subscriptions::subscription_list),
@@ -175,14 +133,6 @@ pub fn router() -> Router<AppState> {
         // (list, detail, roster, check-ins, access) ride the same
         // transaction opener.
         .route(
-            "/erp/attendance/commands",
-            post(crate::erp::attendance::attendance_command),
-        )
-        .route(
-            "/erp/attendance/commands/status",
-            get(crate::erp::attendance::attendance_status),
-        )
-        .route(
             "/erp/attendance/access",
             get(crate::erp::attendance::attendance_access),
         )
@@ -206,14 +156,6 @@ pub fn router() -> Router<AppState> {
         // (start/wait/resume/close/cancel/resolve/reopen/assign/priority/
         // target/note) and the four read projections.
         .route(
-            "/erp/support/commands",
-            post(crate::erp::support::support_command),
-        )
-        .route(
-            "/erp/support/commands/status",
-            get(crate::erp::support::support_status),
-        )
-        .route(
             "/erp/support/access",
             get(crate::erp::support::support_access_route),
         )
@@ -230,14 +172,6 @@ pub fn router() -> Router<AppState> {
             get(crate::erp::support::support_detail_route),
         )
         // Archxy 2's R08 laundry ledger: the order intake & processing lifecycle
-        .route(
-            "/erp/laundry/commands",
-            post(crate::erp::laundry::laundry_command),
-        )
-        .route(
-            "/erp/laundry/commands/status",
-            get(crate::erp::laundry::laundry_status),
-        )
         .route(
             "/erp/laundry/access",
             get(crate::erp::laundry::laundry_access_route),
@@ -260,14 +194,6 @@ pub fn router() -> Router<AppState> {
         )
         // Archxy 2's R08 field services ledger: dispatch, visits, work lines, signoffs
         .route(
-            "/erp/field/commands",
-            post(crate::erp::field_services::field_command),
-        )
-        .route(
-            "/erp/field/commands/status",
-            get(crate::erp::field_services::field_status),
-        )
-        .route(
             "/erp/field/access",
             get(crate::erp::field_services::field_access_route),
         )
@@ -284,14 +210,6 @@ pub fn router() -> Router<AppState> {
             get(crate::erp::field_services::field_audit),
         )
         // Archxy 2's R08 fulfillment ledger: jobs, lines, findings, custody
-        .route(
-            "/erp/fulfillment/commands",
-            post(crate::erp::fulfillment::fulfillment_command),
-        )
-        .route(
-            "/erp/fulfillment/commands/status",
-            get(crate::erp::fulfillment::fulfillment_status),
-        )
         .route(
             "/erp/fulfillment/access",
             get(crate::erp::fulfillment::fulfillment_access_route),
@@ -317,14 +235,6 @@ pub fn router() -> Router<AppState> {
             get(crate::erp::fulfillment::fulfillment_custody_route),
         )
         // Archxy 2's R08 formal education ledger: admissions, enrollments, sessions, results, reviews, audit
-        .route(
-            "/erp/education/commands",
-            post(crate::erp::formal_education::education_command),
-        )
-        .route(
-            "/erp/education/commands/status",
-            get(crate::erp::formal_education::education_status),
-        )
         .route(
             "/erp/education/access",
             get(crate::erp::formal_education::education_access_route),

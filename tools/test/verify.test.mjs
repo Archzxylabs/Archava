@@ -7,8 +7,13 @@ test('the default gate includes workspace integration tests and locked resolutio
   assert.ok(tests.includes('--workspace')); assert.ok(tests.includes('--locked')); assert.ok(!tests.includes('--lib'))
   assert.ok(commands.every((c) => !c.join(' ').includes('pnpm')))
   assert.ok(commands.some((c) => c.includes('tools/check-docs.mjs')))
+  assert.ok(commands.some((c) => c.includes('tools/check-modules.mjs')))
+  assert.ok(commands.some((c) => c.includes('tools/test/modules.test.mjs')))
+  assert.ok(commands.some((c) => c.includes('tools/product/check-delivery.mjs')))
+  assert.ok(commands.some((c) => c.includes('tools/test/product-delivery.test.mjs')))
   assert.ok(commands.some((c) => c.includes('tools/test/docs.test.mjs')))
   assert.ok(commands.some((c) => c.includes('tools/test/native-provenance.test.mjs')))
+  assert.ok(commands.some((c) => c.includes('tools/test/domain-assets.test.mjs')))
   assert.ok(commands.some((c) => c.includes('tools/test/load-benchmark.test.mjs')))
 })
 test('offline and library-only scope are explicit', () => {

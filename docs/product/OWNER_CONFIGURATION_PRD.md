@@ -6,9 +6,11 @@
 **Version:** 1.0.0  
 **Date:** 15 Oktober 2026  
 **Status:** Product requirement yang diperjelas owner; belum implemented/accepted.  
-**Authority:** [Master PRD §51](../archive/history/PRD.md#51-business-shaped-crmerp-and-owner-self-service)
-dan pricebook existing. Ini tidak mengubah harga, release acceptance atau existing
-business invariants.
+**Product authority:** [PRD produk aktif](PRD.md), dengan detail self-service pada
+dokumen ini. Asal requirement tetap dapat ditelusuri ke
+[Master PRD historis §51](../archive/history/PRD.md#51-business-shaped-crmerp-and-owner-self-service).
+Pricebook existing tetap berlaku. Ini tidak mengubah harga, release acceptance
+atau existing business invariants; konteks requirement bertanggal di bawah dipertahankan.
 
 ## 1. Thesis produk
 

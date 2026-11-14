@@ -275,69 +275,24 @@ pub async fn bootstrap_owner(
         ));
     }
     sqlx::query("INSERT INTO archava_identity.users(id,username,password_hash,active,version) VALUES($1,$2,$3,true,1)").bind(principal).bind(username).bind(hash).execute(&mut *tx).await?;
-    for (namespace, permissions) in [
-        (
-            "archava_commerce",
-            vec![
-                "catalog.read",
-                "catalog.write",
-                "stock.read",
-                "stock.write",
-                "orders.read",
-                "orders.write",
-                "returns.write",
-                "valuation.read",
-                "valuation.write",
-                "audit.read",
-            ],
-        ),
-        (
-            "archava_crm",
-            vec![
-                "contacts.read",
-                "contacts.write",
-                "activities.read",
-                "activities.write",
-                "followups.read",
-                "followups.write",
-                "audit.read",
-            ],
-        ),
-        (
-            "archava_purchasing",
-            vec![
-                "suppliers.read",
-                "suppliers.write",
-                "offers.read",
-                "offers.write",
-                "orders.read",
-                "orders.write",
-                "receipts.read",
-                "receipts.write",
-                "audit.read",
-            ],
-        ),
-        (
-            "archava_billing",
-            vec![
-                "billing.read",
-                "billing.write",
-                "billing.settle",
-                "audit.read",
-            ],
-        ),
-        (
-            "archava_support",
-            vec![
-                "cases.read",
-                "cases.write",
-                "cases.assign",
-                "notes.read",
-                "notes.write",
-                "audit.read",
-            ],
-        ),
-    ] {
+    // The same installed-module catalogue drives native forms and the explicit
+    // initial owner bootstrap. Owner config changes never mint grants.
+    let catalogue: serde_json::Value =
+        serde_json::from_str(include_str!("../../../config/operator-actions.v1.json"))
+            .map_err(|_| InstallError::Invalid("Installed module catalogue is invalid"))?;
+    for module in catalogue["modules"]
+        .as_array()
+        .ok_or_else(|| InstallError::Invalid("Installed module catalogue is invalid"))?
+    {
+        let namespace = module["namespace"]
+            .as_str()
+            .ok_or_else(|| InstallError::Invalid("Installed module namespace is invalid"))?;
+        let permissions: Vec<&str> = module["permissions"]
+            .as_array()
+            .ok_or_else(|| InstallError::Invalid("Installed module permissions are invalid"))?
+            .iter()
+            .filter_map(serde_json::Value::as_str)
+            .collect();
         let query=format!("INSERT INTO {namespace}.memberships(tenant_id,principal_id,kind,permissions,scope,active) VALUES($1,$2,'human',$3,'all',true)");
         sqlx::query(sqlx::AssertSqlSafe(query.as_str()))
             .bind(tenant)

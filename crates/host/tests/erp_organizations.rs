@@ -172,6 +172,21 @@ async fn seed(fixture: &Fixture) {
         .await
         .expect("seed the GLOBEX organizations membership");
     }
+    // Real CRM references for affiliation writes; arbitrary UUIDs no longer
+    // count as a contact. These are synthetic opening records, not app data.
+    for (tenant, actors) in [
+        (ACME, vec!["ox", "onone", "ooff"]),
+        (GLOBEX, vec!["other", "ogx"]),
+    ] {
+        for actor in &actors {
+            sqlx::query("INSERT INTO archava_crm.memberships(tenant_id,principal_id,kind,permissions,scope) VALUES($1,$2,'human',ARRAY['contacts.read'],'all')")
+                .bind(tenant).bind(actor).execute(&fixture.admin_pool).await.unwrap();
+        }
+        for id in [CONTACT_A, CONTACT_B, CONTACT_C] {
+            sqlx::query("INSERT INTO archava_crm.contacts(tenant_id,id,full_name,owner_id) VALUES($1,$2,'Synthetic organization contact',$3)")
+                .bind(tenant).bind(uuid::Uuid::parse_str(id).unwrap()).bind(actors[0]).execute(&fixture.admin_pool).await.unwrap();
+        }
+    }
 }
 
 const CONTACT_A: &str = "c1aa0000-4444-4444-4444-0000000000c1";

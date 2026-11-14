@@ -4,7 +4,7 @@
 {$ARCHAVA_DOMAIN:localhost} {
 	encode zstd gzip
 
-	# The application serves /metrics unauthenticated for a local scraper.
+	# The application serves /metrics without a token only to loopback scrapers.
 	# Do not publish it: scrape 127.0.0.1:8347 directly, or replace this block
 	# with an explicit monitoring-network allow-list.
 	@metrics path /metrics

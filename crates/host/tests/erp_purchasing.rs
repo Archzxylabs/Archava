@@ -1518,3 +1518,683 @@ async fn lost_response_recovers_by_replay_and_status() {
     assert_eq!(unknown["decision"], "unknown");
     assert_eq!(unknown["receipt"], Value::Null);
 }
+
+// --- Trade currency (docs/architecture/MULTI_CURRENCY.md, stage 2) ---------
+
+/// The whole mounted router, with `trader` able to register companies and
+/// parties, create books, own a catalog and purchase (documents included).
+async fn trade_setup() -> (Fixture, Router, Session) {
+    let f = provision().await;
+    sqlx::query("INSERT INTO archava_identity.users(id,username,password_hash,active,version) VALUES('trader','trader@archava.test',$1,true,1)").bind(PASSWORD_HASH).execute(&f.admin_pool).await.unwrap();
+    sqlx::query("INSERT INTO archava_organizations.memberships(tenant_id,principal_id,kind,permissions,scope) VALUES($1,'trader','human',ARRAY['organizations.read','organizations.write','companies.read','companies.write','parties.read','parties.write'],'all')").bind(ACME).execute(&f.admin_pool).await.unwrap();
+    sqlx::query("INSERT INTO archava_accounting.memberships(tenant_id,principal_id,kind,permissions,scope) VALUES($1,'trader','human',$2,'all')").bind(ACME).bind(archava_domain::erp::accounting::PERMISSIONS).execute(&f.admin_pool).await.unwrap();
+    sqlx::query("INSERT INTO archava_commerce.memberships(tenant_id,principal_id,kind,permissions,scope) VALUES($1,'trader','human',$2,'all')").bind(ACME).bind(archava_adapters::erp::COMMERCE_PERMISSION_VOCABULARY).execute(&f.admin_pool).await.unwrap();
+    let mut purchasing = PURCHASE_ALL.to_vec();
+    purchasing.extend(["documents.read", "documents.write"]);
+    sqlx::query("INSERT INTO archava_purchasing.memberships(tenant_id,principal_id,kind,permissions,scope) VALUES($1,'trader','human',$2,'all')").bind(ACME).bind(purchasing).execute(&f.admin_pool).await.unwrap();
+    let state = AppState::try_new_all(
+        f.runtime_pool.clone(),
+        commerce_ledger(),
+        archava_host::router::AllReadiness {
+            commerce: &f.commerce_ledger,
+            identity: &f.identity_ledger,
+            crm: &f.crm_ledger,
+            owner: &f.owner_ledger,
+            purchasing: &f.purchasing_ledger,
+            additional_erp: &f.erp_readiness(),
+        },
+        IDENTITY_KEY,
+    )
+    .await
+    .unwrap();
+    let app = archava_host::router(state);
+    let session = login(&app, "trader").await;
+    (f, app, session)
+}
+/// One command of `domain` (`commerce`, `purchasing`, `accounting`): the
+/// status and the whole answer.
+async fn trade_try(
+    app: &Router,
+    session: &Session,
+    domain: &str,
+    request_id: Uuid,
+    command: Value,
+) -> (StatusCode, Value) {
+    post(
+        app,
+        &format!("/erp/{domain}/commands"),
+        &json!({"tenant":ACME,"requestId":request_id,"command":command}).to_string(),
+        Some(session),
+        true,
+    )
+    .await
+}
+/// An accepted command's receipt.
+async fn trade(app: &Router, session: &Session, domain: &str, command: Value) -> Value {
+    let (status, body) = trade_try(app, session, domain, Uuid::new_v4(), command).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    body["receipt"].clone()
+}
+/// A refused command: a conflict that recorded no purchasing command.
+async fn trade_refused(f: &Fixture, app: &Router, session: &Session, command: Value) {
+    let request_id = Uuid::new_v4();
+    let (status, body) = trade_try(app, session, "purchasing", request_id, command).await;
+    assert_eq!(status, StatusCode::CONFLICT, "{body}");
+    let recorded: i64 =
+        sqlx::query_scalar("SELECT count(*) FROM archava_purchasing.commands WHERE request_id=$1")
+            .bind(request_id)
+            .fetch_one(&f.admin_pool)
+            .await
+            .unwrap();
+    assert_eq!(recorded, 0);
+}
+async fn organization_command(app: &Router, session: &Session, kind: &str, data: Value) -> Value {
+    let (status, body) = post(
+        app,
+        "/erp/organizations/commands",
+        &json!({"tenant":ACME,"mutation":{"requestId":Uuid::new_v4(),"type":kind,"data":data}})
+            .to_string(),
+        Some(session),
+        true,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    body["receipt"].clone()
+}
+/// A reviewed managed company; returns its id.
+async fn trade_company(app: &Router, session: &Session, code: &str) -> String {
+    let organization = organization_command(
+        app,
+        session,
+        "create_organization",
+        json!({"name":format!("Company {code}"),"legalName":format!("Company {code} Official")}),
+    )
+    .await;
+    organization_command(
+        app,
+        session,
+        "company.create_from_organization",
+        json!({"code":code,"organizationId":organization["organizationId"],"expectedSourceRevision":1,"reason":"Explicit synthetic legal entity"}),
+    )
+    .await["companyId"]
+        .as_str()
+        .unwrap()
+        .into()
+}
+/// A supplier created from a reviewed supplier party; returns its id.
+async fn trade_supplier(app: &Router, session: &Session, code: &str) -> String {
+    let organization = organization_command(
+        app,
+        session,
+        "create_organization",
+        json!({"name":format!("Vendor {code}"),"legalName":format!("Vendor {code} Official")}),
+    )
+    .await;
+    let party = organization_command(
+        app,
+        session,
+        "party.create_from_organization",
+        json!({"organizationId":organization["organizationId"],"expectedSourceRevision":1,"customer":false,"supplier":true}),
+    )
+    .await;
+    trade(
+        app,
+        session,
+        "purchasing",
+        json!({"operation":"supplier.create-from-party","code":code,"partyId":party["partyId"],"expectedPartyRevision":1}),
+    )
+    .await["id"]
+        .as_str()
+        .unwrap()
+        .into()
+}
+async fn trade_book(app: &Router, session: &Session, company: &str, currency: &str) {
+    trade(app, session, "accounting", book_command(company, currency)).await;
+}
+fn book_command(company: &str, currency: &str) -> Value {
+    json!({"type":"book.create","companyId":company,"expectedCompanyRevision":1,"code":format!("BOOK-{currency}"),"name":"Explicit synthetic official book","currency":currency,"sourceAuthority":"native","independentPosting":true,"reason":"Reviewed book setup; no historical import"})
+}
+async fn books(f: &Fixture, company: &str) -> Vec<String> {
+    sqlx::query_scalar("SELECT currency FROM archava_accounting.books WHERE company_id=$1::uuid")
+        .bind(company)
+        .fetch_all(&f.admin_pool)
+        .await
+        .unwrap()
+}
+/// `book.create` in `currency` is refused as a conflict and writes nothing.
+async fn book_refused(f: &Fixture, app: &Router, session: &Session, company: &str, currency: &str) {
+    let request_id = Uuid::new_v4();
+    let (status, body) = trade_try(
+        app,
+        session,
+        "accounting",
+        request_id,
+        book_command(company, currency),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CONFLICT, "{body}");
+    assert_eq!(books(f, company).await, Vec::<String>::new());
+    let recorded: i64 =
+        sqlx::query_scalar("SELECT count(*) FROM archava_accounting.commands WHERE request_id=$1")
+            .bind(request_id)
+            .fetch_one(&f.admin_pool)
+            .await
+            .unwrap();
+    assert_eq!(recorded, 0, "the refused book leaves no command");
+}
+/// A non-IDR book for a company that already trades. The book guard
+/// (Accounting 015) refuses that through every runtime path, so the database
+/// owner disables it to plant the state the older guards still defend against.
+async fn planted_book(f: &Fixture, app: &Router, session: &Session, company: &str, currency: &str) {
+    sqlx::query("ALTER TABLE archava_accounting.books DISABLE TRIGGER a_currency_book")
+        .execute(&f.admin_pool)
+        .await
+        .unwrap();
+    trade_book(app, session, company, currency).await;
+    sqlx::query("ALTER TABLE archava_accounting.books ENABLE TRIGGER a_currency_book")
+        .execute(&f.admin_pool)
+        .await
+        .unwrap();
+}
+/// A stock-tracked product of `company`; returns its id.
+async fn company_product(app: &Router, session: &Session, company: &str, sku: &str) -> String {
+    trade(app,session,"commerce",json!({"operation":"product.create_for_company","companyId":company,"expectedCompanyRevision":1,"sku":sku,"title":format!("Product {sku}"),"unit":"unit","trackStock":true,"price":1999})).await["id"].as_str().unwrap().into()
+}
+async fn trade_offer(
+    app: &Router,
+    session: &Session,
+    supplier: &str,
+    product: &str,
+    cost: i64,
+) -> String {
+    trade(
+        app,
+        session,
+        "purchasing",
+        json!({"operation":"offer.create","supplierId":supplier,"productId":product,"unitCost":cost}),
+    )
+    .await["id"]
+        .as_str()
+        .unwrap()
+        .into()
+}
+fn company_purchase(company: &str, supplier: &str, offers: &[&str], quantity: i64) -> Value {
+    let lines: Vec<Value> = offers
+        .iter()
+        .map(|offer| json!({"offerId":offer,"quantity":quantity}))
+        .collect();
+    json!({"operation":"order.create-for-company","companyId":company,"expectedCompanyRevision":1,"supplierId":supplier,"lines":lines})
+}
+/// A supplier claim on a received order: `(order id, its revision, line id)`.
+fn supplier_claim(
+    (order, revision, line): (&str, i64, Uuid),
+    supplier: &str,
+    reference: &str,
+    currency: &str,
+    quantity: i64,
+    cost: i64,
+) -> Value {
+    json!({"operation":"document.capture","orderId":order,"expectedOrderRevision":revision,"supplierId":supplier,"vendorReference":reference,"documentDate":"2026-11-07","currency":currency,"declaredTotal":quantity*cost,"lines":[{"lineId":line,"quantity":quantity,"unitCost":cost}]})
+}
+async fn purchase_view(app: &Router, session: &Session, company: Option<&str>) -> Value {
+    let company = company
+        .map(|company| format!("&companyId={company}"))
+        .unwrap_or_default();
+    let (status, body) = get(
+        app,
+        &format!("/erp/purchasing/workspace?tenant={ACME}{company}"),
+        Some(session),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    body
+}
+/// The `currency` the workspace read returns for one offer, order or document.
+fn read_currency(view: &Value, collection: &str, id: &str) -> String {
+    view[collection]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|record| record["id"] == id)
+        .unwrap_or_else(|| panic!("{collection} {id} is missing from {view}"))["currency"]
+        .as_str()
+        .unwrap()
+        .into()
+}
+async fn stored_currency(f: &Fixture, table: &str, id: &str) -> String {
+    let statement = format!("SELECT currency FROM archava_purchasing.{table} WHERE id=$1::uuid");
+    sqlx::query_scalar(sqlx::AssertSqlSafe(statement.as_str()))
+        .bind(id)
+        .fetch_one(&f.admin_pool)
+        .await
+        .unwrap()
+}
+fn refused_check(result: Result<sqlx::postgres::PgQueryResult, sqlx::Error>) -> String {
+    let error = result.expect_err("the database must refuse this row");
+    let database = error.as_database_error().expect("a database refusal");
+    assert_eq!(database.code().as_deref(), Some("23514"), "{database}");
+    database.message().to_owned()
+}
+/// A direct offer insert; `currency` None leaves the column default.
+async fn insert_offer(
+    f: &Fixture,
+    supplier: &str,
+    product: &str,
+    currency: Option<&str>,
+) -> Result<sqlx::postgres::PgQueryResult, sqlx::Error> {
+    let query = match currency {
+        Some(_) => sqlx::query("INSERT INTO archava_purchasing.offers(tenant_id,id,supplier_id,product_id,unit_cost,currency) VALUES($1,$2,$3::uuid,$4::uuid,100,$5)"),
+        None => sqlx::query("INSERT INTO archava_purchasing.offers(tenant_id,id,supplier_id,product_id,unit_cost) VALUES($1,$2,$3::uuid,$4::uuid,100)"),
+    }
+    .bind(ACME)
+    .bind(Uuid::new_v4())
+    .bind(supplier)
+    .bind(product);
+    match currency {
+        Some(currency) => query.bind(currency),
+        None => query,
+    }
+    .execute(&f.admin_pool)
+    .await
+}
+/// A direct purchase-order header insert carrying the company's current
+/// reviewed snapshot (or no company at all).
+async fn insert_order(
+    f: &Fixture,
+    supplier: &str,
+    company: Option<&str>,
+    currency: &str,
+) -> Result<sqlx::postgres::PgQueryResult, sqlx::Error> {
+    match company {
+        Some(company) => sqlx::query("INSERT INTO archava_purchasing.orders(tenant_id,id,owner_id,supplier_id,supplier_code,supplier_name,total_estimate,company_id,company_revision,company_code,company_name,currency) SELECT s.tenant_id,$1,'trader',s.id,s.code,s.name,0,c.id,c.revision,c.code,c.legal_name,$2 FROM archava_purchasing.suppliers s JOIN archava_organizations.companies c ON c.tenant_id=s.tenant_id WHERE s.id=$3::uuid AND c.id=$4::uuid")
+            .bind(Uuid::new_v4())
+            .bind(currency)
+            .bind(supplier)
+            .bind(company)
+            .execute(&f.admin_pool)
+            .await,
+        None => sqlx::query("INSERT INTO archava_purchasing.orders(tenant_id,id,owner_id,supplier_id,supplier_code,supplier_name,total_estimate,currency) SELECT s.tenant_id,$1,'trader',s.id,s.code,s.name,0,$2 FROM archava_purchasing.suppliers s WHERE s.id=$3::uuid")
+            .bind(Uuid::new_v4())
+            .bind(currency)
+            .bind(supplier)
+            .execute(&f.admin_pool)
+            .await,
+    }
+}
+async fn order_line(f: &Fixture, order: &str) -> Uuid {
+    sqlx::query_scalar("SELECT id FROM archava_purchasing.lines WHERE order_id=$1::uuid")
+        .bind(order)
+        .fetch_one(&f.admin_pool)
+        .await
+        .unwrap()
+}
+
+#[tokio::test]
+async fn company_offers_purchase_orders_and_supplier_documents_take_the_book_currency() {
+    let (f, app, session) = trade_setup().await;
+    let company = trade_company(&app, &session, "USDCO").await;
+    trade_book(&app, &session, &company, "USD").await;
+    let supplier = trade_supplier(&app, &session, "USD-VENDOR").await;
+    let item = company_product(&app, &session, &company, "USD-ITEM").await;
+
+    let offer = trade_offer(&app, &session, &supplier, &item, 1250).await;
+    let order = trade(
+        &app,
+        &session,
+        "purchasing",
+        company_purchase(&company, &supplier, &[&offer], 4),
+    )
+    .await;
+    let order = order["id"].as_str().unwrap();
+    assert_eq!(stored_currency(&f, "offers", &offer).await, "USD");
+    assert_eq!(stored_currency(&f, "orders", order).await, "USD");
+    let view = purchase_view(&app, &session, Some(&company)).await;
+    assert_eq!(read_currency(&view, "offers", &offer), "USD");
+    assert_eq!(read_currency(&view, "orders", order), "USD");
+    let listed = view["orders"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|record| record["id"] == order)
+        .unwrap();
+    // Amounts are untouched: 4 x 1250 in the record's own unit.
+    assert_eq!(listed["total"], 5000);
+    assert_eq!(listed["lines"][0]["unitCost"], 1250);
+
+    // The write paths read the non-IDR rows back instead of refusing them.
+    trade(&app,&session,"purchasing",json!({"operation":"offer.set-cost","id":offer,"expectedRevision":1,"reason":"Supplier repriced","unitCost":1300})).await;
+    trade(&app,&session,"purchasing",json!({"operation":"order.replace-lines","id":order,"expectedRevision":1,"reason":"Requote at the new cost","lines":[{"offerId":offer,"quantity":4}]})).await;
+    trade(&app,&session,"purchasing",json!({"operation":"order.confirm","id":order,"expectedRevision":2,"reason":"Approved commitment"})).await;
+    let line = order_line(&f, order).await;
+    let receipt=trade(&app,&session,"purchasing",json!({"operation":"order.receive","id":order,"expectedRevision":3,"reason":"Three accepted, one rejected","landedFeeMinor":77,"allocationBasis":"value","lines":[{"lineId":line,"accepted":3,"rejected":1}]})).await;
+    assert_eq!(order_state(&f, order).await, ("received".to_owned(), 4));
+    assert_eq!(stored_currency(&f, "orders", order).await, "USD");
+
+    // Stock and cost carry the order's integers unchanged: no conversion, no
+    // whole-Rupiah scaling.
+    let request = Uuid::parse_str(receipt["requestId"].as_str().unwrap()).unwrap();
+    let movement: (i32, Option<i64>, i64) = sqlx::query_as("SELECT quantity,unit_cost_minor,landed_fee_minor FROM archava_commerce.movements WHERE request_id=$1 AND kind='purchase' AND product_id=$2::uuid")
+        .bind(request)
+        .bind(&item)
+        .fetch_one(&f.admin_pool)
+        .await
+        .unwrap();
+    assert_eq!(movement, (3, Some(1300), 77));
+    let layer: (i64, i64, Option<i64>) = sqlx::query_as("SELECT original_quantity,remaining_quantity,total_cost_minor FROM archava_commerce.inventory_layers WHERE source_request_id=$1 AND product_id=$2::uuid")
+        .bind(request)
+        .bind(&item)
+        .fetch_one(&f.admin_pool)
+        .await
+        .unwrap();
+    assert_eq!(layer, (3, 3, Some(3 * 1300 + 77)));
+    assert_eq!(stock(&f, ACME, &item).await.0, 3);
+    // A purchase policy cannot exist on a non-IDR book, so nothing was
+    // captured for the ledger (stage 4) and nothing refused the receipt.
+    let captured: (i64, i64) = sqlx::query_as("SELECT (SELECT count(*) FROM archava_accounting.purchase_origins),(SELECT count(*) FROM archava_accounting.purchase_sources)")
+        .fetch_one(&f.admin_pool)
+        .await
+        .unwrap();
+    assert_eq!(captured, (0, 0));
+
+    // A supplier document carries its purchase order's currency: USD is
+    // accepted, IDR (what every document was before) is refused.
+    let source = (order, 4, line);
+    trade_refused(
+        &f,
+        &app,
+        &session,
+        supplier_claim(source, &supplier, "INV-IDR", "IDR", 3, 1300),
+    )
+    .await;
+    // A malformed code never reaches the order comparison.
+    let (status, body) = trade_try(
+        &app,
+        &session,
+        "purchasing",
+        Uuid::new_v4(),
+        supplier_claim(source, &supplier, "INV-LOWER", "usd", 3, 1300),
+    )
+    .await;
+    assert!(
+        status.is_client_error() && status != StatusCode::CONFLICT,
+        "{status} {body}"
+    );
+    let document = trade(
+        &app,
+        &session,
+        "purchasing",
+        supplier_claim(source, &supplier, "INV-USD", "USD", 3, 1300),
+    )
+    .await;
+    let document = document["id"].as_str().unwrap();
+    assert_eq!(
+        stored_currency(&f, "supplier_documents", document).await,
+        "USD"
+    );
+    let view = purchase_view(&app, &session, Some(&company)).await;
+    assert_eq!(read_currency(&view, "documents", document), "USD");
+    // A revision cannot move the document to another currency either.
+    trade_refused(&f,&app,&session,json!({"operation":"document.revise","id":document,"expectedRevision":1,"expectedOrderRevision":4,"reason":"Restate the claim","documentDate":"2026-11-08","currency":"IDR","declaredTotal":3900,"lines":[{"lineId":line,"quantity":3,"unitCost":1300}]})).await;
+    trade(&app,&session,"purchasing",json!({"operation":"document.match","id":document,"expectedRevision":1,"expectedOrderRevision":4,"reason":"Exact accepted-goods claim"})).await;
+    let matched: (String, i64, String) = sqlx::query_as("SELECT state,declared_total,currency FROM archava_purchasing.supplier_documents WHERE id=$1::uuid")
+        .bind(document)
+        .fetch_one(&f.admin_pool)
+        .await
+        .unwrap();
+    assert_eq!(matched, ("matched".to_owned(), 3900, "USD".to_owned()));
+    let documents: i64 =
+        sqlx::query_scalar("SELECT count(*) FROM archava_purchasing.supplier_documents")
+            .fetch_one(&f.admin_pool)
+            .await
+            .unwrap();
+    assert_eq!(documents, 1);
+}
+
+#[tokio::test]
+async fn purchases_without_a_company_or_a_book_stay_idr() {
+    let (f, app, session) = trade_setup().await;
+    let supplier = trade_supplier(&app, &session, "IDR-VENDOR").await;
+    let unowned=trade(&app,&session,"commerce",json!({"operation":"product.create","sku":"NO-COMPANY","title":"Unowned product","unit":"unit","trackStock":true,"price":10000})).await;
+    let unowned = unowned["id"].as_str().unwrap();
+    let offer = trade_offer(&app, &session, &supplier, unowned, 6000).await;
+    let order=trade(&app,&session,"purchasing",json!({"operation":"order.create","supplierId":supplier,"lines":[{"offerId":offer,"quantity":2}]})).await;
+    let order = order["id"].as_str().unwrap();
+    assert_eq!(stored_currency(&f, "offers", &offer).await, "IDR");
+    assert_eq!(stored_currency(&f, "orders", order).await, "IDR");
+    let view = purchase_view(&app, &session, None).await;
+    assert_eq!(read_currency(&view, "offers", &offer), "IDR");
+    assert_eq!(read_currency(&view, "orders", order), "IDR");
+    trade(&app,&session,"purchasing",json!({"operation":"order.confirm","id":order,"expectedRevision":1,"reason":"Approved commitment"})).await;
+    let line = order_line(&f, order).await;
+    trade(&app,&session,"purchasing",json!({"operation":"order.receive","id":order,"expectedRevision":2,"reason":"Delivery accepted","lines":[{"lineId":line,"accepted":2,"rejected":0}]})).await;
+    assert_eq!(stock(&f, ACME, unowned).await.0, 2);
+
+    // A company without a book trades in IDR, documents included.
+    let company = trade_company(&app, &session, "NOBOOK").await;
+    let item = company_product(&app, &session, &company, "NOBOOK-ITEM").await;
+    let offer = trade_offer(&app, &session, &supplier, &item, 7000).await;
+    let order = trade(
+        &app,
+        &session,
+        "purchasing",
+        company_purchase(&company, &supplier, &[&offer], 2),
+    )
+    .await;
+    let order = order["id"].as_str().unwrap();
+    assert_eq!(stored_currency(&f, "offers", &offer).await, "IDR");
+    assert_eq!(stored_currency(&f, "orders", order).await, "IDR");
+    let view = purchase_view(&app, &session, Some(&company)).await;
+    assert_eq!(read_currency(&view, "offers", &offer), "IDR");
+    assert_eq!(read_currency(&view, "orders", order), "IDR");
+    trade(&app,&session,"purchasing",json!({"operation":"order.confirm","id":order,"expectedRevision":1,"reason":"Approved commitment"})).await;
+    let line = order_line(&f, order).await;
+    trade(&app,&session,"purchasing",json!({"operation":"order.receive","id":order,"expectedRevision":2,"reason":"Delivery accepted","lines":[{"lineId":line,"accepted":2,"rejected":0}]})).await;
+    trade_refused(
+        &f,
+        &app,
+        &session,
+        supplier_claim((order, 3, line), &supplier, "INV-USD", "USD", 2, 7000),
+    )
+    .await;
+    let document = trade(
+        &app,
+        &session,
+        "purchasing",
+        supplier_claim((order, 3, line), &supplier, "INV-IDR", "IDR", 2, 7000),
+    )
+    .await;
+    assert_eq!(
+        stored_currency(&f, "supplier_documents", document["id"].as_str().unwrap()).await,
+        "IDR"
+    );
+}
+
+#[tokio::test]
+async fn the_database_refuses_a_purchase_currency_other_than_the_company_book() {
+    let (f, app, session) = trade_setup().await;
+    let named: Vec<(String, String)> = sqlx::query_as("SELECT conrelid::regclass::text,conname::text FROM pg_constraint WHERE contype='c' AND conrelid IN ('archava_purchasing.offers'::regclass,'archava_purchasing.orders'::regclass,'archava_purchasing.supplier_documents'::regclass) AND pg_get_constraintdef(oid) LIKE '%currency%' ORDER BY 1")
+        .fetch_all(&f.admin_pool)
+        .await
+        .unwrap();
+    assert_eq!(
+        named,
+        vec![
+            (
+                "archava_purchasing.offers".to_owned(),
+                "offer_currency_code".to_owned()
+            ),
+            (
+                "archava_purchasing.orders".to_owned(),
+                "purchase_currency_code".to_owned()
+            ),
+            (
+                "archava_purchasing.supplier_documents".to_owned(),
+                "supplier_document_currency_code".to_owned()
+            ),
+        ]
+    );
+
+    let supplier = trade_supplier(&app, &session, "GUARD-VENDOR").await;
+    let company = trade_company(&app, &session, "GUARDED").await;
+    // Before the book exists the company purchases in IDR, and only in IDR.
+    let legacy = company_product(&app, &session, &company, "LEGACY-IDR").await;
+    let spare = company_product(&app, &session, &company, "SPARE-IDR").await;
+    let message = refused_check(insert_offer(&f, &supplier, &spare, Some("USD")).await);
+    assert_eq!(message, "Currency differs from the company book");
+    let message = refused_check(insert_order(&f, &supplier, Some(&company), "USD").await);
+    assert_eq!(message, "Currency differs from the company book");
+    let legacy_offer = trade_offer(&app, &session, &supplier, &legacy, 6000).await;
+    let early = trade(
+        &app,
+        &session,
+        "purchasing",
+        company_purchase(&company, &supplier, &[&legacy_offer], 2),
+    )
+    .await;
+    let early = early["id"].as_str().unwrap();
+    // A company with products, an offer and a purchase order cannot open a USD
+    // book; the mixed state the guards below defend against is planted by the
+    // database owner.
+    book_refused(&f, &app, &session, &company, "USD").await;
+    planted_book(&f, &app, &session, &company, "USD").await;
+    let item = company_product(&app, &session, &company, "USD-ITEM").await;
+
+    // Offers: the company's book currency, which is also the product's.
+    let message = refused_check(insert_offer(&f, &supplier, &item, Some("IDR")).await);
+    assert_eq!(message, "Currency differs from the company book");
+    // The column default is IDR, which this company may no longer use.
+    refused_check(insert_offer(&f, &supplier, &item, None).await);
+    refused_check(insert_offer(&f, &supplier, &item, Some("JPY")).await);
+    // The format check replaced the IDR-only one.
+    refused_check(insert_offer(&f, &supplier, &item, Some("usd")).await);
+    // The planted IDR product: no offer fits it any more.
+    let message = refused_check(insert_offer(&f, &supplier, &spare, Some("USD")).await);
+    assert_eq!(
+        message,
+        "Offer is priced in another currency than its product"
+    );
+    let message = refused_check(insert_offer(&f, &supplier, &spare, Some("IDR")).await);
+    assert_eq!(message, "Currency differs from the company book");
+    trade_refused(
+        &f,
+        &app,
+        &session,
+        json!({"operation":"offer.create","supplierId":supplier,"productId":spare,"unitCost":6000}),
+    )
+    .await;
+    // An offer on a product without a company is IDR whatever books exist.
+    let unowned=trade(&app,&session,"commerce",json!({"operation":"product.create","sku":"NO-COMPANY","title":"Unowned product","unit":"unit","trackStock":true,"price":10000})).await;
+    let unowned = unowned["id"].as_str().unwrap();
+    let message = refused_check(insert_offer(&f, &supplier, unowned, Some("USD")).await);
+    assert_eq!(message, "Currency differs from the company book");
+
+    // Order headers obey the same rule.
+    let message = refused_check(insert_order(&f, &supplier, Some(&company), "IDR").await);
+    assert_eq!(message, "Currency differs from the company book");
+    refused_check(insert_order(&f, &supplier, Some(&company), "JPY").await);
+    let message = refused_check(insert_order(&f, &supplier, None, "USD").await);
+    assert_eq!(message, "Currency differs from the company book");
+    refused_check(insert_order(&f, &supplier, None, "idr").await);
+
+    // One order, one currency: the same company's planted IDR offer and
+    // product cannot enter its USD order, by command or by row.
+    let offer = trade_offer(&app, &session, &supplier, &item, 1250).await;
+    assert_eq!(stored_currency(&f, "offers", &offer).await, "USD");
+    trade_refused(
+        &f,
+        &app,
+        &session,
+        company_purchase(&company, &supplier, &[&offer, &legacy_offer], 2),
+    )
+    .await;
+    trade_refused(
+        &f,
+        &app,
+        &session,
+        company_purchase(&company, &supplier, &[&legacy_offer], 2),
+    )
+    .await;
+    let order = trade(
+        &app,
+        &session,
+        "purchasing",
+        company_purchase(&company, &supplier, &[&offer], 2),
+    )
+    .await;
+    let order = order["id"].as_str().unwrap();
+    assert_eq!(stored_currency(&f, "orders", order).await, "USD");
+    let message=refused_check(sqlx::query("INSERT INTO archava_purchasing.lines(tenant_id,id,order_id,offer_id,offer_revision,product_id,sku,title,unit,quantity,unit_cost) SELECT o.tenant_id,$1,$2::uuid,o.id,o.revision,p.id,p.sku,p.title,p.unit,1,o.unit_cost FROM archava_purchasing.offers o JOIN archava_commerce.products p ON p.tenant_id=o.tenant_id AND p.id=o.product_id WHERE o.id=$3::uuid").bind(Uuid::new_v4()).bind(order).bind(&legacy_offer).execute(&f.admin_pool).await);
+    assert_eq!(message, "Purchase line is priced in another currency");
+    trade_refused(&f,&app,&session,json!({"operation":"order.replace-lines","id":order,"expectedRevision":1,"reason":"Mix in the earlier offer","lines":[{"offerId":offer,"quantity":2},{"offerId":legacy_offer,"quantity":1}]})).await;
+    let lines: i64 =
+        sqlx::query_scalar("SELECT count(*) FROM archava_purchasing.lines WHERE order_id=$1::uuid")
+            .bind(order)
+            .fetch_one(&f.admin_pool)
+            .await
+            .unwrap();
+    assert_eq!(lines, 1);
+
+    // The planted IDR order stays IDR and, with no purchase policy, workable.
+    assert_eq!(stored_currency(&f, "orders", early).await, "IDR");
+    trade(&app,&session,"purchasing",json!({"operation":"order.confirm","id":early,"expectedRevision":1,"reason":"Approved commitment"})).await;
+    let line = order_line(&f, early).await;
+    trade(&app,&session,"purchasing",json!({"operation":"order.receive","id":early,"expectedRevision":2,"reason":"Delivery accepted","lines":[{"lineId":line,"accepted":2,"rejected":0}]})).await;
+    assert_eq!(stored_currency(&f, "orders", early).await, "IDR");
+    assert_eq!(stock(&f, ACME, &legacy).await.0, 2);
+    // Currency never changes after insert.
+    for table in ["offers", "orders"] {
+        let statement = format!(
+            "UPDATE archava_purchasing.{table} SET currency='IDR',revision=revision+1 WHERE id=$1::uuid"
+        );
+        let message = refused_check(
+            sqlx::query(sqlx::AssertSqlSafe(statement.as_str()))
+                .bind(if table == "offers" {
+                    offer.as_str()
+                } else {
+                    order
+                })
+                .execute(&f.admin_pool)
+                .await,
+        );
+        assert!(message.contains("immutable"), "{message}");
+    }
+}
+
+#[tokio::test]
+async fn a_non_idr_book_is_refused_once_the_company_has_a_purchase_order() {
+    let (f, app, session) = trade_setup().await;
+    let supplier = trade_supplier(&app, &session, "BOOK-VENDOR").await;
+    // Product, offer and draft purchase order through the commands. The
+    // purchase-order check alone is isolated in the accounting suite, where a
+    // bare order row is planted; here a header without lines cannot commit.
+    let company = trade_company(&app, &session, "PURCHASED").await;
+    let item = company_product(&app, &session, &company, "IDR-ITEM").await;
+    let offer = trade_offer(&app, &session, &supplier, &item, 6000).await;
+    let order = trade(
+        &app,
+        &session,
+        "purchasing",
+        company_purchase(&company, &supplier, &[&offer], 2),
+    )
+    .await;
+    let order = order["id"].as_str().unwrap();
+    book_refused(&f, &app, &session, &company, "USD").await;
+
+    // An IDR book is still accepted and the order stays workable in IDR.
+    trade_book(&app, &session, &company, "IDR").await;
+    assert_eq!(books(&f, &company).await, vec!["IDR".to_owned()]);
+    assert_eq!(stored_currency(&f, "offers", &offer).await, "IDR");
+    assert_eq!(stored_currency(&f, "orders", order).await, "IDR");
+    trade(&app,&session,"purchasing",json!({"operation":"order.confirm","id":order,"expectedRevision":1,"reason":"Approved commitment"})).await;
+    let again = trade(
+        &app,
+        &session,
+        "purchasing",
+        company_purchase(&company, &supplier, &[&offer], 1),
+    )
+    .await;
+    assert_eq!(
+        stored_currency(&f, "orders", again["id"].as_str().unwrap()).await,
+        "IDR"
+    );
+}

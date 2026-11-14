@@ -189,3 +189,47 @@ async fn readiness_refusal_is_the_named_gate() {
         "the refusal must be the migration-history gate, got: {error:?}"
     );
 }
+
+#[tokio::test]
+async fn supplier_document_tables_are_covered_by_the_serving_readiness_gate() {
+    let fixture = provision().await;
+    for table in [
+        "supplier_documents",
+        "supplier_document_versions",
+        "supplier_document_allocations",
+    ] {
+        let sql = format!("ALTER TABLE archava_purchasing.{table} NO FORCE ROW LEVEL SECURITY");
+        sqlx::query(sqlx::AssertSqlSafe(sql.as_str()))
+            .execute(&fixture.owner_pool)
+            .await
+            .unwrap();
+        let error = AppState::try_new_erp(
+            fixture.runtime_pool.clone(),
+            commerce_ledger(),
+            &fixture.commerce_ledger,
+            &fixture.identity_ledger,
+            IDENTITY_KEY,
+            &fixture.purchasing_ledger,
+            &fixture.erp_readiness(),
+        )
+        .await
+        .expect_err("every mounted supplier document table must be forced before serving");
+        assert!(error.to_string().contains("forced"), "{table}: {error}");
+        let sql = format!("ALTER TABLE archava_purchasing.{table} FORCE ROW LEVEL SECURITY");
+        sqlx::query(sqlx::AssertSqlSafe(sql.as_str()))
+            .execute(&fixture.owner_pool)
+            .await
+            .unwrap();
+    }
+    AppState::try_new_erp(
+        fixture.runtime_pool.clone(),
+        commerce_ledger(),
+        &fixture.commerce_ledger,
+        &fixture.identity_ledger,
+        IDENTITY_KEY,
+        &fixture.purchasing_ledger,
+        &fixture.erp_readiness(),
+    )
+    .await
+    .expect("restored FORCE RLS permits the same profile");
+}

@@ -21,6 +21,28 @@ Acquisition costs live in durable FIFO layers within each stock movement transac
 
 [Migration 006](../../migrations/commerce-pg/006_private_cost_writers.sql) limits valuation writes to ledger-owned triggers. Runtime can read cost tables but cannot write them or attach the cost writer functions to its own temporary triggers. Existing broad grants are revoked during upgrade; legitimate physical movement and return triggers retain forced tenant RLS and a fixed `pg_catalog` search path. This closes a reproduced database-role privilege path; it is not evidence of an unauthenticated HTTP exploit.
 
+[Migration 010](../../migrations/commerce-pg/010_return_layer_provenance.sql)
+adds the exact `return_cost_id` to each new returned stock layer. Its composite
+tenant FK and unique binding identify the actual immutable return portion and
+original use, including equal-cost portions from different original accounts.
+The link cannot be rewritten. Older ambiguous returned layers keep NULL and
+remain operationally consumable; their financial origin is not guessed from
+price, quantity or timing. Unknown original cost remains unknown.
+
+The current mounted-profile startup checks the exact provenance trigger,
+validated FK, unique index and private cost-writer privileges. A disabled trigger
+or exposed writer refuses startup. Earlier declared schema profiles retain their
+explicit prefix behavior. Six focused Commerce HTTP/PostgreSQL tests pass,
+including actual prior-009 return history upgrade/reapply, new return links,
+later legacy consumption and startup refusal. Full current-source/native build
+acceptance remains pending. This does not create or post COGS journals.
+
+Sales can explicitly link an existing CRM customer with `order.create_from_contact`.
+Its ID and reviewed revision persist through invoice conversion while historical
+names stay frozen. Current CRM read and order grants are checked on creation/replay.
+The picker supports search and paging; legacy named orders stay unlinked. See the
+[customer identity contract](CUSTOMER_IDENTITY.md) for dependency and scope details.
+
 Run the module's actual tests from the root workspace (see the source table), plus the [repository verification commands](../DEVELOPER_GUIDE.md). For Tier 1 cross-module/browser acceptance, see [workspace flow tests](../../crates/host/tests/workspace_flows.rs) and [browser acceptance](../../tools/e2e/verify.mjs). Test availability is distinct from an executed passing result.
 
 The [previous module contract](../archive/history/module-contracts-before-native-workspace-2026-10-29/COMMERCE_MODULE.md) is frozen for migration provenance. Its old package commands and acceptance statements are historical context.

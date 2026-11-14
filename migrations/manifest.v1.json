@@ -2,42 +2,6 @@
   "schemaVersion": 1,
   "ledgers": [
     {
-      "namespace": "archava_commerce",
-      "lock": "archava_commerce_migrations",
-      "migrations": [
-        {
-          "id": "001_catalog_orders_stock",
-          "path": "migrations/commerce-pg/001_catalog_orders_stock.sql",
-          "sha256": "afbfdec5d977dd2cea2eaf52ad0c60ad8731375af1447c299dd58a3aba53d9df"
-        },
-        {
-          "id": "002_managed_menu_products",
-          "path": "migrations/commerce-pg/002_managed_menu_products.sql",
-          "sha256": "3ae7debc5b2dc1c53e47f10f317a2656aec0d47c644fd006d1809e30fbb76ffe"
-        },
-        {
-          "id": "003_purchase_receipts",
-          "path": "migrations/commerce-pg/003_purchase_receipts.sql",
-          "sha256": "de658b69951dc030dd750a53ef797b1ebfaf2d39619ac0d4c8d33a00f1cbd8d1"
-        },
-        {
-          "id": "004_bound_approvals",
-          "path": "migrations/commerce-pg/004_bound_approvals.sql",
-          "sha256": "33870679fb6c3d9a960d6b23dd63e5765814be56b2ea50729911293444e4c9b2"
-        },
-        {
-          "id": "005_inventory_cost_layers",
-          "path": "migrations/commerce-pg/005_inventory_cost_layers.sql",
-          "sha256": "ff60fdd9387bbf6808aa7dc16e204938277583ba619f2fe419de38aaa15bac41"
-        },
-        {
-          "id": "006_private_cost_writers",
-          "path": "migrations/commerce-pg/006_private_cost_writers.sql",
-          "sha256": "782de4255d64e33e5f82fe02316dbe028b092957ba2c7e4c4e7031b58458fe5a"
-        }
-      ]
-    },
-    {
       "namespace": "archava_identity",
       "lock": "archava_identity_migrations",
       "migrations": [
@@ -70,6 +34,93 @@
       ]
     },
     {
+      "namespace": "archava_organizations",
+      "lock": "archava_organizations_migrations",
+      "migrations": [
+        {
+          "id": "001_organizations_affiliations",
+          "path": "migrations/organizations-pg/001_organizations_affiliations.sql",
+          "sha256": "0480df5ab70a1e7b2effaa424636c80f1540d4ce59584c4bb54dbf2e32bb411a"
+        },
+        {
+          "id": "002_verified_contact_affiliations",
+          "path": "migrations/organizations-pg/002_verified_contact_affiliations.sql",
+          "sha256": "4f24196706290edae540d6c2939c17abf3a1bc50733e4c6c5b0c6f42a8c30c5b"
+        },
+        {
+          "id": "003_business_parties",
+          "path": "migrations/organizations-pg/003_business_parties.sql",
+          "sha256": "5305d969b0c12ce1bc2808cee209c54ea61ee0e08195cc0d5ecb91cbd2412487"
+        },
+        {
+          "id": "004_managed_companies",
+          "path": "migrations/organizations-pg/004_managed_companies.sql",
+          "sha256": "4459826439b77ec2dd19bbbc570b99ff3a29c4c600a2a13b0adfbb73dc72fe52"
+        }
+      ]
+    },
+    {
+      "namespace": "archava_commerce",
+      "lock": "archava_commerce_migrations",
+      "migrations": [
+        {
+          "id": "001_catalog_orders_stock",
+          "path": "migrations/commerce-pg/001_catalog_orders_stock.sql",
+          "sha256": "afbfdec5d977dd2cea2eaf52ad0c60ad8731375af1447c299dd58a3aba53d9df"
+        },
+        {
+          "id": "002_managed_menu_products",
+          "path": "migrations/commerce-pg/002_managed_menu_products.sql",
+          "sha256": "3ae7debc5b2dc1c53e47f10f317a2656aec0d47c644fd006d1809e30fbb76ffe"
+        },
+        {
+          "id": "003_purchase_receipts",
+          "path": "migrations/commerce-pg/003_purchase_receipts.sql",
+          "sha256": "de658b69951dc030dd750a53ef797b1ebfaf2d39619ac0d4c8d33a00f1cbd8d1"
+        },
+        {
+          "id": "004_bound_approvals",
+          "path": "migrations/commerce-pg/004_bound_approvals.sql",
+          "sha256": "33870679fb6c3d9a960d6b23dd63e5765814be56b2ea50729911293444e4c9b2"
+        },
+        {
+          "id": "005_inventory_cost_layers",
+          "path": "migrations/commerce-pg/005_inventory_cost_layers.sql",
+          "sha256": "ff60fdd9387bbf6808aa7dc16e204938277583ba619f2fe419de38aaa15bac41"
+        },
+        {
+          "id": "006_private_cost_writers",
+          "path": "migrations/commerce-pg/006_private_cost_writers.sql",
+          "sha256": "782de4255d64e33e5f82fe02316dbe028b092957ba2c7e4c4e7031b58458fe5a"
+        },
+        {
+          "id": "007_customer_contact_identity",
+          "path": "migrations/commerce-pg/007_customer_contact_identity.sql",
+          "sha256": "2d7855046cb9333c566dfd2efe966ee04332a0648fe0df1c5ddfd0e0f9c04a51"
+        },
+        {
+          "id": "008_customer_party_identity",
+          "path": "migrations/commerce-pg/008_customer_party_identity.sql",
+          "sha256": "e4e1410a753b3dc0b494e73051d7df53096e2cae2861b2f4409e073264cb96f9"
+        },
+        {
+          "id": "009_company_owned_trade",
+          "path": "migrations/commerce-pg/009_company_owned_trade.sql",
+          "sha256": "5e91f5b8c7ec9cefbed17094fd4e82b4a646aaa43ce498d1132cde0946f7a276"
+        },
+        {
+          "id": "010_return_layer_provenance",
+          "path": "migrations/commerce-pg/010_return_layer_provenance.sql",
+          "sha256": "f02bd7a1fa76e61b7976a90a65be155d825abfab4a98895e2aa32b1d32708b7f"
+        },
+        {
+          "id": "011_company_trade_currency",
+          "path": "migrations/commerce-pg/011_company_trade_currency.sql",
+          "sha256": "0acc5c8306e044e45970062b2c7d35c6e67c175c1a1625197551a96948d1d110"
+        }
+      ]
+    },
+    {
       "namespace": "archava_purchasing",
       "lock": "archava_purchasing_migrations",
       "migrations": [
@@ -82,6 +133,31 @@
           "id": "002_landed_cost_receipts",
           "path": "migrations/purchasing-pg/002_landed_cost_receipts.sql",
           "sha256": "f1d8275bd422948654e605b43ff28efe1a6f157ee1b68ce615d266f4fe66e9e9"
+        },
+        {
+          "id": "003_supplier_contact_identity",
+          "path": "migrations/purchasing-pg/003_supplier_contact_identity.sql",
+          "sha256": "089d6fdad15aff8925c2d6b25aee695be98b888c40c6d35fbb1849dab5436bc2"
+        },
+        {
+          "id": "004_supplier_party_identity",
+          "path": "migrations/purchasing-pg/004_supplier_party_identity.sql",
+          "sha256": "4cab26e4513bec18159d1a999bb9bbcf884bf5dfe920f3a00cee9e9c128c7cd5"
+        },
+        {
+          "id": "005_company_owned_trade",
+          "path": "migrations/purchasing-pg/005_company_owned_trade.sql",
+          "sha256": "ac9e5c422d3f0285613b4878cd46f37c2326e4041d5a891ad9c6fa6d8a0d74b7"
+        },
+        {
+          "id": "006_unposted_supplier_documents",
+          "path": "migrations/purchasing-pg/006_unposted_supplier_documents.sql",
+          "sha256": "bb2ca669e1049c2ca567faaa491aee80f561b8940fec7bfab198cde30c661047"
+        },
+        {
+          "id": "007_company_trade_currency",
+          "path": "migrations/purchasing-pg/007_company_trade_currency.sql",
+          "sha256": "0306389beadea3f6961b11d3e8c303079f5cd3fd085de784fa241a0553406189"
         }
       ]
     },
@@ -93,17 +169,6 @@
           "id": "001_tables_recipes_tickets",
           "path": "migrations/foodservice-pg/001_tables_recipes_tickets.sql",
           "sha256": "48f40f77cf51b47da53c08f77648b23ca7969b50b6eb887c646c52f03d58d4b5"
-        }
-      ]
-    },
-    {
-      "namespace": "archava_organizations",
-      "lock": "archava_organizations_migrations",
-      "migrations": [
-        {
-          "id": "001_organizations_affiliations",
-          "path": "migrations/organizations-pg/001_organizations_affiliations.sql",
-          "sha256": "0480df5ab70a1e7b2effaa424636c80f1540d4ce59584c4bb54dbf2e32bb411a"
         }
       ]
     },
@@ -185,6 +250,112 @@
           "id": "003_invoice_email_outbox",
           "path": "migrations/billing-pg/003_invoice_email_outbox.sql",
           "sha256": "71e0de63149b6463a158c755d6fde8efde569475a7ce0d55e6c4268ac2d31415"
+        },
+        {
+          "id": "004_email_payload_snapshot",
+          "path": "migrations/billing-pg/004_email_payload_snapshot.sql",
+          "sha256": "b328263bff52004f64ec16bc90d5c8dea71c269af86e64bf1636bbc12194eb36"
+        },
+        {
+          "id": "005_order_invoice_provenance",
+          "path": "migrations/billing-pg/005_order_invoice_provenance.sql",
+          "sha256": "08ae47dec0210946eec6e9806be9e7c6f5e7aa0b352206e9f60d9c3936acd8e9"
+        },
+        {
+          "id": "006_customer_contact_identity",
+          "path": "migrations/billing-pg/006_customer_contact_identity.sql",
+          "sha256": "f7c91e3924c98c93f8bf297992d6ff26f164a4a86cf832a3d7920059e0dd1f1d"
+        },
+        {
+          "id": "007_customer_party_identity",
+          "path": "migrations/billing-pg/007_customer_party_identity.sql",
+          "sha256": "d39ff031303261eb2e2078aa544abd871f4d80b6d457db3b6034b2de2fad6897"
+        },
+        {
+          "id": "008_company_owned_trade",
+          "path": "migrations/billing-pg/008_company_owned_trade.sql",
+          "sha256": "fa17f5eaa4253a0eba0cc5330dfd2179e01ee9c162169f2abf63762a458ef5bc"
+        }
+      ]
+    },
+    {
+      "namespace": "archava_accounting",
+      "lock": "archava_accounting_migrations",
+      "migrations": [
+        {
+          "id": "001_company_books",
+          "path": "migrations/accounting-pg/001_company_books.sql",
+          "sha256": "c6b7d56c5bf473a367bb4f8cf83a578fcf100d0da00c84299a77ccb9b3a2c079"
+        },
+        {
+          "id": "002_invoice_source_posting",
+          "path": "migrations/accounting-pg/002_invoice_source_posting.sql",
+          "sha256": "db86740eb5b94e8d7dfc3567d1360ce9ab6e8ee8a477bf485395356cc20b372b"
+        },
+        {
+          "id": "003_invoice_source_integrity",
+          "path": "migrations/accounting-pg/003_invoice_source_integrity.sql",
+          "sha256": "3fa6dbad7ef500921163159fe36e3ab73652e40f897b03d3d388e9e6306408f9"
+        },
+        {
+          "id": "004_purchase_source_posting",
+          "path": "migrations/accounting-pg/004_purchase_source_posting.sql",
+          "sha256": "32b3e9d46066bae9ce419bb06876e084b8a470a10bdd10b957d30501d743d041"
+        },
+        {
+          "id": "005_stock_source_posting",
+          "path": "migrations/accounting-pg/005_stock_source_posting.sql",
+          "sha256": "b2c804e97c1a51dbc8db80399ccba560439702e24b4b65a8465b5ba9206caa4c"
+        },
+        {
+          "id": "006_manual_bank_evidence",
+          "path": "migrations/accounting-pg/006_manual_bank_evidence.sql",
+          "sha256": "46777abd1da20663329b8b8c86499195c3136b575d70263a9099673b512ef52c"
+        },
+        {
+          "id": "007_bank_cash_matching",
+          "path": "migrations/accounting-pg/007_bank_cash_matching.sql",
+          "sha256": "97a73f22258b080f69349015d8013f3bfe6dbb23ab273e4ac6cf65eba3ced229"
+        },
+        {
+          "id": "008_reviewed_bank_periods",
+          "path": "migrations/accounting-pg/008_reviewed_bank_periods.sql",
+          "sha256": "bf67e762d4d1da56f2de8e0b31e60ca333e3adbb7012be6c98fb56577f8cd28a"
+        },
+        {
+          "id": "009_supplier_bank_settlements",
+          "path": "migrations/accounting-pg/009_supplier_bank_settlements.sql",
+          "sha256": "0e03308474f72c3398fcc41e494674724c7dd86c1ccf6013f292c983fc7eae58"
+        },
+        {
+          "id": "010_gateway_bank_settlements",
+          "path": "migrations/accounting-pg/010_gateway_bank_settlements.sql",
+          "sha256": "ff2b9592ce0f7eafe3985a42f2e72ac68b391d5405a5640b5d36ee49be938ffc"
+        },
+        {
+          "id": "011_reviewed_document_terms",
+          "path": "migrations/accounting-pg/011_reviewed_document_terms.sql",
+          "sha256": "3b5dc20e21a324200b291f2158f0aef7054db1fc2f4004fa3560eb42ac977144"
+        },
+        {
+          "id": "012_document_terms_audit_kind",
+          "path": "migrations/accounting-pg/012_document_terms_audit_kind.sql",
+          "sha256": "43c73cb344929689d864069e5a8265c6dd69489061184b008a365700e921aaf9"
+        },
+        {
+          "id": "013_declared_opening_balances",
+          "path": "migrations/accounting-pg/013_declared_opening_balances.sql",
+          "sha256": "78216741b20c84e27f3e926889dfb989dfff60b7a75f9154f5a8de5023e32332"
+        },
+        {
+          "id": "014_source_unit_minor",
+          "path": "migrations/accounting-pg/014_source_unit_minor.sql",
+          "sha256": "c5f25e92445919b3e75b3c0d997e6531a054eeefc53e9c25e9ea167a38057552"
+        },
+        {
+          "id": "015_book_currency_guard",
+          "path": "migrations/accounting-pg/015_book_currency_guard.sql",
+          "sha256": "fc1b94086051f2a208964f439ad442578ce4e6e0a188ed85f63c7409bbf427fa"
         }
       ]
     },
@@ -294,6 +465,21 @@
           "id": "001_owner_config",
           "path": "migrations/owner-pg/001_owner_config.sql",
           "sha256": "120b7e82d059b9c56531ab2310136ecb2232b5b40f8b29442684df80ba642df7"
+        },
+        {
+          "id": "002_reviewed_workflows",
+          "path": "migrations/owner-pg/002_reviewed_workflows.sql",
+          "sha256": "33270c8a18e1f326e8f2128722c072ad78bc4937f0227516d0a6b46b0837cdf2"
+        },
+        {
+          "id": "003_agent_runtime",
+          "path": "migrations/owner-pg/003_agent_runtime.sql",
+          "sha256": "a9ff55093b09db11424290489fcbfcd4fbfed70c8fb43871f007f77aacc9862e"
+        },
+        {
+          "id": "004_ai_disclosure_boundary",
+          "path": "migrations/owner-pg/004_ai_disclosure_boundary.sql",
+          "sha256": "6001842df76ef721067e42af504aa8713d7cbaba0be7e08b85af4b60d7e3270f"
         }
       ]
     },
@@ -327,6 +513,11 @@
           "id": "001_serving_writer",
           "path": "migrations/control-pg/001_serving_writer.sql",
           "sha256": "69b29dada1cb1cdba53df6403e26019bd3e578989f6ffb3a009f265c4b5ce222"
+        },
+        {
+          "id": "002_accounting_write_fence",
+          "path": "migrations/control-pg/002_accounting_write_fence.sql",
+          "sha256": "9f4d23ab8f89744d5b4b053f80a0546d43447affd4c0fb707f584e3a6e6108c9"
         }
       ]
     }
@@ -452,6 +643,48 @@
     "GRANT SELECT ON archava_commerce.inventory_layers,archava_commerce.inventory_uses,archava_commerce.inventory_return_costs TO {runtime_role}",
     "GRANT USAGE ON SCHEMA archava_control TO {runtime_role}",
     "GRANT SELECT ON archava_control.schema_migrations TO {runtime_role}",
-    "GRANT EXECUTE ON FUNCTION archava_control.take_serving_writer(text,boolean),archava_control.require_serving_writer(),archava_control.drain_serving_writer(bigint,text),archava_control.write_guards_complete() TO {runtime_role}"
+    "GRANT EXECUTE ON FUNCTION archava_control.take_serving_writer(text,boolean),archava_control.require_serving_writer(),archava_control.drain_serving_writer(bigint,text),archava_control.write_guards_complete() TO {runtime_role}",
+    "GRANT SELECT,INSERT,UPDATE ON archava_owner.reviewed_workflows TO {runtime_role}",
+    "GRANT SELECT,INSERT ON archava_owner.agent_threads,archava_owner.agent_turns,archava_owner.agent_preferences TO {runtime_role}",
+    "GRANT SELECT,INSERT,UPDATE ON archava_owner.agent_goals TO {runtime_role}",
+    "GRANT SELECT,INSERT,DELETE ON archava_owner.agent_work TO {runtime_role}",
+    "GRANT SELECT,INSERT ON archava_owner.agent_model_attempts TO {runtime_role}",
+    "GRANT SELECT,INSERT,UPDATE ON archava_organizations.parties TO {runtime_role}",
+    "GRANT SELECT,INSERT ON archava_organizations.party_audit TO {runtime_role}",
+    "GRANT SELECT,INSERT,UPDATE ON archava_organizations.companies TO {runtime_role}",
+    "GRANT SELECT,INSERT ON archava_organizations.company_audit TO {runtime_role}",
+    "GRANT SELECT,INSERT,UPDATE ON archava_purchasing.supplier_documents,archava_purchasing.supplier_document_allocations TO {runtime_role}",
+    "GRANT SELECT,INSERT ON archava_purchasing.supplier_document_versions TO {runtime_role}",
+    "GRANT USAGE ON SCHEMA archava_accounting TO {runtime_role}",
+    "GRANT SELECT ON archava_accounting.schema_migrations,archava_accounting.memberships TO {runtime_role}",
+    "GRANT SELECT,INSERT ON archava_accounting.journal_lines,archava_accounting.audit TO {runtime_role}",
+    "GRANT SELECT,INSERT,UPDATE ON archava_accounting.books,archava_accounting.accounts,archava_accounting.periods,archava_accounting.journals,archava_accounting.commands TO {runtime_role}",
+    "GRANT EXECUTE ON FUNCTION archava_accounting.lock_membership(text,text) TO {runtime_role}",
+    "GRANT SELECT,INSERT,UPDATE ON archava_accounting.invoice_policies TO {runtime_role}",
+    "GRANT SELECT,INSERT ON archava_accounting.invoice_sources,archava_accounting.journal_sources TO {runtime_role}",
+    "GRANT EXECUTE ON FUNCTION archava_accounting.source_guards_complete() TO {runtime_role}",
+    "GRANT SELECT,INSERT,UPDATE ON archava_accounting.purchase_policies TO {runtime_role}",
+    "GRANT SELECT,INSERT ON archava_accounting.purchase_origins,archava_accounting.purchase_sources,archava_accounting.purchase_journal_sources TO {runtime_role}",
+    "GRANT EXECUTE ON FUNCTION archava_accounting.lock_purchase_company(text,uuid) TO {runtime_role}",
+    "GRANT EXECUTE ON FUNCTION archava_accounting.purchase_guards_complete() TO {runtime_role}",
+    "GRANT EXECUTE ON FUNCTION archava_commerce.return_layer_guards_complete() TO {runtime_role}",
+    "GRANT SELECT ON archava_accounting.stock_layer_origins TO {runtime_role}",
+    "GRANT SELECT,INSERT,UPDATE ON archava_accounting.stock_policies TO {runtime_role}",
+    "GRANT SELECT,INSERT ON archava_accounting.stock_sources,archava_accounting.stock_journal_sources TO {runtime_role}",
+    "GRANT EXECUTE ON FUNCTION archava_accounting.stock_guards_complete() TO {runtime_role}",
+    "GRANT SELECT,INSERT ON archava_accounting.bank_accounts,archava_accounting.bank_statements,archava_accounting.bank_rows,archava_accounting.bank_allocations,archava_accounting.bank_unmatches TO {runtime_role}",
+    "GRANT EXECUTE ON FUNCTION archava_accounting.bank_evidence_guards_complete() TO {runtime_role}",
+    "GRANT EXECUTE ON FUNCTION archava_accounting.bank_matching_guards_complete() TO {runtime_role}",
+    "GRANT SELECT,INSERT,UPDATE ON archava_accounting.bank_policies TO {runtime_role}",
+    "GRANT SELECT,INSERT ON archava_accounting.bank_reconciliations TO {runtime_role}",
+    "GRANT EXECUTE ON FUNCTION archava_accounting.bank_period_guards_complete() TO {runtime_role}",
+    "GRANT SELECT,INSERT ON archava_accounting.payable_settlements TO {runtime_role}",
+    "GRANT EXECUTE ON FUNCTION archava_accounting.payable_guards_complete() TO {runtime_role}",
+    "GRANT SELECT,INSERT ON archava_accounting.clearing_settlements TO {runtime_role}",
+    "GRANT EXECUTE ON FUNCTION archava_accounting.clearing_guards_complete() TO {runtime_role}",
+    "GRANT SELECT,INSERT ON archava_accounting.document_terms TO {runtime_role}",
+    "GRANT EXECUTE ON FUNCTION archava_accounting.terms_guards_complete() TO {runtime_role}",
+    "GRANT SELECT,INSERT ON archava_accounting.opening_balances TO {runtime_role}",
+    "GRANT EXECUTE ON FUNCTION archava_accounting.opening_guards_complete() TO {runtime_role}"
   ]
 }

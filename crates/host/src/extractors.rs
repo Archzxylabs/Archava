@@ -117,6 +117,31 @@ async fn call(uri: &str, body: Option<&str>) -> (StatusCode, String) {
     (status, String::from_utf8_lossy(&bytes).to_string())
 }
 
+/// Every module in the registry is served its command pair, and nothing else is.
+///
+/// The two routes are generated from the registry rather than written per
+/// module, so this is the proof that a descriptor alone mounts them: an
+/// unmounted path would answer 404, and a path mounted for the wrong method
+/// 405. Each request here is refused later than that, inside the handler.
+#[tokio::test]
+async fn every_registered_module_serves_its_command_pair() {
+    let unmounted = [StatusCode::NOT_FOUND, StatusCode::METHOD_NOT_ALLOWED];
+    let modules = archava_domain::modules::all();
+    assert!(!modules.is_empty());
+    for module in modules {
+        let commands = format!("/erp/{}/commands", module.id);
+        let (status, _) = call(&commands, Some("{}")).await;
+        assert!(!unmounted.contains(&status), "POST {commands}: {status}");
+        let (status, _) = call(&format!("{commands}/status"), None).await;
+        assert!(
+            !unmounted.contains(&status),
+            "GET {commands}/status: {status}"
+        );
+    }
+    let (status, _) = call("/erp/unregistered/commands", Some("{}")).await;
+    assert_eq!(status, StatusCode::NOT_FOUND);
+}
+
 /// A path the router does not declare must not be handed back.
 ///
 /// Axum answers an unmatched path with its own 404, which says nothing about the
@@ -169,6 +194,24 @@ async fn an_unmatched_path_is_not_reflected() {
 /// from this list, so a new module cannot escape the rules below by not being
 /// named here. `extractors.rs` is excluded because it is this file.
 const MODULES: &[(&str, &str)] = &[
+    ("agent/bindings.rs", include_str!("agent/bindings.rs")),
+    ("agent/delegation.rs", include_str!("agent/delegation.rs")),
+    ("agent/disclosure.rs", include_str!("agent/disclosure.rs")),
+    (
+        "agent/disclosure/fields.rs",
+        include_str!("agent/disclosure/fields.rs"),
+    ),
+    (
+        "agent/disclosure/tests.rs",
+        include_str!("agent/disclosure/tests.rs"),
+    ),
+    ("agent/mod.rs", include_str!("agent/mod.rs")),
+    ("agent/lookups.rs", include_str!("agent/lookups.rs")),
+    ("erp/accounting.rs", include_str!("erp/accounting.rs")),
+    ("agent/planner.rs", include_str!("agent/planner.rs")),
+    ("agent/read.rs", include_str!("agent/read.rs")),
+    ("agent/runner.rs", include_str!("agent/runner.rs")),
+    ("agent/schema.rs", include_str!("agent/schema.rs")),
     ("assistant/bridge.rs", include_str!("assistant/bridge.rs")),
     ("assistant/mod.rs", include_str!("assistant/mod.rs")),
     (
@@ -176,8 +219,13 @@ const MODULES: &[(&str, &str)] = &[
         include_str!("assistant/sql_host.rs"),
     ),
     ("authority.rs", include_str!("authority.rs")),
+    ("business.rs", include_str!("business.rs")),
+    ("workflows.rs", include_str!("workflows.rs")),
+    ("feed/actions.rs", include_str!("feed/actions.rs")),
+    ("ingestion/commit.rs", include_str!("ingestion/commit.rs")),
+    ("erp/projections.rs", include_str!("erp/projections.rs")),
     ("cockpit.rs", include_str!("cockpit.rs")),
-    ("crm.rs", include_str!("crm.rs")),
+    ("erp/crm.rs", include_str!("erp/crm.rs")),
     ("decision.rs", include_str!("decision.rs")),
     ("feed.rs", include_str!("feed.rs")),
     ("identity.rs", include_str!("identity.rs")),
@@ -187,8 +235,10 @@ const MODULES: &[(&str, &str)] = &[
     ("metrics.rs", include_str!("metrics.rs")),
     ("orbz.rs", include_str!("orbz.rs")),
     ("own.rs", include_str!("own.rs")),
+    ("own/disclosure.rs", include_str!("own/disclosure.rs")),
     ("payments.rs", include_str!("payments.rs")),
     ("presence.rs", include_str!("presence.rs")),
+    ("presence/media.rs", include_str!("presence/media.rs")),
     ("preview.rs", include_str!("preview.rs")),
     ("router.rs", include_str!("router.rs")),
     ("security.rs", include_str!("security.rs")),
@@ -211,6 +261,8 @@ const MODULES: &[(&str, &str)] = &[
     ("erp/laundry.rs", include_str!("erp/laundry.rs")),
     ("erp/mod.rs", include_str!("erp/mod.rs")),
     ("erp/organizations.rs", include_str!("erp/organizations.rs")),
+    ("erp/parties.rs", include_str!("erp/parties.rs")),
+    ("erp/companies.rs", include_str!("erp/companies.rs")),
     ("erp/projects.rs", include_str!("erp/projects.rs")),
     ("erp/proposals.rs", include_str!("erp/proposals.rs")),
     ("erp/purchasing.rs", include_str!("erp/purchasing.rs")),

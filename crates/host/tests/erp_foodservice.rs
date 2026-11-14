@@ -997,6 +997,111 @@ async fn recipe_refuses_non_tracked_ingredient() {
     );
 }
 
+/// Foodservice has no company, so its recipes stay IDR-only
+/// (docs/architecture/MULTI_CURRENCY.md). The commerce insert guard already
+/// keeps every unowned product in IDR, so the only way to put a non-IDR
+/// ingredient in front of the recipe writer is to bypass that guard as the
+/// database superuser — which is what this witness does, to show the adapter
+/// refuses on its own: a non-IDR ingredient is a recipe conflict and the whole
+/// `menu.create` rolls back.
+#[tokio::test]
+async fn recipe_refuses_an_ingredient_priced_in_another_currency() {
+    let fixture = provision().await;
+    seed(&fixture).await;
+    let foreign = Uuid::new_v4();
+    let refused = sqlx::query("INSERT INTO archava_commerce.products(tenant_id,id,sku,title,unit,track_stock,price,currency) VALUES($1,$2,'P-USD-GUARDED','Guarded row','unit',true,25000,'USD')")
+        .bind(ACME)
+        .bind(Uuid::new_v4())
+        .execute(&fixture.admin_pool)
+        .await
+        .expect_err("an unowned product is IDR");
+    assert_eq!(
+        refused
+            .as_database_error()
+            .and_then(|error| error.code())
+            .as_deref(),
+        Some("23514")
+    );
+    let mut catalog_tx = fixture.admin_pool.begin().await.unwrap();
+    sqlx::query("SELECT set_config('archava.tenant_id', $1, true)")
+        .bind(ACME)
+        .execute(&mut *catalog_tx)
+        .await
+        .unwrap();
+    sqlx::query("ALTER TABLE archava_commerce.products DISABLE TRIGGER a_currency_product")
+        .execute(&mut *catalog_tx)
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO archava_commerce.products(tenant_id,id,sku,title,unit,track_stock,price,currency) VALUES($1,$2,'P-USD-03','Product P-USD-03','unit',true,25000,'USD')")
+        .bind(ACME)
+        .bind(foreign)
+        .execute(&mut *catalog_tx)
+        .await
+        .unwrap();
+    sqlx::query("ALTER TABLE archava_commerce.products ENABLE TRIGGER a_currency_product")
+        .execute(&mut *catalog_tx)
+        .await
+        .unwrap();
+    catalog_tx.commit().await.unwrap();
+
+    let app = archava_host::router(state(&fixture).await);
+    let session = login(&app, "fx").await;
+    let request = Uuid::new_v4().to_string();
+    let (status, refusal) = post(
+        &app,
+        "/erp/foodservice/commands",
+        &menu_body(ACME, &request, "MENU-USD", 12000, &foreign.to_string(), 1),
+        Some(&session),
+        true,
+    )
+    .await;
+    assert_eq!(
+        status,
+        StatusCode::CONFLICT,
+        "a non-IDR ingredient is a recipe conflict: {refusal}"
+    );
+    assert_eq!(refusal["decision"], "refused");
+    assert_eq!(
+        count(
+            &fixture,
+            "SELECT count(*) FROM archava_commerce.products \
+             WHERE tenant_id=$1 AND sku='MENU-USD'",
+            &[ACME],
+        )
+        .await,
+        0,
+        "the menu product rolled back with the refused recipe"
+    );
+    assert_eq!(
+        count(
+            &fixture,
+            "SELECT count(*) FROM archava_foodservice.commands \
+             WHERE request_id=$1::uuid AND receipt IS NOT NULL",
+            &[request.as_str()],
+        )
+        .await,
+        0,
+        "no receipt binds the refused submission"
+    );
+    // The same recipe over the IDR ingredient is accepted.
+    let (status, accepted) = post(
+        &app,
+        "/erp/foodservice/commands",
+        &menu_body(
+            ACME,
+            &Uuid::new_v4().to_string(),
+            "MENU-IDR",
+            12000,
+            ID_P_FAST,
+            1,
+        ),
+        Some(&session),
+        true,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{accepted}");
+}
+
 /// A receipt the CURRENT access no longer authorizes does not replay: the
 /// same key + same bytes re-submitted after the grant was revoked is refused
 /// by the grant gate, and the status read refuses equally — an old receipt

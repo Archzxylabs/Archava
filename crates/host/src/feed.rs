@@ -1,57 +1,31 @@
-//! HTTP endpoints for the industry preset catalogue and the proactive action
-//! feed.
-//!
-//! Both families were mounted outside the identity chain: an unauthenticated
-//! caller could read a feed that presented itself as tenant-shaped, and
-//! "execute" an action card whose response carried a `receipt_id` no ledger
-//! contained. Every handler here now runs [`require_session`] first, the
-//! extractors are the guarded `Result<…, Rejection>` shape so no refusal
-//! reflects the caller's own input, and the execution endpoint answers 501:
-//! there is no dispatch worker to hand work to, so removing the fabricated
-//! receipt is the honest answer.
-//!
-//! The feed's numbers are synthesized demo material, not a tenant roll-up. It
-//! no longer accepts a caller-supplied tenant to label them with.
-
-use archava_domain::feed::generate_action_feed;
-use archava_domain::presets::IndustryProfile;
-use axum::extract::rejection::{JsonRejection, PathRejection, QueryRejection};
-use axum::extract::{Path, Query, State};
-use axum::http::{HeaderMap, StatusCode};
-use axum::Json;
-use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
-
+//! Tenant-derived proactive cards backed by reviewed, authorized domain actions.
+mod actions;
 use crate::router::{require_session, AppState};
-
-/// The label the synthesized demo feed is generated under.
-///
-/// It is deliberately not a request parameter: the previous version accepted
-/// `?tenant=…` and echoed it into a fabricated feed, which read as a
-/// tenant-scoped read that no tenant ever authorized.
-const DEMO_WORKSPACE: &str = "demo-workspace";
-
+use archava_core::tenant::TenantId;
+use archava_domain::presets::IndustryProfile;
+use axum::{
+    extract::{
+        rejection::{JsonRejection, PathRejection, QueryRejection},
+        Path, Query, State,
+    },
+    http::{HeaderMap, StatusCode},
+    Json,
+};
+use serde::Deserialize;
+use serde_json::{json, Value};
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct FeedQueryParams {
+    pub tenant: TenantId,
     pub profile: Option<String>,
 }
-
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct ExecuteActionRequest {
-    pub action_type: String,
-    #[serde(default)]
-    pub payload: serde_json::Value,
+    pub tenant: TenantId,
+    pub plan_hash: String,
+    pub confirmed: bool,
 }
-
-#[derive(Debug, Serialize)]
-pub struct ExecuteActionResponse {
-    pub status: String,
-    pub card_id: String,
-    pub action_type: String,
-    pub detail: String,
-    pub is_simulated: bool,
-}
-
 /// GET /api/v1/presets/profiles
 /// Returns all available industry profile masks for zero-config onboarding.
 pub async fn list_profiles(
@@ -101,98 +75,44 @@ pub async fn get_profile(
     }
 }
 
-/// GET /api/v1/feed/action-cards
-/// Returns proactive action cards tailored to the industry profile.
 pub async fn get_action_cards(
     State(state): State<AppState>,
     headers: HeaderMap,
     query: Result<Query<FeedQueryParams>, QueryRejection>,
-) -> (StatusCode, Json<Value>) {
-    if let Err((status, reason)) = require_session(&state, &headers, false).await {
-        return (status, Json(json!({ "error": { "message": reason } })));
+) -> crate::business::Response {
+    if let Err((s, b)) = crate::router::authenticate(&state, &headers, false).await {
+        return (s, Json(json!(b.0)));
     }
-    let params = match query {
-        Ok(Query(params)) => params,
-        Err(rejection) => {
-            return (
-                rejection.status(),
-                Json(json!({ "error": { "message": "malformed_feed_query" } })),
-            )
-        }
+    let input = match query {
+        Ok(Query(v)) => v,
+        Err(_) => return crate::business::refused(StatusCode::BAD_REQUEST, "invalid_feed_query"),
     };
-    let profile = params
+    if input
         .profile
-        .as_deref()
-        .and_then(IndustryProfile::parse)
-        .unwrap_or(IndustryProfile::FnBCafe);
-
-    // Synthesized demo metrics. The card generator is a planning helper, not a
-    // tenant read; nothing here is derived from a caller-supplied tenant.
-    let feed = generate_action_feed(
-        DEMO_WORKSPACE,
-        profile,
-        3,
-        1_420_000_000, // Rp 14.200.000 overdue
-        &["Biji Kopi Arabica 1kg", "Susu UHT Fresh"],
-    );
-
-    (StatusCode::OK, Json(json!({ "feed": feed })))
+        .as_ref()
+        .is_some_and(|p| IndustryProfile::parse(p).is_none())
+    {
+        return crate::business::refused(StatusCode::BAD_REQUEST, "invalid_profile");
+    }
+    match actions::cards(&state, &headers, input).await {
+        Ok(v) => (StatusCode::OK, Json(v)),
+        Err(e) => e,
+    }
 }
-
-/// POST /api/v1/feed/action-cards/{id}/execute
-///
-/// Answers 501. The route used to return `accepted_pending_worker` with a
-/// `receipt_id` built from the card id, which no receipt ledger ever contained
-/// and no worker ever consumed. Returning a not-implemented refusal is the only
-/// honest answer until a dispatch path exists; the session and CSRF checks stay
-/// in front of it so it cannot be probed anonymously either.
 pub async fn execute_action(
     State(state): State<AppState>,
     headers: HeaderMap,
-    path: Result<Path<String>, PathRejection>,
+    path: Result<Path<uuid::Uuid>, PathRejection>,
     body: Result<Json<ExecuteActionRequest>, JsonRejection>,
-) -> (StatusCode, Json<Value>) {
-    if let Err((status, reason)) = require_session(&state, &headers, true).await {
-        return (status, Json(json!({ "error": { "message": reason } })));
+) -> crate::business::Response {
+    if let Err((s, b)) = crate::router::authenticate(&state, &headers, true).await {
+        return (s, Json(json!(b.0)));
     }
-    let card_id = match path {
-        Ok(Path(card_id)) => card_id,
-        Err(rejection) => {
-            return (
-                rejection.status(),
-                Json(json!({ "error": { "message": "malformed_action_path" } })),
-            )
-        }
+    let (Ok(Path(id)), Ok(Json(input))) = (path, body) else {
+        return crate::business::refused(StatusCode::BAD_REQUEST, "invalid_action_review");
     };
-    let request = match body {
-        Ok(Json(request)) => request,
-        Err(rejection) => {
-            return (
-                rejection.status(),
-                Json(json!({ "error": { "message": "Invalid execution payload." } })),
-            )
-        }
-    };
-
-    let detail = match request.action_type.as_str() {
-        "dispatch_ar_reminders" => "Reminder dispatch has no worker mounted in this host.",
-        "generate_reorder_po" => "Purchase-order drafting is not wired through this route.",
-        "print_shift_summary" => "No printer transport is mounted on this host.",
-        "blast_patient_confirmations" => "No messaging transport is mounted on this host.",
-        "issue_milestone_invoice" => "Invoice issuance is not wired through this route.",
-        _ => "No execution path is mounted for this action.",
-    };
-
-    (
-        StatusCode::NOT_IMPLEMENTED,
-        Json(json!({
-            "error": {
-                "message": detail,
-                "code": "action_execution_not_implemented",
-            },
-            "card_id": card_id,
-            "action_type": request.action_type,
-            "is_simulated": false,
-        })),
-    )
+    match actions::execute(&state, &headers, id, input).await {
+        Ok(v) => (StatusCode::OK, Json(v)),
+        Err(e) => e,
+    }
 }
