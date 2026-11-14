@@ -105,10 +105,15 @@ export async function verifyPriorNative({previousRoot,packageRoot,facts,scratch,
   const source=await org('create_organization',{name:'Existing business',legalName:'Existing Business Official'})
   const company=await org('company.create_from_organization',{code:'EXISTING',organizationId:source.organizationId,expectedSourceRevision:1,reason:'Reviewed company on previous native distribution'})
   const command={tenant,requestId:randomUUID(),command:{operation:'product.create_for_company',companyId:company.companyId,expectedCompanyRevision:1,sku:'PRE-BOOK',title:'Keep the original product and receipt',unit:'unit',trackStock:false,price:15000}}
-  const written=await call(oldServer.origin,originalSession,'/erp/commerce/commands',command);assert.equal(written.status,200,JSON.stringify(written.body))
+  // A previous distribution that already has the book guard refuses a USD book once the company owns a product,
+  // so there the book is created first and the product (then priced in the book currency) after it.
+  const bookFirst=priorAccounting&&bookGuard(oldManifest)
+  const createProduct=async()=>{const r=await call(oldServer.origin,originalSession,'/erp/commerce/commands',command);assert.equal(r.status,200,JSON.stringify(r.body));return r}
+  let written=bookFirst?null:await createProduct()
   if(priorAccounting){
    const financial=async command=>{const r=await call(oldServer.origin,originalSession,'/erp/accounting/commands',{tenant,requestId:randomUUID(),command});assert.equal(r.status,200,JSON.stringify(r.body));return r.body.receipt}
    priorBook=await financial({type:'book.create',companyId:company.companyId,expectedCompanyRevision:1,code:'EXISTING-BOOK',name:'Reviewed book on the prior native distribution',currency:'USD',sourceAuthority:'native',independentPosting:false,reason:'Explicit synthetic prior book; preserve its posted balances on upgrade'})
+   if(bookFirst)written=await createProduct()
    const bank=await financial({type:'account.create',bookId:priorBook.bookId,code:'BANK',name:'Prior bank',class:'asset',cashRole:'cash',reason:'Reviewed prior account'})
    const equity=await financial({type:'account.create',bookId:priorBook.bookId,code:'EQUITY',name:'Prior equity',class:'equity',cashRole:'financing',reason:'Reviewed prior account'})
    await financial({type:'period.open',bookId:priorBook.bookId,code:'2026-11',startDate:'2026-11-01',endDate:'2026-11-30',reason:'Prior financial period'})
