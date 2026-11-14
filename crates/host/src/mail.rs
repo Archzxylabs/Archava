@@ -146,14 +146,15 @@ pub(crate) struct EmailQuery {
     request_id: Option<Uuid>,
 }
 
+/// An invoice amount for mail, `<number> <CODE>`. Billing amounts follow the
+/// trade convention: whole Rupiah for IDR (printed as before, `150000 IDR`),
+/// the ISO minor unit for any other currency, shown with that currency's
+/// decimals (`19.99 USD`, `1500 JPY`, `1.250 KWD`). An uncatalogued code keeps
+/// the stored integer and says what it is.
 fn format_money(amount_minor: i64, currency: &str) -> String {
-    match currency.to_uppercase().as_str() {
-        "IDR" | "JPY" | "KRW" => format!("{amount_minor} {currency}"),
-        _ => {
-            let major = amount_minor / 100;
-            let minor = (amount_minor % 100).abs();
-            format!("{major}.{minor:02} {currency}")
-        }
+    match archava_domain::erp::trade_money::trade_decimal(currency, amount_minor) {
+        Some(number) => format!("{number} {currency}"),
+        None => format!("{amount_minor} {currency} (minor units)"),
     }
 }
 
@@ -675,4 +676,28 @@ pub(crate) async fn list_invoice_emails(
     }
     .await
     .map_or_else(IntoResponse::into_response, IntoResponse::into_response)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::format_money;
+
+    #[test]
+    fn invoice_mail_amounts_follow_the_invoice_currency() {
+        // IDR is whole Rupiah and prints exactly as it did before.
+        assert_eq!(format_money(150_000, "IDR"), "150000 IDR");
+        assert_eq!(format_money(0, "IDR"), "0 IDR");
+        assert_eq!(format_money(-15_000, "IDR"), "-15000 IDR");
+        // Any other currency is its ISO minor unit.
+        assert_eq!(format_money(1_999, "USD"), "19.99 USD");
+        assert_eq!(format_money(5, "USD"), "0.05 USD");
+        assert_eq!(format_money(-50, "USD"), "-0.50 USD");
+        assert_eq!(format_money(1_500, "JPY"), "1500 JPY");
+        assert_eq!(format_money(1_500, "KRW"), "1500 KRW");
+        assert_eq!(format_money(1_500, "VND"), "1500 VND");
+        assert_eq!(format_money(1_250, "KWD"), "1.250 KWD");
+        assert_eq!(format_money(1_250, "BHD"), "1.250 BHD");
+        // An uncatalogued code never has its digits moved.
+        assert_eq!(format_money(1_999, "ZZZ"), "1999 ZZZ (minor units)");
+    }
 }

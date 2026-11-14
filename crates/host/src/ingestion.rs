@@ -39,6 +39,10 @@ fn invalid(message: &str) -> Response {
         Json(json!({"reason":"invalid_import","message":message})),
     )
 }
+/// Import money is whole Rupiah by construction: an imported product is
+/// created without a company and opening stock is accepted only for a product
+/// without a company, and such records are always IDR (trade currency rule
+/// 1). A company's records in another currency are not imported here.
 fn money(raw: &str) -> Result<i64, Response> {
     let raw = raw
         .trim()
@@ -202,7 +206,7 @@ async fn reconcile(
                 }
                 let record:Option<(String,i32,i32)>=sqlx::query_as("SELECT p.id::text,b.quantity,b.revision FROM archava_commerce.products p JOIN archava_commerce.stock_balances b ON b.tenant_id=p.tenant_id AND b.product_id=p.id WHERE p.tenant_id=$1 AND p.sku=$2 AND p.active AND p.track_stock AND (to_jsonb(p)->>'company_id') IS NULL").bind(input.tenant.as_str()).bind(text("sku").to_ascii_uppercase()).fetch_optional(tx.checked_executor().await.map_err(workflows::unavailable)?).await.map_err(workflows::unavailable)?;
                 let Some((id, 0, revision)) = record else {
-                    return Err(invalid("Opening stock requires an active stock product with a zero balance. Review existing stock through inventory adjustments."));
+                    return Err(invalid("Opening stock requires an active stock product of the unassigned workspace with a zero balance. Review existing stock, and any company's products, through inventory adjustments."));
                 };
                 json!({"command":{"operation":"stock.adjust","productId":id,"quantity":quantity,"unitCostMinor":money(text("unit_cost_minor"))?,"reason":"Confirmed opening inventory import"},"stockRevision":revision})
             }

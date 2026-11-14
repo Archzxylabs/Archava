@@ -21,7 +21,11 @@ document carries its purchase order's currency. Once a company owns a product,
 sales order, purchase order or invoice it can open only an IDR book: a book in
 another currency is refused, so a non-IDR book is created before the first record. An invoice made
 from an order takes the order's currency; the payment gateway accepts IDR
-invoices only. No jurisdiction is inferred from a currency.
+invoices only. The screens show each amount and read each price, cost, fee and
+claim in the record's own currency
+([money units](MONEY_UNITS.md)); a new product uses the trade currency the
+Commerce workspace read returns for the selected company. No jurisdiction is
+inferred from a currency.
 
 Products, sales orders, purchase orders and invoices capture company ID, reviewed
 revision, code and official name. Database foreign keys bind that revision to

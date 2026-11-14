@@ -37,6 +37,8 @@ pub mod purchasing;
 pub mod purchasing_documents;
 pub mod scheduling;
 pub mod stock;
+// Showing and entering trade amounts by currency (MULTI_CURRENCY.md rule 6).
+pub mod trade_money;
 
 // R07 cohorts (PACKET-007..010).
 pub mod attendance;

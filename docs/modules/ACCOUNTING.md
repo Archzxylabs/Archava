@@ -35,7 +35,7 @@ A policy with the other unit is refused as a conflict, and the unit of an existi
 
 The bridges convert nothing between currencies. A source in another currency than its book is refused when it would be captured, which refuses the operating command: issuing the invoice, confirming the purchase order, or fulfilling or returning the sales order. A company that already owns a product, sales order, purchase order or invoice cannot open a book in another currency than IDR (Accounting migration 015; `book.create` is refused as a conflict, an IDR book is still accepted), so the commands no longer produce such a source; the refusal remains for a database that already holds one. See [trade currency](../architecture/MULTI_CURRENCY.md#known-consequences). Without a policy nothing is captured and nothing is refused. The control, aging and close reports work on ledger minor amounts and are the same for both units.
 
-The operator policy forms offer only `whole_idr` until the screens are made currency-aware; the command API accepts both.
+The operator policy forms offer both units and, while the configured book's currency is known, hold the one that book requires; the command API accepts both. A captured source is reviewed and drafted from the screen on any book whose captured unit is the book's; its amounts are already book minor units and are shown with the book's currency and decimals.
 
 ## Close readiness
 

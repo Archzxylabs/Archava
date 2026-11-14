@@ -88,6 +88,53 @@ pub(super) fn preview(mut body: Value, book: &Value) -> Value {
     }
     body
 }
+/// The source unit a book's posting policies carry (trade currency rule 5):
+/// `whole_idr` on an IDR book with two minor units, `minor` on a book in any
+/// other currency. The database refuses every other pairing, so the book
+/// decides it. `None` when the book metadata is missing or malformed.
+fn book_source_unit(book: &Value) -> Option<&'static str> {
+    let exponent = book["minorUnits"].as_u64()?;
+    match book["currency"].as_str()? {
+        "IDR" => (exponent == 2).then_some("whole_idr"),
+        code if code.len() == 3
+            && code.bytes().all(|b| b.is_ascii_uppercase())
+            && exponent <= 4 =>
+        {
+            Some("minor")
+        }
+        _ => None,
+    }
+}
+/// [`book_source_unit`] of the book the operator workspace has configured,
+/// read from the form references.
+pub(super) fn policy_source_unit(refs: &Value) -> Option<&'static str> {
+    book_source_unit(&json!({"currency":refs["__currency"],"minorUnits":refs["__minorUnits"]}))
+}
+/// Whether a captured source can be reviewed against `book`: the unit in its
+/// policy snapshot must be the book's. A snapshot without a unit predates the
+/// `minor` unit and is whole Rupiah. Captured amounts are already book minor
+/// units under either unit, so the review formats them with the book.
+fn captured_unit_fits(book: &Value, source: &Value) -> bool {
+    match (
+        book_source_unit(book),
+        source["policy"]["source_unit"].as_str(),
+    ) {
+        (Some(unit), Some(captured)) => unit == captured,
+        (Some(unit), None) => unit == "whole_idr",
+        (None, _) => false,
+    }
+}
+/// How the captured source reached book units, for the reference details.
+fn source_unit_caption(book: &Value, source: &Value) -> String {
+    match book_source_unit(book).filter(|_| captured_unit_fits(book, source)) {
+        Some("whole_idr") => "whole Rupiah converted exactly to IDR book units".into(),
+        Some(_) => format!(
+            "{0} minor units posted unchanged as {0} book units",
+            text(book, "currency")
+        ),
+        None => "Source unit unavailable for this book".into(),
+    }
+}
 pub(super) fn source_reference<'a>(refs: &'a Value, id: &str, action: &str) -> Option<&'a Value> {
     refs[match action {
         "purchase_source.draft" => "accounting/purchase_sources",
@@ -106,7 +153,7 @@ pub(super) fn reviewed_preview(body: Value, book: &Value, refs: &Value) -> Value
             .as_str()
             .and_then(|id| source_reference(refs, id, "invoice_source.draft"))
         {
-            display["reviewedSource"] = json!({"invoice":source["invoiceCode"],"effect":source["effect"],"bookDate":source["sourceDate"],"amount":amount(&source["amountMinor"],book),"policyRevision":source["policyRevision"],"sourceUnit":"whole Rupiah converted exactly to IDR book units","collectionAccount":"Verified provider money uses payment clearing; bank settlement is separate"});
+            display["reviewedSource"] = json!({"invoice":source["invoiceCode"],"effect":source["effect"],"bookDate":source["sourceDate"],"amount":amount(&source["amountMinor"],book),"policyRevision":source["policyRevision"],"sourceUnit":source_unit_caption(book,source),"collectionAccount":"Verified provider money uses payment clearing; bank settlement is separate"});
         }
     }
     if display["type"] == "purchase_source.draft" {
@@ -136,10 +183,10 @@ struct InvoiceReview {
 }
 fn invoice_review(body: &Value, book: &Value, refs: &Value) -> Option<InvoiceReview> {
     use archava_domain::erp::accounting::sources::{legs, InvoiceRole};
-    if book["currency"] != "IDR" || book["minorUnits"] != 2 {
+    let source = source_reference(refs, body["sourceId"].as_str()?, "invoice_source.draft")?;
+    if !captured_unit_fits(book, source) {
         return None;
     }
-    let source = source_reference(refs, body["sourceId"].as_str()?, "invoice_source.draft")?;
     let effect = source["effect"].as_str()?;
     let legs = legs(effect, source["amountMinor"].as_str()?.parse().ok()?).ok()?;
     let selected = body["accounts"].as_array()?;
@@ -201,10 +248,10 @@ struct PurchaseReview {
 }
 fn purchase_review(body: &Value, book: &Value, refs: &Value) -> Option<PurchaseReview> {
     use archava_domain::erp::accounting::purchase_sources::{legs, PurchaseEffect, PurchaseRole};
-    if book["currency"] != "IDR" || book["minorUnits"] != 2 {
+    let source = source_reference(refs, body["sourceId"].as_str()?, "purchase_source.draft")?;
+    if !captured_unit_fits(book, source) {
         return None;
     }
-    let source = source_reference(refs, body["sourceId"].as_str()?, "purchase_source.draft")?;
     let effect: PurchaseEffect = serde_json::from_value(source["effect"].clone()).ok()?;
     let legs = legs(
         effect,
@@ -275,9 +322,9 @@ struct StockReview {
 }
 fn stock_review(body: &Value, book: &Value, refs: &Value) -> Option<StockReview> {
     use archava_domain::erp::accounting::{minor, MAX_MINOR};
-    if book["currency"] != "IDR" || book["minorUnits"] != 2 {
-        return None;
-    }
+    // A stock source carries no policy snapshot; its amounts and legs are
+    // book minor units under the one unit the book's policy can have.
+    book_source_unit(book)?;
     let source = source_reference(refs, body["sourceId"].as_str()?, "stock_source.draft")?;
     let net: i64 = source["amountMinor"].as_str()?.parse().ok()?;
     let total = net.checked_abs().filter(|v| *v > 0 && *v <= MAX_MINOR)?;
@@ -703,6 +750,79 @@ mod tests {
             "original"
         );
         assert!(body.get("reviewedSource").is_none());
+    }
+    #[test]
+    fn source_reviews_render_for_a_usd_book_under_the_minor_unit() {
+        use leptos::prelude::RenderHtml;
+        let book = json!({"currency":"USD","minorUnits":2});
+        let accounts = json!([{"id":"ar","revision":3,"code":"AR","name":"Receivables"},{"id":"revenue","revision":1,"code":"REV","name":"Revenue"},{"id":"stock","revision":2,"code":"STOCK","name":"Inventory"},{"id":"grni","revision":1,"code":"GRNI","name":"Unbilled goods"},{"id":"fee","revision":1,"code":"FEE","name":"Acquisition fees"},{"id":"cogs","revision":2,"code":"COGS","name":"Cost of goods"}]);
+        let policy = |mappings: Value| json!({"source_unit":"minor","mappings":mappings});
+        let mut refs = json!({"accounting/accounts":accounts,
+            // USD 19.99 invoiced: 1999 source minor units are 1999 book units.
+            "accounting/invoice_sources":[{"id":"invoice","effect":"issue","invoiceCode":"INV-USD","amountMinor":"1999","sourceDate":"2026-11-14","policyRevision":1,"policy":policy(json!([{"role":"receivable","accountId":"ar"},{"role":"revenue","accountId":"revenue"},{"role":"payment_clearing","accountId":"clearing"}]))}],
+            "accounting/purchase_sources":[{"id":"purchase","effect":"receipt","goodsMinor":"14000","landedFeeMinor":"101","sourceDate":"2026-11-14","policyRevision":1,"policy":policy(json!([{"role":"inventory","accountId":"stock"},{"role":"goods_received_not_invoiced","accountId":"grni"},{"role":"landed_fee_accrual","accountId":"fee"},{"role":"payable","accountId":"ap"}]))}],
+            "accounting/stock_sources":[{"id":"stock-source","effect":"fulfillment","amountMinor":"7001","sourceDate":"2026-11-14","policyRevision":1,"legs":[{"accountId":"stock","role":"inventory","debitMinor":"0","creditMinor":"7001"},{"accountId":"cogs","role":"cost_of_goods_sold","debitMinor":"7001","creditMinor":"0"}]}]});
+        let invoice = json!({"type":"invoice_source.draft","sourceId":"invoice","accounts":[{"accountId":"ar","expectedAccountRevision":3},{"accountId":"revenue","expectedAccountRevision":1}]});
+        assert!(source_review_accounts_match(&invoice, &book, &refs));
+        let html = review(invoice.clone(), &book, &refs).to_html();
+        assert!(
+            html.contains("data-testid=\"invoice-source-summary\""),
+            "{html}"
+        );
+        assert!(html.contains("INV-USD"));
+        assert!(html.contains("USD 19.99"), "{html}");
+        assert!(!html.contains("USD 1999"), "{html}");
+        assert_eq!(
+            reviewed_preview(invoice.clone(), &book, &refs)["reviewedSource"]["sourceUnit"],
+            "USD minor units posted unchanged as USD book units"
+        );
+        let purchase = json!({"type":"purchase_source.draft","sourceId":"purchase","code":"RECEIPT","accounts":[{"accountId":"stock","expectedAccountRevision":2},{"accountId":"grni","expectedAccountRevision":1},{"accountId":"fee","expectedAccountRevision":1}]});
+        assert!(source_review_accounts_match(&purchase, &book, &refs));
+        let summary = purchase_review(&purchase, &book, &refs).unwrap();
+        assert_eq!(summary.goods, "USD 140.00");
+        assert_eq!(summary.fee, "USD 1.01");
+        assert_eq!(summary.lines[0].debit, "USD 141.01");
+        let html = review(purchase.clone(), &book, &refs).to_html();
+        assert!(
+            html.contains("data-testid=\"purchase-source-summary\""),
+            "{html}"
+        );
+        let stock = json!({"type":"stock_source.draft","sourceId":"stock-source","accounts":[{"accountId":"stock","expectedAccountRevision":2},{"accountId":"cogs","expectedAccountRevision":2}]});
+        assert!(source_review_accounts_match(&stock, &book, &refs));
+        let html = review(stock, &book, &refs).to_html();
+        assert!(
+            html.contains("data-testid=\"stock-source-summary\""),
+            "{html}"
+        );
+        assert!(html.contains("USD 70.01"), "{html}");
+        // A zero-decimal book shows no fraction.
+        let yen = json!({"currency":"JPY","minorUnits":0});
+        assert_eq!(
+            invoice_review(&invoice, &yen, &refs).unwrap().amount,
+            "JPY 1999"
+        );
+        // The unit must be the book's: a whole-Rupiah snapshot is not
+        // reviewable on a USD book, nor a minor-unit snapshot on an IDR book.
+        let idr = json!({"currency":"IDR","minorUnits":2});
+        assert!(invoice_review(&invoice, &idr, &refs).is_none());
+        assert!(purchase_review(&purchase, &idr, &refs).is_none());
+        refs["accounting/invoice_sources"][0]["policy"]["source_unit"] = json!("whole_idr");
+        refs["accounting/purchase_sources"][0]["policy"]["source_unit"] = json!("whole_idr");
+        assert!(invoice_review(&invoice, &book, &refs).is_none());
+        assert!(purchase_review(&purchase, &book, &refs).is_none());
+        assert!(invoice_review(&invoice, &idr, &refs).is_some());
+        assert_eq!(
+            reviewed_preview(invoice.clone(), &idr, &refs)["reviewedSource"]["sourceUnit"],
+            "whole Rupiah converted exactly to IDR book units"
+        );
+        for malformed in [
+            json!({"currency":"usd","minorUnits":2}),
+            json!({"currency":"USD"}),
+            json!({"currency":"IDR","minorUnits":0}),
+            json!({}),
+        ] {
+            assert_eq!(book_source_unit(&malformed), None, "{malformed}");
+        }
     }
     #[test]
     fn human_currency_inputs_and_large_signed_report_values_remain_exact() {

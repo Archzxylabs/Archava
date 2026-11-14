@@ -1365,11 +1365,10 @@
             },
             {
               "name": "currency",
-              "label": "currency",
+              "label": "Currency of the purchase order (three-letter code)",
               "kind": "string",
-              "options": [
-                "IDR"
-              ],
+              "maxLength": 3,
+              "prefill": "currency",
               "default": "IDR"
             },
             {
@@ -1434,11 +1433,10 @@
             },
             {
               "name": "currency",
-              "label": "currency",
+              "label": "Currency of the purchase order (three-letter code)",
               "kind": "string",
-              "options": [
-                "IDR"
-              ],
+              "maxLength": 3,
+              "prefill": "currency",
               "default": "IDR"
             },
             {
@@ -7577,7 +7575,7 @@
           "fields": [
             {
               "name": "bookId",
-              "label": "IDR book",
+              "label": "Company book",
               "kind": "string"
             },
             {
@@ -7598,11 +7596,16 @@
             },
             {
               "name": "sourceUnit",
-              "label": "Source values are whole Rupiah; 1 Rupiah becomes 100 book units",
+              "label": "Source unit of this book's operating records",
               "kind": "string",
               "enum": [
-                "whole_idr"
+                "whole_idr",
+                "minor"
               ],
+              "optionLabels": {
+                "whole_idr": "IDR book: whole Rupiah; 1 Rupiah becomes 100 book units",
+                "minor": "Book in any other currency: ISO minor units, posted unchanged"
+              },
               "default": "whole_idr"
             },
             {
@@ -7701,7 +7704,7 @@
           "fields": [
             {
               "name": "bookId",
-              "label": "IDR book",
+              "label": "Company book",
               "kind": "string"
             },
             {
@@ -7722,11 +7725,16 @@
             },
             {
               "name": "sourceUnit",
-              "label": "Source values are whole Rupiah; 1 Rupiah becomes 100 book units",
+              "label": "Source unit of this book's operating records",
               "kind": "string",
               "enum": [
-                "whole_idr"
+                "whole_idr",
+                "minor"
               ],
+              "optionLabels": {
+                "whole_idr": "IDR book: whole Rupiah; 1 Rupiah becomes 100 book units",
+                "minor": "Book in any other currency: ISO minor units, posted unchanged"
+              },
               "default": "whole_idr"
             },
             {
@@ -7826,7 +7834,7 @@
           "fields": [
             {
               "name": "bookId",
-              "label": "IDR book",
+              "label": "Company book",
               "kind": "string"
             },
             {
@@ -7847,11 +7855,16 @@
             },
             {
               "name": "sourceUnit",
-              "label": "Source values are whole Rupiah; 1 Rupiah becomes 100 book units",
+              "label": "Source unit of this book's operating records",
               "kind": "string",
               "enum": [
-                "whole_idr"
+                "whole_idr",
+                "minor"
               ],
+              "optionLabels": {
+                "whole_idr": "IDR book: whole Rupiah; 1 Rupiah becomes 100 book units",
+                "minor": "Book in any other currency: ISO minor units, posted unchanged"
+              },
               "default": "whole_idr"
             },
             {
