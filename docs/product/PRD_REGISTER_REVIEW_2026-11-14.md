@@ -28,7 +28,7 @@ Status changes: FIN-06 open to partial, OWN-01 open to partial, OWN-02 open to p
 
 | Clauses (261 in total) | proven | built, unproven | absent | outside the repo |
 | --- | ---: | ---: | ---: | ---: |
-| All 35 requirements | 149 | 39 | 52 | 21 |
+| All 35 requirements | 151 | 37 | 52 | 21 |
 
 Of the clauses the reviewer separated, a test asserts about 57 percent, which is a statement about these clauses and not about the product.
 
@@ -40,10 +40,10 @@ Per requirement:
 | DAT-02 | partial | partial | 7 | 0 | 2 | 0 | [DAT-02](#dat-02) |
 | FIN-01 | partial | partial | 6 | 0 | 2 | 1 | [FIN-01](#fin-01) |
 | FIN-02 | partial | partial | 7 | 0 | 3 | 0 | [FIN-02](#fin-02) |
-| FIN-03 | partial | partial | 9 | 1 | 3 | 1 | [FIN-03](#fin-03) |
+| FIN-03 | partial | partial | 10 | 0 | 3 | 1 | [FIN-03](#fin-03) |
 | FIN-04 | partial | partial | 7 | 0 | 4 | 1 | [FIN-04](#fin-04) |
 | FIN-05 | partial | partial | 8 | 0 | 2 | 1 | [FIN-05](#fin-05) |
-| FIN-06 | open | partial | 8 | 1 | 4 | 1 | [FIN-06](#fin-06) |
+| FIN-06 | open | partial | 9 | 0 | 4 | 1 | [FIN-06](#fin-06) |
 | AGT-01 | partial | partial | 5 | 0 | 2 | 1 | [AGT-01](#agt-01) |
 | AGT-02 | partial | partial | 5 | 2 | 1 | 0 | [AGT-02](#agt-02) |
 | AGT-03 | partial | partial | 3 | 2 | 1 | 0 | [AGT-03](#agt-03) |
