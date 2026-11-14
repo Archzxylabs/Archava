@@ -50,6 +50,50 @@ verified order links. Customer references now support the same 160-character
 limit as Commerce customer names. Both creation paths share the
 [invoice adapter](../../crates/adapters/src/erp/billing_invoice.rs).
 
+## Tax on an invoice from an order
+
+Stage B of [tax on documents](../architecture/TAX.md). When the source order names a
+tax code, `create_invoice_from_order` looks up the confirmed output version of that
+code that applies on the invoice date and stores it with the invoice. Billing has no
+document date; the invoice date is the database's date of `created_at`. Without an
+applicable version the command is refused (`invoice_tax_code_not_applicable`) and no
+invoice is created.
+
+| Column | Meaning |
+| --- | --- |
+| `gross_minor` | The amount the customer owes, as before: order total plus tax with an exclusive basis, the order total with an inclusive one |
+| `tax_minor` | The tax part of `gross_minor`; `0` for an untaxed invoice. The net is `gross_minor − tax_minor` |
+| `tax_code_id`, `tax_code`, `tax_code_version`, `tax_kind`, `tax_rate_*`, `tax_base_*`, `price_includes_tax` | What the invoice was taxed with; all null for an untaxed invoice; immutable |
+| `correction_tax_minor` | The tax part of `correction_minor` |
+| `invoice_corrections.tax_minor` | The tax part of one correction |
+
+Lines are the order's priced lines; tax is a document amount, not a line. Outstanding,
+settlement, the payment gateway and refunds work on what is owed and are unchanged.
+A correction is an amount owed less or more; its tax part is the tax contained in the
+corrected total less the tax carried before, so the parts add up and a full reversal
+leaves net, tax and gross at zero.
+
+[Migration 009](../../migrations/billing-pg/009_invoice_tax_snapshot.sql) adds the
+columns, an insert/update guard on invoices, an insert guard on corrections and
+replaces the provenance function of migration 005 in place. The database recomputes
+the tax; an invoice whose tax disagrees with its order, its tax code version or the
+arithmetic is refused, also for a direct insert by the serving role. A manual invoice
+cannot carry tax.
+
+Tax is not posted to the ledger yet. A taxed invoice is refused for a company whose
+book has an invoice posting policy, at creation and at issue
+(`invoice_tax_posting_unavailable`).
+
+The workspace read returns `taxMinor`, `netMinor`, `correctionTaxMinor` and `tax`
+(the snapshot, or null) per invoice and a `taxNotice`. The invoice screen shows net,
+tax with its code, exact rate, base and basis, and total after corrections; the
+invoice-from-order form shows the same for the selected order with the version that
+applies today; the invoice mail adds `Net`, `Tax (…)` and `Total` lines. Each of them
+says that tax codes are entered by the company and not verified by Archava. An
+untaxed invoice is shown and mailed as before. Tests:
+[tax_sales.rs](../../crates/host/tests/erp_accounting/tax_sales.rs). Not exercised in
+a browser.
+
 Later returns do not rewrite the original snapshot or automatically create a
 credit/refund. An authorized operator reviews a correction through the existing
 billing lifecycle. Master-party identity, credit-note document linkage, GL/AR,

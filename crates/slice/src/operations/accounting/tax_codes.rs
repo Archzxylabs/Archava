@@ -1,13 +1,14 @@
 //! The book's tax codes as the company entered them. Nothing is computed with
-//! a code here: the panel lists the stored versions, their state (entered,
-//! confirmed, withdrawn or retired) and which apply on the date the server
-//! answered for. Only a confirmed version applies.
+//! a code here (sales orders and their invoices use one, see `document_tax`):
+//! the panel lists the stored versions, their state (entered, confirmed,
+//! withdrawn or retired) and which apply on the date the server answered
+//! for. Only a confirmed version applies.
 use super::*;
 use archava_domain::erp::tax::Fraction;
 
 /// Shown wherever a tax code is listed (TAX.md rule 1).
 const NOTICE: &str =
-    "Entered by your company; Archava does not verify tax rates or rules. An entered version does not apply until it is confirmed. Nothing uses a tax code yet.";
+    "Entered by your company; Archava does not verify tax rates or rules. An entered version does not apply until it is confirmed. A company sales order can name a confirmed output code, and the invoice made from it stores the tax; tax is not posted to the ledger yet.";
 
 fn fraction(value: &Value) -> Option<Fraction> {
     serde_json::from_value(value.clone()).ok()

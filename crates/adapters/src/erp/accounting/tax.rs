@@ -1,8 +1,10 @@
 //! A company's own tax codes. `tax_code.create` stores a version as entered,
 //! `tax_code.confirm` is the review after which it applies, and
 //! `tax_code.retire` withdraws an entered version or closes the range of a
-//! confirmed one. Nothing reads a code yet. The database guard (Accounting
-//! 016) decides the control account, the reviewer and the date range.
+//! confirmed one. A company sales order names a confirmed output code and
+//! the invoice made from it stores the version that applies (Commerce 012,
+//! Billing 009); nothing posts tax yet. The database guard (Accounting 016)
+//! decides the control account, the reviewer and the date range.
 use super::*;
 use crate::erp::refused_by_code;
 

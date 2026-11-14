@@ -58,10 +58,16 @@ pub fn Sales() -> impl IntoView {
     let product = RwSignal::new(String::new());
     let quantity = RwSignal::new("1".into());
     let cart = RwSignal::new(Vec::<Value>::new());
+    // The tax code a new company order names, and whether its prices include
+    // the tax. A tax code belongs to one company's book.
+    let tax_code = RwSignal::new(String::new());
+    let price_includes_tax = RwSignal::new(false);
     Effect::new(move |_| {
         let _ = work.company_key.get();
         cart.set_if_alive(Vec::new());
         product.set_if_alive(String::new());
+        tax_code.set_if_alive(String::new());
+        price_includes_tax.set_if_alive(false);
     });
     let selected = RwSignal::new(String::new());
     Effect::new(move |_| {
@@ -86,7 +92,7 @@ pub fn Sales() -> impl IntoView {
     view! {<Toolbar work title="Sales orders"/><Feedback work/><div class="ops-layout"><section class="ops-main"><Records work collection="orders" columns=vec![("customerName","Customer"),("state","Status"),("total","Total · IDR")] selected money=vec!["total"]/>
           {move||work.rows("orders").into_iter().find(|p|p["id"]==selected.get()).map(|order|{
             let id=text(&order,"id");let revision=integer(&order,"revision");let state=text(&order,"state");let lines=order["lines"].as_array().cloned().unwrap_or_default();let can_cancel=matches!(state.as_str(),"draft"|"reserved");let cancel_id=id.clone();
-            view!{<section class="ops-detail" data-testid="sales-detail"><p class="eyebrow">"SALES ORDER"</p><company_context::Identity row=order.clone()/><h3>{text(&order,"customerName")}</h3>{order["customerPartyId"].as_str().map(|id|view!{<p class="hint" data-testid="order-party-identity">{format!("Party {id} · captured version {}",integer(&order,"customerPartyRevision"))}<a href="/app/erp?module=organizations">" · Business parties"</a></p>})}{order["customerContactId"].as_str().map(|contact|view!{<p class="hint" data-testid="order-customer-link"><a href=format!("/app/contact?id={contact}")>"Open linked CRM customer"</a>" · name captured at order creation"</p>})}<p>{format!("{} · {}",state,row_money(&order,"total"))}</p><ul class="ops-lines">{lines.clone().into_iter().map(|line|view!{<li>{format!("{} × {} · returned {}",integer(&line,"quantity"),text(&line,"title"),integer(&line,"returnedQuantity"))}</li>}).collect::<Vec<_>>()}</ul>
+            view!{<section class="ops-detail" data-testid="sales-detail"><p class="eyebrow">"SALES ORDER"</p><company_context::Identity row=order.clone()/><h3>{text(&order,"customerName")}</h3>{order["customerPartyId"].as_str().map(|id|view!{<p class="hint" data-testid="order-party-identity">{format!("Party {id} · captured version {}",integer(&order,"customerPartyRevision"))}<a href="/app/erp?module=organizations">" · Business parties"</a></p>})}{order["customerContactId"].as_str().map(|contact|view!{<p class="hint" data-testid="order-customer-link"><a href=format!("/app/contact?id={contact}")>"Open linked CRM customer"</a>" · name captured at order creation"</p>})}<p>{format!("{} · {}",state,row_money(&order,"total"))}</p><document_tax::OrderTax order=order.clone()/><ul class="ops-lines">{lines.clone().into_iter().map(|line|view!{<li>{format!("{} × {} · returned {}",integer(&line,"quantity"),text(&line,"title"),integer(&line,"returnedQuantity"))}</li>}).collect::<Vec<_>>()}</ul>
             {order.get("fulfillmentCostMinor").is_some().then(||view!{<dl class="ops-totals"><dt>"Inventory cost on fulfillment"</dt><dd data-testid="order-fulfillment-cost">{exact_money(&order["fulfillmentCostMinor"],&currency_of(&order))}</dd><dt>"Acquisition basis restocked"</dt><dd>{exact_money(&order["restockedCostMinor"],&currency_of(&order))}</dd></dl><p class="hint">"Acquisition cost of the physical goods consumed by this order."</p>})}
     <div hidden=move||!work.permits("orders.write")><div class="ops-actions">
               {(state=="draft").then(||view!{<ActionButton work command=json!({"operation":"order.reserve","id":id,"expectedRevision":revision,"holdSeconds":900}) label="Reserve stock · 15 min" id="order-reserve"/>})}
@@ -105,11 +111,12 @@ pub fn Sales() -> impl IntoView {
     } else {
         if customer.get_untracked().trim().is_empty(){work.fail("Enter a customer name.");return;}
         json!({"operation":"order.create","customerName":customer.get_untracked(),"lines":cart.get_untracked()})
-    };if let Err(e)=work.new_company_fields(&mut command,"order.create_for_company"){work.fail(e);return}work.send(command);}><h3>"New sales order"</h3><label class="ops-field" hidden=move||work.company.get().is_some()><span><input type="checkbox" data-testid="order-link-customer" prop:checked=move||use_crm.get() on:change=move|event|{use_crm.set_if_alive(event_target_checked(&event));use_party.set_if_alive(false);}/>" Use an existing CRM customer"</span></label>
+    };if let Err(e)=work.new_company_fields(&mut command,"order.create_for_company"){work.fail(e);return}document_tax::order_tax_fields(&mut command,&tax_code.get_untracked(),price_includes_tax.get_untracked());work.send(command);}><h3>"New sales order"</h3><label class="ops-field" hidden=move||work.company.get().is_some()><span><input type="checkbox" data-testid="order-link-customer" prop:checked=move||use_crm.get() on:change=move|event|{use_crm.set_if_alive(event_target_checked(&event));use_party.set_if_alive(false);}/>" Use an existing CRM customer"</span></label>
     <label class="ops-check" hidden=move||work.company.get().is_some()><input type="checkbox" data-testid="order-link-party" prop:checked=move||use_party.get() on:change=move|event|{use_party.set_if_alive(event_target_checked(&event));use_crm.set_if_alive(false);}/><span>"Use a registered business party"</span></label>
     <Show when=move||work.company.get().is_some()||use_party.get()><super::party_selection::PartyPicker selected=linked_party/></Show>
     <Show when=move||work.company.get().is_none()&&use_crm.get()><super::customer::CustomerPicker selected=linked_customer/></Show>
     <div hidden=move||work.company.get().is_some()||use_crm.get()||use_party.get()><Field label="Customer name" id="order-customer" value=customer required=false/></div><Pick label="Product" id="order-product" value=product options/><Field label="Quantity" id="order-quantity" value=quantity kind="number"/><button type="button" class="btn secondary" data-testid="order-add-line" on:click=move|_|{let id=product.get_untracked();if id.is_empty(){work.fail("Choose a product first.");return}match number(quantity){Some(q)if q>0=>cart.update_if_alive(|lines|{if let Some(line)=lines.iter_mut().find(|l|l["productId"]==id){line["quantity"]=json!(q)}else{lines.push(json!({"productId":id,"quantity":q}))}}),_=>work.fail("Enter a positive whole quantity.")}}>"Add / update line"</button>
           <ul class="ops-lines">{move||cart.get().into_iter().map(|line|{let id=text(&line,"productId");let title=work.rows("products").into_iter().find(|p|p["id"]==id).map(|p|text(&p,"title")).unwrap_or_else(||short(&id));view!{<li>{format!("{} × {}",integer(&line,"quantity"),title)}<button type="button" aria-label="Remove line" on:click=move|_|cart.update_if_alive(|ls|ls.retain(|l|l["productId"]!=id))>"×"</button></li>}}).collect::<Vec<_>>()}</ul>
+          <document_tax::OrderTaxFields work code=tax_code price_includes_tax/>
           <p class="hint">"Creating a draft does not reduce stock. Reserve, then fulfill when goods are handed over."</p><button type="submit" class="btn" data-testid="order-save" disabled=move||work.blocked()>"Create draft order"</button></form></div></aside></div>}
 }

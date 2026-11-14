@@ -1218,9 +1218,14 @@ pub async fn lock_commerce_order(
     if owner_module != "commerce" && owner_module != "foodservice" {
         return Err(PurchaseError::Domain(ErpError::Conflict));
     }
+    // `SELECT *` serves installs with and without the later order columns, so
+    // it is not kept as a prepared statement: a migration that adds a column
+    // (Commerce 012) would otherwise fail a connection that prepared it before
+    // ("cached plan must not change result type").
     let row = sqlx::query(
         "SELECT * FROM archava_commerce.orders WHERE tenant_id=$1 AND id=$2 FOR UPDATE",
     )
+    .persistent(false)
     .bind(tenant)
     .bind(order_id)
     .fetch_one(&mut *connection)
@@ -1382,6 +1387,7 @@ pub async fn create_commerce_draft(
             name: customer_name,
             contact: None,
             party: None,
+            tax: None,
         },
         managed_by,
         lines,
@@ -1395,6 +1401,9 @@ pub struct CommerceCustomer<'a> {
     pub name: &'a str,
     pub contact: Option<(Uuid, i32)>,
     pub party: Option<(Uuid, i32)>,
+    /// The tax code text and whether the prices include the tax (TAX.md stage
+    /// B). Only a company order may carry one; the order stores no rate.
+    pub tax: Option<(&'a str, bool)>,
 }
 
 pub async fn create_commerce_draft_with_customer(
@@ -1450,8 +1459,17 @@ pub async fn create_commerce_draft_with_customer(
         Some(company) => Some(company_trade_currency(connection, tenant, company.id).await?),
         None => None,
     };
+    // The insert guard (Commerce 012) refuses the same case; named here so an
+    // order without a company never reaches a statement without tax columns.
+    if customer.tax.is_some() && customer.company.is_none() {
+        return Err(super::refused_by_code("order_tax_code_needs_company"));
+    }
     let order_id = Uuid::new_v4();
-    let statement = if customer.company.is_some() {
+    let statement = if customer.tax.is_some() {
+        // Whether the code is a confirmed output code of the company's book
+        // that applies today is the guard's decision (`a_tax_sales`).
+        "INSERT INTO archava_commerce.orders(tenant_id,id,owner_id,customer_name,total_estimate,managed_by,customer_party_id,customer_party_revision,company_id,company_revision,company_code,company_name,currency,tax_code,price_includes_tax) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)"
+    } else if customer.company.is_some() {
         "INSERT INTO archava_commerce.orders(tenant_id,id,owner_id,customer_name,total_estimate,managed_by,customer_party_id,customer_party_revision,company_id,company_revision,company_code,company_name,currency) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)"
     } else if customer.party.is_some() {
         "INSERT INTO archava_commerce.orders(tenant_id,id,owner_id,customer_name,total_estimate,managed_by,customer_party_id,customer_party_revision) VALUES($1,$2,$3,$4,$5,$6,$7,$8)"
@@ -1480,6 +1498,11 @@ pub async fn create_commerce_draft_with_customer(
             .bind(&company.code)
             .bind(&company.name)
             .bind(currency)
+    } else {
+        query
+    };
+    let query = if let Some((code, inclusive)) = customer.tax {
+        query.bind(code).bind(inclusive)
     } else {
         query
     };

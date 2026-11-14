@@ -561,8 +561,8 @@ async fn checkout_order_quote(
         Err(_) => return Err(StatusCode::SERVICE_UNAVAILABLE),
     }
     let row = sqlx::query(
-        "SELECT total_estimate, currency
-         FROM archava_commerce.orders
+        "SELECT total_estimate, currency, to_jsonb(o)->>'tax_code' AS tax_code
+         FROM archava_commerce.orders o
          WHERE tenant_id = $1 AND id = $2 AND state IN ('draft', 'reserved')
            AND ($3 OR owner_id = $4)",
     )
@@ -586,6 +586,16 @@ async fn checkout_order_quote(
         let currency = row
             .try_get::<String, _>("currency")
             .map_err(|_| StatusCode::SERVICE_UNAVAILABLE)?;
+        // An order that names a tax code has no total to show yet: the rate
+        // is taken when its invoice is made (TAX.md, stage B), so the order
+        // total alone would be a wrong or incomplete amount to sign.
+        if row
+            .try_get::<Option<String>, _>("tax_code")
+            .map_err(|_| StatusCode::SERVICE_UNAVAILABLE)?
+            .is_some()
+        {
+            return Err(StatusCode::CONFLICT);
+        }
         Ok((amount, currency))
     })
     .transpose()
@@ -667,6 +677,8 @@ pub async fn sign_embed_checkout(
         Err(status) => {
             let error = if status == StatusCode::FORBIDDEN {
                 "forbidden_checkout_access"
+            } else if status == StatusCode::CONFLICT {
+                "checkout_order_taxed"
             } else {
                 "checkout_storage_unavailable"
             };

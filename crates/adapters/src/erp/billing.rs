@@ -128,12 +128,19 @@ pub(super) fn refused(code: &str) -> PurchaseError {
 /// Preserve the historical billing driver contract except the installed
 /// accounting source guards: a reviewed financial close, an amount beyond the
 /// ledger bound and an invoice in another currency than its company's book
-/// (trade currency rule 5) are business conflicts, not database failures.
+/// (trade currency rule 5) are business conflicts, not database failures. So
+/// are the two tax guards of Billing 009 a person can meet: no tax code
+/// version applies on the invoice date, and a taxed invoice on a book with
+/// invoice posting (TAX.md stage B).
 pub(super) fn refuses(error: sqlx::Error) -> PurchaseError {
     if error.as_database_error().is_some_and(|e| {
         e.code().as_deref() == Some("23514")
             && (e.message() == "Reopen the financial source period before changing its invoice"
                 || e.message() == "Invoice currency differs from its company book"
+                || e.message()
+                    == "No confirmed version of the invoice tax code applies on the invoice date"
+                || e.message()
+                    == "Tax posting is not available yet for a book with invoice posting"
                 || e.constraint() == Some("invoice_sources_amount_minor_check"))
     }) {
         // The two message guards are catalogued; the amount bound is a
@@ -307,6 +314,59 @@ async fn invoice_row(
         .map_err(refuses)?
         .ok_or_else(not_found)?;
     InvoiceRow::try_get(&row, tenant, invoice_id)
+}
+
+/// The stored tax rule of a taxed invoice and the tax it carries now: the
+/// original tax (`tax_minor`, the tax part of `gross_minor`) and the tax part
+/// of its corrections so far.
+struct InvoiceTax {
+    rule: archava_domain::erp::tax::TaxRule,
+    /// `tax_minor + correction_tax_minor`: the tax of the corrected total.
+    tax_minor: i64,
+    correction_tax_minor: i64,
+}
+
+/// The tax snapshot of an invoice the caller has locked, or `None` for an
+/// untaxed invoice. Read through jsonb so an install whose Billing ledger
+/// predates the tax columns (an owned upgrade fixture) reads "untaxed".
+async fn invoice_tax_rule(
+    connection: &mut PgConnection,
+    tenant: &str,
+    invoice: Uuid,
+) -> Result<Option<InvoiceTax>, PurchaseError> {
+    use archava_domain::erp::tax::{Fraction, TaxRule};
+    let stored: serde_json::Value = sqlx::query_scalar(
+        "SELECT to_jsonb(i) FROM archava_billing.invoices i WHERE tenant_id=$1 AND id=$2",
+    )
+    .bind(tenant)
+    .bind(invoice)
+    .fetch_one(connection)
+    .await
+    .map_err(refuses)?;
+    if stored["tax_code_id"].is_null() {
+        return Ok(None);
+    }
+    let integer = |name: &str| stored[name].as_i64().ok_or_else(conflict);
+    let part = |name: &str| integer(name).and_then(|n| i32::try_from(n).map_err(|_| conflict()));
+    let rule = TaxRule::new(
+        Fraction {
+            numerator: part("tax_rate_numerator")?,
+            denominator: part("tax_rate_denominator")?,
+        },
+        Fraction {
+            numerator: part("tax_base_numerator")?,
+            denominator: part("tax_base_denominator")?,
+        },
+    )
+    .map_err(|_| conflict())?;
+    let correction_tax_minor = minor_safe(integer("correction_tax_minor")?)?;
+    Ok(Some(InvoiceTax {
+        rule,
+        tax_minor: minor_safe(integer("tax_minor")?)?
+            .checked_add(correction_tax_minor)
+            .ok_or_else(conflict)?,
+        correction_tax_minor,
+    }))
 }
 
 // --- The claim + replay plumbing (billing's own SELECT-then-INSERT shape) -------
@@ -671,36 +731,74 @@ WHERE tenant_id=$1 AND id=$2",
                 .ok_or_else(conflict)?;
             let next_outstanding = row.outstanding(next_correction, row.settled_minor);
             let next_rev = row.revision + 1;
-            sqlx::query(
+            // A taxed invoice splits the correction with its stored rule
+            // (TAX.md rule 6); an untaxed one runs the statements it always
+            // ran, which also serve an install without the tax columns.
+            let tax_part = match invoice_tax_rule(connection, tenant, invoice).await? {
+                Some(taxed) => {
+                    let (_, tax_part) = taxed
+                        .rule
+                        .correction(
+                            row.gross_minor
+                                .checked_add(row.correction_minor)
+                                .ok_or_else(conflict)?,
+                            taxed.tax_minor,
+                            *amount_minor,
+                        )
+                        .map_err(|_| conflict())?;
+                    Some((
+                        tax_part,
+                        taxed
+                            .correction_tax_minor
+                            .checked_add(tax_part)
+                            .ok_or_else(conflict)?,
+                    ))
+                }
+                None => None,
+            };
+            let update = if tax_part.is_some() {
                 "UPDATE archava_billing.invoices \
-SET correction_minor=$1, outstanding_minor=$2, revision=$3 WHERE tenant_id=$4 AND id=$5",
-            )
-            .bind(next_correction)
-            .bind(next_outstanding)
-            .bind(int4(next_rev)?)
-            .bind(tenant)
-            .bind(invoice)
-            .execute(&mut *connection)
-            .await
-            .map_err(refuses)?;
+SET correction_minor=$1, outstanding_minor=$2, revision=$3, correction_tax_minor=$6 WHERE tenant_id=$4 AND id=$5"
+            } else {
+                "UPDATE archava_billing.invoices \
+SET correction_minor=$1, outstanding_minor=$2, revision=$3 WHERE tenant_id=$4 AND id=$5"
+            };
+            let update = sqlx::query(update)
+                .bind(next_correction)
+                .bind(next_outstanding)
+                .bind(int4(next_rev)?)
+                .bind(tenant)
+                .bind(invoice);
+            let update = match tax_part {
+                Some((_, next_correction_tax)) => update.bind(next_correction_tax),
+                None => update,
+            };
+            update.execute(&mut *connection).await.map_err(refuses)?;
 
             let correction_id = Uuid::new_v4();
-            sqlx::query(
+            let insert = if tax_part.is_some() {
+                "INSERT INTO archava_billing.invoice_corrections(\
+tenant_id,id,invoice_id,amount_minor,reason,reverses_id,recorded_by,created_at,tax_minor) \
+VALUES($1,$2,$3,$4,$5,$6,$7,$8::timestamptz,$9)"
+            } else {
                 "INSERT INTO archava_billing.invoice_corrections(\
 tenant_id,id,invoice_id,amount_minor,reason,reverses_id,recorded_by,created_at) \
-VALUES($1,$2,$3,$4,$5,$6,$7,$8::timestamptz)",
-            )
-            .bind(tenant)
-            .bind(correction_id)
-            .bind(invoice)
-            .bind(*amount_minor)
-            .bind(reason)
-            .bind(reverses_id)
-            .bind(&access.owner_id)
-            .bind(now)
-            .execute(&mut *connection)
-            .await
-            .map_err(refuses)?;
+VALUES($1,$2,$3,$4,$5,$6,$7,$8::timestamptz)"
+            };
+            let insert = sqlx::query(insert)
+                .bind(tenant)
+                .bind(correction_id)
+                .bind(invoice)
+                .bind(*amount_minor)
+                .bind(reason)
+                .bind(reverses_id)
+                .bind(&access.owner_id)
+                .bind(now);
+            let insert = match tax_part {
+                Some((tax_part, _)) => insert.bind(tax_part),
+                None => insert,
+            };
+            insert.execute(&mut *connection).await.map_err(refuses)?;
 
             Ok(BillingReceipt {
                 command_id: request_id.to_string(),
@@ -1115,9 +1213,9 @@ pub async fn workspace_view_filtered(
     if !access.holds("billing.read") {
         return Err(forbidden());
     }
-    let rows=sqlx::query_scalar::<_,serde_json::Value>("SELECT json_build_object('id',i.id,'code',i.invoice_code,'customer',i.customer_ref,'companyId',to_jsonb(i)->'company_id','companyRevision',to_jsonb(i)->'company_revision','companyCode',to_jsonb(i)->'company_code','companyName',to_jsonb(i)->'company_name','currency',i.currency,'status',i.status,'gross',i.gross_minor,'correction',i.correction_minor,'settled',i.settled_minor,'outstanding',i.outstanding_minor,'revision',i.revision,'consumerRef',i.consumer_ref,'customerContactId',i.customer_contact_id,'customerContactRevision',i.customer_contact_revision,'customerPartyId',i.customer_party_id,'customerPartyRevision',i.customer_party_revision,'sourceOrderId',i.source_order_id,'sourceOrderRevision',i.source_order_revision,'lines',coalesce((SELECT json_agg(json_build_object('id',l.id,'sourceOrderLineId',l.source_order_line_id,'description',l.description,'quantity',l.quantity,'unitAmount',l.unit_minor,'total',l.line_total_minor) ORDER BY l.id) FROM archava_billing.invoice_lines l WHERE l.tenant_id=i.tenant_id AND l.invoice_id=i.id),'[]'::json)) FROM archava_billing.invoices i WHERE i.tenant_id=$1 AND (to_jsonb(i)->>'company_id')::uuid IS NOT DISTINCT FROM $5::uuid AND ($2 OR i.owner_id=$3) AND ($6::uuid IS NULL OR i.id=$6) AND ($4='' OR strpos(lower(i.invoice_code||' '||i.customer_ref),lower($4))>0) ORDER BY i.created_at DESC,i.id LIMIT 100")
+    let rows=sqlx::query_scalar::<_,serde_json::Value>("SELECT json_build_object('id',i.id,'code',i.invoice_code,'customer',i.customer_ref,'companyId',to_jsonb(i)->'company_id','companyRevision',to_jsonb(i)->'company_revision','companyCode',to_jsonb(i)->'company_code','companyName',to_jsonb(i)->'company_name','currency',i.currency,'status',i.status,'gross',i.gross_minor,'correction',i.correction_minor,'settled',i.settled_minor,'outstanding',i.outstanding_minor,'taxMinor',coalesce((to_jsonb(i)->>'tax_minor')::bigint,0),'netMinor',i.gross_minor-coalesce((to_jsonb(i)->>'tax_minor')::bigint,0),'correctionTaxMinor',coalesce((to_jsonb(i)->>'correction_tax_minor')::bigint,0),'tax',CASE WHEN to_jsonb(i)->>'tax_code_id' IS NOT NULL THEN json_build_object('codeId',to_jsonb(i)->'tax_code_id','code',to_jsonb(i)->'tax_code','version',to_jsonb(i)->'tax_code_version','kind',to_jsonb(i)->'tax_kind','rate',json_build_object('numerator',to_jsonb(i)->'tax_rate_numerator','denominator',to_jsonb(i)->'tax_rate_denominator'),'base',json_build_object('numerator',to_jsonb(i)->'tax_base_numerator','denominator',to_jsonb(i)->'tax_base_denominator'),'priceIncludesTax',to_jsonb(i)->'price_includes_tax','enteredByCompany',true,'verifiedByArchava',false) END,'revision',i.revision,'consumerRef',i.consumer_ref,'customerContactId',i.customer_contact_id,'customerContactRevision',i.customer_contact_revision,'customerPartyId',i.customer_party_id,'customerPartyRevision',i.customer_party_revision,'sourceOrderId',i.source_order_id,'sourceOrderRevision',i.source_order_revision,'lines',coalesce((SELECT json_agg(json_build_object('id',l.id,'sourceOrderLineId',l.source_order_line_id,'description',l.description,'quantity',l.quantity,'unitAmount',l.unit_minor,'total',l.line_total_minor) ORDER BY l.id) FROM archava_billing.invoice_lines l WHERE l.tenant_id=i.tenant_id AND l.invoice_id=i.id),'[]'::json)) FROM archava_billing.invoices i WHERE i.tenant_id=$1 AND (to_jsonb(i)->>'company_id')::uuid IS NOT DISTINCT FROM $5::uuid AND ($2 OR i.owner_id=$3) AND ($6::uuid IS NULL OR i.id=$6) AND ($4='' OR strpos(lower(i.invoice_code||' '||i.customer_ref),lower($4))>0) ORDER BY i.created_at DESC,i.id LIMIT 100")
         .bind(tenant).bind(access.scope==archava_domain::erp::ErpScope::All).bind(&access.owner_id).bind(search).bind(company).bind(id).fetch_all(connection).await.map_err(|e|super::purchase_database_error(BILLING_LEDGER,e))?;
     Ok(
-        serde_json::json!({"invoices":rows,"pageLimit":100,"permissions":access.permissions,"scope":access.scope}),
+        serde_json::json!({"invoices":rows,"taxNotice":archava_domain::erp::tax::DOCUMENT_NOTICE,"pageLimit":100,"permissions":access.permissions,"scope":access.scope}),
     )
 }

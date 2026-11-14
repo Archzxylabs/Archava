@@ -57,7 +57,7 @@ The architectural design of Archava: a single root Cargo workspace containing 21
 An isolated database schema namespace in PostgreSQL (e.g. `archava_commerce`, `archava_orbz`, `archava_crm`, `archava_billing`) representing an independent domain ledger. Each ledger owns its tables, sequential migrations, and runtime privilege grants.
 
 ### Mounted vs. Unmounted Ledgers
-- **Mounted Ledgers**: 75 SQL migrations across 25 ledger directories verified by [`migrations/manifest.v1.json`](../migrations/manifest.v1.json) and applied to the active production database. The server binary embeds the 72 it verifies at startup (every ledger except `archava_provider` and `archava_control`), generated from that manifest at build time.
+- **Mounted Ledgers**: 77 SQL migrations across 25 ledger directories verified by [`migrations/manifest.v1.json`](../migrations/manifest.v1.json) and applied to the active production database. The server binary embeds the 74 it verifies at startup (every ledger except `archava_provider` and `archava_control`), generated from that manifest at build time.
 - **Unmounted Ledgers**: 7 SQL files across 6 reserved directories kept in the repository as authoritative future architectural designs. Strictly allowlisted in [`tools/check-structure.mjs`](../tools/check-structure.mjs) to prevent stray SQL drift.
 
 ### FORCE RLS (Row-Level Security)

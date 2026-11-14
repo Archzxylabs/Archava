@@ -1,12 +1,12 @@
 # SQL migration ownership
 
-All 82 checked-in SQL migrations currently live under this directory, grouped into 31 ledger directories. The native manifest mounts 75; 7 remain reserved specifications. The owner-configuration migration was relocated from `crates/host/migrations/owner` to `owner-pg/`; its migration ID, schema namespace, SQL bytes, and checksum are unchanged.
+All 84 checked-in SQL migrations currently live under this directory, grouped into 31 ledger directories. The native manifest mounts 77; 7 remain reserved specifications. The owner-configuration migration was relocated from `crates/host/migrations/owner` to `owner-pg/`; its migration ID, schema namespace, SQL bytes, and checksum are unchanged.
 
 The manifest is the only list of applied migrations. The persistent server embeds the migrations it verifies from it at build time ([build.rs](../crates/slice/build.rs)), and the disposable PostgreSQL fixture reads the same manifest in [pg-fixture](../crates/pg-fixture/src/lib.rs). A file's presence here does not mean a given runtime mounts it or its UI is complete.
 
 ## Applied versus unmounted ledgers
 
-`manifest.v1.json` is the installer's contract: 75 of the 82 files, across 25 ledgers, carry an `id`, `path` and SHA-256 that the Ops installer verifies and applies. The remaining seven files are **unmounted**: no manifest entry, no embedded registration, and no runtime readiness check.
+`manifest.v1.json` is the installer's contract: 77 of the 84 files, across 25 ledgers, carry an `id`, `path` and SHA-256 that the Ops installer verifies and applies. The remaining seven files are **unmounted**: no manifest entry, no embedded registration, and no runtime readiness check.
 
 | Unmounted ledger | Files |
 | --- | --- |
@@ -129,3 +129,23 @@ the audit kinds, grants neither permission to an existing membership, creates no
 and ships no rate. The runtime role needs `SELECT,INSERT,UPDATE` on the table and
 `EXECUTE` on the readiness function. Nothing reads a tax code yet. See
 [tax codes](../docs/modules/ACCOUNTING.md#tax-codes).
+
+Commerce012 adds `tax_code` and `price_includes_tax` to sales orders (both null or
+both set, immutable, only on a company order) and an insert guard: the code must be a
+confirmed output tax code of the company's book that applies on the database's current
+date. Commerce migrates before Accounting, so the guard reads
+`archava_accounting.tax_codes` late-bound, like the book in Commerce011. Existing
+orders are not rewritten and the order stores no rate.
+
+Billing009 adds the invoice tax snapshot (`tax_minor`, the tax code version, its rate
+and base fraction and the price basis), `correction_tax_minor` and
+`invoice_corrections.tax_minor`, all `0`/null on existing rows; integer tax arithmetic
+functions; an insert/update guard on invoices and an insert guard on corrections; and
+replaces `archava_billing.assert_order_invoice()` of Billing005 in place (same
+signature, so its two deferred triggers are unchanged): the order total is compared
+with `gross - tax` for an exclusive basis, and the tax is recomputed from the order
+and the snapshot. It also refuses a taxed invoice for a company whose book has an
+invoice posting policy, read late-bound from `archava_accounting.invoice_policies`,
+until tax posts to the ledger. No new table and no new runtime grant: the serving role
+already reads `archava_accounting.tax_codes`, `books` and `invoice_policies`. See
+[tax on documents](../docs/architecture/TAX.md).

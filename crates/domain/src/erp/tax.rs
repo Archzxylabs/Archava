@@ -135,6 +135,94 @@ impl TaxRule {
     }
 }
 
+/// The net, tax and gross of one taxed document, in the document's own unit.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct DocumentTax {
+    pub net: i64,
+    pub tax: i64,
+    pub gross: i64,
+}
+impl TaxRule {
+    /// Taxes a document whose priced lines add up to `total`: the net when the
+    /// prices exclude tax (tax is added), the gross when they include it (tax
+    /// is extracted). `net + tax = gross` always holds.
+    pub fn document(
+        self,
+        total: i64,
+        price_includes_tax: bool,
+    ) -> Result<DocumentTax, ValidationError> {
+        if price_includes_tax {
+            let (net, tax) = self.inclusive(total)?;
+            Ok(DocumentTax {
+                net,
+                tax,
+                gross: total,
+            })
+        } else {
+            let (tax, gross) = self.exclusive(total)?;
+            Ok(DocumentTax {
+                net: total,
+                tax,
+                gross,
+            })
+        }
+    }
+    /// The tax a gross amount contains: `gross − round(gross / (1 + base × rate))`.
+    ///
+    /// On the gross of a tax-exclusive document this is the tax that was added:
+    /// `(net + round(net × k)) / (1 + k)` differs from `net` by less than half
+    /// a unit whenever `k > 0`, so it rounds back to `net`.
+    pub fn contained(self, gross: i64) -> Result<i64, ValidationError> {
+        self.inclusive(gross).map(|(_, tax)| tax)
+    }
+    /// Splits a correction of a taxed document into its net and tax parts
+    /// (rule 6). The correction changes what the customer owes, so it is a
+    /// gross amount on either price basis. The tax part is the difference
+    /// between the tax contained in the corrected total and the tax the
+    /// document carried before: `contained(total_before + amount) −
+    /// tax_before`. The parts of all corrections therefore add up to the tax
+    /// of the corrected total, and a total of zero has net and tax of zero.
+    /// Returns `(net, tax)` with `net + tax = amount`.
+    pub fn correction(
+        self,
+        total_before: i64,
+        tax_before: i64,
+        correction: i64,
+    ) -> Result<(i64, i64), ValidationError> {
+        let total = total_before
+            .checked_add(correction)
+            .ok_or(ValidationError("taxAmount"))?;
+        let tax = self
+            .contained(total)?
+            .checked_sub(tax_before)
+            .ok_or(ValidationError("taxAmount"))?;
+        let net = correction
+            .checked_sub(tax)
+            .ok_or(ValidationError("taxAmount"))?;
+        Ok((net, tax))
+    }
+}
+
+/// The sentence for every document that shows a tax code or a tax amount
+/// (rule 1).
+pub const DOCUMENT_NOTICE: &str =
+    "Tax codes are entered by the company; Archava does not verify tax rates or rules.";
+
+/// A tax code as a document names it: `VAT 11%`, or `VAT 12% of 11/12 of the
+/// price` when the rate applies to a fraction of the price.
+pub fn describe(code: &str, rate: Fraction, base: Fraction) -> String {
+    if base.is_one() {
+        format!("{code} {}", rate.percent())
+    } else {
+        format!(
+            "{code} {} of {}/{} of the price",
+            rate.percent(),
+            base.numerator,
+            base.denominator
+        )
+    }
+}
+
 /// A document amount; corrections are negative, so both signs are in range.
 fn amount(value: i64) -> Result<i64, ValidationError> {
     if (-MAX_MINOR..=MAX_MINOR).contains(&value) {
@@ -300,6 +388,121 @@ mod tests {
                 "{value}"
             );
         }
+    }
+    #[test]
+    fn a_document_is_taxed_on_its_stated_price_basis() {
+        let eleven = rule((11, 100), (1, 1));
+        assert_eq!(
+            eleven.document(30_000, false).unwrap(),
+            DocumentTax {
+                net: 30_000,
+                tax: 3_300,
+                gross: 33_300
+            }
+        );
+        assert_eq!(
+            eleven.document(30_000, true).unwrap(),
+            DocumentTax {
+                net: 27_027,
+                tax: 2_973,
+                gross: 30_000
+            }
+        );
+        // 3 × 3.33 in minor units: 999 × 0.11 = 109.89, which rounds to 110.
+        assert_eq!(
+            eleven.document(999, false).unwrap(),
+            DocumentTax {
+                net: 999,
+                tax: 110,
+                gross: 1_109
+            }
+        );
+        for rule in rules() {
+            for total in amounts() {
+                for inclusive in [false, true] {
+                    let Ok(taxed) = rule.document(total, inclusive) else {
+                        continue;
+                    };
+                    assert_eq!(taxed.net + taxed.tax, taxed.gross, "{rule:?} {total}");
+                }
+            }
+        }
+    }
+    #[test]
+    fn the_tax_contained_in_an_exclusive_gross_is_exactly_the_tax_that_was_added() {
+        for rule in rules() {
+            for net in amounts() {
+                let Ok((tax, gross)) = rule.exclusive(net) else {
+                    continue;
+                };
+                assert_eq!(rule.contained(gross).unwrap(), tax, "{rule:?} {net}");
+                assert_eq!(rule.inclusive(gross).unwrap(), (net, tax), "{rule:?} {net}");
+            }
+        }
+    }
+    #[test]
+    fn corrections_split_so_that_the_parts_add_up_and_a_full_reversal_is_zero() {
+        let eleven = rule((11, 100), (1, 1));
+        // Exclusive 30,000 + 3,300: a correction of -11,100 is -10,000 net and
+        // -1,100 tax; reversing the rest leaves nothing.
+        assert_eq!(
+            eleven.correction(33_300, 3_300, -11_100).unwrap(),
+            (-10_000, -1_100)
+        );
+        assert_eq!(
+            eleven.correction(22_200, 2_200, -22_200).unwrap(),
+            (-20_000, -2_200)
+        );
+        // An untaxed-looking unit still splits by the cumulative total: ten
+        // corrections of one unit move the tax by one unit exactly once.
+        let (mut total, mut tax) = (33_300_i64, 3_300_i64);
+        let mut tax_parts = Vec::new();
+        for _ in 0..10 {
+            let (net_part, tax_part) = eleven.correction(total, tax, -1).unwrap();
+            assert_eq!(net_part + tax_part, -1);
+            total -= 1;
+            tax += tax_part;
+            tax_parts.push(tax_part);
+            assert_eq!(tax, eleven.contained(total).unwrap());
+        }
+        assert_eq!(tax_parts.iter().sum::<i64>(), -1);
+        assert_eq!((total, tax), (33_290, 3_299));
+        for rule in rules() {
+            for inclusive in [false, true] {
+                for total in [0, 1, 9, 999, 30_000, 1_234_567_891] {
+                    let Ok(document) = rule.document(total, inclusive) else {
+                        continue;
+                    };
+                    let (mut gross, mut tax) = (document.gross, document.tax);
+                    // Any path of corrections, then whatever is left.
+                    for step in [-1, -7, 3, -(gross / 3), 11, -2] {
+                        let (net_part, tax_part) = rule.correction(gross, tax, step).unwrap();
+                        assert_eq!(net_part + tax_part, step, "{rule:?} {total}");
+                        gross += step;
+                        tax += tax_part;
+                        assert_eq!(tax, rule.contained(gross).unwrap(), "{rule:?} {total}");
+                    }
+                    let (net_part, tax_part) = rule.correction(gross, tax, -gross).unwrap();
+                    assert_eq!(gross + net_part + tax_part, 0);
+                    assert_eq!(tax + tax_part, 0, "{rule:?} {total}");
+                    assert_eq!((gross - tax) + net_part, 0, "{rule:?} {total}");
+                }
+            }
+        }
+    }
+    #[test]
+    fn a_document_names_its_tax_code_with_an_exact_rate_and_base() {
+        assert_eq!(describe("VAT", fraction(11, 100), Fraction::ONE), "VAT 11%");
+        assert_eq!(
+            describe("VAT", fraction(43, 400), fraction(5, 5)),
+            "VAT 10.75%"
+        );
+        assert_eq!(
+            describe("PPN", fraction(12, 100), fraction(11, 12)),
+            "PPN 12% of 11/12 of the price"
+        );
+        assert!(DOCUMENT_NOTICE.contains("entered by the company"));
+        assert!(DOCUMENT_NOTICE.contains("Archava does not verify"));
     }
     #[test]
     fn a_zero_rate_adds_and_extracts_nothing() {

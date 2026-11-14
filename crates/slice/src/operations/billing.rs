@@ -65,6 +65,7 @@ fn InvoiceFromOrder(work: Workbench) -> impl IntoView {
             <Field label="Invoice number" id="invoice-order-code" value=code/>
             {move||eligible.get().into_iter().find(|order|order["id"]==selected.get()).map(|order|{let currency=currency_of(&order);view!{
                 <ul class="ops-lines">{order["lines"].as_array().cloned().unwrap_or_default().into_iter().map(|line|view!{<li>{format!("{} × {} · {}",integer(&line,"quantity"),text(&line,"title"),currency_amount(integer(&line,"quantity")*integer(&line,"price"),&currency))}</li>}).collect::<Vec<_>>()}</ul>
+                <document_tax::OrderTaxPreview order=order.clone() codes=orders.rows("taxCodes")/>
             }})}
             <button type="submit" class="btn" data-testid="invoice-from-order-save" disabled=move||work.blocked()||!orders.permits("orders.read")>"Create invoice from order"</button>
         </form>
@@ -95,6 +96,7 @@ pub fn Invoices() -> impl IntoView {
       view!{<section class="ops-detail" data-testid="invoice-detail"><p class="eyebrow">"INVOICE"</p><company_context::Identity row=invoice.clone()/><h3>{text(&invoice,"code")}</h3><p>{text(&invoice,"customer")}</p>{invoice["customerPartyId"].as_str().map(|id|view!{<p class="hint" data-testid="invoice-party-identity">{format!("Party {id} · captured version {} · historical order identity",integer(&invoice,"customerPartyRevision"))}</p>})}{invoice["customerContactId"].as_str().map(|contact|view!{<p class="hint" data-testid="invoice-customer-link"><a href=format!("/app/contact?id={contact}")>"Open linked CRM customer"</a>" · name captured on the source order"</p>})}
        {invoice["sourceOrderId"].as_str().map(|order|view!{<p class="hint" data-testid="invoice-source">{format!("Created from sales order {}",short(order))}</p>})}
        <dl class="ops-totals"><dt>"Gross"</dt><dd>{row_money(&invoice,"gross")}</dd><dt>"Corrections"</dt><dd>{row_money(&invoice,"correction")}</dd><dt>"Settled"</dt><dd>{row_money(&invoice,"settled")}</dd><dt>"Outstanding"</dt><dd>{row_money(&invoice,"outstanding")}</dd></dl>
+       <document_tax::InvoiceTax invoice=invoice.clone()/>
        <ul class="ops-lines">{invoice["lines"].as_array().cloned().unwrap_or_default().into_iter().map(|line|view!{<li>{format!("{} × {} · {}",integer(&line,"quantity"),text(&line,"description"),currency_amount(integer(&line,"total"),&line_currency))}</li>}).collect::<Vec<_>>()}</ul>
        <p class="hint">"Payment totals change only after a verified provider event. Recording an intent does not mark this invoice paid."</p>
        <div hidden=move||!work.permits("billing.settle")><Field label="Action reason" id="invoice-reason" value=reason/>

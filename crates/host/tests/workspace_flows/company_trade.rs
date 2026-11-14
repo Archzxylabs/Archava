@@ -412,7 +412,7 @@ async fn company_trade_upgrade_preserves_legacy_identity_and_original_receipts()
     .await
     .unwrap();
     tx.commit().await.unwrap();
-    let statement="SELECT json_build_object('products',(SELECT json_agg(to_jsonb(p)-'company_id'-'company_revision'-'company_code'-'company_name' ORDER BY id) FROM archava_commerce.products p),'orders',(SELECT json_agg(to_jsonb(o)-'company_id'-'company_revision'-'company_code'-'company_name' ORDER BY id) FROM archava_commerce.orders o),'commands',(SELECT json_agg(to_jsonb(c) ORDER BY request_id) FROM archava_commerce.commands c))";
+    let statement="SELECT json_build_object('products',(SELECT json_agg(to_jsonb(p)-'company_id'-'company_revision'-'company_code'-'company_name' ORDER BY id) FROM archava_commerce.products p),'orders',(SELECT json_agg(to_jsonb(o)-'company_id'-'company_revision'-'company_code'-'company_name'-'tax_code'-'price_includes_tax' ORDER BY id) FROM archava_commerce.orders o),'commands',(SELECT json_agg(to_jsonb(c) ORDER BY request_id) FROM archava_commerce.commands c))";
     let before: Value = sqlx::query_scalar(statement)
         .fetch_one(&f.admin_pool)
         .await
@@ -424,6 +424,16 @@ async fn company_trade_upgrade_preserves_legacy_identity_and_original_receipts()
         .await
         .unwrap();
     assert_eq!(before, after);
+    // The later sales-tax columns are added empty: an upgrade taxes no order.
+    let taxed: i64 = sqlx::query_scalar(
+        "SELECT count(*) FROM archava_commerce.orders \
+         WHERE (to_jsonb(orders)->>'tax_code') IS NOT NULL \
+         OR (to_jsonb(orders)->>'price_includes_tax') IS NOT NULL",
+    )
+    .fetch_one(&f.admin_pool)
+    .await
+    .unwrap();
+    assert_eq!(taxed, 0);
     let assigned: i64 = sqlx::query_scalar(
         "SELECT count(*) FROM archava_commerce.products WHERE company_id IS NOT NULL",
     )

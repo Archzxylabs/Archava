@@ -767,6 +767,19 @@
               },
               "maxItems": 100,
               "minItems": 1
+            },
+            {
+              "name": "taxCode",
+              "label": "Tax code (entered by your company, not verified by Archava)",
+              "kind": "string",
+              "maxLength": 40,
+              "optional": true
+            },
+            {
+              "name": "priceIncludesTax",
+              "label": "Prices include tax (required with a tax code)",
+              "kind": "boolean",
+              "optional": true
             }
           ]
         }

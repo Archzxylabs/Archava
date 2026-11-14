@@ -117,6 +117,11 @@
           "id": "011_company_trade_currency",
           "path": "migrations/commerce-pg/011_company_trade_currency.sql",
           "sha256": "0acc5c8306e044e45970062b2c7d35c6e67c175c1a1625197551a96948d1d110"
+        },
+        {
+          "id": "012_sales_order_tax",
+          "path": "migrations/commerce-pg/012_sales_order_tax.sql",
+          "sha256": "75fb50c5f89fb0b3899a5b02803c7ca35a3828ee3766326deb26f874afe001d2"
         }
       ]
     },
@@ -275,6 +280,11 @@
           "id": "008_company_owned_trade",
           "path": "migrations/billing-pg/008_company_owned_trade.sql",
           "sha256": "fa17f5eaa4253a0eba0cc5330dfd2179e01ee9c162169f2abf63762a458ef5bc"
+        },
+        {
+          "id": "009_invoice_tax_snapshot",
+          "path": "migrations/billing-pg/009_invoice_tax_snapshot.sql",
+          "sha256": "34304cd4a173e81c96a2fd29892f1fdbbfebd3d90f8a9a3bd2996d8075425e7f"
         }
       ]
     },

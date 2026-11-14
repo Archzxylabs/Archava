@@ -8,6 +8,7 @@ mod commerce;
 mod companies;
 pub(crate) mod company_context;
 mod customer;
+mod document_tax;
 mod mail;
 mod missions;
 mod operator;
