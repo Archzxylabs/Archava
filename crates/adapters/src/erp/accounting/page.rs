@@ -6,6 +6,8 @@ pub struct Page<'a> {
     pub selected: Option<Uuid>,
     pub cursor: Option<Uuid>,
     pub limit: i64,
+    /// The date the `tax_codes` collection answers "which version applies" for.
+    pub as_of: Option<&'a str>,
 }
 impl Page<'_> {
     pub fn valid(&self) -> bool {
@@ -38,9 +40,13 @@ impl Page<'_> {
                         | "invoice_term_sources"
                         | "supplier_term_sources"
                         | "document_terms"
+                        | "tax_codes"
                 )
             })
             && (self.selected.is_none() || self.cursor.is_none())
+            && self.as_of.is_none_or(|date| {
+                archava_domain::erp::accommodation::parse_calendar_date(date).is_some()
+            })
     }
 }
 
@@ -56,8 +62,10 @@ pub(super) async fn load(
     let bank_read = access.holds(&["bank.read"]);
     let payables_read = access.holds(&["payables.read"]);
     let clearing_read = access.holds(&["clearing.read"]);
+    let tax_read = access.holds(&["tax.read"]);
     let mut metadata = Vec::new();
     for (table,label,projection,search) in [
+        ("tax_codes","Tax codes entered by the company",tax::projection(),"s.code||' '||s.kind"),
         ("invoice_term_sources","Original customer invoice due terms",terms::invoice_projection(),"s.invoice_code"),
         ("supplier_term_sources","Original supplier bill due terms",terms::supplier_projection(),"s.document_id::text||' '||s.order_id::text"),
         ("document_terms","Reviewed due terms history",terms::history_projection(),"s.document_id::text||' '||s.document_kind||' '||s.reason"),
@@ -93,6 +101,12 @@ pub(super) async fn load(
             if page.collection == Some(table) {return Err(ErpError::Forbidden.into());}
             continue;
         }
+        if table == "tax_codes" && !tax_read {
+            if page.collection == Some(table) {
+                return Err(ErpError::Forbidden.into());
+            }
+            continue;
+        }
         if (table.starts_with("clearing_") && !clearing_read) || (table == "clearing_settlements" && !bank_read) {
             if page.collection == Some(table) {
                 return Err(ErpError::Forbidden.into());
@@ -114,7 +128,12 @@ pub(super) async fn load(
             _ => (table, ""),
         };
         let q=format!("SELECT {projection} FROM archava_accounting.{relation} s WHERE tenant_id=$1 AND book_id=$2{filter} AND ($3::uuid IS NULL OR id=$3) AND ($4::uuid IS NULL OR id>$4) AND strpos(lower({search}),lower($5))>0 ORDER BY id LIMIT $6");
-        let mut rows:Vec<Value>=sqlx::query_scalar(sqlx::AssertSqlSafe(q.as_str())).bind(tenant).bind(key).bind(page.selected).bind(page.cursor).bind(page.search).bind(page.limit+1).fetch_all(&mut *conn).await.map_err(db)?;
+        let mut query = sqlx::query_scalar(sqlx::AssertSqlSafe(q.as_str())).bind(tenant).bind(key).bind(page.selected).bind(page.cursor).bind(page.search).bind(page.limit+1);
+        // Only the tax projection names $7; an unused parameter has no type.
+        if table == "tax_codes" {
+            query = query.bind(page.as_of);
+        }
+        let mut rows:Vec<Value>=query.fetch_all(&mut *conn).await.map_err(db)?;
         let more=rows.len() as i64>page.limit;rows.truncate(page.limit as usize);
         let next=if more{rows.last().and_then(|r|r["id"].as_str())}else{None};
         metadata.push(json!({"id":table,"label":label,"hasMore":more,"nextCursor":next,"limit":page.limit,"included":rows.len(),"wholeFilteredCollection":!more&&page.cursor.is_none()}));
@@ -168,6 +187,7 @@ pub(super) async fn load(
             "invoice_term_sources" => "invoice_source",
             "supplier_term_sources" => "purchase_source",
             "document_terms" => "document_terms",
+            "tax_codes" => "tax_code",
             _ => "journal",
         };
         if matches!(

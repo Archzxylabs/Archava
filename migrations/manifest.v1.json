@@ -356,6 +356,11 @@
           "id": "015_book_currency_guard",
           "path": "migrations/accounting-pg/015_book_currency_guard.sql",
           "sha256": "fc1b94086051f2a208964f439ad442578ce4e6e0a188ed85f63c7409bbf427fa"
+        },
+        {
+          "id": "016_tax_codes",
+          "path": "migrations/accounting-pg/016_tax_codes.sql",
+          "sha256": "3f2824077daabd63b85ad4f66132d05c403bdeb65e5ab523a0492af7802dc92c"
         }
       ]
     },
@@ -685,6 +690,8 @@
     "GRANT SELECT,INSERT ON archava_accounting.document_terms TO {runtime_role}",
     "GRANT EXECUTE ON FUNCTION archava_accounting.terms_guards_complete() TO {runtime_role}",
     "GRANT SELECT,INSERT ON archava_accounting.opening_balances TO {runtime_role}",
-    "GRANT EXECUTE ON FUNCTION archava_accounting.opening_guards_complete() TO {runtime_role}"
+    "GRANT EXECUTE ON FUNCTION archava_accounting.opening_guards_complete() TO {runtime_role}",
+    "GRANT SELECT,INSERT,UPDATE ON archava_accounting.tax_codes TO {runtime_role}",
+    "GRANT EXECUTE ON FUNCTION archava_accounting.tax_guards_complete() TO {runtime_role}"
   ]
 }

@@ -7156,7 +7156,9 @@
         "clearing.read",
         "clearing.write",
         "terms.read",
-        "terms.write"
+        "terms.write",
+        "tax.read",
+        "tax.manage"
       ],
       "actions": [
         {
@@ -8731,6 +8733,173 @@
               "label": "Opening amount",
               "kind": "string",
               "minorAmount": true
+            },
+            {
+              "name": "reason",
+              "label": "Review reason",
+              "kind": "string",
+              "maxLength": 2000
+            }
+          ]
+        },
+        {
+          "id": "tax_code.create",
+          "label": "Enter a company tax code",
+          "permission": "tax.manage",
+          "description": "Entered by your company; Archava does not verify tax rates or rules. Stores one version of a tax code for this book as entered: a kind (output for sales, input for purchases), a rate and a base fraction as whole-number fractions (11% is 11/100; a base of 11/12 taxes eleven twelfths of the price), a control account and the first day it applies. An entered version does not apply until it is confirmed with the separate confirm action; on a book with independent posting another person must confirm it. A stored version never changes; nothing uses a tax code yet.",
+          "fields": [
+            {
+              "name": "bookId",
+              "label": "Book",
+              "kind": "string"
+            },
+            {
+              "name": "code",
+              "label": "Tax code (capital letters, digits, - and _)",
+              "kind": "string",
+              "maxLength": 40
+            },
+            {
+              "name": "kind",
+              "label": "Kind",
+              "kind": "string",
+              "options": [
+                "output",
+                "input"
+              ],
+              "optionLabels": {
+                "output": "Output: tax on sales",
+                "input": "Input: tax on purchases"
+              }
+            },
+            {
+              "name": "rate",
+              "label": "Rate as a fraction (11% is 11 over 100)",
+              "kind": "object",
+              "fields": [
+                {
+                  "name": "numerator",
+                  "label": "Numerator (whole number)",
+                  "kind": "integer",
+                  "min": 0,
+                  "max": 1000000
+                },
+                {
+                  "name": "denominator",
+                  "label": "Denominator (whole number)",
+                  "kind": "integer",
+                  "min": 1,
+                  "max": 1000000,
+                  "default": 100
+                }
+              ]
+            },
+            {
+              "name": "base",
+              "label": "Base fraction: the part of the price the rate applies to (1 over 1 for the whole price)",
+              "kind": "object",
+              "fields": [
+                {
+                  "name": "numerator",
+                  "label": "Numerator (whole number)",
+                  "kind": "integer",
+                  "min": 1,
+                  "max": 1000000,
+                  "default": 1
+                },
+                {
+                  "name": "denominator",
+                  "label": "Denominator (whole number)",
+                  "kind": "integer",
+                  "min": 1,
+                  "max": 1000000,
+                  "default": 1
+                }
+              ]
+            },
+            {
+              "name": "controlAccount",
+              "label": "Tax control account (liability for output, asset for input)",
+              "kind": "object",
+              "fields": [
+                {
+                  "name": "accountId",
+                  "label": "Reviewed account",
+                  "kind": "string"
+                },
+                {
+                  "name": "expectedAccountRevision",
+                  "label": "Reviewed account version",
+                  "kind": "integer",
+                  "min": 1,
+                  "automatic": "revision"
+                }
+              ]
+            },
+            {
+              "name": "effectiveFrom",
+              "label": "First day it applies (YYYY-MM-DD)",
+              "kind": "string",
+              "format": "date"
+            },
+            {
+              "name": "reason",
+              "label": "Review reason",
+              "kind": "string",
+              "maxLength": 2000
+            }
+          ]
+        },
+        {
+          "id": "tax_code.confirm",
+          "label": "Confirm a company tax code version",
+          "permission": "tax.manage",
+          "description": "Entered by your company; Archava does not verify tax rates or rules. Confirms an entered tax code version after you have checked its kind, rate, base fraction, control account and first day. From then on the version applies. On a book with independent posting the person who entered the version cannot confirm it.",
+          "fields": [
+            {
+              "name": "id",
+              "label": "Entered tax code version",
+              "kind": "string"
+            },
+            {
+              "name": "expectedRevision",
+              "label": "Reviewed revision",
+              "kind": "integer",
+              "min": 1,
+              "automatic": "revision"
+            },
+            {
+              "name": "reason",
+              "label": "Review reason",
+              "kind": "string",
+              "maxLength": 2000
+            }
+          ]
+        },
+        {
+          "id": "tax_code.retire",
+          "label": "Retire or withdraw a company tax code version",
+          "permission": "tax.manage",
+          "description": "Entered by your company; Archava does not verify tax rates or rules. For a confirmed version, sets the last day it applies. For a version that is still entered and unconfirmed, withdraws it: it never applied and needs no last day. Either can be done once and cannot be undone; enter a new version afterwards.",
+          "fields": [
+            {
+              "name": "id",
+              "label": "Tax code version",
+              "kind": "string"
+            },
+            {
+              "name": "expectedRevision",
+              "label": "Reviewed revision",
+              "kind": "integer",
+              "min": 1,
+              "automatic": "revision"
+            },
+            {
+              "name": "effectiveTo",
+              "label": "Last day it applies (YYYY-MM-DD); leave empty to withdraw an unconfirmed version",
+              "kind": "string",
+              "format": "date",
+              "optional": true
             },
             {
               "name": "reason",

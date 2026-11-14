@@ -208,6 +208,7 @@ fn resource_id(receipt: &Value) -> Option<&str> {
                 | "bank_policy"
                 | "bank_reconciliation"
                 | "document_terms"
+                | "tax_code"
         )
     }) {
         return receipt["resourceId"].as_str().filter(|v| !v.is_empty());

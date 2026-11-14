@@ -251,6 +251,91 @@
       "code": "invoice_order_has_returns",
       "message": "This sales order has returned items, so an invoice cannot be created directly from it. Create a manual invoice for the items the customer kept.",
       "message_id": "Pesanan penjualan ini memiliki barang yang diretur, sehingga faktur tidak bisa dibuat langsung dari pesanan. Buat faktur manual untuk barang yang tetap diterima pelanggan."
+    },
+    "Tax code history cannot be deleted": {
+      "code": "tax_code_delete_refused",
+      "message": "A stored tax code cannot be deleted. Withdraw it if it is not confirmed yet, or retire it by setting the last day it applies.",
+      "message_id": "Kode pajak yang sudah tersimpan tidak bisa dihapus. Tarik jika belum dikonfirmasi, atau pensiunkan dengan menentukan hari terakhir kode itu berlaku."
+    },
+    "A tax code requires an existing native book": {
+      "code": "tax_code_native_book_required",
+      "message": "Tax codes can only be kept in a book that Archava keeps itself (a native book). This book is kept in an external system or was not found. Choose a company whose book is kept in Archava.",
+      "message_id": "Kode pajak hanya bisa disimpan di pembukuan yang dikelola Archava sendiri (pembukuan native). Pembukuan ini dikelola di sistem eksternal atau tidak ditemukan. Pilih perusahaan yang pembukuannya dikelola di Archava."
+    },
+    "A tax rate must be between zero and one and its base fraction above zero and at most one": {
+      "code": "tax_code_rate_out_of_bounds",
+      "message": "The rate must be a fraction from 0 to 1 (0% to 100%) and the base fraction must be above 0 and at most 1, each with a denominator from 1 to 1,000,000. Correct the numbers and try again.",
+      "message_id": "Tarif harus berupa pecahan dari 0 sampai 1 (0% sampai 100%) dan pecahan dasar pengenaan harus lebih dari 0 dan paling banyak 1, masing-masing dengan penyebut 1 sampai 1.000.000. Perbaiki angkanya lalu coba lagi."
+    },
+    "A book with independent posting needs a tax code reviewer other than the person who entered it": {
+      "code": "tax_code_independent_reviewer_required",
+      "message": "This book requires a second person for reviewed entries, so the person who entered a tax code cannot confirm it. Ask another member with tax permissions to confirm it.",
+      "message_id": "Pembukuan ini mewajibkan orang kedua untuk entri yang ditinjau, jadi orang yang memasukkan kode pajak tidak bisa mengonfirmasinya sendiri. Minta anggota lain yang berizin pajak untuk mengonfirmasinya."
+    },
+    "A tax code needs an active control account at its reviewed revision": {
+      "code": "tax_code_control_account_changed",
+      "message": "The control account is inactive, changed since the tax code was entered or reviewed, or does not belong to this book. Refresh the accounts; enter the code with an active account, or withdraw this version and enter a new one.",
+      "message_id": "Akun kontrol tidak aktif, sudah berubah sejak kode pajak dimasukkan atau ditinjau, atau bukan milik pembukuan ini. Muat ulang daftar akun; masukkan kode dengan akun yang aktif, atau tarik versi ini lalu masukkan versi baru."
+    },
+    "A tax control account must be an operating liability for output tax or an operating asset for input tax": {
+      "code": "tax_code_control_account_wrong_class",
+      "message": "The control account has the wrong type for this tax code. An output (sales) tax code needs a liability account and an input (purchase) tax code needs an asset account, both with the cash role \"operating\". Choose or create such an account.",
+      "message_id": "Jenis akun kontrol tidak sesuai untuk kode pajak ini. Kode pajak keluaran (penjualan) membutuhkan akun liabilitas dan kode pajak masukan (pembelian) membutuhkan akun aset, keduanya dengan peran kas \"operating\". Pilih atau buat akun seperti itu."
+    },
+    "A tax code keeps its kind across versions": {
+      "code": "tax_code_kind_changed",
+      "message": "This code already exists with the other kind. A new version keeps the kind (output or input) of its earlier versions. Use the same kind, or enter the tax under a different code.",
+      "message_id": "Kode ini sudah ada dengan jenis yang lain. Versi baru memakai jenis (keluaran atau masukan) yang sama dengan versi sebelumnya. Gunakan jenis yang sama, atau masukkan pajak ini dengan kode lain."
+    },
+    "Tax code versions must append in order": {
+      "code": "tax_code_version_out_of_order",
+      "message": "Another version of this tax code was stored at the same time. Refresh the tax codes and enter the new version again.",
+      "message_id": "Versi lain dari kode pajak ini tersimpan pada saat yang bersamaan. Muat ulang daftar kode pajak dan masukkan versi baru sekali lagi."
+    },
+    "Tax code date ranges of one code must not overlap": {
+      "code": "tax_code_ranges_overlap",
+      "message": "This version would apply on days that another entered or confirmed version of the same code already covers. Retire the confirmed version with a last day before the new first day, withdraw the unconfirmed one, or choose a first day after every existing version ends.",
+      "message_id": "Versi ini akan berlaku pada hari yang sudah dicakup versi lain dari kode yang sama, baik yang sudah dimasukkan maupun dikonfirmasi. Pensiunkan versi yang sudah dikonfirmasi dengan hari terakhir sebelum hari pertama yang baru, tarik versi yang belum dikonfirmasi, atau pilih hari pertama setelah semua versi yang ada berakhir."
+    },
+    "A tax code cannot end before it starts": {
+      "code": "tax_code_ends_before_start",
+      "message": "The last day is before the first day this tax code version applies. Choose a last day on or after its first day.",
+      "message_id": "Hari terakhir lebih awal daripada hari pertama versi kode pajak ini berlaku. Pilih hari terakhir yang sama dengan atau setelah hari pertamanya."
+    },
+    "A tax code starts entered, unconfirmed and open-ended at revision one": {
+      "code": "tax_code_initial_state_refused",
+      "message": "A new tax code version starts as entered, without a reviewer and without a last day. Enter it with the tax code action, then have it confirmed.",
+      "message_id": "Versi kode pajak yang baru dimulai dengan status dimasukkan, tanpa peninjau dan tanpa hari terakhir. Masukkan dengan tindakan kode pajak, lalu minta konfirmasinya."
+    },
+    "A tax code requires a current human member with tax authority over the book": {
+      "code": "tax_code_member_not_authorized",
+      "message": "The person entering or confirming a tax code must be an active member with permission to read and manage tax codes for this book. Ask an administrator for the tax permissions, or have an authorized person do it.",
+      "message_id": "Orang yang memasukkan atau mengonfirmasi kode pajak harus anggota aktif yang berizin membaca dan mengelola kode pajak untuk pembukuan ini. Minta izin pajak kepada administrator, atau minta orang yang berwenang melakukannya."
+    },
+    "Only an entered tax code can be confirmed": {
+      "code": "tax_code_not_awaiting_confirmation",
+      "message": "This tax code version is not waiting for confirmation: it was already confirmed, withdrawn or retired. Refresh the tax codes; enter a new version if one is needed.",
+      "message_id": "Versi kode pajak ini tidak sedang menunggu konfirmasi: sudah dikonfirmasi, ditarik, atau dipensiunkan. Muat ulang daftar kode pajak; masukkan versi baru jika diperlukan."
+    },
+    "A withdrawn or retired tax code cannot change again": {
+      "code": "tax_code_already_closed",
+      "message": "This tax code version was already withdrawn or retired and cannot be changed again. Enter a new version for later dates.",
+      "message_id": "Versi kode pajak ini sudah ditarik atau dipensiunkan dan tidak bisa diubah lagi. Masukkan versi baru untuk tanggal-tanggal berikutnya."
+    },
+    "Retiring a confirmed tax code needs its last day": {
+      "code": "tax_code_last_day_required",
+      "message": "A confirmed tax code version needs the last day it applies before it can be retired. Enter the last day and try again.",
+      "message_id": "Versi kode pajak yang sudah dikonfirmasi membutuhkan hari terakhir berlakunya sebelum bisa dipensiunkan. Isi hari terakhirnya lalu coba lagi."
+    },
+    "A stored tax code is immutable; it can only be confirmed, withdrawn or retired": {
+      "code": "tax_code_immutable",
+      "message": "A stored tax code version cannot be edited. Withdraw it if it is not confirmed yet, or retire it by setting its last day, then enter a new version with the corrected values.",
+      "message_id": "Versi kode pajak yang sudah tersimpan tidak bisa diedit. Tarik jika belum dikonfirmasi, atau pensiunkan dengan menentukan hari terakhirnya, lalu masukkan versi baru dengan nilai yang sudah diperbaiki."
+    },
+    "A tax code change must carry the reviewed command of the person it names": {
+      "code": "tax_code_claim_incomplete",
+      "message": "The tax code was not changed through its own reviewed action, so the change was refused. Use the tax code actions to enter, confirm, withdraw or retire it.",
+      "message_id": "Kode pajak ini tidak diubah melalui tindakan tinjauannya sendiri sehingga perubahannya ditolak. Gunakan tindakan kode pajak untuk memasukkan, mengonfirmasi, menarik, atau memensiunkannya."
     }
   }
 }

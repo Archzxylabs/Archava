@@ -1166,6 +1166,17 @@ async fn grant_accounting_runtime(pool: &PgPool) {
                 format!("GRANT EXECUTE ON FUNCTION archava_accounting.opening_guards_complete() TO {RUNTIME_USER}"),
             ] {sqlx::query(sqlx::AssertSqlSafe(statement.as_str())).execute(pool).await.unwrap();}
         }
+        let tax_present: bool =
+            sqlx::query_scalar("SELECT to_regclass('archava_accounting.tax_codes') IS NOT NULL")
+                .fetch_one(pool)
+                .await
+                .unwrap();
+        if tax_present {
+            for statement in [
+                format!("GRANT SELECT,INSERT,UPDATE ON archava_accounting.tax_codes TO {RUNTIME_USER}"),
+                format!("GRANT EXECUTE ON FUNCTION archava_accounting.tax_guards_complete() TO {RUNTIME_USER}"),
+            ] {sqlx::query(sqlx::AssertSqlSafe(statement.as_str())).execute(pool).await.unwrap();}
+        }
     }
 }
 

@@ -1,9 +1,9 @@
 # Native business operations
 
 The mounted operator product covers 19 business domains. The shared
-[form catalogue](../../config/operator-actions.v1.json) describes 193 canonical
+[form catalogue](../../config/operator-actions.v1.json) describes 196 canonical
 operations, of which two Billing provider events require the verified payment
-integration. The other 191 operations have native review forms. A form's presence
+integration. The other 194 operations have native review forms. A form's presence
 is not evidence that every lifecycle combination has been exercised in a browser.
 
 The existing CRM, Commerce, Purchasing, Billing, Accounting and Support screens
