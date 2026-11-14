@@ -336,6 +336,46 @@
       "code": "tax_code_claim_incomplete",
       "message": "The tax code was not changed through its own reviewed action, so the change was refused. Use the tax code actions to enter, confirm, withdraw or retire it.",
       "message_id": "Kode pajak ini tidak diubah melalui tindakan tinjauannya sendiri sehingga perubahannya ditolak. Gunakan tindakan kode pajak untuk memasukkan, mengonfirmasi, menarik, atau memensiunkannya."
+    },
+    "A sales order tax code and its price basis are stated together": {
+      "code": "order_tax_code_and_basis_together",
+      "message": "A tax code and its price basis go together. When the order names a tax code, say whether the prices include the tax; when it has no tax code, leave the price basis out.",
+      "message_id": "Kode pajak dan dasar harganya harus diisi bersama. Jika pesanan memakai kode pajak, tentukan apakah harga sudah termasuk pajak; jika tanpa kode pajak, kosongkan dasar harganya."
+    },
+    "A sales order tax code needs a company": {
+      "code": "order_tax_code_needs_company",
+      "message": "Only a sales order of a company can carry a tax code. Choose the company first, or create the order without a tax code.",
+      "message_id": "Hanya pesanan penjualan milik perusahaan yang bisa memakai kode pajak. Pilih perusahaannya dulu, atau buat pesanan tanpa kode pajak."
+    },
+    "Sales order tax code is not a tax code of the company book": {
+      "code": "order_tax_code_unknown",
+      "message": "This company's book has no tax code with that code. Choose one of the company's confirmed output tax codes, or enter and confirm the code in Accounting first.",
+      "message_id": "Pembukuan perusahaan ini tidak punya kode pajak dengan kode tersebut. Pilih salah satu kode pajak keluaran perusahaan yang sudah dikonfirmasi, atau masukkan dan konfirmasi kodenya di Akuntansi terlebih dulu."
+    },
+    "A sales order needs an output tax code": {
+      "code": "order_tax_code_not_output",
+      "message": "That tax code is an input code, which is for purchases. Choose an output tax code for a sales order.",
+      "message_id": "Kode pajak itu adalah kode masukan, yang dipakai untuk pembelian. Pilih kode pajak keluaran untuk pesanan penjualan."
+    },
+    "The sales order tax code is entered but not confirmed": {
+      "code": "order_tax_code_not_confirmed",
+      "message": "That tax code has been entered but a reviewer has not confirmed it yet, so it does not apply. Ask a reviewer to confirm it in Accounting, then create the order again.",
+      "message_id": "Kode pajak itu sudah dimasukkan tetapi belum dikonfirmasi peninjau, jadi belum berlaku. Minta peninjau mengonfirmasinya di Akuntansi, lalu buat pesanannya lagi."
+    },
+    "No confirmed version of the sales order tax code applies on the order date": {
+      "code": "order_tax_code_not_applicable",
+      "message": "No confirmed version of that tax code applies today: it starts later or has been retired. Choose a tax code that applies today, or enter and confirm a version that does.",
+      "message_id": "Tidak ada versi terkonfirmasi dari kode pajak itu yang berlaku hari ini: versinya baru mulai nanti atau sudah dipensiunkan. Pilih kode pajak yang berlaku hari ini, atau masukkan dan konfirmasi versi yang berlaku."
+    },
+    "No confirmed version of the invoice tax code applies on the invoice date": {
+      "code": "invoice_tax_code_not_applicable",
+      "message": "The sales order names a tax code, but no confirmed version of it applies on the invoice date, so the invoice was not created. Enter and confirm a version of the tax code that applies today, then create the invoice again.",
+      "message_id": "Pesanan penjualan ini memakai kode pajak, tetapi tidak ada versi terkonfirmasi yang berlaku pada tanggal faktur, jadi faktur tidak dibuat. Masukkan dan konfirmasi versi kode pajak yang berlaku hari ini, lalu buat fakturnya lagi."
+    },
+    "Tax posting is not available yet for a book with invoice posting": {
+      "code": "invoice_tax_posting_unavailable",
+      "message": "This company's book posts its invoices to the ledger, and posting tax is not available yet, so a taxed invoice cannot be created or issued for it. Invoice an order without a tax code, or wait until tax posting is available.",
+      "message_id": "Pembukuan perusahaan ini memposting fakturnya ke buku besar, dan posting pajak belum tersedia, jadi faktur berpajak belum bisa dibuat atau diterbitkan. Buat faktur dari pesanan tanpa kode pajak, atau tunggu sampai posting pajak tersedia."
     }
   }
 }

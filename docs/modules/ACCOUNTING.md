@@ -75,7 +75,7 @@ Limits: an opening is one lump per declaration with no documents behind it. It i
 
 ## Tax codes
 
-Stage A of [tax on documents](../architecture/TAX.md): a company enters its own tax codes. Archava ships no rate and verifies none, and nothing uses a code yet: no order, invoice, supplier document, posting policy, report or agent step reads one.
+Stage A of [tax on documents](../architecture/TAX.md): a company enters its own tax codes. Archava ships no rate and verifies none. From stage B a company sales order can name a confirmed output code and the invoice made from it stores the version that applies ([Billing](BILLING_MODULE.md#tax-on-an-invoice-from-an-order)); no supplier document, posting policy, report or agent step reads a code, and no tax is posted to the ledger.
 
 A tax code belongs to one native book. One row of `archava_accounting.tax_codes` (Accounting016) is one version of a code:
 

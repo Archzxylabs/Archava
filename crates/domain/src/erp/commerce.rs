@@ -61,6 +61,19 @@ pub enum CommerceCommand {
         #[serde(rename = "expectedPartyRevision")]
         expected_party_revision: i64,
         lines: Vec<OrderLine>,
+        /// The code of an output tax code of the company's book
+        /// (`docs/architecture/TAX.md`, stage B). The company entered it;
+        /// Archava verifies no rate. Stated together with `priceIncludesTax`.
+        #[serde(rename = "taxCode", default, skip_serializing_if = "Option::is_none")]
+        tax_code: Option<String>,
+        /// Whether the product prices already contain the tax (`true`) or the
+        /// tax is added to them (`false`).
+        #[serde(
+            rename = "priceIncludesTax",
+            default,
+            skip_serializing_if = "Option::is_none"
+        )]
+        price_includes_tax: Option<bool>,
     },
     #[serde(rename = "product.set")]
     ProductSet {
@@ -280,13 +293,21 @@ impl CommerceCommand {
                 party_id,
                 expected_party_revision,
                 lines,
-            }
-            | Self::OrderCreateForCompany {
+            } => valid_uuid(party_id) && revision(*expected_party_revision) && valid_lines(lines),
+            // A tax code without a price basis, or a basis without a code, is
+            // well formed; the adapter refuses it with its specific reason.
+            Self::OrderCreateForCompany {
                 party_id,
                 expected_party_revision,
                 lines,
+                tax_code,
                 ..
-            } => valid_uuid(party_id) && revision(*expected_party_revision) && valid_lines(lines),
+            } => {
+                valid_uuid(party_id)
+                    && revision(*expected_party_revision)
+                    && valid_lines(lines)
+                    && tax_code.as_deref().is_none_or(valid_code)
+            }
             Self::OrderCreateFromContact {
                 contact_id,
                 expected_contact_revision,
@@ -390,6 +411,50 @@ mod tests {
             .unwrap()
             .validate()
             .is_err());
+    }
+    #[test]
+    fn a_company_order_may_name_a_tax_code_and_an_untaxed_one_serialises_as_before() {
+        let id = "01933df1-8d5e-783f-9b1e-1d3f9a2b3c4d";
+        let plain = serde_json::json!({"operation":"order.create_for_company","companyId":id,"expectedCompanyRevision":1,"partyId":id,"expectedPartyRevision":1,"lines":[{"productId":id,"quantity":1}]});
+        let parsed = serde_json::from_value::<CommerceCommand>(plain.clone()).unwrap();
+        assert!(parsed.validate().is_ok());
+        // The fingerprint of an existing command is its JSON: no new member.
+        assert_eq!(serde_json::to_value(&parsed).unwrap(), plain);
+        let mut taxed = plain.clone();
+        taxed["taxCode"] = serde_json::json!("VAT-OUT");
+        taxed["priceIncludesTax"] = serde_json::json!(false);
+        let parsed = serde_json::from_value::<CommerceCommand>(taxed.clone()).unwrap();
+        assert!(parsed.validate().is_ok());
+        assert_eq!(serde_json::to_value(&parsed).unwrap(), taxed);
+        for code in ["vat", "", " VAT", "-VAT", &"A".repeat(41)] {
+            let mut body = taxed.clone();
+            body["taxCode"] = serde_json::json!(code);
+            assert!(
+                serde_json::from_value::<CommerceCommand>(body)
+                    .unwrap()
+                    .validate()
+                    .is_err(),
+                "{code}"
+            );
+        }
+        // One without the other parses; the adapter names the refusal.
+        let mut half = plain.clone();
+        half["priceIncludesTax"] = serde_json::json!(true);
+        assert!(serde_json::from_value::<CommerceCommand>(half)
+            .unwrap()
+            .validate()
+            .is_ok());
+        // No other order command takes a tax code, and a rate is never a field.
+        let other = serde_json::json!({"operation":"order.create","customerName":"Walk-in","lines":[{"productId":id,"quantity":1}],"taxCode":"VAT-OUT","priceIncludesTax":false});
+        assert!(serde_json::from_value::<CommerceCommand>(other).is_err());
+        for key in ["taxRate", "taxMinor", "rate"] {
+            let mut forged = taxed.clone();
+            forged[key] = serde_json::json!(1);
+            assert!(
+                serde_json::from_value::<CommerceCommand>(forged).is_err(),
+                "{key}"
+            );
+        }
     }
     #[test]
     fn party_order_requires_reviewed_version_and_rejects_identity_claims() {

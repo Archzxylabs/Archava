@@ -22,6 +22,8 @@ mod stock_sources;
 mod subledger;
 #[path = "erp_accounting/tax.rs"]
 mod tax;
+#[path = "erp_accounting/tax_sales.rs"]
+mod tax_sales;
 #[path = "erp_accounting/terms.rs"]
 mod terms;
 use archava_host::{router, router::AllReadiness, AppState, Ledger};

@@ -314,6 +314,7 @@ pub async fn record(
                     name: customer_name,
                     contact: None,
                     party: None,
+                    tax: None,
                 },
                 CommerceCommand::OrderCreateFromContact {
                     contact_id,
@@ -329,6 +330,7 @@ pub async fn record(
                         name: &row.full_name,
                         contact: Some((id(contact_id)?, row.revision)),
                         party: None,
+                        tax: None,
                     }
                 }
                 CommerceCommand::OrderCreateFromParty {
@@ -343,11 +345,30 @@ pub async fn record(
                     if !row.customer || i64::from(row.revision) != *expected_party_revision {
                         return Err(conflict());
                     }
+                    // Only the company order has tax members; a code and
+                    // its price basis are stated together.
+                    let tax = match command {
+                        CommerceCommand::OrderCreateForCompany {
+                            tax_code,
+                            price_includes_tax,
+                            ..
+                        } => match (tax_code.as_deref(), price_includes_tax) {
+                            (Some(code), Some(inclusive)) => Some((code, *inclusive)),
+                            (None, None) => None,
+                            _ => {
+                                return Err(super::refused_by_code(
+                                    "order_tax_code_and_basis_together",
+                                ))
+                            }
+                        },
+                        _ => None,
+                    };
                     kernel::CommerceCustomer {
                         company: selected_company.as_ref(),
                         name: &row.name,
                         contact: None,
                         party: Some((row.id, row.revision)),
+                        tax,
                     }
                 }
                 _ => return Err(conflict()),
@@ -536,7 +557,7 @@ pub async fn workspace_filtered(
         vec![]
     };
     let mut orders = if context.access.holds(&["orders.read"]) {
-        let statement = "SELECT json_build_object('id',o.id,'customerName',o.customer_name,'companyId',to_jsonb(o)->'company_id','companyRevision',to_jsonb(o)->'company_revision','companyCode',to_jsonb(o)->'company_code','companyName',to_jsonb(o)->'company_name','customerContactId',o.customer_contact_id,'customerContactRevision',o.customer_contact_revision,'customerPartyId',o.customer_party_id,'customerPartyRevision',o.customer_party_revision,'state',o.state,'total',o.total_estimate,'currency',o.currency,'revision',o.revision,'ownerId',o.owner_id,'lines',coalesce((SELECT json_agg(json_build_object('id',l.id,'productId',l.product_id,'title',l.title,'quantity',l.quantity,'price',l.price,'returnedQuantity',l.returned_quantity) ORDER BY l.id) FROM archava_commerce.order_lines l WHERE l.tenant_id=o.tenant_id AND l.order_id=o.id),'[]'::json)) FROM archava_commerce.orders o WHERE o.tenant_id=$1 AND o.managed_by IS NULL AND (to_jsonb(o)->>'company_id')::uuid IS NOT DISTINCT FROM $5::uuid AND ($2 OR o.owner_id=$3) AND ($6::uuid IS NULL OR o.id=$6) AND ($4='' OR strpos(lower(o.customer_name),lower($4))>0) ORDER BY o.created_at DESC,o.id LIMIT 100";
+        let statement = "SELECT json_build_object('id',o.id,'customerName',o.customer_name,'companyId',to_jsonb(o)->'company_id','companyRevision',to_jsonb(o)->'company_revision','companyCode',to_jsonb(o)->'company_code','companyName',to_jsonb(o)->'company_name','customerContactId',o.customer_contact_id,'customerContactRevision',o.customer_contact_revision,'customerPartyId',o.customer_party_id,'customerPartyRevision',o.customer_party_revision,'state',o.state,'total',o.total_estimate,'currency',o.currency,'taxCode',to_jsonb(o)->'tax_code','priceIncludesTax',to_jsonb(o)->'price_includes_tax','revision',o.revision,'ownerId',o.owner_id,'lines',coalesce((SELECT json_agg(json_build_object('id',l.id,'productId',l.product_id,'title',l.title,'quantity',l.quantity,'price',l.price,'returnedQuantity',l.returned_quantity) ORDER BY l.id) FROM archava_commerce.order_lines l WHERE l.tenant_id=o.tenant_id AND l.order_id=o.id),'[]'::json)) FROM archava_commerce.orders o WHERE o.tenant_id=$1 AND o.managed_by IS NULL AND (to_jsonb(o)->>'company_id')::uuid IS NOT DISTINCT FROM $5::uuid AND ($2 OR o.owner_id=$3) AND ($6::uuid IS NULL OR o.id=$6) AND ($4='' OR strpos(lower(o.customer_name),lower($4))>0) ORDER BY o.created_at DESC,o.id LIMIT 100";
         let statement = if company_columns {
             statement.replace("(to_jsonb(o)->>'company_id')::uuid", "o.company_id")
         } else {
@@ -565,7 +586,55 @@ pub async fn workspace_filtered(
         Some(company) => kernel::company_trade_currency(connection, tenant, company).await?,
         None => "IDR".to_owned(),
     };
+    // The output tax codes a new order of the selected company may name: the
+    // confirmed versions of its book that apply on the database's current
+    // date (TAX.md stage B). The caller has already been checked for the
+    // company and reads orders; the list carries no account and no person.
+    // The order's insert guard stays the authority.
+    let tax_codes = match company {
+        Some(company) if context.access.holds(&["orders.read"]) => {
+            applicable_output_tax_codes(connection, tenant, company).await?
+        }
+        _ => Value::Array(vec![]),
+    };
     Ok(
-        json!({"products":products,"orders":orders,"tradeCurrency":trade_currency,"pageLimit":100,"permissions":context.access.permissions,"scope":context.access.scope}),
+        json!({"products":products,"orders":orders,"tradeCurrency":trade_currency,"taxCodes":tax_codes,"taxNotice":TAX_NOTICE,"pageLimit":100,"permissions":context.access.permissions,"scope":context.access.scope}),
     )
+}
+
+/// The sentence shown wherever a sales order names or offers a tax code
+/// (TAX.md rule 1).
+const TAX_NOTICE: &str = "Tax codes are entered by your company; Archava does not verify tax rates or rules. An order names a tax code and whether its prices include the tax; the invoice made from the order takes the version that applies on the invoice date.";
+
+/// The confirmed output tax code versions of a company's book that apply on
+/// the database's current date, or none when the Accounting ledger or the
+/// book is absent.
+async fn applicable_output_tax_codes(
+    connection: &mut PgConnection,
+    tenant: &str,
+    company: Uuid,
+) -> Result<Value, PurchaseError> {
+    let installed: bool =
+        sqlx::query_scalar("SELECT to_regclass('archava_accounting.tax_codes') IS NOT NULL")
+            .fetch_one(&mut *connection)
+            .await
+            .map_err(db)?;
+    if !installed {
+        return Ok(Value::Array(vec![]));
+    }
+    sqlx::query_scalar::<_, Value>(
+        "SELECT coalesce(json_agg(c.row ORDER BY c.code),'[]'::json) FROM (SELECT t.code,json_build_object('code',t.code,'version',t.version,\
+         'rate',json_build_object('numerator',t.rate_numerator,'denominator',t.rate_denominator),\
+         'base',json_build_object('numerator',t.base_numerator,'denominator',t.base_denominator),\
+         'effectiveFrom',t.effective_from,'effectiveTo',t.effective_to,'appliesOn',current_date,\
+         'enteredByCompany',true,'verifiedByArchava',false) AS row \
+         FROM archava_accounting.tax_codes t JOIN archava_accounting.books b ON b.tenant_id=t.tenant_id AND b.id=t.book_id \
+         WHERE t.tenant_id=$1 AND b.company_id=$2 AND t.kind='output' AND t.state IN ('confirmed','retired') \
+         AND current_date BETWEEN t.effective_from AND coalesce(t.effective_to,DATE 'infinity') ORDER BY t.code LIMIT 100) c",
+    )
+    .bind(tenant)
+    .bind(company)
+    .fetch_one(connection)
+    .await
+    .map_err(db)
 }

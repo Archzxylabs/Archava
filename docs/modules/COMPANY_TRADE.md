@@ -49,8 +49,23 @@ New commands:
 | --- | --- | --- |
 | Commerce | `product.create_for_company` | `companyId`, `expectedCompanyRevision` |
 | Commerce | `stock.adjust_for_company` | `companyId`, `expectedCompanyRevision` |
-| Commerce | `order.create_for_company` | Company ID/revision and published customer party ID/revision |
+| Commerce | `order.create_for_company` | Company ID/revision and published customer party ID/revision; optionally `taxCode` with `priceIncludesTax` |
 | Purchasing | `order.create-for-company` | Company ID/revision, supplier and offer lines |
+
+A company sales order may name one output tax code of its company's book and say
+whether its prices include the tax ([tax on documents](../architecture/TAX.md),
+stage B). The two members are stated together; the code must be confirmed and apply
+on the day the order is created, otherwise the order is refused with a specific
+reason. The order stores the code and the basis only
+([Commerce 012](../../migrations/commerce-pg/012_sales_order_tax.sql)): prices and the
+order total are unchanged and no rate is stored. The invoice made from the order takes
+the version that applies on the invoice date ([Billing](BILLING_MODULE.md#tax-on-an-invoice-from-an-order)).
+An order without a company cannot carry a tax code. The Commerce workspace read
+returns `taxCode` and `priceIncludesTax` per order and, for the selected company,
+`taxCodes`: the confirmed output versions that apply today. That list needs the
+`orders.read` grant and access to the company, not an Accounting grant. Tax codes are
+entered by the company; Archava verifies no rate. The checkout document is not signed
+for an order that names a tax code.
 
 Supplier and party masters remain workspace records. Offers derive company from
 their immutable product; new offers/POs retain the current supplier-party checks.

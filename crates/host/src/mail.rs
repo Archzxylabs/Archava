@@ -158,6 +158,82 @@ fn format_money(amount_minor: i64, currency: &str) -> String {
     }
 }
 
+/// The tax of a taxed invoice as its mail states it: the corrected document
+/// total (gross plus corrections) split into net and tax, and the tax code the
+/// invoice stored (TAX.md rule 6).
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct MailTax {
+    /// `VAT 11%`, or `VAT 12% of 11/12 of the price`.
+    label: String,
+    price_includes_tax: bool,
+    net_minor: i64,
+    tax_minor: i64,
+    total_minor: i64,
+}
+
+impl MailTax {
+    /// Reads the stored snapshot of an invoice row (`to_jsonb`), or `None` for
+    /// an untaxed invoice and for an install without the tax columns.
+    fn of(stored: &serde_json::Value) -> Option<Self> {
+        use archava_domain::erp::tax::{describe, Fraction};
+        if stored["tax_code_id"].is_null() {
+            return None;
+        }
+        let integer = |name: &str| stored[name].as_i64();
+        let part = |name: &str| integer(name).and_then(|n| i32::try_from(n).ok());
+        let total_minor = integer("gross_minor")?.checked_add(integer("correction_minor")?)?;
+        let tax_minor = integer("tax_minor")?.checked_add(integer("correction_tax_minor")?)?;
+        Some(Self {
+            label: describe(
+                stored["tax_code"].as_str()?,
+                Fraction {
+                    numerator: part("tax_rate_numerator")?,
+                    denominator: part("tax_rate_denominator")?,
+                },
+                Fraction {
+                    numerator: part("tax_base_numerator")?,
+                    denominator: part("tax_base_denominator")?,
+                },
+            ),
+            price_includes_tax: stored["price_includes_tax"].as_bool()?,
+            net_minor: total_minor.checked_sub(tax_minor)?,
+            tax_minor,
+            total_minor,
+        })
+    }
+    fn basis(&self) -> &'static str {
+        if self.price_includes_tax {
+            "included in the prices"
+        } else {
+            "added to the prices"
+        }
+    }
+    /// The plain-text block: net, tax with its code and rate, total, and the
+    /// notice that the company entered the code (rule 1).
+    fn text(&self, currency: &str) -> String {
+        format!(
+            "\nNet: {}\nTax ({}, {}): {}\nTotal: {}\n{}\n",
+            format_money(self.net_minor, currency),
+            self.label,
+            self.basis(),
+            format_money(self.tax_minor, currency),
+            format_money(self.total_minor, currency),
+            archava_domain::erp::tax::DOCUMENT_NOTICE
+        )
+    }
+    fn html(&self, currency: &str) -> String {
+        format!(
+            "<h3>Tax</h3><ul><li>Net: {}</li><li>Tax ({}, {}): {}</li><li>Total: <strong>{}</strong></li></ul><p>{}</p>",
+            html_escape(&format_money(self.net_minor, currency)),
+            html_escape(&self.label),
+            self.basis(),
+            html_escape(&format_money(self.tax_minor, currency)),
+            html_escape(&format_money(self.total_minor, currency)),
+            html_escape(archava_domain::erp::tax::DOCUMENT_NOTICE)
+        )
+    }
+}
+
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct SendEmailRequest {
@@ -395,7 +471,7 @@ pub(crate) async fn send_invoice_email(
         }
 
         let invoice_row = sqlx::query(
-            "SELECT invoice_code, customer_ref, currency, status, gross_minor, outstanding_minor, (to_jsonb(i)->>'company_name') AS company_name \
+            "SELECT invoice_code, customer_ref, currency, status, gross_minor, outstanding_minor, (to_jsonb(i)->>'company_name') AS company_name, to_jsonb(i) AS stored \
              FROM archava_billing.invoices i WHERE tenant_id = $1 AND id = $2",
         )
         .bind(query.tenant.as_str())
@@ -426,6 +502,11 @@ pub(crate) async fn send_invoice_email(
         .map_err(|e| ErpGateError::Database("billing", e))?;
 
         let company_issuer=invoice_row.as_ref().and_then(|row|row.try_get::<Option<String>,_>("company_name").ok().flatten());
+        // An untaxed invoice has no tax block and its mail is unchanged.
+        let invoice_tax = invoice_row
+            .as_ref()
+            .and_then(|row| row.try_get::<serde_json::Value, _>("stored").ok())
+            .and_then(|stored| MailTax::of(&stored));
         let (invoice_code, customer_ref, currency, outstanding_minor): (
             String,
             String,
@@ -479,6 +560,9 @@ pub(crate) async fn send_invoice_email(
                     text_content.push_str(&format!("- {desc} (x{qty}): {formatted_line}\n"));
                 }
             }
+            if let Some(tax) = &invoice_tax {
+                text_content.push_str(&tax.text(&currency));
+            }
             if let Some(ref url) = payment_link {
                 text_content.push_str(&format!("\nPay online: {url}\n"));
             }
@@ -506,6 +590,9 @@ pub(crate) async fn send_invoice_email(
                     ));
                 }
                 html_content.push_str("</ul>");
+            }
+            if let Some(tax) = &invoice_tax {
+                html_content.push_str(&tax.html(&currency));
             }
             if let Some(ref url) = payment_link {
                 html_content.push_str(&format!(
@@ -680,7 +767,87 @@ pub(crate) async fn list_invoice_emails(
 
 #[cfg(test)]
 mod tests {
-    use super::format_money;
+    use super::{format_money, MailTax};
+    use serde_json::json;
+
+    fn stored(
+        inclusive: bool,
+        gross: i64,
+        tax: i64,
+        correction: i64,
+        correction_tax: i64,
+    ) -> serde_json::Value {
+        json!({"tax_code_id":"01933df1-8d5e-783f-9b1e-1d3f9a2b3c4d","tax_code":"VAT","tax_code_version":1,"tax_kind":"output",
+            "tax_rate_numerator":11,"tax_rate_denominator":100,"tax_base_numerator":1,"tax_base_denominator":1,
+            "price_includes_tax":inclusive,"gross_minor":gross,"tax_minor":tax,"correction_minor":correction,"correction_tax_minor":correction_tax})
+    }
+
+    #[test]
+    fn a_taxed_invoice_mail_states_net_tax_total_the_code_and_the_company_notice() {
+        let tax = MailTax::of(&stored(false, 33_300, 3_300, 0, 0)).unwrap();
+        assert_eq!(
+            tax.text("IDR"),
+            "\nNet: 30000 IDR\nTax (VAT 11%, added to the prices): 3300 IDR\nTotal: 33300 IDR\nTax codes are entered by the company; Archava does not verify tax rates or rules.\n"
+        );
+        let html = tax.html("IDR");
+        assert!(html.contains("<li>Net: 30000 IDR</li>"), "{html}");
+        assert!(
+            html.contains("<li>Tax (VAT 11%, added to the prices): 3300 IDR</li>"),
+            "{html}"
+        );
+        assert!(
+            html.contains("<li>Total: <strong>33300 IDR</strong></li>"),
+            "{html}"
+        );
+        assert!(
+            html.contains("Archava does not verify tax rates or rules."),
+            "{html}"
+        );
+
+        // Minor units, an inclusive basis and a correction: the corrected
+        // total is split, and the parts still add up.
+        let tax = MailTax::of(&stored(true, 1_109, 110, -109, -11)).unwrap();
+        assert_eq!(
+            (tax.net_minor, tax.tax_minor, tax.total_minor),
+            (901, 99, 1_000)
+        );
+        let text = tax.text("USD");
+        assert!(text.contains("Net: 9.01 USD"), "{text}");
+        assert!(
+            text.contains("Tax (VAT 11%, included in the prices): 0.99 USD"),
+            "{text}"
+        );
+        assert!(text.contains("Total: 10.00 USD"), "{text}");
+
+        // A base fraction is named, and a code cannot inject markup.
+        let mut scaled = stored(false, 33_300, 3_300, 0, 0);
+        scaled["tax_rate_numerator"] = json!(12);
+        scaled["tax_base_numerator"] = json!(11);
+        scaled["tax_base_denominator"] = json!(12);
+        scaled["tax_code"] = json!("<b>");
+        let tax = MailTax::of(&scaled).unwrap();
+        assert!(tax
+            .text("IDR")
+            .contains("Tax (<b> 12% of 11/12 of the price, added to the prices): 3300 IDR"));
+        assert!(tax
+            .html("IDR")
+            .contains("Tax (&lt;b&gt; 12% of 11/12 of the price, added to the prices)"));
+    }
+
+    #[test]
+    fn an_untaxed_invoice_has_no_tax_block() {
+        assert_eq!(
+            MailTax::of(
+                &json!({"gross_minor":30_000,"correction_minor":0,"tax_minor":0,"correction_tax_minor":0,"tax_code_id":null})
+            ),
+            None
+        );
+        // An install whose Billing ledger predates the tax columns.
+        assert_eq!(
+            MailTax::of(&json!({"gross_minor":30_000,"correction_minor":0})),
+            None
+        );
+    }
 
     #[test]
     fn invoice_mail_amounts_follow_the_invoice_currency() {

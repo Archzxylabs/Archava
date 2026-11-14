@@ -33,7 +33,10 @@ export async function verifyPriorNative({previousRoot,packageRoot,facts,scratch,
  const bookGuard=manifest=>manifest.ledgers.find(l=>l.namespace==='archava_accounting')?.migrations.some(m=>m.id==='015_book_currency_guard')===true
  const taxCodes=manifest=>manifest.ledgers.find(l=>l.namespace==='archava_accounting')?.migrations.some(m=>m.id==='016_tax_codes')===true
  const tradeCurrency=manifest=>manifest.ledgers.find(l=>l.namespace==='archava_commerce')?.migrations.some(m=>m.id==='011_company_trade_currency')===true
- const commerceAdded=tradeCurrency(newManifest)&&!tradeCurrency(oldManifest)?['011_company_trade_currency']:[]
+ const salesTax=manifest=>manifest.ledgers.find(l=>l.namespace==='archava_commerce')?.migrations.some(m=>m.id==='012_sales_order_tax')===true
+ const commerceAdded=[...(tradeCurrency(newManifest)&&!tradeCurrency(oldManifest)?['011_company_trade_currency']:[]),...(salesTax(newManifest)&&!salesTax(oldManifest)?['012_sales_order_tax']:[])]
+ const invoiceTax=manifest=>manifest.ledgers.find(l=>l.namespace==='archava_billing')?.migrations.some(m=>m.id==='009_invoice_tax_snapshot')===true
+ const billingAdded=invoiceTax(newManifest)&&!invoiceTax(oldManifest)?['009_invoice_tax_snapshot']:[]
  const purchaseCurrency=manifest=>manifest.ledgers.find(l=>l.namespace==='archava_purchasing')?.migrations.some(m=>m.id==='007_company_trade_currency')===true
  const purchasingAdded=purchaseCurrency(newManifest)&&!purchaseCurrency(oldManifest)?['007_company_trade_currency']:[]
  const oldDisclosure=oldManifest.ledgers.find(l=>l.namespace==='archava_owner')?.migrations.some(m=>m.id==='004_ai_disclosure_boundary')===true
@@ -50,7 +53,9 @@ export async function verifyPriorNative({previousRoot,packageRoot,facts,scratch,
   assert.deepEqual(newCommerce.migrations.slice(oldCommerce.migrations.length).map(m=>m.id),commerceAdded)
   const oldPurchasing=oldManifest.ledgers.find(l=>l.namespace==='archava_purchasing'),newPurchasing=newManifest.ledgers.find(l=>l.namespace==='archava_purchasing')
   assert.deepEqual(newPurchasing.migrations.slice(oldPurchasing.migrations.length).map(m=>m.id),purchasingAdded)
-  assert.equal(expectedAdded,1+accountingAdded.length+commerceAdded.length+purchasingAdded.length,'This prior profile adds exactly the Owner disclosure and the declared bank/payable and trade-currency migrations')
+  const oldBilling=oldManifest.ledgers.find(l=>l.namespace==='archava_billing'),newBilling=newManifest.ledgers.find(l=>l.namespace==='archava_billing')
+  assert.deepEqual(newBilling.migrations.slice(oldBilling.migrations.length).map(m=>m.id),billingAdded)
+  assert.equal(expectedAdded,1+accountingAdded.length+commerceAdded.length+purchasingAdded.length+billingAdded.length,'This prior profile adds exactly the Owner disclosure and the declared bank/payable, trade-currency and tax migrations')
  }
  const db=`archava_finupgrade_${randomUUID().slice(0,8)}`,rollback=`${db}_rollback`,fresh=`${db}_fresh`
  assert.match(db,/^archava_finupgrade_[0-9a-f]{8}$/)
@@ -200,6 +205,13 @@ export async function verifyPriorNative({previousRoot,packageRoot,facts,scratch,
   if(taxCodes(newManifest)&&!taxCodes(oldManifest)){
    assert.equal(sql(db,'SELECT count(*) FROM archava_accounting.tax_codes'),'0','Upgrade must not invent tax codes or rates')
    assert.equal(sql(db,"SELECT count(*) FROM archava_accounting.memberships WHERE permissions&&ARRAY['tax.read','tax.manage']::text[]"),'0','Upgrade must not grant existing users tax code authority')
+  }
+  if(invoiceTax(newManifest)&&!invoiceTax(oldManifest)){
+   assert.equal(sql(db,'SELECT count(*) FROM archava_billing.invoices WHERE tax_minor<>0 OR correction_tax_minor<>0 OR tax_code_id IS NOT NULL'),'0','Upgrade must not tax an existing invoice')
+   assert.equal(sql(db,'SELECT count(*) FROM archava_billing.invoice_corrections WHERE tax_minor<>0'),'0','Upgrade must not split an existing correction into tax')
+  }
+  if(salesTax(newManifest)&&!salesTax(oldManifest)){
+   assert.equal(sql(db,'SELECT count(*) FROM archava_commerce.orders WHERE tax_code IS NOT NULL OR price_includes_tax IS NOT NULL'),'0','Upgrade must not put a tax code on an existing sales order')
   }
   if(addedBank){
    assert.equal(sql(db,`SELECT ${bankTables.map(table=>`(SELECT count(*) FROM archava_accounting.${table})`).join('+')}`),'0','Upgrade must not invent bank accounts, statements, matches, opening policies or reviews')

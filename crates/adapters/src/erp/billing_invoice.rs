@@ -8,6 +8,7 @@ use super::{
 use archava_domain::erp::{
     billing::{BillingAccess, BillingCommand, BillingReceipt, PricedLine},
     purchasing::PurchasePrincipal,
+    tax::{DocumentTax, Fraction, TaxRule},
     ErpScope,
 };
 use sqlx::{PgConnection, Row};
@@ -51,12 +52,95 @@ struct Draft {
     customer_contact: Option<(Uuid, i32)>,
     customer_party: Option<(Uuid, i32)>,
     company: Option<(Uuid, i32, String, String)>,
+    tax: Option<TaxSnapshot>,
+}
+
+/// What an invoice was taxed with (TAX.md rule 6): the tax code version that
+/// applies on the invoice date and the amounts computed from it. Stored with
+/// the invoice; the guards of Billing 009 recompute and compare all of it.
+struct TaxSnapshot {
+    code_id: Uuid,
+    code: String,
+    version: i32,
+    rate: Fraction,
+    base: Fraction,
+    price_includes_tax: bool,
+    amounts: DocumentTax,
+}
+
+/// The order's tax code and price basis, read through jsonb so an install
+/// whose Commerce ledger predates them reads an untaxed order.
+async fn order_tax(
+    connection: &mut PgConnection,
+    tenant: &str,
+    order: Uuid,
+) -> Result<Option<(String, bool)>, PurchaseError> {
+    let stated: (Option<String>, Option<bool>) = sqlx::query_as("SELECT to_jsonb(o)->>'tax_code',(to_jsonb(o)->>'price_includes_tax')::boolean FROM archava_commerce.orders o WHERE tenant_id=$1 AND id=$2")
+        .bind(tenant).bind(order).fetch_one(connection).await.map_err(refuses)?;
+    match stated {
+        (None, None) => Ok(None),
+        (Some(code), Some(inclusive)) => Ok(Some((code, inclusive))),
+        _ => Err(conflict()),
+    }
+}
+
+/// Taxes an order total with the version of the order's tax code that applies
+/// on the invoice date: the database's date of the invoice's `created_at`
+/// (`now`, the command's one clock sample), the only date an invoice has. The
+/// version row is share-locked so it cannot be retired under this transaction.
+/// No applicable version refuses the invoice; it is never created untaxed.
+async fn tax_snapshot(
+    connection: &mut PgConnection,
+    tenant: &str,
+    company: Uuid,
+    code: String,
+    price_includes_tax: bool,
+    total: i64,
+    now: &str,
+) -> Result<TaxSnapshot, PurchaseError> {
+    let version: Option<(Uuid, i32, i32, i32, i32, i32)> = sqlx::query_as(
+        "SELECT t.id,t.version,t.rate_numerator,t.rate_denominator,t.base_numerator,t.base_denominator \
+         FROM archava_accounting.tax_codes t JOIN archava_accounting.books b ON b.tenant_id=t.tenant_id AND b.id=t.book_id \
+         WHERE t.tenant_id=$1 AND b.company_id=$2 AND t.code=$3 AND t.kind='output' AND t.state IN ('confirmed','retired') \
+         AND $4::timestamptz::date BETWEEN t.effective_from AND coalesce(t.effective_to,DATE 'infinity') FOR SHARE OF t",
+    )
+    .bind(tenant)
+    .bind(company)
+    .bind(&code)
+    .bind(now)
+    .fetch_optional(connection)
+    .await
+    .map_err(refuses)?;
+    let Some((code_id, version, rate_n, rate_d, base_n, base_d)) = version else {
+        return Err(refused("invoice_tax_code_not_applicable"));
+    };
+    let rate = Fraction {
+        numerator: rate_n,
+        denominator: rate_d,
+    };
+    let base = Fraction {
+        numerator: base_n,
+        denominator: base_d,
+    };
+    let amounts = TaxRule::new(rate, base)
+        .and_then(|rule| rule.document(total, price_includes_tax))
+        .map_err(|_| conflict())?;
+    Ok(TaxSnapshot {
+        code_id,
+        code,
+        version,
+        rate,
+        base,
+        price_includes_tax,
+        amounts,
+    })
 }
 
 async fn draft(
     connection: &mut PgConnection,
     tenant: &str,
     command: &BillingCommand,
+    now: &str,
 ) -> Result<Draft, PurchaseError> {
     match command {
         BillingCommand::CreateInvoice {
@@ -76,6 +160,8 @@ async fn draft(
             customer_contact: None,
             customer_party: None,
             company: None,
+            // A manual invoice has no company and carries no tax.
+            tax: None,
         }),
         BillingCommand::CreateInvoiceFromOrder {
             invoice_code,
@@ -144,6 +230,16 @@ async fn draft(
             } else {
                 None
             };
+            // The order names the tax code and the price basis; the rate is
+            // the one that applies now, on the invoice date.
+            let tax = match (order_tax(connection, tenant, order_id).await?, &company) {
+                (None, _) => None,
+                (Some((code, inclusive)), Some((company_id, ..))) => Some(
+                    tax_snapshot(connection, tenant, *company_id, code, inclusive, total, now)
+                        .await?,
+                ),
+                (Some(_), None) => return Err(conflict()),
+            };
             Ok(Draft {
                 code: invoice_code.clone(),
                 customer: order.customer_name,
@@ -155,6 +251,7 @@ async fn draft(
                 customer_contact,
                 customer_party,
                 company,
+                tax,
                 source: Some((
                     order_id,
                     i32::try_from(order.revision).map_err(|_| conflict())?,
@@ -184,10 +281,17 @@ pub(super) async fn create(
     command: &BillingCommand,
     now: &str,
 ) -> Result<BillingReceipt, PurchaseError> {
-    let draft = draft(connection, tenant, command).await?;
-    let gross = total(&draft.lines)?;
+    let draft = draft(connection, tenant, command, now).await?;
+    // The amount the customer owes: the priced lines, plus the tax when the
+    // order's prices exclude it. An untaxed invoice is its lines, as before.
+    let gross = match &draft.tax {
+        Some(tax) => tax.amounts.gross,
+        None => total(&draft.lines)?,
+    };
     let invoice = Uuid::new_v4();
-    let statement = if draft.company.is_some() {
+    let statement = if draft.tax.is_some() {
+        "INSERT INTO archava_billing.invoices(tenant_id,id,invoice_code,customer_ref,currency,status,gross_minor,outstanding_minor,consumer_ref,owner_id,created_at,source_order_id,source_order_revision,customer_contact_id,customer_contact_revision,customer_party_id,customer_party_revision,company_id,company_revision,company_code,company_name,tax_minor,tax_code_id,tax_code,tax_code_version,tax_kind,tax_rate_numerator,tax_rate_denominator,tax_base_numerator,tax_base_denominator,price_includes_tax) VALUES($1,$2,$3,$4,$5,'draft',$6,$6,$7,$8,$9::timestamptz,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,'output',$24,$25,$26,$27,$28)"
+    } else if draft.company.is_some() {
         "INSERT INTO archava_billing.invoices(tenant_id,id,invoice_code,customer_ref,currency,status,gross_minor,outstanding_minor,consumer_ref,owner_id,created_at,source_order_id,source_order_revision,customer_contact_id,customer_contact_revision,customer_party_id,customer_party_revision,company_id,company_revision,company_code,company_name) VALUES($1,$2,$3,$4,$5,'draft',$6,$6,$7,$8,$9::timestamptz,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)"
     } else {
         "INSERT INTO archava_billing.invoices(tenant_id,id,invoice_code,customer_ref,currency,status,gross_minor,outstanding_minor,consumer_ref,owner_id,created_at,source_order_id,source_order_revision,customer_contact_id,customer_contact_revision,customer_party_id,customer_party_revision) VALUES($1,$2,$3,$4,$5,'draft',$6,$6,$7,$8,$9::timestamptz,$10,$11,$12,$13,$14,$15)"
@@ -210,6 +314,20 @@ pub(super) async fn create(
         .bind(draft.customer_party.map(|c| c.1));
     let query = if let Some((id, revision, code, name)) = &draft.company {
         query.bind(id).bind(revision).bind(code).bind(name)
+    } else {
+        query
+    };
+    let query = if let Some(tax) = &draft.tax {
+        query
+            .bind(tax.amounts.tax)
+            .bind(tax.code_id)
+            .bind(&tax.code)
+            .bind(tax.version)
+            .bind(tax.rate.numerator)
+            .bind(tax.rate.denominator)
+            .bind(tax.base.numerator)
+            .bind(tax.base.denominator)
+            .bind(tax.price_includes_tax)
     } else {
         query
     };
