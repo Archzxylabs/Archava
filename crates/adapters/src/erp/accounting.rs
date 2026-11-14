@@ -33,7 +33,10 @@ pub use reads::{reports, workspace};
 use serde_json::{json, Value};
 use sqlx::{PgConnection, Row};
 pub use subledger::{subledger_report, SubledgerPage, SubledgerSide};
-pub use tax_report::tax_report;
+pub use tax_report::{
+    tax_report, tax_report_documents, tax_report_documents_csv, TaxDocumentsExport,
+    TaxDocumentsPage, DOCUMENTS_NOTICE as TAX_DOCUMENTS_NOTICE,
+};
 use uuid::Uuid;
 
 pub const TABLES: &[&str] = &[

@@ -14,6 +14,8 @@ mod parties;
 mod party_transactions;
 #[path = "workspace_flows/supplier_identity.rs"]
 mod supplier_identity;
+#[path = "workspace_flows/tax_registration.rs"]
+mod tax_registration;
 use archava_host::{router, router::AllReadiness, AppState, Ledger};
 use archava_pg_fixture::{provision, Fixture};
 use axum::{http::StatusCode, Router};

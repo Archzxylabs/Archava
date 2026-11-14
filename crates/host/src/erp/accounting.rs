@@ -104,6 +104,18 @@ pub struct ReportQuery {
 }
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct TaxDocumentsQuery {
+    pub tenant: TenantId,
+    pub book_id: Uuid,
+    pub from: String,
+    pub to: String,
+    /// The `sourceId` of the last row of the page before.
+    pub cursor: Option<Uuid>,
+    #[serde(default = "page_limit")]
+    pub limit: i64,
+}
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct SubledgerQuery {
     pub tenant: TenantId,
     pub book_id: Uuid,
@@ -607,6 +619,157 @@ pub async fn tax_report(
         Err(e) => {
             let _ = tx.rollback().await;
             e
+        }
+    }
+}
+
+/// The posted taxed sources behind the tax report for a period, one row per
+/// source with its document, paged. Same grants and period as the report.
+/// Read-only.
+pub async fn tax_report_documents(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    query: Result<Query<TaxDocumentsQuery>, QueryRejection>,
+) -> Response {
+    let Query(input) = match query {
+        Ok(value) => value,
+        Err(e) => {
+            let (s, b) = query_rejection(e);
+            return (s, Json(json!(b.0)));
+        }
+    };
+    let page = store::TaxDocumentsPage {
+        from: &input.from,
+        to: &input.to,
+        cursor: input.cursor,
+        limit: input.limit,
+    };
+    if !page.valid() {
+        return refusal(
+            StatusCode::BAD_REQUEST,
+            "invalid_query",
+            "Choose a valid tax reporting date range and a page size from 1 to 100.",
+        );
+    }
+    let session = match authenticate(&state, &headers, false).await {
+        Ok(value) => value,
+        Err((s, b)) => return (s, Json(json!(b.0))),
+    };
+    let principal = PurchasePrincipal::human(session.principal_id);
+    let mut tx = match begin(&state, input.tenant.clone()).await {
+        Ok(value) => value,
+        Err(e) => return e,
+    };
+    let outcome = async {
+        let conn = tx.checked_executor().await.map_err(unavailable)?;
+        let access = store::access(conn, input.tenant.as_str(), &principal)
+            .await
+            .map_err(error)?;
+        let mut value = store::tax_report_documents(
+            conn,
+            input.tenant.as_str(),
+            &principal,
+            &access,
+            input.book_id,
+            page,
+        )
+        .await
+        .map_err(error)?;
+        let now: String = sqlx::query_scalar("SELECT clock_timestamp()::text")
+            .fetch_one(conn)
+            .await
+            .map_err(unavailable)?;
+        value["observedAt"] = json!(now);
+        Ok::<_, Response>(value)
+    }
+    .await;
+    match outcome {
+        Ok(value) => match tx.commit().await {
+            Ok(()) => (StatusCode::OK, Json(value)),
+            Err(e) => commit_error(e),
+        },
+        Err(e) => {
+            let _ = tx.rollback().await;
+            e
+        }
+    }
+}
+
+/// The documents listing of a period as a CSV download: a draft export of
+/// company-entered data, not a tax return and not in any authority's import
+/// format. Same grants and period as the report; a refusal is the usual JSON.
+pub async fn tax_report_documents_csv(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    query: Result<Query<ReportQuery>, QueryRejection>,
+) -> axum::response::Response {
+    use axum::http::header::{CACHE_CONTROL, CONTENT_DISPOSITION, CONTENT_TYPE};
+    use axum::response::IntoResponse;
+    let Query(input) = match query {
+        Ok(value) => value,
+        Err(e) => {
+            let (s, b) = query_rejection(e);
+            return (s, Json(json!(b.0))).into_response();
+        }
+    };
+    if parse_calendar_date(&input.from).is_none()
+        || parse_calendar_date(&input.to).is_none()
+        || input.from > input.to
+    {
+        return refusal(
+            StatusCode::BAD_REQUEST,
+            "invalid_query",
+            "Choose a valid tax reporting date range.",
+        )
+        .into_response();
+    }
+    let session = match authenticate(&state, &headers, false).await {
+        Ok(value) => value,
+        Err((s, b)) => return (s, Json(json!(b.0))).into_response(),
+    };
+    let principal = PurchasePrincipal::human(session.principal_id);
+    let mut tx = match begin(&state, input.tenant.clone()).await {
+        Ok(value) => value,
+        Err(e) => return e.into_response(),
+    };
+    let outcome = async {
+        let conn = tx.checked_executor().await.map_err(unavailable)?;
+        let access = store::access(conn, input.tenant.as_str(), &principal)
+            .await
+            .map_err(error)?;
+        store::tax_report_documents_csv(
+            conn,
+            input.tenant.as_str(),
+            &principal,
+            &access,
+            input.book_id,
+            &input.from,
+            &input.to,
+        )
+        .await
+        .map_err(error)
+    }
+    .await;
+    match outcome {
+        Ok(export) => match tx.commit().await {
+            Ok(()) => (
+                StatusCode::OK,
+                [
+                    (CONTENT_TYPE, "text/csv; charset=utf-8".to_string()),
+                    (
+                        CONTENT_DISPOSITION,
+                        format!("attachment; filename=\"{}\"", export.filename),
+                    ),
+                    (CACHE_CONTROL, "no-store".to_string()),
+                ],
+                export.body,
+            )
+                .into_response(),
+            Err(e) => commit_error(e).into_response(),
+        },
+        Err(e) => {
+            let _ = tx.rollback().await;
+            e.into_response()
         }
     }
 }

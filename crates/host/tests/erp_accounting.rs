@@ -22,6 +22,8 @@ mod stock_sources;
 mod subledger;
 #[path = "erp_accounting/tax.rs"]
 mod tax;
+#[path = "erp_accounting/tax_documents.rs"]
+mod tax_documents;
 #[path = "erp_accounting/tax_posting.rs"]
 mod tax_posting;
 #[path = "erp_accounting/tax_purchases.rs"]

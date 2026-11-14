@@ -5,6 +5,7 @@
 //! for. Only a confirmed version applies.
 use super::*;
 use archava_domain::erp::tax::Fraction;
+use archava_domain::erp::tax_templates::{self, TaxTemplate};
 
 /// Shown wherever a tax code is listed (TAX.md rule 1).
 const NOTICE: &str =
@@ -99,9 +100,103 @@ fn panel(data: &Value) -> Option<impl IntoView> {
     )
 }
 
+/// The templates offered on a book kept in `currency`: those of every market
+/// the catalogue lists for it. A book in another currency is offered none,
+/// and its screen is what it was.
+fn templates_for(currency: &str) -> Vec<&'static TaxTemplate> {
+    tax_templates::markets_for_currency(currency)
+        .into_iter()
+        .flat_map(|market| market.templates.iter())
+        .collect()
+}
+/// How a template is listed: its market, what its own numbers are and the
+/// code text it suggests.
+fn template_label(template: &TaxTemplate) -> String {
+    let market = tax_templates::catalogue()
+        .markets
+        .iter()
+        .find(|market| market.code == template.market)
+        .map_or(template.market.as_str(), |market| market.name.as_str());
+    format!(
+        "{market} · {} · suggested code {}",
+        template.label, template.code
+    )
+}
+/// The form-prefill request for a template: the `tax_code.create` form with
+/// the template's code text, kind, rate and base. Nothing is created: the
+/// book, the control account, the first day and the reason stay the person's
+/// own entries, and the code still needs its separate confirmation.
+pub(in crate::operations) fn template_request(id: &str) -> Option<Value> {
+    tax_templates::by_id(id).map(|template| {
+        json!({"action":"tax_code.create","template":template.id,"values":template.form_values()})
+    })
+}
+/// What the picker says once a template filled the form.
+fn applied_line(template: &TaxTemplate) -> String {
+    format!(
+        "The form \"Enter a company tax code\" now holds the template \"{}\" (not verified). Choose your control account and the first day, check every value, then review and save it. It applies only after \"Confirm a company tax code version\".",
+        template.label
+    )
+}
+/// The picker for the given templates; `applied` is the template that filled
+/// the form, if one did.
+fn picker(
+    templates: &[&'static TaxTemplate],
+    chosen: RwSignal<String>,
+    applied: Option<&'static TaxTemplate>,
+    apply: Callback<()>,
+    clear: Callback<()>,
+) -> AnyView {
+    let options = templates
+        .iter()
+        .map(|template| {
+            let id = template.id.clone();
+            let selected = template.id.clone();
+            view! {<option value=id prop:selected=move||chosen.get()==selected>{template_label(template)}</option>}
+        })
+        .collect_view();
+    view! {<details class="ops-disclosure" data-testid="accounting-tax-templates"><summary>"Start a tax code from a template"</summary><div class="ops-form">
+        <p class="hint" data-testid="accounting-tax-template-notice">{tax_templates::catalogue().notice.clone()}</p>
+        <label class="ops-field"><span>"Template"</span><select data-testid="accounting-tax-template" prop:value=move||chosen.get() on:change=move|e|chosen.set_if_alive(event_target_value(&e))>
+            <option value="" prop:selected=move||chosen.get().is_empty()>"Choose a template…"</option>{options}</select></label>
+        <button type="button" class="btn secondary" data-testid="accounting-tax-template-use" disabled=move||chosen.get().is_empty() on:click=move|_|apply.run(())>"Fill the tax code form"</button>
+        {applied.map(|template|view!{<p class="hint" role="status" data-testid="accounting-tax-template-applied">{applied_line(template)}</p>
+            <button type="button" class="btn secondary" data-testid="accounting-tax-template-clear" on:click=move|_|clear.run(())>"Clear the template from the form"</button>})}
+    </div></details>}
+    .into_any()
+}
+
+/// "Start from a template" under the tax codes: offered to a person who may
+/// enter tax codes, on a book whose currency a market of the catalogue names.
+/// Choosing one only pre-fills the reviewed form beside the records.
+#[component]
+fn TaxTemplates(work: Workbench) -> impl IntoView {
+    let chosen = RwSignal::new(String::new());
+    let apply = Callback::new(move |()| {
+        if let Some(request) = template_request(&chosen.get_untracked()) {
+            work.prefill.set_if_alive(request);
+        }
+    });
+    let clear = Callback::new(move |()| {
+        work.prefill.set_if_alive(Value::Null);
+        chosen.set_if_alive(String::new());
+    });
+    move || {
+        let data = work.data.get();
+        let templates = templates_for(&text(&data["configuredBook"], "currency"));
+        if templates.is_empty() || !data["tax_codes"].is_array() || !work.permits("tax.manage") {
+            return ().into_any();
+        }
+        let applied = work.prefill.get()["template"]
+            .as_str()
+            .and_then(tax_templates::by_id);
+        picker(&templates, chosen, applied, apply, clear)
+    }
+}
+
 #[component]
 pub(super) fn TaxCodes(work: Workbench) -> impl IntoView {
-    view! {{move||panel(&work.data.get())}}
+    view! { {move||panel(&work.data.get())} <TaxTemplates work/> }
 }
 
 #[cfg(test)]
@@ -175,6 +270,54 @@ mod tests {
         assert!(html.contains("Archava does not verify tax rates or rules"));
         assert!(!html.contains("accounting-tax-table"));
         assert!(panel(&json!({"accounts":[]})).is_none());
+    }
+    #[test]
+    fn the_template_picker_lists_unverified_starting_points_with_the_notice() {
+        let owner = leptos::reactive::owner::Owner::new();
+        owner.with(|| {
+            let templates = templates_for("IDR");
+            assert_eq!(templates.len(), 4);
+            assert!(templates_for("USD").is_empty());
+            assert!(templates_for("").is_empty());
+            let chosen = RwSignal::new(String::new());
+            let nothing = Callback::new(|()| {});
+            let html = picker(&templates, chosen, None, nothing, nothing).to_html();
+            assert!(html.contains("data-testid=\"accounting-tax-templates\""));
+            assert!(html.contains("Start a tax code from a template"));
+            assert!(html.contains("Archava does not verify tax rates or rules"));
+            assert!(html.contains("Check every value with your own tax adviser"));
+            assert!(html.contains("only pre-fills the tax code form"));
+            assert!(html.contains(
+                "Indonesia · Output tax on sales, 11% on the full price · suggested code VAT-OUT-11"
+            ));
+            assert!(html.contains(
+                "Indonesia · Input tax on purchases, 12% on 11/12 of the price · suggested code VAT-IN-12-B11-12"
+            ));
+            assert_eq!(html.matches("<option").count(), 5);
+            assert!(!html.contains("accounting-tax-template-applied"));
+            for word in ["compliant", "official", "Coretax", "e-Faktur", "required"] {
+                assert!(!html.contains(word), "{word}");
+            }
+            // Once a template filled the form the picker says what is left to do.
+            let applied = tax_templates::by_id("id-output-12-base-11-12");
+            let html = picker(&templates, chosen, applied, nothing, nothing).to_html();
+            assert!(html.contains("data-testid=\"accounting-tax-template-applied\""));
+            assert!(html.contains("(not verified)"));
+            assert!(html.contains("Choose your control account and the first day"));
+            assert!(html.contains("accounting-tax-template-clear"));
+        });
+    }
+    #[test]
+    fn a_template_request_names_the_create_form_and_only_its_code_kind_rate_and_base() {
+        let request = template_request("id-output-12-base-11-12").unwrap();
+        assert_eq!(
+            request,
+            json!({"action":"tax_code.create","template":"id-output-12-base-11-12","values":{
+                "code":"VAT-OUT-12-B11-12","kind":"output",
+                "rate":{"numerator":12,"denominator":100},"base":{"numerator":11,"denominator":12}}})
+        );
+        assert!(template_request("no-such-template").is_none());
+        assert!(template_request("").is_none());
     }
     #[test]
     fn rates_without_a_finite_percentage_stay_fractions() {

@@ -26,6 +26,8 @@ struct Source {
     name: String,
     revision: i32,
     active: bool,
+    /// The organization's tax id as entered; a contact has none.
+    tax_id: Option<String>,
 }
 struct PartyRow {
     id: Uuid,
@@ -36,6 +38,17 @@ struct PartyRow {
     revision: i32,
     customer: bool,
     supplier: bool,
+    tax_id: Option<String>,
+}
+/// Whether parties keep a tax id (Organizations 005). The tax id is written
+/// only where the column exists, and read through jsonb, so an install whose
+/// Organizations ledger predates it (an owned upgrade fixture) registers and
+/// refreshes parties as it always did.
+async fn keeps_tax_id(conn: &mut PgConnection) -> Result<bool, PurchaseError> {
+    sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM pg_attribute WHERE attrelid='archava_organizations.parties'::regclass AND attname='tax_id' AND NOT attisdropped)")
+        .fetch_one(conn)
+        .await
+        .map_err(db)
 }
 async fn party(
     conn: &mut PgConnection,
@@ -45,9 +58,9 @@ async fn party(
     lock: bool,
 ) -> Result<PartyRow, PurchaseError> {
     let sql = if lock {
-        "SELECT id,owner_id,source_contact_id,source_organization_id,source_revision,revision,customer,supplier FROM archava_organizations.parties WHERE tenant_id=$1 AND id=$2 FOR UPDATE"
+        "SELECT id,owner_id,source_contact_id,source_organization_id,source_revision,revision,customer,supplier,to_jsonb(p)->>'tax_id' FROM archava_organizations.parties p WHERE tenant_id=$1 AND id=$2 FOR UPDATE"
     } else {
-        "SELECT id,owner_id,source_contact_id,source_organization_id,source_revision,revision,customer,supplier FROM archava_organizations.parties WHERE tenant_id=$1 AND id=$2"
+        "SELECT id,owner_id,source_contact_id,source_organization_id,source_revision,revision,customer,supplier,to_jsonb(p)->>'tax_id' FROM archava_organizations.parties p WHERE tenant_id=$1 AND id=$2"
     };
     let (
         id,
@@ -58,6 +71,7 @@ async fn party(
         revision,
         customer,
         supplier,
+        tax_id,
     ) = sqlx::query_as::<
         _,
         (
@@ -69,6 +83,7 @@ async fn party(
             i32,
             bool,
             bool,
+            Option<String>,
         ),
     >(sql)
     .bind(tenant)
@@ -86,6 +101,7 @@ async fn party(
         revision,
         customer,
         supplier,
+        tax_id,
     };
     if !access.sees(&row.owner_id) {
         return Err(ErpError::NotFound.into());
@@ -106,14 +122,15 @@ async fn source(
             name: row.full_name,
             revision: row.revision,
             active: true,
+            tax_id: None,
         });
     }
     if !access.holds(&["organizations.read"]) {
         return Err(ErpError::Forbidden.into());
     }
     let id = organization.ok_or(ErpError::Conflict)?;
-    let row:Option<(String,i32,String,String)>=sqlx::query_as("SELECT name,revision,state,owner_id FROM archava_organizations.organizations WHERE tenant_id=$1 AND id=$2 FOR SHARE").bind(tenant).bind(id).fetch_optional(conn).await.map_err(db)?;
-    let (name, revision, state, owner) = row.ok_or(ErpError::NotFound)?;
+    let row:Option<(String,i32,String,String,Option<String>)>=sqlx::query_as("SELECT name,revision,state,owner_id,tax_id FROM archava_organizations.organizations WHERE tenant_id=$1 AND id=$2 FOR SHARE").bind(tenant).bind(id).fetch_optional(conn).await.map_err(db)?;
+    let (name, revision, state, owner, tax_id) = row.ok_or(ErpError::NotFound)?;
     if !access.sees(&owner) {
         return Err(ErpError::NotFound.into());
     }
@@ -121,6 +138,7 @@ async fn source(
         name,
         revision,
         active: state == "active",
+        tax_id,
     })
 }
 /// The host uses this scoped lookup solely to apply the CRM module gate.
@@ -302,7 +320,12 @@ pub async fn record(
                 } => (None, Some(uuid(organization_id)?)),
                 _ => unreachable!(),
             };
-            sqlx::query("INSERT INTO archava_organizations.parties(tenant_id,id,owner_id,source_contact_id,source_organization_id,source_revision,name,customer,supplier) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)").bind(tenant).bind(id).bind(&principal.id).bind(contact).bind(organization).bind(source.revision).bind(&source.name).bind(customer).bind(supplier).execute(&mut *conn).await.map_err(db)?;
+            let insert = if keeps_tax_id(conn).await? {
+                sqlx::query("INSERT INTO archava_organizations.parties(tenant_id,id,owner_id,source_contact_id,source_organization_id,source_revision,name,customer,supplier,tax_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)").bind(tenant).bind(id).bind(&principal.id).bind(contact).bind(organization).bind(source.revision).bind(&source.name).bind(customer).bind(supplier).bind(&source.tax_id)
+            } else {
+                sqlx::query("INSERT INTO archava_organizations.parties(tenant_id,id,owner_id,source_contact_id,source_organization_id,source_revision,name,customer,supplier) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)").bind(tenant).bind(id).bind(&principal.id).bind(contact).bind(organization).bind(source.revision).bind(&source.name).bind(customer).bind(supplier)
+            };
+            insert.execute(&mut *conn).await.map_err(db)?;
             (id, 1)
         }
         PartyCommand::SetRoles {
@@ -328,10 +351,25 @@ pub async fn record(
         } => {
             let row = party(conn, tenant, access, uuid(id)?, true).await?;
             let source = reviewed.as_ref().ok_or(ErpError::Conflict)?;
-            if row.revision != *expected_revision || source.revision <= row.source_revision {
+            // A refresh needs a newer source. The one exception is a party
+            // registered before parties kept a tax id: it may take the tax id
+            // its organization already had at the reviewed revision.
+            let keeps = keeps_tax_id(conn).await?;
+            let adopts_tax_id = keeps
+                && source.revision == row.source_revision
+                && row.tax_id.is_none()
+                && source.tax_id.is_some();
+            if row.revision != *expected_revision
+                || (source.revision <= row.source_revision && !adopts_tax_id)
+            {
                 return Err(ErpError::Conflict.into());
             }
-            sqlx::query("UPDATE archava_organizations.parties SET name=$3,source_revision=$4,revision=revision+1,updated_at=clock_timestamp() WHERE tenant_id=$1 AND id=$2").bind(tenant).bind(row.id).bind(&source.name).bind(source.revision).execute(&mut *conn).await.map_err(db)?;
+            let update = if keeps {
+                sqlx::query("UPDATE archava_organizations.parties SET name=$3,source_revision=$4,tax_id=$5,revision=revision+1,updated_at=clock_timestamp() WHERE tenant_id=$1 AND id=$2").bind(tenant).bind(row.id).bind(&source.name).bind(source.revision).bind(&source.tax_id)
+            } else {
+                sqlx::query("UPDATE archava_organizations.parties SET name=$3,source_revision=$4,revision=revision+1,updated_at=clock_timestamp() WHERE tenant_id=$1 AND id=$2").bind(tenant).bind(row.id).bind(&source.name).bind(source.revision)
+            };
+            update.execute(&mut *conn).await.map_err(db)?;
             (row.id, row.revision + 1)
         }
     };

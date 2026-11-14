@@ -100,6 +100,41 @@ untaxed invoice is shown and mailed as before. Tests:
 [tax_sales.rs](../../crates/host/tests/erp_accounting/tax_sales.rs). Not exercised in
 a browser.
 
+## Tax ids and the tax invoice reference
+
+Part of the [Indonesia tax pack](TAX_INDONESIA_PACK.md); every value is text the
+company entered, stored as entered and not verified.
+[Migration 011](../../migrations/billing-pg/011_invoice_tax_identifiers.sql) adds five
+columns to an invoice and one guard.
+
+| Column | Meaning |
+| --- | --- |
+| `seller_tax_id`, `buyer_tax_id` | The tax id of the invoice's company and of its customer party as they were when the invoice was created; null when there is none and on every untaxed invoice; immutable |
+| `tax_reference` | The reference of a tax invoice issued outside Archava; 1 to 100 characters of free text |
+| `tax_transaction_code` | The company's own short classification of the transaction; optional, 1 to 10 characters |
+| `tax_reference_version` | `0` without a reference, `1` once recorded, one more for every replacement |
+
+`create_invoice_from_order` stores the two tax ids for a taxed invoice. A later change
+of the company's or the party's tax id does not change the invoice.
+
+`record_tax_reference` (`invoiceId`, `expectedRevision`, `reference`, optional
+`transactionCode`) sets the reference of a taxed invoice that is issued or settled.
+`replace_tax_reference` takes the same members and a `reason`. Both need
+`billing.settle`, raise the invoice revision by one, change no amount and no status,
+and follow the usual receipt, replay and audit contract. The earlier value of a
+replaced reference stays in the audit row of the replacing command; the audit table is
+immutable. Archava never generates a reference. Refusals:
+`invoice_tax_reference_untaxed`, `invoice_tax_reference_not_issued`,
+`invoice_tax_reference_already_recorded` and `invoice_tax_reference_missing`.
+
+The workspace read returns `sellerTaxId`, `buyerTaxId` and `taxReference` (or null).
+The invoice screen shows them for a taxed invoice with the form that records or
+replaces the reference; the invoice mail adds `Seller tax id`, `Buyer tax id` and
+`Tax invoice reference` lines when present. An untaxed invoice is read, shown and
+mailed as before. Tests:
+[tax_documents.rs](../../crates/host/tests/erp_accounting/tax_documents.rs). Not
+exercised in a browser.
+
 Later returns do not rewrite the original snapshot or automatically create a
 credit/refund. An authorized operator reviews a correction through the existing
 billing lifecycle. Master-party identity, credit-note document linkage, GL/AR,

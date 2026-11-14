@@ -144,6 +144,11 @@ pub(super) fn refuses(error: sqlx::Error) -> PurchaseError {
                 || e.message() == "The tax control account of the invoice tax code is inactive"
                 || e.message()
                     == "The tax control account is also an account of the invoice posting policy"
+                || e.message() == "Only a taxed invoice can carry a tax invoice reference"
+                || e.message()
+                    == "A tax invoice reference can be recorded only on an issued or settled invoice"
+                || e.message() == "The invoice already has a tax invoice reference"
+                || e.message() == "The invoice has no tax invoice reference to replace"
                 || e.constraint() == Some("invoice_sources_amount_minor_check"))
     }) {
         // The message guards are catalogued; the amount bound is a column
@@ -496,6 +501,21 @@ fn audit_reason(command: &BillingCommand) -> String {
                 outcome.as_str()
             )
         }
+        // The arm states the full reason, with the value a replacement
+        // replaced; this is only the fallback wording.
+        BillingCommand::RecordTaxReference {
+            reference,
+            transaction_code,
+            ..
+        }
+        | BillingCommand::ReplaceTaxReference {
+            reference,
+            transaction_code,
+            ..
+        } => format!(
+            "Set tax invoice reference {}",
+            tax_reference_words(reference, transaction_code.as_deref())
+        ),
     }
 }
 
@@ -586,8 +606,19 @@ pub async fn record_billing_command(
     // The sampled clock — one instant per command, bound everywhere.
     let now = observed_now(connection).await?;
 
-    let receipt =
-        execute_billing_arm(connection, tenant, access, request_id, command, &now).await?;
+    // A tax reference arm states its own audit reason: a replacement names
+    // the value it replaced, which the command alone does not carry.
+    let mut audit_note = None;
+    let receipt = execute_billing_arm(
+        connection,
+        tenant,
+        access,
+        request_id,
+        command,
+        &now,
+        &mut audit_note,
+    )
+    .await?;
     // The TS `audit()` — every arm records once, the invoice id always
     // the row the arm produced or named.
     let audit_invoice = match &receipt.invoice_id {
@@ -602,7 +633,7 @@ pub async fn record_billing_command(
         command.mutation_type(),
         audit_invoice,
         receipt.revision.unwrap_or(1),
-        Some(audit_reason(command).as_str()),
+        Some(audit_note.unwrap_or_else(|| audit_reason(command)).as_str()),
         &now,
     )
     .await?;
@@ -632,6 +663,7 @@ async fn execute_billing_arm(
     request_id: Uuid,
     command: &BillingCommand,
     now: &str,
+    audit_note: &mut Option<String>,
 ) -> Result<BillingReceipt, PurchaseError> {
     match command {
         BillingCommand::CreateInvoice { .. } | BillingCommand::CreateInvoiceFromOrder { .. } => {
@@ -1057,7 +1089,161 @@ VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::timestamptz)",
                 executed_at: now.to_string(),
             })
         }
+
+        BillingCommand::RecordTaxReference {
+            invoice_id,
+            expected_revision,
+            reference,
+            transaction_code,
+            ..
+        } => {
+            tax_reference(
+                connection,
+                tenant,
+                access,
+                request_id,
+                now,
+                audit_note,
+                TaxReferenceChange {
+                    action: "record_tax_reference",
+                    invoice_id,
+                    expected_revision: *expected_revision,
+                    reference,
+                    transaction_code: transaction_code.as_deref(),
+                    replace_reason: None,
+                },
+            )
+            .await
+        }
+        BillingCommand::ReplaceTaxReference {
+            invoice_id,
+            expected_revision,
+            reference,
+            transaction_code,
+            reason,
+            ..
+        } => {
+            tax_reference(
+                connection,
+                tenant,
+                access,
+                request_id,
+                now,
+                audit_note,
+                TaxReferenceChange {
+                    action: "replace_tax_reference",
+                    invoice_id,
+                    expected_revision: *expected_revision,
+                    reference,
+                    transaction_code: transaction_code.as_deref(),
+                    replace_reason: Some(reason),
+                },
+            )
+            .await
+        }
     }
+}
+
+/// One change of an invoice's tax invoice reference: the first recording
+/// (`replace_reason` is none) or a replacement.
+struct TaxReferenceChange<'a> {
+    action: &'static str,
+    invoice_id: &'a str,
+    expected_revision: i64,
+    reference: &'a str,
+    transaction_code: Option<&'a str>,
+    replace_reason: Option<&'a str>,
+}
+
+/// A reference and its optional transaction code as the audit trail words it.
+fn tax_reference_words(reference: &str, transaction_code: Option<&str>) -> String {
+    match transaction_code {
+        Some(code) => format!("\"{reference}\" (transaction code \"{code}\")"),
+        None => format!("\"{reference}\" (no transaction code)"),
+    }
+}
+
+/// Records or replaces the tax invoice reference of a taxed, issued or settled
+/// invoice (Billing 011). The reference is text issued outside Archava and
+/// stored as entered. The rules are the guard's, decided here so each refusal
+/// names its reason. The invoice keeps only the current value; the audit row of
+/// every command states the value it set, and a replacement also states the
+/// value it replaced, so the history is the immutable audit trail.
+async fn tax_reference(
+    connection: &mut PgConnection,
+    tenant: &str,
+    access: &BillingAccess,
+    request_id: Uuid,
+    now: &str,
+    audit_note: &mut Option<String>,
+    change: TaxReferenceChange<'_>,
+) -> Result<BillingReceipt, PurchaseError> {
+    let invoice = parse_uuid_value(change.invoice_id)?;
+    let row = invoice_row(connection, tenant, invoice, access).await?;
+    if row.revision != change.expected_revision {
+        return Err(conflict());
+    }
+    let (taxed, held, held_code, version): (bool, Option<String>, Option<String>, i32) = sqlx::query_as(
+        "SELECT tax_code_id IS NOT NULL,tax_reference,tax_transaction_code,tax_reference_version \
+FROM archava_billing.invoices WHERE tenant_id=$1 AND id=$2",
+    )
+    .bind(tenant)
+    .bind(invoice)
+    .fetch_one(&mut *connection)
+    .await
+    .map_err(refuses)?;
+    if !taxed {
+        return Err(refused("invoice_tax_reference_untaxed"));
+    }
+    if !matches!(row.status.as_str(), STATUS_ISSUED | STATUS_SETTLED) {
+        return Err(refused("invoice_tax_reference_not_issued"));
+    }
+    let set = tax_reference_words(change.reference, change.transaction_code);
+    let note = match (change.replace_reason, held.as_deref()) {
+        (None, Some(_)) => return Err(refused("invoice_tax_reference_already_recorded")),
+        (Some(_), None) => return Err(refused("invoice_tax_reference_missing")),
+        (None, None) => format!("Recorded tax invoice reference {set}"),
+        (Some(reason), Some(previous)) => {
+            // Replacing a value with itself changes nothing to keep.
+            if previous == change.reference && held_code.as_deref() == change.transaction_code {
+                return Err(conflict());
+            }
+            format!(
+                "Replaced tax invoice reference {} with {set}: {reason}",
+                tax_reference_words(previous, held_code.as_deref())
+            )
+        }
+    };
+    let next_rev = row.revision + 1;
+    sqlx::query(
+        "UPDATE archava_billing.invoices SET tax_reference=$1,tax_transaction_code=$2,\
+tax_reference_version=$3,revision=$4 WHERE tenant_id=$5 AND id=$6",
+    )
+    .bind(change.reference)
+    .bind(change.transaction_code)
+    .bind(version.checked_add(1).ok_or_else(conflict)?)
+    .bind(int4(next_rev)?)
+    .bind(tenant)
+    .bind(invoice)
+    .execute(&mut *connection)
+    .await
+    .map_err(refuses)?;
+    *audit_note = Some(note);
+    Ok(BillingReceipt {
+        command_id: request_id.to_string(),
+        tenant_id: tenant.to_string(),
+        action: change.action,
+        invoice_id: Some(invoice.to_string()),
+        line_id: None,
+        correction_id: None,
+        attempt_id: None,
+        event_id: None,
+        status: row.status.clone(),
+        outstanding_minor: Some(row.outstanding_minor),
+        revision: Some(next_rev),
+        idempotency_replay: false,
+        executed_at: now.to_string(),
+    })
 }
 
 // --- commandStatus ---------------------------------------------------------------
@@ -1216,7 +1402,7 @@ pub async fn workspace_view_filtered(
     if !access.holds("billing.read") {
         return Err(forbidden());
     }
-    let rows=sqlx::query_scalar::<_,serde_json::Value>("SELECT json_build_object('id',i.id,'code',i.invoice_code,'customer',i.customer_ref,'companyId',to_jsonb(i)->'company_id','companyRevision',to_jsonb(i)->'company_revision','companyCode',to_jsonb(i)->'company_code','companyName',to_jsonb(i)->'company_name','currency',i.currency,'status',i.status,'gross',i.gross_minor,'correction',i.correction_minor,'settled',i.settled_minor,'outstanding',i.outstanding_minor,'taxMinor',coalesce((to_jsonb(i)->>'tax_minor')::bigint,0),'netMinor',i.gross_minor-coalesce((to_jsonb(i)->>'tax_minor')::bigint,0),'correctionTaxMinor',coalesce((to_jsonb(i)->>'correction_tax_minor')::bigint,0),'tax',CASE WHEN to_jsonb(i)->>'tax_code_id' IS NOT NULL THEN json_build_object('codeId',to_jsonb(i)->'tax_code_id','code',to_jsonb(i)->'tax_code','version',to_jsonb(i)->'tax_code_version','kind',to_jsonb(i)->'tax_kind','rate',json_build_object('numerator',to_jsonb(i)->'tax_rate_numerator','denominator',to_jsonb(i)->'tax_rate_denominator'),'base',json_build_object('numerator',to_jsonb(i)->'tax_base_numerator','denominator',to_jsonb(i)->'tax_base_denominator'),'priceIncludesTax',to_jsonb(i)->'price_includes_tax','enteredByCompany',true,'verifiedByArchava',false) END,'revision',i.revision,'consumerRef',i.consumer_ref,'customerContactId',i.customer_contact_id,'customerContactRevision',i.customer_contact_revision,'customerPartyId',i.customer_party_id,'customerPartyRevision',i.customer_party_revision,'sourceOrderId',i.source_order_id,'sourceOrderRevision',i.source_order_revision,'lines',coalesce((SELECT json_agg(json_build_object('id',l.id,'sourceOrderLineId',l.source_order_line_id,'description',l.description,'quantity',l.quantity,'unitAmount',l.unit_minor,'total',l.line_total_minor) ORDER BY l.id) FROM archava_billing.invoice_lines l WHERE l.tenant_id=i.tenant_id AND l.invoice_id=i.id),'[]'::json)) FROM archava_billing.invoices i WHERE i.tenant_id=$1 AND (to_jsonb(i)->>'company_id')::uuid IS NOT DISTINCT FROM $5::uuid AND ($2 OR i.owner_id=$3) AND ($6::uuid IS NULL OR i.id=$6) AND ($4='' OR strpos(lower(i.invoice_code||' '||i.customer_ref),lower($4))>0) ORDER BY i.created_at DESC,i.id LIMIT 100")
+    let rows=sqlx::query_scalar::<_,serde_json::Value>("SELECT json_build_object('id',i.id,'code',i.invoice_code,'customer',i.customer_ref,'companyId',to_jsonb(i)->'company_id','companyRevision',to_jsonb(i)->'company_revision','companyCode',to_jsonb(i)->'company_code','companyName',to_jsonb(i)->'company_name','currency',i.currency,'status',i.status,'gross',i.gross_minor,'correction',i.correction_minor,'settled',i.settled_minor,'outstanding',i.outstanding_minor,'taxMinor',coalesce((to_jsonb(i)->>'tax_minor')::bigint,0),'netMinor',i.gross_minor-coalesce((to_jsonb(i)->>'tax_minor')::bigint,0),'correctionTaxMinor',coalesce((to_jsonb(i)->>'correction_tax_minor')::bigint,0),'tax',CASE WHEN to_jsonb(i)->>'tax_code_id' IS NOT NULL THEN json_build_object('codeId',to_jsonb(i)->'tax_code_id','code',to_jsonb(i)->'tax_code','version',to_jsonb(i)->'tax_code_version','kind',to_jsonb(i)->'tax_kind','rate',json_build_object('numerator',to_jsonb(i)->'tax_rate_numerator','denominator',to_jsonb(i)->'tax_rate_denominator'),'base',json_build_object('numerator',to_jsonb(i)->'tax_base_numerator','denominator',to_jsonb(i)->'tax_base_denominator'),'priceIncludesTax',to_jsonb(i)->'price_includes_tax','enteredByCompany',true,'verifiedByArchava',false) END,'sellerTaxId',to_jsonb(i)->'seller_tax_id','buyerTaxId',to_jsonb(i)->'buyer_tax_id','taxReference',CASE WHEN to_jsonb(i)->>'tax_reference' IS NOT NULL THEN json_build_object('reference',to_jsonb(i)->'tax_reference','transactionCode',to_jsonb(i)->'tax_transaction_code','version',to_jsonb(i)->'tax_reference_version','enteredByCompany',true,'verifiedByArchava',false) END,'revision',i.revision,'consumerRef',i.consumer_ref,'customerContactId',i.customer_contact_id,'customerContactRevision',i.customer_contact_revision,'customerPartyId',i.customer_party_id,'customerPartyRevision',i.customer_party_revision,'sourceOrderId',i.source_order_id,'sourceOrderRevision',i.source_order_revision,'lines',coalesce((SELECT json_agg(json_build_object('id',l.id,'sourceOrderLineId',l.source_order_line_id,'description',l.description,'quantity',l.quantity,'unitAmount',l.unit_minor,'total',l.line_total_minor) ORDER BY l.id) FROM archava_billing.invoice_lines l WHERE l.tenant_id=i.tenant_id AND l.invoice_id=i.id),'[]'::json)) FROM archava_billing.invoices i WHERE i.tenant_id=$1 AND (to_jsonb(i)->>'company_id')::uuid IS NOT DISTINCT FROM $5::uuid AND ($2 OR i.owner_id=$3) AND ($6::uuid IS NULL OR i.id=$6) AND ($4='' OR strpos(lower(i.invoice_code||' '||i.customer_ref),lower($4))>0) ORDER BY i.created_at DESC,i.id LIMIT 100")
         .bind(tenant).bind(access.scope==archava_domain::erp::ErpScope::All).bind(&access.owner_id).bind(search).bind(company).bind(id).fetch_all(connection).await.map_err(|e|super::purchase_database_error(BILLING_LEDGER,e))?;
     Ok(
         serde_json::json!({"invoices":rows,"taxNotice":archava_domain::erp::tax::DOCUMENT_NOTICE,"pageLimit":100,"permissions":access.permissions,"scope":access.scope}),

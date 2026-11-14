@@ -31,6 +31,33 @@ pub enum CompanyCommand {
         active: bool,
         reason: String,
     },
+    /// The company's own statement that it is registered for value-added
+    /// tax. The tax id itself is the reviewed snapshot of the source
+    /// organization and is not a member here. Nothing is verified.
+    #[serde(rename = "company.set_tax_registration")]
+    SetTaxRegistration {
+        id: String,
+        #[serde(rename = "expectedRevision")]
+        expected_revision: i32,
+        #[serde(rename = "vatRegistered")]
+        vat_registered: bool,
+        reason: String,
+    },
+}
+
+/// Whether a tax id is made of digits and the common separators (space, dot,
+/// slash, hyphen), starting and ending with a digit, within the stored bound
+/// of 50 characters. This is the only check on a tax id anywhere: no length,
+/// checksum or format of any tax authority is known or claimed.
+pub fn tax_id_is_digits_and_separators(value: &str) -> bool {
+    let bytes = value.as_bytes();
+    !bytes.is_empty()
+        && bytes.len() <= 50
+        && bytes[0].is_ascii_digit()
+        && bytes[bytes.len() - 1].is_ascii_digit()
+        && bytes
+            .iter()
+            .all(|b| b.is_ascii_digit() || matches!(b, b' ' | b'.' | b'/' | b'-'))
 }
 impl CompanyCommand {
     pub fn operation(&self) -> &'static str {
@@ -38,11 +65,14 @@ impl CompanyCommand {
             Self::FromOrganization { .. } => "company.create_from_organization",
             Self::RefreshSource { .. } => "company.refresh_source",
             Self::SetActive { .. } => "company.set_active",
+            Self::SetTaxRegistration { .. } => "company.set_tax_registration",
         }
     }
     pub fn id(&self) -> Option<&str> {
         match self {
-            Self::RefreshSource { id, .. } | Self::SetActive { id, .. } => Some(id),
+            Self::RefreshSource { id, .. }
+            | Self::SetActive { id, .. }
+            | Self::SetTaxRegistration { id, .. } => Some(id),
             _ => None,
         }
     }
@@ -50,7 +80,8 @@ impl CompanyCommand {
         match self {
             Self::FromOrganization { reason, .. }
             | Self::RefreshSource { reason, .. }
-            | Self::SetActive { reason, .. } => reason,
+            | Self::SetActive { reason, .. }
+            | Self::SetTaxRegistration { reason, .. } => reason,
         }
     }
     pub fn expected_source(&self) -> Option<i32> {
@@ -122,6 +153,11 @@ pub fn parse(raw: &Value) -> Result<CompanyMutation, ValidationError> {
             expected_revision,
             reason,
             ..
+        }
+        | CompanyCommand::SetTaxRegistration {
+            expected_revision,
+            reason,
+            ..
         } => {
             if !(1..i32::MAX).contains(expected_revision) {
                 return Err(ValidationError("expectedRevision"));
@@ -167,6 +203,10 @@ mod tests {
                 "company.set_active",
                 json!({"id":id,"expectedRevision":1,"active":false,"reason":"Stop using this profile"}),
             ),
+            (
+                "company.set_tax_registration",
+                json!({"id":id,"expectedRevision":1,"vatRegistered":true,"reason":"The company states it is registered"}),
+            ),
         ] {
             let raw = json!({"requestId":id,"type":kind,"data":data});
             assert!(parse(&raw).is_ok());
@@ -180,6 +220,9 @@ mod tests {
                 "permissions",
                 "partyId",
                 "type",
+                "taxId",
+                "taxRegistrationNumber",
+                "taxVerified",
             ] {
                 let mut b = raw.clone();
                 b["data"][key] = json!("forged");
@@ -223,5 +266,46 @@ mod tests {
         let mut b = raw;
         b["data"]["organizationId"] = json!("missing");
         assert!(parse(&b).is_err());
+    }
+    #[test]
+    fn a_tax_registration_statement_is_a_boolean_and_a_tax_id_is_only_digits_and_separators() {
+        let id = "01933df1-8d5e-783f-9b1e-1d3f9a2b3c4d";
+        let raw = json!({"requestId":id,"type":"company.set_tax_registration","data":{"id":id,"expectedRevision":3,"vatRegistered":false,"reason":" No longer registered "}});
+        let parsed = parse(&raw).unwrap();
+        assert_eq!(parsed.command.operation(), "company.set_tax_registration");
+        assert_eq!(parsed.command.reason(), "No longer registered");
+        assert_eq!(parsed.command.expected_source(), None);
+        for invalid in [json!("true"), json!(1), json!(null)] {
+            let mut b = raw.clone();
+            b["data"]["vatRegistered"] = invalid;
+            assert!(parse(&b).is_err());
+        }
+        let mut b = raw;
+        b["data"].as_object_mut().unwrap().remove("vatRegistered");
+        assert!(parse(&b).is_err());
+        for valid in [
+            "7",
+            "0123456789012345",
+            "01.234.567.8-999.000",
+            "12 345 678/0001-90",
+        ] {
+            assert!(tax_id_is_digits_and_separators(valid), "{valid}");
+        }
+        let long = "1".repeat(51);
+        for invalid in [
+            "",
+            " ",
+            "DECLARED-A",
+            "ID123",
+            "-123",
+            "123-",
+            " 123",
+            "12_3",
+            "12,3",
+            "１２３",
+            long.as_str(),
+        ] {
+            assert!(!tax_id_is_digits_and_separators(invalid), "{invalid}");
+        }
     }
 }

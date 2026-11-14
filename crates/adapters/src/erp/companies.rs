@@ -110,6 +110,7 @@ async fn stored(
         "company.create_from_organization",
         "company.refresh_source",
         "company.set_active",
+        "company.set_tax_registration",
     ]
     .contains(&receipt.operation.as_str())
         || receipt.revision < 1
@@ -244,6 +245,35 @@ pub async fn record(
                 return Err(ErpError::Conflict.into());
             }
             sqlx::query("UPDATE archava_organizations.companies SET active=$3,revision=revision+1,updated_at=clock_timestamp() WHERE tenant_id=$1 AND id=$2").bind(tenant).bind(c.id).bind(active).execute(&mut *conn).await.map_err(db)?;
+            (c.id, c.revision + 1)
+        }
+        CompanyCommand::SetTaxRegistration {
+            id,
+            expected_revision,
+            vat_registered,
+            ..
+        } => {
+            let c = company(conn, tenant, access, uuid(id)?, true).await?;
+            // The statement and the tax id it rests on, read from the locked
+            // row. The tax id is the reviewed snapshot of the source
+            // organization; this command never changes it.
+            let (stated, tax_id): (bool, Option<String>) = sqlx::query_as("SELECT vat_registered,tax_id FROM archava_organizations.companies WHERE tenant_id=$1 AND id=$2")
+                .bind(tenant).bind(c.id).fetch_one(&mut *conn).await.map_err(db)?;
+            if c.revision != *expected_revision || stated == *vat_registered {
+                return Err(ErpError::Conflict.into());
+            }
+            // The rule of the company guard (Organizations 005), decided here
+            // so the refusal names it: digits and separators, nothing more.
+            if *vat_registered
+                && !tax_id
+                    .as_deref()
+                    .is_some_and(archava_domain::erp::companies::tax_id_is_digits_and_separators)
+            {
+                return Err(super::refused_by_code(
+                    "company_tax_registration_needs_tax_id",
+                ));
+            }
+            sqlx::query("UPDATE archava_organizations.companies SET vat_registered=$3,revision=revision+1,updated_at=clock_timestamp() WHERE tenant_id=$1 AND id=$2").bind(tenant).bind(c.id).bind(vat_registered).execute(&mut *conn).await.map_err(db)?;
             (c.id, c.revision + 1)
         }
     };

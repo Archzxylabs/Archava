@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "notice": "Templates are starting points entered by Archava as examples, not tax advice. A template only pre-fills the tax code form: your company chooses the control account and the first day, and a reviewer confirms the code. Archava does not verify tax rates or rules. Check every value with your own tax adviser.",
+  "markets": {
+    "ID": {
+      "name": "Indonesia",
+      "currencies": ["IDR"],
+      "templates": [
+        {
+          "id": "id-output-11",
+          "code": "VAT-OUT-11",
+          "kind": "output",
+          "rate": { "numerator": 11, "denominator": 100 },
+          "base": { "numerator": 1, "denominator": 1 },
+          "label": "Output tax on sales, 11% on the full price",
+          "verified": false,
+          "note": "A starting point, not verified by Archava. Check the rate and the base with your own tax adviser before a reviewer confirms the code."
+        },
+        {
+          "id": "id-input-11",
+          "code": "VAT-IN-11",
+          "kind": "input",
+          "rate": { "numerator": 11, "denominator": 100 },
+          "base": { "numerator": 1, "denominator": 1 },
+          "label": "Input tax on purchases, 11% on the full price",
+          "verified": false,
+          "note": "A starting point, not verified by Archava. Check the rate and the base with your own tax adviser before a reviewer confirms the code."
+        },
+        {
+          "id": "id-output-12-base-11-12",
+          "code": "VAT-OUT-12-B11-12",
+          "kind": "output",
+          "rate": { "numerator": 12, "denominator": 100 },
+          "base": { "numerator": 11, "denominator": 12 },
+          "label": "Output tax on sales, 12% on 11/12 of the price",
+          "verified": false,
+          "note": "A starting point, not verified by Archava. Check the rate and the base with your own tax adviser before a reviewer confirms the code."
+        },
+        {
+          "id": "id-input-12-base-11-12",
+          "code": "VAT-IN-12-B11-12",
+          "kind": "input",
+          "rate": { "numerator": 12, "denominator": 100 },
+          "base": { "numerator": 11, "denominator": 12 },
+          "label": "Input tax on purchases, 12% on 11/12 of the price",
+          "verified": false,
+          "note": "A starting point, not verified by Archava. Check the rate and the base with your own tax adviser before a reviewer confirms the code."
+        }
+      ]
+    }
+  }
+}

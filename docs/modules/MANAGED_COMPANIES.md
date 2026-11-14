@@ -10,13 +10,19 @@ a customer/supplier role does not register a managed company automatically.
 ## Commands and current authority
 
 The existing Organizations `{tenant, mutation: {requestId, type, data}}` envelope
-supports three commands:
+supports four commands:
 
 - `company.create_from_organization`: `code`, `organizationId`,
   `expectedSourceRevision`, `reason`.
 - `company.refresh_source`: company `id`, `expectedRevision`,
   `expectedSourceRevision`, `reason`.
 - `company.set_active`: company `id`, `expectedRevision`, `active`, `reason`.
+- `company.set_tax_registration`: company `id`, `expectedRevision`,
+  `vatRegistered`, `reason`. It stores the company's own statement that it is
+  registered for value-added tax (Organizations 005), in a revision of its own. The
+  statement can be true only while the captured tax/reference string is digits with
+  spaces, dots, slashes or hyphens; nothing is verified. See the
+  [Indonesia tax pack](TAX_INDONESIA_PACK.md#tax-registration-identifiers).
 
 Code is 1–40 uppercase ASCII letters/digits/underscore/hyphen, starting with a
 letter or digit. Revision/UUID/type/field validation is strict; reasons are

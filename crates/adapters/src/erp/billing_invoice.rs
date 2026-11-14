@@ -136,6 +136,29 @@ async fn tax_snapshot(
     })
 }
 
+/// The tax id of the invoice's managed company and of its customer party, as
+/// the two rows state them now, each share-locked so neither changes under
+/// this transaction. Either may be absent: a company or an organization
+/// without a tax id, a party sourced from a contact, or a customer that is
+/// not a business party. Read through jsonb so an install whose Organizations
+/// ledger predates the party tax id reads "none", as the guard of Billing 011
+/// does.
+async fn tax_identifiers(
+    connection: &mut PgConnection,
+    tenant: &str,
+    company: Uuid,
+    party: Option<Uuid>,
+) -> Result<(Option<String>, Option<String>), PurchaseError> {
+    let seller: Option<String> = sqlx::query_scalar("SELECT to_jsonb(c)->>'tax_id' FROM archava_organizations.companies c WHERE c.tenant_id=$1 AND c.id=$2 FOR SHARE OF c")
+        .bind(tenant).bind(company).fetch_optional(&mut *connection).await.map_err(refuses)?.flatten();
+    let buyer: Option<String> = match party {
+        Some(party) => sqlx::query_scalar("SELECT to_jsonb(p)->>'tax_id' FROM archava_organizations.parties p WHERE p.tenant_id=$1 AND p.id=$2 FOR SHARE OF p")
+            .bind(tenant).bind(party).fetch_optional(&mut *connection).await.map_err(refuses)?.flatten(),
+        None => None,
+    };
+    Ok((seller, buyer))
+}
+
 async fn draft(
     connection: &mut PgConnection,
     tenant: &str,
@@ -288,9 +311,23 @@ pub(super) async fn create(
         Some(tax) => tax.amounts.gross,
         None => total(&draft.lines)?,
     };
+    // A taxed invoice keeps the tax ids of its company and its customer party
+    // as they are now (Billing 011). Stored as entered; nothing is verified.
+    let tax_ids = match (&draft.tax, &draft.company) {
+        (Some(_), Some((company, ..))) => Some(
+            tax_identifiers(
+                connection,
+                tenant,
+                *company,
+                draft.customer_party.map(|party| party.0),
+            )
+            .await?,
+        ),
+        _ => None,
+    };
     let invoice = Uuid::new_v4();
     let statement = if draft.tax.is_some() {
-        "INSERT INTO archava_billing.invoices(tenant_id,id,invoice_code,customer_ref,currency,status,gross_minor,outstanding_minor,consumer_ref,owner_id,created_at,source_order_id,source_order_revision,customer_contact_id,customer_contact_revision,customer_party_id,customer_party_revision,company_id,company_revision,company_code,company_name,tax_minor,tax_code_id,tax_code,tax_code_version,tax_kind,tax_rate_numerator,tax_rate_denominator,tax_base_numerator,tax_base_denominator,price_includes_tax) VALUES($1,$2,$3,$4,$5,'draft',$6,$6,$7,$8,$9::timestamptz,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,'output',$24,$25,$26,$27,$28)"
+        "INSERT INTO archava_billing.invoices(tenant_id,id,invoice_code,customer_ref,currency,status,gross_minor,outstanding_minor,consumer_ref,owner_id,created_at,source_order_id,source_order_revision,customer_contact_id,customer_contact_revision,customer_party_id,customer_party_revision,company_id,company_revision,company_code,company_name,tax_minor,tax_code_id,tax_code,tax_code_version,tax_kind,tax_rate_numerator,tax_rate_denominator,tax_base_numerator,tax_base_denominator,price_includes_tax,seller_tax_id,buyer_tax_id) VALUES($1,$2,$3,$4,$5,'draft',$6,$6,$7,$8,$9::timestamptz,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,'output',$24,$25,$26,$27,$28,$29,$30)"
     } else if draft.company.is_some() {
         "INSERT INTO archava_billing.invoices(tenant_id,id,invoice_code,customer_ref,currency,status,gross_minor,outstanding_minor,consumer_ref,owner_id,created_at,source_order_id,source_order_revision,customer_contact_id,customer_contact_revision,customer_party_id,customer_party_revision,company_id,company_revision,company_code,company_name) VALUES($1,$2,$3,$4,$5,'draft',$6,$6,$7,$8,$9::timestamptz,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)"
     } else {
@@ -328,6 +365,8 @@ pub(super) async fn create(
             .bind(tax.base.numerator)
             .bind(tax.base.denominator)
             .bind(tax.price_includes_tax)
+            .bind(tax_ids.as_ref().and_then(|ids| ids.0.clone()))
+            .bind(tax_ids.as_ref().and_then(|ids| ids.1.clone()))
     } else {
         query
     };

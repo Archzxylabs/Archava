@@ -319,7 +319,7 @@ async fn organization_identity_real_prior_profile_preserves_legacy_and_verifies_
     }
     f.organizations_ledger =
         archava_pg_fixture::apply_pending_organization_migrations(&f.owner_pool).await;
-    assert_eq!(f.organizations_ledger.len(), 4);
+    assert_eq!(f.organizations_ledger.len(), 5);
     assert_eq!(
         archava_pg_fixture::apply_pending_organization_migrations(&f.owner_pool).await,
         f.organizations_ledger

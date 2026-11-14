@@ -126,6 +126,11 @@ pub struct Workbench {
     pub action: RwSignal<ActionState>,
     pub company: RwSignal<Option<Value>>,
     pub company_key: Memo<String>,
+    /// A request to start one reviewed form from given values:
+    /// `{"action": <action id>, "values": {..}}`, or null. The generic action
+    /// form chooses that action and copies the values into fields it has; the
+    /// person still completes, reviews and submits the form.
+    pub prefill: RwSignal<Value>,
     retry: RwSignal<Option<String>>,
     last: RwSignal<Option<(String, String)>>,
     sequence: RwSignal<u64>,
@@ -368,6 +373,7 @@ impl Workbench {
             notice: RwSignal::new(String::new()),
             search: RwSignal::new(String::new()),
             action: RwSignal::new(ActionState::Idle),
+            prefill: RwSignal::new(Value::Null),
             last: RwSignal::new(None),
             retry: RwSignal::new(None),
             sequence: RwSignal::new(0),

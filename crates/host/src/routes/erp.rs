@@ -60,6 +60,14 @@ pub fn router() -> Router<AppState> {
             "/erp/accounting/tax-report",
             get(crate::erp::accounting::tax_report),
         )
+        .route(
+            "/erp/accounting/tax-report/documents",
+            get(crate::erp::accounting::tax_report_documents),
+        )
+        .route(
+            "/erp/accounting/tax-report/documents.csv",
+            get(crate::erp::accounting::tax_report_documents_csv),
+        )
         // CRM customer relationship management cohort (ADR-018: normalized enterprise routes)
         .route("/erp/crm/records", get(crate::erp::crm::record))
         .route("/erp/crm/contacts", get(crate::erp::crm::contacts))

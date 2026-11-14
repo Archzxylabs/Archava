@@ -13,7 +13,7 @@ Current helpers use Node built-ins and the root Cargo workspace; no root npm/pnp
 | `node tools/rust/verify.mjs --lib --offline` | Explicitly smaller library-only verification |
 | `node tools/rust/cold-consumers.mjs --output NEW_DIRECTORY` | Build and execute two isolated offline consumers of the same packaged core/domain contracts; [scope](consumers/README.md) |
 | `node tools/rust/persistent-consumers.mjs --native PACKAGE --output NEW_DIRECTORY` | Build two cold public clients and verify configured persistent CRM/extensions on separate disposable native databases; [scope](consumers/README.md) |
-| `node tools/rust/domain-assets.mjs --check` | Verify the four public package-local Domain catalogue snapshots; `--write` explicitly refreshes them from canonical config |
+| `node tools/rust/domain-assets.mjs --check` | Verify the five public package-local Domain catalogue snapshots; `--write` explicitly refreshes them from canonical config |
 | `node tools/rust/build-slice.mjs` | Release server, preview fixture, WASM/bindgen and source/artifact provenance |
 | `node tools/rust/package-native.mjs --out NEW_DIRECTORY` | Native server/Ops/site/migrations package; refuses stale inputs and verifies the resulting profile |
 | `node tools/rust/dev-slice.mjs run` | Build and launch a disposable PostgreSQL preview |

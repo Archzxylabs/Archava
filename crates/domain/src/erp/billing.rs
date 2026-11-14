@@ -128,6 +128,11 @@ pub const LINE_DESCRIPTION_MAX: usize = 300;
 /// Bounded `providerRef`: trimmed ≤120 (empty allowed — the only trimmed
 /// member without a `.min`).
 pub const PROVIDER_REF_MAX: usize = 120;
+/// The longest tax invoice reference: an externally issued number, stored as
+/// entered.
+pub const TAX_REFERENCE_MAX: usize = 100;
+/// The longest transaction-type code: the company's own classification.
+pub const TAX_TRANSACTION_CODE_MAX: usize = 10;
 /// Bounded `providerId`: trimmed 1–80.
 pub const PROVIDER_ID_MAX: usize = 80;
 /// Bounded `providerEventId`: trimmed 1–120.
@@ -350,6 +355,38 @@ pub enum BillingCommand {
         /// Trimmed 64-hex lowercase — the settlement's authority.
         signature: String,
     },
+    /// Records the reference of a tax invoice that was issued outside
+    /// Archava on a taxed, issued or settled invoice. Text the company
+    /// entered: nothing here generates, validates or verifies it.
+    #[serde(rename = "record_tax_reference")]
+    RecordTaxReference {
+        #[serde(rename = "commandId")]
+        command_id: String,
+        #[serde(rename = "invoiceId")]
+        invoice_id: String,
+        #[serde(rename = "expectedRevision")]
+        expected_revision: i64,
+        /// Trimmed, 1–100 chars, no control characters.
+        reference: String,
+        /// The company's own short classification; trimmed, 1–10 chars.
+        /// Absent, null and blank all fold to `None`.
+        transaction_code: Option<String>,
+    },
+    /// Replaces a recorded tax invoice reference. The value it replaces
+    /// stays in the audit row of this command.
+    #[serde(rename = "replace_tax_reference")]
+    ReplaceTaxReference {
+        #[serde(rename = "commandId")]
+        command_id: String,
+        #[serde(rename = "invoiceId")]
+        invoice_id: String,
+        #[serde(rename = "expectedRevision")]
+        expected_revision: i64,
+        reference: String,
+        transaction_code: Option<String>,
+        /// Trimmed, 1–500 chars.
+        reason: String,
+    },
 }
 
 /// One priced line of `create_invoice`'s sheet (`pricedLineSchema`):
@@ -378,6 +415,8 @@ impl BillingCommand {
             Self::VoidInvoice { .. } => "void_invoice",
             Self::RecordPaymentAttempt { .. } => "record_payment_attempt",
             Self::RecordProviderEvent { .. } => "record_provider_event",
+            Self::RecordTaxReference { .. } => "record_tax_reference",
+            Self::ReplaceTaxReference { .. } => "replace_tax_reference",
         }
     }
 
@@ -393,7 +432,9 @@ impl BillingCommand {
             | Self::RecordPaymentAttempt { .. } => "billing.write",
             Self::AppendCorrection { .. }
             | Self::IssueInvoice { .. }
-            | Self::VoidInvoice { .. } => "billing.settle",
+            | Self::VoidInvoice { .. }
+            | Self::RecordTaxReference { .. }
+            | Self::ReplaceTaxReference { .. } => "billing.settle",
             Self::RecordProviderEvent { .. } => "billing.write",
         }
     }
@@ -408,7 +449,9 @@ impl BillingCommand {
             | Self::AppendCorrection { command_id, .. }
             | Self::VoidInvoice { command_id, .. }
             | Self::RecordPaymentAttempt { command_id, .. }
-            | Self::RecordProviderEvent { command_id, .. } => command_id,
+            | Self::RecordProviderEvent { command_id, .. }
+            | Self::RecordTaxReference { command_id, .. }
+            | Self::ReplaceTaxReference { command_id, .. } => command_id,
         }
     }
 
@@ -421,7 +464,9 @@ impl BillingCommand {
             | Self::AppendCorrection { invoice_id, .. }
             | Self::VoidInvoice { invoice_id, .. }
             | Self::RecordPaymentAttempt { invoice_id, .. }
-            | Self::RecordProviderEvent { invoice_id, .. } => Some(invoice_id),
+            | Self::RecordProviderEvent { invoice_id, .. }
+            | Self::RecordTaxReference { invoice_id, .. }
+            | Self::ReplaceTaxReference { invoice_id, .. } => Some(invoice_id),
             Self::CreateInvoice { .. } | Self::CreateInvoiceFromOrder { .. } => None,
         }
     }
@@ -1012,8 +1057,84 @@ pub fn parse_command(
                 signature: signature_member(data).ok_or(ValidationError("signature"))?,
             })
         }
+        Some(arm @ ("record_tax_reference" | "replace_tax_reference")) => {
+            let replace = arm == "replace_tax_reference";
+            let allowed: &[&str] = if replace {
+                &[
+                    "type",
+                    "commandId",
+                    "invoiceId",
+                    "expectedRevision",
+                    "reference",
+                    "transactionCode",
+                    "reason",
+                ]
+            } else {
+                &[
+                    "type",
+                    "commandId",
+                    "invoiceId",
+                    "expectedRevision",
+                    "reference",
+                    "transactionCode",
+                ]
+            };
+            let required: Vec<&str> = allowed
+                .iter()
+                .copied()
+                .filter(|key| *key != "transactionCode")
+                .collect();
+            if !strict_optional_members(data, allowed, &required) {
+                return Err(ValidationError("type"));
+            }
+            let command_id =
+                required_uuid(data, "commandId").ok_or(ValidationError("commandId"))?;
+            let invoice_id =
+                required_uuid(data, "invoiceId").ok_or(ValidationError("invoiceId"))?;
+            let expected_revision =
+                bounded_integer(data, "expectedRevision", 1, i64::from(i32::MAX) - 1)
+                    .ok_or(ValidationError("expectedRevision"))?;
+            let reference = tax_text(data.get("reference"), TAX_REFERENCE_MAX)
+                .ok_or(ValidationError("reference"))?;
+            let transaction_code = match data.get("transactionCode") {
+                None | Some(Value::Null) => None,
+                Some(Value::String(value)) if value.chars().all(char::is_whitespace) => None,
+                Some(value) => Some(
+                    tax_text(Some(value), TAX_TRANSACTION_CODE_MAX)
+                        .ok_or(ValidationError("transactionCode"))?,
+                ),
+            };
+            Ok(if replace {
+                BillingCommand::ReplaceTaxReference {
+                    command_id,
+                    invoice_id,
+                    expected_revision,
+                    reference,
+                    transaction_code,
+                    reason: bounded_member(data, "reason", 1, REASON_MAX)
+                        .ok_or(ValidationError("reason"))?,
+                }
+            } else {
+                BillingCommand::RecordTaxReference {
+                    command_id,
+                    invoice_id,
+                    expected_revision,
+                    reference,
+                    transaction_code,
+                }
+            })
+        }
         _ => Err(ValidationError("type")),
     }
+}
+
+/// A tax invoice reference or transaction code: trimmed, 1 to `max`
+/// characters and no control character. Free text otherwise; no format of any
+/// authority is checked.
+fn tax_text(value: Option<&Value>, max: usize) -> Option<String> {
+    let text = super::trimmed(value?.as_str()?);
+    let length = text.chars().count();
+    ((1..=max).contains(&length) && !text.chars().any(char::is_control)).then(|| text.to_string())
 }
 
 // --- The provider-event signature (signature.ts, ported) ------------------------
@@ -1458,5 +1579,125 @@ mod tests {
         let mut forged = raw;
         forged["orderId"] = json!("not-an-order-id");
         assert!(parse_mutation(&forged).is_err());
+    }
+
+    /// A tax invoice reference is free text within bounds; no format of any
+    /// authority is checked, nothing is generated, and neither command takes
+    /// a member that would claim a number was verified.
+    #[test]
+    fn tax_reference_commands_take_bounded_text_and_no_claims() {
+        let id = "018f9a6e-5a3c-7d2b-8e1f-0a1b2c3d4e5f";
+        let record = json!({"type":"record_tax_reference","commandId":id,"invoiceId":id,"expectedRevision":2,"reference":"  010.000-26.00000001  ","transactionCode":" 01 "});
+        let parsed = parse_mutation(&record).unwrap().command;
+        assert_eq!(parsed.mutation_type(), "record_tax_reference");
+        assert_eq!(parsed.required_permission(), "billing.settle");
+        assert_eq!(parsed.invoice_ref(), Some(id));
+        assert_eq!(
+            parsed,
+            BillingCommand::RecordTaxReference {
+                command_id: id.into(),
+                invoice_id: id.into(),
+                expected_revision: 2,
+                reference: "010.000-26.00000001".into(),
+                transaction_code: Some("01".into()),
+            }
+        );
+        // The transaction code is optional: absent, null and blank are none.
+        for code in [None, Some(json!(null)), Some(json!("   "))] {
+            let mut raw = record.clone();
+            match code {
+                Some(value) => raw["transactionCode"] = value,
+                None => {
+                    raw.as_object_mut().unwrap().remove("transactionCode");
+                }
+            }
+            let BillingCommand::RecordTaxReference {
+                transaction_code, ..
+            } = parse_mutation(&raw).unwrap().command
+            else {
+                panic!("record arm");
+            };
+            assert_eq!(transaction_code, None);
+        }
+        // Any text is a reference: letters, another country's shape, a note.
+        for reference in ["A", "FP/2026/11/0001", "tax invoice no. 7 (reissued)"] {
+            let mut raw = record.clone();
+            raw["reference"] = json!(reference);
+            assert!(parse_mutation(&raw).is_ok(), "{reference}");
+        }
+        let long = "9".repeat(TAX_REFERENCE_MAX);
+        let mut raw = record.clone();
+        raw["reference"] = json!(long);
+        assert!(parse_mutation(&raw).is_ok());
+        for (field, invalid) in [
+            ("reference", json!("")),
+            ("reference", json!("   ")),
+            ("reference", json!(format!("{long}9"))),
+            ("reference", json!("line\nbreak")),
+            ("reference", json!(7)),
+            ("reference", json!(null)),
+            ("transactionCode", json!("12345678901")),
+            ("transactionCode", json!("0\t1")),
+            ("transactionCode", json!(1)),
+            ("expectedRevision", json!(0)),
+            ("expectedRevision", json!(1.5)),
+            ("expectedRevision", json!("2")),
+            ("expectedRevision", json!(2147483647i64)),
+            ("invoiceId", json!("not-an-id")),
+            ("commandId", json!("not-an-id")),
+        ] {
+            let mut raw = record.clone();
+            raw[field] = invalid.clone();
+            assert!(parse_mutation(&raw).is_err(), "{field} {invalid}");
+        }
+        for forged in [
+            "reason",
+            "verified",
+            "issuedBy",
+            "authority",
+            "generate",
+            "sellerTaxId",
+            "buyerTaxId",
+            "taxMinor",
+        ] {
+            let mut raw = record.clone();
+            raw[forged] = json!("forged");
+            assert!(parse_mutation(&raw).is_err(), "{forged}");
+        }
+        // Replacing names why, and is its own command.
+        let mut replace = record.clone();
+        replace["type"] = json!("replace_tax_reference");
+        assert!(
+            parse_mutation(&replace).is_err(),
+            "a replacement needs a reason"
+        );
+        replace["reason"] = json!("  The first number was mistyped  ");
+        let parsed = parse_mutation(&replace).unwrap().command;
+        assert_eq!(parsed.mutation_type(), "replace_tax_reference");
+        assert_eq!(parsed.required_permission(), "billing.settle");
+        assert_eq!(
+            parsed,
+            BillingCommand::ReplaceTaxReference {
+                command_id: id.into(),
+                invoice_id: id.into(),
+                expected_revision: 2,
+                reference: "010.000-26.00000001".into(),
+                transaction_code: Some("01".into()),
+                reason: "The first number was mistyped".into(),
+            }
+        );
+        for reason in [
+            json!(""),
+            json!("  "),
+            json!(null),
+            json!("x".repeat(REASON_MAX + 1)),
+        ] {
+            let mut raw = replace.clone();
+            raw["reason"] = reason;
+            assert!(parse_mutation(&raw).is_err());
+        }
+        let mut raw = replace;
+        raw["verified"] = json!(true);
+        assert!(parse_mutation(&raw).is_err());
     }
 }

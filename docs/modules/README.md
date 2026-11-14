@@ -13,6 +13,7 @@ The [capability matrix](../product/BUSINESS_CAPABILITY_MATRIX.md) remains planni
 | [ASSETS_MODULE.md](ASSETS_MODULE.md) | Asset register module |
 | [ATTENDANCE_MODULE.md](ATTENDANCE_MODULE.md) | Attendance, session rosters and event check-in module |
 | [BILLING_MODULE.md](BILLING_MODULE.md) | Invoicing and payment settlement module |
+| [TAX_INDONESIA_PACK.md](TAX_INDONESIA_PACK.md) | Unverified tax code templates, tax registration fields, tax ids and an external tax invoice reference on invoices, and the documents listing with a CSV export |
 | [COMMERCE_MODULE.md](COMMERCE_MODULE.md) | Commerce module |
 | [CRM_MODULE.md](CRM_MODULE.md) | Contacts, activities and follow-up — internal CRM slice |
 | [FIELD_SERVICES_MODULE.md](FIELD_SERVICES_MODULE.md) | Field services: dispatch, visits, and work evidence |

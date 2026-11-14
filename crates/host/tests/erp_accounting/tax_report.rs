@@ -131,7 +131,7 @@ fn nothing() -> Value {
 /// The same company and book as a purchase scenario: purchasing grants, a
 /// supplier, the purchase accounts, a tracked product with its offer and the
 /// purchase policy.
-async fn buying(s: SourceFixture) -> PurchaseScenario {
+pub(super) async fn buying(s: SourceFixture) -> PurchaseScenario {
     for actor in ["alice", "bob"] {
         sqlx::query("INSERT INTO archava_purchasing.memberships(tenant_id,principal_id,kind,permissions,scope) VALUES('acme',$1,'human',$2,'all')").bind(actor).bind(archava_domain::erp::purchasing::PERMISSION_VOCABULARY).execute(&s.f.admin_pool).await.unwrap();
     }

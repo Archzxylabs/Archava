@@ -492,13 +492,16 @@ async fn managed_company_upgrade_preserves_existing_organizations_parties_and_me
     .await
     .unwrap();
     tx.commit().await.unwrap();
-    let snapshot="SELECT json_build_object('parties',(SELECT json_agg(to_jsonb(p) ORDER BY id) FROM archava_organizations.parties p),'audit',(SELECT json_agg(to_jsonb(a) ORDER BY request_id) FROM archava_organizations.party_audit a),'commands',(SELECT json_agg(to_jsonb(c) ORDER BY request_id) FROM archava_organizations.commands c))";
+    // Organizations 005 adds tax_id to parties. The comparison leaves it out
+    // so a prior party compares equal across the upgrade; it must arrive empty
+    // (asserted below).
+    let snapshot="SELECT json_build_object('parties',(SELECT json_agg(to_jsonb(p)-'tax_id' ORDER BY id) FROM archava_organizations.parties p),'audit',(SELECT json_agg(to_jsonb(a) ORDER BY request_id) FROM archava_organizations.party_audit a),'commands',(SELECT json_agg(to_jsonb(c) ORDER BY request_id) FROM archava_organizations.commands c))";
     let prior: Value = sqlx::query_scalar(snapshot)
         .fetch_one(&f.admin_pool)
         .await
         .unwrap();
     let now = archava_pg_fixture::apply_pending_organization_migrations(&f.owner_pool).await;
-    assert_eq!(now.len(), 4);
+    assert_eq!(now.len(), 5);
     assert_eq!(
         archava_pg_fixture::apply_pending_organization_migrations(&f.owner_pool).await,
         now
@@ -516,6 +519,16 @@ async fn managed_company_upgrade_preserves_existing_organizations_parties_and_me
         .await
         .unwrap();
     assert_eq!(prior, preserved);
+    let filled: i64 = sqlx::query_scalar(
+        "SELECT count(*) FROM archava_organizations.parties WHERE tax_id IS NOT NULL",
+    )
+    .fetch_one(&f.admin_pool)
+    .await
+    .unwrap();
+    assert_eq!(
+        filled, 0,
+        "an upgrade copies no tax id onto an existing party"
+    );
     let(n,permissions):(i64,Vec<String>)=sqlx::query_as("SELECT (SELECT count(*) FROM archava_organizations.companies),permissions FROM archava_organizations.memberships WHERE tenant_id='acme' AND principal_id='alice'").fetch_one(&f.admin_pool).await.unwrap();
     assert_eq!(n, 0);
     assert!(!permissions.iter().any(|p| p.starts_with("companies.")));

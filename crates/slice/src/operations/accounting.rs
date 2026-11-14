@@ -8,11 +8,14 @@ mod close_check;
 mod inventory_check;
 mod payables;
 mod tax_codes;
+mod tax_documents;
 mod tax_report;
 mod terms;
 use super::*;
 pub(crate) use agent::{agent_references, agent_step_ready, agent_step_review};
 pub(super) use bank_check::BankCheckField;
+#[cfg(test)]
+pub(super) use tax_codes::template_request as tax_template_request;
 pub(super) use terms::{source as terms_source, ConditionField};
 pub(super) fn decimal(minor: &str, exponent: u8) -> Option<String> {
     let (sign, digits) = minor

@@ -1,19 +1,22 @@
-//! Unverified reference formulas for Indonesian PPN, PPh 21 and BPJS.
+//! Unverified reference formulas for Indonesian PPh 21 and BPJS.
 //!
 //! No other module uses this one: it is only declared in `erp/mod.rs`, and no
 //! adapter, route, schema or screen calls it. The rates, brackets and caps were
 //! not reviewed by a tax professional and are not kept in step with regulation.
-//! It is not an integration with Coretax or DJP and sends nothing to either.
-//! The arithmetic goes through `f64`, so the results are not suitable for
-//! posting to a ledger.
+//! It is not an integration with any tax authority system and sends nothing
+//! anywhere. The arithmetic goes through `f64`, so the results are not
+//! suitable for posting to a ledger. Do not add uses of this module.
+//!
+//! Value-added tax is not here. Tax on documents is the generic integer
+//! [`TaxRule`](super::tax::TaxRule) with tax codes the company enters
+//! (`docs/architecture/TAX.md`); the earlier `f64` VAT amount and the
+//! invoice-shaped struct with an unvalidated QR payload were removed.
 //!
 //! Contents:
-//! 1. PPN (VAT) amount from a rate in basis points, and an e-Faktur-shaped
-//!    struct whose QR payload string is not validated against anything.
-//! 2. PPh 21 TER (Tarif Efektif Rata-Rata) monthly rate lookup, written after
+//! 1. PPh 21 TER (Tarif Efektif Rata-Rata) monthly rate lookup, written after
 //!    PP 58/2023 & PMK 168/2023.
-//! 3. PPh 21 Pasal 17 annual progressive brackets.
-//! 4. BPJS Ketenagakerjaan (JHT, JP, JKK, JKM) & BPJS Kesehatan contribution splits.
+//! 2. PPh 21 Pasal 17 annual progressive brackets.
+//! 3. BPJS Ketenagakerjaan (JHT, JP, JKK, JKM) & BPJS Kesehatan contribution splits.
 
 use serde::{Deserialize, Serialize};
 
@@ -428,53 +431,6 @@ pub fn calculate_bpjs(gross_wage_cents: i64) -> BpjsContribution {
     }
 }
 
-/// An e-Faktur-shaped VAT record. Not a Coretax document: nothing validates
-/// its fields or its QR payload, and nothing submits it.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct EFakturDocument {
-    pub transaction_code: String, // e.g. "01" (Kepada Pihak Bukan Pemungut PPN)
-    pub nsfp: String,             // Nomor Seri Faktur Pajak e.g. "010.001-26.00000001"
-    pub invoice_date: String,
-    pub seller_npwp: String, // 16-digit NPWP
-    pub buyer_npwp_or_nik: String,
-    pub dpp_cents: i64,    // Dasar Pengenaan Pajak
-    pub vat_rate_bps: u32, // 1100 = 11%, 1200 = 12%
-    pub vat_cents: i64,    // Jumlah PPN
-    pub qrcode_payload: String,
-}
-
-pub fn generate_efaktur(
-    transaction_code: &str,
-    nsfp: &str,
-    date: &str,
-    seller_npwp: &str,
-    buyer_id: &str,
-    dpp_cents: i64,
-    vat_rate_bps: u32,
-) -> EFakturDocument {
-    let vat_cents = ((dpp_cents as f64) * (vat_rate_bps as f64 / 10_000.0)).round() as i64;
-    let qrcode_payload = format!(
-        "https://coretax.pajak.go.id/faktur?kd={}&nsfp={}&npwp={}&dpp={}&ppn={}",
-        transaction_code,
-        nsfp,
-        seller_npwp,
-        dpp_cents / 100,
-        vat_cents / 100
-    );
-
-    EFakturDocument {
-        transaction_code: transaction_code.to_string(),
-        nsfp: nsfp.to_string(),
-        invoice_date: date.to_string(),
-        seller_npwp: seller_npwp.to_string(),
-        buyer_npwp_or_nik: buyer_id.to_string(),
-        dpp_cents,
-        vat_rate_bps,
-        vat_cents,
-        qrcode_payload,
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -528,21 +484,5 @@ mod tests {
 
         assert!(bpjs.total_employer_cents > 0);
         assert!(bpjs.total_employee_cents > 0);
-    }
-
-    #[test]
-    fn test_efaktur_generation_and_vat_11_percent() {
-        let doc = generate_efaktur(
-            "01",
-            "010.001-26.00000001",
-            "2026-10-28",
-            "0123456789012345",
-            "3171012345670001",
-            50_000_000_00, // DPP Rp 50 Juta
-            1100,          // 11%
-        );
-
-        assert_eq!(doc.vat_cents, 5_500_000_00); // PPN Rp 5.5 Juta
-        assert!(doc.qrcode_payload.contains("coretax.pajak.go.id"));
     }
 }

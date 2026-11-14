@@ -169,7 +169,15 @@ struct MailTax {
     net_minor: i64,
     tax_minor: i64,
     total_minor: i64,
+    /// The tax ids the invoice stored at creation and the tax invoice
+    /// reference it carries now, in the order they are printed. Empty for an
+    /// invoice without any, whose mail is then what it always was.
+    identifiers: Vec<(&'static str, String)>,
 }
+
+/// Said under tax ids and a tax invoice reference: text the company entered.
+const IDENTIFIER_NOTICE: &str =
+    "Tax ids and the tax invoice reference are shown as the company entered them; Archava does not verify them.";
 
 impl MailTax {
     /// Reads the stored snapshot of an invoice row (`to_jsonb`), or `None` for
@@ -183,6 +191,24 @@ impl MailTax {
         let part = |name: &str| integer(name).and_then(|n| i32::try_from(n).ok());
         let total_minor = integer("gross_minor")?.checked_add(integer("correction_minor")?)?;
         let tax_minor = integer("tax_minor")?.checked_add(integer("correction_tax_minor")?)?;
+        let mut identifiers = Vec::new();
+        for (label, key) in [
+            ("Seller tax id", "seller_tax_id"),
+            ("Buyer tax id", "buyer_tax_id"),
+        ] {
+            if let Some(value) = stored[key].as_str() {
+                identifiers.push((label, value.to_string()));
+            }
+        }
+        if let Some(reference) = stored["tax_reference"].as_str() {
+            identifiers.push((
+                "Tax invoice reference",
+                match stored["tax_transaction_code"].as_str() {
+                    Some(code) => format!("{reference} (transaction code {code})"),
+                    None => reference.to_string(),
+                },
+            ));
+        }
         Some(Self {
             label: describe(
                 stored["tax_code"].as_str()?,
@@ -199,6 +225,7 @@ impl MailTax {
             net_minor: total_minor.checked_sub(tax_minor)?,
             tax_minor,
             total_minor,
+            identifiers,
         })
     }
     fn basis(&self) -> &'static str {
@@ -211,7 +238,7 @@ impl MailTax {
     /// The plain-text block: net, tax with its code and rate, total, and the
     /// notice that the company entered the code (rule 1).
     fn text(&self, currency: &str) -> String {
-        format!(
+        let mut text = format!(
             "\nNet: {}\nTax ({}, {}): {}\nTotal: {}\n{}\n",
             format_money(self.net_minor, currency),
             self.label,
@@ -219,10 +246,18 @@ impl MailTax {
             format_money(self.tax_minor, currency),
             format_money(self.total_minor, currency),
             archava_domain::erp::tax::DOCUMENT_NOTICE
-        )
+        );
+        for (label, value) in &self.identifiers {
+            text.push_str(&format!("{label}: {value}\n"));
+        }
+        if !self.identifiers.is_empty() {
+            text.push_str(IDENTIFIER_NOTICE);
+            text.push('\n');
+        }
+        text
     }
     fn html(&self, currency: &str) -> String {
-        format!(
+        let mut html = format!(
             "<h3>Tax</h3><ul><li>Net: {}</li><li>Tax ({}, {}): {}</li><li>Total: <strong>{}</strong></li></ul><p>{}</p>",
             html_escape(&format_money(self.net_minor, currency)),
             html_escape(&self.label),
@@ -230,7 +265,15 @@ impl MailTax {
             html_escape(&format_money(self.tax_minor, currency)),
             html_escape(&format_money(self.total_minor, currency)),
             html_escape(archava_domain::erp::tax::DOCUMENT_NOTICE)
-        )
+        );
+        if !self.identifiers.is_empty() {
+            html.push_str("<ul>");
+            for (label, value) in &self.identifiers {
+                html.push_str(&format!("<li>{label}: {}</li>", html_escape(value)));
+            }
+            html.push_str(&format!("</ul><p>{}</p>", html_escape(IDENTIFIER_NOTICE)));
+        }
+        html
     }
 }
 
@@ -832,6 +875,43 @@ mod tests {
         assert!(tax
             .html("IDR")
             .contains("Tax (&lt;b&gt; 12% of 11/12 of the price, added to the prices)"));
+    }
+
+    #[test]
+    fn a_taxed_invoice_mail_states_the_stored_tax_ids_and_reference_when_present() {
+        let mut row = stored(false, 33_300, 3_300, 0, 0);
+        row["seller_tax_id"] = json!("01.234.567.8-999.000");
+        row["buyer_tax_id"] = json!("<9>");
+        let tax = MailTax::of(&row).unwrap();
+        assert_eq!(
+            tax.text("IDR"),
+            "\nNet: 30000 IDR\nTax (VAT 11%, added to the prices): 3300 IDR\nTotal: 33300 IDR\nTax codes are entered by the company; Archava does not verify tax rates or rules.\nSeller tax id: 01.234.567.8-999.000\nBuyer tax id: <9>\nTax ids and the tax invoice reference are shown as the company entered them; Archava does not verify them.\n"
+        );
+        let html = tax.html("IDR");
+        assert!(
+            html.contains("<li>Seller tax id: 01.234.567.8-999.000</li>"),
+            "{html}"
+        );
+        assert!(html.contains("<li>Buyer tax id: &lt;9&gt;</li>"), "{html}");
+        assert!(!html.contains("Tax invoice reference"), "{html}");
+        // A recorded reference is printed with its transaction code, if any.
+        row["tax_reference"] = json!("010.000-26.00000001");
+        assert!(MailTax::of(&row)
+            .unwrap()
+            .text("IDR")
+            .contains("\nTax invoice reference: 010.000-26.00000001\n"));
+        row["tax_transaction_code"] = json!("01");
+        let tax = MailTax::of(&row).unwrap();
+        assert!(tax
+            .text("IDR")
+            .contains("\nTax invoice reference: 010.000-26.00000001 (transaction code 01)\n"));
+        assert!(tax
+            .html("IDR")
+            .contains("<li>Tax invoice reference: 010.000-26.00000001 (transaction code 01)</li>"));
+        // Only the buyer has none: the seller's line stands alone.
+        row["buyer_tax_id"] = json!(null);
+        let text = MailTax::of(&row).unwrap().text("IDR");
+        assert!(text.contains("Seller tax id:") && !text.contains("Buyer tax id:"));
     }
 
     #[test]
