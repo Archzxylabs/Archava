@@ -1,4 +1,4 @@
-#![recursion_limit = "256"]
+#![recursion_limit = "512"]
 //! The §1.4B vertical slice — the one real product flow, rendered server-side
 //! and hydrated in the browser.
 //!
