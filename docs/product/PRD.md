@@ -134,6 +134,13 @@ invariant, persona dan acceptance sendiri; dukungan satu profil tidak menerima
 profil lain secara otomatis. Negara, aturan dan konektor riil ditetapkan eksplisit
 ketika konfigurasi/pemakaian riil terkait dibuat.
 
+**Keputusan owner, 14 November 2026:** pasar yang dituju adalah Indonesia dan
+global. Dua profil rilis dicatat di `PRD_DELIVERY_REGISTER.v1.json`: `id-idr`
+(Indonesia, IDR) dan `global` (di luar Indonesia). Profil `global` belum dapat
+dibangun sampai transaksi tidak lagi dibatasi ke IDR; negara, pajak dan mata uang
+pertama di luar Indonesia belum disebut dan tidak diklaim. Cakupan model bisnis
+tidak berubah dari penegasan 8 November.
+
 Satu profil rilis mendefinisikan jenis pelanggan, persona, negara, legal entity,
 currency, proses wajib, volume data, concurrency, integrasi, SLO dan lingkungan.
 Requirement P0 adalah wajib untuk profil yang menawarkan proses terkait. P1
