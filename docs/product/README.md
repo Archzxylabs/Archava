@@ -14,6 +14,7 @@ tracker. New PRD targets do not inherit acceptance from earlier release checks.
 | [Archava product PRD](PRD.md) | Active agentic AI for business requirements, release profiles, success measures and ordered roadmap |
 | [PRD execution tracker](PRD_EXECUTION_WORK.md) | New implementation increments, their actual evidence and remaining scope |
 | [Whole-PRD delivery register](PRD_DELIVERY_REGISTER.v1.json) | Requirement-level acceptance and remaining work; bounded test results do not complete the product |
+| [Delivery register review, 2026-11-14](PRD_REGISTER_REVIEW_2026-11-14.md) | Clause-by-clause assessment of the 35 register requirements for `id-idr` at one commit, what asserts each clause, and the work only the owner or an outside party can do; clause counts are not a completeness score |
 | [Inherited traceability inventory](PRD_INHERITED_TRACEABILITY.v1.json) | Source-bound inventory of migration, owner, benchmark and inherited execution obligations; scope review remains explicit |
 | [Owner configuration](OWNER_CONFIGURATION_PRD.md) | Owner self-service requirements and intended authorization/workflows |
 | [Full Rust PRD](PRD_FULL_RUST.md) | Migration requirements; compare with frozen migration records and current source |
