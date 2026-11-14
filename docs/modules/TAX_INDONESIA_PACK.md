@@ -1,6 +1,6 @@
 # Indonesia tax pack
 
-Status: implemented on branch `feat/tax-indonesia-pack`, not merged. **Unverified.** Nobody with tax authority has reviewed anything in this pack. It states nothing about what Indonesian tax law, or the law of any country, requires. Nothing in it is compliant, official or verified, and nothing in it is described that way.
+Status: merged (#49). **Unverified.** Nobody with tax authority has reviewed anything in this pack. It states nothing about what Indonesian tax law, or the law of any country, requires. Nothing in it is compliant, official or verified, and nothing in it is described that way.
 
 The pack adds fields and templates for the owner's nearer market, Indonesia, on top of the generic [tax on documents](../architecture/TAX.md). Which of them a company uses, and with what values, is the company's decision with its own tax adviser. Its rule is that design's rule 1: tax is the company's data. Every value below is entered by the company and stored as entered, and every screen that shows one says so: *entered by your company; Archava does not verify tax rates or rules*. This page describes what each field stores, not what a tax authority expects in it.
 

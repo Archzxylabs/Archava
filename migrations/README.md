@@ -1,12 +1,12 @@
 # SQL migration ownership
 
-All 90 checked-in SQL migrations currently live under this directory, grouped into 31 ledger directories. The native manifest mounts 83; 7 remain reserved specifications. The owner-configuration migration was relocated from `crates/host/migrations/owner` to `owner-pg/`; its migration ID, schema namespace, SQL bytes, and checksum are unchanged.
+All 94 checked-in SQL migrations currently live under this directory, grouped into 31 ledger directories. The native manifest mounts 87; 7 remain reserved specifications. The owner-configuration migration was relocated from `crates/host/migrations/owner` to `owner-pg/`; its migration ID, schema namespace, SQL bytes, and checksum are unchanged.
 
 The manifest is the only list of applied migrations. The persistent server embeds the migrations it verifies from it at build time ([build.rs](../crates/slice/build.rs)), and the disposable PostgreSQL fixture reads the same manifest in [pg-fixture](../crates/pg-fixture/src/lib.rs). A file's presence here does not mean a given runtime mounts it or its UI is complete.
 
 ## Applied versus unmounted ledgers
 
-`manifest.v1.json` is the installer's contract: 83 of the 90 files, across 25 ledgers, carry an `id`, `path` and SHA-256 that the Ops installer verifies and applies. The remaining seven files are **unmounted**: no manifest entry, no embedded registration, and no runtime readiness check.
+`manifest.v1.json` is the installer's contract: 87 of the 94 files, across 25 ledgers, carry an `id`, `path` and SHA-256 that the Ops installer verifies and applies. The remaining seven files are **unmounted**: no manifest entry, no embedded registration, and no runtime readiness check.
 
 | Unmounted ledger | Files |
 | --- | --- |
@@ -229,3 +229,39 @@ time, in a revision of its own, and cannot be removed. The value a replacement
 overwrote stays in the existing immutable `archava_billing.audit` row of the command.
 No table is added and no grant changes. Organizations005 migrates before it. See
 [Billing](../docs/modules/BILLING_MODULE.md#tax-ids-and-the-tax-invoice-reference).
+
+Commerce013, Billing012, Purchasing009 and Accounting019 follow the review of the tax
+money path ([decisions](../docs/architecture/TAX.md#decisions-taken-after-review-2026-11-14)).
+None adds a table or a column or rewrites a row; every replaced function keeps its
+signature, so the triggers that call it and the readiness functions that identify
+them are unchanged.
+
+Commerce013 replaces `archava_commerce.guard_order_tax()` of Commerce012: "applies on
+the order date" is the UTC calendar date of the transaction clock, not `current_date`
+in the session's time zone.
+
+Billing012 replaces `archava_billing.guard_invoice_tax()` of Billing010: the invoice
+date is the UTC calendar date of `created_at`, and a taxed invoice is inserted with a
+`created_at` within one second of its own transaction's clock, so it cannot be
+back-dated to reach a retired tax code version. It also pins `search_path=pg_catalog`
+on `assert_order_invoice()`, `guard_invoice_source()` and `guard_customer_contact()`
+with `ALTER FUNCTION` (their bodies were already schema-qualified); a later
+`CREATE OR REPLACE` of one of them must carry the setting itself.
+
+Purchasing009 replaces `archava_purchasing.guard_supplier_document_tax()` of
+Purchasing008: a captured version with a tax code is refused when its goods plus its
+tax exceed the ledger bound in ledger units (×100 for an IDR document, ×1 otherwise),
+instead of failing later at the match. Stored versions are not re-examined.
+
+Accounting019 adds `posting_policy_account(text,uuid,uuid)` and
+`tax_control_account(text,uuid,uuid[])` (default `EXECUTE`, invoker rights) and
+`tax_document_guards_complete()`, readiness over the seven tax triggers of Billing,
+Commerce and Purchasing, which needs `EXECUTE` for the runtime role (manifest
+`runtimeGrants` and the fixture). It replaces in place `guard_tax_code()` of 016,
+`guard_invoice_policy()`, `guard_purchase_policy()` and `guard_stock_policy()` of 014,
+`guard_invoice_source()` and `guard_journal_source()` of 017, and
+`guard_purchase_source()` and `guard_purchase_journal_source()` of 018: a tax control
+account and a posting policy account exclude each other on insert and update, the
+capture guards compare the two accounts as uuids, and the draft of a purchase void or
+of an invoice correction or void is refused until the bill or the issue it reverses
+is posted. Existing rows are not re-examined. It migrates after the other three.

@@ -587,10 +587,10 @@ pub async fn workspace_filtered(
         None => "IDR".to_owned(),
     };
     // The output tax codes a new order of the selected company may name: the
-    // confirmed versions of its book that apply on the database's current
-    // date (TAX.md stage B). The caller has already been checked for the
-    // company and reads orders; the list carries no account and no person.
-    // The order's insert guard stays the authority.
+    // confirmed versions of its book that apply on the UTC calendar date now
+    // (TAX.md stage B and the decisions after review). The caller has already
+    // been checked for the company and reads orders; the list carries no
+    // account and no person. The order's insert guard stays the authority.
     let tax_codes = match company {
         Some(company) if context.access.holds(&["orders.read"]) => {
             applicable_output_tax_codes(connection, tenant, company).await?
@@ -607,7 +607,7 @@ pub async fn workspace_filtered(
 const TAX_NOTICE: &str = "Tax codes are entered by your company; Archava does not verify tax rates or rules. An order names a tax code and whether its prices include the tax; the invoice made from the order takes the version that applies on the invoice date.";
 
 /// The confirmed output tax code versions of a company's book that apply on
-/// the database's current date, or none when the Accounting ledger or the
+/// the UTC calendar date now, or none when the Accounting ledger or the
 /// book is absent.
 async fn applicable_output_tax_codes(
     connection: &mut PgConnection,
@@ -626,11 +626,11 @@ async fn applicable_output_tax_codes(
         "SELECT coalesce(json_agg(c.row ORDER BY c.code),'[]'::json) FROM (SELECT t.code,json_build_object('code',t.code,'version',t.version,\
          'rate',json_build_object('numerator',t.rate_numerator,'denominator',t.rate_denominator),\
          'base',json_build_object('numerator',t.base_numerator,'denominator',t.base_denominator),\
-         'effectiveFrom',t.effective_from,'effectiveTo',t.effective_to,'appliesOn',current_date,\
+         'effectiveFrom',t.effective_from,'effectiveTo',t.effective_to,'appliesOn',(now() AT TIME ZONE 'UTC')::date,\
          'enteredByCompany',true,'verifiedByArchava',false) AS row \
          FROM archava_accounting.tax_codes t JOIN archava_accounting.books b ON b.tenant_id=t.tenant_id AND b.id=t.book_id \
          WHERE t.tenant_id=$1 AND b.company_id=$2 AND t.kind='output' AND t.state IN ('confirmed','retired') \
-         AND current_date BETWEEN t.effective_from AND coalesce(t.effective_to,DATE 'infinity') ORDER BY t.code LIMIT 100) c",
+         AND (now() AT TIME ZONE 'UTC')::date BETWEEN t.effective_from AND coalesce(t.effective_to,DATE 'infinity') ORDER BY t.code LIMIT 100) c",
     )
     .bind(tenant)
     .bind(company)

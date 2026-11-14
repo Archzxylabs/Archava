@@ -59,7 +59,7 @@ The native server embeds migrations, shared styles, and selected assets. `target
 
 ## SQL ownership
 
-All 90 checked-in SQL files are under `migrations/`, grouped into 31 ledger directories (83 mounted migrations registered in `migrations/manifest.v1.json` for native installation, and 7 unmounted reserved specs). The owner migration is now `migrations/owner-pg/001_owner_config.sql`. Its migration ID, namespace, bytes, and checksum were preserved when its path changed.
+All 94 checked-in SQL files are under `migrations/`, grouped into 31 ledger directories (87 mounted migrations registered in `migrations/manifest.v1.json` for native installation, and 7 unmounted reserved specs). The owner migration is now `migrations/owner-pg/001_owner_config.sql`. Its migration ID, namespace, bytes, and checksum were preserved when its path changed.
 
 Customer-linked orders add a real schema dependency: the native installer and
 fixture apply Identity, CRM, Organizations, then Commerce before the other dependent ledgers.

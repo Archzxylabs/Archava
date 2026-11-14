@@ -8,10 +8,10 @@ use super::invoice_sources::SourceFixture;
 use super::*;
 use archava_domain::erp::tax::{Fraction, TaxRule};
 
-/// Today, yesterday and tomorrow as the database dates them: the dates a tax
-/// code applies on (TAX.md, stage A decision).
+/// Today, yesterday and tomorrow in the UTC calendar: the dates a tax code
+/// applies on (TAX.md, decisions taken after review).
 pub(super) async fn days(f: &Fixture) -> (String, String, String) {
-    sqlx::query_as("SELECT current_date::text,(current_date-1)::text,(current_date+1)::text")
+    sqlx::query_as("SELECT d::text,(d-1)::text,(d+1)::text FROM (SELECT (now() AT TIME ZONE 'UTC')::date AS d) utc")
         .fetch_one(&f.runtime_pool)
         .await
         .unwrap()

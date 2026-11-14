@@ -131,7 +131,9 @@ pub(super) fn refused(code: &str) -> PurchaseError {
 /// (trade currency rule 5) are business conflicts, not database failures. So
 /// are the two tax guards of Billing 009 a person can meet: no tax code
 /// version applies on the invoice date, and a taxed invoice on a book with
-/// invoice posting (TAX.md stage B).
+/// invoice posting (TAX.md stage B). Lock failures (deadlock, lock timeout)
+/// are conflicts as everywhere else; the other conflict states of the shared
+/// classifier (`23503`, `23505`, `22003`) stay database failures here.
 pub(super) fn refuses(error: sqlx::Error) -> PurchaseError {
     if error.as_database_error().is_some_and(|e| {
         e.code().as_deref() == Some("23514")
@@ -154,6 +156,15 @@ pub(super) fn refuses(error: sqlx::Error) -> PurchaseError {
         // The message guards are catalogued; the amount bound is a column
         // constraint and stays a plain conflict.
         return super::catalogued_refusal(&error).map_or_else(conflict, PurchaseError::Refused);
+    }
+    // A deadlock (`40P01`) or a lock that was not available (`55P03`) is a
+    // race the caller can retry, as in the shared classifier
+    // (`purchase_database_error`): a conflict, not a database failure.
+    if error
+        .as_database_error()
+        .is_some_and(|e| matches!(e.code().as_deref(), Some("40P01") | Some("55P03")))
+    {
+        return conflict();
     }
     PurchaseError::Database {
         ledger: BILLING_LEDGER,

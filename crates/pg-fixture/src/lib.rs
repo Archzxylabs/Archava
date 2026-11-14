@@ -1177,6 +1177,20 @@ async fn grant_accounting_runtime(pool: &PgPool) {
                 format!("GRANT EXECUTE ON FUNCTION archava_accounting.tax_guards_complete() TO {RUNTIME_USER}"),
             ] {sqlx::query(sqlx::AssertSqlSafe(statement.as_str())).execute(pool).await.unwrap();}
         }
+        // Accounting 019: readiness over the tax guards outside Accounting.
+        let tax_documents_present: bool = sqlx::query_scalar(
+            "SELECT to_regprocedure('archava_accounting.tax_document_guards_complete()') IS NOT NULL",
+        )
+        .fetch_one(pool)
+        .await
+        .unwrap();
+        if tax_documents_present {
+            let statement = format!("GRANT EXECUTE ON FUNCTION archava_accounting.tax_document_guards_complete() TO {RUNTIME_USER}");
+            sqlx::query(sqlx::AssertSqlSafe(statement.as_str()))
+                .execute(pool)
+                .await
+                .unwrap();
+        }
     }
 }
 

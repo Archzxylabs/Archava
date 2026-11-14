@@ -82,6 +82,12 @@ The unit factor is the one of the policy the order's origin pinned (×100 under
 account is not a role. `purchase_effect` is unchanged and `purchase_effect_tax`
 reads the tax from the document version Purchasing stored.
 
+A void is reviewed after its bill: `purchase_source.draft` for a void source is
+refused as `purchase_void_before_bill_posted` while the bill source it reverses has no
+posted journal ([Accounting 019](../../migrations/accounting-pg/019_tax_review_guards.sql);
+taxed or not), so the payable never passes through a negative amount. A void draft
+stored before that migration is not looked at again.
+
 | Effect | Reviewed journal |
 | --- | --- |
 | Bill with tax | Debit GRNI (net goods), debit the tax control account (tax), credit supplier payable (goods plus tax) |

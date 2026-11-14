@@ -26,7 +26,7 @@ The analysis below was written by reading test bodies before these tests existed
 | browser `OWNER-native-revoked-owner-refused` (`tools/e2e/verify.mjs`) | T04 l: a grant revoked while signed in refuses the open page's next request and shows the refusal on reload |
 | `crates/host/tests/product_workspaces.rs` (`status_refused`) | A disabled module answers `module_disabled` on `/erp/<id>/commands/status` for the 13 workspace modules and commerce, purchasing, billing, support and accounting |
 
-Nothing from the list above is still missing. The browser checks change a grant through SQL because the product has no grant-management screen.
+The three gaps named in the sentence this paragraph replaced (a revoked owner in the browser, a read-only owner, command-status routes of disabled modules) are covered by the rows above. That is not the whole list: of the numbered items under "Missing tests, most valuable first" below, items 12 (forged readiness, cost or price on `/own/plan`), 14 (a resource pinned between plan and apply), 17 (the agent dispatching to a disabled module) and 18 (a server restart between commit and recovery, in the browser) still have no test. An earlier version of this paragraph said nothing was missing; that was wrong. The browser checks change a grant through SQL because the product has no grant-management screen.
 
 ---
 

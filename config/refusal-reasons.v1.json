@@ -491,6 +491,36 @@
       "code": "purchase_source_tax_accounts_required",
       "message": "This supplier bill source carries tax, so its journal posts the tax to the tax control account captured with it, beside the goods received not invoiced and payable accounts. Review and select exactly the accounts of the proposed journal at their current revisions, then save the draft again.",
       "message_id": "Sumber tagihan pemasok ini memuat pajak, jadi jurnalnya memposting pajak ke akun kontrol pajak yang tercatat bersamanya, di samping akun barang diterima belum ditagih dan akun utang. Tinjau dan pilih tepat akun-akun pada jurnal yang diusulkan dengan revisi terkininya, lalu simpan drafnya lagi."
+    },
+    "A taxed invoice is created at the time of its own transaction": {
+      "code": "invoice_created_at_not_transaction_clock",
+      "message": "A taxed invoice takes its date from the moment it is created, and this one states another time, so it was not recorded. Create the invoice from its fulfilled sales order through Billing; the invoice date cannot be entered.",
+      "message_id": "Faktur berpajak mengambil tanggalnya dari saat faktur dibuat, sedangkan yang ini menyebut waktu lain, jadi tidak dicatat. Buat faktur dari pesanan penjualan yang sudah dipenuhi lewat Penagihan; tanggal faktur tidak bisa diisi."
+    },
+    "A tax control account cannot be an account of a posting policy of the book": {
+      "code": "tax_code_control_account_in_posting_policy",
+      "message": "The control account chosen for this tax code is already used by the invoice, purchase or stock posting policy of this book, so tax would not be a separate line and the tax code was not saved. Choose an account that no posting policy uses: an operating liability account for output tax or an operating asset account for input tax.",
+      "message_id": "Akun kontrol yang dipilih untuk kode pajak ini sudah dipakai oleh kebijakan posting faktur, pembelian, atau persediaan pada pembukuan ini, sehingga pajak tidak akan menjadi baris tersendiri dan kode pajak tidak disimpan. Pilih akun yang tidak dipakai kebijakan posting mana pun: akun liabilitas operasional untuk pajak keluaran atau akun aset operasional untuk pajak masukan."
+    },
+    "A posting policy account cannot be the control account of a tax code of the book": {
+      "code": "posting_policy_account_is_tax_control_account",
+      "message": "One of the accounts chosen for this posting policy is the control account of a tax code of this book, so tax would not be a separate line and the policy was not saved. Choose another account for the policy, or withdraw the tax code if it was entered by mistake; a confirmed or retired tax code keeps its account.",
+      "message_id": "Salah satu akun yang dipilih untuk kebijakan posting ini adalah akun kontrol dari kode pajak pada pembukuan ini, sehingga pajak tidak akan menjadi baris tersendiri dan kebijakan tidak disimpan. Pilih akun lain untuk kebijakan ini, atau tarik kode pajaknya jika salah dimasukkan; kode pajak yang sudah dikonfirmasi atau dipensiunkan tetap memegang akunnya."
+    },
+    "Post the invoice issue before reviewing its correction or void": {
+      "code": "invoice_correction_before_issue_posted",
+      "message": "This correction or void belongs to an invoice whose issue is not posted yet, so its journal was not drafted. Review and post the journal of the invoice issue first, then draft this one.",
+      "message_id": "Koreksi atau pembatalan ini milik faktur yang penerbitannya belum diposting, jadi jurnalnya tidak dibuat. Tinjau dan posting dulu jurnal penerbitan fakturnya, lalu buat draf yang ini."
+    },
+    "Post the supplier bill before reviewing its void": {
+      "code": "purchase_void_before_bill_posted",
+      "message": "This void reverses a supplier bill that is not posted yet, so its journal was not drafted. Review and post the journal of the supplier bill first, then draft the void.",
+      "message_id": "Pembatalan ini membalik tagihan pemasok yang belum diposting, jadi jurnalnya tidak dibuat. Tinjau dan posting dulu jurnal tagihan pemasoknya, lalu buat draf pembatalannya."
+    },
+    "A taxed supplier document total exceeds the amount the ledger can post": {
+      "code": "supplier_document_total_beyond_ledger_bound",
+      "message": "The goods total and the tax of this supplier document together are more than the ledger can post in one bill, so the claim was not saved. Check the amounts against the supplier's document; if they are right, record the supply as several documents.",
+      "message_id": "Total barang dan pajak dokumen pemasok ini jika dijumlahkan melebihi nilai yang bisa diposting buku besar dalam satu tagihan, jadi klaim tidak disimpan. Periksa jumlahnya terhadap dokumen pemasok; jika sudah benar, catat pasokan itu sebagai beberapa dokumen."
     }
   }
 }

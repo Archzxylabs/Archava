@@ -55,7 +55,8 @@ limit as Commerce customer names. Both creation paths share the
 Stage B of [tax on documents](../architecture/TAX.md). When the source order names a
 tax code, `create_invoice_from_order` looks up the confirmed output version of that
 code that applies on the invoice date and stores it with the invoice. Billing has no
-document date; the invoice date is the database's date of `created_at`. Without an
+document date; the invoice date is the UTC calendar date of `created_at`, and a taxed
+invoice must be created at the clock of its own transaction (Billing 012). Without an
 applicable version the command is refused (`invoice_tax_code_not_applicable`) and no
 invoice is created.
 

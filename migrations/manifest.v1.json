@@ -127,6 +127,11 @@
           "id": "012_sales_order_tax",
           "path": "migrations/commerce-pg/012_sales_order_tax.sql",
           "sha256": "75fb50c5f89fb0b3899a5b02803c7ca35a3828ee3766326deb26f874afe001d2"
+        },
+        {
+          "id": "013_sales_order_tax_utc_date",
+          "path": "migrations/commerce-pg/013_sales_order_tax_utc_date.sql",
+          "sha256": "97eca7dd9f4038085b2ff64a45ae5b2da411e3ec617fc45e2c61a12b2f451c62"
         }
       ]
     },
@@ -173,6 +178,11 @@
           "id": "008_supplier_document_tax",
           "path": "migrations/purchasing-pg/008_supplier_document_tax.sql",
           "sha256": "c3bb14dd3f07586f02d99d2c4e9a199bbe3b3fbd0f988770cea996ac847797de"
+        },
+        {
+          "id": "009_supplier_document_tax_bound",
+          "path": "migrations/purchasing-pg/009_supplier_document_tax_bound.sql",
+          "sha256": "a35fcb0a7b4094f7d716404b2f9efa132ceb453faa33b7a0b75a7b0127bc8eb9"
         }
       ]
     },
@@ -305,6 +315,11 @@
           "id": "011_invoice_tax_identifiers",
           "path": "migrations/billing-pg/011_invoice_tax_identifiers.sql",
           "sha256": "375e9c4798ac6b503006532ec17b2586545f0d41a4376a7dc447c2409ce163e8"
+        },
+        {
+          "id": "012_tax_review_guards",
+          "path": "migrations/billing-pg/012_tax_review_guards.sql",
+          "sha256": "920a385f3126c4b3e9b4c545030bd4730427a0442dd3ffa9829cd4dd48f4d913"
         }
       ]
     },
@@ -401,6 +416,11 @@
           "id": "018_purchase_source_tax",
           "path": "migrations/accounting-pg/018_purchase_source_tax.sql",
           "sha256": "9c5601168ff135b0c85bfad6ea4c84625d64a33dd5146d9471d4b72f4f8a6ab6"
+        },
+        {
+          "id": "019_tax_review_guards",
+          "path": "migrations/accounting-pg/019_tax_review_guards.sql",
+          "sha256": "9b7a1cf73511abedcf3a04e7fc36a073c431680b993ec550d8f7da3f7eb52545"
         }
       ]
     },
@@ -732,6 +752,7 @@
     "GRANT SELECT,INSERT ON archava_accounting.opening_balances TO {runtime_role}",
     "GRANT EXECUTE ON FUNCTION archava_accounting.opening_guards_complete() TO {runtime_role}",
     "GRANT SELECT,INSERT,UPDATE ON archava_accounting.tax_codes TO {runtime_role}",
-    "GRANT EXECUTE ON FUNCTION archava_accounting.tax_guards_complete() TO {runtime_role}"
+    "GRANT EXECUTE ON FUNCTION archava_accounting.tax_guards_complete() TO {runtime_role}",
+    "GRANT EXECUTE ON FUNCTION archava_accounting.tax_document_guards_complete() TO {runtime_role}"
   ]
 }
