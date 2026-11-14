@@ -1,6 +1,6 @@
 # Archava Documentation Hub
 
-Comprehensive engineering, architectural, and operational documentation for the Archava Rust modular monolith (22 Cargo workspace crates, Axum host, PostgreSQL `FORCE RLS` multi-tenancy, and Leptos SSR/WASM UI).
+Comprehensive engineering, architectural, and operational documentation for the Archava Rust modular monolith (21 Cargo workspace crates, Axum host, PostgreSQL `FORCE RLS` multi-tenancy, and Leptos SSR/WASM UI).
 
 Start with the [active product PRD](product/PRD.md) for Archava's agentic AI for
 business direction, requirements and measurable outcomes. Requirements and roadmap

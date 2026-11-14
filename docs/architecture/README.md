@@ -2,7 +2,7 @@
 
 <a id="current-architecture"></a>
 
-Archava is a modular Rust monolith: the root Cargo workspace contains 22 crates, and the application is assembled into the `archava-server` binary from `crates/slice`. Keeping the current code in these boundaries is more useful than splitting it into additional services for cosmetic reasons. Consult the [domain glossary](../GLOSSARY.md) for canonical definitions of Ava, Orbz, Cockpit, and the 7 Tier 1 pillars.
+Archava is a modular Rust monolith: the root Cargo workspace contains 21 crates, and the application is assembled into the `archava-server` binary from `crates/slice`. Keeping the current code in these boundaries is more useful than splitting it into additional services for cosmetic reasons. Consult the [domain glossary](../GLOSSARY.md) for canonical definitions of Ava, Orbz, Cockpit, and the 7 Tier 1 pillars.
 
 This document describes the source and entry points. It does not establish launch readiness, regulatory compliance, production latency, or completion of every domain's user workflow. The older aspirational blueprint is retained in [history](../archive/history/platform-2026-10-28/ARCHITECTURE.md).
 
@@ -42,7 +42,7 @@ flowchart TD
 | HTTP composition and authority | `host` |
 | Product UI and server bootstrap | `slice` |
 | Native bindings and operator CLI | `native`, `ops` |
-| Protocols, evaluation, campaigns, browser automation | `mcp`, `evals`, `campaigns`, `rpa` |
+| Protocols, campaigns, browser automation | `mcp`, `campaigns`, `rpa` |
 | Test database lifecycle | `pg-fixture` |
 
 A crate's existence does not mean the persistent host mounts all of its behavior. For example, the host directly composes `cockpit` and `orbz`, while the other protocol/automation crates have their own boundaries. Inspect [the router](../../crates/host/src/router.rs) and [server bootstrap](../../crates/slice/src/bin/archava_server.rs) for the actual mounted surface.
@@ -104,7 +104,7 @@ These source maps distinguish implemented library behavior, host wiring and rema
 | [DECISION_INTELLIGENCE.md](DECISION_INTELLIGENCE.md) | Decision policy, confidence floors, provider and host boundaries |
 | [DURABLE_ACT_OPERATIONS.md](DURABLE_ACT_OPERATIONS.md) | Command receipts, pending state, recovery and provider composition |
 | [ENTERPRISE_ENGINES.md](ENTERPRISE_ENGINES.md) | Ledger, tax, inventory, hardware, telematics and messaging components |
-| [FRONTIER_AGENTIC_CRATES.md](FRONTIER_AGENTIC_CRATES.md) | MCP, evaluation, campaigns and RPA implementation boundaries |
+| [FRONTIER_AGENTIC_CRATES.md](FRONTIER_AGENTIC_CRATES.md) | MCP, campaigns and RPA implementation boundaries |
 | [INTEGRATION.md](INTEGRATION.md) | Host API authentication contracts, CSRF headers, and browser embedding |
 | [ORBZ_MEMORY_ARCHITECTURE.md](ORBZ_MEMORY_ARCHITECTURE.md) | Memory tiers, access policy, reflection and persistence limits |
 

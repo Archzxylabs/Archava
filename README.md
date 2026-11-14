@@ -26,7 +26,7 @@ owned-fixture results do not certify live-provider quality or public deployment.
 
 | Path | Purpose |
 | --- | --- |
-| `crates/` | The 22 Cargo workspace members: contracts, business engines, adapters, host, UI, and operator tools |
+| `crates/` | The 21 Cargo workspace members: contracts, business engines, adapters, host, UI, and operator tools |
 | `migrations/` | Canonical SQL ledgers, including the owner-configuration ledger |
 | `static/` | Served browser assets, embed script, stylesheet, and licensed fonts |
 | `config/` | Shared release/tooling catalogue; crate-owned fixtures and historical data live elsewhere |

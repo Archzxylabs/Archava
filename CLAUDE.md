@@ -39,7 +39,7 @@ slice (Leptos SSR + WASM hydrate, server bootstrap)
                  └─ core (contracts, tenant types; no internal deps)
 ```
 
-Side crates: `pricing`, `rates`, `assembly`, `capacity`, `assistant`, `own`, `context` are portable rule/planner crates; `providers` is the bounded model transport; `cockpit` (mission/flight state) and `orbz` (memory) are composed by the host; `ops` → `assembly` is the operator CLI (migrations, install, restore); `mcp`, `evals`, `campaigns`, `rpa` have their own boundaries and are not all mounted; `pg-fixture` is dev-only.
+Side crates: `pricing`, `rates`, `assembly`, `capacity`, `assistant`, `own`, `context` are portable rule/planner crates; `providers` is the bounded model transport; `cockpit` (mission/flight state) and `orbz` (memory) are composed by the host; `ops` → `assembly` is the operator CLI (migrations, install, restore); `mcp`, `campaigns`, `rpa` have their own boundaries and are not all mounted; `pg-fixture` is dev-only.
 
 How one feature spans the layers (e.g. an ERP domain such as billing):
 
