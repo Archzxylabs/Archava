@@ -112,6 +112,11 @@
           "id": "010_return_layer_provenance",
           "path": "migrations/commerce-pg/010_return_layer_provenance.sql",
           "sha256": "f02bd7a1fa76e61b7976a90a65be155d825abfab4a98895e2aa32b1d32708b7f"
+        },
+        {
+          "id": "011_company_trade_currency",
+          "path": "migrations/commerce-pg/011_company_trade_currency.sql",
+          "sha256": "0acc5c8306e044e45970062b2c7d35c6e67c175c1a1625197551a96948d1d110"
         }
       ]
     },

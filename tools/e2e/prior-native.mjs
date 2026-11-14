@@ -29,6 +29,8 @@ export async function verifyPriorNative({previousRoot,packageRoot,facts,scratch,
  const oldTerms=oldManifest.ledgers.find(l=>l.namespace==='archava_accounting')?.migrations.some(m=>m.id==='011_reviewed_document_terms')===true
  const newOpenings=newManifest.ledgers.find(l=>l.namespace==='archava_accounting')?.migrations.some(m=>m.id==='013_declared_opening_balances')===true
  const oldOpenings=oldManifest.ledgers.find(l=>l.namespace==='archava_accounting')?.migrations.some(m=>m.id==='013_declared_opening_balances')===true
+ const tradeCurrency=manifest=>manifest.ledgers.find(l=>l.namespace==='archava_commerce')?.migrations.some(m=>m.id==='011_company_trade_currency')===true
+ const commerceAdded=tradeCurrency(newManifest)&&!tradeCurrency(oldManifest)?['011_company_trade_currency']:[]
  const oldDisclosure=oldManifest.ledgers.find(l=>l.namespace==='archava_owner')?.migrations.some(m=>m.id==='004_ai_disclosure_boundary')===true
  const newDisclosure=newManifest.ledgers.find(l=>l.namespace==='archava_owner')?.migrations.some(m=>m.id==='004_ai_disclosure_boundary')===true
  assert.ok(expectedAdded>=0)
@@ -39,7 +41,9 @@ export async function verifyPriorNative({previousRoot,packageRoot,facts,scratch,
   const oldAccounting=oldManifest.ledgers.find(l=>l.namespace==='archava_accounting'),newAccounting=newManifest.ledgers.find(l=>l.namespace==='archava_accounting')
   const accountingAdded=[...(addedBank?bankMigrationIds:[]),...(newPayables&&!oldPayables?['009_supplier_bank_settlements']:[]),...(newClearing&&!oldClearing?['010_gateway_bank_settlements']:[]),...(newTerms&&!oldTerms?termsMigrationIds:[]),...(newOpenings&&!oldOpenings?['013_declared_opening_balances']:[])]
   assert.deepEqual(newAccounting.migrations.slice(oldAccounting.migrations.length).map(m=>m.id),accountingAdded)
-  assert.equal(expectedAdded,1+accountingAdded.length,'This prior profile adds exactly the Owner disclosure and the declared bank/payable migrations')
+  const oldCommerce=oldManifest.ledgers.find(l=>l.namespace==='archava_commerce'),newCommerce=newManifest.ledgers.find(l=>l.namespace==='archava_commerce')
+  assert.deepEqual(newCommerce.migrations.slice(oldCommerce.migrations.length).map(m=>m.id),commerceAdded)
+  assert.equal(expectedAdded,1+accountingAdded.length+commerceAdded.length,'This prior profile adds exactly the Owner disclosure and the declared bank/payable and trade-currency migrations')
  }
  const db=`archava_finupgrade_${randomUUID().slice(0,8)}`,rollback=`${db}_rollback`,fresh=`${db}_fresh`
  assert.match(db,/^archava_finupgrade_[0-9a-f]{8}$/)

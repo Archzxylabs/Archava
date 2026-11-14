@@ -252,7 +252,7 @@ pub async fn record(
             active,
         } => {
             let product = id(raw)?;
-            let rows = kernel::lock_commerce_products_scoped(
+            let rows = kernel::lock_trade_products_scoped(
                 connection,
                 tenant,
                 &[product],
@@ -285,7 +285,7 @@ pub async fn record(
             ..
         } => {
             let product = id(product_id)?;
-            let rows = kernel::lock_commerce_products_scoped(
+            let rows = kernel::lock_trade_products_scoped(
                 connection,
                 tenant,
                 &[product],
@@ -429,7 +429,7 @@ pub async fn record(
             let line = id(line_id)?;
             let product:Option<(Uuid,bool)>=sqlx::query_as("SELECT product_id,track_stock FROM archava_commerce.order_lines WHERE tenant_id=$1 AND order_id=$2 AND id=$3").bind(tenant).bind(order).bind(line).fetch_optional(&mut *connection).await.map_err(db)?;
             let (product, tracked) = product.ok_or(PurchaseError::Domain(ErpError::NotFound))?;
-            kernel::lock_commerce_products_scoped(
+            kernel::lock_trade_products_scoped(
                 connection,
                 tenant,
                 &[product],
