@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Archava is a Rust modular monolith: 22 Cargo workspace members, an Axum/PostgreSQL host, and a Leptos UI rendered on the server and hydrated with WebAssembly. The production binary is `crates/slice/src/bin/archava_server.rs`, the HTTP/authority surface is `crates/host/src/router.rs` (with modular route trees under `crates/host/src/routes/`), and `crates/slice/src/server.rs` joins the host router to the SSR shell. Read `docs/architecture/README.md` before moving code across layers.
+Archava is a Rust modular monolith: 21 Cargo workspace members, an Axum/PostgreSQL host, and a Leptos UI rendered on the server and hydrated with WebAssembly. The production binary is `crates/slice/src/bin/archava_server.rs`, the HTTP/authority surface is `crates/host/src/router.rs` (with modular route trees under `crates/host/src/routes/`), and `crates/slice/src/server.rs` joins the host router to the SSR shell. Read `docs/architecture/README.md` before moving code across layers.
 
 ## Commands
 

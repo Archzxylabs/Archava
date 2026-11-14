@@ -1,4 +1,4 @@
-# MCP, evaluation, campaign, and RPA component boundaries
+# MCP, campaign, and RPA component boundaries
 
 > **Status: current source reference — reviewed 29 October 2026.** The [former integration/specification draft](../archive/history/subsystem-drafts-2026-10-29/architecture/FRONTIER_AGENTIC_CRATES.md) is retained as history.
 
@@ -7,7 +7,6 @@ These are workspace components. The current host's dependency graph does not aut
 | Crate | Present in source | Boundary still requiring implementation or proof |
 | --- | --- | --- |
 | [mcp](../../crates/mcp/src/lib.rs) | JSON-RPC structures, tool/resource dispatch, external-tool registry | A deployed authenticated transport and real outbound MCP integration |
-| [evals](../../crates/evals/src/evaluator.rs) | Synthetic cases, observed/expected outcomes, a replaceable evaluation target, calculated category denominators | Evaluation against the actual deployed model/provider and HTTP boundaries |
 | [campaigns](../../crates/campaigns/src/runner.rs) | Trigger-to-plan conversion and registration of in-memory Cockpit missions | Continuous trigger ingestion, authenticated approval execution, real dispatch and delivery reconciliation |
 | [rpa](../../crates/rpa/src/executor.rs) | Structured browser-action recipes and planning helpers | A real browser executor, runtime credential isolation, and complete redirect/navigation enforcement |
 
@@ -19,7 +18,7 @@ These are workspace components. The current host's dependency graph does not aut
 
 ## Evaluation
 
-The default target combines deterministic checks with a real journal-entry validator for its financial cases. Other cases use local prompt/payload heuristics. Report percentages depend on the supplied suite and category denominators; no universal 100% compliance or zero-leakage result follows from the crate's existence.
+The `evals` crate was removed on 14 November 2026. It was never mounted; its cases were local string and payload heuristics, not runs against the host or a model, and its module comment described compliance certificates that nothing issued. Agent behaviour is evidenced by the host integration suites and the browser gate's agent journeys, including the live-provider run (`tools/e2e/run-agent-live.mjs`).
 
 ## Campaigns and RPA
 
@@ -29,4 +28,4 @@ RPA helpers return `RpaRecipe` action lists. Planning an allowlisted destination
 
 ## Verification entry points
 
-Library tests can be run with `cargo test -p archava-mcp -p archava-evals -p archava-campaigns -p archava-rpa --lib`. A passing synthetic suite is scoped to those test cases; deployed integrations require separate evidence.
+Library tests can be run with `cargo test -p archava-mcp -p archava-campaigns -p archava-rpa --lib`. A passing synthetic suite is scoped to those test cases; deployed integrations require separate evidence.

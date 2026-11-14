@@ -175,20 +175,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "archava-evals"
-version = "0.1.0"
-dependencies = [
- "archava-cockpit",
- "archava-core",
- "archava-domain",
- "archava-orbz",
- "serde",
- "serde_json",
- "thiserror 2.0.21",
- "uuid",
-]
-
-[[package]]
 name = "archava-host"
 version = "0.1.0"
 dependencies = [

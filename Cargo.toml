@@ -22,7 +22,6 @@ members = [
   "crates/orbz",
   "crates/cockpit",
   "crates/mcp",
-  "crates/evals",
   "crates/campaigns",
   "crates/rpa",
 ]
@@ -92,7 +91,6 @@ archava-pg-fixture = { path = "crates/pg-fixture" }
 archava-orbz = { path = "crates/orbz", version = "0.1.0" }
 archava-cockpit = { path = "crates/cockpit", version = "0.1.0" }
 archava-mcp = { path = "crates/mcp", version = "0.1.0" }
-archava-evals = { path = "crates/evals", version = "0.1.0" }
 archava-campaigns = { path = "crates/campaigns", version = "0.1.0" }
 archava-rpa = { path = "crates/rpa", version = "0.1.0" }
 

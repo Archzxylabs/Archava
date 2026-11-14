@@ -2,7 +2,7 @@
 
 Canonical vocabulary, domain boundaries, and conceptual definitions for the Archava Rust modular monolith.
 
-This glossary acts as the single source of truth for architectural and business terminology across all 22 workspace crates, database schemas, and documentation.
+This glossary acts as the single source of truth for architectural and business terminology across all 21 workspace crates, database schemas, and documentation.
 
 ---
 
@@ -46,7 +46,7 @@ The autonomous execution and durable flight engine of Archava ([`crates/cockpit`
 ## 2. Architecture & Monolith Foundations
 
 ### Modular Monolith
-The architectural design of Archava: a single root Cargo workspace containing 22 focused crates. Rather than adopting distributed microservices that incur network latency and serialization overhead, modules communicate via in-memory Rust function calls while strictly enforcing compilation boundaries:
+The architectural design of Archava: a single root Cargo workspace containing 21 focused crates. Rather than adopting distributed microservices that incur network latency and serialization overhead, modules communicate via in-memory Rust function calls while strictly enforcing compilation boundaries:
 - `core`: Portable contracts, identity, and shared types (zero internal production dependencies).
 - `domain`: Pure business rules and state machines (depends only on `core`, compiles to `wasm32`).
 - `adapters`: Persistence implementations under PostgreSQL atomic transactions (depends on `core` and `domain`).
