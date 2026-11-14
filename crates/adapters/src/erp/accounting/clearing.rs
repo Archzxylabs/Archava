@@ -1,4 +1,5 @@
-//! Reviewed settlement of an already posted provider event into actual bank cash.
+//! Reviewed settlement of an already posted invoice collection or refund (a
+//! verified provider event or a manual receipt) into actual bank cash.
 use super::*;
 use archava_domain::erp::accounting::{clearing as rules, Line};
 
@@ -70,7 +71,7 @@ pub(super) async fn execute(
             expected_account_revision: account.expected_account_revision,
             debit_minor: leg.debit_minor,
             credit_minor: leg.credit_minor,
-            memo: "Reviewed verified provider event to actual bank".into(),
+            memo: "Reviewed invoice collection or refund to actual bank".into(),
         });
     }
     let draft = Command::JournalDraft {
@@ -78,7 +79,7 @@ pub(super) async fn execute(
         code: code.clone(),
         date: date.ok_or(ErpError::NotFound)?,
         source_ref: format!("clearing:{source}:{code}"),
-        memo: format!("Actual bank settlement of verified invoice event {source}"),
+        memo: format!("Actual bank settlement of invoice payment source {source}"),
         lines,
         reason: reason.clone(),
     };
@@ -91,7 +92,7 @@ pub(super) async fn execute(
 }
 
 pub(super) fn source_projection() -> &'static str {
-    "jsonb_build_object('id',s.id,'bookId',s.book_id,'code',s.invoice_code||' · '||s.effect,'invoiceId',s.invoice_id,'invoiceCode',s.invoice_code,'effect',s.effect,'sourceDate',s.source_date,'sourceAmountMinor',s.amount_minor::text,'clearingAccountId',(SELECT m->>'accountId' FROM jsonb_array_elements(s.policy_snapshot->'mappings') m WHERE m->>'role'='payment_clearing'),'balance',archava_accounting.clearing_balance(s.tenant_id,s.id),'revision',1)"
+    "jsonb_build_object('id',s.id,'bookId',s.book_id,'code',s.invoice_code||' · '||s.effect,'invoiceId',s.invoice_id,'invoiceCode',s.invoice_code,'effect',s.effect,'sourceDate',s.source_date,'origin',(SELECT CASE WHEN to_jsonb(e)->>'manual_method' IS NULL THEN 'gateway' ELSE 'manual' END FROM archava_billing.commands c JOIN archava_billing.payment_events e ON e.tenant_id=c.tenant_id AND e.id::text=c.receipt->>'eventId' WHERE c.tenant_id=s.tenant_id AND c.request_id=s.id),'method',(SELECT to_jsonb(e)->'manual_method' FROM archava_billing.commands c JOIN archava_billing.payment_events e ON e.tenant_id=c.tenant_id AND e.id::text=c.receipt->>'eventId' WHERE c.tenant_id=s.tenant_id AND c.request_id=s.id),'sourceAmountMinor',s.amount_minor::text,'clearingAccountId',(SELECT m->>'accountId' FROM jsonb_array_elements(s.policy_snapshot->'mappings') m WHERE m->>'role'='payment_clearing'),'balance',archava_accounting.clearing_balance(s.tenant_id,s.id),'revision',1)"
 }
 pub(super) fn settlement_projection() -> &'static str {
     "jsonb_build_object('id',s.id,'bookId',s.book_id,'sourceId',s.source_id,'bankRowId',s.bank_row_id,'clearingAccountId',s.clearing_account_id,'cashAccountId',s.cash_account_id,'feeAccountId',s.fee_account_id,'effect',s.effect,'grossMinor',s.gross_minor::text,'feeMinor',s.fee_minor::text,'cashMinor',s.cash_minor::text,'code',(SELECT code FROM archava_accounting.journals j WHERE j.tenant_id=s.tenant_id AND j.id=s.id),'state',(SELECT state FROM archava_accounting.journals j WHERE j.tenant_id=s.tenant_id AND j.id=s.id),'date',(SELECT entry_date FROM archava_accounting.journals j WHERE j.tenant_id=s.tenant_id AND j.id=s.id),'revision',(SELECT revision FROM archava_accounting.journals j WHERE j.tenant_id=s.tenant_id AND j.id=s.id))"

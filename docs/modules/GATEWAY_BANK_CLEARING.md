@@ -1,7 +1,13 @@
 # Gateway bank clearing
 
-Accounting010 connects an already posted verified invoice collection or refund to
-actual bank evidence. It does not initiate a transfer or infer a payout from an
+Accounting010 connects an already posted invoice collection or refund to
+actual bank evidence. The source is a verified provider event or, since
+Accounting020, a [manual receipt](MANUAL_CUSTOMER_RECEIPTS.md) or its reversal: a
+clearing settlement clears a manual collection exactly like a verified one, against
+a bank row dated on or after the day the money was received. A cash receipt is
+cleared the same way against a statement row of the cash drawer, registered as a
+bank account. The clearing source row names its `origin` (`manual` or `gateway`)
+and the review words a manual source as manual, never as verified. It does not initiate a transfer or infer a payout from an
 invoice status. The original source and policy select the book, clearing account
 and direction. Gross and fee values are exact book minor-unit integers.
 

@@ -99,7 +99,8 @@ pub fn Invoices() -> impl IntoView {
        <document_tax::InvoiceTax invoice=invoice.clone()/>
        <document_tax::InvoiceTaxReference work invoice=invoice.clone()/>
        <ul class="ops-lines">{invoice["lines"].as_array().cloned().unwrap_or_default().into_iter().map(|line|view!{<li>{format!("{} × {} · {}",integer(&line,"quantity"),text(&line,"description"),currency_amount(integer(&line,"total"),&line_currency))}</li>}).collect::<Vec<_>>()}</ul>
-       <p class="hint">"Payment totals change only after a verified provider event. Recording an intent does not mark this invoice paid."</p>
+       <p class="hint">"Payment totals change through a verified payment gateway event or a manual receipt recorded by a person who may settle invoices. A payment link alone does not mark this invoice paid."</p>
+       <receipts::InvoicePayments work invoice=invoice.clone()/>
        <div hidden=move||!work.permits("billing.settle")><Field label="Action reason" id="invoice-reason" value=reason/>
          {(state=="draft").then(||view!{<button type="button" class="btn" data-testid="invoice-issue" disabled=move||work.blocked() on:click=move|_|work.send(json!({"type":"issue_invoice","invoiceId":issue_id,"expectedRevision":revision,"reason":reason.get_untracked()}))>"Issue invoice"</button>})}
          {(state!="void"&&state!="settled").then(||view!{<button type="button" class="btn secondary" data-testid="invoice-void" disabled=move||work.blocked() on:click=move|_|work.send(json!({"type":"void_invoice","invoiceId":void_id,"expectedRevision":revision,"reason":reason.get_untracked()}))>"Void invoice"</button>})}

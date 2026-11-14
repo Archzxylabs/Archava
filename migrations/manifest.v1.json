@@ -320,6 +320,11 @@
           "id": "012_tax_review_guards",
           "path": "migrations/billing-pg/012_tax_review_guards.sql",
           "sha256": "920a385f3126c4b3e9b4c545030bd4730427a0442dd3ffa9829cd4dd48f4d913"
+        },
+        {
+          "id": "013_manual_customer_receipts",
+          "path": "migrations/billing-pg/013_manual_customer_receipts.sql",
+          "sha256": "f415e7837169fcc6527571485103afed1508aee176d0172b3b993531eb84b615"
         }
       ]
     },
@@ -421,6 +426,11 @@
           "id": "019_tax_review_guards",
           "path": "migrations/accounting-pg/019_tax_review_guards.sql",
           "sha256": "9b7a1cf73511abedcf3a04e7fc36a073c431680b993ec550d8f7da3f7eb52545"
+        },
+        {
+          "id": "020_manual_receipt_sources",
+          "path": "migrations/accounting-pg/020_manual_receipt_sources.sql",
+          "sha256": "a0730d23ba8742a4994c5f3111495630d4e36b129dcc283dcf16f885b4935cfe"
         }
       ]
     },
@@ -753,6 +763,7 @@
     "GRANT EXECUTE ON FUNCTION archava_accounting.opening_guards_complete() TO {runtime_role}",
     "GRANT SELECT,INSERT,UPDATE ON archava_accounting.tax_codes TO {runtime_role}",
     "GRANT EXECUTE ON FUNCTION archava_accounting.tax_guards_complete() TO {runtime_role}",
-    "GRANT EXECUTE ON FUNCTION archava_accounting.tax_document_guards_complete() TO {runtime_role}"
+    "GRANT EXECUTE ON FUNCTION archava_accounting.tax_document_guards_complete() TO {runtime_role}",
+    "GRANT EXECUTE ON FUNCTION archava_accounting.receipt_guards_complete() TO {runtime_role}"
   ]
 }

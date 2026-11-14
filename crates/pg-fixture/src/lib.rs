@@ -1191,6 +1191,20 @@ async fn grant_accounting_runtime(pool: &PgPool) {
                 .await
                 .unwrap();
         }
+        // Accounting 020: readiness over the manual receipt guards of Billing.
+        let receipt_guards_present: bool = sqlx::query_scalar(
+            "SELECT to_regprocedure('archava_accounting.receipt_guards_complete()') IS NOT NULL",
+        )
+        .fetch_one(pool)
+        .await
+        .unwrap();
+        if receipt_guards_present {
+            let statement = format!("GRANT EXECUTE ON FUNCTION archava_accounting.receipt_guards_complete() TO {RUNTIME_USER}");
+            sqlx::query(sqlx::AssertSqlSafe(statement.as_str()))
+                .execute(pool)
+                .await
+                .unwrap();
+        }
     }
 }
 

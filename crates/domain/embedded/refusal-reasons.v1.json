@@ -521,6 +521,46 @@
       "code": "supplier_document_total_beyond_ledger_bound",
       "message": "The goods total and the tax of this supplier document together are more than the ledger can post in one bill, so the claim was not saved. Check the amounts against the supplier's document; if they are right, record the supply as several documents.",
       "message_id": "Total barang dan pajak dokumen pemasok ini jika dijumlahkan melebihi nilai yang bisa diposting buku besar dalam satu tagihan, jadi klaim tidak disimpan. Periksa jumlahnya terhadap dokumen pemasok; jika sudah benar, catat pasokan itu sebagai beberapa dokumen."
+    },
+    "A manual payment event needs its method, reason and recording person": {
+      "code": "manual_receipt_incomplete",
+      "message": "A manual payment was not saved because it does not carry what a manual receipt must state: the method, the reason and an active person who may settle invoices, in the invoice's currency. Record it with the payment form of the invoice.",
+      "message_id": "Pembayaran manual tidak disimpan karena tidak memuat hal yang wajib ada pada penerimaan manual: metode, alasan, dan orang aktif yang berhak melunasi faktur, dalam mata uang faktur. Catat lewat formulir pembayaran pada faktur."
+    },
+    "A manual receipt can be recorded only on an issued invoice": {
+      "code": "manual_receipt_not_issued",
+      "message": "A payment received can be recorded only on an issued invoice. This invoice is a draft or void. Issue the draft first; a void invoice takes no payment.",
+      "message_id": "Pembayaran yang diterima hanya bisa dicatat pada faktur yang sudah terbit. Faktur ini masih draf atau sudah batal. Terbitkan dulu drafnya; faktur yang batal tidak menerima pembayaran."
+    },
+    "A manual receipt cannot exceed the outstanding amount of its invoice": {
+      "code": "manual_receipt_exceeds_outstanding",
+      "message": "The amount is more than this invoice still owes, so the payment was not recorded. Enter at most the outstanding amount; a fully paid invoice takes no further payment. Money received beyond the invoice cannot be recorded on it.",
+      "message_id": "Jumlahnya melebihi sisa tagihan faktur ini, jadi pembayaran tidak dicatat. Masukkan paling banyak sebesar sisa tagihan; faktur yang sudah lunas tidak menerima pembayaran lagi. Uang yang diterima melebihi faktur tidak bisa dicatat pada faktur ini."
+    },
+    "A manual receipt cannot be dated in the future": {
+      "code": "manual_receipt_future_date",
+      "message": "The received-on date is after today (UTC), so the payment was not recorded. Enter the day the money was actually received, today at the latest.",
+      "message_id": "Tanggal terima lebih dari hari ini (UTC), jadi pembayaran tidak dicatat. Masukkan hari uang benar-benar diterima, paling lambat hari ini."
+    },
+    "A manual receipt cannot be dated before its invoice was issued": {
+      "code": "manual_receipt_before_issue",
+      "message": "The received-on date is before the day this invoice was issued (UTC), so the payment was not recorded. Enter a date on or after the issue date.",
+      "message_id": "Tanggal terima lebih awal dari hari faktur ini diterbitkan (UTC), jadi pembayaran tidak dicatat. Masukkan tanggal pada atau setelah tanggal terbit."
+    },
+    "Close the open online payment before recording a manual receipt": {
+      "code": "manual_receipt_open_payment_link",
+      "message": "This invoice has an online payment link the customer can still pay, so a manual payment was not recorded: the customer could pay twice. Check the online payment's status until it has failed or expired, or wait for it to be paid, then record the payment.",
+      "message_id": "Faktur ini punya tautan pembayaran online yang masih bisa dibayar pelanggan, jadi pembayaran manual tidak dicatat: pelanggan bisa membayar dua kali. Periksa status pembayaran online sampai gagal atau kedaluwarsa, atau tunggu sampai dibayar, lalu catat pembayarannya."
+    },
+    "Only a manual receipt of the same invoice can be reversed": {
+      "code": "manual_reversal_not_manual",
+      "message": "Only a manually recorded payment of this invoice can be reversed here. The chosen payment is a payment gateway event, a reversal, or belongs to another invoice. A gateway payment is refunded through the gateway.",
+      "message_id": "Hanya pembayaran yang dicatat manual pada faktur ini yang bisa dibalik di sini. Pembayaran yang dipilih adalah peristiwa gerbang pembayaran, sebuah pembalikan, atau milik faktur lain. Pembayaran lewat gerbang dikembalikan melalui gerbang pembayaran."
+    },
+    "A manual receipt reversal cannot exceed the unreversed amount of its receipt": {
+      "code": "manual_reversal_exceeds_receipt",
+      "message": "The amount is more than what is left of this manual payment after its earlier reversals, so nothing was reversed. Enter at most the amount not yet reversed.",
+      "message_id": "Jumlahnya melebihi sisa pembayaran manual ini setelah pembalikan sebelumnya, jadi tidak ada yang dibalik. Masukkan paling banyak sebesar jumlah yang belum dibalik."
     }
   }
 }
