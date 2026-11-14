@@ -773,13 +773,15 @@
               "label": "Tax code (entered by your company, not verified by Archava)",
               "kind": "string",
               "maxLength": 40,
-              "optional": true
+              "optional": true,
+              "description": "The code text of a confirmed output tax code of the company's book that applies today, as listed in the Commerce workspace's taxCodes. Omit it for an order without tax. When it is present, priceIncludesTax is required."
             },
             {
               "name": "priceIncludesTax",
               "label": "Prices include tax (required with a tax code)",
               "kind": "boolean",
-              "optional": true
+              "optional": true,
+              "description": "Required exactly when taxCode is present, and omitted otherwise: true when the line prices already contain the tax, false when tax is added to them."
             }
           ]
         }
@@ -1421,14 +1423,16 @@
               "label": "Input tax code (entered by your company, not verified by Archava)",
               "kind": "string",
               "maxLength": 40,
-              "optional": true
+              "optional": true,
+              "description": "The code text of a confirmed input tax code of the company's book that applies on documentDate, as listed in the Purchasing workspace's taxCodes. Omit it for a document without tax. When it is present, taxMinor is required."
             },
             {
               "name": "taxMinor",
               "label": "Tax amount printed on the supplier's document, in the document's unit (required with a tax code; the goods total stays net)",
               "kind": "integer",
               "min": 0,
-              "optional": true
+              "optional": true,
+              "description": "Required exactly when taxCode is present, and omitted otherwise: the tax amount printed on the supplier's document, as an integer in the document's unit (whole Rupiah for IDR, the currency's minor unit otherwise). It is not computed from the rate; declaredTotal stays the net of goods."
             }
           ]
         },
@@ -1508,14 +1512,16 @@
               "label": "Input tax code (entered by your company, not verified by Archava)",
               "kind": "string",
               "maxLength": 40,
-              "optional": true
+              "optional": true,
+              "description": "The code text of a confirmed input tax code of the company's book that applies on documentDate, as listed in the Purchasing workspace's taxCodes. Omit it for a document without tax. When it is present, taxMinor is required."
             },
             {
               "name": "taxMinor",
               "label": "Tax amount printed on the supplier's document, in the document's unit (required with a tax code; the goods total stays net)",
               "kind": "integer",
               "min": 0,
-              "optional": true
+              "optional": true,
+              "description": "Required exactly when taxCode is present, and omitted otherwise: the tax amount printed on the supplier's document, as an integer in the document's unit (whole Rupiah for IDR, the currency's minor unit otherwise). It is not computed from the rate; declaredTotal stays the net of goods."
             }
           ]
         },
@@ -7730,7 +7736,8 @@
                     "automatic": "revision"
                   }
                 ]
-              }
+              },
+              "description": "Exactly the accounts of the source's journal at their current revisions. A source whose taxMinor is 0 takes two: the receivable account and its counter account. A source whose taxMinor is not 0 takes a third: the source's taxAccountId, the tax control account. Both are listed on the source in the Accounting invoice_sources collection."
             },
             {
               "name": "reason",
@@ -7860,7 +7867,8 @@
                     "automatic": "revision"
                   }
                 ]
-              }
+              },
+              "description": "Exactly the accounts of the source's journal at their current revisions. A supplier bill or its void whose taxMinor is not 0 takes a third account beside its two: the source's taxAccountId, the tax control account. A source whose taxMinor is 0 takes no tax account. Both are listed on the source in the Accounting purchase_sources collection."
             },
             {
               "name": "reason",

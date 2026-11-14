@@ -17,6 +17,7 @@ import {verifyInvoicePosting} from './invoice-posting.mjs'
 import {verifyPurchasePosting} from './purchase-posting.mjs'
 import {verifyStockPosting} from './stock-posting.mjs'
 import {verifyTradeCurrency} from './trade-currency.mjs'
+import {verifyTax} from './tax.mjs'
 import {verifyStoreFinanceCycle} from './store-finance-cycle.mjs'
 import {verifyStoreBankCycle} from './store-bank-cycle.mjs'
 import {verifyDueTerms} from './due-terms.mjs'
@@ -320,6 +321,7 @@ try {
   evidence.gatewayClearing=await verifyGatewayClearing({page,origin,facts,until,pass,suffix,paymentProvider:paymentFixture,output})
   evidence.bankReconciliation=await verifyBankReconciliation({page,origin,facts,until,pass,suffix,output})
   evidence.tradeCurrency=await verifyTradeCurrency({page,origin,facts,until,pass,suffix,emailProvider:emailFixture})
+  evidence.tax=await verifyTax({page,origin,facts,until,pass,suffix,emailProvider:emailFixture})
   // Owned transport endpoints are preview-only; the production parser keeps its canonical HTTPS rules.
   const resumeAgent=process.env.ARCHAVA_E2E_AGENT_RUNTIME==='1'?await prepareAgentRestart({page,facts,until,pass}):null
   // Restart the actual production executable on the same migrated fixture and session.

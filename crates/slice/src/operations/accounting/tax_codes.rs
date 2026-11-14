@@ -8,7 +8,7 @@ use archava_domain::erp::tax::Fraction;
 
 /// Shown wherever a tax code is listed (TAX.md rule 1).
 const NOTICE: &str =
-    "Entered by your company; Archava does not verify tax rates or rules. An entered version does not apply until it is confirmed. A company sales order can name a confirmed output code, and the invoice made from it stores the tax; tax is not posted to the ledger yet.";
+    "Entered by your company; Archava does not verify tax rates or rules. An entered version does not apply until it is confirmed. A company sales order can name a confirmed output code and a supplier claim a confirmed input code; the invoice or claim stores the tax, and its captured source posts that tax to the code's control account.";
 
 fn fraction(value: &Value) -> Option<Fraction> {
     serde_json::from_value(value.clone()).ok()

@@ -14,6 +14,7 @@ mod sources;
 mod stock;
 mod subledger;
 mod tax;
+mod tax_report;
 mod terms;
 use super::{
     commerce_kernel::load_locked_membership, company_trade, purchase_database_error, PurchaseError,
@@ -32,6 +33,7 @@ pub use reads::{reports, workspace};
 use serde_json::{json, Value};
 use sqlx::{PgConnection, Row};
 pub use subledger::{subledger_report, SubledgerPage, SubledgerSide};
+pub use tax_report::tax_report;
 use uuid::Uuid;
 
 pub const TABLES: &[&str] = &[

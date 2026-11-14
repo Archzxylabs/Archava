@@ -26,6 +26,8 @@ mod tax;
 mod tax_posting;
 #[path = "erp_accounting/tax_purchases.rs"]
 mod tax_purchases;
+#[path = "erp_accounting/tax_report.rs"]
+mod tax_report;
 #[path = "erp_accounting/tax_sales.rs"]
 mod tax_sales;
 #[path = "erp_accounting/terms.rs"]

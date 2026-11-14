@@ -50,6 +50,12 @@ WHERE s.tenant_id=$1 AND s.book_id=$2 AND s.effect='issue' AND s.source_date<=$3
 "#;
 // A supplier bill is owed in gross: its goods plus the tax its document states
 // (Accounting 018), which is what the bill credits to the payable account.
+//
+// One position per supplier document. A document that was posted, voided,
+// revised and matched again has several bill sources; its position is the net
+// of all their posted bills, voids and settlements (a voided bill contributes
+// zero), and it is described and aged by its live bill: the bill source of the
+// highest document revision that has a posted effect through the cutoff.
 const PAYABLE_POSITIONS: &str = r#"
 WITH events AS (
  SELECT CASE WHEN s.effect='bill' THEN s.id ELSE (s.source_snapshot->'priorMatchedVersion'->>'request_id')::uuid END source_id,s.goods_minor::numeric+s.tax_minor amount
@@ -61,12 +67,17 @@ WITH events AS (
  SELECT s.source_id,CASE WHEN s.effect='payment' THEN -s.amount_minor::numeric ELSE s.amount_minor::numeric END
  FROM archava_accounting.payable_settlements s JOIN archava_accounting.journals j ON j.tenant_id=s.tenant_id AND j.id=s.id
  WHERE s.tenant_id=$1 AND s.book_id=$2 AND j.state='posted' AND j.entry_date<=$3::text::date
-), positions AS (SELECT source_id,sum(amount) balance FROM events GROUP BY source_id)
-SELECT jsonb_build_object('documentId',s.document_id,'sourceId',s.id,'code','Supplier bill · '||s.document_id::text,'sourceDate',s.source_date,'balanceMinor',p.balance::text,
+), positions AS (SELECT source_id,sum(amount) balance FROM events GROUP BY source_id
+), bills AS (
+ SELECT s.id,s.document_id,s.source_date,sum(p.balance) OVER (PARTITION BY s.document_id) balance,
+  row_number() OVER (PARTITION BY s.document_id ORDER BY s.source_revision DESC) newest
+ FROM archava_accounting.purchase_sources s JOIN positions p ON p.source_id=s.id
+ WHERE s.tenant_id=$1 AND s.book_id=$2 AND s.effect='bill' AND s.source_date<=$3::text::date
+)
+SELECT jsonb_build_object('documentId',s.document_id,'sourceId',s.id,'code','Supplier bill · '||s.document_id::text,'sourceDate',s.source_date,'balanceMinor',s.balance::text,
  'terms',(SELECT archava_accounting.terms_snapshot(t)||jsonb_build_object('recordedAt',t.recorded_at) FROM archava_accounting.document_terms t
- WHERE t.tenant_id=s.tenant_id AND t.book_id=s.book_id AND t.document_kind='payable' AND t.document_id=s.document_id AND t.effective_from<=$3::text::date ORDER BY t.revision DESC LIMIT 1))
-FROM archava_accounting.purchase_sources s JOIN positions p ON p.source_id=s.id
-WHERE s.tenant_id=$1 AND s.book_id=$2 AND s.effect='bill' AND s.source_date<=$3::text::date ORDER BY s.document_id
+ WHERE t.tenant_id=$1 AND t.book_id=$2 AND t.document_kind='payable' AND t.document_id=s.document_id AND t.effective_from<=$3::text::date ORDER BY t.revision DESC LIMIT 1))
+FROM bills s WHERE s.newest=1 ORDER BY s.document_id
 "#;
 // Include every historically captured role account and the currently declared
 // role, including an inactive old account. Generic entries remain differences.

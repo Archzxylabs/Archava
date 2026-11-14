@@ -542,6 +542,75 @@ pub async fn inventory_control(
     }
 }
 
+/// Output and input tax of posted sources per tax code version for a period,
+/// beside the movement of each tax control account. Read-only.
+pub async fn tax_report(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    query: Result<Query<ReportQuery>, QueryRejection>,
+) -> Response {
+    let Query(input) = match query {
+        Ok(value) => value,
+        Err(e) => {
+            let (s, b) = query_rejection(e);
+            return (s, Json(json!(b.0)));
+        }
+    };
+    if parse_calendar_date(&input.from).is_none()
+        || parse_calendar_date(&input.to).is_none()
+        || input.from > input.to
+    {
+        return refusal(
+            StatusCode::BAD_REQUEST,
+            "invalid_query",
+            "Choose a valid tax reporting date range.",
+        );
+    }
+    let session = match authenticate(&state, &headers, false).await {
+        Ok(value) => value,
+        Err((s, b)) => return (s, Json(json!(b.0))),
+    };
+    let principal = PurchasePrincipal::human(session.principal_id);
+    let mut tx = match begin(&state, input.tenant.clone()).await {
+        Ok(value) => value,
+        Err(e) => return e,
+    };
+    let outcome = async {
+        let conn = tx.checked_executor().await.map_err(unavailable)?;
+        let access = store::access(conn, input.tenant.as_str(), &principal)
+            .await
+            .map_err(error)?;
+        let mut value = store::tax_report(
+            conn,
+            input.tenant.as_str(),
+            &principal,
+            &access,
+            input.book_id,
+            &input.from,
+            &input.to,
+        )
+        .await
+        .map_err(error)?;
+        let now: String = sqlx::query_scalar("SELECT clock_timestamp()::text")
+            .fetch_one(conn)
+            .await
+            .map_err(unavailable)?;
+        value["observedAt"] = json!(now);
+        Ok::<_, Response>(value)
+    }
+    .await;
+    match outcome {
+        Ok(value) => match tx.commit().await {
+            Ok(()) => (StatusCode::OK, Json(value)),
+            Err(e) => commit_error(e),
+        },
+        Err(e) => {
+            let _ = tx.rollback().await;
+            e
+        }
+    }
+}
+
 pub async fn reports(
     State(state): State<AppState>,
     headers: HeaderMap,
