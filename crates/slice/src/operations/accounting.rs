@@ -172,6 +172,14 @@ pub(super) fn reviewed_preview(body: Value, book: &Value, refs: &Value) -> Value
             .and_then(|id| source_reference(refs, id, "purchase_source.draft"))
         {
             display["reviewedSource"] = json!({"order":source["orderId"],"supplierDocument":source["documentId"],"effect":source["effect"],"bookDate":source["sourceDate"],"goods":amount(&source["goodsMinor"],book),"landedFee":amount(&source["landedFeeMinor"],book),"policyRevision":source["policyRevision"],"accountMappings":source["policy"]["mappings"],"notice":"Amounts and mappings come from the captured operating source. Supplier bank payment is separate; unclaimed landed fees use a separate accrual."});
+            // A bill or void that carries tax states its tax, the total owed
+            // and the tax control account captured with it; goods stay net.
+            if let Some((tax, total)) = purchase_tax_split(source) {
+                let reviewed = &mut display["reviewedSource"];
+                reviewed["tax"] = json!(amount(&json!(tax.to_string()), book));
+                reviewed["total"] = json!(amount(&json!(total.to_string()), book));
+                reviewed["taxAccount"] = json!({"accountId":source["taxAccountId"],"expectedAccountRevision":source["taxAccountRevision"]});
+            }
         }
     }
     display
@@ -182,6 +190,14 @@ fn source_tax_split(source: &Value) -> Option<(i64, i64)> {
     let tax: i64 = source["taxMinor"].as_str()?.parse().ok()?;
     let gross: i64 = source["amountMinor"].as_str()?.parse().ok()?;
     (tax != 0).then_some((gross.checked_sub(tax)?, tax))
+}
+/// The tax and the total owed (goods plus tax, book minor units) of a
+/// captured purchase source that carries tax; `None` for a source without
+/// tax, which is reviewed as before.
+fn purchase_tax_split(source: &Value) -> Option<(i64, i64)> {
+    let tax: i64 = source["taxMinor"].as_str()?.parse().ok()?;
+    let goods: i64 = source["goodsMinor"].as_str()?.parse().ok()?;
+    (tax != 0).then_some((tax, goods.checked_add(tax)?))
 }
 struct PurchaseReviewLine {
     role: String,
@@ -278,20 +294,26 @@ struct PurchaseReview {
     fee: String,
     date: String,
     policy_revision: String,
+    /// Tax and total owed of a source that carries tax, formatted for the book.
+    tax: Option<(String, String)>,
     lines: Vec<PurchaseReviewLine>,
     accounts_match: bool,
 }
 fn purchase_review(body: &Value, book: &Value, refs: &Value) -> Option<PurchaseReview> {
-    use archava_domain::erp::accounting::purchase_sources::{legs, PurchaseEffect, PurchaseRole};
+    use archava_domain::erp::accounting::purchase_sources::{
+        taxed_legs, PurchaseEffect, PurchaseLegAccount, PurchaseRole,
+    };
     let source = source_reference(refs, body["sourceId"].as_str()?, "purchase_source.draft")?;
     if !captured_unit_fits(book, source) {
         return None;
     }
     let effect: PurchaseEffect = serde_json::from_value(source["effect"].clone()).ok()?;
-    let legs = legs(
+    let split = purchase_tax_split(source);
+    let legs = taxed_legs(
         effect,
         source["goodsMinor"].as_str()?.parse().ok()?,
         source["landedFeeMinor"].as_str()?.parse().ok()?,
+        split.map_or(0, |(tax, _)| tax),
     )
     .ok()?;
     let selected = body["accounts"].as_array()?;
@@ -301,8 +323,13 @@ fn purchase_review(body: &Value, book: &Value, refs: &Value) -> Option<PurchaseR
     let lines = legs
         .into_iter()
         .map(|leg| {
-            let mapping = mappings.iter().find(|m| m["role"] == leg.role.as_str());
-            let id = mapping.and_then(|m| m["accountId"].as_str());
+            let id = match leg.account {
+                PurchaseLegAccount::Policy(role) => mappings
+                    .iter()
+                    .find(|m| m["role"] == role.as_str())
+                    .and_then(|m| m["accountId"].as_str()),
+                PurchaseLegAccount::TaxControl => source["taxAccountId"].as_str(),
+            };
             if let Some(id) = id {
                 accounts_match &= expected_ids.insert(id.to_owned());
             }
@@ -316,11 +343,14 @@ fn purchase_review(body: &Value, book: &Value, refs: &Value) -> Option<PurchaseR
                 .unwrap_or_else(|| {
                     "Account details unavailable — review the source references".into()
                 });
-            let role = match leg.role {
-                PurchaseRole::Inventory => "Inventory",
-                PurchaseRole::GoodsReceivedNotInvoiced => "Goods received, not yet invoiced",
-                PurchaseRole::Payable => "Supplier payable",
-                PurchaseRole::LandedFeeAccrual => "Landed fee accrual",
+            let role = match leg.account {
+                PurchaseLegAccount::Policy(PurchaseRole::Inventory) => "Inventory",
+                PurchaseLegAccount::Policy(PurchaseRole::GoodsReceivedNotInvoiced) => {
+                    "Goods received, not yet invoiced"
+                }
+                PurchaseLegAccount::Policy(PurchaseRole::Payable) => "Supplier payable",
+                PurchaseLegAccount::Policy(PurchaseRole::LandedFeeAccrual) => "Landed fee accrual",
+                PurchaseLegAccount::TaxControl => "Input tax",
             };
             PurchaseReviewLine {
                 role: role.into(),
@@ -340,6 +370,12 @@ fn purchase_review(body: &Value, book: &Value, refs: &Value) -> Option<PurchaseR
         fee: amount(&source["landedFeeMinor"], book),
         date: text(source, "sourceDate"),
         policy_revision: source["policyRevision"].to_string(),
+        tax: split.map(|(tax, total)| {
+            (
+                amount(&json!(tax.to_string()), book),
+                amount(&json!(total.to_string()), book),
+            )
+        }),
         lines,
         accounts_match,
     })
@@ -534,6 +570,21 @@ pub(super) fn review(body: Value, book: &Value, refs: &Value) -> AnyView {
     let Some(summary) = purchase_review(&body, book, refs) else {
         return view! {<p class="refusal">"Source details are unavailable. Refresh and select the source again before saving."</p>{details(display)}}.into_any();
     };
+    // A bill or void that carries tax shows its net goods, tax and the total
+    // owed with a third line on the captured tax control account; without tax
+    // the review is the one below, unchanged.
+    if let Some((tax, total)) = summary.tax.clone() {
+        return view! {
+            <section data-testid="purchase-source-summary">
+                <h4>{summary.effect}</h4>
+                <dl class="operator-details"><dt>"Goods (net)"</dt><dd data-testid="purchase-source-net">{summary.goods}</dd><dt>"Input tax"</dt><dd data-testid="purchase-source-tax">{tax}</dd><dt>"Total owed to the supplier"</dt><dd data-testid="purchase-source-total">{total}</dd><dt>"Book date"</dt><dd>{summary.date}</dd><dt>"Original posting policy"</dt><dd>{format!("Revision {}",summary.policy_revision)}</dd></dl>
+                <p class="hint">"Saving creates a draft journal. The tax is the amount entered from the supplier's document; it posts to the control account of the document's tax code, which the company entered. Archava does not verify tax rates or rules. Posting requires a separate action. Supplier bank payment is separate."</p>
+            </section>
+            {source_journal(summary.lines, "purchase-source-journal", "Proposed journal using the original source account mapping and the tax control account")}
+            {(!summary.accounts_match).then(||view!{<p class="refusal">"Select the goods received, tax control and payable accounts of this source before saving."</p>})}
+            <details data-testid="purchase-source-references"><summary>"Source and approval references"</summary>{details(display)}</details>
+        }.into_any();
+    }
     view! {
         <section data-testid="purchase-source-summary">
             <h4>{summary.effect}</h4>
@@ -913,6 +964,167 @@ mod tests {
             "An old cached caption must not impersonate a newer reviewed account version"
         );
         assert!(purchase_review(&body, &json!({"currency":"USD","minorUnits":2}), &refs).is_none());
+    }
+    #[test]
+    fn a_taxed_purchase_source_review_shows_net_tax_and_total_with_the_input_tax_account() {
+        use leptos::prelude::RenderHtml;
+        let accounts = json!([{"id":"grni","revision":1,"code":"GRNI","name":"Unbilled goods"},{"id":"ap","revision":2,"code":"AP","name":"Supplier payables"},{"id":"vat","revision":3,"code":"VAT-IN","name":"Input tax receivable"},{"id":"stock","revision":1,"code":"STOCK","name":"Inventory"}]);
+        let mappings = json!([{"role":"inventory","accountId":"stock","expectedAccountRevision":1},{"role":"goods_received_not_invoiced","accountId":"grni","expectedAccountRevision":1},{"role":"payable","accountId":"ap","expectedAccountRevision":1},{"role":"landed_fee_accrual","accountId":"fee","expectedAccountRevision":1}]);
+        let three = json!([{"accountId":"grni","expectedAccountRevision":1},{"accountId":"vat","expectedAccountRevision":3},{"accountId":"ap","expectedAccountRevision":2}]);
+        let two = json!([{"accountId":"grni","expectedAccountRevision":1},{"accountId":"ap","expectedAccountRevision":2}]);
+        let line = |l: &PurchaseReviewLine| {
+            (
+                l.role.clone(),
+                l.account.clone(),
+                l.debit.clone(),
+                l.credit.clone(),
+            )
+        };
+        let own = |a: &str, b: &str, c: &str, d: &str| {
+            (a.to_owned(), b.to_owned(), c.to_owned(), d.to_owned())
+        };
+
+        // IDR: goods Rp140.000 with Rp15.400 of supplier tax, captured as book units.
+        let idr = json!({"currency":"IDR","minorUnits":2});
+        let refs = json!({"accounting/accounts":accounts,"accounting/purchase_sources":[{"id":"taxed","effect":"bill","orderId":"po","documentId":"doc","goodsMinor":"14000000","landedFeeMinor":"0","taxMinor":"1540000","taxAccountId":"vat","taxAccountRevision":3,"sourceDate":"2026-11-14","policyRevision":1,"policy":{"source_unit":"whole_idr","mappings":mappings}}]});
+        let body = json!({"type":"purchase_source.draft","sourceId":"taxed","code":"BILL","accounts":three});
+        assert!(purchase_review_accounts_match(&body, &idr, &refs));
+        let r = purchase_review(&body, &idr, &refs).unwrap();
+        assert_eq!(r.goods, "IDR 140000.00");
+        assert_eq!(
+            r.tax,
+            Some(("IDR 15400.00".to_owned(), "IDR 155400.00".to_owned()))
+        );
+        assert_eq!(
+            r.lines.iter().map(line).collect::<Vec<_>>(),
+            vec![
+                own(
+                    "Goods received, not yet invoiced",
+                    "GRNI · Unbilled goods",
+                    "IDR 140000.00",
+                    "IDR 0.00"
+                ),
+                own(
+                    "Input tax",
+                    "VAT-IN · Input tax receivable",
+                    "IDR 15400.00",
+                    "IDR 0.00"
+                ),
+                own(
+                    "Supplier payable",
+                    "AP · Supplier payables",
+                    "IDR 0.00",
+                    "IDR 155400.00"
+                ),
+            ]
+        );
+        let html = review(body.clone(), &idr, &refs).to_html();
+        for expected in [
+            "data-testid=\"purchase-source-net\"",
+            "data-testid=\"purchase-source-tax\"",
+            "data-testid=\"purchase-source-total\"",
+            "IDR 15400.00",
+            "IDR 155400.00",
+            "Input tax",
+            "VAT-IN · Input tax receivable",
+            "Archava does not verify tax rates or rules.",
+        ] {
+            assert!(html.contains(expected), "{expected}: {html}");
+        }
+        assert!(
+            !html.contains("Select the goods received, tax control and payable accounts"),
+            "{html}"
+        );
+        let preview = reviewed_preview(body.clone(), &idr, &refs);
+        assert_eq!(preview["reviewedSource"]["goods"], "IDR 140000.00");
+        assert_eq!(preview["reviewedSource"]["tax"], "IDR 15400.00");
+        assert_eq!(preview["reviewedSource"]["total"], "IDR 155400.00");
+        assert_eq!(
+            preview["reviewedSource"]["taxAccount"],
+            json!({"accountId":"vat","expectedAccountRevision":3})
+        );
+
+        // Two accounts, a stale tax account revision or another third account do not match.
+        let mut missing = body.clone();
+        missing["accounts"] = two.clone();
+        assert!(!purchase_review_accounts_match(&missing, &idr, &refs));
+        assert!(review(missing, &idr, &refs)
+            .to_html()
+            .contains("Select the goods received, tax control and payable accounts"));
+        let mut stale = body.clone();
+        stale["accounts"][1]["expectedAccountRevision"] = json!(2);
+        assert!(purchase_review(&stale, &idr, &refs).unwrap().lines[1]
+            .account
+            .contains("unavailable"));
+        let mut other = body.clone();
+        other["accounts"][1] = json!({"accountId":"stock","expectedAccountRevision":1});
+        assert!(!purchase_review_accounts_match(&other, &idr, &refs));
+
+        // The void of the bill reverses all three.
+        let mut void = refs.clone();
+        void["accounting/purchase_sources"][0]["effect"] = json!("void");
+        void["accounting/purchase_sources"][0]["goodsMinor"] = json!("-14000000");
+        void["accounting/purchase_sources"][0]["taxMinor"] = json!("-1540000");
+        let r = purchase_review(&body, &idr, &void).unwrap();
+        assert!(r.accounts_match);
+        assert_eq!(
+            r.lines.iter().map(line).collect::<Vec<_>>(),
+            vec![
+                own(
+                    "Supplier payable",
+                    "AP · Supplier payables",
+                    "IDR 155400.00",
+                    "IDR 0.00"
+                ),
+                own(
+                    "Goods received, not yet invoiced",
+                    "GRNI · Unbilled goods",
+                    "IDR 0.00",
+                    "IDR 140000.00"
+                ),
+                own(
+                    "Input tax",
+                    "VAT-IN · Input tax receivable",
+                    "IDR 0.00",
+                    "IDR 15400.00"
+                ),
+            ]
+        );
+
+        // USD under `minor`: the captured minor units are shown unchanged.
+        let usd = json!({"currency":"USD","minorUnits":2});
+        let mut usd_refs = refs.clone();
+        usd_refs["accounting/purchase_sources"][0] = json!({"id":"taxed","effect":"bill","goodsMinor":"7000","landedFeeMinor":"0","taxMinor":"752","taxAccountId":"vat","taxAccountRevision":3,"sourceDate":"2026-11-14","policyRevision":1,"policy":{"source_unit":"minor","mappings":mappings}});
+        let r = purchase_review(&body, &usd, &usd_refs).unwrap();
+        assert_eq!(r.goods, "USD 70.00");
+        assert_eq!(r.tax, Some(("USD 7.52".to_owned(), "USD 77.52".to_owned())));
+        assert_eq!(r.lines[2].credit, "USD 77.52");
+
+        // Without tax (no tax fields, or a 0% code that keeps its account) the
+        // review is the two-line one it was.
+        for source in [
+            json!({"id":"taxed","effect":"bill","goodsMinor":"14000000","landedFeeMinor":"0","sourceDate":"2026-11-14","policyRevision":1,"policy":{"source_unit":"whole_idr","mappings":mappings}}),
+            json!({"id":"taxed","effect":"bill","goodsMinor":"14000000","landedFeeMinor":"0","taxMinor":"0","taxAccountId":"vat","taxAccountRevision":3,"sourceDate":"2026-11-14","policyRevision":1,"policy":{"source_unit":"whole_idr","mappings":mappings}}),
+        ] {
+            let mut plain = refs.clone();
+            plain["accounting/purchase_sources"][0] = source;
+            let mut untaxed = body.clone();
+            untaxed["accounts"] = two.clone();
+            let r = purchase_review(&untaxed, &idr, &plain).unwrap();
+            assert!(r.accounts_match);
+            assert_eq!(r.tax, None);
+            assert_eq!(r.lines.len(), 2);
+            assert!(!purchase_review_accounts_match(&body, &idr, &plain));
+            let html = review(untaxed.clone(), &idr, &plain).to_html();
+            assert!(
+                !html.contains("purchase-source-tax") && !html.contains("Input tax"),
+                "{html}"
+            );
+            let preview = reviewed_preview(untaxed, &idr, &plain);
+            for key in ["tax", "total", "taxAccount"] {
+                assert!(preview["reviewedSource"].get(key).is_none(), "{key}");
+            }
+        }
     }
     #[test]
     fn stock_review_shows_original_cost_reversal_and_refuses_partial_or_different_allocations() {

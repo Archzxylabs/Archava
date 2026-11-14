@@ -1,7 +1,7 @@
 //! Native purchase sources share the book fence and ordinary review/post policy.
 use super::*;
 use archava_domain::erp::accounting::{
-    purchase_sources::{self, PurchaseEffect, PurchaseMapping},
+    purchase_sources::{self, PurchaseEffect, PurchaseLegAccount, PurchaseMapping},
     Line,
 };
 
@@ -43,39 +43,68 @@ pub(super) async fn execute(
             reason,
         } => {
             let source = id(source_id)?;
-            let row=sqlx::query("SELECT s.goods_minor,s.landed_fee_minor,s.effect,s.source_date::text,o.policy_snapshot FROM archava_accounting.purchase_sources s JOIN archava_accounting.purchase_origins o ON o.tenant_id=s.tenant_id AND o.id=s.origin_id AND o.book_id=s.book_id WHERE s.tenant_id=$1 AND s.book_id=$2 AND s.id=$3")
+            let row=sqlx::query("SELECT s.goods_minor,s.landed_fee_minor,s.tax_minor,s.tax_account_id,s.effect,s.source_date::text,o.policy_snapshot FROM archava_accounting.purchase_sources s JOIN archava_accounting.purchase_origins o ON o.tenant_id=s.tenant_id AND o.id=s.origin_id AND o.book_id=s.book_id WHERE s.tenant_id=$1 AND s.book_id=$2 AND s.id=$3")
                 .bind(tenant).bind(b.id).bind(source).fetch_optional(&mut *conn).await.map_err(db)?.ok_or(ErpError::NotFound)?;
             let effect: PurchaseEffect =
                 serde_json::from_value(json!(row.try_get::<String, _>("effect").map_err(db)?))
                     .map_err(|_| ErpError::Conflict)?;
-            let legs = purchase_sources::legs(
+            let tax: i64 = row.try_get("tax_minor").map_err(db)?;
+            let tax_account: Option<String> = row
+                .try_get::<Option<Uuid>, _>("tax_account_id")
+                .map_err(db)?
+                .map(|key| key.to_string());
+            // A source that carries tax is refused with its own reason when the
+            // reviewed accounts are not exactly its goods received, tax control
+            // and payable accounts; the journal-source guard holds the same rule.
+            let unreviewed = || -> PurchaseError {
+                if tax == 0 {
+                    ErpError::Conflict.into()
+                } else {
+                    crate::erp::refused_by_code("purchase_source_tax_accounts_required")
+                }
+            };
+            let legs = purchase_sources::taxed_legs(
                 effect,
                 row.try_get("goods_minor").map_err(db)?,
                 row.try_get("landed_fee_minor").map_err(db)?,
+                tax,
             )
             .map_err(|_| ErpError::Conflict)?;
-            if legs.is_empty() || legs.len() != accounts.len() {
+            if legs.is_empty() {
                 return Err(ErpError::Conflict.into());
+            }
+            // Exactly the accounts of the legs: a taxed bill or void has three.
+            if legs.len() != accounts.len() {
+                return Err(unreviewed());
             }
             let policy: Value = row.try_get("policy_snapshot").map_err(db)?;
             let mappings: Vec<PurchaseMapping> = serde_json::from_value(policy["mappings"].clone())
                 .map_err(|_| ErpError::Conflict)?;
             let mut lines = Vec::new();
             for leg in legs {
-                let mapping = mappings
-                    .iter()
-                    .find(|m| m.role == leg.role)
-                    .ok_or(ErpError::Conflict)?;
+                let (account_id, role) = match leg.account {
+                    PurchaseLegAccount::Policy(role) => (
+                        mappings
+                            .iter()
+                            .find(|m| m.role == role)
+                            .map(|m| m.account_id.clone())
+                            .ok_or(ErpError::Conflict)?,
+                        role.as_str(),
+                    ),
+                    PurchaseLegAccount::TaxControl => {
+                        (tax_account.clone().ok_or(ErpError::Conflict)?, "input_tax")
+                    }
+                };
                 let reviewed = accounts
                     .iter()
-                    .find(|a| a.account_id == mapping.account_id)
-                    .ok_or(ErpError::Conflict)?;
+                    .find(|a| a.account_id == account_id)
+                    .ok_or_else(unreviewed)?;
                 lines.push(Line {
-                    account_id: mapping.account_id.clone(),
+                    account_id,
                     expected_account_revision: reviewed.expected_account_revision,
                     debit_minor: leg.debit_minor,
                     credit_minor: leg.credit_minor,
-                    memo: format!("Purchase {} {}", effect.as_str(), leg.role.as_str()),
+                    memo: format!("Purchase {} {}", effect.as_str(), role),
                 });
             }
             let draft = Command::JournalDraft {

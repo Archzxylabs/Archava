@@ -1,12 +1,12 @@
 # SQL migration ownership
 
-All 86 checked-in SQL migrations currently live under this directory, grouped into 31 ledger directories. The native manifest mounts 79; 7 remain reserved specifications. The owner-configuration migration was relocated from `crates/host/migrations/owner` to `owner-pg/`; its migration ID, schema namespace, SQL bytes, and checksum are unchanged.
+All 88 checked-in SQL migrations currently live under this directory, grouped into 31 ledger directories. The native manifest mounts 81; 7 remain reserved specifications. The owner-configuration migration was relocated from `crates/host/migrations/owner` to `owner-pg/`; its migration ID, schema namespace, SQL bytes, and checksum are unchanged.
 
 The manifest is the only list of applied migrations. The persistent server embeds the migrations it verifies from it at build time ([build.rs](../crates/slice/build.rs)), and the disposable PostgreSQL fixture reads the same manifest in [pg-fixture](../crates/pg-fixture/src/lib.rs). A file's presence here does not mean a given runtime mounts it or its UI is complete.
 
 ## Applied versus unmounted ledgers
 
-`manifest.v1.json` is the installer's contract: 79 of the 86 files, across 25 ledgers, carry an `id`, `path` and SHA-256 that the Ops installer verifies and applies. The remaining seven files are **unmounted**: no manifest entry, no embedded registration, and no runtime readiness check.
+`manifest.v1.json` is the installer's contract: 81 of the 88 files, across 25 ledgers, carry an `id`, `path` and SHA-256 that the Ops installer verifies and applies. The remaining seven files are **unmounted**: no manifest entry, no embedded registration, and no runtime readiness check.
 
 | Unmounted ledger | Files |
 | --- | --- |
@@ -168,3 +168,36 @@ unchanged. `invoice_effect(text,uuid)` is not replaced. The new function keeps t
 default `EXECUTE` of the other effect functions; no runtime grant is added and no
 table is created. Billing010 migrates before it. See
 [invoice source posting](../docs/modules/INVOICE_POSTING.md#tax-on-a-captured-source).
+
+Purchasing008 adds the supplier document tax snapshot to
+`archava_purchasing.supplier_documents`: `tax_minor` (the tax amount printed on the
+supplier's document) and `tax_computed_minor` (the tax the code gives on the goods
+total), both default 0, and the tax code version (id, code, version, rate and base
+fraction), null on existing rows, with a check that a document has either the whole
+snapshot or none and that neither tax exceeds `declared_total`. It adds integer tax
+arithmetic functions and the guard `guard_supplier_document_tax()` with its trigger
+`supplier_document_tax_guard`: a captured version stores the confirmed input version of
+the company's book that applies on the document date and the tax that version gives; a
+match, a hold and a void cannot change the tax. Purchasing migrates before Accounting,
+so the guard reads `archava_accounting.tax_codes` late-bound, like the book in
+Purchasing007. Version snapshots are the whole row, so a version stored after this
+migration carries the tax keys and earlier versions are not rewritten. No new table and
+no new runtime grant: the serving role already reads `archava_accounting.tax_codes` and
+`books`.
+
+Accounting018 adds `tax_minor` (ledger minor units, default 0), `tax_account_id` and
+`tax_account_revision` (the account's revision at capture) to
+`archava_accounting.purchase_sources`, with a check that tax has an account, belongs to
+a bill or a void, has the sign of the goods and is no larger, and a foreign key to the
+book's accounts. Existing rows get tax 0 and no account. It adds
+`archava_accounting.purchase_effect_tax(text,uuid)`, the tax part of a purchase effect
+as Purchasing stored it on the document version, and replaces `guard_purchase_source()`,
+`capture_purchase_source()`, `purchase_legs(text,uuid)`,
+`guard_purchase_journal_source()` and `payable_balance(text,uuid,uuid)` in place with
+their signatures, so the triggers `purchase_guards_complete()` and
+`payable_guards_complete()` identify by function OID are unchanged.
+`purchase_effect(text,uuid)` is not replaced. `payable_balance` counts a bill and its
+posted void in gross (goods plus tax). The new function keeps the default `EXECUTE` of
+the other effect functions; no runtime grant is added and no table is created.
+Purchasing008 migrates before it. See
+[purchase posting](../docs/modules/PURCHASE_POSTING.md#tax-on-a-supplier-bill).

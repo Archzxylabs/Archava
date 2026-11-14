@@ -203,6 +203,46 @@ impl TaxRule {
     }
 }
 
+/// The tax of a supplier document (rule 7): the amount the supplier's document
+/// states beside the amount the tax code gives on the net goods total. The
+/// entered amount is the one owed and posted.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct EnteredTax {
+    /// The net goods total of the document.
+    pub net: i64,
+    /// `round(net × base × rate)`, the exclusive rule.
+    pub computed: i64,
+    /// What the supplier's document says.
+    pub entered: i64,
+    /// `entered − computed`.
+    pub difference: i64,
+    /// `net + entered`: what is owed to the supplier.
+    pub total: i64,
+}
+impl TaxRule {
+    /// Sets the supplier's entered tax beside the computed one. The entered
+    /// amount is not required to equal the computed one; it is only bounded:
+    /// not negative and not above the net goods total (no rate or base
+    /// fraction exceeds one, so no code can give more than the net).
+    pub fn entered(self, net: i64, entered: i64) -> Result<EnteredTax, ValidationError> {
+        if net < 0 || !(0..=net).contains(&entered) {
+            return Err(ValidationError("taxAmount"));
+        }
+        let (computed, _) = self.exclusive(net)?;
+        let total = amount(
+            net.checked_add(entered)
+                .ok_or(ValidationError("taxAmount"))?,
+        )?;
+        Ok(EnteredTax {
+            net,
+            computed,
+            entered,
+            difference: entered - computed,
+            total,
+        })
+    }
+}
+
 /// The sentence for every document that shows a tax code or a tax amount
 /// (rule 1).
 pub const DOCUMENT_NOTICE: &str =
@@ -575,6 +615,51 @@ mod tests {
             (11, 12, "11/12"),
         ] {
             assert_eq!(fraction(numerator, denominator).percent(), shown);
+        }
+    }
+    #[test]
+    fn a_suppliers_entered_tax_stands_beside_the_computed_one_and_is_the_one_owed() {
+        let vat = rule((11, 100), (1, 1));
+        let same = vat.entered(140_000, 15_400).unwrap();
+        assert_eq!(
+            same,
+            EnteredTax {
+                net: 140_000,
+                computed: 15_400,
+                entered: 15_400,
+                difference: 0,
+                total: 155_400
+            }
+        );
+        // The supplier printed one unit less: accepted, the difference shown.
+        let less = vat.entered(140_000, 15_399).unwrap();
+        assert_eq!((less.computed, less.entered), (15_400, 15_399));
+        assert_eq!(less.difference, -1);
+        assert_eq!(less.total, 155_399);
+        // Minor units with a rounding case: 11% of 10.05 is 1.1055, rounded 1.11.
+        let cents = vat.entered(1_005, 110).unwrap();
+        assert_eq!(
+            (cents.computed, cents.difference, cents.total),
+            (111, -1, 1_115)
+        );
+        // A zero rate computes nothing; an entered amount is still what is owed.
+        let zero = rule((0, 1), (1, 1)).entered(140_000, 0).unwrap();
+        assert_eq!((zero.computed, zero.entered, zero.total), (0, 0, 140_000));
+        // The bound: not negative, not above the net goods total.
+        assert_eq!(vat.entered(140_000, 140_000).unwrap().total, 280_000);
+        for (net, entered) in [(140_000, 140_001), (140_000, -1), (0, 1), (-1, 0)] {
+            assert!(vat.entered(net, entered).is_err(), "{net} {entered}");
+        }
+        assert!(vat.entered(0, 0).is_ok());
+        assert!(vat.entered(MAX_MINOR, MAX_MINOR).is_err());
+        for rule in rules() {
+            for net in amounts().into_iter().filter(|net| *net >= 0) {
+                let (computed, _) = rule.exclusive(net).unwrap();
+                assert!(computed <= net, "{rule:?} {net}");
+                let taxed = rule.entered(net, computed).unwrap();
+                assert_eq!(taxed.difference, 0);
+                assert_eq!(taxed.total, net + computed);
+            }
         }
     }
     #[test]

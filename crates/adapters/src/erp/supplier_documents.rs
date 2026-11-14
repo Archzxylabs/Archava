@@ -5,7 +5,8 @@ use super::{
 };
 use archava_domain::erp::{
     purchasing::{PurchaseCommand, PurchaseMutation},
-    purchasing_documents::ClaimLine,
+    purchasing_documents::{ClaimLine, ClaimTax},
+    tax::{Fraction, TaxRule},
     ErpError,
 };
 use serde_json::{json, Value};
@@ -32,6 +33,133 @@ async fn validate_lines(
         return Err(ErpError::Conflict.into());
     }
     Ok(())
+}
+/// The tax a captured claim version stores (TAX.md stage D): the input tax
+/// code version that applies on the document date, the supplier's entered tax
+/// and the tax that version gives on the net goods total.
+struct TaxSnapshot {
+    code_id: Uuid,
+    code: String,
+    version: i32,
+    rate: Fraction,
+    base: Fraction,
+    entered: i64,
+    computed: i64,
+}
+/// Resolves what a claim says about tax against the company's book. The
+/// version is the confirmed input version that applies on the document's own
+/// date; its row is share-locked so it cannot be retired under this
+/// transaction. Every refusal names the reason of the guard that holds the
+/// same rule (Purchasing 008), which stays the authority.
+async fn tax_snapshot(
+    c: &mut PgConnection,
+    t: &str,
+    company: Uuid,
+    tax: ClaimTax<'_>,
+    document_date: &str,
+    goods_total: i64,
+) -> Result<Option<TaxSnapshot>, PurchaseError> {
+    let (code, entered) = match tax {
+        ClaimTax::None => return Ok(None),
+        ClaimTax::Incomplete => {
+            return Err(super::refused_by_code(
+                "supplier_document_tax_code_and_amount_together",
+            ))
+        }
+        ClaimTax::Entered { code, amount } => (code, amount),
+    };
+    // Purchasing migrates before Accounting: without its ledger no code exists.
+    let installed: bool =
+        sqlx::query_scalar("SELECT to_regclass('archava_accounting.tax_codes') IS NOT NULL")
+            .fetch_one(&mut *c)
+            .await
+            .map_err(db)?;
+    if !installed {
+        return Err(super::refused_by_code("supplier_document_tax_code_unknown"));
+    }
+    let version: Option<(Uuid, i32, i32, i32, i32, i32)> = sqlx::query_as(
+        "SELECT t.id,t.version,t.rate_numerator,t.rate_denominator,t.base_numerator,t.base_denominator \
+         FROM archava_accounting.tax_codes t JOIN archava_accounting.books b ON b.tenant_id=t.tenant_id AND b.id=t.book_id \
+         WHERE t.tenant_id=$1 AND b.company_id=$2 AND t.code=$3 AND t.kind='input' AND t.state IN ('confirmed','retired') \
+         AND $4::date BETWEEN t.effective_from AND coalesce(t.effective_to,DATE 'infinity') FOR SHARE OF t",
+    )
+    .bind(t)
+    .bind(company)
+    .bind(code)
+    .bind(document_date)
+    .fetch_optional(&mut *c)
+    .await
+    .map_err(db)?;
+    let Some((code_id, version, rate_n, rate_d, base_n, base_d)) = version else {
+        // Why no version applies, in the guard's order: the code is not known
+        // to the book, it is an output code, it is entered but unconfirmed, or
+        // no confirmed version covers the document date.
+        let (known, other_kind, entered_only): (bool, bool, bool) = sqlx::query_as(
+            "SELECT coalesce(bool_or(t.state<>'withdrawn'),false),coalesce(bool_or(t.state<>'withdrawn' AND t.kind<>'input'),false),\
+             coalesce(bool_or(t.state='entered' AND t.effective_from<=$4::date),false) \
+             FROM archava_accounting.tax_codes t JOIN archava_accounting.books b ON b.tenant_id=t.tenant_id AND b.id=t.book_id \
+             WHERE t.tenant_id=$1 AND b.company_id=$2 AND t.code=$3",
+        )
+        .bind(t)
+        .bind(company)
+        .bind(code)
+        .bind(document_date)
+        .fetch_one(&mut *c)
+        .await
+        .map_err(db)?;
+        return Err(super::refused_by_code(if !known {
+            "supplier_document_tax_code_unknown"
+        } else if other_kind {
+            "supplier_document_tax_code_not_input"
+        } else if entered_only {
+            "supplier_document_tax_code_not_confirmed"
+        } else {
+            "supplier_document_tax_code_not_applicable"
+        }));
+    };
+    let rate = Fraction {
+        numerator: rate_n,
+        denominator: rate_d,
+    };
+    let base = Fraction {
+        numerator: base_n,
+        denominator: base_d,
+    };
+    // The entered amount is not compared with the computed one; it is only
+    // bounded by the goods total.
+    if !(0..=goods_total).contains(&entered) {
+        return Err(super::refused_by_code(
+            "supplier_document_tax_amount_out_of_bounds",
+        ));
+    }
+    let amounts = TaxRule::new(rate, base)
+        .and_then(|rule| rule.entered(goods_total, entered))
+        .map_err(|_| ErpError::Conflict)?;
+    Ok(Some(TaxSnapshot {
+        code_id,
+        code: code.to_owned(),
+        version,
+        rate,
+        base,
+        entered: amounts.entered,
+        computed: amounts.computed,
+    }))
+}
+/// Binds the nine tax columns of a claim version, empty for a claim without tax.
+fn bind_tax<'q>(
+    query: sqlx::query::Query<'q, sqlx::Postgres, sqlx::postgres::PgArguments>,
+    tax: Option<&'q TaxSnapshot>,
+) -> sqlx::query::Query<'q, sqlx::Postgres, sqlx::postgres::PgArguments> {
+    query
+        .bind(tax.map_or(0, |tax| tax.entered))
+        .bind(tax.map_or(0, |tax| tax.computed))
+        .bind(tax.map(|tax| tax.code_id))
+        .bind(tax.map(|tax| tax.code.as_str()))
+        .bind(tax.map(|tax| tax.version))
+        .bind(tax.map(|tax| tax.rate.numerator))
+        .bind(tax.map(|tax| tax.rate.denominator))
+        .bind(tax.map(|tax| tax.base.numerator))
+        .bind(tax.map(|tax| tax.base.denominator))
 }
 pub(super) async fn order_id(
     c: &mut PgConnection,
@@ -104,9 +232,9 @@ pub(super) async fn execute(
     .fetch_one(&mut *c)
     .await
     .map_err(db)?;
-    if company.is_none() {
+    let Some(company) = company else {
         return Err(ErpError::Conflict.into());
-    }
+    };
     let old = if let Some(rev) = expected {
         let row=sqlx::query("SELECT revision,state,claim_lines,declared_total FROM archava_purchasing.supplier_documents WHERE tenant_id=$1 AND id=$2 FOR UPDATE").bind(t).bind(id).fetch_one(&mut *c).await.map_err(db)?;
         if i64::from(row.try_get::<i32, _>("revision").map_err(db)?) != rev {
@@ -124,8 +252,17 @@ pub(super) async fn execute(
                 return Err(ErpError::Conflict.into());
             }
             validate_lines(c, t, order, &input.lines).await?;
-            sqlx::query("INSERT INTO archava_purchasing.supplier_documents(tenant_id,id,order_id,owner_id,supplier_id,supplier_code,supplier_name,company_id,company_revision,company_code,company_name,vendor_reference,document_date,currency,declared_total,claim_lines,state,observed_order_revision) SELECT tenant_id,$3,id,owner_id,supplier_id,supplier_code,supplier_name,company_id,company_revision,company_code,company_name,$4,$5::date,currency,$6,$7,'captured',revision FROM archava_purchasing.orders WHERE tenant_id=$1 AND id=$2")
-  .bind(t).bind(order).bind(id).bind(&input.vendor_reference).bind(&input.document_date).bind(input.declared_total).bind(json!(input.lines)).execute(&mut *c).await.map_err(db)?;
+            let tax = tax_snapshot(
+                c,
+                t,
+                company,
+                input.tax(),
+                &input.document_date,
+                input.declared_total,
+            )
+            .await?;
+            bind_tax(sqlx::query("INSERT INTO archava_purchasing.supplier_documents(tenant_id,id,order_id,owner_id,supplier_id,supplier_code,supplier_name,company_id,company_revision,company_code,company_name,vendor_reference,document_date,currency,declared_total,claim_lines,state,observed_order_revision,tax_minor,tax_computed_minor,tax_code_id,tax_code,tax_code_version,tax_rate_numerator,tax_rate_denominator,tax_base_numerator,tax_base_denominator) SELECT tenant_id,$3,id,owner_id,supplier_id,supplier_code,supplier_name,company_id,company_revision,company_code,company_name,$4,$5::date,currency,$6,$7,'captured',revision,$8,$9,$10,$11,$12,$13,$14,$15,$16 FROM archava_purchasing.orders WHERE tenant_id=$1 AND id=$2")
+  .bind(t).bind(order).bind(id).bind(&input.vendor_reference).bind(&input.document_date).bind(input.declared_total).bind(json!(input.lines)),tax.as_ref()).execute(&mut *c).await.map_err(db)?;
         }
         PurchaseCommand::DocumentRevise { input } => {
             let old = old.as_ref().ok_or(ErpError::Conflict)?;
@@ -134,7 +271,19 @@ pub(super) async fn execute(
                 return Err(ErpError::Conflict.into());
             }
             validate_lines(c, t, order, &input.lines).await?;
-            sqlx::query("UPDATE archava_purchasing.supplier_documents SET document_date=$3::date,declared_total=$4,claim_lines=$5,state='captured',match_evidence='{}'::jsonb,observed_order_revision=$6,revision=$7,updated_at=clock_timestamp() WHERE tenant_id=$1 AND id=$2").bind(t).bind(id).bind(&input.document_date).bind(input.declared_total).bind(json!(input.lines)).bind(source.revision as i32).bind(next).execute(&mut *c).await.map_err(db)?;
+            // A corrected version states its own tax: the code and amount of
+            // this command, or none. Nothing is carried over from the version
+            // it replaces.
+            let tax = tax_snapshot(
+                c,
+                t,
+                company,
+                input.tax(),
+                &input.document_date,
+                input.declared_total,
+            )
+            .await?;
+            bind_tax(sqlx::query("UPDATE archava_purchasing.supplier_documents SET document_date=$3::date,declared_total=$4,claim_lines=$5,state='captured',match_evidence='{}'::jsonb,observed_order_revision=$6,revision=$7,updated_at=clock_timestamp(),tax_minor=$8,tax_computed_minor=$9,tax_code_id=$10,tax_code=$11,tax_code_version=$12,tax_rate_numerator=$13,tax_rate_denominator=$14,tax_base_numerator=$15,tax_base_denominator=$16 WHERE tenant_id=$1 AND id=$2").bind(t).bind(id).bind(&input.document_date).bind(input.declared_total).bind(json!(input.lines)).bind(source.revision as i32).bind(next),tax.as_ref()).execute(&mut *c).await.map_err(db)?;
         }
         PurchaseCommand::DocumentVoid { .. } => {
             let state: String = old
@@ -237,6 +386,50 @@ pub(super) async fn workspace(
     {
         return Ok(vec![]);
     }
-    let rows=sqlx::query_scalar("SELECT jsonb_build_object('id',d.id,'orderId',d.order_id,'supplierId',d.supplier_id,'supplierName',d.supplier_name,'companyId',d.company_id,'companyRevision',d.company_revision,'companyCode',d.company_code,'companyName',d.company_name,'vendorReference',d.vendor_reference,'documentDate',to_char(d.document_date,'YYYY-MM-DD'),'currency',d.currency,'declaredTotal',d.declared_total,'lines',d.claim_lines,'state',d.state,'revision',d.revision,'observedOrderRevision',d.observed_order_revision,'matchEvidence',d.match_evidence,'accountingStatus','not_inferred','sourceOrder',(SELECT jsonb_build_object('id',o.id,'supplierId',o.supplier_id,'revision',o.revision,'lines',(SELECT jsonb_agg(jsonb_build_object('id',l.id,'title',l.title,'unitCost',l.unit_cost,'acceptedQuantity',l.accepted_quantity,'rejectedQuantity',l.rejected_quantity) ORDER BY l.id) FROM archava_purchasing.lines l WHERE l.tenant_id=o.tenant_id AND l.order_id=o.id)) FROM archava_purchasing.orders o WHERE o.tenant_id=d.tenant_id AND o.id=d.order_id),'versions',coalesce((SELECT jsonb_agg(x.doc ORDER BY x.revision DESC) FROM (SELECT v.revision,jsonb_build_object('revision',v.revision,'requestId',v.request_id,'state',v.snapshot->'state','matchEvidence',v.snapshot->'match_evidence') AS doc FROM archava_purchasing.supplier_document_versions v WHERE v.tenant_id=d.tenant_id AND v.document_id=d.id ORDER BY v.revision DESC LIMIT 20) x),'[]'::jsonb),'historyLimit',20,'activeAllocatedQuantity',(SELECT coalesce(sum(a.quantity),0) FROM archava_purchasing.supplier_document_allocations a WHERE a.tenant_id=d.tenant_id AND a.document_id=d.id AND a.released_revision IS NULL)) FROM archava_purchasing.supplier_documents d WHERE d.tenant_id=$1 AND d.company_id=$2 AND ($3 OR d.owner_id=$4) AND ($6::uuid IS NULL OR d.id=$6) AND ($5='' OR strpos(lower(d.vendor_reference||' '||d.supplier_name),lower($5))>0) ORDER BY d.created_at DESC,d.id LIMIT 100").bind(t).bind(company).bind(context.purchasing.scope.covers_all()).bind(&context.purchasing.owner_id).bind(search).bind(id).fetch_all(c).await.map_err(db)?;
+    let rows=sqlx::query_scalar("SELECT jsonb_build_object('id',d.id,'orderId',d.order_id,'supplierId',d.supplier_id,'supplierName',d.supplier_name,'companyId',d.company_id,'companyRevision',d.company_revision,'companyCode',d.company_code,'companyName',d.company_name,'vendorReference',d.vendor_reference,'documentDate',to_char(d.document_date,'YYYY-MM-DD'),'currency',d.currency,'declaredTotal',d.declared_total,'lines',d.claim_lines,'state',d.state,'revision',d.revision,'observedOrderRevision',d.observed_order_revision,'matchEvidence',d.match_evidence,'accountingStatus','not_inferred','sourceOrder',(SELECT jsonb_build_object('id',o.id,'supplierId',o.supplier_id,'revision',o.revision,'lines',(SELECT jsonb_agg(jsonb_build_object('id',l.id,'title',l.title,'unitCost',l.unit_cost,'acceptedQuantity',l.accepted_quantity,'rejectedQuantity',l.rejected_quantity) ORDER BY l.id) FROM archava_purchasing.lines l WHERE l.tenant_id=o.tenant_id AND l.order_id=o.id)) FROM archava_purchasing.orders o WHERE o.tenant_id=d.tenant_id AND o.id=d.order_id),'versions',coalesce((SELECT jsonb_agg(x.doc ORDER BY x.revision DESC) FROM (SELECT v.revision,jsonb_build_object('revision',v.revision,'requestId',v.request_id,'state',v.snapshot->'state','matchEvidence',v.snapshot->'match_evidence')||CASE WHEN v.snapshot->>'tax_code_id' IS NULL THEN '{}'::jsonb ELSE jsonb_build_object('tax',jsonb_build_object('code',v.snapshot->'tax_code','version',v.snapshot->'tax_code_version','enteredMinor',v.snapshot->'tax_minor','computedMinor',v.snapshot->'tax_computed_minor')) END AS doc FROM archava_purchasing.supplier_document_versions v WHERE v.tenant_id=d.tenant_id AND v.document_id=d.id ORDER BY v.revision DESC LIMIT 20) x),'[]'::jsonb),'historyLimit',20,'activeAllocatedQuantity',(SELECT coalesce(sum(a.quantity),0) FROM archava_purchasing.supplier_document_allocations a WHERE a.tenant_id=d.tenant_id AND a.document_id=d.id AND a.released_revision IS NULL))||CASE WHEN d.tax_code_id IS NULL THEN '{}'::jsonb ELSE jsonb_build_object('tax',jsonb_build_object('codeId',d.tax_code_id,'code',d.tax_code,'version',d.tax_code_version,'kind','input','rate',jsonb_build_object('numerator',d.tax_rate_numerator,'denominator',d.tax_rate_denominator),'base',jsonb_build_object('numerator',d.tax_base_numerator,'denominator',d.tax_base_denominator),'enteredMinor',d.tax_minor,'computedMinor',d.tax_computed_minor,'differenceMinor',d.tax_minor-d.tax_computed_minor,'totalMinor',d.declared_total+d.tax_minor,'enteredByCompany',true,'verifiedByArchava',false)) END FROM archava_purchasing.supplier_documents d WHERE d.tenant_id=$1 AND d.company_id=$2 AND ($3 OR d.owner_id=$4) AND ($6::uuid IS NULL OR d.id=$6) AND ($5='' OR strpos(lower(d.vendor_reference||' '||d.supplier_name),lower($5))>0) ORDER BY d.created_at DESC,d.id LIMIT 100").bind(t).bind(company).bind(context.purchasing.scope.covers_all()).bind(&context.purchasing.owner_id).bind(search).bind(id).fetch_all(c).await.map_err(db)?;
     Ok(rows)
+}
+
+/// The sentence shown wherever a supplier document names or offers a tax code
+/// (TAX.md rules 1 and 7).
+pub(super) const TAX_NOTICE: &str = "Tax codes are entered by your company; Archava does not verify tax rates or rules. Enter the tax amount printed on the supplier's document: that amount is the one owed and posted, shown beside the amount the code gives on the goods total. The version of the code that applies on the document's own date is used.";
+
+/// The input tax code versions a supplier document of this company may name:
+/// every confirmed or retired input version of its book with its date range,
+/// because the version is chosen by the document's own date, not by today.
+/// None when the Accounting ledger or the book is absent. The caller has been
+/// checked for the company and reads supplier documents; the list carries no
+/// account and no person, and the document guard stays the authority.
+pub(super) async fn input_tax_codes(
+    c: &mut PgConnection,
+    t: &str,
+    context: &ResolvedPurchaseContext,
+    company: Option<Uuid>,
+) -> Result<Value, PurchaseError> {
+    let Some(company) = company.filter(|_| context.purchasing.holds(&["documents.read"])) else {
+        return Ok(Value::Array(vec![]));
+    };
+    let installed: bool =
+        sqlx::query_scalar("SELECT to_regclass('archava_accounting.tax_codes') IS NOT NULL")
+            .fetch_one(&mut *c)
+            .await
+            .map_err(db)?;
+    if !installed {
+        return Ok(Value::Array(vec![]));
+    }
+    sqlx::query_scalar::<_, Value>(
+        "SELECT coalesce(json_agg(c.row ORDER BY c.code,c.version),'[]'::json) FROM (SELECT t.code,t.version,json_build_object('code',t.code,'version',t.version,\
+         'rate',json_build_object('numerator',t.rate_numerator,'denominator',t.rate_denominator),\
+         'base',json_build_object('numerator',t.base_numerator,'denominator',t.base_denominator),\
+         'effectiveFrom',t.effective_from,'effectiveTo',t.effective_to,\
+         'enteredByCompany',true,'verifiedByArchava',false) AS row \
+         FROM archava_accounting.tax_codes t JOIN archava_accounting.books b ON b.tenant_id=t.tenant_id AND b.id=t.book_id \
+         WHERE t.tenant_id=$1 AND b.company_id=$2 AND t.kind='input' AND t.state IN ('confirmed','retired') \
+         ORDER BY t.effective_from DESC,t.code LIMIT 200) c",
+    )
+    .bind(t)
+    .bind(company)
+    .fetch_one(c)
+    .await
+    .map_err(db)
 }

@@ -41,6 +41,24 @@ details require payable and bank read access; generic journal detail and audit
 snapshots do not acquire the subordinate bank-row reference. Provider projection
 withholds the new raw collections by default.
 
+## Tax on a supplier bill
+
+A bill of a claim that [carries tax](PURCHASE_POSTING.md#tax-on-a-supplier-bill)
+is owed in gross: its goods plus its tax, which is what the bill credits to the
+payable account. Accounting 018 replaces `payable_balance` in place so that
+`originalMinor`, `recognizedMinor`, `outstandingMinor` and `availableMinor` count
+`goods + tax`, and a posted void takes both away. A payment up to the gross is
+accepted; one above it is refused (`supplier_payment_exceeds_bill`). The payable
+positions, their aging and the payable control comparison of the subledger report
+count the same gross. A bill without tax has the balances it had. Payments and
+returns carry no tax.
+
+One limit predates tax and is unchanged: a supplier document that was posted,
+voided, corrected and matched again has two bill sources, and the payable
+subledger report, which keys its positions by document, answers a conflict for
+that book. The payables collection and summary are not affected. Witnesses:
+[tax_purchases.rs](../../crates/host/tests/erp_accounting/tax_purchases.rs).
+
 Implementation: [domain rules](../../crates/domain/src/erp/accounting/payables.rs),
 [atomic persistence](../../crates/adapters/src/erp/accounting/payables.rs),
 [SQL guards](../../migrations/accounting-pg/009_supplier_bank_settlements.sql),

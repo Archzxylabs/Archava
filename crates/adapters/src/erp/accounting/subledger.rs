@@ -48,9 +48,11 @@ SELECT jsonb_build_object('documentId',s.invoice_id,'sourceId',s.id,'code',s.inv
 FROM archava_accounting.invoice_sources s JOIN posted p ON p.invoice_id=s.invoice_id
 WHERE s.tenant_id=$1 AND s.book_id=$2 AND s.effect='issue' AND s.source_date<=$3::text::date ORDER BY s.invoice_id
 "#;
+// A supplier bill is owed in gross: its goods plus the tax its document states
+// (Accounting 018), which is what the bill credits to the payable account.
 const PAYABLE_POSITIONS: &str = r#"
 WITH events AS (
- SELECT CASE WHEN s.effect='bill' THEN s.id ELSE (s.source_snapshot->'priorMatchedVersion'->>'request_id')::uuid END source_id,s.goods_minor::numeric amount
+ SELECT CASE WHEN s.effect='bill' THEN s.id ELSE (s.source_snapshot->'priorMatchedVersion'->>'request_id')::uuid END source_id,s.goods_minor::numeric+s.tax_minor amount
  FROM archava_accounting.purchase_sources s
  JOIN archava_accounting.purchase_journal_sources x ON x.tenant_id=s.tenant_id AND x.source_id=s.id
  JOIN archava_accounting.journals j ON j.tenant_id=x.tenant_id AND j.id=x.journal_id
@@ -107,7 +109,7 @@ WITH mappings AS (
  FROM archava_accounting.opening_balances o JOIN archava_accounting.journals j ON j.tenant_id=o.tenant_id AND (j.id=o.id OR j.reversal_of=o.id)
  WHERE o.tenant_id=$1 AND o.book_id=$2 AND o.control='payable' AND j.state='posted' AND j.entry_date<=$3::text::date GROUP BY o.control_account_id
 ), events AS (
- SELECT m.account_id,s.goods_minor::numeric amount FROM mappings m JOIN archava_accounting.purchase_sources s ON s.origin_id=m.origin_id AND s.tenant_id=$1 AND s.book_id=$2
+ SELECT m.account_id,s.goods_minor::numeric+s.tax_minor amount FROM mappings m JOIN archava_accounting.purchase_sources s ON s.origin_id=m.origin_id AND s.tenant_id=$1 AND s.book_id=$2
  JOIN archava_accounting.purchase_journal_sources x ON x.tenant_id=s.tenant_id AND x.source_id=s.id
  JOIN archava_accounting.journals j ON j.tenant_id=x.tenant_id AND j.id=x.journal_id
  WHERE s.effect IN ('bill','void') AND j.state='posted' AND j.entry_date<=$3::text::date
