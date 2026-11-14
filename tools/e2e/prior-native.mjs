@@ -31,6 +31,8 @@ export async function verifyPriorNative({previousRoot,packageRoot,facts,scratch,
  const oldOpenings=oldManifest.ledgers.find(l=>l.namespace==='archava_accounting')?.migrations.some(m=>m.id==='013_declared_opening_balances')===true
  const tradeCurrency=manifest=>manifest.ledgers.find(l=>l.namespace==='archava_commerce')?.migrations.some(m=>m.id==='011_company_trade_currency')===true
  const commerceAdded=tradeCurrency(newManifest)&&!tradeCurrency(oldManifest)?['011_company_trade_currency']:[]
+ const purchaseCurrency=manifest=>manifest.ledgers.find(l=>l.namespace==='archava_purchasing')?.migrations.some(m=>m.id==='007_company_trade_currency')===true
+ const purchasingAdded=purchaseCurrency(newManifest)&&!purchaseCurrency(oldManifest)?['007_company_trade_currency']:[]
  const oldDisclosure=oldManifest.ledgers.find(l=>l.namespace==='archava_owner')?.migrations.some(m=>m.id==='004_ai_disclosure_boundary')===true
  const newDisclosure=newManifest.ledgers.find(l=>l.namespace==='archava_owner')?.migrations.some(m=>m.id==='004_ai_disclosure_boundary')===true
  assert.ok(expectedAdded>=0)
@@ -43,7 +45,9 @@ export async function verifyPriorNative({previousRoot,packageRoot,facts,scratch,
   assert.deepEqual(newAccounting.migrations.slice(oldAccounting.migrations.length).map(m=>m.id),accountingAdded)
   const oldCommerce=oldManifest.ledgers.find(l=>l.namespace==='archava_commerce'),newCommerce=newManifest.ledgers.find(l=>l.namespace==='archava_commerce')
   assert.deepEqual(newCommerce.migrations.slice(oldCommerce.migrations.length).map(m=>m.id),commerceAdded)
-  assert.equal(expectedAdded,1+accountingAdded.length+commerceAdded.length,'This prior profile adds exactly the Owner disclosure and the declared bank/payable and trade-currency migrations')
+  const oldPurchasing=oldManifest.ledgers.find(l=>l.namespace==='archava_purchasing'),newPurchasing=newManifest.ledgers.find(l=>l.namespace==='archava_purchasing')
+  assert.deepEqual(newPurchasing.migrations.slice(oldPurchasing.migrations.length).map(m=>m.id),purchasingAdded)
+  assert.equal(expectedAdded,1+accountingAdded.length+commerceAdded.length+purchasingAdded.length,'This prior profile adds exactly the Owner disclosure and the declared bank/payable and trade-currency migrations')
  }
  const db=`archava_finupgrade_${randomUUID().slice(0,8)}`,rollback=`${db}_rollback`,fresh=`${db}_fresh`
  assert.match(db,/^archava_finupgrade_[0-9a-f]{8}$/)

@@ -1,12 +1,12 @@
 # SQL migration ownership
 
-All 78 checked-in SQL migrations currently live under this directory, grouped into 31 ledger directories. The native manifest mounts 71; 7 remain reserved specifications. The owner-configuration migration was relocated from `crates/host/migrations/owner` to `owner-pg/`; its migration ID, schema namespace, SQL bytes, and checksum are unchanged.
+All 79 checked-in SQL migrations currently live under this directory, grouped into 31 ledger directories. The native manifest mounts 72; 7 remain reserved specifications. The owner-configuration migration was relocated from `crates/host/migrations/owner` to `owner-pg/`; its migration ID, schema namespace, SQL bytes, and checksum are unchanged.
 
 The manifest is the only list of applied migrations. The persistent server embeds the migrations it verifies from it at build time ([build.rs](../crates/slice/build.rs)), and the disposable PostgreSQL fixture reads the same manifest in [pg-fixture](../crates/pg-fixture/src/lib.rs). A file's presence here does not mean a given runtime mounts it or its UI is complete.
 
 ## Applied versus unmounted ledgers
 
-`manifest.v1.json` is the installer's contract: 71 of the 78 files, across 25 ledgers, carry an `id`, `path` and SHA-256 that the Ops installer verifies and applies. The remaining seven files are **unmounted**: no manifest entry, no embedded registration, and no runtime readiness check.
+`manifest.v1.json` is the installer's contract: 72 of the 79 files, across 25 ledgers, carry an `id`, `path` and SHA-256 that the Ops installer verifies and applies. The remaining seven files are **unmounted**: no manifest entry, no embedded registration, and no runtime readiness check.
 
 | Unmounted ledger | Files |
 | --- | --- |
@@ -86,6 +86,15 @@ the currency of its company's accounting book, any other row IDR, and an order l
 the currency of its order. Commerce migrates before Accounting, so the guard reads
 `archava_accounting.books` late-bound and treats a missing ledger as "no book".
 Existing rows are not rewritten. See [trade currency](../docs/architecture/MULTI_CURRENCY.md).
+
+Purchasing007 does the same for supplier offers, purchase orders and supplier
+documents: the three IDR-only checks become the format check, a purchase order must
+carry its company's trade currency, an offer that of the company owning its product
+(and the product's own currency), and a purchase line must name an offer and a
+product of its order's currency. A supplier document keeps the Purchasing006 guard
+that binds it to its order's currency. The rule lives in
+`archava_purchasing.trade_currency`, a copy of the Commerce function, so the guards
+do not depend on Commerce011 being applied. Existing rows are not rewritten.
 
 Accounting011/012 append original-document due agreements, immutable reviewed versions and the corresponding audit kind without changing earlier SQL. See [due terms and dated subledgers](../docs/modules/DOCUMENT_DUE_TERMS.md). No historical agreements or new user grants are inferred.
 

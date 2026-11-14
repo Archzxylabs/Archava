@@ -117,7 +117,9 @@ fn claim(
     if !date(day) {
         return Err(ValidationError("documentDate"));
     }
-    if currency != "IDR" {
+    // The grammar only: which code a claim may carry is its purchase order's
+    // currency, and the adapter refuses any other against the locked order.
+    if currency.len() != 3 || !currency.bytes().all(|byte| byte.is_ascii_uppercase()) {
         return Err(ValidationError("currency"));
     }
     if !(0..=TOTAL_MAX).contains(&total) {
@@ -233,6 +235,16 @@ mod tests {
             assert!(Capture::parse(&raw).is_err())
         }
         raw["documentDate"] = json!("2024-02-29");
+        for (code, accepted) in [
+            ("USD", true),
+            ("idr", false),
+            ("RUPIAH", false),
+            ("", false),
+        ] {
+            raw["currency"] = json!(code);
+            assert_eq!(Capture::parse(&raw).is_ok(), accepted, "{code}");
+        }
+        raw["currency"] = json!("IDR");
         raw["ownerId"] = json!("other");
         assert!(Capture::parse(&raw).is_err());
         raw.as_object_mut().unwrap().remove("ownerId");

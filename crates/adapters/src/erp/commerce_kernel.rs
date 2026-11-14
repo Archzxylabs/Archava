@@ -42,15 +42,16 @@ use super::{
 /// The row-side currency grammar: the migration's `^[A-Z]{3}$` CHECK. Which
 /// code a row may carry is the database's decision (`trade_currency`), not
 /// this parser's.
-fn valid_currency_code(code: &str) -> bool {
+pub(super) fn valid_currency_code(code: &str) -> bool {
     code.len() == 3 && code.bytes().all(|byte| byte.is_ascii_uppercase())
 }
 
-/// The trade currency a new company-owned product or sales order must carry:
-/// the currency of the company's accounting book, or IDR when the company has
-/// no book (or the Accounting ledger is not installed). Read in the caller's
-/// transaction; the `a_currency_*` insert guards re-derive it and refuse a
-/// different value, so this is the value to send, not the authority.
+/// The trade currency a new company-owned product, sales order, supplier
+/// offer or purchase order must carry: the currency of the company's
+/// accounting book, or IDR when the company has no book (or the Accounting
+/// ledger is not installed). Read in the caller's transaction; the
+/// `a_currency_*` insert guards of Commerce and Purchasing re-derive it and
+/// refuse a different value, so this is the value to send, not the authority.
 pub async fn company_trade_currency(
     connection: &mut PgConnection,
     tenant: &str,
@@ -206,23 +207,25 @@ pub async fn lock_commerce_products_for(
     ids: &[Uuid],
     owner_module: &str,
 ) -> Result<Vec<ProductRow>, PurchaseError> {
-    lock_commerce_products_scoped(connection, tenant, ids, owner_module, None).await
+    // These callers have no company (foodservice recipes and portions), so
+    // their documents are IDR and a product in another currency is refused.
+    lock_document_products_scoped(connection, tenant, ids, owner_module, None, "IDR").await
 }
-/// The company-scoped lock for callers whose documents are still IDR-only:
-/// purchasing (offers, purchase orders, receipts) and foodservice. A product
-/// in another currency is refused here exactly as before trade currencies
-/// existed, so an IDR purchase document can never be built over a non-IDR
-/// product. Commerce's own paths use [`lock_trade_products_scoped`].
-pub async fn lock_commerce_products_scoped(
+/// The company-scoped lock for a document in one currency: a supplier offer,
+/// a purchase order or its receipt. Every product must be priced in the
+/// document's currency, so a document can never be built over a product of
+/// another one. Commerce's own paths use [`lock_trade_products_scoped`].
+pub async fn lock_document_products_scoped(
     connection: &mut PgConnection,
     tenant: &str,
     ids: &[Uuid],
     owner_module: &str,
     company: Option<Uuid>,
+    currency: &str,
 ) -> Result<Vec<ProductRow>, PurchaseError> {
     let products =
         lock_trade_products_scoped(connection, tenant, ids, owner_module, company).await?;
-    if products.iter().any(|product| product.currency != "IDR") {
+    if products.iter().any(|product| product.currency != currency) {
         return Err(PurchaseError::Domain(ErpError::Conflict));
     }
     Ok(products)
@@ -565,7 +568,19 @@ pub async fn receive_purchase_stock(
     let products = if ids.is_empty() {
         Vec::new()
     } else {
-        lock_commerce_products_scoped(connection, tenant, &ids, "commerce", company).await?
+        // Stock is received in the purchase order's own currency: the unit
+        // cost and landed fee below are that order's amounts, unconverted.
+        let currency: String = sqlx::query_scalar(
+            "SELECT currency FROM archava_purchasing.orders WHERE tenant_id=$1 AND id=$2",
+        )
+        .bind(tenant)
+        .bind(input.purchase_id)
+        .fetch_optional(&mut *connection)
+        .await
+        .map_err(|error| purchase_database_error(COMMERCE_LEDGER, error))?
+        .ok_or(PurchaseError::Domain(ErpError::NotFound))?;
+        lock_document_products_scoped(connection, tenant, &ids, "commerce", company, &currency)
+            .await?
     };
     if products.iter().any(|product| !product.track_stock) {
         return Err(PurchaseError::Domain(ErpError::Conflict));

@@ -31,9 +31,10 @@ A matched claim must be voided before correction. Reopening a void claim is an
 explicit correction to the same vendor reference; it does not create a duplicate
 supplier invoice. Tenant/company/supplier/vendor reference uniqueness survives
 void. References are normalized uppercase ASCII with collapsed spaces (1–120
-characters). Dates are strict Gregorian `YYYY-MM-DD`, 1900–9999. IDR is the
-existing PO's documentary currency, not a newly selected company accounting
-currency. Quantity, unit-price and total bounds follow the Purchasing contract.
+characters). Dates are strict Gregorian `YYYY-MM-DD`, 1900–9999. The currency
+is the existing PO's documentary currency ([trade currency](../architecture/MULTI_CURRENCY.md)),
+never one selected on the claim: a well-formed three-letter code that differs
+from the PO's is refused as a conflict, on capture and on revision. Quantity, unit-price and total bounds follow the Purchasing contract.
 Vendor reference, supplier, source PO, owner, company identity and captured
 company revision/code/name remain immutable.
 

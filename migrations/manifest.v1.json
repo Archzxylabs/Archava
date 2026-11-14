@@ -153,6 +153,11 @@
           "id": "006_unposted_supplier_documents",
           "path": "migrations/purchasing-pg/006_unposted_supplier_documents.sql",
           "sha256": "bb2ca669e1049c2ca567faaa491aee80f561b8940fec7bfab198cde30c661047"
+        },
+        {
+          "id": "007_company_trade_currency",
+          "path": "migrations/purchasing-pg/007_company_trade_currency.sql",
+          "sha256": "0306389beadea3f6961b11d3e8c303079f5cd3fd085de784fa241a0553406189"
         }
       ]
     },

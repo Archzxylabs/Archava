@@ -133,6 +133,7 @@ pub struct OfferRow {
     pub supplier_id: Uuid,
     pub product_id: Uuid,
     pub unit_cost: i64,
+    pub currency: String,
     pub active: bool,
     pub revision: i64,
 }
@@ -146,6 +147,10 @@ fn parse_offer_row(row: &sqlx::postgres::PgRow, tenant: &str) -> Result<OfferRow
     if !(0..=COST_MAX).contains(&unit_cost) {
         return Err(PurchaseError::Domain(ErpError::Conflict));
     }
+    let currency: String = row.try_get("currency").map_err(refuses)?;
+    if !super::commerce_kernel::valid_currency_code(&currency) {
+        return Err(PurchaseError::Domain(ErpError::Conflict));
+    }
     let revision = i64::from(row.try_get::<i32, _>("revision").map_err(refuses)?);
     if revision < 1 {
         return Err(PurchaseError::Domain(ErpError::Conflict));
@@ -155,6 +160,7 @@ fn parse_offer_row(row: &sqlx::postgres::PgRow, tenant: &str) -> Result<OfferRow
         supplier_id: row.try_get("supplier_id").map_err(refuses)?,
         product_id: row.try_get("product_id").map_err(refuses)?,
         unit_cost,
+        currency,
         active: row.try_get("active").map_err(refuses)?,
         revision,
     })
@@ -168,6 +174,7 @@ pub struct OfferJoinedRow {
     pub supplier_id: Uuid,
     pub product_id: Uuid,
     pub unit_cost: i64,
+    pub currency: String,
     pub active: bool,
     pub revision: i64,
     pub sku: String,
@@ -188,6 +195,7 @@ fn parse_offer_joined_row(
         supplier_id: bare.supplier_id,
         product_id: bare.product_id,
         unit_cost: bare.unit_cost,
+        currency: bare.currency,
         active: bare.active,
         revision: bare.revision,
         sku: row.try_get("sku").map_err(refuses)?,
@@ -242,7 +250,7 @@ fn parse_order_row(
         return Err(PurchaseError::Domain(ErpError::Conflict));
     }
     let currency: String = row.try_get("currency").map_err(refuses)?;
-    if currency != "IDR" {
+    if !super::commerce_kernel::valid_currency_code(&currency) {
         return Err(PurchaseError::Domain(ErpError::Conflict));
     }
     let revision = i64::from(row.try_get::<i32, _>("revision").map_err(refuses)?);
@@ -527,6 +535,22 @@ pub(super) async fn owned_order(
 
 // --- Quote (the TS `quote()`) -----------------------------------------------
 
+/// The currency a new supplier offer or purchase order is created in: its
+/// company's trade currency, or IDR without a company. The `a_currency_*`
+/// insert guards of the purchasing ledger re-derive and enforce it.
+async fn purchase_currency(
+    connection: &mut PgConnection,
+    tenant: &str,
+    company: Option<Uuid>,
+) -> Result<String, PurchaseError> {
+    match company {
+        Some(company) => {
+            super::commerce_kernel::company_trade_currency(connection, tenant, company).await
+        }
+        None => Ok("IDR".to_owned()),
+    }
+}
+
 /// One frozen line a quote produced — the line row the `writeLines` insert
 /// carries, with the offer's snapshot columns.
 struct QuotedLine {
@@ -551,13 +575,15 @@ struct Quote {
 /// offer must exist for THIS supplier and be active under `FOR SHARE OF o`;
 /// every product must still be active, stock-tracked and locked `FOR
 /// UPDATE` through the commerce kernel; the total may never exceed the
-/// order-total cell.
+/// order-total cell. `currency` is the purchase order's: every offer and
+/// every product must be priced in it, so one order holds one currency.
 async fn quote(
     connection: &mut PgConnection,
     tenant: &str,
     supplier_id: Uuid,
     lines: &[LineInput],
     company: Option<Uuid>,
+    currency: &str,
 ) -> Result<Quote, PurchaseError> {
     let supplier_row = sqlx::query(
         "SELECT * FROM archava_purchasing.suppliers WHERE tenant_id=$1 AND id=$2 FOR SHARE",
@@ -596,11 +622,15 @@ async fn quote(
     // Input lines are unique per offer (parse level) and offers are unique
     // per id (primary key): a missing or inactive offer is the same conflict
     // either way.
-    if offers.len() != lines.len() || offers.iter().any(|offer| !offer.active) {
+    if offers.len() != lines.len()
+        || offers
+            .iter()
+            .any(|offer| !offer.active || offer.currency != currency)
+    {
         return Err(PurchaseError::Domain(ErpError::Conflict));
     }
 
-    let products = super::commerce_kernel::lock_commerce_products_scoped(
+    let products = super::commerce_kernel::lock_document_products_scoped(
         connection,
         tenant,
         &offers
@@ -609,6 +639,7 @@ async fn quote(
             .collect::<Vec<_>>(),
         "commerce",
         company,
+        currency,
     )
     .await?;
     if products
@@ -1270,12 +1301,17 @@ async fn execute_command(
             if !supplier.active {
                 return Err(PurchaseError::Domain(ErpError::Conflict));
             }
-            let products = super::commerce_kernel::lock_commerce_products_scoped(
+            // An offer is priced in the trade currency of the company that
+            // owns its product (IDR for an unowned product), and the product
+            // itself must be priced in it.
+            let currency = purchase_currency(connection, tenant, sources.stock_company).await?;
+            let products = super::commerce_kernel::lock_document_products_scoped(
                 connection,
                 tenant,
                 &[product_id],
                 "commerce",
                 sources.stock_company,
+                &currency,
             )
             .await?;
             if products
@@ -1290,14 +1326,15 @@ async fn execute_command(
             }
             let id = Uuid::new_v4();
             sqlx::query(
-                "INSERT INTO archava_purchasing.offers(tenant_id,id,supplier_id,product_id,unit_cost) \
-                 VALUES($1,$2,$3,$4,$5)",
+                "INSERT INTO archava_purchasing.offers(tenant_id,id,supplier_id,product_id,unit_cost,currency) \
+                 VALUES($1,$2,$3,$4,$5,$6)",
             )
             .bind(tenant)
             .bind(id)
             .bind(supplier_id)
             .bind(product_id)
             .bind(int4(*unit_cost)?)
+            .bind(currency.as_str())
             .execute(&mut *connection)
             .await
             .map_err(refuses)?;
@@ -1378,17 +1415,26 @@ async fn execute_command(
             supplier_id, lines, ..
         } => {
             let supplier_id = parse_uuid(supplier_id)?;
+            // A company's order is in its book currency, any other order IDR;
+            // the quote refuses an offer or a product priced in another one.
+            let currency = purchase_currency(
+                connection,
+                tenant,
+                sources.company.as_ref().map(|company| company.id),
+            )
+            .await?;
             let quote = quote(
                 connection,
                 tenant,
                 supplier_id,
                 lines,
                 sources.stock_company,
+                &currency,
             )
             .await?;
             let id = Uuid::new_v4();
             let statement = if sources.company.is_some() {
-                "INSERT INTO archava_purchasing.orders(tenant_id,id,owner_id,supplier_id,supplier_code,supplier_name,total_estimate,company_id,company_revision,company_code,company_name) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)"
+                "INSERT INTO archava_purchasing.orders(tenant_id,id,owner_id,supplier_id,supplier_code,supplier_name,total_estimate,company_id,company_revision,company_code,company_name,currency) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)"
             } else {
                 "INSERT INTO archava_purchasing.orders(tenant_id,id,owner_id,supplier_id,supplier_code,supplier_name,total_estimate) VALUES($1,$2,$3,$4,$5,$6,$7)"
             };
@@ -1406,6 +1452,7 @@ async fn execute_command(
                     .bind(company.revision)
                     .bind(&company.code)
                     .bind(&company.name)
+                    .bind(currency.as_str())
             } else {
                 query
             };
@@ -1433,6 +1480,7 @@ async fn execute_command(
                 order.supplier_id,
                 lines,
                 sources.stock_company,
+                &order.currency,
             )
             .await?;
             sqlx::query("DELETE FROM archava_purchasing.lines WHERE tenant_id=$1 AND order_id=$2")
@@ -1512,6 +1560,7 @@ async fn execute_command(
                             })
                             .collect::<Vec<_>>(),
                         sources.stock_company,
+                        &order.currency,
                     )
                     .await?;
                     if requote.lines.iter().any(|quoted| {
@@ -1764,7 +1813,7 @@ pub async fn workspace_view_filtered(
         vec![]
     };
     let offers = if holds("offers.read") {
-        sqlx::query_scalar::<_,serde_json::Value>("SELECT json_build_object('id',o.id,'supplierId',o.supplier_id,'supplierName',s.name,'productId',o.product_id,'productTitle',p.title,'companyId',to_jsonb(p)->'company_id','unitCost',o.unit_cost,'active',o.active,'revision',o.revision) FROM archava_purchasing.offers o JOIN archava_purchasing.suppliers s ON s.tenant_id=o.tenant_id AND s.id=o.supplier_id JOIN archava_commerce.products p ON p.tenant_id=o.tenant_id AND p.id=o.product_id WHERE o.tenant_id=$1 AND (to_jsonb(p)->>'company_id')::uuid IS NOT DISTINCT FROM $3::uuid AND ($4::uuid IS NULL OR o.id=$4) AND ($2='' OR strpos(lower(s.name||' '||p.title),lower($2))>0) ORDER BY o.created_at DESC,o.id LIMIT 100").bind(tenant).bind(search).bind(company).bind(id).fetch_all(&mut *connection).await.map_err(|e|purchase_database_error(PURCHASING_LEDGER,e))?
+        sqlx::query_scalar::<_,serde_json::Value>("SELECT json_build_object('id',o.id,'supplierId',o.supplier_id,'supplierName',s.name,'productId',o.product_id,'productTitle',p.title,'companyId',to_jsonb(p)->'company_id','unitCost',o.unit_cost,'currency',o.currency,'active',o.active,'revision',o.revision) FROM archava_purchasing.offers o JOIN archava_purchasing.suppliers s ON s.tenant_id=o.tenant_id AND s.id=o.supplier_id JOIN archava_commerce.products p ON p.tenant_id=o.tenant_id AND p.id=o.product_id WHERE o.tenant_id=$1 AND (to_jsonb(p)->>'company_id')::uuid IS NOT DISTINCT FROM $3::uuid AND ($4::uuid IS NULL OR o.id=$4) AND ($2='' OR strpos(lower(s.name||' '||p.title),lower($2))>0) ORDER BY o.created_at DESC,o.id LIMIT 100").bind(tenant).bind(search).bind(company).bind(id).fetch_all(&mut *connection).await.map_err(|e|purchase_database_error(PURCHASING_LEDGER,e))?
     } else {
         vec![]
     };
