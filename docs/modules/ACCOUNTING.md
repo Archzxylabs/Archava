@@ -122,3 +122,28 @@ Limits:
 - The create and confirm steps are separate forms; the screen has no single guided flow for them.
 
 [tax.rs](../../crates/host/tests/erp_accounting/tax.rs) covers entering, the creator's refused confirmation and a second person's confirmation on a book with independent posting, self-confirmation on a book without it, listing by date, replay of each command, withdrawing and re-entering over the same range, retiring and a second version; confirmation after the control account changed; each refusal and the permissions; immutability by direct SQL as the serving and owner roles; concurrent versions and concurrent confirmations of one code; and the readiness function. The upgrade assertion that an existing membership gains no tax permission is in `tools/e2e/prior-native.mjs`, which this stage did not run.
+
+## Tax report
+
+Stage E of [tax on documents](../architecture/TAX.md), rule 9. `GET /erp/accounting/tax-report?tenant=<tenant>&bookId=<id>&from=<date>&to=<date>` (permissions `tax.read` and `reports.read`, a native book in scope) adds up the tax of posted sources for the source dates `from` through `to` and compares it with the ledger. Nothing is written. It is the company's own figures from its own tax codes: the response says `enteredByCompany: true`, `verifiedByArchava: false`, and its notice says that Archava does not verify tax rates or rules and that the report is not a tax return.
+
+| Member | Meaning |
+| --- | --- |
+| `codes` | One row per tax code version with posted sources in the period: `code`, `version`, `kind`, `rate`, `base`, `sourceCount`, `taxableBaseMinor` (net) and `taxMinor`, output codes first |
+| `totals` | `outputTaxMinor`, `inputTaxMinor` and `differenceMinor` (output less input) |
+| `controls` | One row per tax control account: `reportedTaxMinor` (the tax the rows attribute to it), `movementMinor` (all its posted journal lines in the period; credit less debit for a liability account, debit less credit otherwise) and `differenceMinor` (movement less reported) |
+| `postedSourceControlsAgree` | Whether every control difference is zero |
+| `pending` | `output` and `input`: count, taxable amount and tax of captured taxed sources in the period without a posted journal |
+| `outsideLedger` | `invoices` and `supplierDocuments`: count and tax of taxed documents that no bridge captured, with `unit: "document"` |
+
+Amounts are decimal strings in the book's ledger minor units, except `outsideLedger`, which is in the unit the documents store (whole Rupiah for IDR, the currency's minor unit otherwise) because no posting policy states a unit factor for a document it never captured.
+
+- A source is a captured invoice effect (issue, correction, void) or a captured supplier bill or its void that carries a tax control account. It counts once its journal is posted. Its period is its source date, which is the date of its journal, so the report ties to the ledger for the same range. A supplier document dated in an earlier period reports its input tax in the period it was matched.
+- A credit or a void is negative. A 0% code has a row with tax 0; an untaxed document has none.
+- The control accounts listed are those of every confirmed or retired code of the book and those of the taxed sources in the period. A manual journal on a tax account is a difference by design.
+- Pending and outside-ledger amounts are not in the rows, the totals or the control comparison. Outside the ledger are issued or settled taxed invoices without an issue source, by the UTC date of the issue, and matched taxed supplier documents without a bill source, by the UTC date of the match.
+- Refusals: 401 without a session; 400 `invalid_query` for a missing, unknown or invalid parameter or a range that ends before it starts; 403 without both permissions; 404 for a book that does not exist or is out of scope; 409 for a book that is not native.
+
+The Accounting screen has a "Tax report" panel under Financial reports. Its dates start as the open period of the book. It shows the rows, the three totals, the control accounts with a difference marked, the pending and outside-ledger sentences and the notice.
+
+[tax_report.rs](../../crates/host/tests/erp_accounting/tax_report.rs) covers a period with a taxed sale and its credit, a 0% sale, an untaxed sale and a supplier bill whose printed tax differs from the computed one; a pending source; a range before the source date; a void; a manual journal as a difference; documents outside the ledger; a USD book; and the refusals. The panel is covered by unit tests in [tax_report.rs](../../crates/slice/src/operations/accounting/tax_report.rs) and by `TAX-native-tax-report` in [tax.mjs](../../tools/e2e/tax.mjs).

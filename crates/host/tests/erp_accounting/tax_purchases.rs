@@ -10,7 +10,7 @@ use super::purchase_sources::PurchaseScenario;
 use super::tax_sales::guard_message;
 use super::*;
 
-async fn today(s: &PurchaseScenario) -> String {
+pub(super) async fn today(s: &PurchaseScenario) -> String {
     sqlx::query_scalar("SELECT (clock_timestamp() AT TIME ZONE 'UTC')::date::text")
         .fetch_one(&s.f.admin_pool)
         .await
@@ -31,7 +31,7 @@ async fn entered_code(
         "controlAccount":{"accountId":account["resourceId"],"expectedAccountRevision":account["revision"]},
         "effectiveFrom":from,"reason":"Entered by the company from its own tax advice"})).await
 }
-async fn confirmed_code(
+pub(super) async fn confirmed_code(
     s: &PurchaseScenario,
     code: &str,
     kind: &str,
@@ -42,13 +42,13 @@ async fn confirmed_code(
     let entered = entered_code(s, code, kind, rate, account, from).await;
     ok(&s.app,&s.bob,json!({"type":"tax_code.confirm","id":entered["resourceId"],"expectedRevision":1,"reason":"Checked against the company's tax advice"})).await
 }
-async fn input_account(s: &PurchaseScenario, code: &str) -> Value {
+pub(super) async fn input_account(s: &PurchaseScenario, code: &str) -> Value {
     account(&s.app, &s.alice, &s.book, code, "asset", "operating").await
 }
 /// A confirmed purchase order of `quantity` units at 7,000, all accepted
 /// without a landed fee, with its receipt source posted (inventory against
 /// goods received not invoiced).
-async fn received(s: &PurchaseScenario, quantity: i64, code: &str) -> (Value, Uuid) {
+pub(super) async fn received(s: &PurchaseScenario, quantity: i64, code: &str) -> (Value, Uuid) {
     let po = s.draft_order(quantity).await;
     s.purchase(json!({"operation":"order.confirm","id":po["id"],"expectedRevision":1,"reason":"Confirm under the reviewed purchase policy"})).await;
     let line = s.order_line(&po).await;
@@ -58,7 +58,7 @@ async fn received(s: &PurchaseScenario, quantity: i64, code: &str) -> (Value, Uu
 }
 /// `document.capture` for all `quantity` units of the order at 7,000, with or
 /// without the two tax members.
-fn claim(
+pub(super) fn claim(
     s: &PurchaseScenario,
     po: &Value,
     line: Uuid,
@@ -84,7 +84,7 @@ async fn attempt(s: &PurchaseScenario, command: Value) -> (StatusCode, Value) {
     )
     .await
 }
-fn matching(document: &Value, revision: i64) -> Value {
+pub(super) fn matching(document: &Value, revision: i64) -> Value {
     json!({"operation":"document.match","id":document["id"],"expectedRevision":revision,"expectedOrderRevision":3,"reason":"Exact accepted-goods claim"})
 }
 fn voiding(document: &Value, revision: i64) -> Value {
@@ -153,7 +153,7 @@ fn draft_with(source: &Value, code: &str, accounts: &[&Value]) -> Value {
     )
 }
 /// Drafts a taxed bill or void with its three accounts and has bob post it.
-async fn post_taxed(
+pub(super) async fn post_taxed(
     s: &PurchaseScenario,
     source: &Value,
     code: &str,
@@ -850,6 +850,77 @@ async fn a_correction_changes_the_tax_and_a_void_reverses_goods_tax_and_payable_
         captured(&s, &plain).await,
         ("bill".into(), 14_000_000, 0, None, None)
     );
+}
+
+/// **Witness: a supplier document that was posted, voided, revised and matched
+/// again has two bill sources. The payable subledger report answers for that
+/// book: the document has one position, the net of its posted bills and voids
+/// (the voided bill contributes zero, the live bill is what is owed), aged
+/// from the live bill, and the control comparison has no difference. This is
+/// so without tax (the defect predates tax) and with it.**
+#[tokio::test]
+async fn a_document_matched_again_after_a_posted_void_has_one_payable_position_from_its_live_bill()
+{
+    let s = PurchaseScenario::new(true).await;
+    let date = today(&s).await;
+    let (po, line) = received(&s, 20, "RECEIPT").await;
+    let document = s
+        .purchase(claim(&s, &po, line, "TWICE", &date, 20, None))
+        .await;
+    let first = s.purchase(matching(&document, 1)).await;
+    s.post(&s.reviewed(&first, "BILL-1", &[1, 2]).await).await;
+    let void = s.purchase(voiding(&document, 2)).await;
+    s.post(&s.reviewed(&void, "VOID-1", &[1, 2]).await).await;
+    let voided = payable_report(&s).await;
+    assert_eq!(voided["positions"].as_array().unwrap().len(), 1);
+    assert_eq!(voided["positions"][0]["sourceId"], first["requestId"]);
+    assert_eq!(voided["positions"][0]["balanceMinor"], "0");
+    assert_eq!(voided["positions"][0]["bucket"], "settled");
+    s.purchase(json!({"operation":"document.revise","id":document["id"],"expectedRevision":3,"expectedOrderRevision":3,"documentDate":date,"currency":"IDR","declaredTotal":140_000,"lines":[{"lineId":line,"quantity":20,"unitCost":7000}],"reason":"Supplier reissued the same document"})).await;
+    let second = s.purchase(matching(&document, 4)).await;
+    // Captured but not posted: the document still has its one settled position.
+    let pending = payable_report(&s).await;
+    assert_eq!(pending["positions"].as_array().unwrap().len(), 1);
+    assert_eq!(pending["positions"][0]["balanceMinor"], "0");
+    assert_eq!(pending["coverage"]["pendingMonetarySourceCount"], 1);
+    s.post(&s.reviewed(&second, "BILL-2", &[1, 2]).await).await;
+
+    let (st, v) = subledger::read(&s.app, &s.alice, &s.book, "payable", "2100-12-31", "").await;
+    assert_eq!(st, StatusCode::OK, "{v}");
+    let positions = v["positions"].as_array().unwrap();
+    assert_eq!(positions.len(), 1, "{v}");
+    assert_eq!(positions[0]["documentId"], document["id"]);
+    assert_eq!(
+        positions[0]["sourceId"], second["requestId"],
+        "the live bill"
+    );
+    assert_eq!(positions[0]["balanceMinor"], "14000000");
+    assert_eq!(positions[0]["sourceDate"], date);
+    assert_eq!(v["totals"]["netOutstandingMinor"], "14000000");
+    assert_eq!(v["coverage"]["qualifyingDocumentCount"], 1);
+    assert_eq!(v["positionControlDifferenceMinor"], "0");
+    assert_eq!(v["controls"][0]["expectedMinor"], "14000000");
+    assert_eq!(v["controls"][0]["differenceMinor"], "0");
+    assert_eq!(v["postedSourceControlsAgree"], true);
+
+    // With tax on the third version the same holds in gross, and a payment of
+    // the live bill reduces the document's one position.
+    let vat_account = input_account(&s, "VAT-IN").await;
+    confirmed_code(&s, "VAT-IN", "input", (11, 100), &vat_account, "2020-01-01").await;
+    let void = s.purchase(voiding(&document, 5)).await;
+    s.post(&s.reviewed(&void, "VOID-2", &[1, 2]).await).await;
+    s.purchase(json!({"operation":"document.revise","id":document["id"],"expectedRevision":6,"expectedOrderRevision":3,"documentDate":date,"currency":"IDR","declaredTotal":140_000,"lines":[{"lineId":line,"quantity":20,"unitCost":7000}],"reason":"Supplier reissued the document with tax","taxCode":"VAT-IN","taxMinor":15_400})).await;
+    let third = s.purchase(matching(&document, 7)).await;
+    post_taxed(&s, &third, "BILL-3", &vat_account).await;
+    let v = payable_report(&s).await;
+    let positions = v["positions"].as_array().unwrap();
+    assert_eq!(positions.len(), 1, "{v}");
+    assert_eq!(positions[0]["sourceId"], third["requestId"]);
+    assert_eq!(positions[0]["balanceMinor"], "15540000");
+    assert_eq!(v["totals"]["netOutstandingMinor"], "15540000");
+    assert_eq!(v["positionControlDifferenceMinor"], "0");
+    assert_eq!(v["controls"][0]["differenceMinor"], "0");
+    assert_eq!(v["postedSourceControlsAgree"], true);
 }
 
 /// One direct change of a supplier document as the serving role, rolled back.

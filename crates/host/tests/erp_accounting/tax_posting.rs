@@ -31,7 +31,12 @@ fn draft_with(source: &Value, code: &str, accounts: &[&Value]) -> Value {
     )
 }
 /// Drafts a taxed source with its three accounts and has bob post it.
-async fn post_taxed(s: &SourceFixture, source: &Value, code: &str, tax_account: &Value) -> Value {
+pub(super) async fn post_taxed(
+    s: &SourceFixture,
+    source: &Value,
+    code: &str,
+    tax_account: &Value,
+) -> Value {
     let request = draft_with(source, code, &[&s.ar, &s.revenue, tax_account]);
     let (st, v) = send(&s.app, &s.alice, &request).await;
     assert_eq!(st, StatusCode::OK, "{v}");
@@ -60,11 +65,11 @@ async fn lines(s: &SourceFixture, journal: &Value) -> Vec<(String, i64, i64)> {
 fn row(code: &str, debit: i64, credit: i64) -> (String, i64, i64) {
     (code.to_owned(), debit, credit)
 }
-async fn issue(s: &SourceFixture, invoice: &Value) -> Value {
+pub(super) async fn issue(s: &SourceFixture, invoice: &Value) -> Value {
     s.bill(json!({"type":"issue_invoice","invoiceId":invoice["invoiceId"],"expectedRevision":1,"reason":"Issue the taxed invoice"})).await
 }
 /// A fulfilled order of 2 × `item` under `tax`, invoiced as a draft.
-async fn taxed_invoice(
+pub(super) async fn taxed_invoice(
     s: &SourceFixture,
     code: &str,
     item: &Value,

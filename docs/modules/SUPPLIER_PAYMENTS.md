@@ -53,10 +53,18 @@ positions, their aging and the payable control comparison of the subledger repor
 count the same gross. A bill without tax has the balances it had. Payments and
 returns carry no tax.
 
-One limit predates tax and is unchanged: a supplier document that was posted,
-voided, corrected and matched again has two bill sources, and the payable
-subledger report, which keys its positions by document, answers a conflict for
-that book. The payables collection and summary are not affected. Witnesses:
+A supplier document that was posted, voided, corrected and matched again has
+several bill sources. The payable subledger report has one position for it: the
+net of all its posted bills, voids and settlements, so a voided bill contributes
+zero and the re-matched bill is what is owed. The position names the live bill
+as its `sourceId` and is aged from that bill's source date: the bill source of
+the highest document revision that has a posted effect through the cutoff. The
+control comparison is unchanged and stays exact. Until tax stage E the report
+listed one row per bill source and answered a conflict for the whole book,
+because two rows named one document; that defect predated tax. The payables
+collection and summary still list each bill source. Witnesses:
+`a_document_matched_again_after_a_posted_void_has_one_payable_position_from_its_live_bill`
+and the other tests in
 [tax_purchases.rs](../../crates/host/tests/erp_accounting/tax_purchases.rs).
 
 Implementation: [domain rules](../../crates/domain/src/erp/accounting/payables.rs),

@@ -3,7 +3,7 @@
 //! `tax_code.retire` withdraws an entered version or closes the range of a
 //! confirmed one. A company sales order names a confirmed output code and
 //! the invoice made from it stores the version that applies (Commerce 012,
-//! Billing 009); nothing posts tax yet. The database guard (Accounting 016)
+//! Billing 009), and its captured source posts the tax. The database guard (Accounting 016)
 //! decides the control account, the reviewer and the date range.
 use super::*;
 use crate::erp::refused_by_code;
