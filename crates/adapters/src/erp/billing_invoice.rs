@@ -142,7 +142,9 @@ async fn draft(
             Ok(Draft {
                 code: invoice_code.clone(),
                 customer: order.customer_name,
-                currency: "IDR".into(),
+                // The invoice is in its order's currency; the provenance
+                // guard (Billing 005) refuses any other.
+                currency: order.currency,
                 consumer: format!("commerce:{order_id}"),
                 lines,
                 customer_contact,

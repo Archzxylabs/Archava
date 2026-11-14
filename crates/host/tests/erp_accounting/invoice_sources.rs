@@ -18,12 +18,16 @@ pub(super) struct SourceFixture {
 }
 impl SourceFixture {
     pub(super) async fn new() -> Self {
+        Self::new_in("IDR").await
+    }
+    /// The same fixture over a book in another currency.
+    pub(super) async fn new_in(currency: &str) -> Self {
         let (f, app, alice, bob, company) = setup().await;
         sqlx::query("UPDATE archava_organizations.memberships SET permissions=permissions||ARRAY['parties.read','parties.write'] WHERE principal_id='alice'").execute(&f.admin_pool).await.unwrap();
         sqlx::query("INSERT INTO archava_commerce.memberships(tenant_id,principal_id,kind,permissions,scope) VALUES('acme','alice','human',$1,'all')").bind(archava_adapters::erp::COMMERCE_PERMISSION_VOCABULARY).execute(&f.admin_pool).await.unwrap();
         sqlx::query("INSERT INTO archava_billing.memberships(tenant_id,principal_id,kind,permissions,scope) VALUES('acme','alice','human',$1,'all')").bind(archava_domain::erp::billing::BILLING_PERMISSIONS).execute(&f.admin_pool).await.unwrap();
         sqlx::query("INSERT INTO archava_owner.owner_grants(tenant_id,principal_id,permissions) VALUES('acme','alice',ARRAY['config.read','config.apply'])").execute(&f.admin_pool).await.unwrap();
-        let (st, body) = send(&app, &alice, &create(&company, "IDR")).await;
+        let (st, body) = send(&app, &alice, &create(&company, currency)).await;
         assert_eq!(st, StatusCode::OK, "{body}");
         let book = body["receipt"].clone();
         let ar = account(&app, &alice, &book, "AR", "asset", "operating").await;
@@ -570,4 +574,33 @@ async fn startup_refuses_disabled_invoice_capture_and_source_audit_guards() {
         send(&s.app, &s.alice, &reserved).await.0,
         StatusCode::BAD_REQUEST
     );
+}
+
+/// Trade currency stage 3: an invoice made from a fulfilled order of a company
+/// whose book is not IDR is in the book's currency, with the order's amounts
+/// unchanged. Until the bridge accepts the `minor` unit (stage 4) such an
+/// invoice is not captured as a source.
+#[tokio::test]
+async fn an_invoice_from_a_non_idr_order_takes_the_order_currency() {
+    let x = SourceFixture::new_in("USD").await;
+    let invoice = x.invoice_amount("USD-INV", 1999, 2).await;
+    let id = Uuid::parse_str(invoice["invoiceId"].as_str().unwrap()).unwrap();
+    let (currency, gross, order_currency): (String, i64, String) = sqlx::query_as(
+        "SELECT i.currency,i.gross_minor,o.currency FROM archava_billing.invoices i \
+         JOIN archava_commerce.orders o ON o.tenant_id=i.tenant_id AND o.id=i.source_order_id \
+         WHERE i.id=$1",
+    )
+    .bind(id)
+    .fetch_one(&x.f.admin_pool)
+    .await
+    .unwrap();
+    assert_eq!(
+        (currency.as_str(), gross, order_currency.as_str()),
+        ("USD", 3998, "USD")
+    );
+    assert_eq!(x.count().await, 0, "no source is captured without a policy");
+
+    // The invoice policy is still IDR-only, so it cannot be set on this book.
+    let (status, refused) = send(&x.app, &x.alice, &x.policy(0)).await;
+    assert_eq!(status, StatusCode::CONFLICT, "{refused}");
 }
