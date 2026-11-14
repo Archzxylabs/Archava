@@ -11,26 +11,30 @@ pub(super) struct PurchaseScenario {
     pub(super) accounts: Vec<Value>,
     pub(super) supplier: Value,
     pub(super) offer: Value,
+    /// The book's currency and the source unit its bridges accept.
+    pub(super) currency: String,
+    pub(super) unit: &'static str,
 }
 impl PurchaseScenario {
     pub(super) async fn new(policy: bool) -> Self {
+        Self::new_in("IDR", policy).await
+    }
+    /// The same scenario over a book in another currency.
+    pub(super) async fn new_in(currency: &str, policy: bool) -> Self {
+        let mut s = Self::trading().await;
+        s.open_book(currency).await;
+        s.stock_item().await;
+        if policy {
+            ok(&s.app, &s.alice, s.policy(0)).await;
+        }
+        s
+    }
+    /// A company that can buy and sell but has no book yet, so it trades in IDR.
+    pub(super) async fn trading() -> Self {
         let (f, app, alice, bob, company) = setup().await;
         for actor in ["alice", "bob"] {
             sqlx::query("INSERT INTO archava_commerce.memberships(tenant_id,principal_id,kind,permissions,scope,role,capability) VALUES('acme',$1,'human',ARRAY['catalog.read','catalog.write','stock.read','stock.write','orders.read','orders.write'],'all','owner','enterprise')").bind(actor).execute(&f.admin_pool).await.unwrap();
             sqlx::query("INSERT INTO archava_purchasing.memberships(tenant_id,principal_id,kind,permissions,scope) VALUES('acme',$1,'human',$2,'all')").bind(actor).bind(archava_domain::erp::purchasing::PERMISSION_VOCABULARY).execute(&f.admin_pool).await.unwrap();
-        }
-        let (status, v) = send(&app, &alice, &create(&company, "IDR")).await;
-        assert_eq!(status, StatusCode::OK, "{v}");
-        let book = v["receipt"].clone();
-        let period=ok(&app,&alice,json!({"type":"period.open","bookId":book["bookId"],"code":"SOURCE","startDate":"2000-01-01","endDate":"2100-12-31","reason":"Owned purchase source window"})).await;
-        let mut accounts = Vec::new();
-        for (role, class) in [
-            ("INVENTORY", "asset"),
-            ("GRNI", "liability"),
-            ("PAYABLE", "liability"),
-            ("FEE-ACCRUAL", "liability"),
-        ] {
-            accounts.push(account(&app, &alice, &book, role, class, "operating").await);
         }
         let mut s = Self {
             f,
@@ -38,23 +42,51 @@ impl PurchaseScenario {
             alice,
             bob,
             company,
-            book,
-            period,
-            accounts,
+            book: Value::Null,
+            period: Value::Null,
+            accounts: Vec::new(),
             supplier: Value::Null,
             offer: Value::Null,
+            currency: "IDR".into(),
+            unit: "whole_idr",
         };
         s.supplier=s.purchase(json!({"operation":"supplier.create","code":"SOURCE-SUPPLIER","name":"Explicit supplier master"})).await;
-        let product=s.trade(json!({"operation":"product.create_for_company","companyId":s.company["companyId"],"expectedCompanyRevision":1,"sku":"PURCHASE-SOURCE","title":"Counted received goods","unit":"unit","trackStock":true,"price":15000})).await;
-        s.offer=s.purchase(json!({"operation":"offer.create","supplierId":s.supplier["id"],"productId":product["id"],"unitCost":7000})).await;
-        if policy {
-            ok(&s.app, &s.alice, s.policy(0)).await;
-        }
         s
     }
+    /// Creates the company's book with the accounts and period the purchase bridge needs.
+    pub(super) async fn open_book(&mut self, currency: &str) {
+        let (status, v) = send(&self.app, &self.alice, &create(&self.company, currency)).await;
+        assert_eq!(status, StatusCode::OK, "{v}");
+        let book = v["receipt"].clone();
+        self.period=ok(&self.app,&self.alice,json!({"type":"period.open","bookId":book["bookId"],"code":"SOURCE","startDate":"2000-01-01","endDate":"2100-12-31","reason":"Owned purchase source window"})).await;
+        for (role, class) in [
+            ("INVENTORY", "asset"),
+            ("GRNI", "liability"),
+            ("PAYABLE", "liability"),
+            ("FEE-ACCRUAL", "liability"),
+        ] {
+            self.accounts
+                .push(account(&self.app, &self.alice, &book, role, class, "operating").await);
+        }
+        self.book = book;
+        self.currency = currency.into();
+        self.unit = if currency == "IDR" {
+            "whole_idr"
+        } else {
+            "minor"
+        };
+    }
+    /// A tracked product and its supplier offer, in the company's current trade currency.
+    pub(super) async fn stock_item(&mut self) {
+        let product=self.trade(json!({"operation":"product.create_for_company","companyId":self.company["companyId"],"expectedCompanyRevision":1,"sku":"PURCHASE-SOURCE","title":"Counted received goods","unit":"unit","trackStock":true,"price":15000})).await;
+        self.offer=self.purchase(json!({"operation":"offer.create","supplierId":self.supplier["id"],"productId":product["id"],"unitCost":7000})).await;
+    }
     pub(super) fn policy(&self, revision: i32) -> Value {
+        self.policy_in(revision, self.unit)
+    }
+    pub(super) fn policy_in(&self, revision: i32, unit: &str) -> Value {
         let mappings:Vec<_>=["inventory","goods_received_not_invoiced","payable","landed_fee_accrual"].into_iter().zip(&self.accounts).map(|(role,a)|json!({"role":role,"accountId":a["resourceId"],"expectedAccountRevision":1})).collect();
-        json!({"type":"purchase_policy.set","bookId":self.book["bookId"],"expectedRevision":revision,"currencyCatalogue":"SIX-2026-09-17","sourceUnit":"whole_idr","mappings":mappings,"reason":"Explicit future whole-Rupiah source contract"})
+        json!({"type":"purchase_policy.set","bookId":self.book["bookId"],"expectedRevision":revision,"currencyCatalogue":"SIX-2026-09-17","sourceUnit":unit,"mappings":mappings,"reason":"Explicit future source unit contract"})
     }
     pub(super) async fn trade(&self, command: Value) -> Value {
         let (status, v) = call(
@@ -383,4 +415,123 @@ async fn purchase_policy_pins_owner_dependencies_and_financial_sources_remain_pe
     )
     .await;
     assert_eq!(status, StatusCode::FORBIDDEN);
+}
+
+/// Trade currency stage 4: on a USD book the purchase bridge posts a received
+/// order and its supplier bill at the order's own minor amounts, and the
+/// payable control comparison reconciles.
+#[tokio::test]
+async fn a_usd_book_posts_purchase_receipts_and_bills_in_minor_units_unchanged() {
+    let s = PurchaseScenario::new_in("USD", false).await;
+    // Whole Rupiah is not a unit of a USD book; the minor unit is.
+    let (status, refused) = send(&s.app, &s.alice, &input(s.policy_in(0, "whole_idr"))).await;
+    assert_eq!(status, StatusCode::CONFLICT, "{refused}");
+    ok(&s.app, &s.alice, s.policy(0)).await;
+    let (st, workspace) = snapshot(&s.app, &s.alice, &s.company).await;
+    assert_eq!(st, StatusCode::OK, "{workspace}");
+    assert_eq!(workspace["purchasePolicy"]["sourceUnit"], "minor");
+    let notice = workspace["purchasePostingNotice"].as_str().unwrap();
+    assert!(
+        notice.contains("USD minor-unit purchase policy") && !notice.contains("whole-IDR"),
+        "{notice}"
+    );
+    // Three ordered at USD 70.00, two accepted, USD 1.01 landed fee.
+    let (po, r, line) = s.receive().await;
+    let source = s.source(&r["requestId"]).await;
+    assert_eq!(source["goodsMinor"], "14000", "not 1400000");
+    assert_eq!(source["landedFeeMinor"], "101");
+    let (unit, key): (String, String) = sqlx::query_as(
+        "SELECT o.policy_snapshot->>'source_unit',(SELECT string_agg(k,',') FROM jsonb_object_keys(s.source_snapshot->'lines'->0) k WHERE k LIKE 'unitCost%') \
+         FROM archava_accounting.purchase_sources s JOIN archava_accounting.purchase_origins o ON o.tenant_id=s.tenant_id AND o.id=s.origin_id",
+    )
+    .fetch_one(&s.f.admin_pool)
+    .await
+    .unwrap();
+    assert_eq!((unit.as_str(), key.as_str()), ("minor", "unitCostMinor"));
+    let receipt_j = s.reviewed(&r, "RECEIPT", &[0, 1, 3]).await;
+    s.post(&receipt_j).await;
+    let document=s.purchase(json!({"operation":"document.capture","orderId":po["id"],"expectedOrderRevision":3,"supplierId":s.supplier["id"],"vendorReference":"USD-BILL","documentDate":"2026-11-08","currency":"USD","declaredTotal":14000,"lines":[{"lineId":line,"quantity":2,"unitCost":7000}]})).await;
+    let bill=s.purchase(json!({"operation":"document.match","id":document["id"],"expectedRevision":1,"expectedOrderRevision":3,"reason":"Exact accepted-goods claim"})).await;
+    assert_eq!(s.source(&bill["requestId"]).await["goodsMinor"], "14000");
+    let j = s.reviewed(&bill, "SUPPLIER-BILL", &[1, 2]).await;
+    s.post(&j).await;
+    let totals:Vec<(String,String)>=sqlx::query_as("SELECT a.code,sum(l.debit_minor-l.credit_minor)::text FROM archava_accounting.journal_lines l JOIN archava_accounting.journals j ON j.tenant_id=l.tenant_id AND j.id=l.journal_id JOIN archava_accounting.accounts a ON a.tenant_id=l.tenant_id AND a.id=l.account_id WHERE l.tenant_id='acme' AND j.state='posted' GROUP BY a.code ORDER BY a.code").fetch_all(&s.f.admin_pool).await.unwrap();
+    assert_eq!(
+        totals,
+        vec![
+            ("FEE-ACCRUAL".into(), "-101".into()),
+            ("GRNI".into(), "0".into()),
+            ("INVENTORY".into(), "14101".into()),
+            ("PAYABLE".into(), "-14000".into())
+        ]
+    );
+    let payable = subledger::accepted(&s.app, &s.alice, &s.book, "payable", "2100-12-31").await;
+    assert_eq!(payable["book"]["currency"], "USD");
+    assert_eq!(payable["totals"]["netOutstandingMinor"], "14000");
+    assert_eq!(payable["positionControlDifferenceMinor"], "0");
+    assert_eq!(payable["controls"][0]["differenceMinor"], "0");
+    assert_eq!(payable["postedSourceControlsAgree"], true, "{payable}");
+    // Voiding the bill reverses the same unconverted amount.
+    let void=s.purchase(json!({"operation":"document.void","id":document["id"],"expectedRevision":2,"reason":"Correct the original supplier claim"})).await;
+    assert_eq!(s.source(&void["requestId"]).await["goodsMinor"], "-14000");
+    let j = s.reviewed(&void, "SUPPLIER-VOID", &[1, 2]).await;
+    s.post(&j).await;
+    let payable = subledger::accepted(&s.app, &s.alice, &s.book, "payable", "2100-12-31").await;
+    assert_eq!(payable["totals"]["netOutstandingMinor"], "0");
+    assert_eq!(payable["postedSourceControlsAgree"], true, "{payable}");
+    ok(&s.app,&s.alice,json!({"type":"period.close","id":s.period["resourceId"],"expectedRevision":1,"reason":"All captured sources reviewed"})).await;
+}
+
+/// The unit must fit the book: the `minor` unit is not valid on an IDR book,
+/// and the unit of an existing policy cannot be changed.
+#[tokio::test]
+async fn the_minor_purchase_unit_is_refused_on_an_idr_book() {
+    let s = PurchaseScenario::new(false).await;
+    let (status, refused) = send(&s.app, &s.alice, &input(s.policy_in(0, "minor"))).await;
+    assert_eq!(status, StatusCode::CONFLICT, "{refused}");
+    ok(&s.app, &s.alice, s.policy(0)).await;
+    let (status, refused) = send(&s.app, &s.alice, &input(s.policy_in(1, "minor"))).await;
+    assert_eq!(status, StatusCode::CONFLICT, "{refused}");
+}
+
+/// A company that drafted a purchase order in IDR before it created a USD
+/// book. Without a purchase policy the order confirms and stays outside the
+/// ledger. With one, confirming a Rupiah order is refused as a conflict and
+/// no origin is recorded; the order stays a draft.
+#[tokio::test]
+async fn an_idr_purchase_order_of_a_company_with_a_later_usd_book_is_refused_not_captured() {
+    let mut s = PurchaseScenario::trading().await;
+    s.stock_item().await;
+    let earlier = s.draft_order(1).await;
+    let later = s.draft_order(1).await;
+    s.open_book("USD").await;
+    s.purchase(json!({"operation":"order.confirm","id":earlier["id"],"expectedRevision":1,"reason":"No purchase policy yet, so nothing is captured"})).await;
+    ok(&s.app, &s.alice, s.policy(0)).await;
+    let (status, refused) = call(
+        &s.app,
+        "POST",
+        "/erp/purchasing/commands",
+        input(json!({"operation":"order.confirm","id":later["id"],"expectedRevision":1,"reason":"Rupiah order against a USD book"})),
+        Some(&s.alice),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CONFLICT, "{refused}");
+    let (currency, confirmed, revision): (String, bool, i32) = sqlx::query_as(
+        "SELECT currency,confirmed_at IS NOT NULL,revision FROM archava_purchasing.orders WHERE id=$1",
+    )
+    .bind(Uuid::parse_str(later["id"].as_str().unwrap()).unwrap())
+    .fetch_one(&s.f.admin_pool)
+    .await
+    .unwrap();
+    assert_eq!((currency.as_str(), confirmed, revision), ("IDR", false, 1));
+    // The order confirmed before the policy is received without a source.
+    let line = s.order_line(&earlier).await;
+    s.purchase(json!({"operation":"order.receive","id":earlier["id"],"expectedRevision":2,"reason":"Outside the captured sources","lines":[{"lineId":line,"accepted":1,"rejected":0}]})).await;
+    let rows: (i64, i64) = sqlx::query_as(
+        "SELECT (SELECT count(*) FROM archava_accounting.purchase_origins),(SELECT count(*) FROM archava_accounting.purchase_sources)",
+    )
+    .fetch_one(&s.f.admin_pool)
+    .await
+    .unwrap();
+    assert_eq!(rows, (0, 0));
 }

@@ -6,8 +6,12 @@ bridge and do not accept it. No actual company book or historical balance is
 created by this work.
 
 A current authorized human explicitly configures `purchase_policy.set` on a native
-IDR company book with the pinned currency catalogue and `whole_idr` source unit.
-One operating Rupiah becomes exactly 100 book minor units. Four distinct reviewed
+company book with the pinned currency catalogue and the book's
+[source unit](ACCOUNTING.md#source-units). On an IDR book that is `whole_idr`: one
+operating Rupiah becomes exactly 100 book minor units. On a book in any other
+currency it is `minor`: unit costs, landed fees and supplier totals are already the
+currency's ISO minor unit and post unchanged. A purchase order in another currency
+than the book cannot be confirmed while the book has a purchase policy. Four distinct reviewed
 active account mappings are required: inventory (asset), goods received but not
 invoiced (liability), supplier payable (liability) and landed fee accrual
 (liability); each has operating cash-flow classification. The policy has a CAS

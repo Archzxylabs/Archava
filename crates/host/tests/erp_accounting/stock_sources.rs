@@ -10,7 +10,11 @@ struct StockScenario {
 }
 impl StockScenario {
     async fn new(policy: bool) -> Self {
-        let p = PurchaseScenario::new(true).await;
+        Self::new_in("IDR", policy).await
+    }
+    /// The same scenario over a book in another currency.
+    async fn new_in(currency: &str, policy: bool) -> Self {
+        let p = PurchaseScenario::new_in(currency, true).await;
         sqlx::query("UPDATE archava_organizations.memberships SET permissions=permissions||ARRAY['parties.read','parties.write'] WHERE tenant_id='acme' AND principal_id IN('alice','bob')").execute(&p.f.admin_pool).await.unwrap();
         sqlx::query("UPDATE archava_commerce.memberships SET permissions=permissions||ARRAY['returns.write'] WHERE tenant_id='acme' AND principal_id IN('alice','bob')").execute(&p.f.admin_pool).await.unwrap();
         let cogs = account(
@@ -57,7 +61,12 @@ impl StockScenario {
         s
     }
     fn policy(&self, revision: i32, account: &Value) -> Value {
-        json!({"type":"stock_policy.set","bookId":self.p.book["bookId"],"expectedRevision":revision,"currencyCatalogue":"SIX-2026-09-17","sourceUnit":"whole_idr","cogsAccount":{"accountId":account["resourceId"],"expectedAccountRevision":account["revision"]},"reason":"Explicit future original-cost recognition"})
+        json!({"type":"stock_policy.set","bookId":self.p.book["bookId"],"expectedRevision":revision,"currencyCatalogue":"SIX-2026-09-17","sourceUnit":self.p.unit,"cogsAccount":{"accountId":account["resourceId"],"expectedAccountRevision":account["revision"]},"reason":"Explicit future original-cost recognition"})
+    }
+    fn policy_in(&self, revision: i32, account: &Value, unit: &str) -> Value {
+        let mut policy = self.policy(revision, account);
+        policy["sourceUnit"] = json!(unit);
+        policy
     }
     async fn receive(&self, quantity: i64, fee: i64, new_mapping: bool) -> Value {
         if new_mapping {
@@ -845,4 +854,149 @@ async fn close_readiness_counts_unposted_receipt_and_stock_sources() {
     assert_eq!(report["ready"], true, "{report}");
     let (st, v) = send(&s.p.app, &s.p.alice, &close).await;
     assert_eq!(st, StatusCode::OK, "{v}");
+}
+
+/// Trade currency stage 4: on a USD book a received purchase and the cost of
+/// a sale post at their own minor amounts, and the inventory control
+/// comparison reconciles.
+#[tokio::test]
+async fn a_usd_book_posts_stock_costs_in_minor_units_and_inventory_control_reconciles() {
+    let s = StockScenario::new_in("USD", false).await;
+    // Whole Rupiah is not a unit of a USD book; the minor unit is.
+    let (status, refused) = send(
+        &s.p.app,
+        &s.p.alice,
+        &input(s.policy_in(0, &s.cogs, "whole_idr")),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CONFLICT, "{refused}");
+    ok(&s.p.app, &s.p.alice, s.policy(0, &s.cogs)).await;
+    // Two units at USD 70.00 plus USD 1.00 landed fee: USD 141.00 of inventory.
+    s.receive(2, 100, false).await;
+    let (_, sale, _) = s.sell(1).await;
+    let source = s.source(&sale).await;
+    assert_eq!(source["amountMinor"], "7050", "not 705000");
+    let unit: String = sqlx::query_scalar(
+        "SELECT policy_snapshot->>'source_unit' FROM archava_accounting.stock_sources",
+    )
+    .fetch_one(&s.p.f.admin_pool)
+    .await
+    .unwrap();
+    assert_eq!(unit, "minor");
+    let (st, v) = send(&s.p.app, &s.p.alice, &s.draft(&source, "USD-COGS")).await;
+    assert_eq!(st, StatusCode::OK, "{v}");
+    s.p.post(&v["receipt"]).await;
+    let totals:Vec<(String,String)>=sqlx::query_as("SELECT a.code,sum(l.debit_minor-l.credit_minor)::text FROM archava_accounting.journal_lines l JOIN archava_accounting.journals j ON j.tenant_id=l.tenant_id AND j.id=l.journal_id JOIN archava_accounting.accounts a ON a.tenant_id=l.tenant_id AND a.id=l.account_id WHERE j.state='posted' GROUP BY a.code ORDER BY a.code COLLATE \"C\"").fetch_all(&s.p.f.admin_pool).await.unwrap();
+    assert_eq!(
+        totals,
+        vec![
+            ("COGS-OLD".into(), "7050".into()),
+            ("FEE-ACCRUAL".into(), "-100".into()),
+            ("GRNI".into(), "-14000".into()),
+            ("INVENTORY".into(), "7050".into())
+        ]
+    );
+    let control = inventory_control(&s, "2100-12-31").await;
+    assert_eq!(control["book"]["currency"], "USD");
+    assert_eq!(
+        control_rows(&control),
+        [row("INVENTORY", "7050", "7050", "0")],
+        "{control}"
+    );
+    assert_eq!(control["postedSourceControlsAgree"], true);
+    assert_eq!(control["coverage"]["pendingMonetarySourceCount"], 0);
+    let (st, r) = call(
+        &s.p.app,
+        "GET",
+        &format!(
+            "/erp/accounting/reports?tenant=acme&bookId={}&from=2000-01-01&to=2100-12-31",
+            s.p.book["bookId"].as_str().unwrap()
+        ),
+        Value::Null,
+        Some(&s.p.alice),
+    )
+    .await;
+    assert_eq!(st, StatusCode::OK, "{r}");
+    assert_eq!(r["profitAndLoss"]["costOfGoodsSoldMinor"], "7050");
+    assert_eq!(r["trialBalance"]["balanced"], true);
+    assert_eq!(r["sourceCoverage"]["unpostedCount"], 0);
+}
+
+/// The unit must fit the book: the `minor` unit is not valid on an IDR book,
+/// and the unit of an existing policy cannot be changed.
+#[tokio::test]
+async fn the_minor_stock_unit_is_refused_on_an_idr_book() {
+    let s = StockScenario::new(false).await;
+    let (status, refused) = send(
+        &s.p.app,
+        &s.p.alice,
+        &input(s.policy_in(0, &s.cogs, "minor")),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CONFLICT, "{refused}");
+    ok(&s.p.app, &s.p.alice, s.policy(0, &s.cogs)).await;
+    let (status, refused) = send(
+        &s.p.app,
+        &s.p.alice,
+        &input(s.policy_in(1, &s.new_cogs, "minor")),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CONFLICT, "{refused}");
+}
+
+/// A company that took a Rupiah sales order before it created a USD book.
+/// Without a stock policy the order is fulfilled and stays outside the ledger.
+/// With one, fulfilling a Rupiah order is refused as a conflict: the order
+/// stays reserved and no stock source is captured.
+#[tokio::test]
+async fn an_idr_sales_order_of_a_company_with_a_later_usd_book_cannot_be_fulfilled_under_a_stock_policy(
+) {
+    let mut p = PurchaseScenario::trading().await;
+    sqlx::query("UPDATE archava_organizations.memberships SET permissions=permissions||ARRAY['parties.read','parties.write'] WHERE tenant_id='acme' AND principal_id='alice'").execute(&p.f.admin_pool).await.unwrap();
+    let (st, org) = call(&p.app,"POST","/erp/organizations/commands",json!({"tenant":"acme","mutation":{"requestId":Uuid::new_v4(),"type":"create_organization","data":{"name":"Rupiah buyer","legalName":"Explicit Rupiah buyer"}}}),Some(&p.alice)).await;
+    assert_eq!(st, StatusCode::OK, "{org}");
+    let (st, party) = call(&p.app,"POST","/erp/organizations/commands",json!({"tenant":"acme","mutation":{"requestId":Uuid::new_v4(),"type":"party.create_from_organization","data":{"organizationId":org["receipt"]["organizationId"],"expectedSourceRevision":1,"customer":true,"supplier":false}}}),Some(&p.alice)).await;
+    assert_eq!(st, StatusCode::OK, "{party}");
+    let service=p.trade(json!({"operation":"product.create_for_company","companyId":p.company["companyId"],"expectedCompanyRevision":1,"sku":"RUPIAH-SERVICE","title":"Untracked Rupiah service","unit":"unit","trackStock":false,"price":15000})).await;
+    let mut orders = Vec::new();
+    for _ in 0..2 {
+        let order=p.trade(json!({"operation":"order.create_for_company","companyId":p.company["companyId"],"expectedCompanyRevision":1,"partyId":party["receipt"]["partyId"],"expectedPartyRevision":1,"lines":[{"productId":service["id"],"quantity":1}]})).await;
+        p.trade(json!({"operation":"order.reserve","id":order["id"],"expectedRevision":1,"holdSeconds":600})).await;
+        orders.push(order);
+    }
+    p.open_book("USD").await;
+    // No stock policy: the Rupiah order is fulfilled and nothing is captured.
+    p.trade(json!({"operation":"order.fulfill","id":orders[0]["id"],"expectedRevision":2}))
+        .await;
+    let cogs = account(
+        &p.app,
+        &p.alice,
+        &p.book,
+        "COGS",
+        "cost_of_goods_sold",
+        "operating",
+    )
+    .await;
+    ok(&p.app,&p.alice,json!({"type":"stock_policy.set","bookId":p.book["bookId"],"expectedRevision":0,"currencyCatalogue":"SIX-2026-09-17","sourceUnit":"minor","cogsAccount":{"accountId":cogs["resourceId"],"expectedAccountRevision":cogs["revision"]},"reason":"Explicit future original-cost recognition"})).await;
+    let (status, refused) = call(
+        &p.app,
+        "POST",
+        "/erp/commerce/commands",
+        input(json!({"operation":"order.fulfill","id":orders[1]["id"],"expectedRevision":2})),
+        Some(&p.alice),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CONFLICT, "{refused}");
+    let (currency, revision): (String, i32) =
+        sqlx::query_as("SELECT currency,revision FROM archava_commerce.orders WHERE id=$1")
+            .bind(Uuid::parse_str(orders[1]["id"].as_str().unwrap()).unwrap())
+            .fetch_one(&p.f.admin_pool)
+            .await
+            .unwrap();
+    assert_eq!((currency.as_str(), revision), ("IDR", 2));
+    let captured: i64 = sqlx::query_scalar("SELECT count(*) FROM archava_accounting.stock_sources")
+        .fetch_one(&p.f.admin_pool)
+        .await
+        .unwrap();
+    assert_eq!(captured, 0);
 }

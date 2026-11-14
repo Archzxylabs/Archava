@@ -27,9 +27,21 @@ pub async fn workspace(
     result["books"] = json!(books);
     result["invoicePolicy"] = sqlx::query_scalar::<_,Value>("SELECT jsonb_build_object('id',id,'revision',revision,'sourceUnit',source_unit,'currencyCatalogue',currency_catalogue,'mappings',mappings) FROM archava_accounting.invoice_policies WHERE tenant_id=$1 AND book_id=$2")
         .bind(tenant).bind(key).fetch_optional(&mut *conn).await.map_err(db)?.unwrap_or(Value::Null);
-    result["invoicePostingNotice"] = json!("The optional invoice policy captures only future company invoices under an explicit whole-IDR unit contract. Existing issued invoices require separate opening/import review. Verified collections go to payment clearing, not bank cash. An active policy keeps Billing and Accounting enabled.");
+    // The unit a source bridge reads on this book: whole Rupiah on an IDR book,
+    // the currency's ISO minor unit on any other.
+    let (unit_name, unit_detail) = match books[0]["currency"].as_str() {
+        Some("IDR") | None => ("whole-IDR".to_string(), String::new()),
+        Some(code) => (
+            format!("{code} minor-unit"),
+            format!(
+                " Source amounts are {code} minor units ({} decimal places) and post unchanged.",
+                books[0]["minorUnits"].as_i64().unwrap_or(0)
+            ),
+        ),
+    };
+    result["invoicePostingNotice"] = json!(format!("The optional invoice policy captures only future company invoices under an explicit {unit_name} unit contract.{unit_detail} Existing issued invoices require separate opening/import review. Verified collections go to payment clearing, not bank cash. An active policy keeps Billing and Accounting enabled."));
     result["purchasePolicy"]=sqlx::query_scalar::<_,Value>("SELECT jsonb_build_object('id',id,'revision',revision,'sourceUnit',source_unit,'currencyCatalogue',currency_catalogue,'mappings',mappings) FROM archava_accounting.purchase_policies WHERE tenant_id=$1 AND book_id=$2").bind(tenant).bind(key).fetch_optional(&mut *conn).await.map_err(db)?.unwrap_or(Value::Null);
-    result["purchasePostingNotice"]=json!("An explicit whole-IDR purchase policy captures only orders confirmed after setup. Accepted goods and landed fees become inventory/GRNI and separate fee accrual; matched goods claims become supplier payable sources. Review and posting remain separate. Old confirmations need opening/import review. Supplier payment, bank reconciliation and aging are separate requirements. Active capture keeps Purchasing, Commerce and Accounting enabled.");
+    result["purchasePostingNotice"]=json!(format!("An explicit {unit_name} purchase policy captures only orders confirmed after setup.{unit_detail} Accepted goods and landed fees become inventory/GRNI and separate fee accrual; matched goods claims become supplier payable sources. Review and posting remain separate. Old confirmations need opening/import review. Supplier payment, bank reconciliation and aging are separate requirements. Active capture keeps Purchasing, Commerce and Accounting enabled."));
     result["stockPolicy"]=sqlx::query_scalar::<_,Value>("SELECT jsonb_build_object('id',id,'revision',revision,'sourceUnit',source_unit,'currencyCatalogue',currency_catalogue,'cogsAccount',jsonb_build_object('accountId',cogs_account_id,'expectedAccountRevision',account_revision)) FROM archava_accounting.stock_policies WHERE tenant_id=$1 AND book_id=$2").bind(tenant).bind(key).fetch_optional(&mut *conn).await.map_err(db)?.unwrap_or(Value::Null);
     result["stockPostingNotice"]=json!("The stock cost policy captures future fulfillment and returns from reviewed original acquisition costs. Restocking reverses the original recognized COGS account, even after policy changes; discard adds no inventory. Unknown or unrecognized historical costs require opening/import review. Draft and independent posting remain separate.");
     if a.holds(&["payables.read"]) {

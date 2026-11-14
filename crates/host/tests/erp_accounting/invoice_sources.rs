@@ -15,21 +15,27 @@ pub(super) struct SourceFixture {
     pub(super) clearing: Value,
     pub(super) period: Value,
     pub(super) party: Value,
+    /// The book's currency and the source unit its bridges accept.
+    pub(super) currency: String,
+    pub(super) unit: &'static str,
 }
 impl SourceFixture {
     pub(super) async fn new() -> Self {
+        Self::new_in("IDR").await
+    }
+    /// The same fixture over a book in another currency.
+    pub(super) async fn new_in(currency: &str) -> Self {
+        let mut s = Self::trading().await;
+        s.open_book(currency).await;
+        s
+    }
+    /// A company that can sell and bill but has no book yet, so it trades in IDR.
+    pub(super) async fn trading() -> Self {
         let (f, app, alice, bob, company) = setup().await;
         sqlx::query("UPDATE archava_organizations.memberships SET permissions=permissions||ARRAY['parties.read','parties.write'] WHERE principal_id='alice'").execute(&f.admin_pool).await.unwrap();
         sqlx::query("INSERT INTO archava_commerce.memberships(tenant_id,principal_id,kind,permissions,scope) VALUES('acme','alice','human',$1,'all')").bind(archava_adapters::erp::COMMERCE_PERMISSION_VOCABULARY).execute(&f.admin_pool).await.unwrap();
         sqlx::query("INSERT INTO archava_billing.memberships(tenant_id,principal_id,kind,permissions,scope) VALUES('acme','alice','human',$1,'all')").bind(archava_domain::erp::billing::BILLING_PERMISSIONS).execute(&f.admin_pool).await.unwrap();
         sqlx::query("INSERT INTO archava_owner.owner_grants(tenant_id,principal_id,permissions) VALUES('acme','alice',ARRAY['config.read','config.apply'])").execute(&f.admin_pool).await.unwrap();
-        let (st, body) = send(&app, &alice, &create(&company, "IDR")).await;
-        assert_eq!(st, StatusCode::OK, "{body}");
-        let book = body["receipt"].clone();
-        let ar = account(&app, &alice, &book, "AR", "asset", "operating").await;
-        let revenue = account(&app, &alice, &book, "REVENUE", "revenue", "operating").await;
-        let clearing = account(&app, &alice, &book, "CLEARING", "asset", "none").await;
-        let period=ok(&app,&alice,json!({"type":"period.open","bookId":book["bookId"],"code":"SOURCE-TEST","startDate":"2000-01-01","endDate":"2100-12-31","reason":"Synthetic period covering source clock without a fixed test date"})).await;
         let org = Self::org(
             &app,
             &alice,
@@ -44,13 +50,33 @@ impl SourceFixture {
             alice,
             bob,
             company,
-            book,
-            ar,
-            revenue,
-            clearing,
-            period,
+            book: Value::Null,
+            ar: Value::Null,
+            revenue: Value::Null,
+            clearing: Value::Null,
+            period: Value::Null,
             party,
+            currency: "IDR".into(),
+            unit: "whole_idr",
         }
+    }
+    /// Creates the company's book with the accounts and period the invoice bridge needs.
+    pub(super) async fn open_book(&mut self, currency: &str) {
+        let (app, alice) = (&self.app, &self.alice);
+        let (st, body) = send(app, alice, &create(&self.company, currency)).await;
+        assert_eq!(st, StatusCode::OK, "{body}");
+        let book = body["receipt"].clone();
+        self.ar = account(app, alice, &book, "AR", "asset", "operating").await;
+        self.revenue = account(app, alice, &book, "REVENUE", "revenue", "operating").await;
+        self.clearing = account(app, alice, &book, "CLEARING", "asset", "none").await;
+        self.period=ok(app,alice,json!({"type":"period.open","bookId":book["bookId"],"code":"SOURCE-TEST","startDate":"2000-01-01","endDate":"2100-12-31","reason":"Synthetic period covering source clock without a fixed test date"})).await;
+        self.book = book;
+        self.currency = currency.into();
+        self.unit = if currency == "IDR" {
+            "whole_idr"
+        } else {
+            "minor"
+        };
     }
     async fn org(app: &Router, s: &Value, kind: &str, data: Value) -> Value {
         let(st,v)=call(app,"POST","/erp/organizations/commands",json!({"tenant":"acme","mutation":{"requestId":Uuid::new_v4(),"type":kind,"data":data}}),Some(s)).await;
@@ -58,11 +84,14 @@ impl SourceFixture {
         v["receipt"].clone()
     }
     fn policy(&self, revision: i32) -> Value {
+        self.policy_in(revision, self.unit)
+    }
+    fn policy_in(&self, revision: i32, unit: &str) -> Value {
         input(
-            json!({"type":"invoice_policy.set","bookId":self.book["bookId"],"expectedRevision":revision,"currencyCatalogue":"SIX-2026-09-17","sourceUnit":"whole_idr","mappings":[
+            json!({"type":"invoice_policy.set","bookId":self.book["bookId"],"expectedRevision":revision,"currencyCatalogue":"SIX-2026-09-17","sourceUnit":unit,"mappings":[
             {"role":"receivable","accountId":self.ar["resourceId"],"expectedAccountRevision":1},
             {"role":"revenue","accountId":self.revenue["resourceId"],"expectedAccountRevision":1},
-            {"role":"payment_clearing","accountId":self.clearing["resourceId"],"expectedAccountRevision":1}],"reason":"Explicit future invoice unit contract: whole Rupiah, exact factor 100, clearing is not bank cash"}),
+            {"role":"payment_clearing","accountId":self.clearing["resourceId"],"expectedAccountRevision":1}],"reason":"Explicit future invoice unit contract: exact unit factor, clearing is not bank cash"}),
         )
     }
     pub(super) async fn enable(&self) -> Value {
@@ -172,11 +201,11 @@ impl SourceFixture {
                 provider_event_id: &event,
                 outcome,
                 amount_minor: amount,
-                currency: "IDR",
+                currency: &self.currency,
             },
         )
         .unwrap();
-        self.bill(json!({"type":"record_provider_event","invoiceId":invoice,"providerId":"owned-bank","providerEventId":event,"outcome":outcome,"amountMinor":amount,"currency":"IDR","signature":signature})).await
+        self.bill(json!({"type":"record_provider_event","invoiceId":invoice,"providerId":"owned-bank","providerEventId":event,"outcome":outcome,"amountMinor":amount,"currency":self.currency,"signature":signature})).await
     }
 }
 
@@ -570,4 +599,248 @@ async fn startup_refuses_disabled_invoice_capture_and_source_audit_guards() {
         send(&s.app, &s.alice, &reserved).await.0,
         StatusCode::BAD_REQUEST
     );
+}
+
+/// Trade currency stages 3 and 4: an invoice made from a fulfilled order of a
+/// company whose book is USD is in USD with the order's amounts unchanged, and
+/// under the `minor` unit it is captured and posted at exactly that amount.
+#[tokio::test]
+async fn an_invoice_from_a_non_idr_order_takes_the_order_currency() {
+    let x = SourceFixture::new_in("USD").await;
+    let before = x.invoice_amount("USD-BEFORE", 1999, 2).await;
+    let id = Uuid::parse_str(before["invoiceId"].as_str().unwrap()).unwrap();
+    let (currency, gross, order_currency): (String, i64, String) = sqlx::query_as(
+        "SELECT i.currency,i.gross_minor,o.currency FROM archava_billing.invoices i \
+         JOIN archava_commerce.orders o ON o.tenant_id=i.tenant_id AND o.id=i.source_order_id \
+         WHERE i.id=$1",
+    )
+    .bind(id)
+    .fetch_one(&x.f.admin_pool)
+    .await
+    .unwrap();
+    assert_eq!(
+        (currency.as_str(), gross, order_currency.as_str()),
+        ("USD", 3998, "USD")
+    );
+    x.bill(json!({"type":"issue_invoice","invoiceId":before["invoiceId"],"expectedRevision":1,"reason":"Issued before any policy"})).await;
+    assert_eq!(x.count().await, 0, "no source is captured without a policy");
+
+    // Whole Rupiah is not a unit of a USD book; the minor unit is.
+    let (status, refused) = send(&x.app, &x.alice, &x.policy_in(0, "whole_idr")).await;
+    assert_eq!(status, StatusCode::CONFLICT, "{refused}");
+    x.enable().await;
+    let (st, snapshot) = snapshot(&x.app, &x.alice, &x.company).await;
+    assert_eq!(st, StatusCode::OK, "{snapshot}");
+    assert_eq!(snapshot["invoicePolicy"]["sourceUnit"], "minor");
+    let notice = snapshot["invoicePostingNotice"].as_str().unwrap();
+    assert!(
+        notice.contains("USD minor-unit") && !notice.contains("whole-IDR"),
+        "{notice}"
+    );
+
+    let invoice = x.invoice_amount("USD-INV", 1999, 2).await;
+    let issue=x.bill(json!({"type":"issue_invoice","invoiceId":invoice["invoiceId"],"expectedRevision":1,"reason":"Issue under the minor unit"})).await;
+    let stored: Vec<(String, i64, String)> = sqlx::query_as(
+        "SELECT effect,amount_minor,policy_snapshot->>'source_unit' FROM archava_accounting.invoice_sources",
+    )
+    .fetch_all(&x.f.admin_pool)
+    .await
+    .unwrap();
+    assert_eq!(
+        stored,
+        vec![("issue".into(), 3998, "minor".into())],
+        "USD 39.98 is 3998 ledger minor units, not 399800"
+    );
+    x.post_source(&issue, "USD-ISSUE").await;
+    let lines: Vec<(String, i64, i64)> = sqlx::query_as(
+        "SELECT a.code,l.debit_minor,l.credit_minor FROM archava_accounting.journal_lines l \
+         JOIN archava_accounting.accounts a ON a.tenant_id=l.tenant_id AND a.id=l.account_id ORDER BY a.code",
+    )
+    .fetch_all(&x.f.admin_pool)
+    .await
+    .unwrap();
+    assert_eq!(
+        lines,
+        vec![("AR".into(), 3998, 0), ("REVENUE".into(), 0, 3998)]
+    );
+    let r = x.reports().await;
+    assert_eq!(r["profitAndLoss"]["revenueMinor"], "3998");
+    assert_eq!(r["balanceSheet"]["assetsMinor"], "3998");
+    assert_eq!(r["sourceCoverage"]["postedCount"], 1);
+    assert_eq!(r["sourceCoverage"]["unpostedCount"], 0);
+    let receivable =
+        subledger::accepted(&x.app, &x.alice, &x.book, "receivable", "2100-12-31").await;
+    assert_eq!(receivable["book"]["currency"], "USD");
+    assert_eq!(receivable["totals"]["netOutstandingMinor"], "3998");
+    assert_eq!(receivable["positionControlDifferenceMinor"], "0");
+    assert_eq!(receivable["controls"][0]["differenceMinor"], "0");
+    assert_eq!(receivable["postedSourceControlsAgree"], true);
+
+    // A correction and a verified collection keep the unit of the issue.
+    let correction=x.bill(json!({"type":"append_correction","invoiceId":invoice["invoiceId"],"amountMinor":-98,"reason":"Reviewed customer credit"})).await;
+    x.post_source(&correction, "USD-CREDIT").await;
+    let paid = x.payment(&invoice, "succeeded", 3900).await;
+    x.post_source(&paid, "USD-COLLECTION").await;
+    let amounts: Vec<(String, i64)> = sqlx::query_as(
+        "SELECT effect,amount_minor FROM archava_accounting.invoice_sources ORDER BY occurred_at",
+    )
+    .fetch_all(&x.f.admin_pool)
+    .await
+    .unwrap();
+    assert_eq!(
+        amounts,
+        vec![
+            ("issue".into(), 3998),
+            ("correction".into(), -98),
+            ("collection".into(), 3900)
+        ]
+    );
+    let r = x.reports().await;
+    assert_eq!(r["profitAndLoss"]["revenueMinor"], "3900");
+    assert_eq!(r["trialBalance"]["balanced"], true);
+    let settled = subledger::accepted(&x.app, &x.alice, &x.book, "receivable", "2100-12-31").await;
+    assert_eq!(settled["totals"]["netOutstandingMinor"], "0");
+    assert_eq!(settled["postedSourceControlsAgree"], true);
+
+    // The earlier invoice was issued before the policy and is never imported.
+    x.bill(json!({"type":"append_correction","invoiceId":before["invoiceId"],"amountMinor":-1,"reason":"Outside the captured sources"})).await;
+    assert_eq!(x.count().await, 3);
+
+    // The replaced functions keep the triggers startup readiness identifies.
+    for check in [
+        "source_guards_complete",
+        "purchase_guards_complete",
+        "stock_guards_complete",
+    ] {
+        let query = format!("SELECT archava_accounting.{check}()");
+        assert!(
+            sqlx::query_scalar::<_, bool>(sqlx::AssertSqlSafe(query.as_str()))
+                .fetch_one(&x.f.runtime_pool)
+                .await
+                .unwrap(),
+            "{check}"
+        );
+    }
+    let _: Router = app(&x.f).await;
+    let checks: Vec<String> = sqlx::query_scalar(
+        "SELECT conname::text FROM pg_constraint WHERE contype='c' AND pg_get_constraintdef(oid) LIKE '%source_unit%' ORDER BY 1",
+    )
+    .fetch_all(&x.f.admin_pool)
+    .await
+    .unwrap();
+    assert_eq!(
+        checks,
+        [
+            "invoice_policy_source_unit",
+            "purchase_policy_source_unit",
+            "stock_policy_source_unit"
+        ]
+    );
+}
+
+/// A zero-decimal currency: 3 x JPY 1500 is 4500 ledger minor units. A factor
+/// of 100 here would post JPY 450,000.
+#[tokio::test]
+async fn a_zero_decimal_book_posts_minor_amounts_unchanged() {
+    let x = SourceFixture::new_in("JPY").await;
+    let minor_units: i16 = sqlx::query_scalar("SELECT minor_units FROM archava_accounting.books")
+        .fetch_one(&x.f.admin_pool)
+        .await
+        .unwrap();
+    assert_eq!(minor_units, 0);
+    x.enable().await;
+    let invoice = x.invoice_amount("JPY-INV", 1500, 3).await;
+    let issue=x.bill(json!({"type":"issue_invoice","invoiceId":invoice["invoiceId"],"expectedRevision":1,"reason":"Issue in a zero-decimal currency"})).await;
+    let stored: (String, i64) =
+        sqlx::query_as("SELECT effect,amount_minor FROM archava_accounting.invoice_sources")
+            .fetch_one(&x.f.admin_pool)
+            .await
+            .unwrap();
+    assert_eq!(stored, ("issue".into(), 4500));
+    x.post_source(&issue, "JPY-ISSUE").await;
+    let r = x.reports().await;
+    assert_eq!(r["profitAndLoss"]["revenueMinor"], "4500");
+    assert_eq!(r["balanceSheet"]["assetsMinor"], "4500");
+    assert_eq!(r["trialBalance"]["balanced"], true);
+    let receivable =
+        subledger::accepted(&x.app, &x.alice, &x.book, "receivable", "2100-12-31").await;
+    assert_eq!(receivable["book"]["minorUnits"], 0);
+    assert_eq!(receivable["totals"]["netOutstandingMinor"], "4500");
+    assert_eq!(receivable["postedSourceControlsAgree"], true);
+    // The ledger bound applies to the unconverted amount: the total an IDR book
+    // refuses at factor 100 is within the bound at factor 1.
+    let large = x
+        .invoice_many_amount("JPY-LARGE", 1000000000, 10000, 10)
+        .await;
+    x.bill(json!({"type":"issue_invoice","invoiceId":large["invoiceId"],"expectedRevision":1,"reason":"Within the exact book posting bound"})).await;
+    let amount: i64 = sqlx::query_scalar(
+        "SELECT amount_minor FROM archava_accounting.invoice_sources WHERE invoice_id=$1",
+    )
+    .bind(Uuid::parse_str(large["invoiceId"].as_str().unwrap()).unwrap())
+    .fetch_one(&x.f.admin_pool)
+    .await
+    .unwrap();
+    assert_eq!(amount, 100_000_000_000_000);
+}
+
+/// The unit must fit the book: the `minor` unit is not valid on an IDR book.
+#[tokio::test]
+async fn the_minor_unit_is_refused_on_an_idr_book() {
+    let s = SourceFixture::new().await;
+    let (status, refused) = send(&s.app, &s.alice, &s.policy_in(0, "minor")).await;
+    assert_eq!(status, StatusCode::CONFLICT, "{refused}");
+    s.enable().await;
+    let (st, snapshot) = snapshot(&s.app, &s.alice, &s.company).await;
+    assert_eq!(st, StatusCode::OK, "{snapshot}");
+    assert_eq!(snapshot["invoicePolicy"]["sourceUnit"], "whole_idr");
+    assert!(snapshot["invoicePostingNotice"]
+        .as_str()
+        .unwrap()
+        .contains("whole-IDR unit contract"));
+    // The unit of an existing policy cannot be changed either.
+    let (status, refused) = send(&s.app, &s.alice, &s.policy_in(1, "minor")).await;
+    assert_eq!(status, StatusCode::CONFLICT, "{refused}");
+}
+
+/// A company that traded in IDR before it created a USD book. Its IDR invoice
+/// cannot be issued while the book has an invoice policy: the issue is refused
+/// as a conflict and nothing is captured. An IDR invoice issued before the
+/// policy stays outside the ledger and can still be corrected.
+#[tokio::test]
+async fn an_idr_invoice_of_a_company_with_a_later_usd_book_is_refused_not_captured() {
+    let mut x = SourceFixture::trading().await;
+    let issued = x.invoice_amount("IDR-ISSUED", 15000, 2).await;
+    let draft = x.invoice_amount("IDR-DRAFT", 15000, 2).await;
+    x.open_book("USD").await;
+    x.bill(json!({"type":"issue_invoice","invoiceId":issued["invoiceId"],"expectedRevision":1,"reason":"No policy yet, so nothing is captured"})).await;
+    x.enable().await;
+    let command = Uuid::new_v4();
+    let (st,v)=call(&x.app,"POST","/erp/billing/commands",json!({"tenant":"acme","mutation":{"type":"issue_invoice","commandId":command,"invoiceId":draft["invoiceId"],"expectedRevision":1,"reason":"Rupiah invoice against a USD book"}}),Some(&x.alice)).await;
+    assert_eq!(st, StatusCode::CONFLICT, "{v}");
+    let (state, currency): (String, String) =
+        sqlx::query_as("SELECT status,currency FROM archava_billing.invoices WHERE id=$1")
+            .bind(Uuid::parse_str(draft["invoiceId"].as_str().unwrap()).unwrap())
+            .fetch_one(&x.f.admin_pool)
+            .await
+            .unwrap();
+    assert_eq!((state.as_str(), currency.as_str()), ("draft", "IDR"));
+    let recorded: i64 =
+        sqlx::query_scalar("SELECT count(*) FROM archava_billing.commands WHERE request_id=$1")
+            .bind(command)
+            .fetch_one(&x.f.admin_pool)
+            .await
+            .unwrap();
+    assert_eq!(recorded, 0, "the refused issue leaves no command");
+    assert_eq!(x.count().await, 0);
+    x.bill(json!({"type":"append_correction","invoiceId":issued["invoiceId"],"amountMinor":-100,"reason":"Issued before the policy, still correctable"})).await;
+    assert_eq!(x.count().await, 0);
+    // New trade is in USD and is captured.
+    let invoice = x.invoice_amount("USD-NEW", 1999, 1).await;
+    x.bill(json!({"type":"issue_invoice","invoiceId":invoice["invoiceId"],"expectedRevision":1,"reason":"Book currency invoice"})).await;
+    let amount: i64 =
+        sqlx::query_scalar("SELECT amount_minor FROM archava_accounting.invoice_sources")
+            .fetch_one(&x.f.admin_pool)
+            .await
+            .unwrap();
+    assert_eq!(amount, 1999);
 }

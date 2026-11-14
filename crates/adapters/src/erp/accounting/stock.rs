@@ -28,7 +28,9 @@ pub(super) async fn execute(
                 sqlx::query("INSERT INTO archava_accounting.stock_policies(tenant_id,id,book_id,currency_catalogue,source_unit,cogs_account_id,account_revision) VALUES($1,$2,$3,$4,$5,$6,$7)").bind(tenant).bind(key).bind(b.id).bind(currency_catalogue).bind(source_unit).bind(id(&cogs_account.account_id)?).bind(cogs_account.expected_account_revision).execute(&mut *conn).await.map_err(db)?;
                 (key, 1)
             } else {
-                sqlx::query_as::<_,(Uuid,i32)>("UPDATE archava_accounting.stock_policies SET cogs_account_id=$4,account_revision=$5,revision=revision+1 WHERE tenant_id=$1 AND book_id=$2 AND revision=$3 RETURNING id,revision").bind(tenant).bind(b.id).bind(expected_revision).bind(id(&cogs_account.account_id)?).bind(cogs_account.expected_account_revision).fetch_optional(&mut *conn).await.map_err(db)?.ok_or(ErpError::Conflict)?
+                // The unit is immutable: a command naming another unit is refused,
+                // not accepted with the stored unit kept.
+                sqlx::query_as::<_,(Uuid,i32)>("UPDATE archava_accounting.stock_policies SET cogs_account_id=$4,account_revision=$5,revision=revision+1 WHERE tenant_id=$1 AND book_id=$2 AND revision=$3 AND source_unit=$6 RETURNING id,revision").bind(tenant).bind(b.id).bind(expected_revision).bind(id(&cogs_account.account_id)?).bind(cogs_account.expected_account_revision).bind(source_unit).fetch_optional(&mut *conn).await.map_err(db)?.ok_or(ErpError::Conflict)?
             };
             Ok(("stock_policy", key, revision))
         }

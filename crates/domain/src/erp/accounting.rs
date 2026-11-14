@@ -709,7 +709,7 @@ pub fn parse(raw: &Value) -> Result<Mutation, ValidationError> {
             valid_uuid(book_id)
                 && (0..i32::MAX).contains(expected_revision)
                 && currency_catalogue == sources::CURRENCY_CATALOGUE
-                && source_unit == sources::INVOICE_SOURCE_UNIT
+                && sources::source_unit_factor(source_unit).is_some()
                 && sources::valid_refs(std::slice::from_ref(cogs_account), 1)
         }
         Command::StockSourceDraft {
@@ -734,7 +734,7 @@ pub fn parse(raw: &Value) -> Result<Mutation, ValidationError> {
             valid_uuid(book_id)
                 && (0..i32::MAX).contains(expected_revision)
                 && currency_catalogue == sources::CURRENCY_CATALOGUE
-                && source_unit == sources::INVOICE_SOURCE_UNIT
+                && sources::source_unit_factor(source_unit).is_some()
                 && purchase_sources::valid_mappings(mappings)
         }
         Command::PurchaseSourceDraft {
@@ -759,7 +759,7 @@ pub fn parse(raw: &Value) -> Result<Mutation, ValidationError> {
             valid_uuid(book_id)
                 && (0..i32::MAX).contains(expected_revision)
                 && currency_catalogue == sources::CURRENCY_CATALOGUE
-                && source_unit == sources::INVOICE_SOURCE_UNIT
+                && sources::source_unit_factor(source_unit).is_some()
                 && sources::valid_mappings(mappings)
         }
         Command::InvoiceSourceDraft {

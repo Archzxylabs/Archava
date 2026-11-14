@@ -1,10 +1,27 @@
-//! Reviewed source units and account roles for the native IDR invoice bridge.
+//! Reviewed source units and account roles for the native invoice bridge.
+//!
+//! A posting policy names the unit its source amounts are in. The database
+//! decides which unit fits a book: `whole_idr` only on an IDR book, `minor`
+//! only on a book in any other currency.
 use super::{revision, AccountClass, CashRole, ValidationError, MAX_MINOR};
 use crate::erp::valid_uuid;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 
+/// Whole Rupiah; the ledger holds IDR with two decimals, so the factor is 100.
 pub const INVOICE_SOURCE_UNIT: &str = "whole_idr";
+/// The ISO minor unit of a non-IDR book currency; posted unchanged.
+pub const MINOR_SOURCE_UNIT: &str = "minor";
+
+/// The exact factor from a source amount to ledger minor units, for a unit a
+/// policy command may name.
+pub fn source_unit_factor(unit: &str) -> Option<i64> {
+    match unit {
+        INVOICE_SOURCE_UNIT => Some(100),
+        MINOR_SOURCE_UNIT => Some(1),
+        _ => None,
+    }
+}
 pub const CURRENCY_CATALOGUE: &str = "SIX-2026-09-17";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -74,12 +91,17 @@ pub fn valid_mappings(mappings: &[InvoiceMapping]) -> bool {
             .len()
             == 3
 }
-/// This bridge explicitly accepts whole Rupiah and performs no FX or rounding.
-pub fn invoice_minor(whole_idr: i64) -> Result<i64, ValidationError> {
-    whole_idr
-        .checked_mul(100)
+/// A source amount in ledger minor units under the named source unit: whole
+/// Rupiah times 100, or an ISO minor amount unchanged. No FX and no rounding.
+pub fn source_minor(unit: &str, amount: i64) -> Result<i64, ValidationError> {
+    source_unit_factor(unit)
+        .and_then(|factor| amount.checked_mul(factor))
         .filter(|n| (-MAX_MINOR..=MAX_MINOR).contains(n))
         .ok_or(ValidationError("sourceAmount"))
+}
+/// The `whole_idr` case of [`source_minor`].
+pub fn invoice_minor(whole_idr: i64) -> Result<i64, ValidationError> {
+    source_minor(INVOICE_SOURCE_UNIT, whole_idr)
 }
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct InvoiceLeg {
@@ -159,6 +181,17 @@ mod tests {
         ] {
             assert!(invoice_minor(n).is_err());
         }
+        // The `minor` unit posts the amount unchanged, whatever the exponent.
+        assert_eq!(source_minor(MINOR_SOURCE_UNIT, 3998).unwrap(), 3998);
+        assert_eq!(source_minor(MINOR_SOURCE_UNIT, -1500).unwrap(), -1500);
+        assert_eq!(
+            source_minor(MINOR_SOURCE_UNIT, MAX_MINOR).unwrap(),
+            MAX_MINOR
+        );
+        assert!(source_minor(MINOR_SOURCE_UNIT, MAX_MINOR + 1).is_err());
+        assert!(source_minor(MINOR_SOURCE_UNIT, -MAX_MINOR - 1).is_err());
+        assert!(source_minor("book_minor", 1).is_err());
+        assert_eq!(source_unit_factor("iso_minor"), None);
         assert_eq!(
             InvoiceRole::PaymentClearing.classification(),
             (AccountClass::Asset, CashRole::None)
