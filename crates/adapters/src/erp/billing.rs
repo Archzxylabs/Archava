@@ -120,11 +120,14 @@ fn not_found() -> PurchaseError {
 }
 
 /// Preserve the historical billing driver contract except the installed
-/// source-period guard: a reviewed financial close is a business conflict.
+/// accounting source guards: a reviewed financial close, an amount beyond the
+/// ledger bound and an invoice in another currency than its company's book
+/// (trade currency rule 5) are business conflicts, not database failures.
 pub(super) fn refuses(error: sqlx::Error) -> PurchaseError {
     if error.as_database_error().is_some_and(|e| {
         e.code().as_deref() == Some("23514")
             && (e.message() == "Reopen the financial source period before changing its invoice"
+                || e.message() == "Invoice currency differs from its company book"
                 || e.constraint() == Some("invoice_sources_amount_minor_check"))
     }) {
         return conflict();

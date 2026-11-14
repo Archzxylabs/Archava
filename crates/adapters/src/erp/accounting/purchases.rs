@@ -29,8 +29,10 @@ pub(super) async fn execute(
                     .bind(tenant).bind(key).bind(b.id).bind(source_unit).bind(currency_catalogue).bind(json!(mappings)).execute(&mut *conn).await.map_err(db)?;
                 (key, 1)
             } else {
-                sqlx::query_as::<_,(Uuid,i32)>("UPDATE archava_accounting.purchase_policies SET mappings=$4,revision=revision+1 WHERE tenant_id=$1 AND book_id=$2 AND revision=$3 RETURNING id,revision")
-                    .bind(tenant).bind(b.id).bind(expected_revision).bind(json!(mappings)).fetch_optional(&mut *conn).await.map_err(db)?.ok_or(ErpError::Conflict)?
+                // The unit is immutable: a command naming another unit is refused,
+                // not accepted with the stored unit kept.
+                sqlx::query_as::<_,(Uuid,i32)>("UPDATE archava_accounting.purchase_policies SET mappings=$4,revision=revision+1 WHERE tenant_id=$1 AND book_id=$2 AND revision=$3 AND source_unit=$5 RETURNING id,revision")
+                    .bind(tenant).bind(b.id).bind(expected_revision).bind(json!(mappings)).bind(source_unit).fetch_optional(&mut *conn).await.map_err(db)?.ok_or(ErpError::Conflict)?
             };
             Ok(("purchase_policy", key, revision))
         }

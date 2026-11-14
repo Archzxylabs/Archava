@@ -4,13 +4,17 @@ This is the current implementation contract. Source posting is being validated;
 it is separate from the dated [manual GL acceptance](../product/PRD_NATIVE_GL_ACCEPTANCE_2026-11-08.md).
 It does not establish full FIN-03 or financial release acceptance.
 
-An authorized accountant may configure `invoice_policy.set` for a native IDR
-book. Setup explicitly declares `whole_idr`, the pinned currency catalogue and
-three reviewed account roles: receivable (asset/operating), revenue
-(revenue/operating), and payment clearing (asset/no cash classification).
-Whole Rupiah convert exactly by 100 into the book's ISO exponent-2 units. Other
-source currencies/units and FX are refused. Policy changes use the current
-revision and preserve immutable audit snapshots; book/unit identity remains fixed.
+An authorized accountant may configure `invoice_policy.set` for a native
+book. Setup explicitly declares the [source unit](ACCOUNTING.md#source-units),
+the pinned currency catalogue and three reviewed account roles: receivable
+(asset/operating), revenue (revenue/operating), and payment clearing (asset/no
+cash classification). On an IDR book the unit is `whole_idr`: whole Rupiah
+convert exactly by 100 into the book's ISO exponent-2 units. On a book in any
+other currency the unit is `minor`: the invoice amount is already the
+currency's ISO minor unit and posts unchanged. The other unit, an invoice in
+another currency than the book, and FX are refused. Policy changes use the
+current revision and preserve immutable audit snapshots; book/unit identity
+remains fixed.
 
 The policy applies to future invoice issuance for that managed company. Existing
 issued invoices remain opening/import work, including their subsequent changes;

@@ -346,6 +346,11 @@
           "id": "013_declared_opening_balances",
           "path": "migrations/accounting-pg/013_declared_opening_balances.sql",
           "sha256": "78216741b20c84e27f3e926889dfb989dfff60b7a75f9154f5a8de5023e32332"
+        },
+        {
+          "id": "014_source_unit_minor",
+          "path": "migrations/accounting-pg/014_source_unit_minor.sql",
+          "sha256": "c5f25e92445919b3e75b3c0d997e6531a054eeefc53e9c25e9ea167a38057552"
         }
       ]
     },

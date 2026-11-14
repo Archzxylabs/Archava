@@ -138,6 +138,11 @@ mod tests {
             ),
             _ => panic!("wrong typed stock policy"),
         }
+        // The command accepts either reviewed unit; the database decides which
+        // one fits the book's currency.
+        let mut minor = policy.clone();
+        minor["command"]["sourceUnit"] = json!("minor");
+        assert!(super::super::parse(&minor).is_ok());
         for (key, value) in [
             ("sourceUnit", json!("book_minor")),
             ("currencyCatalogue", json!("unreviewed")),

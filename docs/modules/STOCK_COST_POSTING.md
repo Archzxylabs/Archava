@@ -2,8 +2,9 @@
 
 Accounting migration 005 and Commerce migration 010 connect future fulfillment
 and returns to immutable acquisition costs. The bridge uses an explicit native
-IDR book, its reviewed whole-Rupiah purchase origin and a separately configured
-stock cost policy. Installation creates no book, policy, opening balance or
+book, its reviewed purchase origin and a separately configured stock cost
+policy in the book's [source unit](ACCOUNTING.md#source-units): `whole_idr` on
+an IDR book, `minor` on a book in any other currency (Accounting migration 014). Installation creates no book, policy, opening balance or
 financial journal.
 
 `stock_policy.set` binds the current book, currency catalogue and reviewed
@@ -32,8 +33,10 @@ reviewed account references and a reason. The portable Domain engine and the
 SQL guard independently derive the exact original account allocations. The
 server compares them before drafting. Source amounts, effects, book and actor
 cannot be supplied as caller claims. Stock costs use exact decimal strings;
-conversion from operating whole Rupiah to the book's ISO minor units is checked
-before capture. Sources support at most 10,000 portions and 100 effective
+conversion from the operating amount to the book's ISO minor units (times 100
+for whole Rupiah, unchanged for the `minor` unit) is checked before capture. A
+sales order in another currency than the book cannot be fulfilled or returned
+while the book has a stock policy. Sources support at most 10,000 portions and 100 effective
 accounts; oversized operations refuse atomically before creating an unusable
 source.
 
