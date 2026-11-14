@@ -1,0 +1,11 @@
+# cargo-audit reads Cargo.lock, which records every optional dependency of the
+# crates in it whether or not this workspace builds them.
+[advisories]
+ignore = [
+    # libsqlite3-sys 0.37 (C SQLite). It is in Cargo.lock only as an optional
+    # dependency of sqlx (sqlx-sqlite); this workspace enables the postgres
+    # driver alone, so the crate is in no build graph. sqlx 0.9 does not accept
+    # the patched 0.39. The security-audit workflow fails if the crate ever
+    # enters the graph, at which point this entry must go.
+    "RUSTSEC-2026-0459",
+]

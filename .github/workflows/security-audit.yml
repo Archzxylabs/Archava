@@ -33,6 +33,17 @@ jobs:
       - name: Install cargo-audit
         run: cargo install cargo-audit --locked
 
+      # .cargo/audit.toml ignores RUSTSEC-2026-0459 because libsqlite3-sys is in
+      # Cargo.lock without being built. That holds only while this prints nothing.
+      - name: The ignored SQLite advisory still concerns a crate nothing builds
+        run: |
+          graph="$(cargo tree --locked --workspace --target all -e all -i libsqlite3-sys 2>/dev/null || true)"
+          if [ -n "$graph" ]; then
+            echo "libsqlite3-sys is now in the build graph; remove the ignore in .cargo/audit.toml:"
+            echo "$graph"
+            exit 1
+          fi
+
       - name: Audit the Rust workspace (fail on any RUSTSEC vulnerability)
         run: cargo audit
 
