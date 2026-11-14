@@ -2,14 +2,15 @@
 //! B). The order names a confirmed output tax code of its company's book and a
 //! price basis; the invoice stores the version that applies on its own date
 //! with the net, tax and gross computed from it, and splits its corrections
-//! with that stored rule. Nothing here posts tax to the ledger.
+//! with that stored rule. How a taxed invoice posts its tax to the ledger
+//! (stage C) is in `tax_posting.rs`, which shares the helpers below.
 use super::invoice_sources::SourceFixture;
 use super::*;
 use archava_domain::erp::tax::{Fraction, TaxRule};
 
 /// Today, yesterday and tomorrow as the database dates them: the dates a tax
 /// code applies on (TAX.md, stage A decision).
-async fn days(f: &Fixture) -> (String, String, String) {
+pub(super) async fn days(f: &Fixture) -> (String, String, String) {
     sqlx::query_as("SELECT current_date::text,(current_date-1)::text,(current_date+1)::text")
         .fetch_one(&f.runtime_pool)
         .await
@@ -17,7 +18,7 @@ async fn days(f: &Fixture) -> (String, String, String) {
 }
 /// A tax code version entered by alice; `confirmed_code` has bob confirm it
 /// (the fixture's book requires a second person).
-async fn entered_code(
+pub(super) async fn entered_code(
     s: &SourceFixture,
     code: &str,
     kind: &str,
@@ -31,7 +32,7 @@ async fn entered_code(
         "controlAccount":{"accountId":account["resourceId"],"expectedAccountRevision":account["revision"]},
         "effectiveFrom":from,"reason":"Entered by the company from its own tax advice"})).await
 }
-async fn confirmed_code(
+pub(super) async fn confirmed_code(
     s: &SourceFixture,
     code: &str,
     kind: &str,
@@ -46,7 +47,7 @@ async fn confirmed_code(
 async fn retire(s: &SourceFixture, code: &Value, last_day: &str) -> Value {
     ok(&s.app,&s.alice,json!({"type":"tax_code.retire","id":code["resourceId"],"expectedRevision":2,"effectiveTo":last_day,"reason":"The company's rate changes"})).await
 }
-async fn output_account(s: &SourceFixture) -> Value {
+pub(super) async fn output_account(s: &SourceFixture) -> Value {
     account(
         &s.app,
         &s.alice,
@@ -57,7 +58,7 @@ async fn output_account(s: &SourceFixture) -> Value {
     )
     .await
 }
-async fn trade(s: &SourceFixture, command: Value) -> (StatusCode, Value) {
+pub(super) async fn trade(s: &SourceFixture, command: Value) -> (StatusCode, Value) {
     call(
         &s.app,
         "POST",
@@ -67,16 +68,21 @@ async fn trade(s: &SourceFixture, command: Value) -> (StatusCode, Value) {
     )
     .await
 }
-async fn traded(s: &SourceFixture, command: Value) -> Value {
+pub(super) async fn traded(s: &SourceFixture, command: Value) -> Value {
     let (st, v) = trade(s, command).await;
     assert_eq!(st, StatusCode::OK, "{v}");
     v["receipt"].clone()
 }
-async fn product(s: &SourceFixture, sku: &str, price: i64) -> Value {
+pub(super) async fn product(s: &SourceFixture, sku: &str, price: i64) -> Value {
     traded(s,json!({"operation":"product.create_for_company","companyId":s.company["companyId"],"expectedCompanyRevision":1,"sku":sku,"title":sku,"unit":"unit","trackStock":false,"price":price})).await
 }
 /// A company order of `quantity` × `item`, naming `tax` (code, prices include tax) or none.
-fn order(s: &SourceFixture, item: &Value, quantity: i64, tax: Option<(&str, bool)>) -> Value {
+pub(super) fn order(
+    s: &SourceFixture,
+    item: &Value,
+    quantity: i64,
+    tax: Option<(&str, bool)>,
+) -> Value {
     let mut command = json!({"operation":"order.create_for_company","companyId":s.company["companyId"],"expectedCompanyRevision":1,"partyId":s.party["partyId"],"expectedPartyRevision":1,"lines":[{"productId":item["id"],"quantity":quantity}]});
     if let Some((code, inclusive)) = tax {
         command["taxCode"] = json!(code);
@@ -84,7 +90,7 @@ fn order(s: &SourceFixture, item: &Value, quantity: i64, tax: Option<(&str, bool
     }
     command
 }
-async fn fulfilled(s: &SourceFixture, command: Value) -> Value {
+pub(super) async fn fulfilled(s: &SourceFixture, command: Value) -> Value {
     let o = traded(s, command).await;
     traded(
         s,
@@ -98,7 +104,7 @@ async fn fulfilled(s: &SourceFixture, command: Value) -> Value {
     .await;
     o
 }
-async fn bill(s: &SourceFixture, mut command: Value) -> (StatusCode, Value) {
+pub(super) async fn bill(s: &SourceFixture, mut command: Value) -> (StatusCode, Value) {
     command["commandId"] = json!(Uuid::new_v4());
     call(
         &s.app,
@@ -109,15 +115,19 @@ async fn bill(s: &SourceFixture, mut command: Value) -> (StatusCode, Value) {
     )
     .await
 }
-async fn invoice_from(s: &SourceFixture, code: &str, order: &Value) -> (StatusCode, Value) {
+pub(super) async fn invoice_from(
+    s: &SourceFixture,
+    code: &str,
+    order: &Value,
+) -> (StatusCode, Value) {
     bill(s,json!({"type":"create_invoice_from_order","invoiceCode":code,"orderId":order["id"],"expectedOrderRevision":3})).await
 }
-async fn invoiced(s: &SourceFixture, code: &str, order: &Value) -> Value {
+pub(super) async fn invoiced(s: &SourceFixture, code: &str, order: &Value) -> Value {
     let (st, v) = invoice_from(s, code, order).await;
     assert_eq!(st, StatusCode::OK, "{v}");
     v
 }
-async fn workspace(s: &SourceFixture, domain: &str, id: &Value) -> Value {
+pub(super) async fn workspace(s: &SourceFixture, domain: &str, id: &Value) -> Value {
     let (st, v) = call(
         &s.app,
         "GET",
@@ -134,22 +144,22 @@ async fn workspace(s: &SourceFixture, domain: &str, id: &Value) -> Value {
     v
 }
 /// The invoice as the Billing workspace read returns it.
-async fn invoice_row(s: &SourceFixture, invoice: &Value) -> Value {
+pub(super) async fn invoice_row(s: &SourceFixture, invoice: &Value) -> Value {
     workspace(s, "billing", &invoice["invoiceId"]).await["invoices"][0].clone()
 }
 async fn order_row(s: &SourceFixture, order: &Value) -> Value {
     workspace(s, "commerce", &order["id"]).await["orders"][0].clone()
 }
-async fn correct(s: &SourceFixture, invoice: &Value, amount: i64) -> Value {
+pub(super) async fn correct(s: &SourceFixture, invoice: &Value, amount: i64) -> Value {
     s.bill(json!({"type":"append_correction","invoiceId":invoice["invoiceId"],"amountMinor":amount,"reason":"Reviewed correction of a taxed invoice"})).await
 }
 /// The stored amounts of an invoice: gross, corrections, tax, correction tax,
 /// outstanding, and the sum of the tax parts its correction rows carry.
-async fn stored(s: &SourceFixture, invoice: &Value) -> (i64, i64, i64, i64, i64, i64) {
+pub(super) async fn stored(s: &SourceFixture, invoice: &Value) -> (i64, i64, i64, i64, i64, i64) {
     sqlx::query_as("SELECT i.gross_minor,i.correction_minor,i.tax_minor,i.correction_tax_minor,i.outstanding_minor,(SELECT coalesce(sum(c.tax_minor),0)::bigint FROM archava_billing.invoice_corrections c WHERE c.invoice_id=i.id) FROM archava_billing.invoices i WHERE i.id=$1::uuid")
         .bind(invoice["invoiceId"].as_str().unwrap()).fetch_one(&s.f.admin_pool).await.unwrap()
 }
-async fn count(f: &Fixture, table: &str) -> i64 {
+pub(super) async fn count(f: &Fixture, table: &str) -> i64 {
     let q = format!("SELECT count(*) FROM {table}");
     sqlx::query_scalar(sqlx::AssertSqlSafe(q.as_str()))
         .fetch_one(&f.admin_pool)
@@ -169,7 +179,7 @@ fn rule(rate: (i32, i32), base: (i32, i32)) -> TaxRule {
     )
     .unwrap()
 }
-fn guard_message(error: &sqlx::Error) -> (String, String) {
+pub(super) fn guard_message(error: &sqlx::Error) -> (String, String) {
     let database = error.as_database_error().expect("a database refusal");
     (
         database.code().unwrap_or_default().into_owned(),
@@ -742,54 +752,6 @@ async fn orders_and_invoices_refuse_tax_codes_that_do_not_apply_with_specific_re
     assert_eq!(row["tax"]["version"], 2);
     assert_eq!(row["taxMinor"], 3_600);
     assert_eq!(row["gross"], 33_600);
-}
-
-/// **Witness: until tax posts to the ledger, a taxed invoice is refused for a
-/// company whose book has an invoice posting policy, at creation and at
-/// issue, so the invoice bridge never captures it as if it were untaxed; an
-/// untaxed invoice of the same book is still captured.**
-#[tokio::test]
-async fn a_taxed_invoice_is_refused_while_the_book_posts_invoices() {
-    let s = SourceFixture::new().await;
-    let account = output_account(&s).await;
-    confirmed_code(
-        &s,
-        "VAT",
-        "output",
-        (11, 100),
-        (1, 1),
-        &account,
-        "2020-01-01",
-    )
-    .await;
-    let item = product(&s, "TEA", 15_000).await;
-    // Created before the policy: the draft exists, taxed.
-    let early = fulfilled(&s, order(&s, &item, 2, Some(("VAT", false)))).await;
-    let early = invoiced(&s, "BEFORE-POLICY", &early).await;
-    let waiting = fulfilled(&s, order(&s, &item, 2, Some(("VAT", false)))).await;
-
-    s.enable().await;
-
-    let (st, v) = invoice_from(&s, "AFTER-POLICY", &waiting).await;
-    assert_refused_as(st, &v, "invoice_tax_posting_unavailable");
-    assert_eq!(count(&s.f, "archava_billing.invoices").await, 1);
-    // The refused command left no receipt: the same order can be invoiced
-    // once the refusal no longer holds.
-    let (st, v) = bill(&s,json!({"type":"issue_invoice","invoiceId":early["invoiceId"],"expectedRevision":1,"reason":"Issue under a posting policy"})).await;
-    assert_refused_as(st, &v, "invoice_tax_posting_unavailable");
-    assert_eq!(invoice_row(&s, &early).await["status"], "draft");
-    assert_eq!(count(&s.f, "archava_accounting.invoice_sources").await, 0);
-
-    // An untaxed invoice of the same book is created, issued and captured.
-    let plain = fulfilled(&s, order(&s, &item, 2, None)).await;
-    let plain = invoiced(&s, "PLAIN", &plain).await;
-    s.bill(json!({"type":"issue_invoice","invoiceId":plain["invoiceId"],"expectedRevision":1,"reason":"Issue untaxed"})).await;
-    let captured: (String, i64) =
-        sqlx::query_as("SELECT effect,amount_minor FROM archava_accounting.invoice_sources")
-            .fetch_one(&s.f.admin_pool)
-            .await
-            .unwrap();
-    assert_eq!(captured, ("issue".into(), 3_000_000));
 }
 
 /// One direct invoice insert as the serving role, copying the order's

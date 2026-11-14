@@ -1,12 +1,12 @@
 # SQL migration ownership
 
-All 84 checked-in SQL migrations currently live under this directory, grouped into 31 ledger directories. The native manifest mounts 77; 7 remain reserved specifications. The owner-configuration migration was relocated from `crates/host/migrations/owner` to `owner-pg/`; its migration ID, schema namespace, SQL bytes, and checksum are unchanged.
+All 86 checked-in SQL migrations currently live under this directory, grouped into 31 ledger directories. The native manifest mounts 79; 7 remain reserved specifications. The owner-configuration migration was relocated from `crates/host/migrations/owner` to `owner-pg/`; its migration ID, schema namespace, SQL bytes, and checksum are unchanged.
 
 The manifest is the only list of applied migrations. The persistent server embeds the migrations it verifies from it at build time ([build.rs](../crates/slice/build.rs)), and the disposable PostgreSQL fixture reads the same manifest in [pg-fixture](../crates/pg-fixture/src/lib.rs). A file's presence here does not mean a given runtime mounts it or its UI is complete.
 
 ## Applied versus unmounted ledgers
 
-`manifest.v1.json` is the installer's contract: 77 of the 84 files, across 25 ledgers, carry an `id`, `path` and SHA-256 that the Ops installer verifies and applies. The remaining seven files are **unmounted**: no manifest entry, no embedded registration, and no runtime readiness check.
+`manifest.v1.json` is the installer's contract: 79 of the 86 files, across 25 ledgers, carry an `id`, `path` and SHA-256 that the Ops installer verifies and applies. The remaining seven files are **unmounted**: no manifest entry, no embedded registration, and no runtime readiness check.
 
 | Unmounted ledger | Files |
 | --- | --- |
@@ -149,3 +149,22 @@ invoice posting policy, read late-bound from `archava_accounting.invoice_policie
 until tax posts to the ledger. No new table and no new runtime grant: the serving role
 already reads `archava_accounting.tax_codes`, `books` and `invoice_policies`. See
 [tax on documents](../docs/architecture/TAX.md).
+
+Billing010 replaces `archava_billing.guard_invoice_tax()` of Billing009 in place (same
+signature, so its trigger is unchanged) without the refusal of a taxed invoice on a
+book with an invoice posting policy; every other rule of that guard is kept.
+`archava_billing.invoice_posting_policy()` stays installed and is no longer called.
+No row is rewritten and no grant changes.
+
+Accounting017 adds `tax_minor` (ledger minor units, default 0), `tax_account_id` and
+`tax_account_revision` (the account's revision at capture) to `archava_accounting.invoice_sources`, with a check that tax
+has an account, the sign of the amount and is no larger, and a foreign key to the
+book's accounts. Existing rows get tax 0 and no account. It adds
+`archava_accounting.invoice_effect_tax(text,uuid)`, the tax part of an invoice effect
+as Billing stored it, and replaces `guard_invoice_source()`,
+`capture_invoice_source()` and `guard_journal_source()` in place with their
+signatures, so the triggers `source_guards_complete()` identifies by function OID are
+unchanged. `invoice_effect(text,uuid)` is not replaced. The new function keeps the
+default `EXECUTE` of the other effect functions; no runtime grant is added and no
+table is created. Billing010 migrates before it. See
+[invoice source posting](../docs/modules/INVOICE_POSTING.md#tax-on-a-captured-source).

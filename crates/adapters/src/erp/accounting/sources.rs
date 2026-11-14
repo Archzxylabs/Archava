@@ -1,5 +1,8 @@
 use super::*;
-use archava_domain::erp::accounting::{sources::InvoiceMapping, Line};
+use archava_domain::erp::accounting::{
+    sources::{InvoiceLegAccount, InvoiceMapping},
+    Line,
+};
 
 pub(super) async fn execute(
     conn: &mut PgConnection,
@@ -39,28 +42,50 @@ pub(super) async fn execute(
             reason,
         } => {
             let source = id(source_id)?;
-            let row = sqlx::query("SELECT amount_minor,effect,source_date::text,invoice_code,policy_snapshot FROM archava_accounting.invoice_sources WHERE tenant_id=$1 AND book_id=$2 AND id=$3")
+            let row = sqlx::query("SELECT amount_minor,tax_minor,tax_account_id,effect,source_date::text,invoice_code,policy_snapshot FROM archava_accounting.invoice_sources WHERE tenant_id=$1 AND book_id=$2 AND id=$3")
                 .bind(tenant).bind(b.id).bind(source).fetch_optional(&mut *conn).await.map_err(db)?.ok_or(ErpError::NotFound)?;
             let amount: i64 = row.try_get("amount_minor").map_err(db)?;
             if amount == 0 {
                 return Err(ErpError::Conflict.into());
             }
+            let tax: i64 = row.try_get("tax_minor").map_err(db)?;
+            let tax_account: Option<String> = row
+                .try_get::<Option<Uuid>, _>("tax_account_id")
+                .map_err(db)?
+                .map(|key| key.to_string());
             let effect: String = row.try_get("effect").map_err(db)?;
             let policy: Value = row.try_get("policy_snapshot").map_err(db)?;
             let mappings: Vec<InvoiceMapping> = serde_json::from_value(policy["mappings"].clone())
                 .map_err(|_| ErpError::Conflict)?;
-            let account_for = |role: &str| {
-                mappings
-                    .iter()
-                    .find(|m| m.role.as_str() == role)
-                    .map(|m| m.account_id.as_str())
-                    .ok_or(ErpError::Conflict)
+            // A source that carries tax is refused with its own reason when the
+            // reviewed accounts are not exactly its receivable, revenue and tax
+            // control accounts; the journal-source guard holds the same rule.
+            let unreviewed = || -> PurchaseError {
+                if tax == 0 {
+                    ErpError::Conflict.into()
+                } else {
+                    crate::erp::refused_by_code("invoice_source_tax_accounts_required")
+                }
             };
-            let legs = archava_domain::erp::accounting::sources::legs(&effect, amount)
+            let account_for = |account: InvoiceLegAccount| match account {
+                InvoiceLegAccount::Policy(role) => mappings
+                    .iter()
+                    .find(|m| m.role == role)
+                    .map(|m| m.account_id.as_str())
+                    .ok_or_else(|| PurchaseError::from(ErpError::Conflict)),
+                InvoiceLegAccount::TaxControl => tax_account
+                    .as_deref()
+                    .ok_or_else(|| PurchaseError::from(ErpError::Conflict)),
+            };
+            let legs = archava_domain::erp::accounting::sources::taxed_legs(&effect, amount, tax)
                 .map_err(|_| ErpError::Conflict)?;
-            let make_line = |leg: archava_domain::erp::accounting::sources::InvoiceLeg| -> Result<Line, PurchaseError> {
-                let key=account_for(leg.role.as_str())?;
-                let reviewed=accounts.iter().find(|a|a.account_id==key).ok_or(ErpError::Conflict)?;
+            // Exactly the accounts of the legs: two without tax, three with it.
+            if accounts.len() != legs.len() {
+                return Err(unreviewed());
+            }
+            let make_line = |leg: archava_domain::erp::accounting::sources::TaxedInvoiceLeg| -> Result<Line, PurchaseError> {
+                let key=account_for(leg.account)?;
+                let reviewed=accounts.iter().find(|a|a.account_id==key).ok_or_else(unreviewed)?;
                 Ok(Line{account_id:key.into(),expected_account_revision:reviewed.expected_account_revision,debit_minor:leg.debit_minor,credit_minor:leg.credit_minor,memo:format!("Source invoice {effect}")})
             };
             let draft = Command::JournalDraft {

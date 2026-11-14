@@ -372,10 +372,25 @@
       "message": "The sales order names a tax code, but no confirmed version of it applies on the invoice date, so the invoice was not created. Enter and confirm a version of the tax code that applies today, then create the invoice again.",
       "message_id": "Pesanan penjualan ini memakai kode pajak, tetapi tidak ada versi terkonfirmasi yang berlaku pada tanggal faktur, jadi faktur tidak dibuat. Masukkan dan konfirmasi versi kode pajak yang berlaku hari ini, lalu buat fakturnya lagi."
     },
-    "Tax posting is not available yet for a book with invoice posting": {
-      "code": "invoice_tax_posting_unavailable",
-      "message": "This company's book posts its invoices to the ledger, and posting tax is not available yet, so a taxed invoice cannot be created or issued for it. Invoice an order without a tax code, or wait until tax posting is available.",
-      "message_id": "Pembukuan perusahaan ini memposting fakturnya ke buku besar, dan posting pajak belum tersedia, jadi faktur berpajak belum bisa dibuat atau diterbitkan. Buat faktur dari pesanan tanpa kode pajak, atau tunggu sampai posting pajak tersedia."
+    "The invoice tax code is not a confirmed output tax code of the posting book": {
+      "code": "invoice_tax_code_not_postable",
+      "message": "This invoice's tax code is not a confirmed output tax code of the book the invoice posts to, so its tax cannot be posted and the invoice was not issued. Check the tax code in Accounting; create the invoice from an order that names a confirmed output tax code of this company's book.",
+      "message_id": "Kode pajak faktur ini bukan kode pajak keluaran terkonfirmasi pada pembukuan tempat faktur diposting, jadi pajaknya tidak bisa diposting dan faktur tidak diterbitkan. Periksa kode pajaknya di Akuntansi; buat faktur dari pesanan yang memakai kode pajak keluaran terkonfirmasi milik pembukuan perusahaan ini."
+    },
+    "The tax control account of the invoice tax code is inactive": {
+      "code": "invoice_tax_control_account_changed",
+      "message": "The control account of this invoice's tax code is inactive, so the invoice's tax cannot be posted and the invoice was not issued. Reactivate the account in Accounting and issue the invoice again. For later invoices you can instead retire this tax code version and enter and confirm a new version with an active account.",
+      "message_id": "Akun kontrol dari kode pajak faktur ini tidak aktif, jadi pajak faktur tidak bisa diposting dan faktur tidak diterbitkan. Aktifkan kembali akun itu di Akuntansi lalu terbitkan fakturnya lagi. Untuk faktur berikutnya, Anda juga bisa memensiunkan versi kode pajak ini lalu memasukkan dan mengonfirmasi versi baru dengan akun yang aktif."
+    },
+    "The tax control account is also an account of the invoice posting policy": {
+      "code": "invoice_tax_control_account_in_policy",
+      "message": "The control account of this invoice's tax code is also the receivable, revenue or payment clearing account of the invoice posting policy, so the tax would not be a separate line and the invoice was not issued. Enter and confirm a tax code version with its own liability account.",
+      "message_id": "Akun kontrol dari kode pajak faktur ini juga dipakai sebagai akun piutang, pendapatan, atau kliring pembayaran pada kebijakan posting faktur, sehingga pajak tidak menjadi baris tersendiri dan faktur tidak diterbitkan. Masukkan dan konfirmasi versi kode pajak dengan akun kewajibannya sendiri."
+    },
+    "A taxed source draft must use the captured amount, net and tax on the receivable, revenue and tax control accounts": {
+      "code": "invoice_source_tax_accounts_required",
+      "message": "This invoice source carries tax, so its journal posts the tax to the tax control account captured with it, beside the receivable and revenue accounts. Review and select exactly the accounts of the proposed journal at their current revisions, then save the draft again.",
+      "message_id": "Sumber faktur ini memuat pajak, jadi jurnalnya memposting pajak ke akun kontrol pajak yang tercatat bersamanya, di samping akun piutang dan pendapatan. Tinjau dan pilih tepat akun-akun pada jurnal yang diusulkan dengan revisi terkininya, lalu simpan drafnya lagi."
     }
   }
 }

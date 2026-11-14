@@ -75,7 +75,7 @@ Limits: an opening is one lump per declaration with no documents behind it. It i
 
 ## Tax codes
 
-Stage A of [tax on documents](../architecture/TAX.md): a company enters its own tax codes. Archava ships no rate and verifies none. From stage B a company sales order can name a confirmed output code and the invoice made from it stores the version that applies ([Billing](BILLING_MODULE.md#tax-on-an-invoice-from-an-order)); no supplier document, posting policy, report or agent step reads a code, and no tax is posted to the ledger.
+Stage A of [tax on documents](../architecture/TAX.md): a company enters its own tax codes. Archava ships no rate and verifies none. From stage B a company sales order can name a confirmed output code and the invoice made from it stores the version that applies ([Billing](BILLING_MODULE.md#tax-on-an-invoice-from-an-order)); from stage C a taxed invoice posts its tax to the code's control account through the invoice bridge ([invoice source posting](INVOICE_POSTING.md#tax-on-a-captured-source)). No supplier document, posting policy, report or agent step reads a code.
 
 A tax code belongs to one native book. One row of `archava_accounting.tax_codes` (Accounting016) is one version of a code:
 
@@ -118,7 +118,7 @@ Refusals carry their own [reason](../architecture/REFUSAL_REASONS.md): `tax_code
 Limits:
 
 - A version cannot be entered with a last day; it is created open-ended and retired after confirmation.
-- A control account that is deactivated after confirmation does not change the stored code, which still applies; the workspace row shows the account's current `active` and `revision`. An entered version whose account changed cannot be confirmed: withdraw it and enter it again.
+- A control account that is deactivated after confirmation does not change the stored code, which still applies; the workspace row shows the account's current `active` and `revision`. On a book with an invoice posting policy an invoice taxed with that version cannot be issued while the account is inactive (`invoice_tax_control_account_changed`): reactivate the account, or for later invoices retire the version and enter a new one with an active account. An entered version whose account changed cannot be confirmed: withdraw it and enter it again.
 - The create and confirm steps are separate forms; the screen has no single guided flow for them.
 
 [tax.rs](../../crates/host/tests/erp_accounting/tax.rs) covers entering, the creator's refused confirmation and a second person's confirmation on a book with independent posting, self-confirmation on a book without it, listing by date, replay of each command, withdrawing and re-entering over the same range, retiring and a second version; confirmation after the control account changed; each refusal and the permissions; immutability by direct SQL as the serving and owner roles; concurrent versions and concurrent confirmations of one code; and the readiness function. The upgrade assertion that an existing membership gains no tax permission is in `tools/e2e/prior-native.mjs`, which this stage did not run.

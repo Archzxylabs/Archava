@@ -32,7 +32,7 @@ not grant that actor arbitrary financial permissions.
 
 `invoice_source.draft` requires current financial and company authority. A human
 reviews the captured amount, source date and the two mapped current account
-versions. The server derives the amount and balanced lines from the source;
+versions (three for a [source with tax](#tax-on-a-captured-source)). The server derives the amount and balanced lines from the source;
 request-body prices, approvals and unrelated accounts cannot replace them. An
 invoice/credit/void affects receivable and revenue. Verified collection/refund
 affects receivable and payment clearing. Provider money is not booked as settled
@@ -45,6 +45,35 @@ source journal cannot be reversed independently of its operating source: use the
 reviewed invoice correction or verified refund workflow. The reserved `billing:`
 reference requires a matching source link, immutable audit and command receipt.
 Zero sources retain an explicit no-monetary-effect state without a fake journal.
+
+## Tax on a captured source
+
+Stage C of [tax on documents](../architecture/TAX.md). A source of an invoice that
+carries a tax code stores `tax_minor`, the tax part of its amount with the same unit
+factor, and the control account of the invoice's tax code version with the revision
+that account has at capture (Accounting017). The policy and its three roles are
+unchanged. Issue posts debit receivable (gross), credit revenue (net) and credit the
+tax control account (tax); a correction or void uses the same accounts with its own
+amounts and a negative amount swaps the sides; a collection or refund carries no tax.
+A source whose tax is zero, including every source of an untaxed invoice and of a 0%
+code, is drafted with two lines as before.
+
+`invoice_source.draft` names three reviewed accounts for a source with tax; two
+accounts, or another third account, are refused as
+`invoice_source_tax_accounts_required`. A third account on a source without tax is a
+conflict. The `invoice_sources` rows of the workspace carry `taxMinor`,
+`taxAccountId` and `taxAccountRevision` when the source has a tax account, and the
+review shows gross, net and tax with the third journal line.
+
+Issuing a taxed invoice is refused, with the billing command rolled back, while the
+tax code's control account is inactive (`invoice_tax_control_account_changed`).
+Reactivating the account releases the invoice; the account's revision is not compared
+with the one the code was confirmed with. Two further database rules cannot be
+reached through the commands (`invoice_tax_code_not_postable`,
+`invoice_tax_control_account_in_policy`). A taxed invoice issued before the
+policy is not captured, nor are its later changes. Tests:
+[tax_posting.rs](../../crates/host/tests/erp_accounting/tax_posting.rs). Not exercised
+in a browser.
 
 Period close refuses any nonzero captured source in that period without a posted
 source journal. A closed source period refuses a later operating change

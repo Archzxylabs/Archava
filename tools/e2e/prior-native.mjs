@@ -36,7 +36,9 @@ export async function verifyPriorNative({previousRoot,packageRoot,facts,scratch,
  const salesTax=manifest=>manifest.ledgers.find(l=>l.namespace==='archava_commerce')?.migrations.some(m=>m.id==='012_sales_order_tax')===true
  const commerceAdded=[...(tradeCurrency(newManifest)&&!tradeCurrency(oldManifest)?['011_company_trade_currency']:[]),...(salesTax(newManifest)&&!salesTax(oldManifest)?['012_sales_order_tax']:[])]
  const invoiceTax=manifest=>manifest.ledgers.find(l=>l.namespace==='archava_billing')?.migrations.some(m=>m.id==='009_invoice_tax_snapshot')===true
- const billingAdded=invoiceTax(newManifest)&&!invoiceTax(oldManifest)?['009_invoice_tax_snapshot']:[]
+ const taxPosting=manifest=>manifest.ledgers.find(l=>l.namespace==='archava_billing')?.migrations.some(m=>m.id==='010_taxed_invoice_posting')===true
+ const sourceTax=manifest=>manifest.ledgers.find(l=>l.namespace==='archava_accounting')?.migrations.some(m=>m.id==='017_invoice_source_tax')===true
+ const billingAdded=[...(invoiceTax(newManifest)&&!invoiceTax(oldManifest)?['009_invoice_tax_snapshot']:[]),...(taxPosting(newManifest)&&!taxPosting(oldManifest)?['010_taxed_invoice_posting']:[])]
  const purchaseCurrency=manifest=>manifest.ledgers.find(l=>l.namespace==='archava_purchasing')?.migrations.some(m=>m.id==='007_company_trade_currency')===true
  const purchasingAdded=purchaseCurrency(newManifest)&&!purchaseCurrency(oldManifest)?['007_company_trade_currency']:[]
  const oldDisclosure=oldManifest.ledgers.find(l=>l.namespace==='archava_owner')?.migrations.some(m=>m.id==='004_ai_disclosure_boundary')===true
@@ -47,7 +49,7 @@ export async function verifyPriorNative({previousRoot,packageRoot,facts,scratch,
   const oldOwner=oldManifest.ledgers.find(l=>l.namespace==='archava_owner'),newOwner=newManifest.ledgers.find(l=>l.namespace==='archava_owner')
   assert.deepEqual(newOwner.migrations.slice(oldOwner.migrations.length).map(m=>m.id),['004_ai_disclosure_boundary'])
   const oldAccounting=oldManifest.ledgers.find(l=>l.namespace==='archava_accounting'),newAccounting=newManifest.ledgers.find(l=>l.namespace==='archava_accounting')
-  const accountingAdded=[...(addedBank?bankMigrationIds:[]),...(newPayables&&!oldPayables?['009_supplier_bank_settlements']:[]),...(newClearing&&!oldClearing?['010_gateway_bank_settlements']:[]),...(newTerms&&!oldTerms?termsMigrationIds:[]),...(newOpenings&&!oldOpenings?['013_declared_opening_balances']:[]),...(sourceUnit(newManifest)&&!sourceUnit(oldManifest)?['014_source_unit_minor']:[]),...(bookGuard(newManifest)&&!bookGuard(oldManifest)?['015_book_currency_guard']:[]),...(taxCodes(newManifest)&&!taxCodes(oldManifest)?['016_tax_codes']:[])]
+  const accountingAdded=[...(addedBank?bankMigrationIds:[]),...(newPayables&&!oldPayables?['009_supplier_bank_settlements']:[]),...(newClearing&&!oldClearing?['010_gateway_bank_settlements']:[]),...(newTerms&&!oldTerms?termsMigrationIds:[]),...(newOpenings&&!oldOpenings?['013_declared_opening_balances']:[]),...(sourceUnit(newManifest)&&!sourceUnit(oldManifest)?['014_source_unit_minor']:[]),...(bookGuard(newManifest)&&!bookGuard(oldManifest)?['015_book_currency_guard']:[]),...(taxCodes(newManifest)&&!taxCodes(oldManifest)?['016_tax_codes']:[]),...(sourceTax(newManifest)&&!sourceTax(oldManifest)?['017_invoice_source_tax']:[])]
   assert.deepEqual(newAccounting.migrations.slice(oldAccounting.migrations.length).map(m=>m.id),accountingAdded)
   const oldCommerce=oldManifest.ledgers.find(l=>l.namespace==='archava_commerce'),newCommerce=newManifest.ledgers.find(l=>l.namespace==='archava_commerce')
   assert.deepEqual(newCommerce.migrations.slice(oldCommerce.migrations.length).map(m=>m.id),commerceAdded)
@@ -67,7 +69,10 @@ export async function verifyPriorNative({previousRoot,packageRoot,facts,scratch,
   assert.equal(r.status,0,`${r.stderr}\n${r.stdout}`);const body=JSON.parse(r.stdout);assert.equal(body.ok,true);return body
  }
  const priorFinancialTables=['memberships','books','accounts','periods','journals','journal_lines','commands','audit',...(priorInvoiceSources?['invoice_policies','invoice_sources','journal_sources']:[]),...(priorPurchaseSources?['purchase_policies','purchase_origins','purchase_sources','purchase_journal_sources']:[]),...(priorStockSources?['stock_policies','stock_layer_origins','stock_sources','stock_journal_sources']:[])]
- const financialProof=priorAccounting?`jsonb_build_object(${priorFinancialTables.map(table=>`'${table}',(SELECT jsonb_build_object('rows',count(*),'digest',md5(coalesce(string_agg(to_jsonb(r)::text,'' ORDER BY to_jsonb(r)::text),''))) FROM archava_accounting.${table} r)`).join(',')})`:'NULL'
+ // Accounting 017 adds tax columns to invoice_sources. The digest leaves them out so a prior row compares equal across the upgrade; they must arrive empty (asserted below).
+ const sourceTaxColumns=['tax_minor','tax_account_id','tax_account_revision']
+ const proofRow=table=>table==='invoice_sources'?`(to_jsonb(r)-ARRAY[${sourceTaxColumns.map(c=>`'${c}'`).join(',')}])`:'to_jsonb(r)'
+ const financialProof=priorAccounting?`jsonb_build_object(${priorFinancialTables.map(table=>`'${table}',(SELECT jsonb_build_object('rows',count(*),'digest',md5(coalesce(string_agg(${proofRow(table)}::text,'' ORDER BY ${proofRow(table)}::text),''))) FROM archava_accounting.${table} r)`).join(',')})`:'NULL'
  const proof=database=>JSON.parse(sql(database,`SELECT jsonb_build_object(
   'users',(SELECT jsonb_build_object('rows',count(*),'digest',md5(coalesce(string_agg(to_jsonb(r)::text,'' ORDER BY id),''))) FROM archava_identity.users r),
   'organizationMemberships',(SELECT jsonb_agg(to_jsonb(r) ORDER BY tenant_id,principal_id) FROM archava_organizations.memberships r),
@@ -210,6 +215,9 @@ export async function verifyPriorNative({previousRoot,packageRoot,facts,scratch,
    assert.equal(sql(db,'SELECT count(*) FROM archava_billing.invoices WHERE tax_minor<>0 OR correction_tax_minor<>0 OR tax_code_id IS NOT NULL'),'0','Upgrade must not tax an existing invoice')
    assert.equal(sql(db,'SELECT count(*) FROM archava_billing.invoice_corrections WHERE tax_minor<>0'),'0','Upgrade must not split an existing correction into tax')
   }
+  if(sourceTax(newManifest)&&!sourceTax(oldManifest)&&priorInvoiceSources){
+   assert.equal(sql(db,'SELECT count(*) FROM archava_accounting.invoice_sources WHERE tax_minor<>0 OR tax_account_id IS NOT NULL OR tax_account_revision IS NOT NULL'),'0','Upgrade must not put tax on an existing invoice source')
+  }
   if(salesTax(newManifest)&&!salesTax(oldManifest)){
    assert.equal(sql(db,'SELECT count(*) FROM archava_commerce.orders WHERE tax_code IS NOT NULL OR price_includes_tax IS NOT NULL'),'0','Upgrade must not put a tax code on an existing sales order')
   }
@@ -244,6 +252,8 @@ export async function verifyPriorNative({previousRoot,packageRoot,facts,scratch,
   const verifyPriorSources=async(database,server,session)=>{
    if(!priorInvoiceSources)return
    const after=JSON.parse(sql(database,"SELECT jsonb_build_object('sources',(SELECT count(*) FROM archava_accounting.invoice_sources),'policies',(SELECT count(*) FROM archava_accounting.invoice_policies),'links',(SELECT count(*) FROM archava_accounting.journal_sources),'invoices',(SELECT jsonb_agg(to_jsonb(r) ORDER BY tenant_id,id) FROM archava_billing.invoices r),'commands',(SELECT jsonb_agg(to_jsonb(r) ORDER BY tenant_id,request_id) FROM archava_billing.commands r));"))
+   // A later migration may add columns to a prior invoice row. They must arrive empty (null or zero); every prior column must be unchanged.
+   for(const [i,row] of (after.invoices||[]).entries()){const prior=priorSourceProof.invoices?.[i]||{};for(const key of Object.keys(row))if(!Object.hasOwn(prior,key)){assert.ok(row[key]===null||row[key]===0,`Upgrade filled new invoice column ${key}`);delete row[key]}}
    assert.deepEqual(after,priorSourceProof)
    const r=await call(server.origin,session,`/erp/accounting/reports?tenant=${tenant}&bookId=${priorSourceBook.bookId}&from=2000-01-01&to=2100-12-31`)
    assert.equal(r.status,200);assert.equal(r.body.balanceSheet.assetsMinor,'1500000');assert.equal(r.body.trialBalance.balanced,true);assert.equal(r.body.sourceCoverage.postedCount,1);assert.equal(r.body.sourceCoverage.unpostedCount,0)
