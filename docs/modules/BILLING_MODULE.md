@@ -2,7 +2,7 @@
 
 Tier 1. Native operator workspace implemented; acceptance is tracked against current execution evidence.
 
-The working journey is **Invoice draft → issue → correction / void → verified gateway settlement/refund**. Current launch status belongs to [the canonical readiness tracker](../product/LAUNCH_READINESS.md), rather than historical acceptance labels.
+The working journey is **Invoice draft → issue → correction / void → settlement/refund by a verified gateway event or a [manual receipt](MANUAL_CUSTOMER_RECEIPTS.md)**. Current launch status belongs to [the canonical readiness tracker](../product/LAUNCH_READINESS.md), rather than historical acceptance labels.
 
 | Boundary | Current source |
 | --- | --- |
@@ -13,7 +13,7 @@ The working journey is **Invoice draft → issue → correction / void → verif
 
 The native UI is `/app/erp?module=invoices`. It reads current database projections, submits authorized commands, and shows a saved result only after a matching receipt. The server resolves tenant membership and permissions; browser controls do not grant authority. Unknown transport outcomes retain their request reference for status recovery.
 
-Invoices show ledger balances and frozen lines. The operator can create and issue drafts, append corrections and void eligible invoices. Currency follows each invoice: totals, lines and the correction input use the invoice's currency and decimals ([money units](MONEY_UNITS.md)); the manual creation form has no company and stays IDR whole Rupiah. Only a verified provider event can change settlement totals. The inline payment panel creates and recovers durable Midtrans correlations, opens a real gateway checkout URL when available, and checks authenticated gateway status before settlement/refund. Unapplied funds remain visible for reconciliation. See [payment architecture and setup](../architecture/PAYMENTS.md). Live merchant acceptance remains deferred by the owner; no “mark paid” UI asserts payment.
+Invoices show ledger balances and frozen lines. The operator can create and issue drafts, append corrections and void eligible invoices. Currency follows each invoice: totals, lines and the correction input use the invoice's currency and decimals ([money units](MONEY_UNITS.md)); the manual creation form has no company and stays IDR whole Rupiah. Settlement totals change through a verified provider event or through a manual receipt recorded by a person with `billing.settle`. A manual receipt is labelled as manual everywhere and never as verified; it carries who recorded it, when, the method (bank transfer or cash), the reference and the reason, and it can be undone only by an explicit reversal ([manual customer receipts](MANUAL_CUSTOMER_RECEIPTS.md)). The inline payment panel creates and recovers durable Midtrans correlations, opens a real gateway checkout URL when available, and checks authenticated gateway status before settlement/refund. Unapplied funds remain visible for reconciliation. See [payment architecture and setup](../architecture/PAYMENTS.md). Live merchant acceptance remains deferred by the owner. No control marks an invoice paid without an event: the invoice screen lists every payment event with its origin, and "Record a payment received" stores a manual receipt with its facts.
 
 For orders explicitly linked to a CRM customer, invoice conversion also retains
 the source contact UUID/revision and historical customer name. The current CRM
@@ -134,6 +134,19 @@ replaces the reference; the invoice mail adds `Seller tax id`, `Buyer tax id` an
 `Tax invoice reference` lines when present. An untaxed invoice is read, shown and
 mailed as before. Tests:
 [tax_documents.rs](../../crates/host/tests/erp_accounting/tax_documents.rs). Not
+exercised in a browser.
+
+## Manual receipts
+
+`record_manual_receipt` and `reverse_manual_receipt` settle an invoice the customer paid
+by bank transfer or in cash and take such a payment back. They reuse the settlement
+arithmetic of provider events (part payments allowed, overpayment refused), store a
+payment event under the reserved provider ids `manual:bank_transfer` and `manual:cash`
+with the facts of [Migration 013](../../migrations/billing-pg/013_manual_customer_receipts.sql),
+and are refused while the invoice has an open, unpaid gateway link. The workspace read
+returns `payments` per invoice. Commands, dates, the ledger, refusals and the database
+guard are in [manual customer receipts](MANUAL_CUSTOMER_RECEIPTS.md). Tests:
+[manual_receipts.rs](../../crates/host/tests/erp_accounting/manual_receipts.rs). Not
 exercised in a browser.
 
 Later returns do not rewrite the original snapshot or automatically create a

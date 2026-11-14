@@ -23,9 +23,14 @@ Installing migrations creates no policy, book, journal or existing-user grant.
 
 An invoice command saves its immutable financial source inside the same
 transaction as the operating command, receipt and audit. Invoice issuance,
-correction, void, verified provider collection and verified refund carry exact
+correction, void, collection and refund carry exact
 signed amounts, source command/invoice/revision, UTC source date and original
-policy snapshot. Failed provider notifications and payment attempts do not imply
+policy snapshot. A collection or refund is a verified provider event or a
+[manual receipt](MANUAL_CUSTOMER_RECEIPTS.md) or its reversal
+([Accounting 020](../../migrations/accounting-pg/020_manual_receipt_sources.sql)).
+The source date is the UTC date of the command, except for a manual receipt: its
+source date is the day the money was received, which must lie in an open period
+and not before the invoice's issue source. Failed provider notifications and payment attempts do not imply
 money. Corrections and payments retain the issuance policy after later mapping
 changes. The capture path needs the actor's current operating authority; it does
 not grant that actor arbitrary financial permissions.
@@ -34,15 +39,15 @@ not grant that actor arbitrary financial permissions.
 reviews the captured amount, source date and the two mapped current account
 versions (three for a [source with tax](#tax-on-a-captured-source)). The server derives the amount and balanced lines from the source;
 request-body prices, approvals and unrelated accounts cannot replace them. An
-invoice/credit/void affects receivable and revenue. Verified collection/refund
-affects receivable and payment clearing. Provider money is not booked as settled
+invoice/credit/void affects receivable and revenue. Collection/refund, verified or manual,
+affects receivable and payment clearing. Collected money is not booked as settled
 bank cash; bank settlement and reconciliation remain separate work.
 
 Normal independent posting, account activity/version, period and receipt rules
 apply. A source has at most one live journal; a withdrawn draft may be reviewed
 again under a new journal code. Posting and replay retain the source ID. A posted
 source journal cannot be reversed independently of its operating source: use the
-reviewed invoice correction or verified refund workflow. The reserved `billing:`
+reviewed invoice correction, the verified refund or the manual receipt reversal. The reserved `billing:`
 reference requires a matching source link, immutable audit and command receipt.
 Zero sources retain an explicit no-monetary-effect state without a fake journal.
 

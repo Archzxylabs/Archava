@@ -22,9 +22,17 @@
 //! - `record_payment_attempt` — a POSITIVE amount and an optional nullable
 //!   `providerRef` (≤120): an intent that is structurally incapable of
 //!   asserting a result, because no member of the arm carries an outcome;
-//! - `record_provider_event` — THE only arm that can move what is paid:
+//! - `record_provider_event` — the arm a PROVIDER moves what is paid with:
 //!   outcome (succeeded/failed/refunded), amount, currency and the 64-hex
 //!   lowercase `signature` the service re-verifies (see below).
+//!
+//! Later arms that are not part of the TS wire: the tax invoice reference
+//! arms, and the manual receipt arms (`record_manual_receipt`,
+//! `reverse_manual_receipt`) — the arms a PERSON with `billing.settle` moves
+//! what is paid with, for money that arrived by bank transfer or in cash.
+//! They carry no signature, write the reserved `manual:` provider ids, and
+//! are refused for a service principal; a provider event can never name
+//! that namespace.
 //!
 //! Members use the recorded fold where the schema carries it: `reversesId`
 //! and `providerRef` are `.nullable().optional()` — absent AND explicit
@@ -135,6 +143,12 @@ pub const TAX_REFERENCE_MAX: usize = 100;
 pub const TAX_TRANSACTION_CODE_MAX: usize = 10;
 /// Bounded `providerId`: trimmed 1–80.
 pub const PROVIDER_ID_MAX: usize = 80;
+/// The provider-id namespace of manual receipts (`manual:bank_transfer`,
+/// `manual:cash`). Reserved: only the manual receipt arms write it, and a
+/// provider event naming it is refused at the parse.
+pub const MANUAL_PROVIDER_PREFIX: &str = "manual:";
+/// Bounded `reference` of a manual receipt: trimmed 1–100.
+pub const RECEIPT_REFERENCE_MAX: usize = 100;
 /// Bounded `providerEventId`: trimmed 1–120.
 pub const PROVIDER_EVENT_ID_MAX: usize = 120;
 /// `currencySchema` — a three-letter uppercase ISO code after trimming.
@@ -229,6 +243,69 @@ impl SettlementOutcome {
             Self::Refunded => OUTCOME_REFUNDED,
         }
     }
+}
+
+/// How the money of a manual receipt arrived. A manual receipt is a person's
+/// statement, never a provider's: its event carries `manual:<method>` as
+/// provider id and is labelled manual wherever it is shown.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ManualMethod {
+    BankTransfer,
+    Cash,
+}
+
+impl ManualMethod {
+    pub fn parse(value: &str) -> Option<Self> {
+        match value {
+            "bank_transfer" => Some(Self::BankTransfer),
+            "cash" => Some(Self::Cash),
+            _ => None,
+        }
+    }
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::BankTransfer => "bank_transfer",
+            Self::Cash => "cash",
+        }
+    }
+
+    /// The event's provider id: the reserved prefix and the method.
+    pub fn provider_id(self) -> &'static str {
+        match self {
+            Self::BankTransfer => "manual:bank_transfer",
+            Self::Cash => "manual:cash",
+        }
+    }
+}
+
+/// A `YYYY-MM-DD` calendar date that exists (Gregorian, years 0001–9999).
+/// Whether it lies in the future or before the invoice was issued is the
+/// adapter's question: it needs the database clock and the invoice.
+pub fn valid_calendar_date(value: &str) -> bool {
+    let bytes = value.as_bytes();
+    if bytes.len() != 10
+        || bytes[4] != b'-'
+        || bytes[7] != b'-'
+        || !bytes
+            .iter()
+            .enumerate()
+            .all(|(at, byte)| at == 4 || at == 7 || byte.is_ascii_digit())
+    {
+        return false;
+    }
+    let number = |range: std::ops::Range<usize>| value[range].parse::<u32>().unwrap_or(0);
+    let (year, month, day) = (number(0..4), number(5..7), number(8..10));
+    let leap = year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
+    let days = match month {
+        1 | 3 | 5 | 7 | 8 | 10 | 12 => 31,
+        4 | 6 | 9 | 11 => 30,
+        2 if leap => 29,
+        2 => 28,
+        _ => return false,
+    };
+    year >= 1 && (1..=days).contains(&day)
 }
 
 /// `settledFromEvents` — what an appended event is worth: `succeeded`
@@ -355,6 +432,52 @@ pub enum BillingCommand {
         /// Trimmed 64-hex lowercase — the settlement's authority.
         signature: String,
     },
+    /// A person with `billing.settle` states that money for an issued
+    /// invoice was received by bank transfer or in cash. No signature and
+    /// no provider: the authority is the person, and the event is labelled
+    /// manual. It settles like a succeeded provider event.
+    #[serde(rename = "record_manual_receipt")]
+    RecordManualReceipt {
+        #[serde(rename = "commandId")]
+        command_id: String,
+        #[serde(rename = "invoiceId")]
+        invoice_id: String,
+        #[serde(rename = "expectedRevision")]
+        expected_revision: i64,
+        /// Positive, in the invoice's own unit and currency.
+        #[serde(rename = "amountMinor")]
+        amount_minor: i64,
+        method: ManualMethod,
+        /// The UTC calendar date the money was received, `YYYY-MM-DD`.
+        #[serde(rename = "receivedOn")]
+        received_on: String,
+        /// The payer's or bank's reference, or the cash receipt number;
+        /// trimmed, 1–100 chars, no control characters.
+        reference: String,
+        /// Trimmed, 1–500 chars.
+        reason: String,
+    },
+    /// Reverses all or part of one earlier manual receipt of the invoice (a
+    /// bounced transfer, a keying error, money returned). It reopens the
+    /// invoice like a refunded provider event and never names a gateway
+    /// event.
+    #[serde(rename = "reverse_manual_receipt")]
+    ReverseManualReceipt {
+        #[serde(rename = "commandId")]
+        command_id: String,
+        #[serde(rename = "invoiceId")]
+        invoice_id: String,
+        #[serde(rename = "expectedRevision")]
+        expected_revision: i64,
+        /// The payment event of the manual receipt being reversed.
+        #[serde(rename = "receiptEventId")]
+        receipt_event_id: String,
+        /// Positive; at most the receipt's unreversed amount.
+        #[serde(rename = "amountMinor")]
+        amount_minor: i64,
+        /// Trimmed, 1–500 chars.
+        reason: String,
+    },
     /// Records the reference of a tax invoice that was issued outside
     /// Archava on a taxed, issued or settled invoice. Text the company
     /// entered: nothing here generates, validates or verifies it.
@@ -415,6 +538,8 @@ impl BillingCommand {
             Self::VoidInvoice { .. } => "void_invoice",
             Self::RecordPaymentAttempt { .. } => "record_payment_attempt",
             Self::RecordProviderEvent { .. } => "record_provider_event",
+            Self::RecordManualReceipt { .. } => "record_manual_receipt",
+            Self::ReverseManualReceipt { .. } => "reverse_manual_receipt",
             Self::RecordTaxReference { .. } => "record_tax_reference",
             Self::ReplaceTaxReference { .. } => "replace_tax_reference",
         }
@@ -433,6 +558,8 @@ impl BillingCommand {
             Self::AppendCorrection { .. }
             | Self::IssueInvoice { .. }
             | Self::VoidInvoice { .. }
+            | Self::RecordManualReceipt { .. }
+            | Self::ReverseManualReceipt { .. }
             | Self::RecordTaxReference { .. }
             | Self::ReplaceTaxReference { .. } => "billing.settle",
             Self::RecordProviderEvent { .. } => "billing.write",
@@ -450,6 +577,8 @@ impl BillingCommand {
             | Self::VoidInvoice { command_id, .. }
             | Self::RecordPaymentAttempt { command_id, .. }
             | Self::RecordProviderEvent { command_id, .. }
+            | Self::RecordManualReceipt { command_id, .. }
+            | Self::ReverseManualReceipt { command_id, .. }
             | Self::RecordTaxReference { command_id, .. }
             | Self::ReplaceTaxReference { command_id, .. } => command_id,
         }
@@ -465,6 +594,8 @@ impl BillingCommand {
             | Self::VoidInvoice { invoice_id, .. }
             | Self::RecordPaymentAttempt { invoice_id, .. }
             | Self::RecordProviderEvent { invoice_id, .. }
+            | Self::RecordManualReceipt { invoice_id, .. }
+            | Self::ReverseManualReceipt { invoice_id, .. }
             | Self::RecordTaxReference { invoice_id, .. }
             | Self::ReplaceTaxReference { invoice_id, .. } => Some(invoice_id),
             Self::CreateInvoice { .. } | Self::CreateInvoiceFromOrder { .. } => None,
@@ -1034,7 +1165,10 @@ pub fn parse_command(
             Ok(BillingCommand::RecordProviderEvent {
                 command_id: required_uuid(data, "commandId").ok_or(ValidationError("commandId"))?,
                 invoice_id: required_uuid(data, "invoiceId").ok_or(ValidationError("invoiceId"))?,
+                // `manual:` is the namespace of manual receipts: a signed
+                // provider event can never name it.
                 provider_id: bounded_member(data, "providerId", 1, PROVIDER_ID_MAX)
+                    .filter(|provider| !provider.starts_with(MANUAL_PROVIDER_PREFIX))
                     .ok_or(ValidationError("providerId"))?,
                 provider_event_id: bounded_member(
                     data,
@@ -1055,6 +1189,87 @@ pub fn parse_command(
                 .ok_or(ValidationError("amountMinor"))?,
                 currency: currency_member(data).ok_or(ValidationError("currency"))?,
                 signature: signature_member(data).ok_or(ValidationError("signature"))?,
+            })
+        }
+        Some("record_manual_receipt") => {
+            // No signature member exists on this arm and none is accepted:
+            // its authority is the person's `billing.settle` grant.
+            if !strict_members(
+                data,
+                &[
+                    "type",
+                    "commandId",
+                    "invoiceId",
+                    "expectedRevision",
+                    "amountMinor",
+                    "method",
+                    "receivedOn",
+                    "reference",
+                    "reason",
+                ],
+            ) {
+                return Err(ValidationError("type"));
+            }
+            Ok(BillingCommand::RecordManualReceipt {
+                command_id: required_uuid(data, "commandId").ok_or(ValidationError("commandId"))?,
+                invoice_id: required_uuid(data, "invoiceId").ok_or(ValidationError("invoiceId"))?,
+                expected_revision: bounded_integer(
+                    data,
+                    "expectedRevision",
+                    1,
+                    i64::from(i32::MAX) - 1,
+                )
+                .ok_or(ValidationError("expectedRevision"))?,
+                amount_minor: bounded_integer(data, "amountMinor", 1, SAFE_INTEGER_MAX)
+                    .ok_or(ValidationError("amountMinor"))?,
+                method: data
+                    .get("method")
+                    .and_then(Value::as_str)
+                    .and_then(ManualMethod::parse)
+                    .ok_or(ValidationError("method"))?,
+                received_on: data
+                    .get("receivedOn")
+                    .and_then(Value::as_str)
+                    .filter(|date| valid_calendar_date(date))
+                    .ok_or(ValidationError("receivedOn"))?
+                    .to_string(),
+                reference: tax_text(data.get("reference"), RECEIPT_REFERENCE_MAX)
+                    .ok_or(ValidationError("reference"))?,
+                reason: bounded_member(data, "reason", 1, REASON_MAX)
+                    .ok_or(ValidationError("reason"))?,
+            })
+        }
+        Some("reverse_manual_receipt") => {
+            if !strict_members(
+                data,
+                &[
+                    "type",
+                    "commandId",
+                    "invoiceId",
+                    "expectedRevision",
+                    "receiptEventId",
+                    "amountMinor",
+                    "reason",
+                ],
+            ) {
+                return Err(ValidationError("type"));
+            }
+            Ok(BillingCommand::ReverseManualReceipt {
+                command_id: required_uuid(data, "commandId").ok_or(ValidationError("commandId"))?,
+                invoice_id: required_uuid(data, "invoiceId").ok_or(ValidationError("invoiceId"))?,
+                expected_revision: bounded_integer(
+                    data,
+                    "expectedRevision",
+                    1,
+                    i64::from(i32::MAX) - 1,
+                )
+                .ok_or(ValidationError("expectedRevision"))?,
+                receipt_event_id: required_uuid(data, "receiptEventId")
+                    .ok_or(ValidationError("receiptEventId"))?,
+                amount_minor: bounded_integer(data, "amountMinor", 1, SAFE_INTEGER_MAX)
+                    .ok_or(ValidationError("amountMinor"))?,
+                reason: bounded_member(data, "reason", 1, REASON_MAX)
+                    .ok_or(ValidationError("reason"))?,
             })
         }
         Some(arm @ ("record_tax_reference" | "replace_tax_reference")) => {
@@ -1699,5 +1914,156 @@ mod tests {
         let mut raw = replace;
         raw["verified"] = json!(true);
         assert!(parse_mutation(&raw).is_err());
+    }
+    /// The manual receipt arms: a strict sheet with no signature, a positive
+    /// amount, one of two methods, a real calendar date, a bounded reference
+    /// and reason; and the `manual:` provider namespace is closed to provider
+    /// events.
+    #[test]
+    fn manual_receipt_arms_parse_strictly_and_reserve_the_manual_provider_namespace() {
+        let id = "00000000-0000-4000-8000-000000000001";
+        let event = "00000000-0000-4000-8000-000000000002";
+        let record = json!({"type":"record_manual_receipt","commandId":id,"invoiceId":id,"expectedRevision":2,
+            "amountMinor":30000,"method":"bank_transfer","receivedOn":"2026-11-13","reference":"  TRF/8842  ","reason":"  Seen on the bank statement  "});
+        let parsed = parse_mutation(&record).unwrap().command;
+        assert_eq!(parsed.mutation_type(), "record_manual_receipt");
+        assert_eq!(parsed.required_permission(), "billing.settle");
+        assert_eq!(parsed.invoice_ref(), Some(id));
+        assert_eq!(parsed.command_id(), id);
+        assert_eq!(
+            parsed,
+            BillingCommand::RecordManualReceipt {
+                command_id: id.into(),
+                invoice_id: id.into(),
+                expected_revision: 2,
+                amount_minor: 30000,
+                method: ManualMethod::BankTransfer,
+                received_on: "2026-11-13".into(),
+                reference: "TRF/8842".into(),
+                reason: "Seen on the bank statement".into(),
+            }
+        );
+        // The fingerprint document spells the members as the wire does.
+        let wire = serde_json::to_value(&parsed).unwrap();
+        assert_eq!(wire["type"], "record_manual_receipt");
+        assert_eq!(wire["method"], "bank_transfer");
+        assert_eq!(wire["receivedOn"], "2026-11-13");
+        assert_eq!(wire["amountMinor"], 30000);
+        let mut cash = record.clone();
+        cash["method"] = json!("cash");
+        let BillingCommand::RecordManualReceipt { method, .. } =
+            parse_mutation(&cash).unwrap().command
+        else {
+            panic!("record arm");
+        };
+        assert_eq!(method, ManualMethod::Cash);
+        assert_eq!(method.provider_id(), "manual:cash");
+        assert_eq!(
+            ManualMethod::BankTransfer.provider_id(),
+            "manual:bank_transfer"
+        );
+        for (field, invalid) in [
+            ("amountMinor", json!(0)),
+            ("amountMinor", json!(-1)),
+            ("amountMinor", json!(1.5)),
+            ("amountMinor", json!("30000")),
+            ("amountMinor", json!(SAFE_INTEGER_MAX + 1)),
+            ("method", json!("card")),
+            ("method", json!("manual:cash")),
+            ("method", json!(null)),
+            ("receivedOn", json!("2026-02-30")),
+            ("receivedOn", json!("2026-13-01")),
+            ("receivedOn", json!("2025-02-29")),
+            ("receivedOn", json!("13-11-2026")),
+            ("receivedOn", json!("2026-11-13T00:00:00Z")),
+            ("receivedOn", json!(" 2026-11-13")),
+            ("receivedOn", json!(20261113)),
+            ("reference", json!("")),
+            ("reference", json!("   ")),
+            ("reference", json!("x".repeat(RECEIPT_REFERENCE_MAX + 1))),
+            ("reference", json!("line\nbreak")),
+            ("reference", json!(null)),
+            ("reason", json!("")),
+            ("reason", json!("x".repeat(REASON_MAX + 1))),
+            ("expectedRevision", json!(0)),
+            ("expectedRevision", json!("2")),
+            ("invoiceId", json!("not-an-id")),
+            ("commandId", json!("not-an-id")),
+        ] {
+            let mut raw = record.clone();
+            raw[field] = invalid.clone();
+            assert!(parse_mutation(&raw).is_err(), "{field} {invalid}");
+        }
+        assert!(valid_calendar_date("2024-02-29"));
+        assert!(!valid_calendar_date("2100-02-29"));
+        assert!(!valid_calendar_date("0000-01-01"));
+        for missing in ["method", "receivedOn", "reference", "reason", "amountMinor"] {
+            let mut raw = record.clone();
+            raw.as_object_mut().unwrap().remove(missing);
+            assert!(parse_mutation(&raw).is_err(), "{missing}");
+        }
+        for forged in [
+            "signature",
+            "providerId",
+            "providerEventId",
+            "outcome",
+            "currency",
+            "verified",
+            "recordedBy",
+        ] {
+            let mut raw = record.clone();
+            raw[forged] = json!("forged");
+            assert!(parse_mutation(&raw).is_err(), "{forged}");
+        }
+
+        let reverse = json!({"type":"reverse_manual_receipt","commandId":id,"invoiceId":id,"expectedRevision":3,
+            "receiptEventId":event,"amountMinor":10000,"reason":" Transfer bounced "});
+        let parsed = parse_mutation(&reverse).unwrap().command;
+        assert_eq!(parsed.mutation_type(), "reverse_manual_receipt");
+        assert_eq!(parsed.required_permission(), "billing.settle");
+        assert_eq!(
+            parsed,
+            BillingCommand::ReverseManualReceipt {
+                command_id: id.into(),
+                invoice_id: id.into(),
+                expected_revision: 3,
+                receipt_event_id: event.into(),
+                amount_minor: 10000,
+                reason: "Transfer bounced".into(),
+            }
+        );
+        for (field, invalid) in [
+            ("amountMinor", json!(0)),
+            ("amountMinor", json!(-10000)),
+            ("receiptEventId", json!("gateway-1-credit-1")),
+            ("receiptEventId", json!(null)),
+            ("reason", json!("  ")),
+            ("expectedRevision", json!(0)),
+        ] {
+            let mut raw = reverse.clone();
+            raw[field] = invalid.clone();
+            assert!(parse_mutation(&raw).is_err(), "{field} {invalid}");
+        }
+        for forged in ["method", "receivedOn", "reference", "signature", "outcome"] {
+            let mut raw = reverse.clone();
+            raw[forged] = json!("forged");
+            assert!(parse_mutation(&raw).is_err(), "{forged}");
+        }
+
+        // A provider event cannot name the manual namespace, signed or not.
+        let provider = |provider_id: &str| {
+            json!({"type":"record_provider_event","commandId":id,"invoiceId":id,"providerId":provider_id,
+                "providerEventId":"evt-1","outcome":"succeeded","amountMinor":30000,"currency":"IDR","signature":"a".repeat(64)})
+        };
+        assert!(parse_mutation(&provider("owned-bank")).is_ok());
+        assert!(parse_mutation(&provider("manually-run-bank")).is_ok());
+        for reserved in [
+            "manual:bank_transfer",
+            "manual:cash",
+            " manual:cash ",
+            "manual:",
+        ] {
+            assert!(parse_mutation(&provider(reserved)).is_err(), "{reserved}");
+        }
     }
 }

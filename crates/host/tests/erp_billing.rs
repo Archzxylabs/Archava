@@ -2136,3 +2136,229 @@ async fn a_same_grant_rival_never_replays_another_actors_billing_receipt() {
     assert_eq!(replay["idempotencyReplay"].as_bool(), Some(true));
     assert_eq!(replay["invoiceId"].as_str(), Some(invoice_id.as_str()));
 }
+
+// --- Manual receipts beside provider events ------------------------------------------
+
+const KEY_MANUAL_CREATE: &str = "6b240100-9999-4999-9999-0000000004a1";
+const KEY_MANUAL_ISSUE: &str = "6b240100-9999-4999-9999-0000000004a2";
+const KEY_MANUAL_UNSIGNED: &str = "6b240100-9999-4999-9999-0000000004a3";
+const KEY_MANUAL_NAMESPACE: &str = "6b240100-9999-4999-9999-0000000004a4";
+const KEY_MANUAL_UNGRANTED: &str = "6b240100-9999-4999-9999-0000000004a5";
+const KEY_MANUAL_RECEIPT: &str = "6b240100-9999-4999-9999-0000000004a6";
+const KEY_MANUAL_REMAINDER: &str = "6b240100-9999-4999-9999-0000000004a7";
+const KEY_MANUAL_SIGNED_ARM: &str = "6b240100-9999-4999-9999-0000000004a8";
+
+fn manual_receipt_body(
+    command_id: &str,
+    invoice_id: &str,
+    expected_revision: i64,
+    amount_minor: i64,
+    received_on: &str,
+) -> Value {
+    json!({
+        "type": "record_manual_receipt",
+        "commandId": command_id,
+        "invoiceId": invoice_id,
+        "expectedRevision": expected_revision,
+        "amountMinor": amount_minor,
+        "method": "bank_transfer",
+        "receivedOn": received_on,
+        "reference": "TRF/2026/8842",
+        "reason": "Seen on the bank statement",
+    })
+}
+
+/// A manual receipt is its own arm: it needs `billing.settle` and no
+/// signature, and it leaves the provider arm exactly as strict as it was.
+/// An unsigned provider event is still refused; a provider event naming the
+/// `manual:` namespace is refused at the parse even when its signature would
+/// verify; the manual arm accepts no signature member; a caller without
+/// `billing.settle` records nothing. The receipt then settles part of the
+/// invoice, and a signed provider event settles the rest.
+#[tokio::test]
+async fn a_manual_receipt_needs_no_signature_and_provider_events_keep_theirs() {
+    let (fixture, app, bx, bxg, bxn, _bxr, _other) = served().await;
+    let created = receipt_of(
+        &app,
+        &bx,
+        &create_body(ACME, KEY_MANUAL_CREATE, "INV-MANUAL", "customer-m"),
+    )
+    .await;
+    let invoice_id = created["invoiceId"].as_str().expect("uuid").to_string();
+    receipt_of(
+        &app,
+        &bx,
+        &issue_body(ACME, KEY_MANUAL_ISSUE, &invoice_id, 1),
+    )
+    .await;
+    let (today,): (String,) =
+        sqlx::query_as("SELECT (clock_timestamp() AT TIME ZONE 'UTC')::date::text")
+            .fetch_one(&fixture.admin_pool)
+            .await
+            .expect("the clock answers");
+
+    // The provider arm is unchanged: no valid signature, no settlement.
+    refused_forbidden(
+        &app,
+        &bx,
+        &event_body(
+            ACME,
+            KEY_MANUAL_UNSIGNED,
+            &invoice_id,
+            STRIPE,
+            "evt_unsigned",
+            "succeeded",
+            NIGHT_GROSS,
+            "0".repeat(64),
+        ),
+    )
+    .await;
+    // The manual namespace is closed to provider events, signed or not.
+    for provider in ["manual:bank_transfer", "manual:cash"] {
+        let signed = signed_claim(
+            ACME,
+            &invoice_id,
+            provider,
+            "evt_manual_namespace",
+            "succeeded",
+            NIGHT_GROSS,
+            IDR,
+        );
+        refused_parse(
+            &app,
+            &bx,
+            &event_body(
+                ACME,
+                KEY_MANUAL_NAMESPACE,
+                &invoice_id,
+                provider,
+                "evt_manual_namespace",
+                "succeeded",
+                NIGHT_GROSS,
+                signed,
+            ),
+        )
+        .await;
+    }
+    // The manual arm takes no signature and no provider members.
+    let mut signed_arm =
+        manual_receipt_body(KEY_MANUAL_SIGNED_ARM, &invoice_id, 2, 500_000, &today);
+    signed_arm["signature"] = json!("0".repeat(64));
+    refused_parse(&app, &bx, &envelope(ACME, signed_arm)).await;
+    // Reading or auditing is not settling.
+    for session in [&bxg, &bxn] {
+        refused_forbidden(
+            &app,
+            session,
+            &envelope(
+                ACME,
+                manual_receipt_body(KEY_MANUAL_UNGRANTED, &invoice_id, 2, 500_000, &today),
+            ),
+        )
+        .await;
+    }
+    assert_eq!(event_rows(&fixture, ACME).await, Vec::new());
+    assert_eq!(count_of(&fixture, "commands", ACME).await, 2);
+    assert_eq!(invoice_row(&fixture, ACME, &invoice_id).await.3, 0);
+
+    // The receipt: part of the invoice, by a person who may settle.
+    let body = envelope(
+        ACME,
+        manual_receipt_body(KEY_MANUAL_RECEIPT, &invoice_id, 2, 500_000, &today),
+    );
+    let receipt = receipt_of(&app, &bx, &body).await;
+    assert_eq!(receipt["action"].as_str(), Some("record_manual_receipt"));
+    assert_eq!(receipt["status"].as_str(), Some("issued"));
+    assert_eq!(
+        receipt["outstandingMinor"].as_i64(),
+        Some(NIGHT_GROSS - 500_000)
+    );
+    assert_eq!(receipt["revision"].as_i64(), Some(3));
+    let event_id = receipt["eventId"]
+        .as_str()
+        .expect("the event id")
+        .to_string();
+    let stored: (String, String, String, String, String, String) = sqlx::query_as(
+        "SELECT provider_id,provider_event_id,manual_method,received_on::text,reference,recorded_by \
+         FROM archava_billing.payment_events WHERE tenant_id=$1 AND id=$2::uuid",
+    )
+    .bind(ACME)
+    .bind(&event_id)
+    .fetch_one(&fixture.admin_pool)
+    .await
+    .expect("the manual event answers");
+    assert_eq!(
+        stored,
+        (
+            "manual:bank_transfer".to_string(),
+            format!("manual:{event_id}"),
+            "bank_transfer".to_string(),
+            today.clone(),
+            "TRF/2026/8842".to_string(),
+            "bx".to_string()
+        )
+    );
+    let replay = receipt_of(&app, &bx, &body).await;
+    assert_eq!(replay["idempotencyReplay"].as_bool(), Some(true));
+    assert_eq!(replay["eventId"].as_str(), Some(event_id.as_str()));
+    assert_eq!(event_rows(&fixture, ACME).await.len(), 1);
+    let status = status_of(&app, &bx, ACME, KEY_MANUAL_RECEIPT).await;
+    assert_eq!(status["status"].as_str(), Some("recorded"), "{status}");
+    assert_eq!(
+        status["receipt"]["eventId"].as_str(),
+        Some(event_id.as_str())
+    );
+    assert!(audit_operations(&fixture, ACME)
+        .await
+        .contains(&"record_manual_receipt".to_string()));
+
+    // A verified provider event still settles the rest, under its signature.
+    let remainder = NIGHT_GROSS - 500_000;
+    let signed = signed_claim(
+        ACME,
+        &invoice_id,
+        STRIPE,
+        "evt_remainder",
+        "succeeded",
+        remainder,
+        IDR,
+    );
+    let settled = receipt_of(
+        &app,
+        &bx,
+        &event_body(
+            ACME,
+            KEY_MANUAL_REMAINDER,
+            &invoice_id,
+            STRIPE,
+            "evt_remainder",
+            "succeeded",
+            remainder,
+            signed,
+        ),
+    )
+    .await;
+    assert_eq!(settled["status"].as_str(), Some("settled"));
+    let invoice = invoice_row(&fixture, ACME, &invoice_id).await;
+    assert_eq!(
+        (invoice.0.as_str(), invoice.3, invoice.4),
+        ("settled", NIGHT_GROSS, 0)
+    );
+    let manual: Vec<(String, Option<String>)> = sqlx::query_as(
+        "SELECT provider_id,manual_method FROM archava_billing.payment_events WHERE tenant_id=$1 ORDER BY verified_at",
+    )
+    .bind(ACME)
+    .fetch_all(&fixture.admin_pool)
+    .await
+    .expect("the events answer");
+    assert_eq!(
+        manual,
+        vec![
+            (
+                "manual:bank_transfer".to_string(),
+                Some("bank_transfer".to_string())
+            ),
+            (STRIPE.to_string(), None)
+        ]
+    );
+}

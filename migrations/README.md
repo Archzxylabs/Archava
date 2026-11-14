@@ -1,12 +1,12 @@
 # SQL migration ownership
 
-All 94 checked-in SQL migrations currently live under this directory, grouped into 31 ledger directories. The native manifest mounts 87; 7 remain reserved specifications. The owner-configuration migration was relocated from `crates/host/migrations/owner` to `owner-pg/`; its migration ID, schema namespace, SQL bytes, and checksum are unchanged.
+All 96 checked-in SQL migrations currently live under this directory, grouped into 31 ledger directories. The native manifest mounts 89; 7 remain reserved specifications. The owner-configuration migration was relocated from `crates/host/migrations/owner` to `owner-pg/`; its migration ID, schema namespace, SQL bytes, and checksum are unchanged.
 
 The manifest is the only list of applied migrations. The persistent server embeds the migrations it verifies from it at build time ([build.rs](../crates/slice/build.rs)), and the disposable PostgreSQL fixture reads the same manifest in [pg-fixture](../crates/pg-fixture/src/lib.rs). A file's presence here does not mean a given runtime mounts it or its UI is complete.
 
 ## Applied versus unmounted ledgers
 
-`manifest.v1.json` is the installer's contract: 87 of the 94 files, across 25 ledgers, carry an `id`, `path` and SHA-256 that the Ops installer verifies and applies. The remaining seven files are **unmounted**: no manifest entry, no embedded registration, and no runtime readiness check.
+`manifest.v1.json` is the installer's contract: 89 of the 96 files, across 25 ledgers, carry an `id`, `path` and SHA-256 that the Ops installer verifies and applies. The remaining seven files are **unmounted**: no manifest entry, no embedded registration, and no runtime readiness check.
 
 | Unmounted ledger | Files |
 | --- | --- |
@@ -265,3 +265,31 @@ account and a posting policy account exclude each other on insert and update, th
 capture guards compare the two accounts as uuids, and the draft of a purchase void or
 of an invoice correction or void is refused until the bill or the issue it reverses
 is posted. Existing rows are not re-examined. It migrates after the other three.
+
+Billing013 and Accounting020 add [manual customer receipts](../docs/modules/MANUAL_CUSTOMER_RECEIPTS.md).
+Neither adds a table or rewrites a row; every replaced function keeps its signature.
+
+Billing013 adds five columns to `archava_billing.payment_events`, null on every
+existing row and on every provider event: `manual_method` (`bank_transfer` or `cash`),
+`received_on`, `reference`, `reason` and `reverses_event_id` (a foreign key to the
+event a reversal reverses), with the row check `payment_event_manual_facts` (an event
+carries all the manual facts of its kind or none, and one that carries them names
+`manual:<method>` as provider id and `manual:<its id>` as provider event id) and the
+insert guard `guard_manual_receipt()` with its trigger `payment_event_manual_guard`. An
+event in the reserved `manual:` provider namespace must carry the manual facts, be
+recorded by an active person holding `billing.settle` at the clock of its transaction
+and in the invoice's currency; a receipt needs an issued invoice that it does not
+overpay, a received-on date that is not in the future and not before the issue date,
+and no open unpaid gateway link; a reversal names a manual receipt of the same invoice
+and stays within its unreversed amount. The facts are immutable with their row under
+`events_immutable` of Billing001. No table is added and no grant changes: the serving
+role keeps `SELECT,INSERT` on `payment_events`.
+
+Accounting020 replaces `invoice_effect(text,uuid)` of 014 (the two manual actions map
+to `collection` and `refund`), `guard_invoice_source()` of 019 and
+`capture_invoice_source()` of 017 in place, and adds
+`invoice_effect_date(text,uuid)` (default `EXECUTE`): the source date of a manual
+receipt is its received-on date, every other source keeps the UTC date of its command.
+It adds `receipt_guards_complete()`, readiness over the two Billing triggers on
+`payment_events`, which needs `EXECUTE` for the runtime role (manifest `runtimeGrants`
+and the fixture). It migrates after Billing013.

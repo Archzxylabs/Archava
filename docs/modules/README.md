@@ -70,4 +70,6 @@ boundary. Native/browser acceptance remains source-specific.
 
 [Gateway bank clearing](GATEWAY_BANK_CLEARING.md) defines Accounting010 verified collection/refund sources, explicit fees and actual bank evidence. Combined native acceptance remains under validation.
 
+[Manual customer receipts](MANUAL_CUSTOMER_RECEIPTS.md) defines Billing013/Accounting020: a bank transfer or cash payment recorded by a person with `billing.settle`, its reversal, the received-on source date and the same clearing chain. Not exercised in a browser.
+
 - [Original-document due terms and dated AR/AP reports](DOCUMENT_DUE_TERMS.md) — explicit reviewed dates, private source/history reads, whole-book exact aging and independent posted-source/GL controls; merged-release acceptance is tracked separately.

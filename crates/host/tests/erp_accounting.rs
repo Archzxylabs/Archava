@@ -10,6 +10,8 @@ mod close;
 mod common;
 #[path = "erp_accounting/invoice_sources.rs"]
 mod invoice_sources;
+#[path = "erp_accounting/manual_receipts.rs"]
+mod manual_receipts;
 #[path = "erp_accounting/openings.rs"]
 mod openings;
 #[path = "erp_accounting/payables.rs"]

@@ -90,8 +90,8 @@ use uuid::Uuid;
 
 use archava_domain::erp::billing::{
     BillingAccess, BillingCommand, BillingCommandStatus, BillingMutation, BillingReceipt,
-    SettlementOutcome, BILLING_PERMISSIONS, SAFE_INTEGER_MAX, STATUS_DRAFT, STATUS_ISSUED,
-    STATUS_SETTLED, STATUS_VOID,
+    ManualMethod, SettlementOutcome, BILLING_PERMISSIONS, MANUAL_PROVIDER_PREFIX, SAFE_INTEGER_MAX,
+    STATUS_DRAFT, STATUS_ISSUED, STATUS_SETTLED, STATUS_VOID,
 };
 use archava_domain::erp::purchasing::PurchasePrincipal;
 use archava_domain::erp::ErpError;
@@ -151,6 +151,7 @@ pub(super) fn refuses(error: sqlx::Error) -> PurchaseError {
                     == "A tax invoice reference can be recorded only on an issued or settled invoice"
                 || e.message() == "The invoice already has a tax invoice reference"
                 || e.message() == "The invoice has no tax invoice reference to replace"
+                || MANUAL_RECEIPT_GUARDS.contains(&e.message())
                 || e.constraint() == Some("invoice_sources_amount_minor_check"))
     }) {
         // The message guards are catalogued; the amount bound is a column
@@ -171,6 +172,20 @@ pub(super) fn refuses(error: sqlx::Error) -> PurchaseError {
         source: error,
     }
 }
+
+/// The catalogued guard messages of Billing 013 (`guard_manual_receipt`). The
+/// manual receipt arms decide the same rules first and name the same codes;
+/// the guard is what a direct insert, or a race the arm could not see, meets.
+const MANUAL_RECEIPT_GUARDS: &[&str] = &[
+    "A manual payment event needs its method, reason and recording person",
+    "A manual receipt can be recorded only on an issued invoice",
+    "A manual receipt cannot exceed the outstanding amount of its invoice",
+    "A manual receipt cannot be dated in the future",
+    "A manual receipt cannot be dated before its invoice was issued",
+    "Close the open online payment before recording a manual receipt",
+    "Only a manual receipt of the same invoice can be reversed",
+    "A manual receipt reversal cannot exceed the unreversed amount of its receipt",
+];
 
 fn parse_uuid_value(value: &str) -> Result<Uuid, PurchaseError> {
     Uuid::parse_str(value).map_err(|_| conflict())
@@ -208,14 +223,23 @@ async fn observed_now(connection: &mut PgConnection) -> Result<String, PurchaseE
     .map_err(refuses)
 }
 
+/// Whether the invoice has a gateway link the customer could still pay: not
+/// closed and nothing received on it.
+async fn pending_gateway(
+    connection: &mut PgConnection,
+    tenant: &str,
+    invoice: Uuid,
+) -> Result<bool, PurchaseError> {
+    sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM archava_billing.gateway_links WHERE tenant_id=$1 AND invoice_id=$2 AND closed_at IS NULL AND received_minor=0)")
+        .bind(tenant).bind(invoice).fetch_one(connection).await.map_err(refuses)
+}
+
 async fn require_no_pending_gateway(
     connection: &mut PgConnection,
     tenant: &str,
     invoice: Uuid,
 ) -> Result<(), PurchaseError> {
-    let active:bool=sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM archava_billing.gateway_links WHERE tenant_id=$1 AND invoice_id=$2 AND closed_at IS NULL AND received_minor=0)")
-        .bind(tenant).bind(invoice).fetch_one(connection).await.map_err(refuses)?;
-    if active {
+    if pending_gateway(connection, tenant, invoice).await? {
         Err(conflict())
     } else {
         Ok(())
@@ -512,6 +536,25 @@ fn audit_reason(command: &BillingCommand) -> String {
                 outcome.as_str()
             )
         }
+        BillingCommand::RecordManualReceipt {
+            amount_minor,
+            method,
+            received_on,
+            reference,
+            reason,
+            ..
+        } => format!(
+            "Manual {} receipt of {amount_minor} minor units received on {received_on}, reference \"{reference}\": {reason}",
+            method.as_str()
+        ),
+        BillingCommand::ReverseManualReceipt {
+            receipt_event_id,
+            amount_minor,
+            reason,
+            ..
+        } => format!(
+            "Reversed {amount_minor} minor units of manual receipt {receipt_event_id}: {reason}"
+        ),
         // The arm states the full reason, with the value a replacement
         // replaced; this is only the fallback wording.
         BillingCommand::RecordTaxReference {
@@ -986,79 +1029,22 @@ VALUES($1,$2,$3,$4,$5,$6,$7,$8::timestamptz)",
                 return Err(conflict());
             }
 
+            // `manual:` is the namespace of manual receipts. The parse refuses
+            // it for a submitted provider event; a caller that builds the
+            // command itself (the gateway reconciler) is held to it here.
+            if provider_id.starts_with(MANUAL_PROVIDER_PREFIX) {
+                return Err(conflict());
+            }
+
             // The TS settlement ladder: `nextSettled`, `nextStatus` and
-            // the receipt's own `statusLabel` — started FROM the row.
-            let mut next_settled = row.settled_minor;
-            let mut next_status = row.status.clone();
-            let mut status_label = row.status.clone();
-
-            match outcome {
-                SettlementOutcome::Succeeded => {
-                    // `A ${status} invoice cannot accept a successful
-                    // settlement` — only an issued invoice settles.
-                    if row.status != STATUS_ISSUED {
-                        return Err(conflict());
-                    }
-                    next_settled = row
-                        .settled_minor
-                        .checked_add(*amount_minor)
-                        .ok_or_else(conflict)?;
-                    let next_outstanding = row.outstanding(row.correction_minor, next_settled);
-                    // `Settlement exceeds the outstanding balance`.
-                    if next_outstanding < 0 {
-                        return Err(conflict());
-                    }
-                    if next_outstanding == 0 {
-                        next_status = STATUS_SETTLED.to_string();
-                        status_label = STATUS_SETTLED.to_string();
-                    }
-                }
-                SettlementOutcome::Refunded => {
-                    // `Refund exceeds the amount already settled`.
-                    if row.settled_minor < *amount_minor {
-                        return Err(conflict());
-                    }
-                    next_settled = row.settled_minor - *amount_minor;
-                    // A refund REOPENS a settled invoice.
-                    if row.status == STATUS_SETTLED {
-                        next_status = STATUS_ISSUED.to_string();
-                        status_label = STATUS_ISSUED.to_string();
-                    }
-                }
-                // `failed` — history only: the receipt's own label, and
-                // the invoice row is NOT even touched (no revision).
-                SettlementOutcome::Failed => {
-                    status_label = "failed".to_string();
-                }
-            }
-
-            // A failed notification moves no money and no state, so it
-            // never touches the invoice row — not even its revision.
-            // Everything that makes the balance change is confined to
-            // the two outcomes above (`movesBalance`).
-            let outstanding = row.outstanding(row.correction_minor, next_settled);
-            let moves_balance = *outcome != SettlementOutcome::Failed;
-            if moves_balance {
-                let updated = sqlx::query(
-                    "UPDATE archava_billing.invoices \
-SET settled_minor=$1, outstanding_minor=$2, status=$3, revision=$4, \
-settled_at=CASE WHEN $3='settled' THEN $5::timestamptz ELSE settled_at END \
-WHERE tenant_id=$6 AND id=$7",
-                )
-                .bind(next_settled)
-                .bind(outstanding)
-                .bind(&next_status)
-                .bind(int4(row.revision + 1)?)
-                .bind(now)
-                .bind(tenant)
-                .bind(invoice)
-                .execute(&mut *connection)
-                .await
-                .map_err(refuses)?;
-                if updated.rows_affected() == 0 {
-                    return Err(not_found());
-                }
-            }
+            // the receipt's own `statusLabel` — started FROM the row. Every
+            // refusal of the ladder is the same conflict on this arm.
+            let settlement =
+                settlement_of(&row, *outcome, *amount_minor).map_err(|_| conflict())?;
+            let outstanding = settlement.outstanding;
+            let status_label = settlement.status_label.clone();
+            let moves_balance = settlement.moves_balance;
+            apply_settlement(connection, tenant, invoice, &row, &settlement, now).await?;
 
             let event_id = Uuid::new_v4();
             sqlx::query(
@@ -1099,6 +1085,55 @@ VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::timestamptz)",
                 idempotency_replay: false,
                 executed_at: now.to_string(),
             })
+        }
+
+        BillingCommand::RecordManualReceipt {
+            invoice_id,
+            expected_revision,
+            amount_minor,
+            method,
+            received_on,
+            reference,
+            reason,
+            ..
+        } => {
+            manual_receipt(
+                connection,
+                tenant,
+                access,
+                request_id,
+                now,
+                invoice_id,
+                *expected_revision,
+                *amount_minor,
+                *method,
+                received_on,
+                reference,
+                reason,
+            )
+            .await
+        }
+        BillingCommand::ReverseManualReceipt {
+            invoice_id,
+            expected_revision,
+            receipt_event_id,
+            amount_minor,
+            reason,
+            ..
+        } => {
+            manual_reversal(
+                connection,
+                tenant,
+                access,
+                request_id,
+                now,
+                invoice_id,
+                *expected_revision,
+                receipt_event_id,
+                *amount_minor,
+                reason,
+            )
+            .await
         }
 
         BillingCommand::RecordTaxReference {
@@ -1153,6 +1188,332 @@ VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::timestamptz)",
             .await
         }
     }
+}
+
+// --- The settlement ladder (provider events and manual receipts) -----------------
+
+/// Which rule of the settlement ladder refused. A provider event answers
+/// every one as the same conflict; a manual receipt names its reason.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum SettlementRefusal {
+    /// `A ${status} invoice cannot accept a successful settlement`.
+    NotIssued,
+    /// `Settlement exceeds the outstanding balance`.
+    ExceedsOutstanding,
+    /// `Refund exceeds the amount already settled`.
+    ExceedsSettled,
+    /// The sum left the 64-bit range.
+    Overflow,
+}
+
+/// What one payment event does to its invoice.
+struct Settlement {
+    next_settled: i64,
+    next_status: String,
+    /// The receipt's own label: the invoice status, or `failed`.
+    status_label: String,
+    outstanding: i64,
+    /// False only for a failed event, which touches nothing.
+    moves_balance: bool,
+}
+
+/// The settlement arithmetic, the one place it is written: `succeeded` needs
+/// an issued invoice, adds to what is settled, may leave a remainder and never
+/// takes the balance below zero, and settles the invoice at zero; `refunded`
+/// subtracts no more than is settled and reopens a settled invoice; `failed`
+/// is history that moves nothing.
+fn settlement_of(
+    row: &InvoiceRow,
+    outcome: SettlementOutcome,
+    amount_minor: i64,
+) -> Result<Settlement, SettlementRefusal> {
+    let mut next_settled = row.settled_minor;
+    let mut next_status = row.status.clone();
+    let mut status_label = row.status.clone();
+    match outcome {
+        SettlementOutcome::Succeeded => {
+            if row.status != STATUS_ISSUED {
+                return Err(SettlementRefusal::NotIssued);
+            }
+            next_settled = row
+                .settled_minor
+                .checked_add(amount_minor)
+                .ok_or(SettlementRefusal::Overflow)?;
+            let next_outstanding = row.outstanding(row.correction_minor, next_settled);
+            if next_outstanding < 0 {
+                return Err(SettlementRefusal::ExceedsOutstanding);
+            }
+            if next_outstanding == 0 {
+                next_status = STATUS_SETTLED.to_string();
+                status_label = STATUS_SETTLED.to_string();
+            }
+        }
+        SettlementOutcome::Refunded => {
+            if row.settled_minor < amount_minor {
+                return Err(SettlementRefusal::ExceedsSettled);
+            }
+            next_settled = row.settled_minor - amount_minor;
+            // A refund REOPENS a settled invoice.
+            if row.status == STATUS_SETTLED {
+                next_status = STATUS_ISSUED.to_string();
+                status_label = STATUS_ISSUED.to_string();
+            }
+        }
+        // `failed` — history only: the receipt's own label, and the invoice
+        // row is NOT even touched (no revision).
+        SettlementOutcome::Failed => {
+            status_label = "failed".to_string();
+        }
+    }
+    Ok(Settlement {
+        outstanding: row.outstanding(row.correction_minor, next_settled),
+        next_settled,
+        next_status,
+        status_label,
+        moves_balance: outcome != SettlementOutcome::Failed,
+    })
+}
+
+/// Writes a settlement to its locked invoice row: the new settled and
+/// outstanding amounts, the status and the next revision. A failed event
+/// moves no money and no state, so it never touches the row.
+async fn apply_settlement(
+    connection: &mut PgConnection,
+    tenant: &str,
+    invoice: Uuid,
+    row: &InvoiceRow,
+    settlement: &Settlement,
+    now: &str,
+) -> Result<(), PurchaseError> {
+    if !settlement.moves_balance {
+        return Ok(());
+    }
+    let updated = sqlx::query(
+        "UPDATE archava_billing.invoices \
+SET settled_minor=$1, outstanding_minor=$2, status=$3, revision=$4, \
+settled_at=CASE WHEN $3='settled' THEN $5::timestamptz ELSE settled_at END \
+WHERE tenant_id=$6 AND id=$7",
+    )
+    .bind(settlement.next_settled)
+    .bind(settlement.outstanding)
+    .bind(&settlement.next_status)
+    .bind(int4(row.revision + 1)?)
+    .bind(now)
+    .bind(tenant)
+    .bind(invoice)
+    .execute(&mut *connection)
+    .await
+    .map_err(refuses)?;
+    if updated.rows_affected() == 0 {
+        return Err(not_found());
+    }
+    Ok(())
+}
+
+// --- Manual receipts -------------------------------------------------------------
+
+/// A manual receipt: a person with `billing.settle` states that money for an
+/// issued invoice arrived by bank transfer or in cash. It settles through the
+/// same ladder as a succeeded provider event and stores a payment event under
+/// the `manual:` provider id with who, when, method, reference and reason
+/// (Billing 013). The rules are the guard's, decided here so each refusal
+/// names its reason.
+#[allow(clippy::too_many_arguments)]
+async fn manual_receipt(
+    connection: &mut PgConnection,
+    tenant: &str,
+    access: &BillingAccess,
+    request_id: Uuid,
+    now: &str,
+    invoice_id: &str,
+    expected_revision: i64,
+    amount_minor: i64,
+    method: ManualMethod,
+    received_on: &str,
+    reference: &str,
+    reason: &str,
+) -> Result<BillingReceipt, PurchaseError> {
+    let invoice = parse_uuid_value(invoice_id)?;
+    let row = invoice_row(connection, tenant, invoice, access).await?;
+    if row.revision != expected_revision {
+        return Err(conflict());
+    }
+    // A settled invoice owes nothing: any amount is more than is outstanding.
+    // A draft or void invoice is not one that can be paid at all.
+    if row.status == STATUS_SETTLED {
+        return Err(refused("manual_receipt_exceeds_outstanding"));
+    }
+    let settlement =
+        settlement_of(&row, SettlementOutcome::Succeeded, amount_minor).map_err(|refusal| {
+            match refusal {
+                SettlementRefusal::NotIssued => refused("manual_receipt_not_issued"),
+                SettlementRefusal::ExceedsOutstanding => {
+                    refused("manual_receipt_exceeds_outstanding")
+                }
+                SettlementRefusal::ExceedsSettled | SettlementRefusal::Overflow => conflict(),
+            }
+        })?;
+    // The received-on date is a UTC calendar date: not after the day of this
+    // command and not before the day the invoice was issued.
+    let (future, before_issue): (bool, bool) = sqlx::query_as(
+        "SELECT $3::date>($4::timestamptz AT TIME ZONE 'UTC')::date,\
+issued_at IS NULL OR $3::date<(issued_at AT TIME ZONE 'UTC')::date \
+FROM archava_billing.invoices WHERE tenant_id=$1 AND id=$2",
+    )
+    .bind(tenant)
+    .bind(invoice)
+    .bind(received_on)
+    .bind(now)
+    .fetch_one(&mut *connection)
+    .await
+    .map_err(refuses)?;
+    if future {
+        return Err(refused("manual_receipt_future_date"));
+    }
+    if before_issue {
+        return Err(refused("manual_receipt_before_issue"));
+    }
+    // While the customer can still pay the frozen amount online, a manual
+    // receipt could settle the same money twice.
+    if pending_gateway(connection, tenant, invoice).await? {
+        return Err(refused("manual_receipt_open_payment_link"));
+    }
+    apply_settlement(connection, tenant, invoice, &row, &settlement, now).await?;
+    let event_id = Uuid::new_v4();
+    sqlx::query(
+        "INSERT INTO archava_billing.payment_events(\
+tenant_id,id,invoice_id,provider_id,provider_event_id,outcome,amount_minor,currency,recorded_by,verified_at,\
+manual_method,received_on,reference,reason) \
+VALUES($1,$2,$3,$4,$5,'succeeded',$6,$7,$8,$9::timestamptz,$10,$11::date,$12,$13)",
+    )
+    .bind(tenant)
+    .bind(event_id)
+    .bind(invoice)
+    .bind(method.provider_id())
+    .bind(format!("{MANUAL_PROVIDER_PREFIX}{event_id}"))
+    .bind(amount_minor)
+    .bind(&row.currency)
+    .bind(&access.owner_id)
+    .bind(now)
+    .bind(method.as_str())
+    .bind(received_on)
+    .bind(reference)
+    .bind(reason)
+    .execute(&mut *connection)
+    .await
+    .map_err(refuses)?;
+    Ok(BillingReceipt {
+        command_id: request_id.to_string(),
+        tenant_id: tenant.to_string(),
+        action: "record_manual_receipt",
+        invoice_id: Some(invoice.to_string()),
+        line_id: None,
+        correction_id: None,
+        attempt_id: None,
+        event_id: Some(event_id.to_string()),
+        status: settlement.status_label,
+        outstanding_minor: Some(settlement.outstanding),
+        revision: Some(row.revision + 1),
+        idempotency_replay: false,
+        executed_at: now.to_string(),
+    })
+}
+
+/// Reverses all or part of one manual receipt of the invoice: a payment event
+/// with outcome `refunded` under the receipt's own `manual:` provider id,
+/// naming the receipt it reverses. It runs the refund side of the settlement
+/// ladder, so it reopens a settled invoice. A gateway event is never reversed
+/// here, and the reversals of one receipt never exceed it.
+#[allow(clippy::too_many_arguments)]
+async fn manual_reversal(
+    connection: &mut PgConnection,
+    tenant: &str,
+    access: &BillingAccess,
+    request_id: Uuid,
+    now: &str,
+    invoice_id: &str,
+    expected_revision: i64,
+    receipt_event_id: &str,
+    amount_minor: i64,
+    reason: &str,
+) -> Result<BillingReceipt, PurchaseError> {
+    let invoice = parse_uuid_value(invoice_id)?;
+    let original_id = parse_uuid_value(receipt_event_id)?;
+    let row = invoice_row(connection, tenant, invoice, access).await?;
+    if row.revision != expected_revision {
+        return Err(conflict());
+    }
+    let original: Option<(Uuid, String, i64, Option<String>)> = sqlx::query_as(
+        "SELECT invoice_id,outcome,amount_minor,manual_method FROM archava_billing.payment_events \
+WHERE tenant_id=$1 AND id=$2",
+    )
+    .bind(tenant)
+    .bind(original_id)
+    .fetch_optional(&mut *connection)
+    .await
+    .map_err(refuses)?;
+    let (original_invoice, outcome, original_amount, method) = original.ok_or_else(not_found)?;
+    let method = method.as_deref().and_then(ManualMethod::parse);
+    let Some(method) = method.filter(|_| original_invoice == invoice && outcome == "succeeded")
+    else {
+        return Err(refused("manual_reversal_not_manual"));
+    };
+    // The invoice row is locked, so the reversals of its receipts are serial.
+    let reversed: i64 = sqlx::query_scalar(
+        "SELECT coalesce(sum(amount_minor),0)::bigint FROM archava_billing.payment_events \
+WHERE tenant_id=$1 AND reverses_event_id=$2",
+    )
+    .bind(tenant)
+    .bind(original_id)
+    .fetch_one(&mut *connection)
+    .await
+    .map_err(refuses)?;
+    if reversed
+        .checked_add(amount_minor)
+        .is_none_or(|total| total > original_amount)
+    {
+        return Err(refused("manual_reversal_exceeds_receipt"));
+    }
+    let settlement =
+        settlement_of(&row, SettlementOutcome::Refunded, amount_minor).map_err(|_| conflict())?;
+    apply_settlement(connection, tenant, invoice, &row, &settlement, now).await?;
+    let event_id = Uuid::new_v4();
+    sqlx::query(
+        "INSERT INTO archava_billing.payment_events(\
+tenant_id,id,invoice_id,provider_id,provider_event_id,outcome,amount_minor,currency,recorded_by,verified_at,\
+manual_method,reason,reverses_event_id) \
+VALUES($1,$2,$3,$4,$5,'refunded',$6,$7,$8,$9::timestamptz,$10,$11,$12)",
+    )
+    .bind(tenant)
+    .bind(event_id)
+    .bind(invoice)
+    .bind(method.provider_id())
+    .bind(format!("{MANUAL_PROVIDER_PREFIX}{event_id}"))
+    .bind(amount_minor)
+    .bind(&row.currency)
+    .bind(&access.owner_id)
+    .bind(now)
+    .bind(method.as_str())
+    .bind(reason)
+    .bind(original_id)
+    .execute(&mut *connection)
+    .await
+    .map_err(refuses)?;
+    Ok(BillingReceipt {
+        command_id: request_id.to_string(),
+        tenant_id: tenant.to_string(),
+        action: "reverse_manual_receipt",
+        invoice_id: Some(invoice.to_string()),
+        line_id: None,
+        correction_id: None,
+        attempt_id: None,
+        event_id: Some(event_id.to_string()),
+        status: settlement.status_label,
+        outstanding_minor: Some(settlement.outstanding),
+        revision: Some(row.revision + 1),
+        idempotency_replay: false,
+        executed_at: now.to_string(),
+    })
 }
 
 /// One change of an invoice's tax invoice reference: the first recording
@@ -1384,6 +1745,26 @@ AND relrowsecurity AND relforcerowsecurity";
     Ok(())
 }
 
+/// The payment events of invoice `i`, oldest first: what settled it and what
+/// was taken back. `origin` is `manual` for a manual receipt or its reversal
+/// (a person's statement, with `method`, `receivedOn`, `reference`, `reason`
+/// and who recorded it) and `gateway` for a provider event verified by its
+/// signature or by the payment gateway. `reversedAmount` is what the reversals
+/// of a manual receipt have taken back so far. The Billing 013 columns are read
+/// through jsonb, so an install whose ledger predates them lists every event as
+/// a gateway event.
+const PAYMENTS_PROJECTION: &str = "coalesce((SELECT json_agg(json_build_object(\
+'id',e.id,'origin',CASE WHEN to_jsonb(e)->>'manual_method' IS NULL THEN 'gateway' ELSE 'manual' END,\
+'method',to_jsonb(e)->'manual_method','providerId',e.provider_id,'outcome',e.outcome,\
+'amount',e.amount_minor,'currency',e.currency,'recordedAt',e.verified_at,\
+'recordedOn',(e.verified_at AT TIME ZONE 'UTC')::date,'receivedOn',to_jsonb(e)->'received_on',\
+'reference',to_jsonb(e)->'reference','reason',to_jsonb(e)->'reason','recordedBy',e.recorded_by,\
+'recordedByName',(SELECT nullif(m.display_name,'') FROM archava_billing.memberships m WHERE m.tenant_id=e.tenant_id AND m.principal_id=e.recorded_by),\
+'reversesEventId',to_jsonb(e)->'reverses_event_id',\
+'reversedAmount',(SELECT coalesce(sum(r.amount_minor),0) FROM archava_billing.payment_events r WHERE r.tenant_id=e.tenant_id AND r.invoice_id=e.invoice_id AND to_jsonb(r)->>'reverses_event_id'=e.id::text),\
+'verifiedByProvider',to_jsonb(e)->>'manual_method' IS NULL) ORDER BY e.verified_at,e.id) \
+FROM archava_billing.payment_events e WHERE e.tenant_id=i.tenant_id AND e.invoice_id=i.id),'[]'::json)";
+
 /// Invoice balances and immutable line snapshots, scoped to the resolved reader.
 pub async fn workspace_view(
     connection: &mut PgConnection,
@@ -1413,9 +1794,25 @@ pub async fn workspace_view_filtered(
     if !access.holds("billing.read") {
         return Err(forbidden());
     }
-    let rows=sqlx::query_scalar::<_,serde_json::Value>("SELECT json_build_object('id',i.id,'code',i.invoice_code,'customer',i.customer_ref,'companyId',to_jsonb(i)->'company_id','companyRevision',to_jsonb(i)->'company_revision','companyCode',to_jsonb(i)->'company_code','companyName',to_jsonb(i)->'company_name','currency',i.currency,'status',i.status,'gross',i.gross_minor,'correction',i.correction_minor,'settled',i.settled_minor,'outstanding',i.outstanding_minor,'taxMinor',coalesce((to_jsonb(i)->>'tax_minor')::bigint,0),'netMinor',i.gross_minor-coalesce((to_jsonb(i)->>'tax_minor')::bigint,0),'correctionTaxMinor',coalesce((to_jsonb(i)->>'correction_tax_minor')::bigint,0),'tax',CASE WHEN to_jsonb(i)->>'tax_code_id' IS NOT NULL THEN json_build_object('codeId',to_jsonb(i)->'tax_code_id','code',to_jsonb(i)->'tax_code','version',to_jsonb(i)->'tax_code_version','kind',to_jsonb(i)->'tax_kind','rate',json_build_object('numerator',to_jsonb(i)->'tax_rate_numerator','denominator',to_jsonb(i)->'tax_rate_denominator'),'base',json_build_object('numerator',to_jsonb(i)->'tax_base_numerator','denominator',to_jsonb(i)->'tax_base_denominator'),'priceIncludesTax',to_jsonb(i)->'price_includes_tax','enteredByCompany',true,'verifiedByArchava',false) END,'sellerTaxId',to_jsonb(i)->'seller_tax_id','buyerTaxId',to_jsonb(i)->'buyer_tax_id','taxReference',CASE WHEN to_jsonb(i)->>'tax_reference' IS NOT NULL THEN json_build_object('reference',to_jsonb(i)->'tax_reference','transactionCode',to_jsonb(i)->'tax_transaction_code','version',to_jsonb(i)->'tax_reference_version','enteredByCompany',true,'verifiedByArchava',false) END,'revision',i.revision,'consumerRef',i.consumer_ref,'customerContactId',i.customer_contact_id,'customerContactRevision',i.customer_contact_revision,'customerPartyId',i.customer_party_id,'customerPartyRevision',i.customer_party_revision,'sourceOrderId',i.source_order_id,'sourceOrderRevision',i.source_order_revision,'lines',coalesce((SELECT json_agg(json_build_object('id',l.id,'sourceOrderLineId',l.source_order_line_id,'description',l.description,'quantity',l.quantity,'unitAmount',l.unit_minor,'total',l.line_total_minor) ORDER BY l.id) FROM archava_billing.invoice_lines l WHERE l.tenant_id=i.tenant_id AND l.invoice_id=i.id),'[]'::json)) FROM archava_billing.invoices i WHERE i.tenant_id=$1 AND (to_jsonb(i)->>'company_id')::uuid IS NOT DISTINCT FROM $5::uuid AND ($2 OR i.owner_id=$3) AND ($6::uuid IS NULL OR i.id=$6) AND ($4='' OR strpos(lower(i.invoice_code||' '||i.customer_ref),lower($4))>0) ORDER BY i.created_at DESC,i.id LIMIT 100")
-        .bind(tenant).bind(access.scope==archava_domain::erp::ErpScope::All).bind(&access.owner_id).bind(search).bind(company).bind(id).fetch_all(connection).await.map_err(|e|super::purchase_database_error(BILLING_LEDGER,e))?;
+    let statement=[r#"SELECT json_build_object('id',i.id,'code',i.invoice_code,'customer',i.customer_ref,'companyId',to_jsonb(i)->'company_id','companyRevision',to_jsonb(i)->'company_revision','companyCode',to_jsonb(i)->'company_code','companyName',to_jsonb(i)->'company_name','currency',i.currency,'status',i.status,'gross',i.gross_minor,'correction',i.correction_minor,'settled',i.settled_minor,'outstanding',i.outstanding_minor,'taxMinor',coalesce((to_jsonb(i)->>'tax_minor')::bigint,0),'netMinor',i.gross_minor-coalesce((to_jsonb(i)->>'tax_minor')::bigint,0),'correctionTaxMinor',coalesce((to_jsonb(i)->>'correction_tax_minor')::bigint,0),'tax',CASE WHEN to_jsonb(i)->>'tax_code_id' IS NOT NULL THEN json_build_object('codeId',to_jsonb(i)->'tax_code_id','code',to_jsonb(i)->'tax_code','version',to_jsonb(i)->'tax_code_version','kind',to_jsonb(i)->'tax_kind','rate',json_build_object('numerator',to_jsonb(i)->'tax_rate_numerator','denominator',to_jsonb(i)->'tax_rate_denominator'),'base',json_build_object('numerator',to_jsonb(i)->'tax_base_numerator','denominator',to_jsonb(i)->'tax_base_denominator'),'priceIncludesTax',to_jsonb(i)->'price_includes_tax','enteredByCompany',true,'verifiedByArchava',false) END,'sellerTaxId',to_jsonb(i)->'seller_tax_id','buyerTaxId',to_jsonb(i)->'buyer_tax_id','taxReference',CASE WHEN to_jsonb(i)->>'tax_reference' IS NOT NULL THEN json_build_object('reference',to_jsonb(i)->'tax_reference','transactionCode',to_jsonb(i)->'tax_transaction_code','version',to_jsonb(i)->'tax_reference_version','enteredByCompany',true,'verifiedByArchava',false) END,'revision',i.revision,'consumerRef',i.consumer_ref,'customerContactId',i.customer_contact_id,'customerContactRevision',i.customer_contact_revision,'customerPartyId',i.customer_party_id,'customerPartyRevision',i.customer_party_revision,'sourceOrderId',i.source_order_id,'sourceOrderRevision',i.source_order_revision,'issuedOn',(i.issued_at AT TIME ZONE 'UTC')::date,'payments',"#,PAYMENTS_PROJECTION,r#",'lines',coalesce((SELECT json_agg(json_build_object('id',l.id,'sourceOrderLineId',l.source_order_line_id,'description',l.description,'quantity',l.quantity,'unitAmount',l.unit_minor,'total',l.line_total_minor) ORDER BY l.id) FROM archava_billing.invoice_lines l WHERE l.tenant_id=i.tenant_id AND l.invoice_id=i.id),'[]'::json)) FROM archava_billing.invoices i WHERE i.tenant_id=$1 AND (to_jsonb(i)->>'company_id')::uuid IS NOT DISTINCT FROM $5::uuid AND ($2 OR i.owner_id=$3) AND ($6::uuid IS NULL OR i.id=$6) AND ($4='' OR strpos(lower(i.invoice_code||' '||i.customer_ref),lower($4))>0) ORDER BY i.created_at DESC,i.id LIMIT 100"#].concat();
+    let rows = sqlx::query_scalar::<_, serde_json::Value>(sqlx::AssertSqlSafe(statement.as_str()))
+        .bind(tenant)
+        .bind(access.scope == archava_domain::erp::ErpScope::All)
+        .bind(&access.owner_id)
+        .bind(search)
+        .bind(company)
+        .bind(id)
+        .fetch_all(&mut *connection)
+        .await
+        .map_err(|e| super::purchase_database_error(BILLING_LEDGER, e))?;
+    // The UTC calendar date of the database clock: the default received-on
+    // date of a manual receipt and the latest one it accepts.
+    let today: String =
+        sqlx::query_scalar("SELECT (clock_timestamp() AT TIME ZONE 'UTC')::date::text")
+            .fetch_one(&mut *connection)
+            .await
+            .map_err(|e| super::purchase_database_error(BILLING_LEDGER, e))?;
     Ok(
-        serde_json::json!({"invoices":rows,"taxNotice":archava_domain::erp::tax::DOCUMENT_NOTICE,"pageLimit":100,"permissions":access.permissions,"scope":access.scope}),
+        serde_json::json!({"invoices":rows,"taxNotice":archava_domain::erp::tax::DOCUMENT_NOTICE,"today":today,"pageLimit":100,"permissions":access.permissions,"scope":access.scope}),
     )
 }

@@ -1903,6 +1903,128 @@
           "providerOnly": true
         },
         {
+          "id": "record_manual_receipt",
+          "label": "Record a payment received (manual)",
+          "permission": "billing.settle",
+          "description": "A manual receipt: a person states that money for an issued invoice was received by bank transfer or in cash. Archava does not verify it with a bank or a payment provider, and it is shown as manual, with who recorded it, when, the method, the reference and the reason. It settles the invoice by the amount; a part payment leaves the rest outstanding. It is refused on a draft, settled or void invoice, for more than the outstanding amount, for a received-on date in the future or before the invoice was issued, in a closed financial period, and while the invoice has an online payment link the customer can still pay. It can be undone only by the reverse action.",
+          "fields": [
+            {
+              "name": "commandId",
+              "label": "Command id",
+              "kind": "string",
+              "maxLength": 2000,
+              "automatic": "requestId"
+            },
+            {
+              "name": "invoiceId",
+              "label": "Invoice id",
+              "kind": "string",
+              "maxLength": 2000
+            },
+            {
+              "name": "expectedRevision",
+              "label": "Expected revision",
+              "kind": "integer",
+              "default": 1,
+              "min": 1,
+              "automatic": "revision"
+            },
+            {
+              "name": "amountMinor",
+              "label": "Amount received, in the invoice's unit",
+              "kind": "integer",
+              "min": 1,
+              "description": "The amount received as a positive integer in the invoice's own currency and unit: whole Rupiah for an IDR invoice, the currency's minor unit otherwise (USD 12.50 is 1250). At most the invoice's outstanding amount."
+            },
+            {
+              "name": "method",
+              "label": "How the money was received",
+              "kind": "string",
+              "enum": [
+                "bank_transfer",
+                "cash"
+              ],
+              "optionLabels": {
+                "bank_transfer": "Bank transfer",
+                "cash": "Cash"
+              },
+              "default": "bank_transfer",
+              "description": "bank_transfer for money that arrived in a bank account, cash for money handed over. Either way it is posted to the payment clearing account until a clearing settlement matches it to a bank or cash-drawer statement row."
+            },
+            {
+              "name": "receivedOn",
+              "label": "Date the money was received (UTC)",
+              "kind": "string",
+              "maxLength": 10,
+              "format": "date",
+              "description": "The UTC calendar date the money was received, as YYYY-MM-DD. Not after today and not before the day the invoice was issued. It is the date of the ledger entry, so use the date on the bank statement for a transfer."
+            },
+            {
+              "name": "reference",
+              "label": "Payer's or bank's reference, or cash receipt number",
+              "kind": "string",
+              "maxLength": 100,
+              "description": "The reference that identifies this payment outside Archava: the transfer reference on the bank statement, or the number of the cash receipt handed to the customer. Copied as text; never invent one."
+            },
+            {
+              "name": "reason",
+              "label": "Reason / note",
+              "kind": "string",
+              "maxLength": 500,
+              "description": "Why this payment is recorded by hand and what it was checked against, for example the bank statement line that was seen."
+            }
+          ]
+        },
+        {
+          "id": "reverse_manual_receipt",
+          "label": "Reverse a manually recorded payment",
+          "permission": "billing.settle",
+          "description": "Reverses all or part of one manual receipt of the invoice: a bounced transfer, a keying error, or money returned to the customer. It reopens the invoice by the amount and is itself shown as a manual reversal with who recorded it, when and why. It cannot exceed what is left of that receipt after earlier reversals and never reverses a payment gateway event. The reversal is dated the day it is recorded.",
+          "fields": [
+            {
+              "name": "commandId",
+              "label": "Command id",
+              "kind": "string",
+              "maxLength": 2000,
+              "automatic": "requestId"
+            },
+            {
+              "name": "invoiceId",
+              "label": "Invoice id",
+              "kind": "string",
+              "maxLength": 2000
+            },
+            {
+              "name": "expectedRevision",
+              "label": "Expected revision",
+              "kind": "integer",
+              "default": 1,
+              "min": 1,
+              "automatic": "revision"
+            },
+            {
+              "name": "receiptEventId",
+              "label": "Manual payment to reverse",
+              "kind": "string",
+              "maxLength": 36,
+              "description": "The id of the manual receipt's payment event, as listed under payments on the invoice. Only an event whose origin is manual and whose outcome is succeeded."
+            },
+            {
+              "name": "amountMinor",
+              "label": "Amount to reverse, in the invoice's unit",
+              "kind": "integer",
+              "min": 1,
+              "description": "A positive integer in the invoice's own currency and unit; at most the receipt's amount less what was already reversed."
+            },
+            {
+              "name": "reason",
+              "label": "Reason for the reversal",
+              "kind": "string",
+              "maxLength": 500
+            }
+          ]
+        },
+        {
           "id": "record_tax_reference",
           "label": "Record the tax invoice reference",
           "permission": "billing.settle",
@@ -8623,7 +8745,7 @@
           "fields": [
             {
               "name": "sourceId",
-              "label": "Posted verified provider collection or refund",
+              "label": "Posted invoice collection or refund (verified provider event or manual receipt)",
               "kind": "string"
             },
             {

@@ -106,7 +106,7 @@ The registry mounts 19 modules. Five of them (`crm`, `support`, `organizations`,
 
 | Module ID | Status | Capabilities & Ledger |
 | :--- | :---: | :--- |
-| `billing` | **Mounted** | Invoice drafts and issue, signed corrections appended to the same invoice (no credit-note documents), settlement only from verified provider events (`archava_billing`). |
+| `billing` | **Mounted** | Invoice drafts and issue, signed corrections appended to the same invoice (no credit-note documents), settlement from verified provider events or from manual receipts recorded by a person with `billing.settle` and labelled manual (`archava_billing`). |
 | `subscriptions` | **Mounted** | Recurring subscription plans, entitlements, usage quotas (`archava_subscriptions`). |
 | `payroll` | Domain rules only | Indonesian payroll arithmetic (BPJS TK JHT/JP, BPJS Kes, PPh 21 as an input, overtime pay, take-home salary); rates unverified. |
 | `expenses` | Domain rules only | Employee reimbursement claims, receipt SHA-256 hash, multi-level manager approvals, finance payouts. |

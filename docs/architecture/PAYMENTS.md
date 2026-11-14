@@ -2,7 +2,7 @@
 
 The native path is **invoice → frozen gateway order → hosted checkout → authenticated status → Billing allocation**. The [readiness tracker](../product/LAUNCH_READINESS.md) owns acceptance. Local fixture results do not prove live merchant integration.
 
-The [domain](../../crates/domain/src/erp/payments.rs) handles whole IDR and monotonic cumulative money. The [provider transport](../../crates/providers/src/midtrans.rs) uses fixed Midtrans Sandbox/Production HTTPS endpoints, Basic authentication, no redirects, bounded responses and a four-second timeout. The [adapter](../../crates/adapters/src/erp/payments.rs) owns durable correlations and allocation. The [host](../../crates/host/src/payments.rs) owns sessions, CSRF, the provider registry and authenticated Get Status. The [invoice panel](../../crates/slice/src/operations/payments.rs) never asserts payment itself.
+The [domain](../../crates/domain/src/erp/payments.rs) handles whole IDR and monotonic cumulative money. The [provider transport](../../crates/providers/src/midtrans.rs) uses fixed Midtrans Sandbox/Production HTTPS endpoints, Basic authentication, no redirects, bounded responses and a four-second timeout. The [adapter](../../crates/adapters/src/erp/payments.rs) owns durable correlations and allocation. The [host](../../crates/host/src/payments.rs) owns sessions, CSRF, the provider registry and authenticated Get Status. The [invoice panel](../../crates/slice/src/operations/payments.rs) never asserts payment itself. A payment the customer made outside the gateway, by bank transfer or in cash, is a separate, human-attested fact: a [manual receipt](../modules/MANUAL_CUSTOMER_RECEIPTS.md), recorded by a person with `billing.settle`, labelled manual and never verified by this path.
 
 ## Configuration and authority
 
@@ -28,6 +28,19 @@ Midtrans's SHA-512 notification signature does not cover `transaction_status` or
 
 External gross received/refunded and invoice credits/refunds are separate cumulative totals. A refund observed first allocates only the remaining external net. A changed invoice balance can leave real money unapplied; that amount remains visible for merchant-dashboard reconciliation/refund. It is not silently discarded or applied past the invoice balance. Unsupported or inconsistent states require review. This MVP does not execute merchant refunds or automatically reconcile unbound orders.
 
+## Manual receipts beside the gateway
+
+Both paths write payment events and both run the same settlement arithmetic, so they
+are kept from settling the same money twice. While an invoice has a link that is not
+closed and has received nothing, `record_manual_receipt` is refused
+(`manual_receipt_open_payment_link`): check the link's status until the gateway reports
+it failed or expired, or wait for it to be paid. A link is created for the invoice's
+outstanding amount, so a manual part payment followed by a link for the remainder
+works. A gateway event is never reversed by `reverse_manual_receipt`; gateway money goes
+back through the gateway and its verified refund. The provider id namespace `manual:` is
+reserved for manual receipts and refused on provider events. Gateway behaviour is
+unchanged.
+
 ## Restore
 
 Restore invalidates the copied writer identity and sets the global Billing payment-creation hold before reopening the isolated target. Existing correlations remain readable and can be verified, but new Snap calls are blocked. Reconcile all transactions since the backup against the merchant dashboard, including orders absent from the snapshot, before explicitly running:
@@ -40,6 +53,6 @@ Only the Billing owner/administrator can release this hold. The serving runtime 
 
 ## Evidence and protocol references
 
-Executable coverage lives in [gateway router tests](../../crates/host/tests/gateway_payments.rs), [transport tests](../../crates/providers/tests/midtrans_transport.rs), [service provisioning](../../crates/ops/tests/payment_service.rs), [restore rehearsal](../../crates/ops/tests/upgrade_restore.rs) and [browser acceptance](../../tools/e2e/payments.mjs). Execution results belong to the [evidence packet](../archive/audits/evidence/launch-2026-10-29/checks.json).
+Executable coverage lives in [gateway router tests](../../crates/host/tests/gateway_payments.rs) (including a manual part payment beside a link), [transport tests](../../crates/providers/tests/midtrans_transport.rs), [service provisioning](../../crates/ops/tests/payment_service.rs), [restore rehearsal](../../crates/ops/tests/upgrade_restore.rs) and [browser acceptance](../../tools/e2e/payments.mjs). Execution results belong to the [evidence packet](../archive/audits/evidence/launch-2026-10-29/checks.json).
 
 Protocol decisions were checked against the official [notification guide](https://docs.midtrans.com/reference/handle-notifications), [Get Status](https://docs.midtrans.com/reference/get-transaction-status), [Snap expiry](https://docs.midtrans.com/reference/expire-a-snap-session) and [Snap cancellation](https://docs.midtrans.com/reference/cancel-a-snap-session) on 2026-10-30. Snap cancellation requires its token; page expiry alone does not necessarily stop a payment method whose expiry is later. Those operations are not assumed to be available by order ID.

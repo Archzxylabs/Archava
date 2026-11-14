@@ -534,3 +534,109 @@ async fn exact_payment_receipt_recovery_is_not_limited_by_the_recent_history_win
     assert_eq!(b["link"]["id"], original);
     assert_eq!(mock.state.lock().unwrap().create_count, 1);
 }
+
+/// A manual part payment and the gateway on one invoice. The link is created
+/// for what is still outstanding after the manual receipt; while that link is
+/// open and unpaid a manual receipt is refused, so the customer cannot pay the
+/// same money twice; the gateway then settles the rest. The gateway's event is
+/// never reversed by hand, the manual one is, and once a later link has failed
+/// (expired) a manual receipt is accepted again.
+#[tokio::test]
+async fn a_manual_part_payment_leaves_the_rest_to_a_link_and_an_open_link_holds_manual_receipts() {
+    let mock = Mock::start().await;
+    let (f, app, session, invoice) = setup(&mock).await;
+    let today: String =
+        sqlx::query_scalar("SELECT (clock_timestamp() AT TIME ZONE 'UTC')::date::text")
+            .fetch_one(&f.admin_pool)
+            .await
+            .unwrap();
+    let bill = |command: Value| {
+        let (app, session) = (app.clone(), session.clone());
+        async move {
+            let mut command = command;
+            command["commandId"] = json!(Uuid::new_v4());
+            command["invoiceId"] = json!(invoice);
+            call(
+                &app,
+                "POST",
+                "/erp/billing/commands",
+                json!({"tenant":"acme","mutation":command}),
+                Some(&session),
+            )
+            .await
+        }
+    };
+    let receipt = |revision: i64, amount: i64| json!({"type":"record_manual_receipt","expectedRevision":revision,"amountMinor":amount,"method":"bank_transfer","receivedOn":today,"reference":"TRF-1","reason":"Seen on the statement"});
+    let (s, manual) = bill(receipt(2, 40)).await;
+    assert_eq!(s, StatusCode::OK, "{manual}");
+    assert_eq!(balance(&f).await, ("issued".into(), 40, 60));
+
+    // The link freezes the remainder, not the invoice total.
+    let (s, link) = call(
+        &app,
+        "POST",
+        "/erp/billing/payments",
+        request(invoice, Uuid::new_v4()),
+        Some(&session),
+    )
+    .await;
+    assert_eq!(s, StatusCode::OK, "{link}");
+    assert_eq!(mock.state.lock().unwrap().amount, 60);
+    let (s, refused) = bill(receipt(3, 10)).await;
+    assert_eq!(s, StatusCode::CONFLICT, "{refused}");
+    assert_eq!(
+        refused["detail"]["code"], "manual_receipt_open_payment_link",
+        "{refused}"
+    );
+    assert_eq!(balance(&f).await, ("issued".into(), 40, 60));
+
+    mock.state.lock().unwrap().state = "settlement".into();
+    let (s, b) = notification(&f, &app, &mock, "settlement").await;
+    assert_eq!(s, StatusCode::OK, "{b}");
+    assert_eq!(balance(&f).await, ("settled".into(), 100, 0));
+    let events: Vec<(String, Option<String>, i64, Uuid)> = sqlx::query_as("SELECT provider_id,manual_method,amount_minor,id FROM archava_billing.payment_events ORDER BY verified_at").fetch_all(&f.admin_pool).await.unwrap();
+    assert_eq!(events.len(), 2);
+    assert_eq!(
+        (events[0].0.as_str(), events[0].1.as_deref(), events[0].2),
+        ("manual:bank_transfer", Some("bank_transfer"), 40)
+    );
+    assert_eq!(
+        (events[1].0.as_str(), events[1].1.as_deref(), events[1].2),
+        ("midtrans:merchant", None, 60)
+    );
+
+    // The gateway's money goes back through the gateway, never by hand.
+    let reverse = |revision: i64, event: Uuid, amount: i64| json!({"type":"reverse_manual_receipt","expectedRevision":revision,"receiptEventId":event,"amountMinor":amount,"reason":"Returned"});
+    let (s, refused) = bill(reverse(4, events[1].3, 60)).await;
+    assert_eq!(s, StatusCode::CONFLICT, "{refused}");
+    assert_eq!(
+        refused["detail"]["code"], "manual_reversal_not_manual",
+        "{refused}"
+    );
+    let (s, reversed) = bill(reverse(4, events[0].3, 40)).await;
+    assert_eq!(s, StatusCode::OK, "{reversed}");
+    assert_eq!(balance(&f).await, ("issued".into(), 60, 40));
+
+    // A second link that fails (expires) is closed and frees the invoice.
+    let (s, link) = call(
+        &app,
+        "POST",
+        "/erp/billing/payments",
+        request(invoice, Uuid::new_v4()),
+        Some(&session),
+    )
+    .await;
+    assert_eq!(s, StatusCode::OK, "{link}");
+    assert_eq!(mock.state.lock().unwrap().amount, 40);
+    let (s, refused) = bill(receipt(5, 40)).await;
+    assert_eq!(
+        refused["detail"]["code"], "manual_receipt_open_payment_link",
+        "{s} {refused}"
+    );
+    mock.state.lock().unwrap().state = "expire".into();
+    let (s, b) = notification(&f, &app, &mock, "expire").await;
+    assert_eq!(s, StatusCode::OK, "{b}");
+    let (s, paid) = bill(receipt(5, 40)).await;
+    assert_eq!(s, StatusCode::OK, "{paid}");
+    assert_eq!(balance(&f).await, ("settled".into(), 100, 0));
+}

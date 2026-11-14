@@ -18,6 +18,7 @@ mod party_selection;
 pub(crate) use operator::AgentActionEditor;
 mod payments;
 mod purchasing;
+mod receipts;
 mod supplier_documents;
 mod suppliers;
 mod support;

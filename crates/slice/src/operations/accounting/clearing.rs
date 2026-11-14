@@ -1,4 +1,6 @@
-//! Human bank settlement review, using the exact original verified event.
+//! Human bank settlement review, using the exact original collection or refund
+//! source: a verified provider event, or a manual receipt, which is worded as
+//! manual and never as verified.
 use super::*;
 use archava_domain::erp::accounting::clearing::{self as rules, Effect};
 fn record<'a>(refs: &'a Value, collection: &str, key: &Value) -> Option<&'a Value> {
@@ -93,6 +95,8 @@ pub(super) fn review(body: &Value, book: &Value, refs: &Value) -> Option<AnyView
     } else {
         Effect::Refund
     };
+    // A manual receipt is a person's statement: nothing about it is "verified".
+    let manual = source["origin"] == "manual";
     let legs = rules::legs(
         effect,
         body["grossMinor"].as_str()?,
@@ -108,8 +112,13 @@ pub(super) fn review(body: &Value, book: &Value, refs: &Value) -> Option<AnyView
         .into_iter()
         .map(|leg| {
             let (key, label) = match leg.role {
+                rules::Role::Clearing if manual => (
+                    "clearingAccount",
+                    "Original payment clearing of the manual receipt",
+                ),
                 rules::Role::Clearing => ("clearingAccount", "Original verified payment clearing"),
                 rules::Role::Cash => ("cashAccount", "Actual bank cash"),
+                rules::Role::Fee if manual => ("feeAccount", "Explicit fee"),
                 rules::Role::Fee => ("feeAccount", "Explicit gateway fee"),
             };
             let account = record(refs, "accounts", &body[key]["accountId"]);
@@ -129,9 +138,28 @@ pub(super) fn review(body: &Value, book: &Value, refs: &Value) -> Option<AnyView
     let gross = amount(&body["grossMinor"], book);
     let fee = amount(&body["feeMinor"], book);
     let body = body.clone();
-    Some(view!{<section data-testid="clearing-review-summary"><h4>"Record actual gateway bank settlement"</h4><dl class="operator-details"><dt>"Original verified source"</dt><dd>{source}</dd><dt>"Actual bank transaction"</dt><dd>{bankref}</dd><dt>"Journal date"</dt><dd>{date}</dd><dt>"Gross provider money"</dt><dd>{gross}</dd><dt>"Explicit fee"</dt><dd>{fee}</dd><dt>"Actual bank amount"</dt><dd>{cash}</dd></dl>
-        <p class="hint">"Saving creates a draft. Separate posting transfers verified clearing to actual bank cash without posting customer receivables or revenue again. Bank matching is another reviewed action. This action sends no money."</p></section>
-        {source_journal(lines,"clearing-source-journal","Proposed verified source to bank journal")}<details><summary>"Provider source, bank evidence and approval references"</summary>{details(body)}</details>}.into_any())
+    let (heading, source_label, gross_label, hint, journal, references) = if manual {
+        (
+            "Record the bank settlement of a manual receipt",
+            "Original manual receipt source",
+            "Gross amount received",
+            "Saving creates a draft. Separate posting moves the manually recorded money from clearing to actual bank cash without posting customer receivables or revenue again. Bank matching is another reviewed action. This action sends no money.",
+            "Proposed manual receipt to bank journal",
+            "Manual receipt source, bank evidence and approval references",
+        )
+    } else {
+        (
+            "Record actual gateway bank settlement",
+            "Original verified source",
+            "Gross provider money",
+            "Saving creates a draft. Separate posting transfers verified clearing to actual bank cash without posting customer receivables or revenue again. Bank matching is another reviewed action. This action sends no money.",
+            "Proposed verified source to bank journal",
+            "Provider source, bank evidence and approval references",
+        )
+    };
+    Some(view!{<section data-testid="clearing-review-summary"><h4>{heading}</h4><dl class="operator-details"><dt>{source_label}</dt><dd>{source}</dd><dt>"Actual bank transaction"</dt><dd>{bankref}</dd><dt>"Journal date"</dt><dd>{date}</dd><dt>{gross_label}</dt><dd>{gross}</dd><dt>"Explicit fee"</dt><dd>{fee}</dd><dt>"Actual bank amount"</dt><dd>{cash}</dd></dl>
+        <p class="hint">{hint}</p></section>
+        {source_journal(lines,"clearing-source-journal",journal)}<details><summary>{references}</summary>{details(body)}</details>}.into_any())
 }
 
 #[cfg(test)]
@@ -173,5 +201,31 @@ mod tests {
         let mut missing_fee = body;
         missing_fee.as_object_mut().unwrap().remove("feeAccount");
         assert!(!valid_review(&missing_fee, &book, &refs));
+    }
+    #[test]
+    fn a_manual_receipt_source_is_reviewed_as_manual_and_never_as_verified() {
+        let book = json!({"id":"book","currency":"IDR","minorUnits":2});
+        let refs = json!({"accounting/clearing_sources":[{"id":"source","bookId":"book","code":"INV-7 · collection","effect":"collection","origin":"manual","method":"bank_transfer","sourceDate":"2026-11-13","clearingAccountId":"clearing","balance":{"sourcePosted":true,"availableGrossMinor":"3000000"}}],
+            "accounting/bank_rows":[{"id":"row","bookId":"book","bankAccountId":"bank","date":"2026-11-13","unreservedMinor":"3000000","externalRef":"TRF-8842"}],"accounting/bank_accounts":[{"id":"bank","accountId":"cash"}],
+            "accounting/accounts":[{"id":"clearing","active":true,"revision":1,"class":"asset","cashRole":"none","code":"CLEARING","name":"Payment clearing"},{"id":"cash","active":true,"revision":1,"class":"asset","cashRole":"cash","code":"BANK","name":"Bank"}]});
+        let body = json!({"type":"clearing_settlement.draft","sourceId":"source","bankRowId":"row","clearingAccount":{"accountId":"clearing","expectedAccountRevision":1},"cashAccount":{"accountId":"cash","expectedAccountRevision":1},"grossMinor":"3000000","feeMinor":"0"});
+        assert!(valid_review(&body, &book, &refs));
+        let html = review(&body, &book, &refs).unwrap().to_html();
+        assert!(
+            html.contains("Record the bank settlement of a manual receipt"),
+            "{html}"
+        );
+        assert!(html.contains("Original manual receipt source"), "{html}");
+        assert!(
+            html.contains("Proposed manual receipt to bank journal"),
+            "{html}"
+        );
+        assert!(html.contains("IDR 30000.00"), "{html}");
+        assert!(!html.to_lowercase().contains("verified"), "{html}");
+        assert!(!html.to_lowercase().contains("gateway"), "{html}");
+        // A bank row dated before the day the money was received is not offered.
+        let mut early = refs.clone();
+        *early.pointer_mut("/accounting~1bank_rows/0/date").unwrap() = json!("2026-11-12");
+        assert!(!valid_review(&body, &book, &early));
     }
 }
