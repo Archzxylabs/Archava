@@ -687,7 +687,7 @@ async fn snapshot(
         "stock_policy"=>"SELECT jsonb_build_object('record',to_jsonb(r)) FROM archava_accounting.stock_policies r WHERE tenant_id=$1 AND id=$2",
         "stock_source"=>"SELECT jsonb_build_object('record',to_jsonb(r)||jsonb_build_object('amount_minor',r.amount_minor::text)) FROM archava_accounting.stock_sources r WHERE tenant_id=$1 AND id=$2",
         "invoice_policy"=>"SELECT jsonb_build_object('record',to_jsonb(r)) FROM archava_accounting.invoice_policies r WHERE tenant_id=$1 AND id=$2",
-        "invoice_source"=>"SELECT jsonb_build_object('record',jsonb_set(to_jsonb(r),'{amount_minor}',to_jsonb(r.amount_minor::text))) FROM archava_accounting.invoice_sources r WHERE tenant_id=$1 AND id=$2",
+        "invoice_source"=>"SELECT jsonb_build_object('record',to_jsonb(r)||jsonb_build_object('amount_minor',r.amount_minor::text,'tax_minor',r.tax_minor::text)) FROM archava_accounting.invoice_sources r WHERE tenant_id=$1 AND id=$2",
         "journal"=>"SELECT jsonb_build_object('record',to_jsonb(r),'lines',(SELECT jsonb_agg(to_jsonb(l) ORDER BY ordinal) FROM archava_accounting.journal_lines l WHERE l.tenant_id=r.tenant_id AND l.journal_id=r.id)) FROM archava_accounting.journals r WHERE tenant_id=$1 AND id=$2",
         _=>return Err(ErpError::Conflict.into()),
     };

@@ -140,11 +140,14 @@ pub(super) fn refuses(error: sqlx::Error) -> PurchaseError {
                 || e.message()
                     == "No confirmed version of the invoice tax code applies on the invoice date"
                 || e.message()
-                    == "Tax posting is not available yet for a book with invoice posting"
+                    == "The invoice tax code is not a confirmed output tax code of the posting book"
+                || e.message() == "The tax control account of the invoice tax code is inactive"
+                || e.message()
+                    == "The tax control account is also an account of the invoice posting policy"
                 || e.constraint() == Some("invoice_sources_amount_minor_check"))
     }) {
-        // The two message guards are catalogued; the amount bound is a
-        // column constraint and stays a plain conflict.
+        // The message guards are catalogued; the amount bound is a column
+        // constraint and stays a plain conflict.
         return super::catalogued_refusal(&error).map_or_else(conflict, PurchaseError::Refused);
     }
     PurchaseError::Database {

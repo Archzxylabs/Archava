@@ -80,9 +80,15 @@ the tax; an invoice whose tax disagrees with its order, its tax code version or 
 arithmetic is refused, also for a direct insert by the serving role. A manual invoice
 cannot carry tax.
 
-Tax is not posted to the ledger yet. A taxed invoice is refused for a company whose
-book has an invoice posting policy, at creation and at issue
-(`invoice_tax_posting_unavailable`).
+For a company whose book has an invoice posting policy the tax is posted to the
+ledger: the invoice bridge captures the tax of the issue, of each correction and of a
+void, and the reviewed journal credits it to the tax code's control account
+([invoice source posting](INVOICE_POSTING.md#tax-on-a-captured-source)).
+[Migration 010](../../migrations/billing-pg/010_taxed_invoice_posting.sql) removes the
+refusal that stood in for this (`invoice_tax_posting_unavailable` no longer exists).
+Issuing is refused while the tax code's control account is inactive
+(`invoice_tax_control_account_changed`); the invoice stays a draft until the account
+is reactivated.
 
 The workspace read returns `taxMinor`, `netMinor`, `correctionTaxMinor` and `tax`
 (the snapshot, or null) per invoice and a `taxNotice`. The invoice screen shows net,

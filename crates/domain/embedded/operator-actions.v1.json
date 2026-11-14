@@ -7682,10 +7682,10 @@
             },
             {
               "name": "accounts",
-              "label": "Review the two mapped accounts",
+              "label": "Review the mapped accounts (two, or three with the tax control account of a taxed source)",
               "kind": "array",
               "minItems": 2,
-              "maxItems": 2,
+              "maxItems": 3,
               "items": {
                 "kind": "object",
                 "fields": [

@@ -836,7 +836,14 @@ pub fn parse(raw: &Value) -> Result<Mutation, ValidationError> {
             code,
             accounts,
             ..
-        } => valid_uuid(source_id) && valid_code(code) && sources::valid_refs(accounts, 2),
+        } => {
+            // Two reviewed accounts, or three when the source carries tax:
+            // which one the source needs is decided against the stored source.
+            valid_uuid(source_id)
+                && valid_code(code)
+                && (2..=3).contains(&accounts.len())
+                && sources::valid_refs(accounts, accounts.len())
+        }
         Command::BookCreate {
             company_id,
             expected_company_revision,
@@ -1043,6 +1050,40 @@ mod tests {
             assert!(minor(bad).is_err());
         }
         assert_eq!(minor("9000000000000000").unwrap(), MAX_MINOR);
+    }
+    #[test]
+    fn an_invoice_source_draft_names_two_reviewed_accounts_or_three_with_tax() {
+        let id = |n: u8| format!("a0000000-0000-4000-8000-0000000000{n:02}");
+        let account = |n: u8| json!({"accountId":id(n),"expectedAccountRevision":1});
+        let draft = |accounts: Vec<Value>| {
+            parse(
+                &json!({"requestId":id(90),"command":{"type":"invoice_source.draft","sourceId":id(91),
+            "code":"ISSUE","accounts":accounts,"reason":"Reviewed source"}}),
+            )
+        };
+        let two = draft(vec![account(1), account(2)]).unwrap();
+        assert_eq!(two.command.operation(), "invoice_source.draft");
+        assert_eq!(two.command.permission(), "journals.write");
+        // The third is the tax control account of a taxed source.
+        assert!(draft(vec![account(1), account(2), account(3)]).is_ok());
+        assert!(draft(vec![account(1)]).is_err());
+        assert!(draft(vec![account(1), account(2), account(3), account(4)]).is_err());
+        // Every named account is a different one, at a positive revision.
+        assert!(draft(vec![account(1), account(2), account(2)]).is_err());
+        assert!(draft(vec![account(1), account(1)]).is_err());
+        assert!(draft(vec![
+            account(1),
+            account(2),
+            json!({"accountId":id(3),"expectedAccountRevision":0})
+        ])
+        .is_err());
+        // No role, amount or tax can be stated: the stored source decides them.
+        assert!(draft(vec![
+            account(1),
+            account(2),
+            json!({"accountId":id(3),"expectedAccountRevision":1,"role":"tax"})
+        ])
+        .is_err());
     }
     #[test]
     fn tax_code_commands_take_integer_fractions_and_no_claimed_people() {

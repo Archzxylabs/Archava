@@ -285,6 +285,11 @@
           "id": "009_invoice_tax_snapshot",
           "path": "migrations/billing-pg/009_invoice_tax_snapshot.sql",
           "sha256": "34304cd4a173e81c96a2fd29892f1fdbbfebd3d90f8a9a3bd2996d8075425e7f"
+        },
+        {
+          "id": "010_taxed_invoice_posting",
+          "path": "migrations/billing-pg/010_taxed_invoice_posting.sql",
+          "sha256": "fcee2384bd9ac413d09edf109acc99b77a34639917cad81c5f63bd9bad218e8a"
         }
       ]
     },
@@ -371,6 +376,11 @@
           "id": "016_tax_codes",
           "path": "migrations/accounting-pg/016_tax_codes.sql",
           "sha256": "3f2824077daabd63b85ad4f66132d05c403bdeb65e5ab523a0492af7802dc92c"
+        },
+        {
+          "id": "017_invoice_source_tax",
+          "path": "migrations/accounting-pg/017_invoice_source_tax.sql",
+          "sha256": "cb53ae3468916556e0b80f03bf85567be1b8342b2a3f7f71a3c67ed969a435e0"
         }
       ]
     },
