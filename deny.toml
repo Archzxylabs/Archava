@@ -1,5 +1,5 @@
 # Configuration for cargo-deny (cargo-deny check)
-# Enforces supply chain security, license compliance, and dependency hygiene across Archava's 22 crates.
+# Enforces supply chain security, license compliance, and dependency hygiene across Archava's 21 crates.
 
 [graph]
 targets = [
@@ -12,6 +12,9 @@ version = 2
 ignore = [
     # paste is unmaintained upstream; used transitively by Leptos 0.8 / reactive_graph / tachys.
     "RUSTSEC-2024-0436",
+    # libsqlite3-sys is in Cargo.lock only as an optional dependency of sqlx; nothing builds it.
+    # See .cargo/audit.toml and the security-audit workflow, which fails if it enters the graph.
+    "RUSTSEC-2026-0459",
 ]
 
 [licenses]
