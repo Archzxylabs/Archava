@@ -26,6 +26,7 @@ use crate::{
     pending::{self, PendingMarker},
     session::{self, Answer},
 };
+use archava_domain::erp::trade_money;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 use leptos_router::hooks::{use_navigate, use_query_map};
@@ -391,6 +392,15 @@ impl Workbench {
             .as_array()
             .is_some_and(|a| a.iter().any(|p| p == permission))
     }
+    /// The currency a new record of the selected company is created in, as
+    /// the Commerce workspace read reports it; IDR until it is known.
+    pub fn trade_currency(self) -> String {
+        self.data.get()["tradeCurrency"]
+            .as_str()
+            .filter(|code| !code.is_empty())
+            .unwrap_or(trade_money::IDR)
+            .to_string()
+    }
     pub fn rows(self, key: &str) -> Vec<Value> {
         self.data.get()[key].as_array().cloned().unwrap_or_default()
     }
@@ -682,16 +692,60 @@ pub fn integer(value: &Value, key: &str) -> i64 {
 pub fn short(id: &str) -> String {
     id.chars().take(8).collect()
 }
+/// A whole-Rupiah amount. Only for amounts that are IDR by contract (the
+/// payment gateway); a record's own amount goes through [`currency_amount`].
 pub fn money(amount: i64) -> String {
-    let digits = amount.unsigned_abs().to_string();
-    let mut out = String::new();
-    for (i, c) in digits.chars().enumerate() {
-        if i > 0 && (digits.len() - i).is_multiple_of(3) {
-            out.push('.')
-        }
-        out.push(c)
+    trade_money::format_trade(trade_money::IDR, amount)
+}
+/// The currency a workspace row is priced in. A row without one is IDR
+/// (trade currency rule 1).
+pub fn currency_of(row: &Value) -> String {
+    row["currency"]
+        .as_str()
+        .filter(|code| !code.is_empty())
+        .unwrap_or(trade_money::IDR)
+        .to_string()
+}
+/// A row's integer amount under `key`, shown in the row's own currency.
+pub fn row_money(row: &Value, key: &str) -> String {
+    currency_amount(integer(row, key), &currency_of(row))
+}
+/// Reads an entered trade amount in `currency` into the stored integer:
+/// whole Rupiah for IDR, minor units from a decimal amount otherwise.
+pub fn trade_input(value: RwSignal<String>, currency: &str) -> Option<i64> {
+    trade_money::parse_trade(currency, &value.get_untracked()).ok()
+}
+/// How a trade amount in `currency` is entered, for a refusal message.
+/// `idr` is the wording the IDR form already used.
+pub fn amount_rule(currency: &str, idr: &str) -> String {
+    match trade_money::trade_decimals(currency) {
+        _ if currency == trade_money::IDR => idr.to_string(),
+        Some(0) => format!("whole {currency}"),
+        Some(1) => format!("{currency} (at most 1 decimal)"),
+        Some(n) => format!("{currency} (at most {n} decimals)"),
+        None => format!("{currency} (currency not supported)"),
     }
-    format!("{}Rp {}", if amount < 0 { "−" } else { "" }, out)
+}
+/// The `step` of a number input for `currency`: absent for whole amounts.
+pub fn trade_step(currency: &str) -> Option<String> {
+    match trade_money::trade_decimals(currency) {
+        Some(0) => None,
+        Some(n) => Some(format!("0.{}1", "0".repeat(usize::from(n) - 1))),
+        None => Some("any".into()),
+    }
+}
+/// A money input labelled with its currency. IDR renders exactly like
+/// [`Field`] with `kind="number"`; another currency accepts its decimals.
+#[component]
+pub fn TradeField(
+    label: &'static str,
+    id: &'static str,
+    value: RwSignal<String>,
+    #[prop(into)] currency: Signal<String>,
+    #[prop(default = "")] note: &'static str,
+    #[prop(default = true)] required: bool,
+) -> impl IntoView {
+    view! {<label class="ops-field"><span>{move||format!("{label} · {}{note}",currency.get())}</span><input data-testid=id type="number" step=move||trade_step(&currency.get()) prop:value=move||value.get() on:input=move|e|value.set_if_alive(event_target_value(&e)) required=required /></label>}
 }
 
 #[component]
@@ -743,41 +797,55 @@ pub fn Records(
     collection: &'static str,
     columns: Vec<(&'static str, &'static str)>,
     selected: RwSignal<String>,
+    /// Column keys that hold a trade amount in the row's own currency.
+    #[prop(optional)]
+    money: Vec<&'static str>,
 ) -> impl IntoView {
     let headings = columns.clone();
     view! {<div class="ops-records">
       {move||if !work.ready.get(){view!{<p class="hint">"Waiting for workspace records…"</p>}.into_any()}
       else{let rows=work.rows(collection);if rows.is_empty(){view!{<div class="ops-empty"><h3>"No records yet"</h3><p>"Create a record to start this workflow, or adjust your search."</p></div>}.into_any()}
-      else{let columns=columns.clone();view!{<div class="ops-table-wrap"><table class="ops-table"><thead><tr>{headings.iter().map(|(_,label)|view!{<th>{*label}</th>}).collect::<Vec<_>>()}<th>"Details"</th></tr></thead><tbody>{rows.into_iter().map(|row|{let id=text(&row,"id");let chosen=id.clone();view!{<tr class:selected=move||selected.get()==chosen>{columns.iter().map(|(key,_)|{let v=&row[*key];let display=if let Some(s)=v.as_str(){s.to_string()}else if v.is_null(){"—".into()}else{v.to_string()};view!{<td>{display}</td>}}).collect::<Vec<_>>()}<td><button type="button" class="ops-open" data-testid=format!("ops-open-{}",id) on:click=move|_|selected.set_if_alive(id.clone())>"Open"</button></td></tr>}}).collect::<Vec<_>>()}</tbody></table></div>}.into_any()}}}
+      else{let columns=columns.clone();let money=money.clone();view!{<div class="ops-table-wrap"><table class="ops-table"><thead><tr>{headings.iter().map(|(key,label)|view!{<th>{if money.contains(key){money_heading(label,&rows)}else{(*label).to_string()}}</th>}).collect::<Vec<_>>()}<th>"Details"</th></tr></thead><tbody>{rows.into_iter().map(|row|{let id=text(&row,"id");let chosen=id.clone();view!{<tr class:selected=move||selected.get()==chosen>{columns.iter().map(|(key,_)|{let v=&row[*key];let display=if money.contains(key){money_cell(&row,key)}else if let Some(s)=v.as_str(){s.to_string()}else if v.is_null(){"—".into()}else{v.to_string()};view!{<td>{display}</td>}}).collect::<Vec<_>>()}<td><button type="button" class="ops-open" data-testid=format!("ops-open-{}",id) on:click=move|_|selected.set_if_alive(id.clone())>"Open"</button></td></tr>}}).collect::<Vec<_>>()}</tbody></table></div>}.into_any()}}}
     </div>}
 }
 
-pub fn currency_amount(amount: i64, currency: &str) -> String {
-    if currency == "IDR" {
-        money(amount)
-    } else {
-        format!("{currency} {amount} minor units")
+/// The heading of a money column. `label` names IDR (`Price · IDR`); when
+/// every listed row is in one other currency the heading names that instead.
+fn money_heading(label: &str, rows: &[Value]) -> String {
+    let mut currencies = rows.iter().map(currency_of);
+    match (currencies.next(), label.strip_suffix(trade_money::IDR)) {
+        (Some(first), Some(stem))
+            if first != trade_money::IDR && currencies.all(|next| next == first) =>
+        {
+            format!("{stem}{first}")
+        }
+        _ => label.to_string(),
     }
+}
+/// A money cell. An IDR row keeps the bare whole-Rupiah integer under its
+/// `· IDR` heading; a row in another currency is written out with its code.
+fn money_cell(row: &Value, key: &str) -> String {
+    let currency = currency_of(row);
+    match row[key].as_i64() {
+        Some(amount) if currency != trade_money::IDR => currency_amount(amount, &currency),
+        Some(amount) => amount.to_string(),
+        None => "—".into(),
+    }
+}
+
+pub fn currency_amount(amount: i64, currency: &str) -> String {
+    trade_money::format_trade(currency, amount)
 }
 
 // A fetch may finish after its route owner has been disposed. Preserve durable
 // marker handling, but never write into a destroyed view or spawn another read.
 
-pub fn exact_money(value: &Value) -> String {
-    let Some(digits) = value
+/// An exact unsigned amount carried as a digit string, in `currency`.
+pub fn exact_money(value: &Value, currency: &str) -> String {
+    value
         .as_str()
-        .filter(|s| !s.is_empty() && s.bytes().all(|c| c.is_ascii_digit()))
-    else {
-        return "Unknown cost".into();
-    };
-    let mut out = String::from("Rp ");
-    for (i, c) in digits.chars().enumerate() {
-        if i > 0 && (digits.len() - i).is_multiple_of(3) {
-            out.push('.')
-        }
-        out.push(c)
-    }
-    out
+        .and_then(|digits| trade_money::format_trade_digits(currency, digits))
+        .unwrap_or_else(|| "Unknown cost".into())
 }
 
 #[cfg(test)]
@@ -889,11 +957,127 @@ mod tests {
     #[test]
     fn exact_money_keeps_large_values_and_unknown_cost_distinct_from_zero() {
         assert_eq!(
-            exact_money(&json!("1000000000000000000")),
+            exact_money(&json!("1000000000000000000"), "IDR"),
             "Rp 1.000.000.000.000.000.000"
         );
-        assert_eq!(exact_money(&json!("0")), "Rp 0");
-        assert_eq!(exact_money(&Value::Null), "Unknown cost");
+        assert_eq!(exact_money(&json!("0"), "IDR"), "Rp 0");
+        assert_eq!(exact_money(&Value::Null, "IDR"), "Unknown cost");
+        assert_eq!(exact_money(&json!("70010"), "USD"), "USD 700.10");
+        assert_eq!(exact_money(&json!("0"), "JPY"), "JPY 0");
+        assert_eq!(exact_money(&Value::Null, "USD"), "Unknown cost");
+    }
+    #[test]
+    fn a_record_amount_is_shown_and_entered_in_its_own_currency() {
+        // IDR output is the one every screen had before other currencies.
+        assert_eq!(money(150_000), "Rp 150.000");
+        assert_eq!(currency_amount(150_000, "IDR"), "Rp 150.000");
+        assert_eq!(currency_amount(-15_000, "IDR"), "−Rp 15.000");
+        assert_eq!(currency_amount(1_999, "USD"), "USD 19.99");
+        assert_eq!(currency_amount(1_500, "JPY"), "JPY 1500");
+        assert_eq!(currency_amount(1_250, "KWD"), "KWD 1.250");
+        let idr = json!({"price":150000,"currency":"IDR"});
+        let legacy = json!({"price":150000});
+        let usd = json!({"price":1999,"currency":"USD"});
+        assert_eq!(row_money(&idr, "price"), "Rp 150.000");
+        assert_eq!(row_money(&legacy, "price"), "Rp 150.000");
+        assert_eq!(row_money(&usd, "price"), "USD 19.99");
+        // The list keeps the bare Rupiah integer under "· IDR" and names
+        // another currency in the heading only when every row shares it.
+        assert_eq!(money_cell(&idr, "price"), "150000");
+        assert_eq!(money_cell(&usd, "price"), "USD 19.99");
+        assert_eq!(money_cell(&usd, "missing"), "—");
+        assert_eq!(
+            money_heading("Price · IDR", std::slice::from_ref(&idr)),
+            "Price · IDR"
+        );
+        assert_eq!(
+            money_heading("Price · IDR", &[usd.clone(), usd.clone()]),
+            "Price · USD"
+        );
+        assert_eq!(money_heading("Price · IDR", &[idr, usd]), "Price · IDR");
+        assert_eq!(money_heading("Price · IDR", &[]), "Price · IDR");
+        let entered = |raw: &str, currency: &str| trade_money::parse_trade(currency, raw).ok();
+        assert_eq!(entered("150000", "IDR"), Some(150_000));
+        assert_eq!(entered("150000.5", "IDR"), None);
+        assert_eq!(entered("19.99", "USD"), Some(1_999));
+        assert_eq!(entered("19.999", "USD"), None);
+        assert_eq!(amount_rule("IDR", "whole Rupiah"), "whole Rupiah");
+        assert_eq!(amount_rule("IDR", "whole IDR"), "whole IDR");
+        assert_eq!(
+            amount_rule("USD", "whole Rupiah"),
+            "USD (at most 2 decimals)"
+        );
+        assert_eq!(amount_rule("JPY", "whole Rupiah"), "whole JPY");
+        assert_eq!(
+            amount_rule("KWD", "whole Rupiah"),
+            "KWD (at most 3 decimals)"
+        );
+        assert_eq!(trade_step("IDR"), None);
+        assert_eq!(trade_step("JPY"), None);
+        assert_eq!(trade_step("USD").as_deref(), Some("0.01"));
+        assert_eq!(trade_step("KWD").as_deref(), Some("0.001"));
+    }
+    #[test]
+    fn a_money_field_names_its_currency_and_takes_decimals_only_outside_idr() {
+        use leptos::prelude::RenderHtml;
+        let owner = Owner::new();
+        owner.with(|| {
+            let value = RwSignal::new("0".to_string());
+            let idr = view! {<TradeField label="Unit price" id="product-price" value currency=Signal::stored("IDR".to_string())/>}.to_html();
+            assert!(idr.contains("Unit price · IDR"), "{idr}");
+            assert!(idr.contains("type=\"number\""));
+            assert!(!idr.contains("step="), "{idr}");
+            let usd = view! {<TradeField label="Unit price" id="product-price" value currency=Signal::stored("USD".to_string())/>}.to_html();
+            assert!(usd.contains("Unit price · USD"), "{usd}");
+            assert!(usd.contains("step=\"0.01\""), "{usd}");
+            let noted = view! {<TradeField label="Unit acquisition cost" id="stock-unit-cost" value currency=Signal::stored("IDR".to_string()) note=" (optional for additions)" required=false/>}.to_html();
+            assert!(noted.contains("Unit acquisition cost · IDR (optional for additions)"), "{noted}");
+        });
+    }
+    fn loaded(domain: Domain, data: Value) -> Workbench {
+        let work = Workbench::new(domain);
+        work.data.set(data);
+        work.ready.set(true);
+        work
+    }
+    #[test]
+    fn record_lists_show_each_amount_in_the_rows_currency() {
+        use leptos::prelude::RenderHtml;
+        Owner::new().with(|| {
+            let selected = RwSignal::new(String::new());
+            let columns = || vec![("sku", "SKU"), ("price", "Price · IDR")];
+            let idr = loaded(Domain::Commerce, json!({"products":[{"id":"a","sku":"TEA","price":150000,"currency":"IDR"}]}));
+            let html = view! {<Records work=idr collection="products" columns=columns() selected money=vec!["price"]/>}.to_html();
+            assert!(html.contains("Price · IDR"), "{html}");
+            assert!(html.contains(">150000<"), "{html}");
+            let usd = loaded(Domain::Commerce, json!({"products":[{"id":"b","sku":"MUG","price":1999,"currency":"USD"}]}));
+            let html = view! {<Records work=usd collection="products" columns=columns() selected money=vec!["price"]/>}.to_html();
+            assert!(html.contains("Price · USD"), "{html}");
+            assert!(html.contains("USD 19.99"), "{html}");
+            assert!(!html.contains(">1999<"), "{html}");
+        });
+    }
+    #[test]
+    fn idr_workspaces_keep_their_rupiah_labels_and_a_company_form_names_its_currency() {
+        use leptos::prelude::RenderHtml;
+        Owner::new().with(|| {
+            let catalog = view! {<commerce::Catalog/>}.to_html();
+            assert!(catalog.contains("Unit price · IDR"), "{catalog}");
+            let purchasing = view! {<purchasing::Purchasing/>}.to_html();
+            assert!(purchasing.contains("Unit cost · IDR"), "{purchasing}");
+            let invoices = view! {<billing::Invoices/>}.to_html();
+            assert!(invoices.contains("Unit amount · IDR"), "{invoices}");
+            // The Commerce read reports the company's trade currency.
+            let work = loaded(
+                Domain::Commerce,
+                json!({"products":[],"tradeCurrency":"USD"}),
+            );
+            assert_eq!(work.trade_currency(), "USD");
+            assert_eq!(
+                loaded(Domain::Commerce, json!({"products":[]})).trade_currency(),
+                "IDR"
+            );
+        });
     }
     #[test]
     fn receipts_match_wire_shape_original_key_and_resource() {

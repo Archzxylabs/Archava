@@ -359,12 +359,33 @@ fn field_view(
         }
         return view!{<label class="ops-check"><input data-testid=id type="checkbox" prop:checked=move||value.get().as_bool().unwrap_or(false) on:change=move|e|setter.run(json!(event_target_checked(&e)))/><span>{title}</span></label>}.into_any();
     }
+    if domain == "accounting"
+        && name == "sourceUnit"
+        && matches!(
+            action.as_str(),
+            "invoice_policy.set" | "purchase_policy.set" | "stock_policy.set"
+        )
+    {
+        // The unit follows the configured book's currency (the database
+        // refuses the other one), so the form does not leave it to be guessed.
+        // Without a known book the choice stays with the operator.
+        let unit_path = path.clone();
+        Effect::new(move |_| {
+            let Some(unit) = accounting::policy_source_unit(&refs.get()) else {
+                return;
+            };
+            if at(&values.get(), &unit_path) != unit {
+                setter.run(json!(unit));
+            }
+        });
+    }
     if let Some(options) = schema["options"]
         .as_array()
         .or_else(|| schema["enum"].as_array())
     {
         let options = options.clone();
-        return view!{<label class="ops-field"><span>{title}</span><select data-testid=id prop:value=move||string(&value.get()) on:change=move|e|{let v=event_target_value(&e);setter.run(if v.is_empty(){Value::Null}else{json!(v)});} required=!optional><option value="">{if optional{"Keep unchanged"}else{"Choose…"}}</option>{options.into_iter().map(|v|{let s=v.as_str().unwrap_or_default().to_string();view!{<option value=s.clone()>{label(&s)}</option>}}).collect::<Vec<_>>()}</select></label>}.into_any();
+        let captions = schema["optionLabels"].clone();
+        return view!{<label class="ops-field"><span>{title}</span><select data-testid=id prop:value=move||string(&value.get()) on:change=move|e|{let v=event_target_value(&e);setter.run(if v.is_empty(){Value::Null}else{json!(v)});} required=!optional><option value="">{if optional{"Keep unchanged"}else{"Choose…"}}</option>{options.into_iter().map(|v|{let s=v.as_str().unwrap_or_default().to_string();let caption=captions[&s].as_str().map(str::to_owned).unwrap_or_else(||label(&s));view!{<option value=s.clone()>{caption}</option>}}).collect::<Vec<_>>()}</select></label>}.into_any();
     }
     if let Some((target, collection)) = reference(&name, &action, domain) {
         let key = format!("{target}/{collection}");
@@ -590,6 +611,14 @@ fn prefills(fields: &[Value], row: &Value, values: &mut Value) {
             }
             if let Some(revision) = row.get(name).or_else(|| row.get("revision")) {
                 values[name] = revision.clone();
+            }
+            continue;
+        }
+        // A field that must repeat a value of the selected record (a supplier
+        // document's currency is its purchase order's) names it in `prefill`.
+        if let Some(source) = f["prefill"].as_str() {
+            if let Some(v) = row.get(source).filter(|v| v.is_string()) {
+                values[name] = v.clone();
             }
             continue;
         }
@@ -1254,6 +1283,98 @@ mod tests {
         );
         assert_eq!(draft["expectedPolicyRevision"], 2);
         assert!(draft["expectedPeriodRevision"].is_null());
+    }
+    fn catalogue_fields(module: &str, action: &str) -> Vec<Value> {
+        contracts::module(module).unwrap()["actions"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|a| a["id"] == action)
+            .unwrap()["fields"]
+            .as_array()
+            .unwrap()
+            .clone()
+    }
+    #[test]
+    fn a_supplier_document_form_takes_the_selected_purchase_orders_currency() {
+        for action in ["document.capture", "document.revise"] {
+            let fields = catalogue_fields("purchasing", action);
+            let currency = fields.iter().find(|f| f["name"] == "currency").unwrap();
+            assert!(
+                currency.get("options").is_none(),
+                "{action} is no longer limited to IDR"
+            );
+            let mut draft = contracts::field_defaults(&fields);
+            assert_eq!(draft["currency"], "IDR", "IDR stays the default");
+            prefills(&fields, &json!({"id":"po","currency":"USD"}), &mut draft);
+            assert_eq!(draft["currency"], "USD");
+            let mut draft = contracts::field_defaults(&fields);
+            prefills(&fields, &json!({"id":"po","currency":"IDR"}), &mut draft);
+            assert_eq!(draft["currency"], "IDR");
+            let mut draft = contracts::field_defaults(&fields);
+            prefills(&fields, &json!({"id":"legacy-row"}), &mut draft);
+            assert_eq!(draft["currency"], "IDR");
+        }
+    }
+    #[test]
+    fn posting_policy_forms_offer_both_source_units_and_say_which_book_each_is_for() {
+        use leptos::prelude::RenderHtml;
+        for action in [
+            "invoice_policy.set",
+            "purchase_policy.set",
+            "stock_policy.set",
+        ] {
+            let fields = catalogue_fields("accounting", action);
+            let unit = fields
+                .iter()
+                .find(|f| f["name"] == "sourceUnit")
+                .unwrap()
+                .clone();
+            assert_eq!(unit["enum"], json!(["whole_idr", "minor"]));
+            assert_eq!(unit["default"], "whole_idr");
+            let owner = Owner::new();
+            owner.with(|| {
+                let values = RwSignal::new(contracts::field_defaults(&fields));
+                let refs = RwSignal::new(json!({}));
+                let html = field_view(
+                    unit.clone(),
+                    vec!["sourceUnit".into()],
+                    values,
+                    refs,
+                    "accounting",
+                    action.to_string(),
+                )
+                .to_html();
+                assert!(
+                    html.contains("data-testid=\"operator-accounting-sourceUnit\""),
+                    "{html}"
+                );
+                assert!(html.contains("value=\"whole_idr\""), "{html}");
+                assert!(html.contains("value=\"minor\""), "{html}");
+                assert!(
+                    html.contains("IDR book: whole Rupiah; 1 Rupiah becomes 100 book units"),
+                    "{html}"
+                );
+                assert!(
+                    html.contains("Book in any other currency: ISO minor units, posted unchanged"),
+                    "{html}"
+                );
+            });
+        }
+        // The unit the form settles on is the configured book's.
+        assert_eq!(
+            accounting::policy_source_unit(&json!({"__currency":"IDR","__minorUnits":2})),
+            Some("whole_idr")
+        );
+        assert_eq!(
+            accounting::policy_source_unit(&json!({"__currency":"USD","__minorUnits":2})),
+            Some("minor")
+        );
+        assert_eq!(
+            accounting::policy_source_unit(&json!({"__currency":"JPY","__minorUnits":0})),
+            Some("minor")
+        );
+        assert_eq!(accounting::policy_source_unit(&json!({})), None);
     }
 }
 

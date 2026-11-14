@@ -723,6 +723,12 @@ async fn company_products_and_sales_orders_take_the_book_currency() {
     let company = trade_company(&app, &session, "USDCO").await;
     let buyer = trade_buyer(&app, &session).await;
     trade_book(&app, &session, &company, "USD").await;
+    // Before the first record exists the read already names the currency a
+    // new product or order of this company is created in, so the form can
+    // label and read its price in it.
+    let empty = company_snapshot(&app, &session, &company).await;
+    assert_eq!(empty["tradeCurrency"], "USD");
+    assert_eq!(empty["products"], json!([]));
 
     let item = company_product(&app, &session, &company, "USD-ITEM").await;
     let order = command(&app, &session, company_order(&company, &buyer, &[&item])).await;
@@ -770,6 +776,7 @@ async fn records_without_a_company_or_a_book_stay_idr() {
     assert_eq!(stored_currency(&f, "products", &unowned).await, "IDR");
     assert_eq!(stored_currency(&f, "orders", unowned_order).await, "IDR");
     let view = snapshot(&app, &session).await;
+    assert_eq!(view["tradeCurrency"], "IDR");
     assert_eq!(read_currency(&view, "products", &unowned), "IDR");
     assert_eq!(read_currency(&view, "orders", unowned_order), "IDR");
 
@@ -781,6 +788,7 @@ async fn records_without_a_company_or_a_book_stay_idr() {
     assert_eq!(stored_currency(&f, "products", &item).await, "IDR");
     assert_eq!(stored_currency(&f, "orders", order_id).await, "IDR");
     let view = company_snapshot(&app, &session, &company).await;
+    assert_eq!(view["tradeCurrency"], "IDR");
     assert_eq!(read_currency(&view, "products", &item), "IDR");
     assert_eq!(read_currency(&view, "orders", order_id), "IDR");
 }

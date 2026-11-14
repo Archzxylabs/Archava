@@ -160,6 +160,18 @@ pub fn canonical_checkout(
     format!("{tenant}|{order}|{amount}|{currency}|{item}")
 }
 
+/// The amount the checkout document shows. It is the order's total, so it
+/// follows the trade convention: whole Rupiah for IDR (`Rp 30000`, as before),
+/// the ISO minor unit for any other currency, shown with its decimals
+/// (`USD 19.99`). An uncatalogued code keeps the integer and names its unit.
+fn checkout_amount(amount: u64, currency: &str) -> String {
+    if currency == archava_domain::erp::trade_money::IDR {
+        return format!("Rp {amount}");
+    }
+    archava_domain::erp::trade_money::format_trade_digits(currency, &amount.to_string())
+        .unwrap_or_else(|| format!("{currency} {amount}"))
+}
+
 /// Percent-encodes a value for the signed checkout URL, so a display name with
 /// spaces or punctuation survives the round trip without changing meaning.
 pub fn percent_encode(input: &str) -> String {
@@ -270,11 +282,7 @@ pub async fn serve_embed_checkout(
     let currency = params.currency;
     let item_name = escape_html(&params.item);
 
-    let formatted_amount = if currency == "IDR" {
-        format!("Rp {}", amount)
-    } else {
-        format!("{} {}", currency, amount)
-    };
+    let formatted_amount = checkout_amount(amount, &currency);
 
     let html = format!(
         r#"<!DOCTYPE html>
@@ -776,4 +784,27 @@ pub async fn database_ready(state: &AppState) -> bool {
         .await,
         Ok(Ok(()))
     )
+}
+
+#[cfg(test)]
+mod checkout_amount_tests {
+    use super::checkout_amount;
+
+    #[test]
+    fn the_checkout_document_shows_the_order_total_in_its_currency() {
+        // IDR is whole Rupiah and prints exactly as it did before.
+        assert_eq!(checkout_amount(30_000, "IDR"), "Rp 30000");
+        assert_eq!(checkout_amount(0, "IDR"), "Rp 0");
+        // Any other currency is its ISO minor unit.
+        assert_eq!(checkout_amount(1_999, "USD"), "USD 19.99");
+        assert_eq!(checkout_amount(1_500, "JPY"), "JPY 1500");
+        assert_eq!(checkout_amount(1_250, "KWD"), "KWD 1.250");
+        assert_eq!(
+            checkout_amount(u64::MAX, "USD"),
+            "USD 184467440737095516.15"
+        );
+        // An uncatalogued (still signed) code keeps the integer.
+        assert_eq!(checkout_amount(1_999, "ZZZ"), "ZZZ 1999 minor units");
+        assert_eq!(checkout_amount(1_999, "ABCDEF"), "ABCDEF 1999 minor units");
+    }
 }

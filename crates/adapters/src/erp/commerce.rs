@@ -557,7 +557,15 @@ pub async fn workspace_filtered(
     };
     super::inventory_valuation::enrich(connection, tenant, context, &mut products, &mut orders)
         .await?;
+    // The currency a new product or order of this scope will be created in
+    // (the selected company's book, IDR otherwise), so a form can label and
+    // read its price in that currency before the first record exists. The
+    // insert guards stay the authority.
+    let trade_currency = match company {
+        Some(company) => kernel::company_trade_currency(connection, tenant, company).await?,
+        None => "IDR".to_owned(),
+    };
     Ok(
-        json!({"products":products,"orders":orders,"pageLimit":100,"permissions":context.access.permissions,"scope":context.access.scope}),
+        json!({"products":products,"orders":orders,"tradeCurrency":trade_currency,"pageLimit":100,"permissions":context.access.permissions,"scope":context.access.scope}),
     )
 }

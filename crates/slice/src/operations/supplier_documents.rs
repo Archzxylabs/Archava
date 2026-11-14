@@ -14,9 +14,9 @@ pub(super) fn Documents(work: Workbench, order_id: RwSignal<String>) -> impl Int
         editing.set_if_alive(false)
     });
     view! {<section class="ops-detail" hidden=move||work.company.get().is_none()||!work.permits("documents.read") data-testid="supplier-documents"><p class="eyebrow">"SUPPLIER DOCUMENTS · UNPOSTED"</p><h3>"Check supplier claims against accepted goods"</h3><p class="hint">"Capture the supplier’s actual goods claim. Matching checks PO prices and unallocated accepted receipts. This does not post accounts, calculate tax, or pay the supplier. Tax, freight and other charges require separate review."</p>
-     <Records work collection="documents" columns=vec![("vendorReference","Vendor reference"),("state","Check"),("declaredTotal","Claim · IDR")] selected/>
+     <Records work collection="documents" columns=vec![("vendorReference","Vendor reference"),("state","Check"),("declaredTotal","Claim · IDR")] selected money=vec!["declaredTotal"]/>
      {move||work.rows("documents").into_iter().find(|d|d["id"]==selected.get()).map(|d|{let id=text(&d,"id");let match_id=id.clone();let revision=integer(&d,"revision");let state=text(&d,"state");let po_revision=integer(&d["sourceOrder"],"revision");let source=d["sourceOrder"].clone();let edit=d.clone();
-      view!{<section data-testid="supplier-document-detail"><company_context::Identity row=d.clone()/><h4>{text(&d,"vendorReference")}</h4><p data-testid="supplier-document-state">{format!("{} · UNPOSTED · {} · allocated accepted quantity {}",state,money(integer(&d,"declaredTotal")),integer(&d,"activeAllocatedQuantity"))}</p><p>{format!("Supplier {} · source PO {} · reviewed order version {}",text(&d,"supplierName"),short(&text(&d,"orderId")),integer(&d,"observedOrderRevision"))}</p>
+      view!{<section data-testid="supplier-document-detail"><company_context::Identity row=d.clone()/><h4>{text(&d,"vendorReference")}</h4><p data-testid="supplier-document-state">{format!("{} · UNPOSTED · {} · allocated accepted quantity {}",state,row_money(&d,"declaredTotal"),integer(&d,"activeAllocatedQuantity"))}</p><p>{format!("Supplier {} · source PO {} · reviewed order version {}",text(&d,"supplierName"),short(&text(&d,"orderId")),integer(&d,"observedOrderRevision"))}</p>
        <ul class="ops-lines" data-testid="supplier-document-findings">{d["matchEvidence"]["reasons"].as_array().cloned().unwrap_or_default().into_iter().map(|r|view!{<li>{format!("{} · claimed {} · observed {}",text(&r,"code").replace('_'," "),r.get("claimed").unwrap_or(&Value::Null),r.get("available").or_else(||r.get("ordered")).or_else(||r.get("computed")).unwrap_or(&Value::Null))}</li>}).collect::<Vec<_>>()}</ul>
        <ul class="ops-lines">{d["matchEvidence"]["lines"].as_array().cloned().unwrap_or_default().into_iter().map(|l|view!{<li>{format!("Line {} · claimed {} · accepted {} · rejected {} · available {}",short(&text(&l,"lineId")),integer(&l,"claimedQuantity"),integer(&l,"accepted"),integer(&l,"rejected"),integer(&l,"available"))}</li>}).collect::<Vec<_>>()}</ul>
        <div hidden=move||!work.permits("documents.write")><Field label="Review / correction reason" id="supplier-doc-reason" value=reason/>
@@ -44,24 +44,32 @@ fn Composer(work: Workbench, order: Value, existing: Option<Value>) -> impl Into
             .map(|d| text(d, "documentDate"))
             .unwrap_or_default(),
     );
+    // The claim is in its purchase order's currency: a correction keeps the
+    // document's, a new claim takes the selected order's (both are returned
+    // by the workspace read; the embedded source order of a document is not).
+    let currency = StoredValue::new(currency_of(existing.as_ref().unwrap_or(&order)));
+    let shown = move |amount: i64| {
+        trade_money::trade_decimal(&currency.get_value(), amount)
+            .unwrap_or_else(|| amount.to_string())
+    };
     let total = RwSignal::new(
         existing
             .as_ref()
-            .map(|d| integer(d, "declaredTotal").to_string())
+            .map(|d| shown(integer(d, "declaredTotal")))
             .unwrap_or_default(),
     );
     let reason = RwSignal::new(String::new());
     let source = StoredValue::new(order.clone());
     let prior = StoredValue::new(existing.clone());
     let edit = existing.is_some();
-    let drafts=RwSignal::new(order["lines"].as_array().cloned().unwrap_or_default().into_iter().map(|line|{let found=existing.as_ref().and_then(|d|d["lines"].as_array()).and_then(|ls|ls.iter().find(|l|l["lineId"]==line["id"]));json!({"lineId":line["id"],"title":line["title"],"accepted":line["acceptedQuantity"],"rejected":line["rejectedQuantity"],"orderedUnitCost":line["unitCost"],"quantity":found.map(|l|integer(l,"quantity").to_string()).unwrap_or_default(),"unitCost":found.map(|l|integer(l,"unitCost").to_string()).unwrap_or_default()})}).collect::<Vec<_>>());
+    let drafts=RwSignal::new(order["lines"].as_array().cloned().unwrap_or_default().into_iter().map(|line|{let found=existing.as_ref().and_then(|d|d["lines"].as_array()).and_then(|ls|ls.iter().find(|l|l["lineId"]==line["id"]));json!({"lineId":line["id"],"title":line["title"],"accepted":line["acceptedQuantity"],"rejected":line["rejectedQuantity"],"orderedUnitCost":line["unitCost"],"quantity":found.map(|l|integer(l,"quantity").to_string()).unwrap_or_default(),"unitCost":found.map(|l|shown(integer(l,"unitCost"))).unwrap_or_default()})}).collect::<Vec<_>>());
     view! {<form class="ops-form" data-testid=if edit{"supplier-doc-revise-form"}else{"supplier-doc-capture-form"} on:submit=move|e|{
-    e.prevent_default();let Some(amount)=number(total).filter(|n|*n>=0)else{work.fail("Enter the supplier’s declared whole IDR goods total.");return};let mut claims=Vec::new();for l in drafts.get_untracked(){let q=text(&l,"quantity");let price=text(&l,"unitCost");if q.trim().is_empty()&&price.trim().is_empty(){continue}let(Ok(q),Ok(price))=(q.parse::<i64>(),price.parse::<i64>())else{work.fail("Enter whole claimed quantity and unit price, or leave both blank to omit a line.");return};if q<=0||price<0{work.fail("Claim quantities must be positive and unit prices non-negative.");return}claims.push(json!({"lineId":l["lineId"],"quantity":q,"unitCost":price}))}if claims.is_empty(){work.fail("Enter at least one actual supplier claim line.");return}
-    let o=source.get_value();let mut command=json!({"operation":"document.capture","orderId":o["id"],"expectedOrderRevision":o["revision"],"supplierId":o["supplierId"],"vendorReference":vendor.get_untracked(),"documentDate":day.get_untracked(),"currency":"IDR","declaredTotal":amount,"lines":claims});if let Some(d)=prior.get_value(){command.as_object_mut().unwrap().remove("orderId");command.as_object_mut().unwrap().remove("supplierId");command.as_object_mut().unwrap().remove("vendorReference");command["operation"]=json!("document.revise");command["id"]=d["id"].clone();command["expectedRevision"]=d["revision"].clone();command["reason"]=json!(reason.get_untracked());}work.send(command);
+    e.prevent_default();let cur=currency.get_value();let Some(amount)=trade_input(total,&cur).filter(|n|*n>=0)else{work.fail(format!("Enter the supplier’s declared {} goods total.",amount_rule(&cur,"whole IDR")));return};let mut claims=Vec::new();for l in drafts.get_untracked(){let q=text(&l,"quantity");let price=text(&l,"unitCost");if q.trim().is_empty()&&price.trim().is_empty(){continue}let(Ok(q),Ok(price))=(q.parse::<i64>(),trade_money::parse_trade(&cur,&price))else{work.fail(if cur==trade_money::IDR{"Enter whole claimed quantity and unit price, or leave both blank to omit a line.".to_string()}else{format!("Enter a whole claimed quantity and a unit price in {}, or leave both blank to omit a line.",amount_rule(&cur,""))});return};if q<=0||price<0{work.fail("Claim quantities must be positive and unit prices non-negative.");return}claims.push(json!({"lineId":l["lineId"],"quantity":q,"unitCost":price}))}if claims.is_empty(){work.fail("Enter at least one actual supplier claim line.");return}
+    let o=source.get_value();let mut command=json!({"operation":"document.capture","orderId":o["id"],"expectedOrderRevision":o["revision"],"supplierId":o["supplierId"],"vendorReference":vendor.get_untracked(),"documentDate":day.get_untracked(),"currency":cur,"declaredTotal":amount,"lines":claims});if let Some(d)=prior.get_value(){command.as_object_mut().unwrap().remove("orderId");command.as_object_mut().unwrap().remove("supplierId");command.as_object_mut().unwrap().remove("vendorReference");command["operation"]=json!("document.revise");command["id"]=d["id"].clone();command["expectedRevision"]=d["revision"].clone();command["reason"]=json!(reason.get_untracked());}work.send(command);
     }><h4>{if edit{"Correct supplier claim · new version"}else{"Actual supplier goods claim"}}</h4>
-    {(!edit).then(||view!{<Field label="Vendor document reference" id="supplier-doc-reference" value=vendor/>})}<Field label="Vendor document date" id=if edit{"supplier-doc-edit-date"}else{"supplier-doc-date"} value=day kind="date"/><Field label="Declared goods total · IDR" id=if edit{"supplier-doc-edit-total"}else{"supplier-doc-total"} value=total kind="number"/>
+    {(!edit).then(||view!{<Field label="Vendor document reference" id="supplier-doc-reference" value=vendor/>})}<Field label="Vendor document date" id=if edit{"supplier-doc-edit-date"}else{"supplier-doc-date"} value=day kind="date"/><TradeField label="Declared goods total" id=if edit{"supplier-doc-edit-total"}else{"supplier-doc-total"} value=total currency=Signal::stored(currency.get_value())/>
     <p class="hint">"Enter what the supplier document actually claims. Leave both fields blank for a line that is not claimed. Prices and accepted goods are checked after capture."</p>
-    {drafts.get_untracked().into_iter().map(|l|{let id=text(&l,"lineId");let qid=id.clone();let cid=id.clone();let qread=id.clone();let cread=id;view!{<fieldset class="ops-receipt-line"><legend>{text(&l,"title")}</legend><p class="hint">{format!("PO unit price {} · accepted {} · rejected {}",money(integer(&l,"orderedUnitCost")),integer(&l,"accepted"),integer(&l,"rejected"))}</p><label>"Claimed quantity"<input type="number" min="1" data-testid=if edit{"supplier-doc-edit-quantity"}else{"supplier-doc-quantity"} prop:value=move||drafts.get().iter().find(|l|l["lineId"]==qread).map(|l|text(l,"quantity")).unwrap_or_default() on:input=move|e|set_claim(drafts,&qid,"quantity",event_target_value(&e))/></label><label>"Claimed unit price · IDR"<input type="number" min="0" data-testid=if edit{"supplier-doc-edit-price"}else{"supplier-doc-price"} prop:value=move||drafts.get().iter().find(|l|l["lineId"]==cread).map(|l|text(l,"unitCost")).unwrap_or_default() on:input=move|e|set_claim(drafts,&cid,"unitCost",event_target_value(&e))/></label></fieldset>}}).collect::<Vec<_>>()}
+    {drafts.get_untracked().into_iter().map(|l|{let id=text(&l,"lineId");let qid=id.clone();let cid=id.clone();let qread=id.clone();let cread=id;view!{<fieldset class="ops-receipt-line"><legend>{text(&l,"title")}</legend><p class="hint">{format!("PO unit price {} · accepted {} · rejected {}",currency_amount(integer(&l,"orderedUnitCost"),&currency.get_value()),integer(&l,"accepted"),integer(&l,"rejected"))}</p><label>"Claimed quantity"<input type="number" min="1" data-testid=if edit{"supplier-doc-edit-quantity"}else{"supplier-doc-quantity"} prop:value=move||drafts.get().iter().find(|l|l["lineId"]==qread).map(|l|text(l,"quantity")).unwrap_or_default() on:input=move|e|set_claim(drafts,&qid,"quantity",event_target_value(&e))/></label><label>{format!("Claimed unit price · {}",currency.get_value())}<input type="number" min="0" step=trade_step(&currency.get_value()) data-testid=if edit{"supplier-doc-edit-price"}else{"supplier-doc-price"} prop:value=move||drafts.get().iter().find(|l|l["lineId"]==cread).map(|l|text(l,"unitCost")).unwrap_or_default() on:input=move|e|set_claim(drafts,&cid,"unitCost",event_target_value(&e))/></label></fieldset>}}).collect::<Vec<_>>()}
     {edit.then(||view!{<Field label="Reason for correction" id="supplier-doc-edit-reason" value=reason/>})}<button class="btn" type="submit" data-testid=if edit{"supplier-doc-revise"}else{"supplier-doc-save"} disabled=move||work.blocked()>{if edit{"Save corrected claim version"}else{"Capture supplier claim"}}</button></form>}
 }
 fn set_claim(drafts: RwSignal<Vec<Value>>, id: &str, key: &str, value: String) {
@@ -70,4 +78,42 @@ fn set_claim(drafts: RwSignal<Vec<Value>>, id: &str, key: &str, value: String) {
             l[key] = json!(value)
         }
     })
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use leptos::prelude::RenderHtml;
+    fn order(currency: Option<&str>, unit_cost: i64) -> Value {
+        let mut order = json!({"id":"po","revision":3,"supplierId":"supplier","lines":[{"id":"line","title":"Green tea","unitCost":unit_cost,"acceptedQuantity":4,"rejectedQuantity":0}]});
+        if let Some(currency) = currency {
+            order["currency"] = json!(currency);
+        }
+        order
+    }
+    #[test]
+    fn a_supplier_claim_is_entered_and_shown_in_its_purchase_orders_currency() {
+        Owner::new().with(|| {
+            let work = Workbench::new(Domain::Purchasing);
+            let idr = view! {<Composer work order=order(Some("IDR"), 150_000) existing=None/>}.to_html();
+            assert!(idr.contains("Declared goods total · IDR"), "{idr}");
+            assert!(idr.contains("PO unit price Rp 150.000"), "{idr}");
+            assert!(idr.contains("Claimed unit price · IDR"), "{idr}");
+            assert!(!idr.contains("step="), "{idr}");
+            // A row without a currency is IDR.
+            let legacy = view! {<Composer work order=order(None, 150_000) existing=None/>}.to_html();
+            assert!(legacy.contains("PO unit price Rp 150.000"), "{legacy}");
+            let usd = view! {<Composer work order=order(Some("USD"), 1_250) existing=None/>}.to_html();
+            assert!(usd.contains("Declared goods total · USD"), "{usd}");
+            assert!(usd.contains("PO unit price USD 12.50"), "{usd}");
+            assert!(usd.contains("Claimed unit price · USD"), "{usd}");
+            assert!(usd.contains("step=\"0.01\""), "{usd}");
+            // A correction keeps the document's currency (its embedded source
+            // order carries none) and shows the stored minor units as decimals.
+            let source = order(None, 1_250);
+            let document = json!({"id":"doc","revision":2,"currency":"USD","declaredTotal":5_000,"documentDate":"2026-11-14","lines":[{"lineId":"line","quantity":4,"unitCost":1_250}]});
+            let revise = view! {<Composer work order=source existing=Some(document)/>}.to_html();
+            assert!(revise.contains("Declared goods total · USD"), "{revise}");
+            assert!(revise.contains("PO unit price USD 12.50"), "{revise}");
+        });
+    }
 }
