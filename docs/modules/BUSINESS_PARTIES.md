@@ -22,6 +22,12 @@ The existing Organizations command endpoint/envelope supports:
 - `party.refresh_source`: party `id`, `expectedRevision`,
   `expectedSourceRevision` and `reason`.
 
+A party registered from an organization also keeps that organization's tax id as
+part of the reviewed snapshot (`taxId`, Organizations 005): stored as entered, changed
+only by `party.refresh_source`, and null for a party registered from a contact. It is
+not a tax registration and nothing verifies it. See the
+[Indonesia tax pack](TAX_INDONESIA_PACK.md#tax-registration-identifiers).
+
 Creation requires at least one role. Later clearing both roles is allowed; it
 keeps the identity/history and does not disable existing legacy transactions.
 Reactivation retains the same ID. No command accepts a caller-supplied name,

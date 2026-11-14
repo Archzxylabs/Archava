@@ -43,6 +43,7 @@ pub mod trade_money;
 pub mod refusals;
 // Tax fractions and the two price bases (TAX.md rules 4 and 5).
 pub mod tax;
+pub mod tax_templates;
 
 // R07 cohorts (PACKET-007..010).
 pub mod attendance;

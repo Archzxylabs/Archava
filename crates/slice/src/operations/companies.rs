@@ -18,6 +18,65 @@ pub(super) fn Registry(work: Workbench) -> impl IntoView {
     <button type="submit" class="btn" data-testid="company-save" disabled=move||work.blocked()>"Register reviewed company"</button>
     </form></div></details></Show><Profile work/>}
 }
+/// Said wherever a company's tax id or its registration statement is shown.
+const TAX_REGISTRATION_NOTICE: &str =
+    "Entered by your company; Archava does not verify tax ids or tax registration.";
+
+/// The company's tax id and its own statement about being registered for
+/// value-added tax, as stored.
+fn tax_registration_line(row: &Value) -> String {
+    let tax_id = row["taxId"]
+        .as_str()
+        .filter(|value| !value.is_empty())
+        .map_or_else(
+            || "no tax id entered".to_string(),
+            |value| format!("tax id {value}"),
+        );
+    let stated = if row["vatRegistered"] == true {
+        "the company states it is registered for value-added tax"
+    } else {
+        "no statement that the company is registered for value-added tax"
+    };
+    format!("Tax registration: {tax_id} · {stated}.")
+}
+/// The stored statement of the chosen company with the notice; nothing
+/// without a company.
+fn tax_registration_summary(row: Option<&Value>) -> AnyView {
+    match row {
+        Some(row) => view! {<p data-testid="company-tax-registration">{tax_registration_line(row)}</p>
+            <p class="hint" data-testid="company-tax-registration-notice">{TAX_REGISTRATION_NOTICE}" The tax id is the reviewed copy of the source organization's tax id: change it on the organization, then apply the reviewed company profile. A company can be marked registered only while its tax id is digits with spaces, dots, slashes or hyphens."</p>}
+        .into_any(),
+        None => ().into_any(),
+    }
+}
+/// The company's tax registration statement and its reviewed form.
+#[component]
+fn TaxRegistration(work: Workbench, current: Memo<Option<Value>>) -> impl IntoView {
+    let stated = RwSignal::new(false);
+    let reason = RwSignal::new(String::new());
+    Effect::new(move |_| {
+        stated.set_if_alive(
+            current
+                .get()
+                .is_some_and(|row| row["vatRegistered"] == true),
+        );
+        reason.set_if_alive(String::new());
+    });
+    let save = move |e: leptos::ev::SubmitEvent| {
+        e.prevent_default();
+        let Some(row) = current.get_untracked() else {
+            return;
+        };
+        work.send(json!({"operation":"company.set_tax_registration","id":row["id"],"expectedRevision":row["revision"],"vatRegistered":stated.get_untracked(),"reason":reason.get_untracked()}));
+    };
+    view! {<details class="ops-disclosure" data-testid="company-tax-registration-panel"><summary>"Tax registration"</summary>
+    {move||tax_registration_summary(current.get().as_ref())}
+    <form class="ops-form" on:submit=save>
+    <label class="ops-check"><input type="checkbox" data-testid="company-vat-registered" prop:checked=move||stated.get() on:change=move|e|stated.set_if_alive(event_target_checked(&e))/><span>"The company states it is registered for value-added tax"</span></label>
+    <Field label="Reason for the tax registration change" id="company-tax-registration-reason" value=reason/>
+    <button type="submit" class="btn" data-testid="company-tax-registration-save" disabled=move||work.blocked()||current.get().is_none_or(|row|(row["vatRegistered"]==true)==stated.get())>"Save tax registration"</button>
+    </form></details>}
+}
 #[component]
 fn Profile(work: Workbench) -> impl IntoView {
     let selected = RwSignal::new(String::new());
@@ -69,6 +128,7 @@ fn Profile(work: Workbench) -> impl IntoView {
     <Field label="Reason for profile change" id="company-profile-reason" value=reason/>
     <button type="submit" class="btn" data-testid="company-active-save" disabled=move||work.blocked()||current.get().is_none_or(|r|r["active"]==active.get())>"Save company activity"</button></form>
     <p class="hint">"Reactivation checks the current organization profile. If it changed, review and refresh this company first. Deactivation preserves its history."</p>
+    <TaxRegistration work current/>
     <button type="button" class="btn secondary" data-testid="company-source-load" disabled=move||work.blocked()||loading.get()||current.get().is_none() on:click=move|_|{
         let Some(row)=current.get_untracked()else{return};let Some(held)=session::held()else{return};let source=text(&row,"sourceOrganizationId");
         let path=format!("/erp/organizations/workspace?tenant={}&collection=organizations&id={}",crate::contacts::query_encode(&held.tenant),crate::contacts::query_encode(&source));
@@ -78,4 +138,40 @@ fn Profile(work: Workbench) -> impl IntoView {
     {move||reviewed.get().map(|s|view!{<p class="hint" data-testid="company-source-preview">{format!("Review: {} · official name {} · reference {} · source revision {} · {}",text(&s,"name"),text(&s,"legalName"),text(&s,"taxId"),integer(&s,"revision"),text(&s,"state"))}</p>})}
     <button type="button" class="btn" data-testid="company-source-save" disabled=move||work.blocked()||loading.get()||!can_refresh() on:click=move|_|{let(Some(row),Some(source))=(current.get_untracked(),reviewed.get_untracked())else{return};if reason.get_untracked().trim().is_empty(){work.fail("Enter a reason before applying the reviewed company profile.");return}work.send(json!({"operation":"company.refresh_source","id":row["id"],"expectedRevision":row["revision"],"expectedSourceRevision":source["revision"],"reason":reason.get_untracked()}));}>"Apply reviewed company profile"</button>
     </div><p class="hint" role="status" data-testid="company-profile-status">{move||notice.get()}</p></div></details>}
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use leptos::prelude::RenderHtml;
+
+    #[test]
+    fn the_company_profile_states_its_tax_id_and_registration_as_entered() {
+        let row =
+            json!({"id":"c","taxId":"01.234.567.8-999.000","vatRegistered":true,"revision":3});
+        let html = tax_registration_summary(Some(&row)).to_html();
+        assert!(html.contains("data-testid=\"company-tax-registration\""));
+        assert!(html.contains(
+            "Tax registration: tax id 01.234.567.8-999.000 · the company states it is registered for value-added tax."
+        ));
+        assert!(html.contains("Archava does not verify tax ids or tax registration."));
+        assert!(html.contains("change it on the organization"));
+        // A company from before the field, or without a tax id.
+        assert_eq!(
+            tax_registration_line(&json!({"id":"c","taxId":null})),
+            "Tax registration: no tax id entered · no statement that the company is registered for value-added tax."
+        );
+        assert_eq!(
+            tax_registration_line(&json!({"taxId":"<b>","vatRegistered":false})),
+            "Tax registration: tax id <b> · no statement that the company is registered for value-added tax."
+        );
+        let html = tax_registration_summary(Some(&json!({"taxId":"<b>"}))).to_html();
+        assert!(html.contains("tax id &lt;b&gt;") && !html.contains("<b>"));
+        assert!(!tax_registration_summary(None)
+            .to_html()
+            .contains("Tax registration"));
+        for word in ["verified by", "compliant", "official", "NPWP", "PKP"] {
+            assert!(!html.contains(word), "{word}");
+        }
+    }
 }

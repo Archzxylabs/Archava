@@ -7,7 +7,7 @@
 | Area | Source | Read this boundary carefully |
 | --- | --- | --- |
 | Journal rules and reports | [general_ledger.rs](../../crates/domain/src/erp/general_ledger.rs) | Library validation/calculation is distinct from an authorized persisted posting workflow |
-| Tax calculations and serialization | [tax_indonesia.rs](../../crates/domain/src/erp/tax_indonesia.rs) | Constants/formulas in source are not verification of current rules or authority acceptance |
+| Payroll withholding and contribution reference formulas | [tax_indonesia.rs](../../crates/domain/src/erp/tax_indonesia.rs) | Unused and unverified; constants/formulas in source are not verification of current rules or authority acceptance. Tax on documents is the generic [tax design](TAX.md), not this module |
 | Inventory costing | [inventory_costing.rs](../../crates/domain/src/erp/inventory_costing.rs) | Costing calculations do not by themselves prove stock reservation/receipt concurrency |
 | ESC/POS bytes | [escpos.rs](../../crates/domain/src/hardware/escpos.rs) | Byte generation is distinct from transport, printer compatibility, and successful device output |
 | Telematics parsing | [telematics module](../../crates/domain/src/telematics/mod.rs) | Parser support does not establish deployment against every named device/protocol variant |

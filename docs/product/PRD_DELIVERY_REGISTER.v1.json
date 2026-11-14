@@ -26,7 +26,7 @@
         "fits": "Sales, purchasing, billing, payments, accommodation and the accounting source bridges already record whole-IDR amounts.",
         "openBeforeAcceptance": [
           "Accounting source is still undecided (native GL is the engineering recommendation).",
-          "No transaction carries Indonesian tax: the PPN/PPh formulas in crates/domain/src/erp/tax_indonesia.rs are used by no module, and no tax rule has been reviewed by a tax professional.",
+          "No transaction carries Indonesian tax: the PPh 21/BPJS formulas in crates/domain/src/erp/tax_indonesia.rs are used by no module, and no tax rule has been reviewed by a tax professional.",
           "No production host, pilot user or priority integration is chosen."
         ]
       },

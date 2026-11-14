@@ -50,6 +50,108 @@ pub fn InvoiceTax(invoice: Value) -> impl IntoView {
     })
 }
 
+/// Said under the tax ids and the tax invoice reference of an invoice.
+const IDENTIFIER_NOTICE: &str = "The tax ids are those the company and the customer party had when this invoice was created; later changes to either do not change the invoice. The tax invoice reference is a number issued outside Archava, recorded as entered. Archava does not verify tax ids or tax invoice references.";
+
+/// The recorded tax invoice reference in words, or that there is none.
+fn reference_line(invoice: &Value) -> String {
+    let stored = &invoice["taxReference"];
+    match stored["reference"].as_str() {
+        Some(reference) => {
+            let code = stored["transactionCode"]
+                .as_str()
+                .map(|code| format!(" · transaction code {code}"))
+                .unwrap_or_default();
+            format!("{reference}{code} · entry {}", integer(stored, "version"))
+        }
+        None => "Not recorded".to_string(),
+    }
+}
+/// The tax ids a taxed invoice stored at creation and its tax invoice
+/// reference. Renders nothing for an untaxed invoice.
+fn invoice_identifiers(invoice: &Value) -> AnyView {
+    if !invoice["tax"].is_object() {
+        return ().into_any();
+    }
+    let id = |key: &str| {
+        invoice[key]
+            .as_str()
+            .map_or_else(|| "None stored".to_string(), str::to_owned)
+    };
+    view! {<dl class="ops-totals" data-testid="invoice-tax-identifiers">
+        <dt>"Seller tax id"</dt><dd data-testid="invoice-seller-tax-id">{id("sellerTaxId")}</dd>
+        <dt>"Buyer tax id"</dt><dd data-testid="invoice-buyer-tax-id">{id("buyerTaxId")}</dd>
+        <dt>"Tax invoice reference"</dt><dd data-testid="invoice-tax-reference">{reference_line(invoice)}</dd>
+    </dl><p class="hint" data-testid="invoice-tax-identifiers-notice">{IDENTIFIER_NOTICE}</p>}
+    .into_any()
+}
+/// The command that records, or replaces, the tax invoice reference of an
+/// invoice. A blank transaction code is left out; a replacement carries its
+/// reason.
+pub fn tax_reference_command(
+    invoice: &Value,
+    reference: &str,
+    transaction_code: &str,
+    reason: &str,
+) -> Value {
+    let replace = invoice["taxReference"].is_object();
+    let mut command = json!({
+        "type": if replace {"replace_tax_reference"} else {"record_tax_reference"},
+        "invoiceId": invoice["id"],
+        "expectedRevision": invoice["revision"],
+        "reference": reference.trim(),
+    });
+    if !transaction_code.trim().is_empty() {
+        command["transactionCode"] = json!(transaction_code.trim());
+    }
+    if replace {
+        command["reason"] = json!(reason);
+    }
+    command
+}
+/// Whether the reference form is offered: a taxed invoice that is issued or
+/// settled.
+fn takes_reference(invoice: &Value) -> bool {
+    invoice["tax"].is_object() && matches!(invoice["status"].as_str(), Some("issued" | "settled"))
+}
+
+/// The tax ids and the tax invoice reference of a taxed invoice, with the
+/// form that records the reference (or replaces it, with a reason) for a
+/// person who may change an issued invoice. Renders nothing for an untaxed
+/// invoice.
+#[component]
+pub fn InvoiceTaxReference(work: Workbench, invoice: Value) -> impl IntoView {
+    let reference = RwSignal::new(String::new());
+    let code = RwSignal::new(String::new());
+    let reason = RwSignal::new(String::new());
+    let shown = invoice_identifiers(&invoice);
+    let form = takes_reference(&invoice).then(|| {
+        let replace = invoice["taxReference"].is_object();
+        let row = invoice.clone();
+        let submit = move |e: leptos::ev::SubmitEvent| {
+            e.prevent_default();
+            if reference.get_untracked().trim().is_empty() {
+                work.fail("Enter the tax invoice reference as it was issued.");
+                return;
+            }
+            work.send(tax_reference_command(
+                &row,
+                &reference.get_untracked(),
+                &code.get_untracked(),
+                &reason.get_untracked(),
+            ));
+        };
+        view! {<div hidden=move||!work.permits("billing.settle")><form class="ops-form" data-testid="invoice-tax-reference-form" on:submit=submit>
+            <Field label="Tax invoice reference issued outside Archava" id="invoice-tax-reference-input" value=reference/>
+            <Field label="Transaction type code (optional, your own classification)" id="invoice-tax-transaction-code" value=code required=false/>
+            {replace.then(||view!{<Field label="Reason for replacing the reference" id="invoice-tax-reference-reason" value=reason/>})}
+            <button type="submit" class="btn secondary" data-testid="invoice-tax-reference-save" disabled=move||work.blocked()>{if replace {"Replace tax invoice reference"} else {"Record tax invoice reference"}}</button>
+            <p class="hint">{if replace {"The earlier reference stays in the billing audit trail."} else {"Archava never generates this number. Once recorded it can only be replaced, with a reason."}}</p>
+        </form></div>}
+    });
+    view! { {shown} {form} }
+}
+
 /// What an invoice made now from `order` would carry, for the invoice-from-
 /// order form: the order's tax code as the applicable codes of its company
 /// list it today. The server computes the stored amounts when the invoice is
@@ -321,6 +423,68 @@ mod tests {
             assert!(html.contains(">USD 0.99<"), "{html}");
             assert!(html.contains(">USD 10.00<"), "{html}");
             assert!(html.contains("Tax · VAT 12% of 11/12 of the price · included in the prices · version 2"), "{html}");
+        });
+    }
+    #[test]
+    fn a_taxed_invoice_shows_its_stored_tax_ids_and_reference_with_the_form() {
+        Owner::new().with(|| {
+            let work = loaded(json!({"permissions":["billing.read","billing.settle"]}), None);
+            let mut invoice = json!({"id":"i1","revision":2,"status":"issued","currency":"IDR","gross":33_300,"correction":0,"taxMinor":3_300,"correctionTaxMinor":0,
+                "tax":snapshot((11,100),(1,1),false),"sellerTaxId":"01.234.567.8-999.000","buyerTaxId":"<02>","taxReference":null});
+            let html = view! {<InvoiceTaxReference work invoice=invoice.clone()/>}.to_html();
+            assert!(html.contains("data-testid=\"invoice-tax-identifiers\""), "{html}");
+            assert!(html.contains(">01.234.567.8-999.000<"), "{html}");
+            assert!(html.contains(">&lt;02&gt;<"), "{html}");
+            assert!(html.contains("data-testid=\"invoice-tax-reference\">Not recorded<"), "{html}");
+            assert!(html.contains("Archava does not verify tax ids or tax invoice references."), "{html}");
+            assert!(html.contains("later changes to either do not change the invoice"), "{html}");
+            assert!(html.contains("Record tax invoice reference"), "{html}");
+            assert!(html.contains("Archava never generates this number."), "{html}");
+            assert!(!html.contains("invoice-tax-reference-reason"), "{html}");
+            assert_eq!(
+                tax_reference_command(&invoice, " 010.000-26.00000001 ", "  ", "ignored"),
+                json!({"type":"record_tax_reference","invoiceId":"i1","expectedRevision":2,"reference":"010.000-26.00000001"})
+            );
+
+            // A recorded reference is shown with its code and is replaced with a reason.
+            invoice["taxReference"] = json!({"reference":"010.000-26.00000001","transactionCode":"01","version":1});
+            invoice["buyerTaxId"] = Value::Null;
+            invoice["status"] = json!("settled");
+            let html = view! {<InvoiceTaxReference work invoice=invoice.clone()/>}.to_html();
+            assert!(html.contains("data-testid=\"invoice-buyer-tax-id\">None stored<"), "{html}");
+            assert!(html.contains(">010.000-26.00000001 · transaction code 01 · entry 1<"), "{html}");
+            assert!(html.contains("Replace tax invoice reference"), "{html}");
+            assert!(html.contains("invoice-tax-reference-reason"), "{html}");
+            assert!(html.contains("The earlier reference stays in the billing audit trail."), "{html}");
+            assert_eq!(
+                tax_reference_command(&invoice, "010.000-26.00000002", "02", "Mistyped"),
+                json!({"type":"replace_tax_reference","invoiceId":"i1","expectedRevision":2,"reference":"010.000-26.00000002","transactionCode":"02","reason":"Mistyped"})
+            );
+
+            // A draft or voided taxed invoice shows what it stored and offers no form.
+            for status in ["draft", "void"] {
+                invoice["status"] = json!(status);
+                let html = view! {<InvoiceTaxReference work invoice=invoice.clone()/>}.to_html();
+                assert!(html.contains("invoice-tax-identifiers"), "{html}");
+                assert!(!html.contains("invoice-tax-reference-form"), "{html}");
+            }
+            for word in ["compliant", "official", "Coretax", "e-Faktur", "verified by"] {
+                assert!(!html.contains(word), "{word}");
+            }
+        });
+    }
+    #[test]
+    fn an_untaxed_invoice_shows_no_tax_ids_and_no_reference_form() {
+        Owner::new().with(|| {
+            let work = loaded(json!({"permissions":["billing.settle"]}), None);
+            for invoice in [
+                json!({"id":"i","revision":1,"status":"issued","currency":"IDR","gross":30_000,"correction":0,"tax":null,"sellerTaxId":null,"buyerTaxId":null,"taxReference":null}),
+                json!({"id":"i","revision":1,"status":"issued","currency":"IDR","gross":30_000,"correction":0}),
+            ] {
+                let html = view! {<InvoiceTaxReference work invoice/>}.to_html();
+                assert!(!html.contains("invoice-tax"), "{html}");
+                assert!(!html.contains("<form") && !html.contains("<dl"), "{html}");
+            }
         });
     }
     /// What an absent optional view renders: the hydration placeholder, no

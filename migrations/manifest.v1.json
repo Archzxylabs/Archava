@@ -56,6 +56,11 @@
           "id": "004_managed_companies",
           "path": "migrations/organizations-pg/004_managed_companies.sql",
           "sha256": "4459826439b77ec2dd19bbbc570b99ff3a29c4c600a2a13b0adfbb73dc72fe52"
+        },
+        {
+          "id": "005_tax_registration",
+          "path": "migrations/organizations-pg/005_tax_registration.sql",
+          "sha256": "35db38e74498a45b7baf83f829ab98172cb34a8b48bba576c164bd4e6ff15398"
         }
       ]
     },
@@ -295,6 +300,11 @@
           "id": "010_taxed_invoice_posting",
           "path": "migrations/billing-pg/010_taxed_invoice_posting.sql",
           "sha256": "fcee2384bd9ac413d09edf109acc99b77a34639917cad81c5f63bd9bad218e8a"
+        },
+        {
+          "id": "011_invoice_tax_identifiers",
+          "path": "migrations/billing-pg/011_invoice_tax_identifiers.sql",
+          "sha256": "375e9c4798ac6b503006532ec17b2586545f0d41a4376a7dc447c2409ce163e8"
         }
       ]
     },

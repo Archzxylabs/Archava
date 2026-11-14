@@ -1901,6 +1901,100 @@
             }
           ],
           "providerOnly": true
+        },
+        {
+          "id": "record_tax_reference",
+          "label": "Record the tax invoice reference",
+          "permission": "billing.settle",
+          "description": "Entered by your company; Archava does not verify tax ids, tax invoice numbers, tax rates or rules. Stores, on a taxed invoice that is issued or settled, the reference of a tax invoice that was issued outside Archava, with an optional transaction type code. It is refused on an untaxed invoice, on a draft or voided invoice, and when the invoice already has a reference (use the replace action). It changes no amount and no status.",
+          "fields": [
+            {
+              "name": "commandId",
+              "label": "Command id",
+              "kind": "string",
+              "maxLength": 2000,
+              "automatic": "requestId"
+            },
+            {
+              "name": "invoiceId",
+              "label": "Invoice id",
+              "kind": "string",
+              "maxLength": 2000
+            },
+            {
+              "name": "expectedRevision",
+              "label": "Expected revision",
+              "kind": "integer",
+              "default": 1,
+              "min": 1,
+              "automatic": "revision"
+            },
+            {
+              "name": "reference",
+              "label": "Tax invoice reference issued outside Archava",
+              "kind": "string",
+              "maxLength": 100,
+              "description": "The number of the tax invoice as it was issued outside Archava, copied as text. Never generate or guess one: Archava does not issue tax invoice numbers and is not connected to any tax authority."
+            },
+            {
+              "name": "transactionCode",
+              "label": "Transaction type code (optional, your company's own classification)",
+              "kind": "string",
+              "maxLength": 10,
+              "optional": true,
+              "description": "A short code your company uses to classify the transaction; at most 10 characters. Stored as entered; Archava attaches no meaning to it."
+            }
+          ]
+        },
+        {
+          "id": "replace_tax_reference",
+          "label": "Replace the tax invoice reference",
+          "permission": "billing.settle",
+          "description": "Entered by your company; Archava does not verify tax ids, tax invoice numbers, tax rates or rules. Replaces the tax invoice reference already recorded on a taxed, issued or settled invoice, with a reason. The earlier value stays in the billing audit trail. It is refused when the invoice has no reference yet (use the record action).",
+          "fields": [
+            {
+              "name": "commandId",
+              "label": "Command id",
+              "kind": "string",
+              "maxLength": 2000,
+              "automatic": "requestId"
+            },
+            {
+              "name": "invoiceId",
+              "label": "Invoice id",
+              "kind": "string",
+              "maxLength": 2000
+            },
+            {
+              "name": "expectedRevision",
+              "label": "Expected revision",
+              "kind": "integer",
+              "default": 1,
+              "min": 1,
+              "automatic": "revision"
+            },
+            {
+              "name": "reference",
+              "label": "Tax invoice reference issued outside Archava",
+              "kind": "string",
+              "maxLength": 100,
+              "description": "The number of the tax invoice as it was issued outside Archava, copied as text. Never generate or guess one: Archava does not issue tax invoice numbers and is not connected to any tax authority."
+            },
+            {
+              "name": "transactionCode",
+              "label": "Transaction type code (optional, your company's own classification)",
+              "kind": "string",
+              "maxLength": 10,
+              "optional": true,
+              "description": "A short code your company uses to classify the transaction; at most 10 characters. Stored as entered; Archava attaches no meaning to it."
+            },
+            {
+              "name": "reason",
+              "label": "Reason for replacing the reference",
+              "kind": "string",
+              "maxLength": 500
+            }
+          ]
         }
       ],
       "namespace": "archava_billing",
@@ -2890,6 +2984,39 @@
               "label": "Active",
               "kind": "boolean",
               "default": true
+            },
+            {
+              "name": "reason",
+              "label": "Review reason",
+              "kind": "string",
+              "maxLength": 2000
+            }
+          ]
+        },
+        {
+          "id": "company.set_tax_registration",
+          "label": "Set a managed company's tax registration statement",
+          "permission": "companies.write",
+          "description": "Entered by your company; Archava does not verify tax ids, tax invoice numbers, tax rates or rules. Stores the company's own statement that it is registered for value-added tax. It changes nothing else: the company's tax id stays the reviewed copy of its source organization's tax id, and is changed by updating the organization and refreshing the company. A company can be marked registered only while that tax id is digits with spaces, dots, slashes or hyphens; no national format or checksum is checked. The statement does not change how any document is taxed.",
+          "fields": [
+            {
+              "name": "id",
+              "label": "Company ID",
+              "kind": "string"
+            },
+            {
+              "name": "expectedRevision",
+              "label": "Reviewed revision",
+              "kind": "integer",
+              "default": 1,
+              "automatic": "revision"
+            },
+            {
+              "name": "vatRegistered",
+              "label": "The company states it is registered for value-added tax",
+              "kind": "boolean",
+              "default": true,
+              "description": "The company's own statement, stored as entered and not verified. True needs a tax id of digits and separators on the company."
             },
             {
               "name": "reason",
@@ -8795,7 +8922,7 @@
           "id": "tax_code.create",
           "label": "Enter a company tax code",
           "permission": "tax.manage",
-          "description": "Entered by your company; Archava does not verify tax rates or rules. Stores one version of a tax code for this book as entered: a kind (output for sales, input for purchases), a rate and a base fraction as whole-number fractions (11% is 11/100; a base of 11/12 taxes eleven twelfths of the price), a control account and the first day it applies. An entered version does not apply until it is confirmed with the separate confirm action; on a book with independent posting another person must confirm it. A stored version never changes; nothing uses a tax code yet.",
+          "description": "Entered by your company; Archava does not verify tax rates or rules. Stores one version of a tax code for this book as entered: a kind (output for sales, input for purchases), a rate and a base fraction as whole-number fractions (11% is 11/100; a base of 11/12 taxes eleven twelfths of the price), a control account and the first day it applies. An entered version does not apply until it is confirmed with the separate confirm action; on a book with independent posting another person must confirm it. A stored version never changes.",
           "fields": [
             {
               "name": "bookId",

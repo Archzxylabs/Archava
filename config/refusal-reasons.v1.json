@@ -462,6 +462,31 @@
       "message": "The void of a supplier bill uses the tax control account of the bill it reverses, and this one names another, so it was not recorded. Void the supplier document through Purchasing; Archava captures the void with the bill's account.",
       "message_id": "Pembatalan tagihan pemasok memakai akun kontrol pajak dari tagihan yang dibatalkannya, sedangkan yang ini menyebut akun lain, jadi tidak dicatat. Batalkan dokumen pemasok lewat Pembelian; Archava merekam pembatalannya dengan akun tagihan itu."
     },
+    "Only a taxed invoice can carry a tax invoice reference": {
+      "code": "invoice_tax_reference_untaxed",
+      "message": "This invoice carries no tax, so it cannot be given a tax invoice reference. Record the reference on the taxed invoice it belongs to.",
+      "message_id": "Faktur ini tidak memuat pajak, jadi tidak bisa diberi nomor referensi faktur pajak. Catat referensi itu pada faktur berpajak yang bersangkutan."
+    },
+    "A tax invoice reference can be recorded only on an issued or settled invoice": {
+      "code": "invoice_tax_reference_not_issued",
+      "message": "A tax invoice reference can be recorded only on an issued or settled invoice. Issue the draft first; a voided invoice takes no reference.",
+      "message_id": "Referensi faktur pajak hanya bisa dicatat pada faktur yang sudah diterbitkan atau lunas. Terbitkan dulu drafnya; faktur yang dibatalkan tidak menerima referensi."
+    },
+    "The invoice already has a tax invoice reference": {
+      "code": "invoice_tax_reference_already_recorded",
+      "message": "This invoice already has a tax invoice reference. Use \"Replace the tax invoice reference\" with a reason to change it; the earlier value stays in the audit trail.",
+      "message_id": "Faktur ini sudah punya referensi faktur pajak. Gunakan \"Ganti referensi faktur pajak\" dengan alasan untuk mengubahnya; nilai sebelumnya tetap ada di jejak audit."
+    },
+    "The invoice has no tax invoice reference to replace": {
+      "code": "invoice_tax_reference_missing",
+      "message": "This invoice has no tax invoice reference to replace. Record the reference first.",
+      "message_id": "Faktur ini belum punya referensi faktur pajak untuk diganti. Catat dulu referensinya."
+    },
+    "A company registered for tax needs a tax id of digits and separators": {
+      "code": "company_tax_registration_needs_tax_id",
+      "message": "A company can be marked as registered for tax only while its tax id is digits with spaces, dots, slashes or hyphens. Correct the tax id on the source organization, refresh the company, then set the registration.",
+      "message_id": "Perusahaan hanya bisa ditandai terdaftar pajak selama nomor pajaknya berupa angka dengan spasi, titik, garis miring atau tanda hubung. Perbaiki nomor pajak pada organisasi sumber, segarkan perusahaan, lalu atur pendaftarannya."
+    },
     "A taxed purchase draft must use the captured goods, tax and total on the goods received, tax control and payable accounts": {
       "code": "purchase_source_tax_accounts_required",
       "message": "This supplier bill source carries tax, so its journal posts the tax to the tax control account captured with it, beside the goods received not invoiced and payable accounts. Review and select exactly the accounts of the proposed journal at their current revisions, then save the draft again.",

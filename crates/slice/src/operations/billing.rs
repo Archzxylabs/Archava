@@ -97,6 +97,7 @@ pub fn Invoices() -> impl IntoView {
        {invoice["sourceOrderId"].as_str().map(|order|view!{<p class="hint" data-testid="invoice-source">{format!("Created from sales order {}",short(order))}</p>})}
        <dl class="ops-totals"><dt>"Gross"</dt><dd>{row_money(&invoice,"gross")}</dd><dt>"Corrections"</dt><dd>{row_money(&invoice,"correction")}</dd><dt>"Settled"</dt><dd>{row_money(&invoice,"settled")}</dd><dt>"Outstanding"</dt><dd>{row_money(&invoice,"outstanding")}</dd></dl>
        <document_tax::InvoiceTax invoice=invoice.clone()/>
+       <document_tax::InvoiceTaxReference work invoice=invoice.clone()/>
        <ul class="ops-lines">{invoice["lines"].as_array().cloned().unwrap_or_default().into_iter().map(|line|view!{<li>{format!("{} × {} · {}",integer(&line,"quantity"),text(&line,"description"),currency_amount(integer(&line,"total"),&line_currency))}</li>}).collect::<Vec<_>>()}</ul>
        <p class="hint">"Payment totals change only after a verified provider event. Recording an intent does not mark this invoice paid."</p>
        <div hidden=move||!work.permits("billing.settle")><Field label="Action reason" id="invoice-reason" value=reason/>

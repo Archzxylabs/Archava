@@ -46,13 +46,14 @@ Use PostgreSQL tooling for full integration coverage. Tests provision owned disp
 ## Public Domain catalogues
 
 `config/operator-actions.v1.json`, `config/accounting-currencies.v1.json`,
-`config/modules.v1.json` (the [module registry](architecture/MODULE_REGISTRY.md)) and
-`config/refusal-reasons.v1.json` (the [refusal reasons](architecture/REFUSAL_REASONS.md)) are
+`config/modules.v1.json` (the [module registry](architecture/MODULE_REGISTRY.md)),
+`config/refusal-reasons.v1.json` (the [refusal reasons](architecture/REFUSAL_REASONS.md)) and
+`config/tax-templates.v1.json` (the [tax code templates](modules/TAX_INDONESIA_PACK.md)) are
 canonical shared inputs. Run `node tools/rust/domain-assets.mjs --write` after
 editing them, then verify normally. Their exact generated copies live inside
 `crates/domain/embedded/` so a packaged Domain crate does not require the parent
 checkout. `node tools/rust/domain-assets.mjs --check` is read-only; structure
-verification and build provenance refuse missing or stale copies. Only these four
+verification and build provenance refuse missing or stale copies. Only these five
 public catalogues are copied, never deployment credentials.
 
 ## Build the application

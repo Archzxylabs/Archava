@@ -115,6 +115,8 @@ The calculation rules of the design (rule 5) are in [tax.rs](../../crates/domain
 
 Refusals carry their own [reason](../architecture/REFUSAL_REASONS.md): `tax_code_control_account_wrong_class`, `tax_code_control_account_changed`, `tax_code_ranges_overlap`, `tax_code_kind_changed`, `tax_code_independent_reviewer_required`, `tax_code_not_awaiting_confirmation`, `tax_code_last_day_required`, `tax_code_ends_before_start`, `tax_code_already_closed` and `tax_code_native_book_required`. A rate or base outside its bounds is refused as an invalid submission before anything is read.
 
+On a book whose currency a market of the [tax code template catalogue](../../config/tax-templates.v1.json) lists, the panel offers "Start a tax code from a template" to a holder of `tax.manage`. Choosing a template only pre-fills the "Enter a company tax code" form with a code text, kind, rate and base; the book, the control account, the first day and the reason are still entered by the person, and the version still needs its confirmation. Templates are unverified starting points, not rates Archava states. See the [Indonesia tax pack](TAX_INDONESIA_PACK.md#tax-code-templates).
+
 Limits:
 
 - A version cannot be entered with a last day; it is created open-ended and retired after confirmation.
@@ -147,3 +149,7 @@ Amounts are decimal strings in the book's ledger minor units, except `outsideLed
 The Accounting screen has a "Tax report" panel under Financial reports. Its dates start as the open period of the book. It shows the rows, the three totals, the control accounts with a difference marked, the pending and outside-ledger sentences and the notice.
 
 [tax_report.rs](../../crates/host/tests/erp_accounting/tax_report.rs) covers a period with a taxed sale and its credit, a 0% sale, an untaxed sale and a supplier bill whose printed tax differs from the computed one; a pending source; a range before the source date; a void; a manual journal as a difference; documents outside the ledger; a USD book; and the refusals. The panel is covered by unit tests in [tax_report.rs](../../crates/slice/src/operations/accounting/tax_report.rs) and by `TAX-native-tax-report` in [tax.mjs](../../tools/e2e/tax.mjs).
+
+### Documents behind the report
+
+`GET /erp/accounting/tax-report/documents` lists the same posted taxed sources one by one, with the document, the counterparty, the tax id the invoice stored, the tax code version, the taxable amount, the tax and the tax invoice reference when one was recorded; it is paged by source and needs the report's permissions. `GET /erp/accounting/tax-report/documents.csv` is the whole period as a CSV download whose first line says it is a draft export of company-entered data, not a tax return and not in any tax authority's import format. The Tax report panel shows the listing and the download link under the report. Members, the CSV columns and an example are in the [Indonesia tax pack](TAX_INDONESIA_PACK.md#documents-listing-and-csv); [tax_documents.rs](../../crates/host/tests/erp_accounting/tax_documents.rs) covers exact rows, paging, the exact CSV bytes and the refusals.

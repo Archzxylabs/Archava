@@ -1,12 +1,12 @@
 # SQL migration ownership
 
-All 88 checked-in SQL migrations currently live under this directory, grouped into 31 ledger directories. The native manifest mounts 81; 7 remain reserved specifications. The owner-configuration migration was relocated from `crates/host/migrations/owner` to `owner-pg/`; its migration ID, schema namespace, SQL bytes, and checksum are unchanged.
+All 90 checked-in SQL migrations currently live under this directory, grouped into 31 ledger directories. The native manifest mounts 83; 7 remain reserved specifications. The owner-configuration migration was relocated from `crates/host/migrations/owner` to `owner-pg/`; its migration ID, schema namespace, SQL bytes, and checksum are unchanged.
 
 The manifest is the only list of applied migrations. The persistent server embeds the migrations it verifies from it at build time ([build.rs](../crates/slice/build.rs)), and the disposable PostgreSQL fixture reads the same manifest in [pg-fixture](../crates/pg-fixture/src/lib.rs). A file's presence here does not mean a given runtime mounts it or its UI is complete.
 
 ## Applied versus unmounted ledgers
 
-`manifest.v1.json` is the installer's contract: 81 of the 88 files, across 25 ledgers, carry an `id`, `path` and SHA-256 that the Ops installer verifies and applies. The remaining seven files are **unmounted**: no manifest entry, no embedded registration, and no runtime readiness check.
+`manifest.v1.json` is the installer's contract: 83 of the 90 files, across 25 ledgers, carry an `id`, `path` and SHA-256 that the Ops installer verifies and applies. The remaining seven files are **unmounted**: no manifest entry, no embedded registration, and no runtime readiness check.
 
 | Unmounted ledger | Files |
 | --- | --- |
@@ -201,3 +201,31 @@ posted void in gross (goods plus tax). The new function keeps the default `EXECU
 the other effect functions; no runtime grant is added and no table is created.
 Purchasing008 migrates before it. See
 [purchase posting](../docs/modules/PURCHASE_POSTING.md#tax-on-a-supplier-bill).
+
+Organizations005 adds `vat_registered` (default false) to
+`archava_organizations.companies`, the company's own statement that it is registered
+for value-added tax, and `tax_id` (null on existing rows) to
+`archava_organizations.parties`, the reviewed snapshot of the source organization's tax
+id that a company already keeps. It widens the `company_audit` operation check by
+`company.set_tax_registration` and replaces `guard_company()` and `guard_party()` in
+place with their signatures, so their triggers are unchanged: the statement changes in
+a revision of its own and needs a tax id of digits and separators (space, dot, slash,
+hyphen); a party's tax id is its organization's at the reviewed revision and null for a
+contact; a party registered earlier may take the tax id its organization already had
+without a newer source revision. Nothing is verified, no row is rewritten, no table is
+added and no grant changes. See
+[the Indonesia tax pack](../docs/modules/TAX_INDONESIA_PACK.md#tax-registration-identifiers).
+
+Billing011 adds `seller_tax_id`, `buyer_tax_id`, `tax_reference`,
+`tax_transaction_code` (all null on existing rows) and `tax_reference_version`
+(default 0) to `archava_billing.invoices`, with two checks (only a taxed invoice
+carries any of them; a reference is 1 to 100 characters, a transaction code 1 to 10)
+and the guard `guard_invoice_tax_identifiers()` with its trigger
+`invoice_tax_identifiers_guard`: a taxed invoice stores the tax id of its company and
+of its customer party as they are at creation, read through jsonb so an install whose
+Organizations ledger predates the party tax id reads none; the two are immutable; a
+reference is set only on a taxed invoice that is issued or settled, one version at a
+time, in a revision of its own, and cannot be removed. The value a replacement
+overwrote stays in the existing immutable `archava_billing.audit` row of the command.
+No table is added and no grant changes. Organizations005 migrates before it. See
+[Billing](../docs/modules/BILLING_MODULE.md#tax-ids-and-the-tax-invoice-reference).

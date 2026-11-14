@@ -223,6 +223,7 @@ pub(super) fn TaxReport(work: Workbench) -> impl IntoView {
         </form>
         {move||{let n=notice.get();(!n.is_empty()).then(||view!{<p class="refusal" data-testid="accounting-taxreport-refusal">{n}</p>})}}
         {move||report.get().map(|r|result(&r))}
+        <tax_documents::TaxDocuments work from to/>
     </section>}
 }
 

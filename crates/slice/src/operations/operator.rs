@@ -629,6 +629,26 @@ fn prefills(fields: &[Value], row: &Value, values: &mut Value) {
         }
     }
 }
+/// Copies the values of a form-prefill request (`Workbench::prefill`) into a
+/// draft of the action it names. Only members the form already has are
+/// written, and only at the top level: a request cannot add a field, and
+/// everything it does not name keeps its default or stays empty.
+fn requested_prefill(action: &Value, request: &Value, values: &mut Value) {
+    if request["action"].is_null() || request["action"] != action["id"] {
+        return;
+    }
+    let Some(given) = request["values"].as_object() else {
+        return;
+    };
+    for field in action["fields"].as_array().into_iter().flatten() {
+        let Some(name) = field["name"].as_str() else {
+            continue;
+        };
+        if let Some(value) = given.get(name) {
+            values[name] = value.clone();
+        }
+    }
+}
 fn command(body: &Value, module: &Value) -> Value {
     match module["envelope"].as_str() {
         Some("command" | "action-command") => body["command"].clone(),
@@ -658,6 +678,17 @@ pub(super) fn Actions(work: Workbench, selected: RwSignal<Value>) -> impl IntoVi
     let values = RwSignal::new(json!({}));
     let plan = RwSignal::new(None::<Value>);
     let refs = RwSignal::new(json!({}));
+    // A prefill request names its action; the form switches to it.
+    Effect::new(move |_| {
+        if let Some(id) = work.prefill.get()["action"].as_str() {
+            let known = module.get_value()["actions"]
+                .as_array()
+                .is_some_and(|actions| actions.iter().any(|a| a["id"] == id));
+            if known {
+                chosen.set_if_alive(id.to_string());
+            }
+        }
+    });
     let action = Signal::derive(move || {
         module.get_value()["actions"]
             .as_array()
@@ -689,6 +720,7 @@ pub(super) fn Actions(work: Workbench, selected: RwSignal<Value>) -> impl IntoVi
             .unwrap_or_default();
         let mut draft = contracts::field_defaults(fields);
         prefills(fields, &row, &mut draft);
+        requested_prefill(&a, &work.prefill.get(), &mut draft);
         if let Some(c) = company {
             for f in fields {
                 match f["name"].as_str() {
@@ -1032,6 +1064,7 @@ pub(super) fn Workspace(domain: Domain) -> impl IntoView {
         let company = work.company_key.get();
         if company != prior_company.get_untracked() {
             prior_company.set_if_alive(company);
+            work.prefill.set_if_alive(Value::Null);
             selected.set_if_alive(json!({}));
             collection.set_if_alive(String::new());
         }
@@ -1294,6 +1327,69 @@ mod tests {
             .as_array()
             .unwrap()
             .clone()
+    }
+    /// "Start from a template" (the Tax codes panel) only pre-fills the
+    /// `tax_code.create` form: the code text, kind, rate and base arrive, the
+    /// book, control account, first day and reason stay empty for the person,
+    /// and the result is not a submittable command until they are entered.
+    #[test]
+    fn a_tax_template_prefills_the_create_form_and_leaves_the_companys_own_steps_empty() {
+        let module = contracts::module("accounting").unwrap();
+        let action = module["actions"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|a| a["id"] == "tax_code.create")
+            .unwrap();
+        let fields = action["fields"].as_array().unwrap();
+        let untouched = contracts::field_defaults(fields);
+        let request = accounting::tax_template_request("id-output-12-base-11-12").unwrap();
+        let mut draft = untouched.clone();
+        requested_prefill(action, &request, &mut draft);
+        assert_eq!(draft["code"], "VAT-OUT-12-B11-12");
+        assert_eq!(draft["kind"], "output");
+        assert_eq!(draft["rate"], json!({"numerator":12,"denominator":100}));
+        assert_eq!(draft["base"], json!({"numerator":11,"denominator":12}));
+        for own in ["bookId", "controlAccount", "effectiveFrom", "reason"] {
+            assert_eq!(draft[own], untouched[own], "{own}");
+        }
+        assert!(draft.get("template").is_none() && draft.get("state").is_none());
+        // Without the company's own entries nothing can be sent.
+        assert!(
+            contracts::envelope("accounting", "acme", "request", "tax_code.create", &draft)
+                .is_err()
+        );
+        // With them, the command is the ordinary reviewed creation: entered,
+        // never confirmed, and it names no template.
+        let id = "01933df1-8d5e-783f-9b1e-1d3f9a2b3c4d";
+        draft["bookId"] = json!(id);
+        draft["controlAccount"] = json!({"accountId":id,"expectedAccountRevision":1});
+        draft["effectiveFrom"] = json!("2026-01-01");
+        draft["reason"] = json!("Entered from a template after our adviser checked it");
+        let body =
+            contracts::envelope("accounting", "acme", id, "tax_code.create", &draft).unwrap();
+        assert_eq!(body["command"]["type"], "tax_code.create");
+        assert!(body["command"].get("template").is_none());
+        assert!(archava_domain::erp::accounting::parse(
+            &json!({"requestId":id,"command":body["command"]})
+        )
+        .is_ok());
+        // A request for another action, or an unknown member, changes nothing.
+        let mut other = untouched.clone();
+        requested_prefill(
+            action,
+            &json!({"action":"tax_code.confirm","values":{"code":"X"}}),
+            &mut other,
+        );
+        assert_eq!(other, untouched);
+        requested_prefill(
+            action,
+            &json!({"action":"tax_code.create","values":{"state":"confirmed","reviewedBy":"me"}}),
+            &mut other,
+        );
+        assert_eq!(other, untouched);
+        requested_prefill(action, &Value::Null, &mut other);
+        assert_eq!(other, untouched);
     }
     #[test]
     fn a_supplier_document_form_takes_the_selected_purchase_orders_currency() {
