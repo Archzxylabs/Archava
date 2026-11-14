@@ -65,6 +65,51 @@ pending corrections. This is **not full AP, bank or inventory subledger close**:
 GRNI, fee evidence, due terms, aging, outbound supplier settlement, COGS/returns,
 opening imports and reconciliation still need their complete controls.
 
+## Tax on a supplier bill
+
+Stage D of [tax on documents](../architecture/TAX.md). A matched claim that
+[carries tax](SUPPLIER_DOCUMENTS.md#tax-on-a-supplier-document) is captured with
+its tax beside its goods ([Accounting 018](../../migrations/accounting-pg/018_purchase_source_tax.sql)):
+
+| Source | `goodsMinor` | `taxMinor` | Tax account |
+| --- | --- | --- | --- |
+| Bill of a taxed claim | Net goods × unit factor | Entered tax × unit factor | Control account of the tax code version on the matched document version, with the account's revision at capture |
+| Void of that bill | Negated net goods | Negated entered tax of the matched version | The account and revision of the bill's source |
+| Receipt, or bill/void of a claim without tax | As before | absent | absent |
+
+The unit factor is the one of the policy the order's origin pinned (×100 under
+`whole_idr`, ×1 under `minor`). The purchase policy keeps its four roles; the tax
+account is not a role. `purchase_effect` is unchanged and `purchase_effect_tax`
+reads the tax from the document version Purchasing stored.
+
+| Effect | Reviewed journal |
+| --- | --- |
+| Bill with tax | Debit GRNI (net goods), debit the tax control account (tax), credit supplier payable (goods plus tax) |
+| Void of a bill with tax | Debit supplier payable (goods plus tax), credit GRNI (net goods), credit the tax control account (tax) |
+| Tax of zero (a 0% code) | The two lines of a bill or void without tax; the source keeps the code's account |
+
+`purchase_source.draft` for a bill or void with tax names exactly three reviewed
+accounts: GRNI, the tax control account at its current revision and the payable.
+Anything else is refused as `purchase_source_tax_accounts_required`. The
+`purchase_sources` workspace row of such a source carries `taxMinor`,
+`taxAccountId` and `taxAccountRevision`; other rows are unchanged. The review
+shows net goods, input tax and the total owed with the third journal line.
+
+Matching a taxed claim is refused, and the purchasing command rolls back with
+nothing written, when the tax code is not a confirmed or retired input code of the
+posting book (`supplier_bill_tax_code_not_postable`), while its control account is
+inactive (`supplier_bill_tax_control_account_changed`; reactivating the account
+releases the claim) and when that account is one of the policy's four accounts
+(`supplier_bill_tax_control_account_in_policy`). The database recomputes the tax
+and the account on every insert, so a source that disagrees with its document
+cannot be stored, also by direct SQL as the serving role.
+
+Receipts, landed fees and inventory cost are untouched: supplier tax is not part
+of acquisition cost here. The payable of a taxed bill is gross
+([supplier payments](SUPPLIER_PAYMENTS.md#tax-on-a-supplier-bill)). Witnesses:
+[tax_purchases.rs](../../crates/host/tests/erp_accounting/tax_purchases.rs); the
+browser gate and the upgrade proof were not run.
+
 [Accounting migration 004](../../migrations/accounting-pg/004_purchase_source_posting.sql)
 is additive; earlier SQL bytes stay unchanged. Its four additional tables use
 FORCE RLS and the existing dynamic Control writer fence. Startup independently

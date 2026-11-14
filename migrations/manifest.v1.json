@@ -163,6 +163,11 @@
           "id": "007_company_trade_currency",
           "path": "migrations/purchasing-pg/007_company_trade_currency.sql",
           "sha256": "0306389beadea3f6961b11d3e8c303079f5cd3fd085de784fa241a0553406189"
+        },
+        {
+          "id": "008_supplier_document_tax",
+          "path": "migrations/purchasing-pg/008_supplier_document_tax.sql",
+          "sha256": "c3bb14dd3f07586f02d99d2c4e9a199bbe3b3fbd0f988770cea996ac847797de"
         }
       ]
     },
@@ -381,6 +386,11 @@
           "id": "017_invoice_source_tax",
           "path": "migrations/accounting-pg/017_invoice_source_tax.sql",
           "sha256": "cb53ae3468916556e0b80f03bf85567be1b8342b2a3f7f71a3c67ed969a435e0"
+        },
+        {
+          "id": "018_purchase_source_tax",
+          "path": "migrations/accounting-pg/018_purchase_source_tax.sql",
+          "sha256": "9c5601168ff135b0c85bfad6ea4c84625d64a33dd5146d9471d4b72f4f8a6ab6"
         }
       ]
     },

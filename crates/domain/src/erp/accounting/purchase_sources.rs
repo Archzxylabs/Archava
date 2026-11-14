@@ -137,6 +137,75 @@ pub fn legs(
     }
     Ok(result)
 }
+/// The account a leg of a purchase source posts to: an account of the
+/// purchase posting policy, or the input tax control account captured with a
+/// taxed supplier bill.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PurchaseLegAccount {
+    Policy(PurchaseRole),
+    TaxControl,
+}
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TaxedPurchaseLeg {
+    pub account: PurchaseLegAccount,
+    pub debit_minor: String,
+    pub credit_minor: String,
+}
+/// The legs of a purchase source that carries `tax` beside its goods (both in
+/// exact book minor units, the tax with the sign of the goods and no larger).
+/// Without tax these are the legs of [`legs`]. A taxed bill debits goods
+/// received not invoiced (the net goods) and the tax control account (the
+/// tax) and credits the payable (goods plus tax); its void is the reverse. A
+/// receipt carries no tax.
+pub fn taxed_legs(
+    effect: PurchaseEffect,
+    goods: i64,
+    landed_fee: i64,
+    tax: i64,
+) -> Result<Vec<TaxedPurchaseLeg>, ValidationError> {
+    let plain = legs(effect, goods, landed_fee)?;
+    let leg = |account, value: i64, debit: bool| TaxedPurchaseLeg {
+        account,
+        debit_minor: if debit { value } else { 0 }.to_string(),
+        credit_minor: if debit { 0 } else { value }.to_string(),
+    };
+    if tax == 0 {
+        return Ok(plain
+            .into_iter()
+            .map(|leg| TaxedPurchaseLeg {
+                account: PurchaseLegAccount::Policy(leg.role),
+                debit_minor: leg.debit_minor,
+                credit_minor: leg.credit_minor,
+            })
+            .collect());
+    }
+    let within = match effect {
+        PurchaseEffect::Bill => (1..=goods).contains(&tax),
+        PurchaseEffect::Void => (goods..0).contains(&tax),
+        PurchaseEffect::Receipt => false,
+    };
+    let total = goods
+        .checked_add(tax)
+        .filter(|n| (-MAX_MINOR..=MAX_MINOR).contains(n));
+    let (true, Some(total)) = (within, total) else {
+        return Err(ValidationError("purchaseSourceAmount"));
+    };
+    let grni = PurchaseLegAccount::Policy(PurchaseRole::GoodsReceivedNotInvoiced);
+    let payable = PurchaseLegAccount::Policy(PurchaseRole::Payable);
+    Ok(if effect == PurchaseEffect::Bill {
+        vec![
+            leg(grni, goods, true),
+            leg(PurchaseLegAccount::TaxControl, tax, true),
+            leg(payable, total, false),
+        ]
+    } else {
+        vec![
+            leg(payable, -total, true),
+            leg(grni, -goods, false),
+            leg(PurchaseLegAccount::TaxControl, -tax, false),
+        ]
+    })
+}
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -230,5 +299,91 @@ mod tests {
             ),
             i128::from(MAX_MINOR)
         );
+    }
+    #[test]
+    fn a_taxed_bill_posts_goods_and_input_tax_against_a_gross_payable_and_its_void_reverses_all_three(
+    ) {
+        use PurchaseLegAccount::{Policy, TaxControl};
+        let line = |leg: &TaxedPurchaseLeg| {
+            (
+                leg.account,
+                leg.debit_minor.parse::<i64>().unwrap(),
+                leg.credit_minor.parse::<i64>().unwrap(),
+            )
+        };
+        let grni = Policy(PurchaseRole::GoodsReceivedNotInvoiced);
+        let payable = Policy(PurchaseRole::Payable);
+        // Goods 140,000 whole IDR with 15,400 of tax, as book minor units.
+        let bill = taxed_legs(PurchaseEffect::Bill, 14_000_000, 0, 1_540_000).unwrap();
+        assert_eq!(
+            bill.iter().map(line).collect::<Vec<_>>(),
+            vec![
+                (grni, 14_000_000, 0),
+                (TaxControl, 1_540_000, 0),
+                (payable, 0, 15_540_000)
+            ]
+        );
+        let void = taxed_legs(PurchaseEffect::Void, -14_000_000, 0, -1_540_000).unwrap();
+        assert_eq!(
+            void.iter().map(line).collect::<Vec<_>>(),
+            vec![
+                (payable, 15_540_000, 0),
+                (grni, 0, 14_000_000),
+                (TaxControl, 0, 1_540_000)
+            ]
+        );
+        // Bill and void together leave nothing on any account.
+        for account in [grni, payable, TaxControl] {
+            let net: i64 = bill
+                .iter()
+                .chain(&void)
+                .map(line)
+                .filter(|(a, _, _)| *a == account)
+                .map(|(_, debit, credit)| debit - credit)
+                .sum();
+            assert_eq!(net, 0, "{account:?}");
+        }
+        // Without tax the legs are the two-leg shape of `legs`, in its order.
+        for (effect, goods, fee) in [
+            (PurchaseEffect::Bill, 1_400_000, 0),
+            (PurchaseEffect::Void, -1_400_000, 0),
+            (PurchaseEffect::Receipt, 1_400_000, 10_100),
+        ] {
+            let plain = legs(effect, goods, fee).unwrap();
+            let taxed = taxed_legs(effect, goods, fee, 0).unwrap();
+            assert_eq!(taxed.len(), plain.len());
+            for (taxed, plain) in taxed.iter().zip(&plain) {
+                assert_eq!(taxed.account, Policy(plain.role));
+                assert_eq!(taxed.debit_minor, plain.debit_minor);
+                assert_eq!(taxed.credit_minor, plain.credit_minor);
+            }
+        }
+        // All of the goods as tax is the bound; every taxed journal balances.
+        for (goods, tax) in [
+            (100, 100),
+            (100, 1),
+            (1_005, 111),
+            (MAX_MINOR / 2, MAX_MINOR / 2),
+        ] {
+            let rows = taxed_legs(PurchaseEffect::Bill, goods, 0, tax).unwrap();
+            let debit: i64 = rows.iter().map(|r| line(r).1).sum();
+            let credit: i64 = rows.iter().map(|r| line(r).2).sum();
+            assert_eq!((debit, credit), (goods + tax, goods + tax));
+            assert!(rows.iter().all(|r| (line(r).1 == 0) != (line(r).2 == 0)));
+        }
+        for (effect, goods, fee, tax) in [
+            (PurchaseEffect::Bill, 100, 0, 101),
+            (PurchaseEffect::Bill, 100, 0, -1),
+            (PurchaseEffect::Void, -100, 0, 1),
+            (PurchaseEffect::Void, -100, 0, -101),
+            (PurchaseEffect::Receipt, 100, 0, 1),
+            (PurchaseEffect::Bill, 0, 0, 1),
+            (PurchaseEffect::Bill, MAX_MINOR, 0, 1),
+        ] {
+            assert!(
+                taxed_legs(effect, goods, fee, tax).is_err(),
+                "{effect:?} {goods} {tax}"
+            );
+        }
     }
 }

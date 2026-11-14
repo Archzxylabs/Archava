@@ -1833,7 +1833,12 @@ pub async fn workspace_view_filtered(
     let documents =
         super::supplier_documents::workspace(connection, tenant, context, search, company, id)
             .await?;
+    // The input tax codes a supplier document of the selected company may name
+    // (TAX.md stage D): read here so the supplier documents screen needs no
+    // Accounting grant.
+    let tax_codes =
+        super::supplier_documents::input_tax_codes(connection, tenant, context, company).await?;
     Ok(
-        serde_json::json!({"suppliers":suppliers,"offers":offers,"orders":orders,"documents":documents,"pageLimit":100,"permissions":access.purchasing.permissions,"scope":access.purchasing.scope}),
+        serde_json::json!({"suppliers":suppliers,"offers":offers,"orders":orders,"documents":documents,"taxCodes":tax_codes,"taxNotice":super::supplier_documents::TAX_NOTICE,"pageLimit":100,"permissions":access.purchasing.permissions,"scope":access.purchasing.scope}),
     )
 }

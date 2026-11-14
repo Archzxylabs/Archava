@@ -40,7 +40,9 @@ export async function verifyPriorNative({previousRoot,packageRoot,facts,scratch,
  const sourceTax=manifest=>manifest.ledgers.find(l=>l.namespace==='archava_accounting')?.migrations.some(m=>m.id==='017_invoice_source_tax')===true
  const billingAdded=[...(invoiceTax(newManifest)&&!invoiceTax(oldManifest)?['009_invoice_tax_snapshot']:[]),...(taxPosting(newManifest)&&!taxPosting(oldManifest)?['010_taxed_invoice_posting']:[])]
  const purchaseCurrency=manifest=>manifest.ledgers.find(l=>l.namespace==='archava_purchasing')?.migrations.some(m=>m.id==='007_company_trade_currency')===true
- const purchasingAdded=purchaseCurrency(newManifest)&&!purchaseCurrency(oldManifest)?['007_company_trade_currency']:[]
+ const documentTax=manifest=>manifest.ledgers.find(l=>l.namespace==='archava_purchasing')?.migrations.some(m=>m.id==='008_supplier_document_tax')===true
+ const purchaseSourceTax=manifest=>manifest.ledgers.find(l=>l.namespace==='archava_accounting')?.migrations.some(m=>m.id==='018_purchase_source_tax')===true
+ const purchasingAdded=[...(purchaseCurrency(newManifest)&&!purchaseCurrency(oldManifest)?['007_company_trade_currency']:[]),...(documentTax(newManifest)&&!documentTax(oldManifest)?['008_supplier_document_tax']:[])]
  const oldDisclosure=oldManifest.ledgers.find(l=>l.namespace==='archava_owner')?.migrations.some(m=>m.id==='004_ai_disclosure_boundary')===true
  const newDisclosure=newManifest.ledgers.find(l=>l.namespace==='archava_owner')?.migrations.some(m=>m.id==='004_ai_disclosure_boundary')===true
  assert.ok(expectedAdded>=0)
@@ -49,7 +51,7 @@ export async function verifyPriorNative({previousRoot,packageRoot,facts,scratch,
   const oldOwner=oldManifest.ledgers.find(l=>l.namespace==='archava_owner'),newOwner=newManifest.ledgers.find(l=>l.namespace==='archava_owner')
   assert.deepEqual(newOwner.migrations.slice(oldOwner.migrations.length).map(m=>m.id),['004_ai_disclosure_boundary'])
   const oldAccounting=oldManifest.ledgers.find(l=>l.namespace==='archava_accounting'),newAccounting=newManifest.ledgers.find(l=>l.namespace==='archava_accounting')
-  const accountingAdded=[...(addedBank?bankMigrationIds:[]),...(newPayables&&!oldPayables?['009_supplier_bank_settlements']:[]),...(newClearing&&!oldClearing?['010_gateway_bank_settlements']:[]),...(newTerms&&!oldTerms?termsMigrationIds:[]),...(newOpenings&&!oldOpenings?['013_declared_opening_balances']:[]),...(sourceUnit(newManifest)&&!sourceUnit(oldManifest)?['014_source_unit_minor']:[]),...(bookGuard(newManifest)&&!bookGuard(oldManifest)?['015_book_currency_guard']:[]),...(taxCodes(newManifest)&&!taxCodes(oldManifest)?['016_tax_codes']:[]),...(sourceTax(newManifest)&&!sourceTax(oldManifest)?['017_invoice_source_tax']:[])]
+  const accountingAdded=[...(addedBank?bankMigrationIds:[]),...(newPayables&&!oldPayables?['009_supplier_bank_settlements']:[]),...(newClearing&&!oldClearing?['010_gateway_bank_settlements']:[]),...(newTerms&&!oldTerms?termsMigrationIds:[]),...(newOpenings&&!oldOpenings?['013_declared_opening_balances']:[]),...(sourceUnit(newManifest)&&!sourceUnit(oldManifest)?['014_source_unit_minor']:[]),...(bookGuard(newManifest)&&!bookGuard(oldManifest)?['015_book_currency_guard']:[]),...(taxCodes(newManifest)&&!taxCodes(oldManifest)?['016_tax_codes']:[]),...(sourceTax(newManifest)&&!sourceTax(oldManifest)?['017_invoice_source_tax']:[]),...(purchaseSourceTax(newManifest)&&!purchaseSourceTax(oldManifest)?['018_purchase_source_tax']:[])]
   assert.deepEqual(newAccounting.migrations.slice(oldAccounting.migrations.length).map(m=>m.id),accountingAdded)
   const oldCommerce=oldManifest.ledgers.find(l=>l.namespace==='archava_commerce'),newCommerce=newManifest.ledgers.find(l=>l.namespace==='archava_commerce')
   assert.deepEqual(newCommerce.migrations.slice(oldCommerce.migrations.length).map(m=>m.id),commerceAdded)
@@ -69,9 +71,9 @@ export async function verifyPriorNative({previousRoot,packageRoot,facts,scratch,
   assert.equal(r.status,0,`${r.stderr}\n${r.stdout}`);const body=JSON.parse(r.stdout);assert.equal(body.ok,true);return body
  }
  const priorFinancialTables=['memberships','books','accounts','periods','journals','journal_lines','commands','audit',...(priorInvoiceSources?['invoice_policies','invoice_sources','journal_sources']:[]),...(priorPurchaseSources?['purchase_policies','purchase_origins','purchase_sources','purchase_journal_sources']:[]),...(priorStockSources?['stock_policies','stock_layer_origins','stock_sources','stock_journal_sources']:[])]
- // Accounting 017 adds tax columns to invoice_sources. The digest leaves them out so a prior row compares equal across the upgrade; they must arrive empty (asserted below).
+ // Accounting 017 adds tax columns to invoice_sources and 018 the same three to purchase_sources. The digest leaves them out so a prior row compares equal across the upgrade; they must arrive empty (asserted below).
  const sourceTaxColumns=['tax_minor','tax_account_id','tax_account_revision']
- const proofRow=table=>table==='invoice_sources'?`(to_jsonb(r)-ARRAY[${sourceTaxColumns.map(c=>`'${c}'`).join(',')}])`:'to_jsonb(r)'
+ const proofRow=table=>table==='invoice_sources'||table==='purchase_sources'?`(to_jsonb(r)-ARRAY[${sourceTaxColumns.map(c=>`'${c}'`).join(',')}])`:'to_jsonb(r)'
  const financialProof=priorAccounting?`jsonb_build_object(${priorFinancialTables.map(table=>`'${table}',(SELECT jsonb_build_object('rows',count(*),'digest',md5(coalesce(string_agg(${proofRow(table)}::text,'' ORDER BY ${proofRow(table)}::text),''))) FROM archava_accounting.${table} r)`).join(',')})`:'NULL'
  const proof=database=>JSON.parse(sql(database,`SELECT jsonb_build_object(
   'users',(SELECT jsonb_build_object('rows',count(*),'digest',md5(coalesce(string_agg(to_jsonb(r)::text,'' ORDER BY id),''))) FROM archava_identity.users r),
@@ -152,6 +154,8 @@ export async function verifyPriorNative({previousRoot,packageRoot,facts,scratch,
    await financial({type:'journal.post',id:journal.resourceId,expectedRevision:1,reason:'Post the reviewed prior source journal'})
   }
   const purchaseProof=database=>JSON.parse(sql(database,`SELECT jsonb_build_object('sources',(SELECT jsonb_agg(to_jsonb(r) ORDER BY tenant_id,id) FROM archava_accounting.purchase_sources r),'origins',(SELECT jsonb_agg(to_jsonb(r) ORDER BY tenant_id,id) FROM archava_accounting.purchase_origins r),'layers',(SELECT jsonb_agg(CASE WHEN ${priorStockSources?'true':'false'} THEN to_jsonb(r) ELSE to_jsonb(r)-'return_cost_id' END ORDER BY tenant_id,id) FROM archava_commerce.inventory_layers r),'uses',(SELECT jsonb_agg(to_jsonb(r) ORDER BY tenant_id,id) FROM archava_commerce.inventory_uses r),'returns',(SELECT jsonb_agg(to_jsonb(r) ORDER BY tenant_id,id) FROM archava_commerce.inventory_return_costs r),'stock',(SELECT jsonb_agg(to_jsonb(r) ORDER BY tenant_id,product_id) FROM archava_commerce.stock_balances r));`))
+  // A later migration may add columns to a prior purchase source row. They must arrive empty (null or zero); every prior column must be unchanged.
+  const upgradedPurchaseProof=database=>{const after=purchaseProof(database);for(const [i,row] of (after.sources||[]).entries()){const prior=priorPurchaseProof.sources?.[i]||{};for(const key of Object.keys(row))if(!Object.hasOwn(prior,key)){assert.ok(row[key]===null||row[key]===0,`Upgrade filled new purchase source column ${key}`);delete row[key]}}return after}
   if(priorPurchaseSources){
    const mutate=async(domain,command)=>{const requestId=randomUUID(),r=await call(oldServer.origin,originalSession,`/erp/${domain}/commands`,{tenant,requestId,command});assert.equal(r.status,200,JSON.stringify(r.body));return{...r.body.receipt,requestId:r.body.requestId??r.body.receipt.requestId}}
    const financial=command=>mutate('accounting',command)
@@ -218,6 +222,13 @@ export async function verifyPriorNative({previousRoot,packageRoot,facts,scratch,
   if(sourceTax(newManifest)&&!sourceTax(oldManifest)&&priorInvoiceSources){
    assert.equal(sql(db,'SELECT count(*) FROM archava_accounting.invoice_sources WHERE tax_minor<>0 OR tax_account_id IS NOT NULL OR tax_account_revision IS NOT NULL'),'0','Upgrade must not put tax on an existing invoice source')
   }
+  if(purchaseSourceTax(newManifest)&&!purchaseSourceTax(oldManifest)&&priorPurchaseSources){
+   assert.equal(sql(db,'SELECT count(*) FROM archava_accounting.purchase_sources WHERE tax_minor<>0 OR tax_account_id IS NOT NULL OR tax_account_revision IS NOT NULL'),'0','Upgrade must not put tax on an existing purchase source')
+  }
+  if(documentTax(newManifest)&&!documentTax(oldManifest)){
+   assert.equal(sql(db,'SELECT count(*) FROM archava_purchasing.supplier_documents WHERE tax_minor<>0 OR tax_computed_minor<>0 OR tax_code_id IS NOT NULL OR tax_code IS NOT NULL OR tax_code_version IS NOT NULL OR tax_rate_numerator IS NOT NULL OR tax_rate_denominator IS NOT NULL OR tax_base_numerator IS NOT NULL OR tax_base_denominator IS NOT NULL'),'0','Upgrade must not put tax on an existing supplier document')
+   assert.equal(sql(db,"SELECT count(*) FROM archava_purchasing.supplier_document_versions WHERE snapshot ? 'tax_minor' OR snapshot ? 'tax_code_id'"),'0','Upgrade must not rewrite a stored supplier document version')
+  }
   if(salesTax(newManifest)&&!salesTax(oldManifest)){
    assert.equal(sql(db,'SELECT count(*) FROM archava_commerce.orders WHERE tax_code IS NOT NULL OR price_includes_tax IS NOT NULL'),'0','Upgrade must not put a tax code on an existing sales order')
   }
@@ -229,7 +240,7 @@ export async function verifyPriorNative({previousRoot,packageRoot,facts,scratch,
   if(!priorInvoiceSources&&newManifest.ledgers.find(l=>l.namespace==='archava_accounting')?.migrations.some(m=>m.id==='002_invoice_source_posting'))assert.equal(sql(db,"SELECT (SELECT count(*) FROM archava_accounting.invoice_policies)+(SELECT count(*) FROM archava_accounting.invoice_sources)+(SELECT count(*) FROM archava_accounting.journal_sources)"),'0','Upgrade must not invent source policies or source postings')
   if(!priorPurchaseSources&&newManifest.ledgers.find(l=>l.namespace==='archava_accounting')?.migrations.some(m=>m.id==='004_purchase_source_posting'))assert.equal(sql(db,"SELECT (SELECT count(*) FROM archava_accounting.purchase_policies)+(SELECT count(*) FROM archava_accounting.purchase_origins)+(SELECT count(*) FROM archava_accounting.purchase_sources)+(SELECT count(*) FROM archava_accounting.purchase_journal_sources)"),'0','Upgrade must not invent purchase setup, origins, sources or postings')
   if(priorPurchaseSources){
-   assert.deepEqual(purchaseProof(db),priorPurchaseProof)
+   assert.deepEqual(upgradedPurchaseProof(db),priorPurchaseProof)
    assert.equal(sql(db,"SELECT count(*) FROM archava_accounting.stock_layer_origins"),priorStockSources?'2':'1',priorStockSources?'Both already-known acquired and returned layer origins survive the upgrade':'Only the exact acquired layer gets its reviewed prior inventory account; legacy return lineage stays unguessed')
    assert.equal(sql(db,"SELECT (SELECT count(*) FROM archava_accounting.stock_policies)+(SELECT count(*) FROM archava_accounting.stock_sources)+(SELECT count(*) FROM archava_accounting.stock_journal_sources)"),'0','Upgrade never invents historical COGS recognition or stock policy')
   }
@@ -260,7 +271,7 @@ export async function verifyPriorNative({previousRoot,packageRoot,facts,scratch,
   }
   const verifyPriorPurchases=async(database,server,session)=>{
    if(!priorPurchaseSources)return
-   assert.deepEqual(purchaseProof(database),priorPurchaseProof)
+   assert.deepEqual(upgradedPurchaseProof(database),priorPurchaseProof)
    const r=await call(server.origin,session,`/erp/accounting/reports?tenant=${tenant}&bookId=${priorPurchaseBook.bookId}&from=2000-01-01&to=2100-12-31`)
    assert.equal(r.status,200,JSON.stringify(r.body));assert.equal(r.body.balanceSheet.assetsMinor,'1410100');assert.equal(r.body.profitAndLoss.costOfGoodsSoldMinor,'0');assert.equal(r.body.trialBalance.balanced,true);assert.equal(r.body.sourceCoverage.postedCount,2);assert.equal(r.body.sourceCoverage.unpostedCount,0)
   }

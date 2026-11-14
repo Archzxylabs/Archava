@@ -391,6 +391,81 @@
       "code": "invoice_source_tax_accounts_required",
       "message": "This invoice source carries tax, so its journal posts the tax to the tax control account captured with it, beside the receivable and revenue accounts. Review and select exactly the accounts of the proposed journal at their current revisions, then save the draft again.",
       "message_id": "Sumber faktur ini memuat pajak, jadi jurnalnya memposting pajak ke akun kontrol pajak yang tercatat bersamanya, di samping akun piutang dan pendapatan. Tinjau dan pilih tepat akun-akun pada jurnal yang diusulkan dengan revisi terkininya, lalu simpan drafnya lagi."
+    },
+    "A supplier document tax code and its tax amount are stated together": {
+      "code": "supplier_document_tax_code_and_amount_together",
+      "message": "A tax code and the supplier's tax amount go together. When the supplier document names a tax code, enter the tax amount printed on it (0 if it prints none); when it has no tax code, leave the tax amount out.",
+      "message_id": "Kode pajak dan jumlah pajak pemasok harus diisi bersama. Jika dokumen pemasok memakai kode pajak, isi jumlah pajak yang tercetak di dokumen itu (0 jika tidak ada); jika tanpa kode pajak, kosongkan jumlah pajaknya."
+    },
+    "Supplier document tax code is not a tax code of the company book": {
+      "code": "supplier_document_tax_code_unknown",
+      "message": "This company's book has no tax code with that code. Choose one of the company's confirmed input tax codes, or enter and confirm the code in Accounting first.",
+      "message_id": "Pembukuan perusahaan ini tidak punya kode pajak dengan kode itu. Pilih salah satu kode pajak masukan perusahaan yang sudah dikonfirmasi, atau masukkan dan konfirmasi kodenya di Akuntansi lebih dulu."
+    },
+    "A supplier document needs an input tax code": {
+      "code": "supplier_document_tax_code_not_input",
+      "message": "That tax code is an output code, which is for sales. Choose an input tax code for a supplier document.",
+      "message_id": "Kode pajak itu adalah kode keluaran, yang dipakai untuk penjualan. Pilih kode pajak masukan untuk dokumen pemasok."
+    },
+    "The supplier document tax code is entered but not confirmed": {
+      "code": "supplier_document_tax_code_not_confirmed",
+      "message": "That tax code has been entered but a reviewer has not confirmed it yet, so it does not apply. Ask a reviewer to confirm it in Accounting, then save the supplier document again.",
+      "message_id": "Kode pajak itu sudah dimasukkan tetapi belum dikonfirmasi peninjau, jadi belum berlaku. Minta peninjau mengonfirmasinya di Akuntansi, lalu simpan dokumen pemasoknya lagi."
+    },
+    "No confirmed version of the supplier document tax code applies on the document date": {
+      "code": "supplier_document_tax_code_not_applicable",
+      "message": "No confirmed version of that tax code applies on the date of the supplier document: it starts later or was retired before that date. Check the document date, choose a tax code that applies on it, or enter and confirm a version that does.",
+      "message_id": "Tidak ada versi terkonfirmasi dari kode pajak itu yang berlaku pada tanggal dokumen pemasok: versinya baru mulai setelahnya atau sudah dipensiunkan sebelum tanggal itu. Periksa tanggal dokumen, pilih kode pajak yang berlaku pada tanggal itu, atau masukkan dan konfirmasi versi yang berlaku."
+    },
+    "Supplier document tax snapshot differs from the tax code version that applies on the document date": {
+      "code": "supplier_document_tax_snapshot_mismatch",
+      "message": "The tax code details stored with this supplier document are not those of the tax code version that applies on its date, so the document was not saved. Refresh the supplier documents and save the claim again.",
+      "message_id": "Rincian kode pajak yang disimpan bersama dokumen pemasok ini tidak sama dengan versi kode pajak yang berlaku pada tanggalnya, jadi dokumen tidak disimpan. Muat ulang dokumen pemasok lalu simpan klaimnya lagi."
+    },
+    "A supplier document tax amount cannot be negative or exceed its goods total": {
+      "code": "supplier_document_tax_amount_out_of_bounds",
+      "message": "The tax amount is larger than the goods total of the supplier document, or negative. Enter the tax amount printed on the supplier's document; it cannot be more than the goods total.",
+      "message_id": "Jumlah pajak lebih besar daripada total barang pada dokumen pemasok, atau negatif. Isi jumlah pajak yang tercetak di dokumen pemasok; jumlahnya tidak boleh melebihi total barang."
+    },
+    "Supplier document computed tax must follow the stored tax rule": {
+      "code": "supplier_document_tax_computed_mismatch",
+      "message": "The tax calculated for this supplier document does not follow its tax code, so the document was not saved. Refresh the supplier documents and save the claim again; the calculated tax is worked out by Archava and is not entered.",
+      "message_id": "Pajak hasil hitung untuk dokumen pemasok ini tidak mengikuti kode pajaknya, jadi dokumen tidak disimpan. Muat ulang dokumen pemasok lalu simpan klaimnya lagi; pajak hasil hitung dihitung oleh Archava dan tidak diisi."
+    },
+    "Supplier document tax changes only with a corrected claim version": {
+      "code": "supplier_document_tax_fixed_for_version",
+      "message": "The tax of a supplier claim cannot change while it is checked, matched or voided. Void the claim if it is matched, then record a corrected claim version with the new tax code or tax amount.",
+      "message_id": "Pajak pada klaim pemasok tidak bisa berubah saat klaim diperiksa, dicocokkan, atau dibatalkan. Batalkan klaim jika sudah cocok, lalu catat versi klaim koreksi dengan kode pajak atau jumlah pajak yang baru."
+    },
+    "Purchase source tax differs from the tax stored on its supplier document": {
+      "code": "purchase_source_tax_mismatch",
+      "message": "The tax of this purchase source is not the tax stored on its supplier document, so it was not recorded. Purchase sources are captured by Archava from the matched supplier document; match or void the document through Purchasing instead.",
+      "message_id": "Pajak pada sumber pembelian ini tidak sama dengan pajak yang tersimpan di dokumen pemasoknya, jadi tidak dicatat. Sumber pembelian direkam oleh Archava dari dokumen pemasok yang sudah cocok; cocokkan atau batalkan dokumennya lewat Pembelian."
+    },
+    "The supplier document tax code is not a confirmed input tax code of the posting book": {
+      "code": "supplier_bill_tax_code_not_postable",
+      "message": "This supplier document's tax code is not a confirmed input tax code of the book the bill posts to, so its tax cannot be posted and the claim was not matched. Check the tax code in Accounting; record a corrected claim version that names a confirmed input tax code of this company's book.",
+      "message_id": "Kode pajak dokumen pemasok ini bukan kode pajak masukan terkonfirmasi pada pembukuan tempat tagihan diposting, jadi pajaknya tidak bisa diposting dan klaim tidak dicocokkan. Periksa kode pajaknya di Akuntansi; catat versi klaim koreksi yang memakai kode pajak masukan terkonfirmasi milik pembukuan perusahaan ini."
+    },
+    "The tax control account of the supplier document tax code is inactive": {
+      "code": "supplier_bill_tax_control_account_changed",
+      "message": "The control account of this supplier document's tax code is inactive, so the bill's tax cannot be posted and the claim was not matched. Reactivate the account in Accounting and check the claim again. For later documents you can instead retire this tax code version and enter and confirm a new version with an active account.",
+      "message_id": "Akun kontrol dari kode pajak dokumen pemasok ini tidak aktif, jadi pajak tagihan tidak bisa diposting dan klaim tidak dicocokkan. Aktifkan kembali akun itu di Akuntansi lalu periksa klaimnya lagi. Untuk dokumen berikutnya, Anda juga bisa memensiunkan versi kode pajak ini lalu memasukkan dan mengonfirmasi versi baru dengan akun yang aktif."
+    },
+    "The tax control account is also an account of the purchase posting policy": {
+      "code": "supplier_bill_tax_control_account_in_policy",
+      "message": "The control account of this supplier document's tax code is also the inventory, goods received not invoiced, payable or landed fee account of the purchase posting policy of its order, so the tax would not be a separate line and the claim was not matched. Enter and confirm a tax code version with its own asset account, then record a corrected claim version.",
+      "message_id": "Akun kontrol dari kode pajak dokumen pemasok ini juga dipakai sebagai akun persediaan, barang diterima belum ditagih, utang, atau biaya perolehan pada kebijakan posting pembelian pesanannya, sehingga pajak tidak menjadi baris tersendiri dan klaim tidak dicocokkan. Masukkan dan konfirmasi versi kode pajak dengan akun asetnya sendiri, lalu catat versi klaim koreksi."
+    },
+    "A purchase void retains the tax control account of its supplier bill": {
+      "code": "purchase_void_tax_account_changed",
+      "message": "The void of a supplier bill uses the tax control account of the bill it reverses, and this one names another, so it was not recorded. Void the supplier document through Purchasing; Archava captures the void with the bill's account.",
+      "message_id": "Pembatalan tagihan pemasok memakai akun kontrol pajak dari tagihan yang dibatalkannya, sedangkan yang ini menyebut akun lain, jadi tidak dicatat. Batalkan dokumen pemasok lewat Pembelian; Archava merekam pembatalannya dengan akun tagihan itu."
+    },
+    "A taxed purchase draft must use the captured goods, tax and total on the goods received, tax control and payable accounts": {
+      "code": "purchase_source_tax_accounts_required",
+      "message": "This supplier bill source carries tax, so its journal posts the tax to the tax control account captured with it, beside the goods received not invoiced and payable accounts. Review and select exactly the accounts of the proposed journal at their current revisions, then save the draft again.",
+      "message_id": "Sumber tagihan pemasok ini memuat pajak, jadi jurnalnya memposting pajak ke akun kontrol pajak yang tercatat bersamanya, di samping akun barang diterima belum ditagih dan akun utang. Tinjau dan pilih tepat akun-akun pada jurnal yang diusulkan dengan revisi terkininya, lalu simpan drafnya lagi."
     }
   }
 }

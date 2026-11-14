@@ -1415,6 +1415,20 @@
                   }
                 ]
               }
+            },
+            {
+              "name": "taxCode",
+              "label": "Input tax code (entered by your company, not verified by Archava)",
+              "kind": "string",
+              "maxLength": 40,
+              "optional": true
+            },
+            {
+              "name": "taxMinor",
+              "label": "Tax amount printed on the supplier's document, in the document's unit (required with a tax code; the goods total stays net)",
+              "kind": "integer",
+              "min": 0,
+              "optional": true
             }
           ]
         },
@@ -1488,6 +1502,20 @@
               "name": "reason",
               "label": "reason",
               "kind": "string"
+            },
+            {
+              "name": "taxCode",
+              "label": "Input tax code (entered by your company, not verified by Archava)",
+              "kind": "string",
+              "maxLength": 40,
+              "optional": true
+            },
+            {
+              "name": "taxMinor",
+              "label": "Tax amount printed on the supplier's document, in the document's unit (required with a tax code; the goods total stays net)",
+              "kind": "integer",
+              "min": 0,
+              "optional": true
             }
           ]
         },
@@ -7812,7 +7840,7 @@
             },
             {
               "name": "accounts",
-              "label": "Review all mapped accounts used by this source",
+              "label": "Review all mapped accounts used by this source (with the tax control account of a taxed supplier bill or its void)",
               "kind": "array",
               "minItems": 2,
               "maxItems": 3,
