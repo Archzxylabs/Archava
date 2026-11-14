@@ -38,6 +38,7 @@ The registry describes wiring. It is not a grant and not acceptance: domain tran
 | `agent.rank` | Position in keyword routing; lower ranks match first. Unique. |
 | `agent.keywords` | Lower-case phrases that route an utterance to the module. |
 | `agent.collections` | Response collections the provider projection may read. Anything not listed stays withheld. |
+| `agent.aggregates` | Optional. Aggregate lookups Ava may request, one entry per collection (which must be in `agent.collections`): `sums` (integer amount fields a sum may name; a count is always offered), `dimensions` (`{id, class}`: a group-by and the AI-sharing data category of its labels, `business_facts` or `names`), `filters`, and `date` (which date `dateFrom`/`dateTo` and `month` read). Names only: the SQL behind each one is fixed in the adapters. Anything not listed is refused. |
 | `owner.aliases` | Optional. Other single lower-case words an owner may call the module by when configuring the workspace in chat (`hotel`, `penginapan`). The id always counts. A word names one module. |
 | `owner.requires` | Optional. Module ids that must be enabled for this module to be enabled. A module that names none requires only the mandatory base, `crm-contacts`. Describing a business in chat enables these with the module. |
 
@@ -48,6 +49,7 @@ The registry describes wiring. It is not a grant and not acceptance: domain tran
 | [`archava_domain::modules`](../../crates/domain/src/modules.rs) | Typed registry compiled from the embedded snapshot |
 | [Agent keyword routing](../../crates/host/src/agent/planner.rs) | `agent.rank`, `agent.keywords` |
 | [Provider projection](../../crates/host/src/agent/disclosure/fields.rs) | `agent.collections` |
+| [Aggregate lookups](../../crates/host/src/agent/aggregate.rs) and [their SQL](../../crates/adapters/src/erp/aggregates.rs) | `agent.aggregates`: what the planner is offered and what a request is checked against; the adapter refuses a name it does not implement and a unit test keeps the two lists equal |
 | [Product catalogue](../../tools/product/catalogue.mjs) | Module list for the product audit and browser gates |
 | [Operations tabs](../../crates/slice/src/operations/mod.rs) and [detail loading](../../crates/slice/src/operations/operator.rs) | `tab`, `typedDetail` |
 | [Workspace domains](../../crates/adapters/src/erp/projections.rs) | `namespace` for each workspace's tenant transaction and module-enabled check |
@@ -91,6 +93,7 @@ The registry does not yet drive, and the gate does not yet check, these per-modu
 - The ten Operations tabs with dedicated views (catalog, sales, purchasing, invoices, accounting, support, missions, suggestions, import, voice) and their view dispatch in `crates/slice/src/operations/mod.rs`. Tabs for modules served by the generic operator workspace come from the registry.
 - The assembly contracts in `crates/assembly`, which use the assembly vocabulary (`contacts`, `fieldServices`) rather than these ids, and the two CRM capabilities the owner catalogue adds by hand (`crm-contacts`, `crm-pipeline`).
 - Typed form references in `crates/domain/src/operator.rs`.
+- The SQL of an aggregate (`SOURCES` in `crates/adapters/src/erp/aggregates.rs`): its table, columns, states and the page read's predicates. The registry declares the public names; adding an entry without its SQL fails `the_registry_and_the_sql_table_declare_exactly_the_same_names`, and the domain test that lists the declared aggregates fails until the new one is reviewed for disclosure.
 - The fixture's per-ledger provisioning and runtime grants. Its migration lists and directories come from the migration manifest.
 
 Migrations are registered once, in `migrations/manifest.v1.json`: the server embeds from it at build time and the fixture reads it. The gate refuses a migration embedded by hand.

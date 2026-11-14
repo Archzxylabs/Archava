@@ -1,4 +1,5 @@
 //! Ava's goal-driven conversation. Plans request work; existing domain handlers authorize it.
+mod aggregate;
 pub(crate) mod bindings;
 pub(crate) mod delegation;
 mod disclosure;
@@ -7,6 +8,7 @@ mod planner;
 mod read;
 mod runner;
 mod schema;
+mod units;
 use crate::{
     business::{refused, Response},
     router::{authenticate, AppState},
@@ -133,9 +135,19 @@ fn id(value: &Value, key: &str) -> Result<Uuid, Response> {
         .ok_or_else(|| unavailable("invalid stored agent reference"))
 }
 fn public_goal(mut goal: Value) -> Value {
+    // The catalogued reason of a refused step travels in the stored mission
+    // snapshot. It describes the current failure only: once the failure is
+    // cleared (a new approval) it is no longer the goal's reason.
+    let refusal = goal["outcome"]
+        .as_object_mut()
+        .and_then(|outcome| outcome.remove(runner::REFUSAL_KEY))
+        .filter(|_| goal["failure"].is_string());
     if let Some(g) = goal.as_object_mut() {
         g.remove("session_hash");
         g.remove("principal_id");
+        if let Some(refusal) = refusal {
+            g.insert("failureDetail".into(), refusal);
+        }
     }
     goal
 }
@@ -386,7 +398,7 @@ async fn turn_impl(
         .await
         .map_err(unavailable)?
         .ok_or_else(|| unavailable("missing newly planned goal"))?;
-        let reply = json!({"text":planner::proposal_text(&proposal.plan,state_name),"source":"business","planner":proposal.planner,"modules":module_json,"accessHash":proposal.context["accessHash"],"goalId":goal_id,"goal":visible_goal(state,tenant,actor,goal).await?,"inputHash":input_hash,"requestId":input.request_id,"threadId":thread,"data":{"kind":if state_name=="planned"{"agent_plan"}else if state_name=="clarifying"{"agent_clarification"}else{"agent_report"}}});
+        let reply = json!({"text":planner::proposal_text(&proposal.plan,&proposal.context,state_name),"source":"business","planner":proposal.planner,"modules":module_json,"accessHash":proposal.context["accessHash"],"goalId":goal_id,"goal":visible_goal(state,tenant,actor,goal).await?,"inputHash":input_hash,"requestId":input.request_id,"threadId":thread,"data":{"kind":if state_name=="planned"{"agent_plan"}else if state_name=="clarifying"{"agent_clarification"}else{"agent_report"}}});
         // Plan and recoverable turn commit together: no orphaned plan after a lost response.
         store::record_turn(
             tx.checked_executor().await.map_err(unavailable)?,
@@ -477,7 +489,7 @@ fn report_reply(goal: &Value) -> Value {
         .as_array()
         .map(|s| s.iter().filter(|s| s["status"] == "passed").count())
         .unwrap_or(0);
-    json!({"text":format!("Goal status: {}. {} business steps have verified completion records. {}",goal["state"].as_str().unwrap_or("unknown"),completed,goal["failure"].as_str().unwrap_or("Review the recorded plan, source facts and receipts below.")),"source":"business","modules":goal["modules"],"goalId":goal["id"],"goal":goal,"data":{"kind":"agent_report","verifiedCompletedSteps":completed}})
+    json!({"text":format!("Goal status: {}. {} business steps have verified completion records. {}",goal["state"].as_str().unwrap_or("unknown"),completed,goal["failure"].as_str().unwrap_or("Review the recorded plan, source facts and receipts below.")),"source":"business","modules":goal["modules"],"goalId":goal["id"],"goal":goal,"data":{"kind":"agent_report","verifiedCompletedSteps":completed,"refusal":goal["failureDetail"]}})
 }
 fn control_from_chat(goal: Value, text: &str) -> Value {
     let action = if text.contains("cancel") || text.contains("batalkan") {

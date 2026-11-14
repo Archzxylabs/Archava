@@ -51,6 +51,13 @@ fn field_schema(field: &Value) -> Value {
     }
     value
 }
+/// The aggregate member of a lookup: a count or a sum over every row of the
+/// collection that matches the filters, not a page. The values each member
+/// accepts are data (`readExpansion.aggregates`, from the module registry),
+/// so this shape stays the same whatever is installed or shared.
+fn aggregate() -> Value {
+    json!({"type":"object","description":"A whole-collection total instead of rows. Use it for totals, counts, how many/how much and breakdowns. Only the combinations listed in readExpansion.aggregates are served; anything else is answered with a refusal reason.","properties":{"measure":{"type":"string","enum":["count","sum"]},"field":{"type":"string","description":"For measure sum: one of the entry's sumFields. Omit for count."},"groupBy":{"type":"string","description":"One of the entry's groupBy values, or omit for a single total."},"filters":{"type":"object","properties":{"status":{"type":"string"},"state":{"type":"string"},"dateFrom":{"type":"string","description":"First UTC calendar date included, YYYY-MM-DD."},"dateTo":{"type":"string","description":"Last UTC calendar date included, YYYY-MM-DD."},"companyId":{"type":"string","description":"An observed company id."}},"additionalProperties":false}},"required":["measure"],"additionalProperties":false})
+}
 pub(super) fn contracts(modules: &[String]) -> Vec<Value> {
     modules.iter().filter_map(|id|archava_domain::operator::module(id)).flat_map(|m|{
         m["actions"].as_array().into_iter().flatten().filter(|a|a["providerOnly"]!=true).map(move|a| {
@@ -76,7 +83,7 @@ pub(super) fn plan(contracts: &[Value]) -> Value {
         json!({"type":"array","maxItems":12,"items":{"type":"object","properties":{"title":{"type":"string","maxLength":200},"tool":{"type":"string","enum":tools},"input":shared_input(contracts),"dependsOn":{"type":"array","items":{"type":"integer","minimum":0,"maximum":11},"description":"Earlier ZERO-BASED array indices. The second step depends on the first with [0]."}},"required":["title","tool","input","dependsOn"],"additionalProperties":false}})
     };
     let mut schema = json!({"type":"object","properties":{"summary":{"type":"string","maxLength":4000},"questions":{"type":"array","items":{"type":"string","maxLength":1000},"maxItems":8,"description":"Missing BUSINESS DATA only. Ready action plans use []. The host UI asks for approval separately. When questions are nonempty, steps must be []."},"steps":steps},"required":["summary","questions","steps"],"additionalProperties":false});
-    schema["properties"]["lookups"] = json!({"type":"array","maxItems":8,"description":"Optional authorized read expansion only: when nonempty, steps and questions must both be empty. Use only the current host read budget; request a lookup only when readExpansion.canRequestAnotherRead is true. Choose only available source module/collection pairs.","items":{"type":"object","properties":{"module":{"type":"string"},"collection":{"type":"string"},"query":{"type":"string","maxLength":160},"id":{"type":"string","maxLength":128}},"required":["module","collection"],"additionalProperties":false}});
+    schema["properties"]["lookups"] = json!({"type":"array","maxItems":8,"description":"Optional authorized read expansion only: when nonempty, steps and questions must both be empty. Use only the current host read budget; request a lookup only when readExpansion.canRequestAnotherRead is true. Choose only available source module/collection pairs. Each item is ONE of: a search (query), an exact record (id), or a whole-collection count or sum (aggregate, without query and id).","items":{"type":"object","properties":{"module":{"type":"string"},"collection":{"type":"string"},"query":{"type":"string","maxLength":160},"id":{"type":"string","maxLength":128},"aggregate":aggregate()},"required":["module","collection"],"additionalProperties":false}});
     compact(&mut schema);
     schema
 }
@@ -332,6 +339,117 @@ mod tests {
             assert_eq!(closed, expected);
             assert_eq!(closed["required"], open["required"]);
         }
+    }
+    #[test]
+    fn every_trade_money_field_states_its_unit() {
+        fn money(schema: &Value, path: &str, out: &mut Vec<(String, String)>) {
+            for (name, field) in schema["properties"].as_object().into_iter().flatten() {
+                let at = format!("{path}.{name}");
+                if field["type"] == "integer"
+                    && matches!(
+                        name.as_str(),
+                        "price"
+                            | "unitCost"
+                            | "unitCostMinor"
+                            | "landedFeeMinor"
+                            | "declaredTotal"
+                            | "taxMinor"
+                            | "unitMinor"
+                            | "amountMinor"
+                    )
+                {
+                    out.push((
+                        at.clone(),
+                        field["description"].as_str().unwrap_or_default().to_owned(),
+                    ));
+                }
+                money(field, &at, out);
+                money(&field["items"], &at, out);
+            }
+        }
+        let mut fields = Vec::new();
+        for contract in contracts(&["commerce".into(), "purchasing".into(), "billing".into()]) {
+            money(
+                &contract["inputSchema"],
+                contract["tool"].as_str().unwrap(),
+                &mut fields,
+            );
+        }
+        let names = fields.iter().map(|(at, _)| at.as_str()).collect::<Vec<_>>();
+        for expected in [
+            "commerce.product.create.price",
+            "commerce.product.set.price",
+            "commerce.product.create_for_company.price",
+            "commerce.stock.adjust.unitCostMinor",
+            "commerce.stock.adjust_for_company.unitCostMinor",
+            "purchasing.offer.create.unitCost",
+            "purchasing.offer.set-cost.unitCost",
+            "purchasing.order.receive.landedFeeMinor",
+            "purchasing.document.capture.declaredTotal",
+            "purchasing.document.capture.lines.unitCost",
+            "purchasing.document.capture.taxMinor",
+            "purchasing.document.revise.declaredTotal",
+            "purchasing.document.revise.lines.unitCost",
+            "purchasing.document.revise.taxMinor",
+            "billing.create_invoice.lines.unitMinor",
+            "billing.append_correction.amountMinor",
+            "billing.record_manual_receipt.amountMinor",
+            "billing.reverse_manual_receipt.amountMinor",
+        ] {
+            assert!(names.contains(&expected), "{expected} is not a money field");
+        }
+        for (at, description) in &fields {
+            let text = description.to_lowercase();
+            assert!(
+                text.contains("whole rupiah") && text.contains("minor unit"),
+                "{at} does not state its unit: {description}"
+            );
+        }
+        // The shared decoding envelope carries the same description, so the
+        // unit reaches the model wherever the field is decoded.
+        let schema = plan(&contracts(&["commerce".into()]));
+        assert!(
+            schema["properties"]["steps"]["items"]["properties"]["input"]["properties"]["price"]
+                ["description"]
+                .as_str()
+                .unwrap()
+                .contains("whole Rupiah when the currency is IDR")
+        );
+    }
+    #[test]
+    fn a_lookup_may_be_an_aggregate_and_the_final_round_offers_neither_kind() {
+        let schema = plan(&contracts(&["billing".to_string()]));
+        let item = &schema["properties"]["lookups"]["items"];
+        assert_eq!(item["required"], json!(["module", "collection"]));
+        let aggregate = &item["properties"]["aggregate"];
+        assert_eq!(
+            aggregate["properties"]["measure"]["enum"],
+            json!(["count", "sum"])
+        );
+        assert_eq!(aggregate["required"], json!(["measure"]));
+        assert_eq!(aggregate["additionalProperties"], false);
+        assert_eq!(
+            aggregate["properties"]["filters"]["additionalProperties"],
+            false
+        );
+        for filter in ["status", "state", "dateFrom", "dateTo", "companyId"] {
+            assert_eq!(
+                aggregate["properties"]["filters"]["properties"][filter]["type"],
+                "string"
+            );
+        }
+        // No SQL, column, permission or free-form expression can be named.
+        assert_eq!(
+            aggregate["properties"]
+                .as_object()
+                .unwrap()
+                .keys()
+                .collect::<Vec<_>>(),
+            ["field", "filters", "groupBy", "measure"]
+        );
+        let closed = without_reads(&schema);
+        assert!(closed["properties"].get("lookups").is_none());
+        assert!(!closed.to_string().contains("aggregate"));
     }
     #[test]
     fn compact_preserves_field_names_while_removing_grammar_counting_bounds() {

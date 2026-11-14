@@ -35,10 +35,16 @@ pub(crate) fn domain_error(error: PurchaseError) -> Response {
         PurchaseError::Domain(ErpError::NotFound) => {
             refused(StatusCode::NOT_FOUND, "unknown_resource")
         }
-        // A catalogued refusal is the same business conflict here; this
-        // answer has no member for its reason yet.
-        PurchaseError::Domain(ErpError::Conflict) | PurchaseError::Refused(_) => {
+        PurchaseError::Domain(ErpError::Conflict) => {
             refused(StatusCode::CONFLICT, "business_conflict")
+        }
+        // A catalogued refusal is the same business conflict, plus its
+        // reason: status, `reason` and `message` are unchanged and `detail`
+        // carries the catalogue entry, as the module commands answer it.
+        PurchaseError::Refused(refusal) => {
+            let mut response = refused(StatusCode::CONFLICT, "business_conflict");
+            response.1 .0["detail"] = crate::erp::refusal_detail(refusal);
+            response
         }
         error => unavailable(format!("{error:?}")),
     }
@@ -343,5 +349,30 @@ pub async fn cancel(
     match run(&state, &headers, input).await {
         Ok(v) => (StatusCode::OK, Json(v)),
         Err(e) => e,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn a_catalogued_refusal_keeps_the_business_conflict_answer_and_adds_its_reason() {
+        let entry = archava_domain::erp::refusals::for_code("sales_line_currency_mismatch")
+            .expect("a catalogued commerce refusal");
+        let (status, Json(body)) = domain_error(PurchaseError::Refused(entry));
+        assert_eq!(status, StatusCode::CONFLICT);
+        assert_eq!(body["reason"], "business_conflict");
+        assert_eq!(
+            body["detail"],
+            json!({"code":entry.code,"message":entry.message,"messageId":entry.message_id})
+        );
+        let (status, Json(plain)) = domain_error(PurchaseError::Domain(ErpError::Conflict));
+        assert_eq!(status, StatusCode::CONFLICT);
+        assert_eq!(plain["reason"], "business_conflict");
+        assert!(plain.get("detail").is_none());
+        assert_eq!(
+            plain["message"], body["message"],
+            "the general sentence is unchanged"
+        );
     }
 }

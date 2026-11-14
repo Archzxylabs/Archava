@@ -1047,5 +1047,9 @@ async fn supplier_document_agent_executes_reviewed_claim_then_match_once_and_ref
     let _ = server.await;
 }
 
+#[path = "agent_runtime/aggregates.rs"]
+mod agent_aggregates;
+#[path = "agent_runtime/failures.rs"]
+mod agent_failures;
 #[path = "agent_runtime/lookups.rs"]
 mod agent_lookups;

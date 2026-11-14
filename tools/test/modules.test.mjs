@@ -137,3 +137,22 @@ test('a missing registry is a problem, not a silent pass', (t) => {
   rmSync(join(f.root, 'config/modules.v1.json'))
   assert.deepEqual(checkModules(f.root).problems, ['Missing or invalid config/modules.v1.json'])
 })
+
+test('aggregate lookups are a closed, well-formed list over readable collections', () => {
+  const aggregate = () => ({ collection: 'sales', sums: ['total'], dimensions: [{ id: 'state', class: 'business_facts' }, { id: 'customer', class: 'names' }], filters: ['state', 'dateFrom'], date: 'created' })
+  const problems = (change) => {
+    const entry = aggregate()
+    change(entry)
+    return registryProblems({ schemaVersion: 1, modules: [{ ...descriptor(), agent: { ...descriptor().agent, aggregates: [entry] } }] }).join('\n')
+  }
+  assert.equal(problems(() => {}), '')
+  assert.match(problems((entry) => { entry.collection = 'secrets' }), /collection must be one of kiosk\.agent\.collections/)
+  assert.match(problems((entry) => { entry.sums = ['total', 'total'] }), /sums must be a list of distinct amount names/)
+  assert.match(problems((entry) => { entry.dimensions[1].class = 'contact_details' }), /must name the data class its labels belong to/)
+  assert.match(problems((entry) => { delete entry.dimensions[1].class }), /must name the data class/)
+  assert.match(problems((entry) => { entry.filters = [] }), /filters must be a non-empty list/)
+  assert.match(problems((entry) => { delete entry.date }), /date must name the date/)
+  assert.match(problems((entry) => { entry.sql = 'select 1' }), /unknown members sql/)
+  assert.match(registryProblems({ schemaVersion: 1, modules: [{ ...descriptor(), agent: { ...descriptor().agent, aggregates: [aggregate(), aggregate()] } }] }).join('\n'), /collection repeats "sales"/)
+  assert.match(registryProblems({ schemaVersion: 1, modules: [{ ...descriptor(), agent: { ...descriptor().agent, aggregates: [] } }] }).join('\n'), /aggregates must be a non-empty list when present/)
+})

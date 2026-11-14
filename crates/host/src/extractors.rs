@@ -194,6 +194,7 @@ async fn an_unmatched_path_is_not_reflected() {
 /// from this list, so a new module cannot escape the rules below by not being
 /// named here. `extractors.rs` is excluded because it is this file.
 const MODULES: &[(&str, &str)] = &[
+    ("agent/aggregate.rs", include_str!("agent/aggregate.rs")),
     ("agent/bindings.rs", include_str!("agent/bindings.rs")),
     ("agent/delegation.rs", include_str!("agent/delegation.rs")),
     ("agent/disclosure.rs", include_str!("agent/disclosure.rs")),
@@ -212,6 +213,7 @@ const MODULES: &[(&str, &str)] = &[
     ("agent/read.rs", include_str!("agent/read.rs")),
     ("agent/runner.rs", include_str!("agent/runner.rs")),
     ("agent/schema.rs", include_str!("agent/schema.rs")),
+    ("agent/units.rs", include_str!("agent/units.rs")),
     ("assistant/bridge.rs", include_str!("assistant/bridge.rs")),
     ("assistant/mod.rs", include_str!("assistant/mod.rs")),
     (

@@ -190,6 +190,39 @@ async fn guards_match(
     }
     Ok(true)
 }
+/// The stored failure of a step refused without a catalogued reason.
+pub(super) const UNSPECIFIED_REFUSAL: &str = "The current domain rules refused this step. Review the recorded partial outcome before changing the plan.";
+/// Member of the stored mission snapshot that carries a catalogued refusal.
+pub(super) const REFUSAL_KEY: &str = "agentRefusal";
+/// The catalogued reason of a refused step, when the module named one.
+///
+/// A module answers a catalogued refusal with `detail.code`
+/// (`docs/architecture/REFUSAL_REASONS.md`). The code selects the catalogue
+/// entry and the stored sentences are the catalogue's, so neither a database
+/// message nor any other response text can reach the goal or its report.
+/// Returns the structured detail and the sentence kept in `failure`.
+pub(super) fn step_refusal(index: u64, plan_step: &Value, body: &Value) -> Option<(Value, String)> {
+    let refusal = archava_domain::erp::refusals::for_code(body["detail"]["code"].as_str()?)?;
+    let tool = plan_step["tool"].as_str().unwrap_or_default();
+    let label = crate::business::tool(tool)
+        .and_then(|(module, action)| {
+            archava_domain::operator::module(module)?["actions"]
+                .as_array()?
+                .iter()
+                .find(|a| a["id"] == action)?["label"]
+                .as_str()
+        })
+        .unwrap_or(tool);
+    let number = index + 1;
+    let detail = json!({"stepIndex":index,"tool":tool,"action":label,"code":refusal.code,"message":refusal.message,"messageId":refusal.message_id});
+    Some((
+        detail,
+        format!(
+            "Step {number} ({label}) was refused: {} Nothing was changed by this step; review the plan before continuing.",
+            refusal.message
+        ),
+    ))
+}
 pub(super) async fn drive(
     state: &AppState,
     tenant: &TenantId,
@@ -396,7 +429,28 @@ async fn execute(state: &AppState, tenant: &TenantId, goal: &Value) -> Result<()
             } else {
                 "holding"
             };
-            update(state,tenant,goal,next,Some(&mission),Some(if status.is_server_error(){"Outcome unconfirmed. Recovery will use the original mission/step key; do not create a replacement action."}else{"The current domain rules refused this step. Review the recorded partial outcome before changing the plan."})).await?;
+            // A catalogued refusal names its rule. Only the catalogue's own
+            // sentences are kept, selected by the code the module answered;
+            // the response text itself is never stored or reported.
+            let refusal = (!status.is_server_error())
+                .then(|| step_refusal(index, plan_step, &body))
+                .flatten();
+            let (snapshot, failure) = match &refusal {
+                Some((detail, sentence)) => {
+                    let mut snapshot = mission.clone();
+                    snapshot[REFUSAL_KEY] = detail.clone();
+                    (snapshot, sentence.as_str())
+                }
+                None => (
+                    mission.clone(),
+                    if status.is_server_error() {
+                        "Outcome unconfirmed. Recovery will use the original mission/step key; do not create a replacement action."
+                    } else {
+                        UNSPECIFIED_REFUSAL
+                    },
+                ),
+            };
+            update(state, tenant, goal, next, Some(&snapshot), Some(failure)).await?;
             return Ok(());
         }
         mission = body;
@@ -537,4 +591,56 @@ pub(super) async fn stop_for_replan(
     id: Uuid,
 ) -> Result<(), Response> {
     control(state, headers, tenant, actor, id, "cancel").await
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn a_catalogued_refusal_is_stored_in_catalogue_words_and_names_its_step() {
+        let entry =
+            archava_domain::erp::refusals::for_code("manual_receipt_exceeds_outstanding").unwrap();
+        let step = json!({"title":"Model-written title","tool":"billing.record_manual_receipt"});
+        // The module's answer: the catalogue code, beside text the agent must
+        // never repeat.
+        let body = json!({"decision":"refused","reason":"conflict","message":"ERROR: new row violates check constraint \"invoice_balance\" (SQLSTATE 23514)","detail":{"code":"manual_receipt_exceeds_outstanding","message":"ERROR: relation archava_billing.invoices","messageId":"SQLSTATE 23514"}});
+        let (detail, sentence) = step_refusal(2, &step, &body).unwrap();
+        assert_eq!(
+            detail,
+            json!({"stepIndex":2,"tool":"billing.record_manual_receipt","action":detail["action"],"code":entry.code,"message":entry.message,"messageId":entry.message_id})
+        );
+        assert_eq!(
+            sentence,
+            format!(
+                "Step 3 ({}) was refused: {} Nothing was changed by this step; review the plan before continuing.",
+                detail["action"].as_str().unwrap(),
+                entry.message
+            )
+        );
+        for text in [sentence, detail.to_string()] {
+            for raw in [
+                "ERROR",
+                "SQLSTATE",
+                "23514",
+                "constraint",
+                "archava_billing",
+                "Model-written",
+            ] {
+                assert!(!text.contains(raw), "{raw}: {text}");
+            }
+        }
+    }
+    #[test]
+    fn a_refusal_without_a_catalogue_entry_has_no_specific_reason() {
+        let step = json!({"tool":"billing.void_invoice"});
+        for body in [
+            json!({"decision":"refused","reason":"conflict","message":"The record changed."}),
+            json!({"reason":"conflict","detail":{"code":"not_a_catalogue_code","message":"duplicate key value violates unique constraint"}}),
+            json!({"reason":"conflict","detail":"23505"}),
+            Value::Null,
+        ] {
+            assert!(step_refusal(0, &step, &body).is_none(), "{body}");
+        }
+        assert!(UNSPECIFIED_REFUSAL.starts_with("The current domain rules refused this step."));
+    }
 }

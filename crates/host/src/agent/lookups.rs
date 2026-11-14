@@ -9,6 +9,10 @@ pub(super) struct Lookup {
     pub query: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
+    /// A count or sum over the whole filtered collection instead of a page
+    /// of rows (`aggregate.rs`). It carries neither a search nor an id.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub aggregate: Option<super::aggregate::Aggregate>,
 }
 impl Lookup {
     fn key(&self) -> &str {
@@ -19,6 +23,21 @@ impl Lookup {
         }
     }
     pub(super) fn validate(&self, context: &Value) -> Result<(), Response> {
+        if let Some(aggregate) = &self.aggregate {
+            // Structure only. Whether the module, collection, measure,
+            // dimension and filters are allowed is answered to the planner as
+            // a refusal with its reason when the aggregate is run.
+            let name = |s: &str| !s.is_empty() && s.len() <= 64 && s.trim() == s;
+            if !self.query.is_empty()
+                || self.id.is_some()
+                || !name(&self.module)
+                || !name(&self.collection)
+                || !aggregate.well_formed()
+            {
+                return Err(refused(StatusCode::BAD_GATEWAY, "invalid_agent_lookup"));
+            }
+            return Ok(());
+        }
         if self.query.chars().count() > 160
             || self.query.trim() != self.query
             || self.id.is_some() != self.query.is_empty()
@@ -71,6 +90,9 @@ impl Lookup {
         Ok(())
     }
     fn normalize(&mut self) {
+        if let Some(aggregate) = &mut self.aggregate {
+            aggregate.normalize();
+        }
         if matches!(
             self.module.as_str(),
             "crm" | "support" | "commerce" | "purchasing" | "billing"
@@ -183,6 +205,7 @@ pub(super) fn action_requests(action: &ActionInput) -> Vec<Lookup> {
                             collection: collection.into(),
                             query: String::new(),
                             id: Some(id.to_owned()),
+                            aggregate: None,
                         };
                         lookup.normalize();
                         if !out.contains(&lookup) {
@@ -234,6 +257,11 @@ async fn expand_bounded(
     let mut evidence = Vec::new();
     for lookup in lookups {
         lookup.validate(context)?;
+        // An aggregate counts against the same budget but reads no page; it is
+        // computed and recorded by `aggregate::expand`.
+        if lookup.aggregate.is_some() {
+            continue;
+        }
         let path = lookup.path(tenant, company);
         let (status, Json(data)) =
             read::invoke(state, headers, axum::http::Method::GET, &path, None).await?;
@@ -290,7 +318,7 @@ async fn expand_bounded(
         source["coverage"][&key] = json!({"included":rows.len(),"rowsInLookupResults":matching,"moreRowsInLookupResults":matching>rows.len(),"limit":max_rows,"selection":"explicit_lookups","wholeCollection":false});
         let protected = lookups
             .iter()
-            .filter(|q| q.module == module)
+            .filter(|q| q.module == module && q.aggregate.is_none())
             .filter_map(|q| q.id.as_ref().map(|id| (q.key().to_string(), id.clone())))
             .collect();
         read::bound_source(source, &protected)?;
@@ -318,6 +346,7 @@ pub(super) async fn refresh_guards(
                 collection: collection.into(),
                 query: String::new(),
                 id: Some(id.into()),
+                aggregate: None,
             };
             if !queries.contains(&q) {
                 queries.push(q)
@@ -330,13 +359,17 @@ pub(super) async fn refresh_guards(
             collection: "products".into(),
             query: String::new(),
             id: Some(id.into()),
+            aggregate: None,
         };
         if !queries.contains(&q) {
             queries.push(q)
         }
     }
     if queries.is_empty() {
+        // Guards re-read records. An aggregate is evidence of an answer, not
+        // a fact a step depends on, and is never recomputed by the worker.
         queries = saved(&goal["context"])?;
+        queries.retain(|q| q.aggregate.is_none());
     }
     if !queries.is_empty() {
         context["requestedReferenceIds"] = json!(queries
@@ -383,6 +416,7 @@ mod tests {
             collection: "contacts".into(),
             query: "Alice".into(),
             id: None,
+            aggregate: None,
         };
         let mut c = json!({"sources":[{"module":"crm","available":true,"data":{"items":[]}}]});
         assert!(q.validate(&c).is_ok());

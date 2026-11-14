@@ -29,6 +29,9 @@ const WORKSPACES = 'crates/adapters/src/erp/projections.rs'
 const LAYERS = ['domain', 'adapters', 'host']
 
 const STRINGS = ['id', 'label', 'namespace', 'ledger', 'source', 'suite', 'spec', 'readPath', 'uiPath', 'control']
+// Data classes of the owner's AI sharing policy a group label can belong to
+// (crates/own/src/disclosure.rs). A dimension without one is never disclosed.
+const AGGREGATE_CLASSES = ['business_facts', 'names']
 const escape = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 const isFile = (root, path) => existsSync(join(root, path)) && statSync(join(root, path)).isFile()
 const isDir = (root, path) => existsSync(join(root, path)) && statSync(join(root, path)).isDirectory()
@@ -59,6 +62,25 @@ export function registryProblems(registry) {
       const values = agent?.[list]
       if (!Array.isArray(values) || values.length === 0 || values.some((value) => typeof value !== 'string' || !value)) problems.push(`${REGISTRY}: ${name}.agent.${list} must be a non-empty list of strings`)
       else if (list === 'keywords' && values.some((value) => value !== value.toLowerCase())) problems.push(`${REGISTRY}: ${name}.agent.keywords must be lower-case (utterances are lower-cased before matching)`)
+    }
+    // Aggregate lookups Ava may request: a closed list per collection. The SQL
+    // behind each name is fixed in crates/adapters/src/erp/aggregates.rs.
+    if (agent?.aggregates !== undefined) {
+      const names = (values) => Array.isArray(values) && values.every((value) => typeof value === 'string' && /^[a-z][A-Za-z]*$/.test(value)) && new Set(values).size === values.length
+      if (!Array.isArray(agent.aggregates) || agent.aggregates.length === 0) problems.push(`${REGISTRY}: ${name}.agent.aggregates must be a non-empty list when present`)
+      else agent.aggregates.forEach((aggregate, position) => {
+        const at = `${name}.agent.aggregates[${position}]`
+        const extra = Object.keys(aggregate ?? {}).filter((key) => !['collection', 'sums', 'dimensions', 'filters', 'date'].includes(key))
+        if (extra.length) problems.push(`${REGISTRY}: ${at} has unknown members ${extra.join(', ')}`)
+        if (typeof aggregate?.collection !== 'string' || !Array.isArray(agent.collections) || !agent.collections.includes(aggregate.collection)) problems.push(`${REGISTRY}: ${at}.collection must be one of ${name}.agent.collections`)
+        else if (agent.aggregates.findIndex((other) => other?.collection === aggregate.collection) !== position) problems.push(`${REGISTRY}: ${at}.collection repeats ${JSON.stringify(aggregate.collection)}`)
+        if (!names(aggregate?.sums)) problems.push(`${REGISTRY}: ${at}.sums must be a list of distinct amount names (count is always offered)`)
+        if (!names(aggregate?.filters) || aggregate.filters.length === 0) problems.push(`${REGISTRY}: ${at}.filters must be a non-empty list of distinct filter names`)
+        if (typeof aggregate?.date !== 'string' || !/^[a-z]+$/.test(aggregate.date)) problems.push(`${REGISTRY}: ${at}.date must name the date its dateFrom/dateTo filters and month dimension use`)
+        const dimensions = aggregate?.dimensions
+        if (!Array.isArray(dimensions) || dimensions.length === 0 || !names(dimensions.map((dimension) => dimension?.id))) problems.push(`${REGISTRY}: ${at}.dimensions must be a non-empty list of {id, class} with distinct ids`)
+        else for (const dimension of dimensions) if (!AGGREGATE_CLASSES.includes(dimension.class)) problems.push(`${REGISTRY}: ${at}.dimensions ${JSON.stringify(dimension.id)} must name the data class its labels belong to (${AGGREGATE_CLASSES.join(', ')})`)
+      })
     }
     const owner = module?.owner
     if (owner !== undefined) {
