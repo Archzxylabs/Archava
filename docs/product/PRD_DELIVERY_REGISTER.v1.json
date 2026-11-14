@@ -3,14 +3,47 @@
   "scope": "Whole active PRD plus owner requirements; earlier local milestone acceptance is supporting evidence, not completion of an entire requirement. Inherited requirements remain applicable.",
   "completionRule": "Never complete the whole product while a required requirement, selected profile, provider/operations acceptance, or real-user pilot remains open. Historical proof is immutable.",
   "releaseProfile": {
-    "status": "building_multi_model_profiles",
+    "status": "profiles_selected",
     "accountingSource": null,
-    "jurisdictions": [],
-    "functionalCurrencies": [],
+    "jurisdictions": [
+      "ID"
+    ],
+    "functionalCurrencies": [
+      "IDR"
+    ],
     "offeredIndustryProfiles": [],
     "productionDeployment": "deferred_by_owner_until_website",
     "engineeringRecommendation": "Native accounting first, with optional bound external accounting per company; one official source per company book. Owner asked for a recommendation; actual company setup remains explicit.",
-    "businessModelTarget": "Owner clarified 2026-11-08: ready across business models, catalogued families and validated hybrid compositions. Continue local implementation and acceptance matrices without requiring a first customer/model choice. Per-model profiles define explicit configuration, mandatory workflows and evidence; no universal readiness is inferred."
+    "businessModelTarget": "Owner clarified 2026-11-08: ready across business models, catalogued families and validated hybrid compositions. Continue local implementation and acceptance matrices without requiring a first customer/model choice. Per-model profiles define explicit configuration, mandatory workflows and evidence; no universal readiness is inferred.",
+    "ownerDecision": "Owner decided 2026-11-14: Archava targets Indonesia and a global market. Business-model coverage stays as clarified on 2026-11-08; no single industry is selected.",
+    "profiles": [
+      {
+        "id": "id-idr",
+        "market": "Indonesia",
+        "jurisdiction": "ID",
+        "functionalCurrency": "IDR",
+        "status": "selected",
+        "fits": "Sales, purchasing, billing, payments, accommodation and the accounting source bridges already record whole-IDR amounts.",
+        "openBeforeAcceptance": [
+          "Accounting source is still undecided (native GL is the engineering recommendation).",
+          "No transaction carries Indonesian tax: the PPN/PPh formulas in crates/domain/src/erp/tax_indonesia.rs are used by no module, and no tax rule has been reviewed by a tax professional.",
+          "No production host, pilot user or priority integration is chosen."
+        ]
+      },
+      {
+        "id": "global",
+        "market": "Outside Indonesia",
+        "jurisdiction": null,
+        "functionalCurrency": null,
+        "status": "selected_not_buildable_yet",
+        "fits": "The general ledger accepts any ISO 4217 book currency from config/accounting-currencies.v1.json.",
+        "openBeforeAcceptance": [
+          "Commerce, purchasing, supplier documents and accommodation constrain currency to IDR in their schemas, and the invoice, purchase and stock source bridges require an IDR book; a non-IDR company cannot sell, buy or post sources.",
+          "Money entry, import and several screens assume whole IDR amounts.",
+          "No country, tax regime or first currency outside Indonesia is named; none is claimed."
+        ]
+      }
+    ]
   },
   "requirements": [
     {
