@@ -25,7 +25,7 @@ Navigate directly to what you need based on your role or objective:
 5. **[Architecture Decisions (ADR Ledger)](architecture/DECISIONS.md)**: Living ledger of architectural decisions (ADR-014 through ADR-020).
 
 ### 3. 💼 ERP & CRM Business Modules
-1. **[Business Modules Overview](modules/README.md)**: Domain contracts and evidence for the 18 mounted business domains.
+1. **[Business Modules Overview](modules/README.md)**: Domain contracts and evidence for the 19 mounted business domains.
 2. **[CRM Module](modules/CRM_MODULE.md)**: Contacts, sales pipeline stages, follow-up drafting, and durable receipt recovery.
 3. **[Commerce Module](modules/COMMERCE_MODULE.md)**: Catalog items, customer orders, inventory stock, and landed cost layers.
 4. **[Billing Module](modules/BILLING_MODULE.md)**: Invoicing, gateway payment attempts, webhooks, and email outbox dispatch.

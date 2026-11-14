@@ -1,13 +1,13 @@
 # Native business operations
 
-The mounted operator product covers 18 business domains. The shared
-[form catalogue](../../config/operator-actions.v1.json) describes 157 canonical
+The mounted operator product covers 19 business domains. The shared
+[form catalogue](../../config/operator-actions.v1.json) describes 193 canonical
 operations, of which two Billing provider events require the verified payment
-integration. The other 155 operations have native review forms. A form's presence
+integration. The other 191 operations have native review forms. A form's presence
 is not evidence that every lifecycle combination has been exercised in a browser.
 
-The existing CRM, Commerce, Purchasing, Billing and Support screens remain the
-primary workspaces. The other 13 domains use the native
+The existing CRM, Commerce, Purchasing, Billing, Accounting and Support screens
+remain the primary workspaces. The other 13 domains use the native
 [operator view](../../crates/slice/src/operations/operator.rs) at
 `/app/erp?module=<id>`. Purchasing and Support also expose the additional actions
 through this view's form component. Fields include nested records, editable line
