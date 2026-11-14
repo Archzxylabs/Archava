@@ -25,11 +25,18 @@ The owner targets Indonesia and a global market. The general ledger already acce
 - Accommodation, which has no company and no ledger bridge, stays IDR.
 - A company that traded in IDR before its non-IDR book was created. Its earlier records stay IDR and cannot be posted to that book; the policy guard refuses them.
 
+## Known consequences
+
+- **Create the book before the company's first product.** Products a company created before its non-IDR book stay IDR. New sales orders are in the book currency, so those products can no longer be sold (the line guard refuses them) and must be created again.
+- **A product inserted while the book is being created can commit as IDR.** The insert guard takes no lock on the book. The result is the state above, not a wrong amount.
+- **Until stage 2, purchasing and foodservice refuse a non-IDR product**, so no IDR purchase document can be built over one.
+- **The insert guards have no startup readiness check**; the migration checksum is the only proof they are installed.
+
 ## Stages
 
 | Stage | Scope | State |
 | --- | --- | --- |
-| 1 | Commerce: products and sales orders take the company's trade currency; database guard; reads return it | not started |
+| 1 | Commerce: products and sales orders take the company's trade currency; database guard; reads return it | implemented on branch `feat/trade-currency-commerce`, not merged: `commerce-pg/011_company_trade_currency.sql` (format check, `trade_currency`, insert guards on products, orders and order lines), the adapter sets the currency of company-owned products and orders, the workspace read returns it. Purchasing still refuses a non-IDR product, and a non-IDR order cannot be invoiced or posted until stages 2-4 |
 | 2 | Purchasing: offers, purchase orders and supplier documents | not started |
 | 3 | Billing: invoices from orders and manual invoices; gateway refusal reason | not started |
 | 4 | Accounting source bridges and policies accept the `minor` unit on non-IDR books | not started |

@@ -1,12 +1,12 @@
 # SQL migration ownership
 
-All 77 checked-in SQL migrations currently live under this directory, grouped into 31 ledger directories. The native manifest mounts 70; 7 remain reserved specifications. The owner-configuration migration was relocated from `crates/host/migrations/owner` to `owner-pg/`; its migration ID, schema namespace, SQL bytes, and checksum are unchanged.
+All 78 checked-in SQL migrations currently live under this directory, grouped into 31 ledger directories. The native manifest mounts 71; 7 remain reserved specifications. The owner-configuration migration was relocated from `crates/host/migrations/owner` to `owner-pg/`; its migration ID, schema namespace, SQL bytes, and checksum are unchanged.
 
 The manifest is the only list of applied migrations. The persistent server embeds the migrations it verifies from it at build time ([build.rs](../crates/slice/build.rs)), and the disposable PostgreSQL fixture reads the same manifest in [pg-fixture](../crates/pg-fixture/src/lib.rs). A file's presence here does not mean a given runtime mounts it or its UI is complete.
 
 ## Applied versus unmounted ledgers
 
-`manifest.v1.json` is the installer's contract: 70 of the 77 files, across 25 ledgers, carry an `id`, `path` and SHA-256 that the Ops installer verifies and applies. The remaining seven files are **unmounted**: no manifest entry, no embedded registration, and no runtime readiness check.
+`manifest.v1.json` is the installer's contract: 71 of the 78 files, across 25 ledgers, carry an `id`, `path` and SHA-256 that the Ops installer verifies and applies. The remaining seven files are **unmounted**: no manifest entry, no embedded registration, and no runtime readiness check.
 
 | Unmounted ledger | Files |
 | --- | --- |
@@ -79,6 +79,13 @@ layer, leaving historical ambiguous layers NULL. It retains private cost writers
 and adds exact trigger/FK/index/privilege readiness for the mounted profile. This
 is original-cost provenance, not COGS journal posting. See
 [Commerce](../docs/modules/COMMERCE_MODULE.md).
+
+Commerce011 replaces the IDR-only currency checks on products and sales orders
+with a three-letter format check and insert guards: a company-owned row must carry
+the currency of its company's accounting book, any other row IDR, and an order line
+the currency of its order. Commerce migrates before Accounting, so the guard reads
+`archava_accounting.books` late-bound and treats a missing ledger as "no book".
+Existing rows are not rewritten. See [trade currency](../docs/architecture/MULTI_CURRENCY.md).
 
 Accounting011/012 append original-document due agreements, immutable reviewed versions and the corresponding audit kind without changing earlier SQL. See [due terms and dated subledgers](../docs/modules/DOCUMENT_DUE_TERMS.md). No historical agreements or new user grants are inferred.
 

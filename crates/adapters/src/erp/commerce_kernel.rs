@@ -39,6 +39,46 @@ use super::{
     COMMERCE_PERMISSION_VOCABULARY,
 };
 
+/// The row-side currency grammar: the migration's `^[A-Z]{3}$` CHECK. Which
+/// code a row may carry is the database's decision (`trade_currency`), not
+/// this parser's.
+fn valid_currency_code(code: &str) -> bool {
+    code.len() == 3 && code.bytes().all(|byte| byte.is_ascii_uppercase())
+}
+
+/// The trade currency a new company-owned product or sales order must carry:
+/// the currency of the company's accounting book, or IDR when the company has
+/// no book (or the Accounting ledger is not installed). Read in the caller's
+/// transaction; the `a_currency_*` insert guards re-derive it and refuse a
+/// different value, so this is the value to send, not the authority.
+pub async fn company_trade_currency(
+    connection: &mut PgConnection,
+    tenant: &str,
+    company: Uuid,
+) -> Result<String, PurchaseError> {
+    let installed: bool =
+        sqlx::query_scalar("SELECT to_regclass('archava_accounting.books') IS NOT NULL")
+            .fetch_one(&mut *connection)
+            .await
+            .map_err(|error| purchase_database_error(COMMERCE_LEDGER, error))?;
+    if !installed {
+        return Ok("IDR".to_owned());
+    }
+    let book: Option<String> = sqlx::query_scalar(
+        "SELECT currency FROM archava_accounting.books WHERE tenant_id=$1 AND company_id=$2",
+    )
+    .bind(tenant)
+    .bind(company)
+    .fetch_optional(&mut *connection)
+    .await
+    .map_err(|error| purchase_database_error(COMMERCE_LEDGER, error))?;
+    let currency = book.unwrap_or_else(|| "IDR".to_owned());
+    if !valid_currency_code(&currency) {
+        return Err(PurchaseError::Domain(ErpError::Conflict));
+    }
+    Ok(currency)
+}
+
 fn int4(value: i64) -> Result<i32, PurchaseError> {
     i32::try_from(value).map_err(|_| PurchaseError::Domain(ErpError::Conflict))
 }
@@ -109,7 +149,7 @@ fn parse_product_row(
     let currency: String = row
         .try_get("currency")
         .map_err(|error| purchase_database_error(COMMERCE_LEDGER, error))?;
-    if currency != "IDR" {
+    if !valid_currency_code(&currency) {
         return Err(PurchaseError::Domain(ErpError::Conflict));
     }
     let track_stock: bool = row
@@ -168,7 +208,28 @@ pub async fn lock_commerce_products_for(
 ) -> Result<Vec<ProductRow>, PurchaseError> {
     lock_commerce_products_scoped(connection, tenant, ids, owner_module, None).await
 }
+/// The company-scoped lock for callers whose documents are still IDR-only:
+/// purchasing (offers, purchase orders, receipts) and foodservice. A product
+/// in another currency is refused here exactly as before trade currencies
+/// existed, so an IDR purchase document can never be built over a non-IDR
+/// product. Commerce's own paths use [`lock_trade_products_scoped`].
 pub async fn lock_commerce_products_scoped(
+    connection: &mut PgConnection,
+    tenant: &str,
+    ids: &[Uuid],
+    owner_module: &str,
+    company: Option<Uuid>,
+) -> Result<Vec<ProductRow>, PurchaseError> {
+    let products =
+        lock_trade_products_scoped(connection, tenant, ids, owner_module, company).await?;
+    if products.iter().any(|product| product.currency != "IDR") {
+        return Err(PurchaseError::Domain(ErpError::Conflict));
+    }
+    Ok(products)
+}
+/// The company-scoped product lock in whatever currency the rows carry: the
+/// catalog, stock and sales-order paths of Commerce itself.
+pub async fn lock_trade_products_scoped(
     connection: &mut PgConnection,
     tenant: &str,
     ids: &[Uuid],
@@ -921,9 +982,15 @@ pub async fn record_product_command(
     if let Some((company, expected)) = &input.company {
         company.validate_new(*expected)?;
     }
+    // An unowned product keeps the column default (IDR); a company-owned one
+    // is priced in its company's book currency.
+    let currency = match &input.company {
+        Some((company, _)) => Some(company_trade_currency(connection, tenant, company.id).await?),
+        None => None,
+    };
     let product_id = Uuid::new_v4();
     let statement = if input.company.is_some() {
-        "INSERT INTO archava_commerce.products(tenant_id,id,sku,title,unit,track_stock,price,company_id,company_revision,company_code,company_name) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)"
+        "INSERT INTO archava_commerce.products(tenant_id,id,sku,title,unit,track_stock,price,company_id,company_revision,company_code,company_name,currency) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)"
     } else {
         "INSERT INTO archava_commerce.products(tenant_id,id,sku,title,unit,track_stock,price) VALUES($1,$2,$3,$4,$5,$6,$7)"
     };
@@ -941,6 +1008,7 @@ pub async fn record_product_command(
             .bind(company.revision)
             .bind(&company.code)
             .bind(&company.name)
+            .bind(currency)
     } else {
         query
     };
@@ -1013,6 +1081,7 @@ pub struct OrderRow {
     pub state: String,
     pub managed_by: Option<String>,
     pub total_estimate: i64,
+    pub currency: String,
     pub revision: i64,
 }
 
@@ -1079,6 +1148,12 @@ fn parse_order_row(
     if !(0..=TOTAL_MAX).contains(&total_estimate) {
         return Err(PurchaseError::Domain(ErpError::Conflict));
     }
+    let currency: String = row
+        .try_get("currency")
+        .map_err(|error| purchase_database_error(COMMERCE_LEDGER, error))?;
+    if !valid_currency_code(&currency) {
+        return Err(PurchaseError::Domain(ErpError::Conflict));
+    }
     let revision: i32 = row
         .try_get::<i32, _>("revision")
         .map_err(|error| purchase_database_error(COMMERCE_LEDGER, error))?;
@@ -1094,6 +1169,7 @@ fn parse_order_row(
         state,
         managed_by,
         total_estimate,
+        currency,
         revision,
     })
 }
@@ -1190,7 +1266,7 @@ pub async fn quote_commerce_lines_scoped(
         seen.push(line.product_id);
     }
     let products =
-        lock_commerce_products_scoped(connection, tenant, &seen.to_vec(), owner_module, company)
+        lock_trade_products_scoped(connection, tenant, &seen.to_vec(), owner_module, company)
             .await?;
     let mut quoted = Vec::with_capacity(lines.len());
     for line in lines {
@@ -1336,9 +1412,16 @@ pub async fn create_commerce_draft_with_customer(
     if !(0..=TOTAL_MAX).contains(&total) {
         return Err(PurchaseError::Domain(ErpError::Conflict));
     }
+    // An unowned order keeps the column default (IDR); a company-owned one is
+    // in its company's book currency, and the line guard refuses a product
+    // priced in any other.
+    let currency = match customer.company {
+        Some(company) => Some(company_trade_currency(connection, tenant, company.id).await?),
+        None => None,
+    };
     let order_id = Uuid::new_v4();
     let statement = if customer.company.is_some() {
-        "INSERT INTO archava_commerce.orders(tenant_id,id,owner_id,customer_name,total_estimate,managed_by,customer_party_id,customer_party_revision,company_id,company_revision,company_code,company_name) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)"
+        "INSERT INTO archava_commerce.orders(tenant_id,id,owner_id,customer_name,total_estimate,managed_by,customer_party_id,customer_party_revision,company_id,company_revision,company_code,company_name,currency) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)"
     } else if customer.party.is_some() {
         "INSERT INTO archava_commerce.orders(tenant_id,id,owner_id,customer_name,total_estimate,managed_by,customer_party_id,customer_party_revision) VALUES($1,$2,$3,$4,$5,$6,$7,$8)"
     } else if customer.contact.is_some() {
@@ -1365,6 +1448,7 @@ pub async fn create_commerce_draft_with_customer(
             .bind(company.revision)
             .bind(&company.code)
             .bind(&company.name)
+            .bind(currency)
     } else {
         query
     };
@@ -1467,7 +1551,7 @@ pub async fn reserve_commerce_order(
     }
     let mut product_ids: Vec<Uuid> = line_rows.iter().map(|(id, _, _)| *id).collect();
     product_ids.extend(owns.iter().map(|allocation| allocation.product_id));
-    let products = lock_commerce_products_scoped(
+    let products = lock_trade_products_scoped(
         connection,
         tenant,
         &product_ids,
@@ -1556,7 +1640,7 @@ pub async fn fulfill_commerce_order(
             .iter()
             .map(|(product_id, _)| *product_id)
             .collect();
-        lock_commerce_products_scoped(
+        lock_trade_products_scoped(
             connection,
             tenant,
             &allocation_products,
@@ -1653,7 +1737,7 @@ pub async fn cancel_commerce_order(
             .into_iter()
             .map(|(product_id,)| product_id)
             .collect();
-        lock_commerce_products_scoped(
+        lock_trade_products_scoped(
             connection,
             tenant,
             &allocation_products,
