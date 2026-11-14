@@ -628,6 +628,7 @@ async fn an_invoice_from_a_non_idr_order_takes_the_order_currency() {
     // Whole Rupiah is not a unit of a USD book; the minor unit is.
     let (status, refused) = send(&x.app, &x.alice, &x.policy_in(0, "whole_idr")).await;
     assert_eq!(status, StatusCode::CONFLICT, "{refused}");
+    assert_refused_as(status, &refused, "posting_policy_source_unit_mismatch");
     x.enable().await;
     let (st, snapshot) = snapshot(&x.app, &x.alice, &x.company).await;
     assert_eq!(st, StatusCode::OK, "{snapshot}");
@@ -789,6 +790,7 @@ async fn the_minor_unit_is_refused_on_an_idr_book() {
     let s = SourceFixture::new().await;
     let (status, refused) = send(&s.app, &s.alice, &s.policy_in(0, "minor")).await;
     assert_eq!(status, StatusCode::CONFLICT, "{refused}");
+    assert_refused_as(status, &refused, "posting_policy_source_unit_mismatch");
     s.enable().await;
     let (st, snapshot) = snapshot(&s.app, &s.alice, &s.company).await;
     assert_eq!(st, StatusCode::OK, "{snapshot}");
@@ -827,6 +829,9 @@ async fn a_planted_idr_invoice_under_a_usd_book_is_refused_not_captured() {
     let command = Uuid::new_v4();
     let (st,v)=call(&x.app,"POST","/erp/billing/commands",json!({"tenant":"acme","mutation":{"type":"issue_invoice","commandId":command,"invoiceId":draft["invoiceId"],"expectedRevision":1,"reason":"Rupiah invoice against a USD book"}}),Some(&x.alice)).await;
     assert_eq!(st, StatusCode::CONFLICT, "{v}");
+    // The accounting capture guard refuses inside the billing command, and
+    // the billing answer names it.
+    assert_refused_as(st, &v, "invoice_currency_differs_from_book");
     let (state, currency): (String, String) =
         sqlx::query_as("SELECT status,currency FROM archava_billing.invoices WHERE id=$1")
             .bind(Uuid::parse_str(draft["invoiceId"].as_str().unwrap()).unwrap())

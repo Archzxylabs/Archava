@@ -150,6 +150,9 @@ fn error(e: PurchaseError) -> Response {
     PurchaseError::Domain(ErpError::Forbidden)=>refusal(StatusCode::FORBIDDEN,"forbidden","Your current financial permissions do not allow this operation."),
     PurchaseError::Domain(ErpError::NotFound)=>refusal(StatusCode::NOT_FOUND,"unknown_resource","The financial record is unavailable in your current company scope."),
     PurchaseError::Domain(_)=>refusal(StatusCode::CONFLICT,"conflict","The reviewed record, account or period changed, or a bookkeeping rule needs review. Refresh the record before trying again."),
+    // A conflict whose database guard is catalogued: the same 409 and
+    // `reason`, with the specific sentence and its code.
+    PurchaseError::Refused(refusal)=>(StatusCode::CONFLICT,Json(crate::erp::refused_document(refusal))),
     other=>unavailable(other),
 }
 }

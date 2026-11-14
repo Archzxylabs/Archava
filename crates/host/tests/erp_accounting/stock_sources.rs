@@ -870,6 +870,11 @@ async fn a_usd_book_posts_stock_costs_in_minor_units_and_inventory_control_recon
     )
     .await;
     assert_eq!(status, StatusCode::CONFLICT, "{refused}");
+    assert_refused_as(
+        status,
+        &refused,
+        "stock_policy_unit_or_cogs_account_refused",
+    );
     ok(&s.p.app, &s.p.alice, s.policy(0, &s.cogs)).await;
     // Two units at USD 70.00 plus USD 1.00 landed fee: USD 141.00 of inventory.
     s.receive(2, 100, false).await;
@@ -996,6 +1001,9 @@ async fn a_planted_idr_sales_order_under_a_usd_book_cannot_be_fulfilled_under_a_
     )
     .await;
     assert_eq!(status, StatusCode::CONFLICT, "{refused}");
+    // The accounting capture guard refuses inside the commerce command, and
+    // the commerce answer names it.
+    assert_refused_as(status, &refused, "sales_order_currency_differs_from_book");
     let (currency, revision): (String, i32) =
         sqlx::query_as("SELECT currency,revision FROM archava_commerce.orders WHERE id=$1")
             .bind(Uuid::parse_str(orders[1]["id"].as_str().unwrap()).unwrap())

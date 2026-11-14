@@ -1,0 +1,256 @@
+{
+  "schemaVersion": 1,
+  "meaning": "Each key is the exact message of a database guard (RAISE EXCEPTION in migrations/). A refusal whose guard message is a key here is answered with this stable code and these sentences; any other refusal keeps the module's general conflict answer. Codes are stable API: never rename one, add a new entry instead.",
+  "reasons": {
+    "A company that already trades in IDR cannot open a book in another currency": {
+      "code": "book_currency_conflicts_with_existing_trade",
+      "message": "This company already has products, orders or invoices in IDR, so its book cannot be opened in another currency. Open the book in IDR, or create a new company for trading in the other currency.",
+      "message_id": "Perusahaan ini sudah punya produk, pesanan, atau faktur dalam IDR, jadi pembukuannya tidak bisa dibuka dengan mata uang lain. Buka pembukuan dalam IDR, atau buat perusahaan baru untuk bertransaksi dengan mata uang lain."
+    },
+    "Currency differs from the company book": {
+      "code": "trade_currency_differs_from_book",
+      "message": "This record's currency is not the currency of the company's book. Use the book's currency (IDR when the company has no book yet) and try again.",
+      "message_id": "Mata uang catatan ini berbeda dengan mata uang pembukuan perusahaan. Gunakan mata uang pembukuan (IDR jika perusahaan belum punya pembukuan), lalu coba lagi."
+    },
+    "Sales line is priced in another currency": {
+      "code": "sales_line_currency_mismatch",
+      "message": "This product is priced in a different currency than the sales order. Choose a product that belongs to the same company and currency as the order.",
+      "message_id": "Produk ini dihargai dalam mata uang yang berbeda dengan pesanan penjualan. Pilih produk dari perusahaan dan mata uang yang sama dengan pesanan."
+    },
+    "Offer is priced in another currency than its product": {
+      "code": "offer_currency_differs_from_product",
+      "message": "A supplier offer must be priced in the same currency as its product. Enter the offer in the product's currency.",
+      "message_id": "Penawaran pemasok harus memakai mata uang yang sama dengan produknya. Masukkan penawaran dalam mata uang produk tersebut."
+    },
+    "Purchase line is priced in another currency": {
+      "code": "purchase_line_currency_mismatch",
+      "message": "This product or supplier offer is priced in a different currency than the purchase order. Choose a product and offer in the order's currency.",
+      "message_id": "Produk atau penawaran pemasok ini memakai mata uang yang berbeda dengan pesanan pembelian. Pilih produk dan penawaran dengan mata uang yang sama dengan pesanan."
+    },
+    "Invoice currency differs from its company book": {
+      "code": "invoice_currency_differs_from_book",
+      "message": "This invoice is in a different currency than the company's book, so it cannot be recorded in the accounts. Issue the invoice in the book's currency.",
+      "message_id": "Faktur ini memakai mata uang yang berbeda dengan pembukuan perusahaan, sehingga tidak bisa dicatat di akuntansi. Terbitkan faktur dalam mata uang pembukuan."
+    },
+    "Sales order currency differs from its company book": {
+      "code": "sales_order_currency_differs_from_book",
+      "message": "This sales order is in a different currency than the company's book, so its stock cost cannot be recorded in the accounts. Recreate the order in the book's currency.",
+      "message_id": "Pesanan penjualan ini memakai mata uang yang berbeda dengan pembukuan perusahaan, sehingga biaya stoknya tidak bisa dicatat di akuntansi. Buat ulang pesanan dalam mata uang pembukuan."
+    },
+    "Purchase order currency differs from its company book": {
+      "code": "purchase_order_currency_differs_from_book",
+      "message": "This purchase order is in a different currency than the company's book, so it cannot be recorded in the accounts. Recreate the purchase order in the book's currency.",
+      "message_id": "Pesanan pembelian ini memakai mata uang yang berbeda dengan pembukuan perusahaan, sehingga tidak bisa dicatat di akuntansi. Buat ulang pesanan pembelian dalam mata uang pembukuan."
+    },
+    "This source bridge requires a reviewed native book and its source unit: whole_idr on an IDR book, minor on any other": {
+      "code": "posting_policy_source_unit_mismatch",
+      "message": "The posting policy's amount unit does not fit this book. Use whole rupiah (whole_idr) for an IDR book and minor units (minor) for a book in any other currency, and make sure the book is a native book.",
+      "message_id": "Satuan nominal pada kebijakan posting tidak sesuai dengan pembukuan ini. Gunakan rupiah utuh (whole_idr) untuk pembukuan IDR dan satuan minor (minor) untuk pembukuan mata uang lain, serta pastikan pembukuannya adalah pembukuan native."
+    },
+    "Stock policy requires a reviewed native book, its source unit (whole_idr on an IDR book, minor on any other) and a current COGS account": {
+      "code": "stock_policy_unit_or_cogs_account_refused",
+      "message": "The stock posting policy was refused. Use whole rupiah (whole_idr) for an IDR book or minor units (minor) for any other currency, and choose an active cost of goods sold account at its current revision.",
+      "message_id": "Kebijakan posting stok ditolak. Gunakan rupiah utuh (whole_idr) untuk pembukuan IDR atau satuan minor (minor) untuk mata uang lain, dan pilih akun harga pokok penjualan yang aktif pada revisi terbarunya."
+    },
+    "Invoice posting policy has no reviewed source unit": {
+      "code": "invoice_policy_source_unit_missing",
+      "message": "The invoice posting policy for this book has no reviewed amount unit, so the invoice cannot be recorded. Save a new revision of the invoice posting policy, then try again.",
+      "message_id": "Kebijakan posting faktur untuk pembukuan ini belum punya satuan nominal yang ditinjau, sehingga faktur tidak bisa dicatat. Simpan revisi baru kebijakan posting faktur, lalu coba lagi."
+    },
+    "Purchase source has no origin with a reviewed source unit": {
+      "code": "purchase_policy_source_unit_missing",
+      "message": "The purchase posting policy for this book has no reviewed amount unit, so the purchase cannot be recorded. Save a new revision of the purchase posting policy, then try again.",
+      "message_id": "Kebijakan posting pembelian untuk pembukuan ini belum punya satuan nominal yang ditinjau, sehingga pembelian tidak bisa dicatat. Simpan revisi baru kebijakan posting pembelian, lalu coba lagi."
+    },
+    "Policy identity and unit basis are immutable": {
+      "code": "posting_policy_identity_immutable",
+      "message": "A posting policy's book and amount unit cannot be changed after it is created, and each change must build on its latest revision. Refresh the policy and revise only its accounts.",
+      "message_id": "Pembukuan dan satuan nominal pada kebijakan posting tidak bisa diubah setelah dibuat, dan setiap perubahan harus berdasarkan revisi terbarunya. Muat ulang kebijakan dan revisi hanya akun-akunnya."
+    },
+    "Stock policy identity and unit basis are immutable": {
+      "code": "stock_policy_identity_immutable",
+      "message": "A stock posting policy's book and amount unit cannot be changed after it is created, and each change must build on its latest revision. Refresh the policy and revise only its cost of goods sold account.",
+      "message_id": "Pembukuan dan satuan nominal pada kebijakan posting stok tidak bisa diubah setelah dibuat, dan setiap perubahan harus berdasarkan revisi terbarunya. Muat ulang kebijakan dan revisi hanya akun harga pokok penjualannya."
+    },
+    "Three distinct source roles/accounts are required": {
+      "code": "invoice_policy_accounts_incomplete",
+      "message": "The invoice posting policy needs three different accounts, one for each role. Choose a separate account for each role and save again.",
+      "message_id": "Kebijakan posting faktur membutuhkan tiga akun yang berbeda, satu untuk tiap peran. Pilih akun terpisah untuk setiap peran, lalu simpan lagi."
+    },
+    "Four distinct source roles/accounts are required": {
+      "code": "purchase_policy_accounts_incomplete",
+      "message": "The purchase posting policy needs four different accounts, one for each role. Choose a separate account for each role and save again.",
+      "message_id": "Kebijakan posting pembelian membutuhkan empat akun yang berbeda, satu untuk tiap peran. Pilih akun terpisah untuk setiap peran, lalu simpan lagi."
+    },
+    "A source account differs from its reviewed classification/revision": {
+      "code": "policy_account_changed_or_wrong_class",
+      "message": "One of the accounts in this posting policy is inactive, has changed since you reviewed it, or is the wrong type for its role. Refresh the chart of accounts and choose a current account of the right type.",
+      "message_id": "Salah satu akun pada kebijakan posting ini tidak aktif, sudah berubah sejak Anda tinjau, atau jenisnya tidak cocok dengan perannya. Muat ulang daftar akun dan pilih akun terbaru dengan jenis yang sesuai."
+    },
+    "An existing native book is required": {
+      "code": "native_book_required",
+      "message": "This action needs a native book that already exists for the company. Create the company's book first, or choose a company that has one.",
+      "message_id": "Tindakan ini membutuhkan pembukuan native yang sudah ada untuk perusahaan. Buat pembukuan perusahaan terlebih dahulu, atau pilih perusahaan yang sudah punya pembukuan."
+    },
+    "An opening balance must use the control account the current policy declares": {
+      "code": "opening_balance_wrong_control_account",
+      "message": "The opening balance names a different control account than the one the current posting policy declares. Use the receivable, payable or inventory account from the current posting policy, or set that policy first.",
+      "message_id": "Saldo awal memakai akun kontrol yang berbeda dengan yang ditetapkan kebijakan posting saat ini. Gunakan akun piutang, utang, atau persediaan dari kebijakan posting yang berlaku, atau atur kebijakan itu terlebih dahulu."
+    },
+    "An opening balance needs an active control account and an active equity offset account": {
+      "code": "opening_balance_accounts_refused",
+      "message": "The opening balance needs an active control account of the right type and an active equity account as its offset. Choose an active equity account for the offset and check that the control account is active.",
+      "message_id": "Saldo awal membutuhkan akun kontrol aktif dengan jenis yang sesuai dan akun ekuitas aktif sebagai lawannya. Pilih akun ekuitas yang aktif sebagai lawan dan pastikan akun kontrolnya aktif."
+    },
+    "Opening lines differ from the declared accounts or exact amount": {
+      "code": "opening_balance_lines_differ",
+      "message": "The opening balance journal no longer matches its declared accounts or amount. Refresh the accounts and enter the opening balance again.",
+      "message_id": "Jurnal saldo awal tidak lagi cocok dengan akun atau jumlah yang dinyatakan. Muat ulang daftar akun dan masukkan saldo awal sekali lagi."
+    },
+    "Reserved opening references require a declared opening balance": {
+      "code": "opening_reference_reserved",
+      "message": "Journal references starting with \"opening:\" are reserved for opening balances. Use the opening balance action, or choose a different reference for this journal.",
+      "message_id": "Referensi jurnal yang diawali \"opening:\" khusus untuk saldo awal. Gunakan tindakan saldo awal, atau pilih referensi lain untuk jurnal ini."
+    },
+    "Resolve draft journals before closing": {
+      "code": "period_close_draft_journals",
+      "message": "This period still has draft journals. Post or void every draft journal dated in the period, then close it.",
+      "message_id": "Periode ini masih punya jurnal draf. Posting atau batalkan semua jurnal draf bertanggal dalam periode ini, lalu tutup periodenya."
+    },
+    "Resolve unposted invoice sources before closing": {
+      "code": "period_close_unposted_invoices",
+      "message": "This period still has invoices that are not posted to the ledger. Post the invoice sources dated in the period, then close it.",
+      "message_id": "Periode ini masih punya faktur yang belum diposting ke buku besar. Posting sumber faktur bertanggal dalam periode ini, lalu tutup periodenya."
+    },
+    "Resolve unposted receipt, supplier claim and correction sources before closing": {
+      "code": "period_close_unposted_purchases",
+      "message": "This period still has goods receipts, supplier bills or purchase corrections that are not posted to the ledger. Post the purchase sources dated in the period, then close it.",
+      "message_id": "Periode ini masih punya penerimaan barang, tagihan pemasok, atau koreksi pembelian yang belum diposting ke buku besar. Posting sumber pembelian bertanggal dalam periode ini, lalu tutup periodenya."
+    },
+    "Resolve unposted stock cost sources before closing": {
+      "code": "period_close_unposted_stock_costs",
+      "message": "This period still has stock costs that are not posted to the ledger. Post the stock cost sources dated in the period, then close it.",
+      "message_id": "Periode ini masih punya biaya stok yang belum diposting ke buku besar. Posting sumber biaya stok bertanggal dalam periode ini, lalu tutup periodenya."
+    },
+    "Resolve unmatched imported statement amounts before closing": {
+      "code": "period_close_unmatched_bank_rows",
+      "message": "This period still has imported bank statement amounts that are not matched. Match every statement row dated in the period, then close it.",
+      "message_id": "Periode ini masih punya nominal rekening koran impor yang belum dicocokkan. Cocokkan semua baris rekening koran bertanggal dalam periode ini, lalu tutup periodenya."
+    },
+    "Configure an explicit reconciliation opening basis for every registered bank before closing": {
+      "code": "period_close_bank_without_opening_basis",
+      "message": "At least one registered bank account has no reconciliation opening basis. Set an opening basis for every bank account, then close the period.",
+      "message_id": "Setidaknya satu rekening bank terdaftar belum punya dasar pembukaan rekonsiliasi. Atur dasar pembukaan untuk setiap rekening bank, lalu tutup periodenya."
+    },
+    "Complete bank coverage, cash controls and a fresh reviewed reconciliation are required before closing": {
+      "code": "period_close_bank_review_incomplete",
+      "message": "The bank reconciliation for this period is incomplete or was reviewed before the latest changes. Import the full statement, resolve the differences and have the reconciliation reviewed again, then close the period.",
+      "message_id": "Rekonsiliasi bank untuk periode ini belum lengkap atau ditinjau sebelum perubahan terakhir. Impor rekening koran secara lengkap, selesaikan selisihnya, dan minta rekonsiliasi ditinjau ulang, lalu tutup periodenya."
+    },
+    "An open native book period is required": {
+      "code": "open_period_required",
+      "message": "The journal date does not fall in an open period of this book. Choose a date inside an open period, open a period that covers the date, or reopen the closed period first.",
+      "message_id": "Tanggal jurnal tidak berada dalam periode yang terbuka pada pembukuan ini. Pilih tanggal di dalam periode terbuka, buka periode yang mencakup tanggal itu, atau buka kembali periode yang sudah ditutup."
+    },
+    "Stock source falls in a closed financial period": {
+      "code": "stock_cost_in_closed_period",
+      "message": "This stock movement is dated in a financial period that is already closed, so its cost cannot be recorded. Reopen the period first, or wait until the stock movement falls in an open period.",
+      "message_id": "Pergerakan stok ini bertanggal dalam periode keuangan yang sudah ditutup, sehingga biayanya tidak bisa dicatat. Buka kembali periodenya terlebih dahulu, atau lakukan saat pergerakan stok jatuh dalam periode yang terbuka."
+    },
+    "Reopen the financial source period before changing its invoice": {
+      "code": "invoice_in_closed_period",
+      "message": "This invoice belongs to a financial period that is already closed. Reopen the period before changing the invoice.",
+      "message_id": "Faktur ini termasuk dalam periode keuangan yang sudah ditutup. Buka kembali periodenya sebelum mengubah faktur."
+    },
+    "Reopen the financial source period before changing this purchase": {
+      "code": "purchase_in_closed_period",
+      "message": "This purchase belongs to a financial period that is already closed. Reopen the period before changing the purchase.",
+      "message_id": "Pembelian ini termasuk dalam periode keuangan yang sudah ditutup. Buka kembali periodenya sebelum mengubah pembelian."
+    },
+    "Reopen the statement and journal periods before changing a match": {
+      "code": "bank_match_in_closed_period",
+      "message": "This bank match touches a statement row or journal in a closed period. Reopen those periods before changing the match.",
+      "message_id": "Pencocokan bank ini menyangkut baris rekening koran atau jurnal dalam periode yang sudah ditutup. Buka kembali periode tersebut sebelum mengubah pencocokan."
+    },
+    "Statement rows cannot be appended after their financial period closed": {
+      "code": "bank_import_in_closed_period",
+      "message": "This bank statement covers a financial period that is already closed. Reopen the period before importing more statement rows for it.",
+      "message_id": "Rekening koran ini mencakup periode keuangan yang sudah ditutup. Buka kembali periodenya sebelum mengimpor baris rekening koran tambahan."
+    },
+    "Reopen affected reconciled later periods before backdating cash postings": {
+      "code": "cash_posting_before_reconciled_period",
+      "message": "This cash posting is dated before a period that has already been reconciled with the bank. Reopen the affected later periods first, or use a later date.",
+      "message_id": "Posting kas ini bertanggal sebelum periode yang sudah direkonsiliasi dengan bank. Buka kembali periode-periode setelahnya terlebih dahulu, atau gunakan tanggal yang lebih baru."
+    },
+    "Period overlaps or has invalid initial state": {
+      "code": "period_overlaps_existing",
+      "message": "The new period overlaps an existing period of this book. Choose dates that do not overlap any other period.",
+      "message_id": "Periode baru bertumpang tindih dengan periode lain pada pembukuan ini. Pilih tanggal yang tidak bertumpang tindih dengan periode mana pun."
+    },
+    "Journal lines must be balanced, complete and audited": {
+      "code": "journal_not_balanced",
+      "message": "The journal cannot be posted: it needs between 2 and 100 lines, and total debit must equal total credit. Correct the lines and try again.",
+      "message_id": "Jurnal tidak bisa diposting: jurnal harus berisi 2 sampai 100 baris, dan total debit harus sama dengan total kredit. Perbaiki baris jurnal lalu coba lagi."
+    },
+    "Journal cannot be amended; use a reversal": {
+      "code": "journal_cannot_be_amended",
+      "message": "A posted or voided journal cannot be changed. Record a reversal of the journal and enter a corrected one.",
+      "message_id": "Jurnal yang sudah diposting atau dibatalkan tidak bisa diubah. Buat jurnal pembalik, lalu masukkan jurnal yang benar."
+    },
+    "Independent posting is required": {
+      "code": "independent_posting_required",
+      "message": "This book requires a journal to be posted by someone other than the person who drafted it. Ask another authorised person to post this journal.",
+      "message_id": "Pembukuan ini mewajibkan jurnal diposting oleh orang yang berbeda dari pembuat drafnya. Minta orang lain yang berwenang untuk memposting jurnal ini."
+    },
+    "The bank evidence importer cannot be its independent reviewer": {
+      "code": "bank_reviewer_is_importer",
+      "message": "The person who imported the bank statement cannot also review its reconciliation. Ask another authorised person to review it.",
+      "message_id": "Orang yang mengimpor rekening koran tidak boleh sekaligus meninjau rekonsiliasinya. Minta orang lain yang berwenang untuk meninjaunya."
+    },
+    "Statement windows must not overlap": {
+      "code": "bank_statement_overlaps",
+      "message": "This bank statement's dates overlap a statement that was already imported for the same bank account. Import a statement whose dates start after the previous one ends.",
+      "message_id": "Tanggal rekening koran ini bertumpang tindih dengan rekening koran yang sudah diimpor untuk rekening bank yang sama. Impor rekening koran yang tanggalnya dimulai setelah rekening koran sebelumnya berakhir."
+    },
+    "Adjacent statement closing and opening balances must agree": {
+      "code": "bank_statement_balances_disagree",
+      "message": "This statement's opening balance does not equal the closing balance of the statement before it (or its closing balance does not equal the opening balance of the next one). Check the statement and its balances, then import it again.",
+      "message_id": "Saldo awal rekening koran ini tidak sama dengan saldo akhir rekening koran sebelumnya (atau saldo akhirnya tidak sama dengan saldo awal rekening koran berikutnya). Periksa rekening koran dan saldonya, lalu impor ulang."
+    },
+    "Payment exceeds the current posted bill or live reservations": {
+      "code": "supplier_payment_exceeds_bill",
+      "message": "The supplier bill changed, or this payment is larger than what is still owed on it counting payments already drafted. Refresh the bill and enter an amount up to its outstanding balance.",
+      "message_id": "Tagihan pemasok sudah berubah, atau pembayaran ini melebihi sisa tagihan termasuk pembayaran lain yang sudah dibuat drafnya. Muat ulang tagihan dan masukkan jumlah paling banyak sebesar sisa tagihan."
+    },
+    "Bank evidence is already matched or reserved": {
+      "code": "bank_row_already_used",
+      "message": "This bank statement row does not have enough unmatched amount left: it is already matched or reserved for another payment. Choose a statement row with enough remaining amount.",
+      "message_id": "Sisa nominal baris rekening koran ini tidak mencukupi karena sudah dicocokkan atau dipakai untuk pembayaran lain. Pilih baris rekening koran yang sisanya masih cukup."
+    },
+    "Company is inactive": {
+      "code": "company_inactive",
+      "message": "This company is inactive, so new records cannot be created for it. Choose an active company.",
+      "message_id": "Perusahaan ini tidak aktif, sehingga catatan baru tidak bisa dibuat untuknya. Pilih perusahaan yang aktif."
+    },
+    "Return exceeds delivered quantity": {
+      "code": "return_exceeds_delivered",
+      "message": "The returned quantity is more than what was delivered and not yet returned on this order line. Enter a quantity up to the remaining delivered quantity.",
+      "message_id": "Jumlah retur melebihi jumlah yang sudah dikirim dan belum diretur pada baris pesanan ini. Masukkan jumlah paling banyak sebesar sisa yang sudah dikirim."
+    },
+    "Receipt exceeds ordered quantity": {
+      "code": "receipt_exceeds_ordered",
+      "message": "The goods receipt was refused: either the purchase order is not open for receiving, or the quantity is more than what is still outstanding on the line. Check that the order is confirmed and enter a quantity up to the remaining ordered quantity.",
+      "message_id": "Penerimaan barang ditolak: pesanan pembelian belum bisa menerima barang, atau jumlahnya melebihi sisa pesanan pada baris tersebut. Pastikan pesanan sudah dikonfirmasi dan masukkan jumlah paling banyak sebesar sisa yang dipesan."
+    },
+    "Invoice must match the fulfilled source order snapshot": {
+      "code": "invoice_order_not_fulfilled",
+      "message": "An invoice can only be created from a sales order that has been fulfilled, and it must match that order. Fulfil the order first, then create the invoice from it.",
+      "message_id": "Faktur hanya bisa dibuat dari pesanan penjualan yang sudah dipenuhi, dan harus sesuai dengan pesanan tersebut. Penuhi pesanannya terlebih dahulu, lalu buat faktur dari pesanan itu."
+    },
+    "Invoice lines must exactly match the unreturned source order": {
+      "code": "invoice_order_has_returns",
+      "message": "This sales order has returned items, so an invoice cannot be created directly from it. Create a manual invoice for the items the customer kept.",
+      "message_id": "Pesanan penjualan ini memiliki barang yang diretur, sehingga faktur tidak bisa dibuat langsung dari pesanan. Buat faktur manual untuk barang yang tetap diterima pelanggan."
+    }
+  }
+}

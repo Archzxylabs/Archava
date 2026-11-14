@@ -137,6 +137,12 @@ fn map_food_result(error: PurchaseError) -> Result<(StatusCode, ErpBody), ErpGat
         PurchaseError::Domain(ErpError::Forbidden) => Ok(forbidden()),
         PurchaseError::Domain(ErpError::NotFound) => Ok(unknown_resource()),
         PurchaseError::Domain(ErpError::Conflict) => Ok(conflict()),
+        // A conflict whose database guard is catalogued: the same 409 and
+        // `reason`, with the specific sentence and its code.
+        PurchaseError::Refused(refusal) => Ok((
+            StatusCode::CONFLICT,
+            ErpBody::Doc(crate::erp::refused_document(refusal)),
+        )),
         PurchaseError::Domain(ErpError::Unavailable) => Ok(unavailable()),
         PurchaseError::Database { ledger, source } => Err(ErpGateError::Database(ledger, source)),
     }

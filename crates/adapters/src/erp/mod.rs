@@ -67,6 +67,7 @@ pub mod formal_education;
 pub mod fulfillment;
 pub mod laundry;
 
+use archava_domain::erp::refusals::{self, Refusal};
 use archava_domain::erp::ErpError;
 use thiserror::Error;
 
@@ -105,18 +106,26 @@ pub const PURCHASING_NAMESPACE: &str = "archava_purchasing";
 /// The foodservice SQL namespace — the third of the stock cohort's ledgers.
 pub const FOODSERVICE_NAMESPACE: &str = "archava_foodservice";
 
-/// A purchasing-cohort refusal, exactly one of two classes:
+/// A purchasing-cohort refusal, exactly one of three classes:
 ///
 /// - [`PurchaseError::Domain`] — an API-code refusal (`forbidden`,
 ///   `not_found`, `conflict`) the caller can act on. Validation refusals map
 ///   through the host's own invalid-submission shape before the repository
 ///   ever runs.
+/// - [`PurchaseError::Refused`] — a conflict whose reason is known: the
+///   database guard that refused is in the refusal reason catalogue
+///   (`config/refusal-reasons.v1.json`). It is a conflict in every respect
+///   (same HTTP class, same `reason`); it only adds the catalogued code and
+///   sentence. A handler that has no use for the reason treats it exactly as
+///   `Domain(ErpError::Conflict)`.
 /// - [`PurchaseError::Database`] — a driver error the SQL.state whitelist did
 ///   NOT reclassify; an infrastructure fault, never a caller decision.
 #[derive(Debug, Error)]
 pub enum PurchaseError {
     #[error("{0}")]
     Domain(#[from] ErpError),
+    #[error("refused: {}", .0.code)]
+    Refused(&'static Refusal),
     #[error("{ledger} database failure")]
     Database {
         ledger: &'static str,
@@ -133,6 +142,9 @@ pub enum PurchaseError {
 /// available. Everything else stays a database failure — swallowing a serial
 /// error as a conflict would misreport history corruptions as caller races.
 pub fn purchase_database_error(ledger: &'static str, error: sqlx::Error) -> PurchaseError {
+    if let Some(refusal) = catalogued_refusal(&error) {
+        return PurchaseError::Refused(refusal);
+    }
     if database_error_reclassifies_conflict(&error) {
         return PurchaseError::Domain(ErpError::Conflict);
     }
@@ -149,6 +161,36 @@ pub type CommerceError = PurchaseError;
 
 pub fn commerce_database_error(ledger: &'static str, error: sqlx::Error) -> PurchaseError {
     purchase_database_error(ledger, error)
+}
+
+/// The catalogued reason behind a guard refusal, if there is one.
+///
+/// Only `23514` is read: that is the state every business guard raises with,
+/// and the other conflict states (`23503`, `23505`, …) carry driver-composed
+/// messages that name constraints, never a guard sentence. The guard's whole
+/// message must equal a catalogue key.
+pub fn catalogued_refusal(error: &sqlx::Error) -> Option<&'static Refusal> {
+    let database = error.as_database_error()?;
+    refusal_for(database.code().as_deref(), database.message())
+}
+
+/// A conflict an adapter decides itself, before the database guard would,
+/// carrying the catalogued reason of that guard. An unknown code is a plain
+/// conflict, never a different class of answer.
+pub fn refused_by_code(code: &str) -> PurchaseError {
+    refusals::for_code(code).map_or(
+        PurchaseError::Domain(ErpError::Conflict),
+        PurchaseError::Refused,
+    )
+}
+
+/// [`catalogued_refusal`] on the two facts it reads, so the rule is testable
+/// without a database.
+fn refusal_for(sqlstate: Option<&str>, message: &str) -> Option<&'static Refusal> {
+    if sqlstate != Some("23514") {
+        return None;
+    }
+    refusals::for_guard(message)
 }
 
 fn database_error_reclassifies_conflict(error: &sqlx::Error) -> bool {
@@ -171,3 +213,140 @@ fn database_error_reclassifies_conflict(error: &sqlx::Error) -> bool {
 }
 
 pub mod inventory_valuation;
+
+#[cfg(test)]
+mod refusal_tests {
+    use super::*;
+    use sqlx::error::{DatabaseError, ErrorKind};
+    use std::borrow::Cow;
+
+    /// A driver error with a chosen SQLSTATE and message.
+    #[derive(Debug)]
+    struct Raised(&'static str, String);
+    impl std::fmt::Display for Raised {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            f.write_str(&self.1)
+        }
+    }
+    impl std::error::Error for Raised {}
+    impl DatabaseError for Raised {
+        fn message(&self) -> &str {
+            &self.1
+        }
+        fn code(&self) -> Option<Cow<'_, str>> {
+            Some(Cow::Borrowed(self.0))
+        }
+        fn as_error(&self) -> &(dyn std::error::Error + Send + Sync + 'static) {
+            self
+        }
+        fn as_error_mut(&mut self) -> &mut (dyn std::error::Error + Send + Sync + 'static) {
+            self
+        }
+        fn into_error(self: Box<Self>) -> Box<dyn std::error::Error + Send + Sync + 'static> {
+            self
+        }
+        fn kind(&self) -> ErrorKind {
+            ErrorKind::Other
+        }
+    }
+    fn raised(sqlstate: &'static str, message: &str) -> sqlx::Error {
+        sqlx::Error::Database(Box::new(Raised(sqlstate, message.to_string())))
+    }
+
+    const GUARD: &str =
+        "A company that already trades in IDR cannot open a book in another currency";
+
+    #[test]
+    fn a_catalogued_guard_message_carries_its_code() {
+        match purchase_database_error("accounting", raised("23514", GUARD)) {
+            PurchaseError::Refused(refusal) => {
+                assert_eq!(refusal.code, "book_currency_conflicts_with_existing_trade");
+                assert_eq!(refusal.guard, GUARD);
+            }
+            other => panic!("{other:?}"),
+        }
+        // The commerce alias classifies the same way.
+        assert!(matches!(
+            commerce_database_error(COMMERCE_LEDGER, raised("23514", GUARD)),
+            PurchaseError::Refused(_)
+        ));
+        assert_eq!(
+            PurchaseError::Refused(refusals::for_guard(GUARD).unwrap()).to_string(),
+            "refused: book_currency_conflicts_with_existing_trade"
+        );
+    }
+
+    #[test]
+    fn an_uncatalogued_guard_message_stays_a_plain_conflict() {
+        for message in [
+            "Financial history is immutable",
+            "",
+            // Containing a catalogued sentence is not being it.
+            "ERROR: A company that already trades in IDR cannot open a book in another currency",
+            "A company that already trades in IDR cannot open a book in another currency.",
+            "a company that already trades in idr cannot open a book in another currency",
+            " A company that already trades in IDR cannot open a book in another currency",
+        ] {
+            assert!(
+                matches!(
+                    purchase_database_error("accounting", raised("23514", message)),
+                    PurchaseError::Domain(ErpError::Conflict)
+                ),
+                "{message}"
+            );
+        }
+    }
+
+    #[test]
+    fn other_sql_states_classify_as_before_whatever_their_message() {
+        for state in ["23503", "23505", "22003", "40P01", "55P03"] {
+            assert!(
+                matches!(
+                    purchase_database_error("accounting", raised(state, GUARD)),
+                    PurchaseError::Domain(ErpError::Conflict)
+                ),
+                "{state}"
+            );
+            assert!(catalogued_refusal(&raised(state, GUARD)).is_none());
+        }
+        for state in ["P0001", "40001", "42501", "23502", "23P01"] {
+            assert!(
+                matches!(
+                    purchase_database_error("accounting", raised(state, GUARD)),
+                    PurchaseError::Database {
+                        ledger: "accounting",
+                        ..
+                    }
+                ),
+                "{state}"
+            );
+        }
+        assert!(matches!(
+            purchase_database_error("accounting", sqlx::Error::RowNotFound),
+            PurchaseError::Database { .. }
+        ));
+        assert!(catalogued_refusal(&sqlx::Error::RowNotFound).is_none());
+        assert!(refusal_for(None, GUARD).is_none());
+    }
+
+    #[test]
+    fn an_adapter_decided_refusal_names_a_catalogued_code() {
+        // The codes the adapters name themselves (billing_invoice.rs,
+        // purchasing.rs).
+        for code in [
+            "invoice_order_not_fulfilled",
+            "invoice_order_has_returns",
+            "purchase_line_currency_mismatch",
+            "offer_currency_differs_from_product",
+        ] {
+            assert!(
+                matches!(refused_by_code(code), PurchaseError::Refused(r) if r.code == code),
+                "{code}"
+            );
+        }
+        assert!(matches!(
+            refused_by_code("no_such_code"),
+            PurchaseError::Domain(ErpError::Conflict)
+        ));
+    }
+}

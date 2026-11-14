@@ -237,7 +237,7 @@ impl IntoResponse for Failure {
             Self::Store(PurchaseError::Domain(ErpError::NotFound)) => {
                 (StatusCode::NOT_FOUND, "not_found")
             }
-            Self::Store(PurchaseError::Domain(ErpError::Conflict)) => {
+            Self::Store(PurchaseError::Domain(ErpError::Conflict) | PurchaseError::Refused(_)) => {
                 (StatusCode::CONFLICT, "conflict")
             }
             Self::Store(PurchaseError::Domain(ErpError::Unavailable)) => {

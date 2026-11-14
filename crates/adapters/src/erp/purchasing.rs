@@ -71,6 +71,11 @@ fn refuses(error: sqlx::Error) -> PurchaseError {
     purchase_database_error(PURCHASING_LEDGER, error)
 }
 
+/// The catalogue codes (`config/refusal-reasons.v1.json`) of the two currency
+/// rules this adapter decides before their Purchasing 007 guards would.
+const LINE_CURRENCY_MISMATCH: &str = "purchase_line_currency_mismatch";
+const OFFER_CURRENCY_MISMATCH: &str = "offer_currency_differs_from_product";
+
 /// A conflict-mapped `i32` conversion for int4 columns whose values the
 /// contract bounds strictly below `i32::MAX` (the callers validate the
 /// ceiling before reaching this point; anything larger is corrupt state).
@@ -622,15 +627,16 @@ async fn quote(
     // Input lines are unique per offer (parse level) and offers are unique
     // per id (primary key): a missing or inactive offer is the same conflict
     // either way.
-    if offers.len() != lines.len()
-        || offers
-            .iter()
-            .any(|offer| !offer.active || offer.currency != currency)
-    {
+    if offers.len() != lines.len() || offers.iter().any(|offer| !offer.active) {
         return Err(PurchaseError::Domain(ErpError::Conflict));
     }
+    // One order, one currency. This is the rule of the line guard
+    // (Purchasing 007), decided here, so the refusal carries its reason.
+    if offers.iter().any(|offer| offer.currency != currency) {
+        return Err(super::refused_by_code(LINE_CURRENCY_MISMATCH));
+    }
 
-    let products = super::commerce_kernel::lock_document_products_scoped(
+    let products = super::commerce_kernel::lock_document_products_refusing(
         connection,
         tenant,
         &offers
@@ -640,6 +646,7 @@ async fn quote(
         "commerce",
         company,
         currency,
+        LINE_CURRENCY_MISMATCH,
     )
     .await?;
     if products
@@ -1305,13 +1312,14 @@ async fn execute_command(
             // owns its product (IDR for an unowned product), and the product
             // itself must be priced in it.
             let currency = purchase_currency(connection, tenant, sources.stock_company).await?;
-            let products = super::commerce_kernel::lock_document_products_scoped(
+            let products = super::commerce_kernel::lock_document_products_refusing(
                 connection,
                 tenant,
                 &[product_id],
                 "commerce",
                 sources.stock_company,
                 &currency,
+                OFFER_CURRENCY_MISMATCH,
             )
             .await?;
             if products

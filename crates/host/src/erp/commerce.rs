@@ -97,6 +97,12 @@ pub(super) fn error(error: PurchaseError) -> Response {
             "conflict",
             "The record changed or the operation is not valid in its current state.",
         ),
+        // A conflict whose database guard is catalogued: the same 409 and
+        // `reason`, with the specific sentence and its code.
+        PurchaseError::Refused(refusal) => (
+            StatusCode::CONFLICT,
+            Json(crate::erp::refused_document(refusal)),
+        ),
         other => unavailable(other),
     }
 }

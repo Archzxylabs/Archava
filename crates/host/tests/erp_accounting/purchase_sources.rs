@@ -426,6 +426,7 @@ async fn a_usd_book_posts_purchase_receipts_and_bills_in_minor_units_unchanged()
     // Whole Rupiah is not a unit of a USD book; the minor unit is.
     let (status, refused) = send(&s.app, &s.alice, &input(s.policy_in(0, "whole_idr"))).await;
     assert_eq!(status, StatusCode::CONFLICT, "{refused}");
+    assert_refused_as(status, &refused, "posting_policy_source_unit_mismatch");
     ok(&s.app, &s.alice, s.policy(0)).await;
     let (st, workspace) = snapshot(&s.app, &s.alice, &s.company).await;
     assert_eq!(st, StatusCode::OK, "{workspace}");
@@ -489,6 +490,7 @@ async fn the_minor_purchase_unit_is_refused_on_an_idr_book() {
     let s = PurchaseScenario::new(false).await;
     let (status, refused) = send(&s.app, &s.alice, &input(s.policy_in(0, "minor"))).await;
     assert_eq!(status, StatusCode::CONFLICT, "{refused}");
+    assert_refused_as(status, &refused, "posting_policy_source_unit_mismatch");
     ok(&s.app, &s.alice, s.policy(0)).await;
     let (status, refused) = send(&s.app, &s.alice, &input(s.policy_in(1, "minor"))).await;
     assert_eq!(status, StatusCode::CONFLICT, "{refused}");
@@ -507,6 +509,11 @@ async fn a_planted_idr_purchase_order_under_a_usd_book_is_refused_not_captured()
     let later = s.draft_order(1).await;
     let (status, refused) = send(&s.app, &s.alice, &create(&s.company, "USD")).await;
     assert_eq!(status, StatusCode::CONFLICT, "{refused}");
+    assert_refused_as(
+        status,
+        &refused,
+        "book_currency_conflicts_with_existing_trade",
+    );
     let books: i64 = sqlx::query_scalar("SELECT count(*) FROM archava_accounting.books")
         .fetch_one(&s.f.admin_pool)
         .await
@@ -526,6 +533,13 @@ async fn a_planted_idr_purchase_order_under_a_usd_book_is_refused_not_captured()
     )
     .await;
     assert_eq!(status, StatusCode::CONFLICT, "{refused}");
+    // The accounting capture guard refuses inside the purchasing command, and
+    // the purchasing answer names it.
+    assert_refused_as(
+        status,
+        &refused,
+        "purchase_order_currency_differs_from_book",
+    );
     let (currency, confirmed, revision): (String, bool, i32) = sqlx::query_as(
         "SELECT currency,confirmed_at IS NOT NULL,revision FROM archava_purchasing.orders WHERE id=$1",
     )

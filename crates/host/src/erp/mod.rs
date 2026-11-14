@@ -59,6 +59,34 @@ pub const ACCOUNTING_LEDGER: Ledger = Ledger {
     tables: archava_adapters::erp::accounting::TABLES,
 };
 
+/// The `detail` member of a refusal whose reason is catalogued
+/// (`config/refusal-reasons.v1.json`): the stable code, the English sentence
+/// and the Indonesian one. There is no request locale to choose by, so both
+/// travel and the client picks.
+pub(crate) fn refusal_detail(
+    refusal: &archava_domain::erp::refusals::Refusal,
+) -> serde_json::Value {
+    serde_json::json!({
+        "code": refusal.code,
+        "message": refusal.message,
+        "messageId": refusal.message_id,
+    })
+}
+
+/// The 409 body of a catalogued refusal. It is the general conflict answer —
+/// same `decision`, same `reason` — whose `message` is the specific sentence
+/// and which adds `detail`. See `docs/architecture/REFUSAL_REASONS.md`.
+pub(crate) fn refused_document(
+    refusal: &archava_domain::erp::refusals::Refusal,
+) -> serde_json::Value {
+    serde_json::json!({
+        "decision": "refused",
+        "reason": "conflict",
+        "message": refusal.message,
+        "detail": refusal_detail(refusal),
+    })
+}
+
 /// The ways an ERP request fails as INFRASTRUCTURE — everything else is a
 /// caller-facing answer the submit functions return as data.
 #[derive(Debug)]

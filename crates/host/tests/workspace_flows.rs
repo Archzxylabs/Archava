@@ -278,10 +278,11 @@ async fn order_invoice_rejects_stale_unfulfilled_missing_and_previously_returned
         fulfilled_invoice_source(&app, &session, "SOURCE-REFUSALS", "Synthetic buyer").await;
     let mut stale = order_invoice_command(&order, "INV-STALE");
     stale["expectedOrderRevision"] = json!(2);
-    assert_eq!(
-        order_invoice_call(&app, &session, &stale).await.0,
-        StatusCode::CONFLICT
-    );
+    // A stale revision is a plain conflict: nothing names a reason.
+    let (status, body) = order_invoice_call(&app, &session, &stale).await;
+    assert_eq!(status, StatusCode::CONFLICT, "{body}");
+    assert_eq!(body["reason"], "conflict", "{body}");
+    assert!(body.get("detail").is_none(), "{body}");
     let mut missing = order_invoice_command(&order, "INV-MISSING");
     missing["orderId"] = json!(Uuid::new_v4());
     assert_eq!(
@@ -289,22 +290,30 @@ async fn order_invoice_rejects_stale_unfulfilled_missing_and_previously_returned
         StatusCode::NOT_FOUND
     );
     let draft=submit(&app,&session,"commerce",json!({"operation":"order.create","customerName":"Draft buyer","lines":[{"productId":order["lines"][0]["productId"],"quantity":1}]})).await;
+    // The two provenance rules name their reason on the same 409 conflict.
+    let (status, body) = order_invoice_call(
+        &app,
+        &session,
+        &order_invoice_command(&draft, "INV-NOT-FULFILLED"),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CONFLICT, "{body}");
+    assert_eq!(body["decision"], "refused", "{body}");
+    assert_eq!(body["reason"], "conflict", "{body}");
     assert_eq!(
-        order_invoice_call(
-            &app,
-            &session,
-            &order_invoice_command(&draft, "INV-NOT-FULFILLED")
-        )
-        .await
-        .0,
-        StatusCode::CONFLICT
+        body["detail"]["code"], "invoice_order_not_fulfilled",
+        "{body}"
     );
+    assert_eq!(body["message"], body["detail"]["message"], "{body}");
     let returned=submit(&app,&session,"commerce",json!({"operation":"order.return","id":order["id"],"expectedRevision":3,"lineId":order["lines"][0]["id"],"quantity":1,"disposition":"discard","reason":"Returned before billing"})).await;
     let mut command = order_invoice_command(&order, "INV-RETURNED");
     command["expectedOrderRevision"] = returned["revision"].clone();
+    let (status, body) = order_invoice_call(&app, &session, &command).await;
+    assert_eq!(status, StatusCode::CONFLICT, "{body}");
+    assert_eq!(body["reason"], "conflict", "{body}");
     assert_eq!(
-        order_invoice_call(&app, &session, &command).await.0,
-        StatusCode::CONFLICT
+        body["detail"]["code"], "invoice_order_has_returns",
+        "{body}"
     );
     let (_, workspace) = snapshot(&app, &session, "billing").await;
     assert_eq!(workspace["invoices"], json!([]));

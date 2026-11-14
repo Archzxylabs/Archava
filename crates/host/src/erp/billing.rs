@@ -188,6 +188,12 @@ fn map_purchase_result(error: PurchaseError) -> Result<(StatusCode, ErpBody), Er
         PurchaseError::Domain(ErpError::Forbidden) => Ok(forbidden()),
         PurchaseError::Domain(ErpError::NotFound) => Ok(unknown_resource()),
         PurchaseError::Domain(ErpError::Conflict) => Ok(conflict()),
+        // A conflict whose database guard is catalogued: the same 409 and
+        // `reason`, with the specific sentence and its code.
+        PurchaseError::Refused(refusal) => Ok((
+            StatusCode::CONFLICT,
+            ErpBody::Doc(crate::erp::refused_document(refusal)),
+        )),
         // No billing arm raises the runtime 400 class (the tools boundary
         // and the parse boundary are the parse's own 400s); the arm stays
         // mapped for the shared net's completeness.

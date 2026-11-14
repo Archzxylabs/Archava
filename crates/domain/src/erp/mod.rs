@@ -39,6 +39,8 @@ pub mod scheduling;
 pub mod stock;
 // Showing and entering trade amounts by currency (MULTI_CURRENCY.md rule 6).
 pub mod trade_money;
+// What a database guard refused, in words a person can act on.
+pub mod refusals;
 
 // R07 cohorts (PACKET-007..010).
 pub mod attendance;

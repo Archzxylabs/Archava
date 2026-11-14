@@ -35,7 +35,9 @@ pub(crate) fn domain_error(error: PurchaseError) -> Response {
         PurchaseError::Domain(ErpError::NotFound) => {
             refused(StatusCode::NOT_FOUND, "unknown_resource")
         }
-        PurchaseError::Domain(ErpError::Conflict) => {
+        // A catalogued refusal is the same business conflict here; this
+        // answer has no member for its reason yet.
+        PurchaseError::Domain(ErpError::Conflict) | PurchaseError::Refused(_) => {
             refused(StatusCode::CONFLICT, "business_conflict")
         }
         error => unavailable(format!("{error:?}")),
