@@ -494,17 +494,27 @@ async fn the_minor_purchase_unit_is_refused_on_an_idr_book() {
     assert_eq!(status, StatusCode::CONFLICT, "{refused}");
 }
 
-/// A company that drafted a purchase order in IDR before it created a USD
-/// book. Without a purchase policy the order confirms and stays outside the
-/// ledger. With one, confirming a Rupiah order is refused as a conflict and
-/// no origin is recorded; the order stays a draft.
+/// A company that has a purchase order cannot open a USD book (Accounting
+/// 015). The capture guard behind that refusal stays: with the state planted
+/// by the database owner, a Rupiah order confirms outside the ledger while the
+/// USD book has no purchase policy, and with one its confirmation is refused
+/// as a conflict, no origin is recorded and the order stays a draft.
 #[tokio::test]
-async fn an_idr_purchase_order_of_a_company_with_a_later_usd_book_is_refused_not_captured() {
+async fn a_planted_idr_purchase_order_under_a_usd_book_is_refused_not_captured() {
     let mut s = PurchaseScenario::trading().await;
     s.stock_item().await;
     let earlier = s.draft_order(1).await;
     let later = s.draft_order(1).await;
+    let (status, refused) = send(&s.app, &s.alice, &create(&s.company, "USD")).await;
+    assert_eq!(status, StatusCode::CONFLICT, "{refused}");
+    let books: i64 = sqlx::query_scalar("SELECT count(*) FROM archava_accounting.books")
+        .fetch_one(&s.f.admin_pool)
+        .await
+        .unwrap();
+    assert_eq!(books, 0, "the refused book is not written");
+    book_currency_guard(&s.f, false).await;
     s.open_book("USD").await;
+    book_currency_guard(&s.f, true).await;
     s.purchase(json!({"operation":"order.confirm","id":earlier["id"],"expectedRevision":1,"reason":"No purchase policy yet, so nothing is captured"})).await;
     ok(&s.app, &s.alice, s.policy(0)).await;
     let (status, refused) = call(

@@ -597,6 +597,54 @@ async fn trade_book(app: &Router, session: &Value, company: &str, currency: &str
     .await;
     assert_eq!(status, StatusCode::OK, "{body}");
 }
+fn book_request(company: &str, currency: &str) -> Value {
+    json!({"tenant":"acme","requestId":Uuid::new_v4(),"command":{"type":"book.create","companyId":company,"expectedCompanyRevision":1,"code":format!("BOOK-{currency}"),"name":"Explicit synthetic official book","currency":currency,"sourceAuthority":"native","independentPosting":true,"reason":"Reviewed book setup; no historical import"}})
+}
+async fn books(f: &Fixture, company: &str) -> Vec<String> {
+    sqlx::query_scalar(
+        "SELECT currency FROM archava_accounting.books WHERE company_id=$1::uuid ORDER BY currency",
+    )
+    .bind(company)
+    .fetch_all(&f.admin_pool)
+    .await
+    .unwrap()
+}
+/// `book.create` in `currency` is refused as a conflict and writes nothing.
+async fn book_refused(f: &Fixture, app: &Router, session: &Value, company: &str, currency: &str) {
+    let request = book_request(company, currency);
+    let (status, body) = call(
+        app,
+        "POST",
+        "/erp/accounting/commands",
+        request.clone(),
+        Some(session),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CONFLICT, "{body}");
+    assert_eq!(books(f, company).await, Vec::<String>::new());
+    let recorded: i64 = sqlx::query_scalar(
+        "SELECT count(*) FROM archava_accounting.commands WHERE request_id=$1::uuid",
+    )
+    .bind(request["requestId"].as_str().unwrap())
+    .fetch_one(&f.admin_pool)
+    .await
+    .unwrap();
+    assert_eq!(recorded, 0, "the refused book leaves no command");
+}
+/// A non-IDR book for a company that already trades. The book guard
+/// (Accounting 015) refuses that through every runtime path, so the database
+/// owner disables it to plant the state the older guards still defend against.
+async fn planted_book(f: &Fixture, app: &Router, session: &Value, company: &str, currency: &str) {
+    sqlx::query("ALTER TABLE archava_accounting.books DISABLE TRIGGER a_currency_book")
+        .execute(&f.admin_pool)
+        .await
+        .unwrap();
+    trade_book(app, session, company, currency).await;
+    sqlx::query("ALTER TABLE archava_accounting.books ENABLE TRIGGER a_currency_book")
+        .execute(&f.admin_pool)
+        .await
+        .unwrap();
+}
 async fn company_product(app: &Router, session: &Value, company: &str, sku: &str) -> String {
     command(app,session,json!({"operation":"product.create_for_company","companyId":company,"expectedCompanyRevision":1,"sku":sku,"title":format!("Product {sku}"),"unit":"unit","trackStock":false,"price":1999})).await["id"].as_str().unwrap().into()
 }
@@ -764,7 +812,10 @@ async fn the_database_refuses_a_currency_other_than_the_company_book() {
     let message = refused_check(insert_company_product(&f, &company, "EARLY-USD", "USD").await);
     assert_eq!(message, "Currency differs from the company book");
     let legacy = company_product(&app, &session, &company, "LEGACY-IDR").await;
-    trade_book(&app, &session, &company, "USD").await;
+    // A company with a product cannot open a USD book; the mixed state the
+    // line guard below defends against is planted by the database owner.
+    book_refused(&f, &app, &session, &company, "USD").await;
+    planted_book(&f, &app, &session, &company, "USD").await;
 
     let message = refused_check(insert_company_product(&f, &company, "WRONG-IDR", "IDR").await);
     assert_eq!(message, "Currency differs from the company book");
@@ -784,8 +835,8 @@ async fn the_database_refuses_a_currency_other_than_the_company_book() {
     let message=refused_check(sqlx::query("INSERT INTO archava_commerce.orders(tenant_id,id,owner_id,customer_name,total_estimate,currency) VALUES('acme',$1,'alice','Direct order',0,'USD')").bind(Uuid::new_v4()).execute(&f.admin_pool).await);
     assert_eq!(message, "Currency differs from the company book");
 
-    // One order, one currency: the same company's earlier IDR product cannot
-    // be added to its USD order.
+    // One order, one currency: the planted IDR product of the same company
+    // cannot be added to its USD order.
     let item = company_product(&app, &session, &company, "USD-ITEM").await;
     let order = command(&app, &session, company_order(&company, &buyer, &[&item])).await;
     let message=refused_check(sqlx::query("INSERT INTO archava_commerce.order_lines(tenant_id,id,order_id,product_id,sku,title,unit,track_stock,quantity,price,product_revision) SELECT p.tenant_id,$1,$2::uuid,p.id,p.sku,p.title,p.unit,p.track_stock,1,p.price,p.revision FROM archava_commerce.products p WHERE p.tenant_id='acme' AND p.id=$3::uuid").bind(Uuid::new_v4()).bind(order["id"].as_str().unwrap()).bind(&legacy).execute(&f.admin_pool).await);
@@ -801,55 +852,45 @@ async fn the_database_refuses_a_currency_other_than_the_company_book() {
 }
 
 #[tokio::test]
-async fn a_book_created_later_changes_only_new_records() {
+async fn a_non_idr_book_is_refused_once_the_company_trades() {
     let (f, app, session) = trade_setup().await;
-    let company = trade_company(&app, &session, "LATEBOOK").await;
+    let company = trade_company(&app, &session, "TRADED").await;
     let buyer = trade_buyer(&app, &session).await;
+    // (a) One product is enough.
     let before = company_product(&app, &session, &company, "BEFORE-BOOK").await;
+    book_refused(&f, &app, &session, &company, "USD").await;
+    // (b) So is a sales order, and a zero-decimal currency is no exception.
     let early = command(&app, &session, company_order(&company, &buyer, &[&before])).await;
     let early = early["id"].as_str().unwrap();
-    trade_book(&app, &session, &company, "USD").await;
-    let after = company_product(&app, &session, &company, "AFTER-BOOK").await;
+    book_refused(&f, &app, &session, &company, "USD").await;
+    book_refused(&f, &app, &session, &company, "JPY").await;
 
+    // The company keeps trading in IDR and can still open an IDR book.
+    trade_book(&app, &session, &company, "IDR").await;
+    assert_eq!(books(&f, &company).await, vec!["IDR".to_owned()]);
+    let after = company_product(&app, &session, &company, "AFTER-BOOK").await;
+    let later = command(
+        &app,
+        &session,
+        company_order(&company, &buyer, &[&before, &after]),
+    )
+    .await;
     assert_eq!(stored_currency(&f, "products", &before).await, "IDR");
+    assert_eq!(stored_currency(&f, "products", &after).await, "IDR");
     assert_eq!(stored_currency(&f, "orders", early).await, "IDR");
-    assert_eq!(stored_currency(&f, "products", &after).await, "USD");
+    assert_eq!(
+        stored_currency(&f, "orders", later["id"].as_str().unwrap()).await,
+        "IDR"
+    );
     let view = company_snapshot(&app, &session, &company).await;
     assert_eq!(read_currency(&view, "products", &before), "IDR");
     assert_eq!(read_currency(&view, "orders", early), "IDR");
-    assert_eq!(read_currency(&view, "products", &after), "USD");
-
-    // The earlier IDR order is still workable; a new order is USD and takes
-    // only USD products, so the earlier IDR product is refused whole.
     command(
         &app,
         &session,
         json!({"operation":"order.reserve","id":early,"expectedRevision":1,"holdSeconds":300}),
     )
     .await;
-    let mixed = submission(company_order(&company, &buyer, &[&after, &before]));
-    let (status, body) = call(
-        &app,
-        "POST",
-        "/erp/commerce/commands",
-        mixed.clone(),
-        Some(&session),
-    )
-    .await;
-    assert_eq!(status, StatusCode::CONFLICT, "{body}");
-    let recorded: i64 = sqlx::query_scalar(
-        "SELECT count(*) FROM archava_commerce.commands WHERE request_id=$1::uuid",
-    )
-    .bind(mixed["requestId"].as_str().unwrap())
-    .fetch_one(&f.admin_pool)
-    .await
-    .unwrap();
-    assert_eq!(recorded, 0);
-    let later = command(&app, &session, company_order(&company, &buyer, &[&after])).await;
-    assert_eq!(
-        stored_currency(&f, "orders", later["id"].as_str().unwrap()).await,
-        "USD"
-    );
     // Currency never changes after insert.
     let message = refused_check(
         sqlx::query("UPDATE archava_commerce.products SET currency='USD',revision=revision+1 WHERE id=$1::uuid")
@@ -858,4 +899,154 @@ async fn a_book_created_later_changes_only_new_records() {
             .await,
     );
     assert!(message.contains("immutable"), "{message}");
+
+    // A company that has not traded opens its USD book as before.
+    let fresh = trade_company(&app, &session, "FRESH").await;
+    trade_book(&app, &session, &fresh, "USD").await;
+    assert_eq!(books(&f, &fresh).await, vec!["USD".to_owned()]);
+}
+
+/// A company product insert and a non-IDR book serialise on the company row,
+/// in both orders: a committed IDR product never coexists with a USD book.
+#[tokio::test]
+async fn a_product_insert_and_a_non_idr_book_serialise_on_the_company() {
+    use std::time::Duration;
+    let (f, app, session) = trade_setup().await;
+    let pause = |millis| tokio::time::sleep(Duration::from_millis(millis));
+
+    // The product is written first but not yet committed. The book waits for
+    // it (an unlocked check would not see the row and would accept the book)
+    // and is refused once it commits.
+    let company = trade_company(&app, &session, "PRODUCT-FIRST").await;
+    let mut pending = f.admin_pool.begin().await.unwrap();
+    sqlx::query("SELECT set_config('archava.tenant_id','acme',true)")
+        .execute(&mut *pending)
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO archava_commerce.products(tenant_id,id,sku,title,unit,track_stock,price,company_id,company_revision,company_code,company_name,currency) SELECT c.tenant_id,$1,'PENDING-IDR','Direct row','unit',false,100,c.id,c.revision,c.code,c.legal_name,'IDR' FROM archava_organizations.companies c WHERE c.tenant_id='acme' AND c.id=$2::uuid")
+        .bind(Uuid::new_v4())
+        .bind(&company)
+        .execute(&mut *pending)
+        .await
+        .unwrap();
+    let request = book_request(&company, "USD");
+    let ((status, body), ()) = tokio::join!(
+        call(
+            &app,
+            "POST",
+            "/erp/accounting/commands",
+            request,
+            Some(&session)
+        ),
+        async {
+            pause(700).await;
+            pending.commit().await.unwrap();
+        }
+    );
+    assert_eq!(status, StatusCode::CONFLICT, "{body}");
+    assert_eq!(books(&f, &company).await, Vec::<String>::new());
+
+    // The book is written first and held before its commit by an uncommitted
+    // row that claims its book code. The product waits for the book (an
+    // unlocked insert would commit in IDR) and is then created in USD.
+    let company = trade_company(&app, &session, "BOOK-FIRST").await;
+    let blocker = trade_company(&app, &session, "BLOCKER").await;
+    let mut held = f.admin_pool.begin().await.unwrap();
+    sqlx::query("SET LOCAL session_replication_role='replica'")
+        .execute(&mut *held)
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO archava_accounting.books(tenant_id,id,company_id,company_revision,company_code,company_name,owner_id,code,name,currency,minor_units,currency_catalogue,source_authority,independent_posting) SELECT c.tenant_id,$1,c.id,c.revision,c.code,c.legal_name,'alice','BOOK-USD','Uncommitted code holder','USD',2,'SIX-2026-09-17','native',true FROM archava_organizations.companies c WHERE c.tenant_id='acme' AND c.id=$2::uuid")
+        .bind(Uuid::new_v4())
+        .bind(&blocker)
+        .execute(&mut *held)
+        .await
+        .unwrap();
+    let request = book_request(&company, "USD");
+    let item = submission(
+        json!({"operation":"product.create_for_company","companyId":company,"expectedCompanyRevision":1,"sku":"RACED","title":"Raced product","unit":"unit","trackStock":false,"price":1999}),
+    );
+    let ((book_status, book_body), (item_status, item_body), ()) = tokio::join!(
+        call(
+            &app,
+            "POST",
+            "/erp/accounting/commands",
+            request,
+            Some(&session)
+        ),
+        async {
+            pause(500).await;
+            call(&app, "POST", "/erp/commerce/commands", item, Some(&session)).await
+        },
+        async {
+            pause(1200).await;
+            held.rollback().await.unwrap();
+        }
+    );
+    assert_eq!(book_status, StatusCode::OK, "{book_body}");
+    assert_eq!(item_status, StatusCode::OK, "{item_body}");
+    assert_eq!(books(&f, &company).await, vec!["USD".to_owned()]);
+    assert_eq!(
+        stored_currency(&f, "products", item_body["receipt"]["id"].as_str().unwrap()).await,
+        "USD"
+    );
+
+    // Unsynchronised: whichever commits first, the pair is never an IDR
+    // product beside a USD book.
+    for round in 0..4 {
+        let company = trade_company(&app, &session, &format!("RACE-{round}")).await;
+        let mut request = book_request(&company, "USD");
+        request["command"]["code"] = json!(format!("RACE-{round}"));
+        let item = submission(
+            json!({"operation":"product.create_for_company","companyId":company,"expectedCompanyRevision":1,"sku":format!("RACE-{round}"),"title":"Raced product","unit":"unit","trackStock":false,"price":1999}),
+        );
+        let ((book_status, book_body), (item_status, item_body)) = tokio::join!(
+            call(
+                &app,
+                "POST",
+                "/erp/accounting/commands",
+                request,
+                Some(&session)
+            ),
+            call(&app, "POST", "/erp/commerce/commands", item, Some(&session))
+        );
+        let currencies: Vec<String> = sqlx::query_scalar(
+            "SELECT currency FROM archava_commerce.products WHERE company_id=$1::uuid",
+        )
+        .bind(&company)
+        .fetch_all(&f.admin_pool)
+        .await
+        .unwrap();
+        let outcome = (
+            book_status,
+            item_status,
+            books(&f, &company).await,
+            currencies,
+        );
+        let product_first = (
+            StatusCode::CONFLICT,
+            StatusCode::OK,
+            vec![],
+            vec!["IDR".to_owned()],
+        );
+        let book_first = (
+            StatusCode::OK,
+            StatusCode::OK,
+            vec!["USD".to_owned()],
+            vec!["USD".to_owned()],
+        );
+        // The product read "no book" and the database refused its IDR row.
+        let book_first_product_refused = (
+            StatusCode::OK,
+            StatusCode::CONFLICT,
+            vec!["USD".to_owned()],
+            vec![],
+        );
+        assert!(
+            outcome == product_first
+                || outcome == book_first
+                || outcome == book_first_product_refused,
+            "{outcome:?} {book_body} {item_body}"
+        );
+    }
 }

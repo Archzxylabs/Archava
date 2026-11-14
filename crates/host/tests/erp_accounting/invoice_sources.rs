@@ -802,16 +802,26 @@ async fn the_minor_unit_is_refused_on_an_idr_book() {
     assert_eq!(status, StatusCode::CONFLICT, "{refused}");
 }
 
-/// A company that traded in IDR before it created a USD book. Its IDR invoice
-/// cannot be issued while the book has an invoice policy: the issue is refused
-/// as a conflict and nothing is captured. An IDR invoice issued before the
-/// policy stays outside the ledger and can still be corrected.
+/// A company that has an invoice cannot open a USD book (Accounting 015). The
+/// capture guard behind that refusal stays: with the state planted by the
+/// database owner, an IDR invoice cannot be issued while the USD book has an
+/// invoice policy (a conflict, nothing captured), and an IDR invoice issued
+/// before the policy stays outside the ledger and can still be corrected.
 #[tokio::test]
-async fn an_idr_invoice_of_a_company_with_a_later_usd_book_is_refused_not_captured() {
+async fn a_planted_idr_invoice_under_a_usd_book_is_refused_not_captured() {
     let mut x = SourceFixture::trading().await;
     let issued = x.invoice_amount("IDR-ISSUED", 15000, 2).await;
     let draft = x.invoice_amount("IDR-DRAFT", 15000, 2).await;
+    let (st, v) = send(&x.app, &x.alice, &create(&x.company, "USD")).await;
+    assert_eq!(st, StatusCode::CONFLICT, "{v}");
+    let books: i64 = sqlx::query_scalar("SELECT count(*) FROM archava_accounting.books")
+        .fetch_one(&x.f.admin_pool)
+        .await
+        .unwrap();
+    assert_eq!(books, 0, "the refused book is not written");
+    book_currency_guard(&x.f, false).await;
     x.open_book("USD").await;
+    book_currency_guard(&x.f, true).await;
     x.bill(json!({"type":"issue_invoice","invoiceId":issued["invoiceId"],"expectedRevision":1,"reason":"No policy yet, so nothing is captured"})).await;
     x.enable().await;
     let command = Uuid::new_v4();
@@ -834,7 +844,7 @@ async fn an_idr_invoice_of_a_company_with_a_later_usd_book_is_refused_not_captur
     assert_eq!(x.count().await, 0);
     x.bill(json!({"type":"append_correction","invoiceId":issued["invoiceId"],"amountMinor":-100,"reason":"Issued before the policy, still correctable"})).await;
     assert_eq!(x.count().await, 0);
-    // New trade is in USD and is captured.
+    // Trade made under the book is in USD and is captured.
     let invoice = x.invoice_amount("USD-NEW", 1999, 1).await;
     x.bill(json!({"type":"issue_invoice","invoiceId":invoice["invoiceId"],"expectedRevision":1,"reason":"Book currency invoice"})).await;
     let amount: i64 =

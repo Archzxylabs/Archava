@@ -17,8 +17,11 @@ companies. A company-owned product, sales order or purchase order, and a
 supplier offer on a company's product, takes the currency of its company's
 accounting book at insert, and IDR when the company has no book
 ([trade currency](../architecture/MULTI_CURRENCY.md), stages 1-2); a supplier
-document carries its purchase order's currency. Invoices retain their IDR
-rules. No jurisdiction is inferred from a currency.
+document carries its purchase order's currency. Once a company owns a product,
+sales order, purchase order or invoice it can open only an IDR book: a book in
+another currency is refused, so a non-IDR book is created before the first record. An invoice made
+from an order takes the order's currency; the payment gateway accepts IDR
+invoices only. No jurisdiction is inferred from a currency.
 
 Products, sales orders, purchase orders and invoices capture company ID, reviewed
 revision, code and official name. Database foreign keys bind that revision to

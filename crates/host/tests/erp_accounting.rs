@@ -115,6 +115,19 @@ fn create(c: &Value, currency: &str) -> Value {
         json!({"type":"book.create","companyId":c["companyId"],"expectedCompanyRevision":1,"code":format!("BOOK-{currency}"),"name":"Explicit synthetic official book","currency":currency,"sourceAuthority":"native","independentPosting":true,"reason":"Reviewed book setup; no historical import"}),
     )
 }
+/// Lets the database owner switch the book currency guard (Accounting 015) off
+/// and on. A non-IDR book for a company that already trades is refused through
+/// every runtime path, so tests of the guards behind it plant that state.
+async fn book_currency_guard(f: &Fixture, enabled: bool) {
+    let statement = format!(
+        "ALTER TABLE archava_accounting.books {} TRIGGER a_currency_book",
+        if enabled { "ENABLE" } else { "DISABLE" }
+    );
+    sqlx::query(sqlx::AssertSqlSafe(statement.as_str()))
+        .execute(&f.admin_pool)
+        .await
+        .unwrap();
+}
 async fn book(app: &Router, a: &Value, c: &Value) -> Value {
     let (st, v) = send(app, a, &create(c, "USD")).await;
     assert_eq!(st, StatusCode::OK, "{v}");
@@ -232,6 +245,92 @@ async fn explicit_books_pin_source_company_currency_and_no_implicit_historical_p
         .await
         .unwrap();
     assert_eq!(n, 0);
+}
+
+/// Each of the four company trade tables refuses a non-IDR book on its own. A
+/// sales order, purchase order or invoice cannot exist without a product through
+/// the commands, so the owner plants one bare row per company.
+#[tokio::test]
+async fn a_non_idr_book_is_refused_once_the_company_owns_a_trade_record() {
+    let (f, app, a, _b, untraded) = setup().await;
+    let planted = [
+        ("PRODUCT", "INSERT INTO archava_commerce.products(tenant_id,id,sku,title,unit,track_stock,price,company_id,company_revision,company_code,company_name) SELECT c.tenant_id,$1,'PLANTED','Planted product','unit',false,100,c.id,c.revision,c.code,c.legal_name FROM archava_organizations.companies c WHERE c.id=$2"),
+        ("SALE", "INSERT INTO archava_commerce.orders(tenant_id,id,owner_id,customer_name,total_estimate,company_id,company_revision,company_code,company_name) SELECT c.tenant_id,$1,'alice','Planted sale',0,c.id,c.revision,c.code,c.legal_name FROM archava_organizations.companies c WHERE c.id=$2"),
+        ("PURCHASE", "INSERT INTO archava_purchasing.orders(tenant_id,id,owner_id,supplier_id,supplier_code,supplier_name,total_estimate,company_id,company_revision,company_code,company_name) SELECT c.tenant_id,$1,'alice',$1,'PLANTED','Planted supplier',0,c.id,c.revision,c.code,c.legal_name FROM archava_organizations.companies c WHERE c.id=$2"),
+        ("INVOICE", "INSERT INTO archava_billing.invoices(tenant_id,id,invoice_code,customer_ref,currency,consumer_ref,owner_id,company_id,company_revision,company_code,company_name) SELECT c.tenant_id,$1,'PLANTED','Planted customer','IDR','planted','alice',c.id,c.revision,c.code,c.legal_name FROM archava_organizations.companies c WHERE c.id=$2"),
+    ];
+    for (code, statement) in planted {
+        let c = company(&app, &a, code).await;
+        let id = Uuid::parse_str(c["companyId"].as_str().unwrap()).unwrap();
+        // Replica mode skips the unrelated triggers and foreign keys of a bare row.
+        let mut owner = f.admin_pool.begin().await.unwrap();
+        sqlx::query("SET LOCAL session_replication_role='replica'")
+            .execute(&mut *owner)
+            .await
+            .unwrap();
+        let rows = sqlx::query(statement)
+            .bind(Uuid::new_v4())
+            .bind(id)
+            .execute(&mut *owner)
+            .await
+            .unwrap()
+            .rows_affected();
+        assert_eq!(rows, 1, "{code}");
+        owner.commit().await.unwrap();
+
+        for currency in ["USD", "JPY"] {
+            let mut refused = create(&c, currency);
+            refused["command"]["code"] = json!(format!("{code}-{currency}"));
+            let (st, v) = send(&app, &a, &refused).await;
+            assert_eq!(st, StatusCode::CONFLICT, "{code} {currency} {v}");
+            let written: (i64, i64) = sqlx::query_as("SELECT (SELECT count(*) FROM archava_accounting.books WHERE company_id=$1),(SELECT count(*) FROM archava_accounting.commands WHERE request_id=$2::uuid)")
+                .bind(id)
+                .bind(refused["requestId"].as_str().unwrap())
+                .fetch_one(&f.admin_pool)
+                .await
+                .unwrap();
+            assert_eq!(written, (0, 0), "{code} {currency}");
+        }
+        // The database gives the reason; the command reports a plain conflict.
+        let direct = sqlx::query("INSERT INTO archava_accounting.books(tenant_id,id,company_id,company_revision,company_code,company_name,owner_id,code,name,currency,minor_units,currency_catalogue,source_authority,independent_posting) SELECT c.tenant_id,$1,c.id,c.revision,c.code,c.legal_name,'alice','DIRECT','Direct row','USD',2,'SIX-2026-09-17','native',true FROM archava_organizations.companies c WHERE c.id=$2")
+            .bind(Uuid::new_v4())
+            .bind(id)
+            .execute(&f.admin_pool)
+            .await
+            .expect_err("the database refuses the book");
+        let direct = direct.as_database_error().expect("a database refusal");
+        assert_eq!(direct.code().as_deref(), Some("23514"), "{direct}");
+        assert_eq!(
+            direct.message(),
+            "A company that already trades in IDR cannot open a book in another currency"
+        );
+
+        let mut idr = create(&c, "IDR");
+        idr["command"]["code"] = json!(format!("{code}-IDR"));
+        let (st, v) = send(&app, &a, &idr).await;
+        assert_eq!(st, StatusCode::OK, "{code} {v}");
+        assert_eq!(
+            snapshot(&app, &a, &c).await.1["books"][0]["currency"],
+            "IDR"
+        );
+    }
+    // A company without trade records opens its non-IDR book as before.
+    let (st, v) = send(&app, &a, &create(&untraded, "USD")).await;
+    assert_eq!(st, StatusCode::OK, "{v}");
+    // A book never changes afterwards, so the insert is the only path.
+    for statement in [
+        "UPDATE archava_accounting.books SET currency='EUR'",
+        "DELETE FROM archava_accounting.books",
+    ] {
+        let refused = sqlx::query(statement)
+            .execute(&f.admin_pool)
+            .await
+            .expect_err("books are immutable");
+        assert_eq!(
+            refused.as_database_error().unwrap().code().as_deref(),
+            Some("23514")
+        );
+    }
 }
 
 #[tokio::test]

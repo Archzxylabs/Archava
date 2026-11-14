@@ -30,6 +30,7 @@ export async function verifyPriorNative({previousRoot,packageRoot,facts,scratch,
  const newOpenings=newManifest.ledgers.find(l=>l.namespace==='archava_accounting')?.migrations.some(m=>m.id==='013_declared_opening_balances')===true
  const oldOpenings=oldManifest.ledgers.find(l=>l.namespace==='archava_accounting')?.migrations.some(m=>m.id==='013_declared_opening_balances')===true
  const sourceUnit=manifest=>manifest.ledgers.find(l=>l.namespace==='archava_accounting')?.migrations.some(m=>m.id==='014_source_unit_minor')===true
+ const bookGuard=manifest=>manifest.ledgers.find(l=>l.namespace==='archava_accounting')?.migrations.some(m=>m.id==='015_book_currency_guard')===true
  const tradeCurrency=manifest=>manifest.ledgers.find(l=>l.namespace==='archava_commerce')?.migrations.some(m=>m.id==='011_company_trade_currency')===true
  const commerceAdded=tradeCurrency(newManifest)&&!tradeCurrency(oldManifest)?['011_company_trade_currency']:[]
  const purchaseCurrency=manifest=>manifest.ledgers.find(l=>l.namespace==='archava_purchasing')?.migrations.some(m=>m.id==='007_company_trade_currency')===true
@@ -42,7 +43,7 @@ export async function verifyPriorNative({previousRoot,packageRoot,facts,scratch,
   const oldOwner=oldManifest.ledgers.find(l=>l.namespace==='archava_owner'),newOwner=newManifest.ledgers.find(l=>l.namespace==='archava_owner')
   assert.deepEqual(newOwner.migrations.slice(oldOwner.migrations.length).map(m=>m.id),['004_ai_disclosure_boundary'])
   const oldAccounting=oldManifest.ledgers.find(l=>l.namespace==='archava_accounting'),newAccounting=newManifest.ledgers.find(l=>l.namespace==='archava_accounting')
-  const accountingAdded=[...(addedBank?bankMigrationIds:[]),...(newPayables&&!oldPayables?['009_supplier_bank_settlements']:[]),...(newClearing&&!oldClearing?['010_gateway_bank_settlements']:[]),...(newTerms&&!oldTerms?termsMigrationIds:[]),...(newOpenings&&!oldOpenings?['013_declared_opening_balances']:[]),...(sourceUnit(newManifest)&&!sourceUnit(oldManifest)?['014_source_unit_minor']:[])]
+  const accountingAdded=[...(addedBank?bankMigrationIds:[]),...(newPayables&&!oldPayables?['009_supplier_bank_settlements']:[]),...(newClearing&&!oldClearing?['010_gateway_bank_settlements']:[]),...(newTerms&&!oldTerms?termsMigrationIds:[]),...(newOpenings&&!oldOpenings?['013_declared_opening_balances']:[]),...(sourceUnit(newManifest)&&!sourceUnit(oldManifest)?['014_source_unit_minor']:[]),...(bookGuard(newManifest)&&!bookGuard(oldManifest)?['015_book_currency_guard']:[])]
   assert.deepEqual(newAccounting.migrations.slice(oldAccounting.migrations.length).map(m=>m.id),accountingAdded)
   const oldCommerce=oldManifest.ledgers.find(l=>l.namespace==='archava_commerce'),newCommerce=newManifest.ledgers.find(l=>l.namespace==='archava_commerce')
   assert.deepEqual(newCommerce.migrations.slice(oldCommerce.migrations.length).map(m=>m.id),commerceAdded)

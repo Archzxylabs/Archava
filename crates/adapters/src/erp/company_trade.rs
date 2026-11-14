@@ -29,11 +29,45 @@ pub async fn resolve(
     principal: &PurchasePrincipal,
     id: Uuid,
 ) -> Result<CompanyStamp, PurchaseError> {
+    resolve_locked(conn, tenant, principal, id, false).await
+}
+/// `resolve` for opening a book in a currency other than IDR. It takes the
+/// company row lock that conflicts with the `FOR SHARE` every company trade
+/// insert holds, at the same point in the lock order as `resolve`, so the book
+/// guard (Accounting 015) never has to upgrade a shared lock inside its trigger.
+pub async fn resolve_excluding_trade(
+    conn: &mut PgConnection,
+    tenant: &str,
+    principal: &PurchasePrincipal,
+    id: Uuid,
+) -> Result<CompanyStamp, PurchaseError> {
+    resolve_locked(conn, tenant, principal, id, true).await
+}
+async fn resolve_locked(
+    conn: &mut PgConnection,
+    tenant: &str,
+    principal: &PurchasePrincipal,
+    id: Uuid,
+    excluding_trade: bool,
+) -> Result<CompanyStamp, PurchaseError> {
     let access = companies::access(conn, tenant, principal).await?;
     if !access.holds(&["companies.read"]) {
         return Err(ErpError::Forbidden.into());
     }
-    let row=sqlx::query("SELECT id,revision,code,legal_name,active FROM archava_organizations.companies WHERE tenant_id=$1 AND id=$2 AND ($3 OR owner_id=$4) FOR SHARE").bind(tenant).bind(id).bind(access.scope.covers_all()).bind(&access.owner_id).fetch_optional(conn).await.map_err(db)?.ok_or(ErpError::NotFound)?;
+    let statement = if excluding_trade {
+        "SELECT id,revision,code,legal_name,active FROM archava_organizations.companies WHERE tenant_id=$1 AND id=$2 AND ($3 OR owner_id=$4) FOR NO KEY UPDATE"
+    } else {
+        "SELECT id,revision,code,legal_name,active FROM archava_organizations.companies WHERE tenant_id=$1 AND id=$2 AND ($3 OR owner_id=$4) FOR SHARE"
+    };
+    let row = sqlx::query(statement)
+        .bind(tenant)
+        .bind(id)
+        .bind(access.scope.covers_all())
+        .bind(&access.owner_id)
+        .fetch_optional(conn)
+        .await
+        .map_err(db)?
+        .ok_or(ErpError::NotFound)?;
     Ok(CompanyStamp {
         id: row.try_get("id").map_err(db)?,
         revision: row.try_get("revision").map_err(db)?,

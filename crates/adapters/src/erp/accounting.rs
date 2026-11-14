@@ -389,7 +389,13 @@ pub async fn record(
         ..
     } = &m.command
     {
-        let company = company_trade::resolve(conn, tenant, p, id(company_id)?).await?;
+        // A non-IDR book excludes concurrent company trade inserts (Accounting
+        // 015); an IDR book keeps the shared lock it always took.
+        let company = if currency == "IDR" {
+            company_trade::resolve(conn, tenant, p, id(company_id)?).await?
+        } else {
+            company_trade::resolve_excluding_trade(conn, tenant, p, id(company_id)?).await?
+        };
         company.validate_new(i64::from(*expected_company_revision))?;
         let key = Uuid::new_v4();
         sqlx::query("INSERT INTO archava_accounting.books(tenant_id,id,company_id,company_revision,company_code,company_name,owner_id,code,name,currency,minor_units,currency_catalogue,source_authority,external_system,independent_posting) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'SIX-2026-09-17',$12,$13,$14)")

@@ -1,12 +1,12 @@
 # SQL migration ownership
 
-All 80 checked-in SQL migrations currently live under this directory, grouped into 31 ledger directories. The native manifest mounts 73; 7 remain reserved specifications. The owner-configuration migration was relocated from `crates/host/migrations/owner` to `owner-pg/`; its migration ID, schema namespace, SQL bytes, and checksum are unchanged.
+All 81 checked-in SQL migrations currently live under this directory, grouped into 31 ledger directories. The native manifest mounts 74; 7 remain reserved specifications. The owner-configuration migration was relocated from `crates/host/migrations/owner` to `owner-pg/`; its migration ID, schema namespace, SQL bytes, and checksum are unchanged.
 
 The manifest is the only list of applied migrations. The persistent server embeds the migrations it verifies from it at build time ([build.rs](../crates/slice/build.rs)), and the disposable PostgreSQL fixture reads the same manifest in [pg-fixture](../crates/pg-fixture/src/lib.rs). A file's presence here does not mean a given runtime mounts it or its UI is complete.
 
 ## Applied versus unmounted ledgers
 
-`manifest.v1.json` is the installer's contract: 73 of the 80 files, across 25 ledgers, carry an `id`, `path` and SHA-256 that the Ops installer verifies and applies. The remaining seven files are **unmounted**: no manifest entry, no embedded registration, and no runtime readiness check.
+`manifest.v1.json` is the installer's contract: 74 of the 81 files, across 25 ledgers, carry an `id`, `path` and SHA-256 that the Ops installer verifies and applies. The remaining seven files are **unmounted**: no manifest entry, no embedded registration, and no runtime readiness check.
 
 | Unmounted ledger | Files |
 | --- | --- |
@@ -107,3 +107,12 @@ guards and the capture and effect functions are replaced in place (same signatur
 the triggers the readiness functions identify are unchanged), a source whose currency
 differs from its book's is refused, and no row is rewritten. See
 [source units](../docs/modules/ACCOUNTING.md#source-units).
+
+Accounting015 adds an insert guard on `archava_accounting.books`: a book in another
+currency than IDR is refused when its company already owns a Commerce product or
+sales order, a Purchasing order or a Billing invoice, which are all IDR without a
+book. The guard locks the company row (`FOR NO KEY UPDATE`) against the shared lock
+of the Commerce 009, Purchasing 005 and Billing 008 company guards, reads the three
+earlier ledgers directly (Accounting migrates after them) and needs no new runtime
+grant. IDR books and existing books are unaffected. See
+[trade currency](../docs/architecture/MULTI_CURRENCY.md#known-consequences).
